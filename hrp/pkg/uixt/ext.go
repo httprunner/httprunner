@@ -41,10 +41,15 @@ const (
 	RecordStop     MobileMethod = "record_stop"
 
 	// UI validation
-	SelectorName       string = "ui_name"
-	SelectorLabel      string = "ui_label"
-	SelectorOCR        string = "ui_ocr"
-	SelectorImage      string = "ui_image"
+	// selectors
+	SelectorName          string = "ui_name"
+	SelectorLabel         string = "ui_label"
+	SelectorOCR           string = "ui_ocr"
+	SelectorImage         string = "ui_image"
+	SelectorForegroundApp string = "ui_foreground_app"
+	// assertions
+	AssertionEqual     string = "equal"
+	AssertionNotEqual  string = "not_equal"
 	AssertionExists    string = "exists"
 	AssertionNotExists string = "not_exists"
 
@@ -212,7 +217,7 @@ type DriverExt struct {
 	doneMjpegStream chan bool
 	scale           float64
 	ocrService      OCRService // used to get text from image
-	ScreenShots     []string   // save screenshots path
+	screenShots     []string   // cache screenshot paths
 
 	CVArgs
 }
@@ -248,7 +253,9 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 	return dExt, nil
 }
 
-func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
+// TakeScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
+// if fileName is empty, it will not save image file and only return raw image data
+func (dExt *DriverExt) TakeScreenShot(fileName ...string) (raw *bytes.Buffer, err error) {
 	// wait for action done
 	time.Sleep(500 * time.Millisecond)
 
@@ -258,15 +265,34 @@ func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
 		return dExt.frame, nil
 	}
 	if raw, err = dExt.Driver.Screenshot(); err != nil {
-		log.Error().Err(err).Msg("takeScreenShot failed")
+		log.Error().Err(err).Msg("capture screenshot data failed")
 		return nil, err
 	}
+
+	// save screenshot to file
+	if len(fileName) > 0 && fileName[0] != "" {
+		path := filepath.Join(env.ScreenShotsPath, fileName[0])
+		path, err := dExt.saveScreenShot(raw, path)
+		if err != nil {
+			log.Error().Err(err).Msg("save screenshot file failed")
+			return nil, err
+		}
+		dExt.screenShots = append(dExt.screenShots, path)
+		log.Info().Str("path", path).Msg("save screenshot file success")
+	}
+
 	return raw, nil
 }
 
 // saveScreenShot saves image file with file name
-func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
-	img, format, err := image.Decode(raw)
+func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
+	// notice: screenshot data is a stream, so we need to copy it to a new buffer
+	copiedBuffer := &bytes.Buffer{}
+	if _, err := copiedBuffer.Write(raw.Bytes()); err != nil {
+		log.Error().Err(err).Msg("copy screenshot buffer failed")
+	}
+
+	img, format, err := image.Decode(copiedBuffer)
 	if err != nil {
 		return "", errors.Wrap(err, "decode screenshot image failed")
 	}
@@ -297,19 +323,11 @@ func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 	return screenshotPath, nil
 }
 
-// ScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
-func (dExt *DriverExt) ScreenShot(fileName string) (string, error) {
-	raw, err := dExt.takeScreenShot()
-	if err != nil {
-		return "", errors.Wrap(err, "screenshot failed")
-	}
-
-	fileName = filepath.Join(env.ScreenShotsPath, fileName)
-	path, err := saveScreenShot(raw, fileName)
-	if err != nil {
-		return "", errors.Wrap(err, "save screenshot failed")
-	}
-	return path, nil
+func (dExt *DriverExt) GetScreenShots() []string {
+	defer func() {
+		dExt.screenShots = nil
+	}()
+	return dExt.screenShots
 }
 
 // isPathExists returns true if path exists, whether path is file or dir
@@ -347,6 +365,16 @@ func (dExt *DriverExt) IsOCRExist(text string) bool {
 func (dExt *DriverExt) IsImageExist(text string) bool {
 	_, _, _, _, err := dExt.FindImageRectInUIKit(text)
 	return err == nil
+}
+
+func (dExt *DriverExt) IsAppInForeground(packageName string) bool {
+	// check if app is in foreground
+	yes, err := dExt.Driver.IsAppInForeground(packageName)
+	if !yes || err != nil {
+		log.Info().Str("packageName", packageName).Msg("app is not in foreground")
+		return false
+	}
+	return true
 }
 
 var errActionNotImplemented = errors.New("UI action not implemented")
@@ -674,15 +702,9 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 		}
 	case CtlScreenShot:
-		// take snapshot
-		log.Info().Msg("take snapshot for current screen")
-		screenshotPath, err := dExt.ScreenShot(fmt.Sprintf("screenshot_%d",
-			time.Now().Unix()))
-		if err != nil {
-			return errors.Wrap(err, "take screenshot failed")
-		}
-		log.Info().Str("path", screenshotPath).Msg("take screenshot")
-		dExt.ScreenShots = append(dExt.ScreenShots, screenshotPath)
+		// take screenshot
+		log.Info().Msg("take screenshot for current screen")
+		_, err := dExt.TakeScreenShot(builtin.GenNameWithTimestamp("screenshot_%d"))
 		return err
 	case CtlStartCamera:
 		return dExt.Driver.StartCamera()
@@ -700,18 +722,20 @@ func (dExt *DriverExt) getAbsScope(x1, y1, x2, y2 float64) (int, int, int, int) 
 }
 
 func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) bool {
-	var exists bool
-	if assert == AssertionExists {
-		exists = true
+	var exp bool
+	if assert == AssertionExists || assert == AssertionEqual {
+		exp = true
 	} else {
-		exists = false
+		exp = false
 	}
 	var result bool
 	switch check {
 	case SelectorOCR:
-		result = (dExt.IsOCRExist(expected) == exists)
+		result = (dExt.IsOCRExist(expected) == exp)
 	case SelectorImage:
-		result = (dExt.IsImageExist(expected) == exists)
+		result = (dExt.IsImageExist(expected) == exp)
+	case SelectorForegroundApp:
+		result = (dExt.IsAppInForeground(expected) == exp)
 	}
 
 	if !result {

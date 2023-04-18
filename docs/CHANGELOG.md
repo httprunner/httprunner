@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.3 (2023-04-14)
+## v4.3.3 (2023-04-18)
 
 **go version**
 
@@ -9,11 +9,13 @@
 - feat: add adb `screencap` sub command
 - feat: add `IsAppInForeground` to check if the given package is in foreground
 - feat: check if app is in foreground when step failed
+- feat: add validator AssertAppInForeground and AssertAppNotInForeground
+- feat: save screenshots of all steps including ocr and cv recognition process data
 - fix: adb driver for TapFloat
 - fix: stop logcat only when enabled
 - fix: do not fail case when kill logcat error
 - fix: take screenshot after each step
-- fix: screencap compatibility for shell v1 and v2
+- fix: screencap compatibility for shell v1 and v2 protocol
 
 ## v4.3.2 (2022-12-26)
 

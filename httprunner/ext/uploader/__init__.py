@@ -10,7 +10,7 @@ Then you can write upload test script as below:
     - test:
         name: upload file
         request:
-            url: http://httpbin.org/upload
+            url: https://httpbin.org/upload
             method: POST
             headers:
                 Cookie: session=AAA-BBB-CCC
@@ -31,7 +31,7 @@ For compatibility, you can also write upload test script in old way:
             field2: "value2"
             m_encoder: ${multipart_encoder(file=$file, field1=$field1, field2=$field2)}
         request:
-            url: http://httpbin.org/upload
+            url: https://httpbin.org/upload
             method: POST
             headers:
                 Content-Type: ${multipart_content_type($m_encoder)}
@@ -75,7 +75,9 @@ def ensure_upload_ready():
     sys.exit(1)
 
 
-def prepare_upload_step(step: TStep, step_variables: VariablesMapping, functions: FunctionsMapping):
+def prepare_upload_step(
+    step: TStep, step_variables: VariablesMapping, functions: FunctionsMapping
+):
     """preprocess for upload test
         replace `upload` info with MultipartEncoder
 
@@ -84,7 +86,7 @@ def prepare_upload_step(step: TStep, step_variables: VariablesMapping, functions
             {
                 "variables": {},
                 "request": {
-                    "url": "http://httpbin.org/upload",
+                    "url": "https://httpbin.org/upload",
                     "method": "POST",
                     "headers": {
                         "Cookie": "session=AAA-BBB-CCC"

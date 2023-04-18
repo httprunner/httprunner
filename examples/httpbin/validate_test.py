@@ -5,7 +5,7 @@ from httprunner import HttpRunner, Config, Step, RunRequest
 
 class TestCaseValidate(HttpRunner):
 
-    config = Config("basic test with httpbin").base_url("http://httpbin.org/")
+    config = Config("basic test with httpbin").base_url("https://httpbin.org/")
 
     teststeps = [
         Step(

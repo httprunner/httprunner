@@ -124,8 +124,9 @@ var errorsMap = map[error]int{
 	AndroidCaptureLogError:       66,
 
 	// UI automation related
-	MobileUIDriverError:     70,
-	MobileUIValidationError: 75,
+	MobileUIDriverError:             70,
+	MobileUIValidationError:         75,
+	MobileUIAppNotInForegroundError: 76,
 
 	// OCR related
 	OCREnvMissedError:         80,
