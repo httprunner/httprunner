@@ -314,7 +314,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 	case wsOpen:
 		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("open websocket connection")
 		// use the current websocket connection if existed
-		if r.wsConnMap[parsedURL] != nil {
+		if r.getWsClient(parsedURL) != nil {
 			break
 		}
 		resp, err = openWithTimeout(parsedURL, parsedHeader, r, step)
@@ -476,10 +476,15 @@ func openWithTimeout(urlStr string, requestHeader http.Header, r *SessionRunner,
 		conn.SetCloseHandler(func(code int, text string) error {
 			message := websocket.FormatCloseMessage(code, "")
 			conn.WriteControl(websocket.CloseMessage, message, time.Now().Add(defaultWriteWait))
-			r.closeResponseChan <- &wsCloseRespObject{
+			select {
+			case r.closeResponseChan <- &wsCloseRespObject{
 				StatusCode: code,
 				Text:       text,
+			}:
+			default:
+				log.Warn().Msg("close response channel is block, drop the response")
 			}
+
 			return nil
 		})
 		r.wsConnMap[urlStr] = conn
@@ -499,7 +504,7 @@ func openWithTimeout(urlStr string, requestHeader http.Header, r *SessionRunner,
 }
 
 func readMessageWithTimeout(urlString string, r *SessionRunner, step *TStep) (*wsReadRespObject, error) {
-	wsConn := r.wsConnMap[urlString]
+	wsConn := r.getWsClient(urlString)
 	if wsConn == nil {
 		return nil, errors.New("try to use existing connection, but there is no connection")
 	}
@@ -529,7 +534,7 @@ func readMessageWithTimeout(urlString string, r *SessionRunner, step *TStep) (*w
 }
 
 func writeWebSocket(urlString string, r *SessionRunner, step *TStep, stepVariables map[string]interface{}) error {
-	wsConn := r.wsConnMap[urlString]
+	wsConn := r.getWsClient(urlString)
 	if wsConn == nil {
 		return errors.New("try to use existing connection, but there is no connection")
 	}
@@ -595,7 +600,7 @@ func writeWithAction(c *websocket.Conn, step *TStep, messageType int, message []
 }
 
 func closeWithTimeout(urlString string, r *SessionRunner, step *TStep, stepVariables map[string]interface{}) (*wsCloseRespObject, error) {
-	wsConn := r.wsConnMap[urlString]
+	wsConn := r.getWsClient(urlString)
 	if wsConn == nil {
 		return nil, errors.New("no connection needs to be closed")
 	}
