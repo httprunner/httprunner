@@ -13,7 +13,6 @@ func Test_transport_VerifyResponse(t *testing.T) {
 	}
 	defer transport.Close()
 
-	// err = transport.Send("host:123version")
 	err = transport.Send("host:version")
 	if err != nil {
 		t.Fatal(err)

@@ -37,6 +37,14 @@ func (t transport) Send(command string) (err error) {
 	return _send(t.sock, []byte(msg))
 }
 
+func (t transport) SendBytes(b []byte) (err error) {
+	return _send(t.sock, b)
+}
+
+func (t transport) Conn() net.Conn {
+	return t.sock
+}
+
 func (t transport) VerifyResponse() (err error) {
 	var status string
 	if status, err = t.ReadStringN(4); err != nil {
@@ -103,6 +111,7 @@ func (t transport) Close() (err error) {
 	if t.sock == nil {
 		return nil
 	}
+	_ = DisableTimeWait(t.sock.(*net.TCPConn))
 	return t.sock.Close()
 }
 

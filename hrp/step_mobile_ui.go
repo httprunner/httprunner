@@ -2,11 +2,11 @@ package hrp
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
@@ -281,6 +281,18 @@ func (s *StepMobile) Sleep(n float64) *StepMobile {
 	return &StepMobile{step: s.step}
 }
 
+// SleepRandom specify random sleeping seconds after last action
+// params have two different kinds:
+// 1. [min, max] : min and max are float64 time range boudaries
+// 2. [min1, max1, weight1, min2, max2, weight2, ...] : weight is the probability of the time range
+func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
+	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+		Method: uixt.CtlSleepRandom,
+		Params: params,
+	})
+	return &StepMobile{step: s.step}
+}
+
 func (s *StepMobile) ScreenShot() *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
 		Method: uixt.CtlScreenShot,
@@ -456,6 +468,36 @@ func (s *StepMobileUIValidation) AssertImageNotExists(expectedImagePath string, 
 	return s
 }
 
+func (s *StepMobileUIValidation) AssertAppInForeground(packageName string, msg ...string) *StepMobileUIValidation {
+	v := Validator{
+		Check:  uixt.SelectorForegroundApp,
+		Assert: uixt.AssertionEqual,
+		Expect: packageName,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("app [%s] should be in foreground", packageName)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
+func (s *StepMobileUIValidation) AssertAppNotInForeground(packageName string, msg ...string) *StepMobileUIValidation {
+	v := Validator{
+		Check:  uixt.SelectorForegroundApp,
+		Assert: uixt.AssertionNotEqual,
+		Expect: packageName,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("app [%s] should not be in foreground", packageName)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
 func (s *StepMobileUIValidation) Name() string {
 	return s.step.Name
 }
@@ -530,7 +572,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		Success:     false,
 		ContentSize: 0,
 	}
-	screenshots := make([]string, 0)
 
 	// merge step variables with session variables
 	stepVariables, err := s.ParseStepVariables(step.Variables)
@@ -549,11 +590,25 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		attachments := make(map[string]interface{})
 		if err != nil {
 			attachments["error"] = err.Error()
+
+			// check if app is in foreground
+			packageName := uiDriver.Driver.GetLastLaunchedApp()
+			yes, err2 := uiDriver.Driver.IsAppInForeground(packageName)
+			if packageName != "" && (!yes || err2 != nil) {
+				log.Error().Err(err2).Str("packageName", packageName).Msg("app is not in foreground")
+				err = errors.Wrap(code.MobileUIAppNotInForegroundError, err.Error())
+			}
+		}
+
+		// take screenshot after each step
+		_, err := uiDriver.TakeScreenShot(
+			builtin.GenNameWithTimestamp("step_%d_") + step.Name)
+		if err != nil {
+			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed on step finished")
 		}
 
 		// save attachments
-		screenshots = append(screenshots, uiDriver.ScreenShots...)
-		attachments["screenshots"] = screenshots
+		attachments["screenshots"] = uiDriver.GetScreenShots()
 		stepResult.Attachments = attachments
 	}()
 
@@ -585,16 +640,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 			}
 			return stepResult, err
 		}
-	}
-
-	// take snapshot
-	screenshotPath, err := uiDriver.ScreenShot(
-		fmt.Sprintf("validate_%d", time.Now().Unix()))
-	if err != nil {
-		log.Warn().Err(err).Str("step", step.Name).Msg("take screenshot failed")
-	} else {
-		log.Info().Str("path", screenshotPath).Msg("take screenshot before validation")
-		screenshots = append(screenshots, screenshotPath)
 	}
 
 	// validate

@@ -250,5 +250,6 @@ func (sync syncTransport) Close() (err error) {
 	if sync.sock == nil {
 		return nil
 	}
+	_ = DisableTimeWait(sync.sock.(*net.TCPConn))
 	return sync.sock.Close()
 }

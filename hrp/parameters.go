@@ -38,8 +38,8 @@ type iteratorStrategy struct {
 	PickOrder iteratorPickOrder `json:"pick_order,omitempty" yaml:"pick_order,omitempty"`
 }
 
-func initParametersIterator(cfg *TConfig) (*ParametersIterator, error) {
-	parameters, err := loadParameters(cfg.Parameters, cfg.Variables)
+func (p *Parser) initParametersIterator(cfg *TConfig) (*ParametersIterator, error) {
+	parameters, err := p.loadParameters(cfg.Parameters, cfg.Variables)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ configParameters = {
 	]
 }
 */
-func loadParameters(configParameters map[string]interface{}, variablesMapping map[string]interface{}) (
+func (p *Parser) loadParameters(configParameters map[string]interface{}, variablesMapping map[string]interface{}) (
 	map[string]Parameters, error) {
 
 	if len(configParameters) == 0 {
@@ -263,7 +263,7 @@ func loadParameters(configParameters map[string]interface{}, variablesMapping ma
 			// => [["test1", "111111"], ["test2", "222222"]]
 			// e.g. "app_version": "${gen_app_version()}"
 			// => ["1.0.0", "1.0.1"]
-			parsedParameterContent, err := newParser().ParseString(rawValue.String(), variablesMapping)
+			parsedParameterContent, err := p.ParseString(rawValue.String(), variablesMapping)
 			if err != nil {
 				log.Error().Err(err).
 					Str("parametersRawContent", rawValue.String()).

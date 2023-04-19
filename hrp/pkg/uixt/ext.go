@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
+	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"math/rand"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -32,16 +34,22 @@ const (
 	AppStop        MobileMethod = "app_stop"
 	CtlScreenShot  MobileMethod = "screenshot"
 	CtlSleep       MobileMethod = "sleep"
+	CtlSleepRandom MobileMethod = "sleep_random"
 	CtlStartCamera MobileMethod = "camera_start" // alias for app_launch camera
 	CtlStopCamera  MobileMethod = "camera_stop"  // alias for app_terminate camera
 	RecordStart    MobileMethod = "record_start"
 	RecordStop     MobileMethod = "record_stop"
 
 	// UI validation
-	SelectorName       string = "ui_name"
-	SelectorLabel      string = "ui_label"
-	SelectorOCR        string = "ui_ocr"
-	SelectorImage      string = "ui_image"
+	// selectors
+	SelectorName          string = "ui_name"
+	SelectorLabel         string = "ui_label"
+	SelectorOCR           string = "ui_ocr"
+	SelectorImage         string = "ui_image"
+	SelectorForegroundApp string = "ui_foreground_app"
+	// assertions
+	AssertionEqual     string = "equal"
+	AssertionNotEqual  string = "not_equal"
 	AssertionExists    string = "exists"
 	AssertionNotExists string = "not_exists"
 
@@ -209,7 +217,7 @@ type DriverExt struct {
 	doneMjpegStream chan bool
 	scale           float64
 	ocrService      OCRService // used to get text from image
-	ScreenShots     []string   // save screenshots path
+	screenShots     []string   // cache screenshot paths
 
 	CVArgs
 }
@@ -245,7 +253,9 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 	return dExt, nil
 }
 
-func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
+// TakeScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
+// if fileName is empty, it will not save image file and only return raw image data
+func (dExt *DriverExt) TakeScreenShot(fileName ...string) (raw *bytes.Buffer, err error) {
 	// wait for action done
 	time.Sleep(500 * time.Millisecond)
 
@@ -255,15 +265,34 @@ func (dExt *DriverExt) takeScreenShot() (raw *bytes.Buffer, err error) {
 		return dExt.frame, nil
 	}
 	if raw, err = dExt.Driver.Screenshot(); err != nil {
-		log.Error().Err(err).Msg("takeScreenShot failed")
+		log.Error().Err(err).Msg("capture screenshot data failed")
 		return nil, err
 	}
+
+	// save screenshot to file
+	if len(fileName) > 0 && fileName[0] != "" {
+		path := filepath.Join(env.ScreenShotsPath, fileName[0])
+		path, err := dExt.saveScreenShot(raw, path)
+		if err != nil {
+			log.Error().Err(err).Msg("save screenshot file failed")
+			return nil, err
+		}
+		dExt.screenShots = append(dExt.screenShots, path)
+		log.Info().Str("path", path).Msg("save screenshot file success")
+	}
+
 	return raw, nil
 }
 
 // saveScreenShot saves image file with file name
-func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
-	img, format, err := image.Decode(raw)
+func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
+	// notice: screenshot data is a stream, so we need to copy it to a new buffer
+	copiedBuffer := &bytes.Buffer{}
+	if _, err := copiedBuffer.Write(raw.Bytes()); err != nil {
+		log.Error().Err(err).Msg("copy screenshot buffer failed")
+	}
+
+	img, format, err := image.Decode(copiedBuffer)
 	if err != nil {
 		return "", errors.Wrap(err, "decode screenshot image failed")
 	}
@@ -282,6 +311,8 @@ func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 		err = png.Encode(file, img)
 	case "jpeg":
 		err = jpeg.Encode(file, img, nil)
+	case "gif":
+		err = gif.Encode(file, img, nil)
 	default:
 		return "", fmt.Errorf("unsupported image format: %s", format)
 	}
@@ -292,19 +323,11 @@ func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 	return screenshotPath, nil
 }
 
-// ScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
-func (dExt *DriverExt) ScreenShot(fileName string) (string, error) {
-	raw, err := dExt.takeScreenShot()
-	if err != nil {
-		return "", errors.Wrap(err, "screenshot failed")
-	}
-
-	fileName = filepath.Join(env.ScreenShotsPath, fileName)
-	path, err := saveScreenShot(raw, fileName)
-	if err != nil {
-		return "", errors.Wrap(err, "save screenshot failed")
-	}
-	return path, nil
+func (dExt *DriverExt) GetScreenShots() []string {
+	defer func() {
+		dExt.screenShots = nil
+	}()
+	return dExt.screenShots
 }
 
 // isPathExists returns true if path exists, whether path is file or dir
@@ -313,6 +336,10 @@ func isPathExists(path string) bool {
 		return false
 	}
 	return true
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }
 
 func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...DataOption) (x, y, width, height float64, err error) {
@@ -340,7 +367,30 @@ func (dExt *DriverExt) IsImageExist(text string) bool {
 	return err == nil
 }
 
+func (dExt *DriverExt) IsAppInForeground(packageName string) bool {
+	// check if app is in foreground
+	yes, err := dExt.Driver.IsAppInForeground(packageName)
+	if !yes || err != nil {
+		log.Info().Str("packageName", packageName).Msg("app is not in foreground")
+		return false
+	}
+	return true
+}
+
 var errActionNotImplemented = errors.New("UI action not implemented")
+
+func convertToFloat64(val interface{}) (float64, error) {
+	switch v := val.(type) {
+	case float64:
+		return v, nil
+	case int:
+		return float64(v), nil
+	case int64:
+		return float64(v), nil
+	default:
+		return 0, fmt.Errorf("invalid type for conversion to float64: %T, value: %+v", val, val)
+	}
+}
 
 func (dExt *DriverExt) DoAction(action MobileAction) error {
 	log.Info().Str("method", string(action.Method)).Interface("params", action.Params).Msg("start UI action")
@@ -602,16 +652,59 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			return nil
 		}
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
-	case CtlScreenShot:
-		// take snapshot
-		log.Info().Msg("take snapshot for current screen")
-		screenshotPath, err := dExt.ScreenShot(fmt.Sprintf("screenshot_%d",
-			time.Now().Unix()))
-		if err != nil {
-			return errors.Wrap(err, "take screenshot failed")
+	case CtlSleepRandom:
+		params, ok := action.Params.([]interface{})
+		if !ok {
+			return fmt.Errorf("invalid sleep random params: %v(%T)", action.Params, action.Params)
 		}
-		log.Info().Str("path", screenshotPath).Msg("take screenshot")
-		dExt.ScreenShots = append(dExt.ScreenShots, screenshotPath)
+		// append default weight 1
+		if len(params) == 2 {
+			params = append(params, 1.0)
+		}
+
+		var sections []struct {
+			min, max, weight float64
+		}
+		totalProb := 0.0
+		for i := 0; i+3 <= len(params); i += 3 {
+			min, err := convertToFloat64(params[i])
+			if err != nil {
+				return errors.Wrapf(err, "invalid minimum time: %v", params[i])
+			}
+			max, err := convertToFloat64(params[i+1])
+			if err != nil {
+				return errors.Wrapf(err, "invalid maximum time: %v", params[i+1])
+			}
+			weight, err := convertToFloat64(params[i+2])
+			if err != nil {
+				return errors.Wrapf(err, "invalid weight value: %v", params[i+2])
+			}
+			totalProb += weight
+			sections = append(sections,
+				struct{ min, max, weight float64 }{min, max, weight},
+			)
+		}
+
+		if totalProb == 0 {
+			log.Warn().Msg("total weight is 0, skip sleep")
+			return nil
+		}
+
+		r := rand.Float64()
+		accProb := 0.0
+		for _, s := range sections {
+			accProb += s.weight / totalProb
+			if r < accProb {
+				n := s.min + rand.Float64()*(s.max-s.min)
+				log.Info().Float64("duration", n).Msg("sleep random seconds")
+				time.Sleep(time.Duration(n*1000) * time.Millisecond)
+				return nil
+			}
+		}
+	case CtlScreenShot:
+		// take screenshot
+		log.Info().Msg("take screenshot for current screen")
+		_, err := dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_screenshot"))
 		return err
 	case CtlStartCamera:
 		return dExt.Driver.StartCamera()
@@ -629,18 +722,20 @@ func (dExt *DriverExt) getAbsScope(x1, y1, x2, y2 float64) (int, int, int, int) 
 }
 
 func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) bool {
-	var exists bool
-	if assert == AssertionExists {
-		exists = true
+	var exp bool
+	if assert == AssertionExists || assert == AssertionEqual {
+		exp = true
 	} else {
-		exists = false
+		exp = false
 	}
 	var result bool
 	switch check {
 	case SelectorOCR:
-		result = (dExt.IsOCRExist(expected) == exists)
+		result = (dExt.IsOCRExist(expected) == exp)
 	case SelectorImage:
-		result = (dExt.IsImageExist(expected) == exists)
+		result = (dExt.IsImageExist(expected) == exp)
+	case SelectorForegroundApp:
+		result = (dExt.IsAppInForeground(expected) == exp)
 	}
 
 	if !result {

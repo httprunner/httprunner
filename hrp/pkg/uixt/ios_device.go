@@ -141,7 +141,7 @@ func WithIOSPcapOptions(options ...gidevice.PcapOption) IOSDeviceOption {
 	}
 }
 
-func IOSDevices(udid ...string) (devices []gidevice.Device, err error) {
+func GetIOSDevices(udid ...string) (devices []gidevice.Device, err error) {
 	var usbmux gidevice.Usbmux
 	if usbmux, err = gidevice.NewUsbmux(); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceConnectionError,
@@ -168,6 +168,15 @@ func IOSDevices(udid ...string) (devices []gidevice.Device, err error) {
 		}
 	}
 
+	if len(deviceList) == 0 {
+		var err error
+		if udid == nil || (len(udid) == 1 && udid[0] == "") {
+			err = fmt.Errorf("no ios device found")
+		} else {
+			err = fmt.Errorf("no ios device found for udid %v", udid)
+		}
+		return nil, err
+	}
 	return deviceList, nil
 }
 
@@ -223,31 +232,27 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 		option(device)
 	}
 
-	deviceList, err := IOSDevices(device.UDID)
+	deviceList, err := GetIOSDevices(device.UDID)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.IOSDeviceConnectionError, err.Error())
 	}
 
-	for _, dev := range deviceList {
-		udid := dev.Properties().SerialNumber
-		device.UDID = udid
-		device.d = dev
+	dev := deviceList[0]
+	udid := dev.Properties().SerialNumber
+	device.UDID = udid
+	device.d = dev
 
-		// run xctest if XCTestBundleID is set
-		if device.XCTestBundleID != "" {
-			_, err = device.RunXCTest(device.XCTestBundleID)
-			if err != nil {
-				log.Error().Err(err).Str("udid", udid).Msg("failed to init XCTest")
-				continue
-			}
+	// run xctest if XCTestBundleID is set
+	if device.XCTestBundleID != "" {
+		_, err = device.RunXCTest(device.XCTestBundleID)
+		if err != nil {
+			log.Error().Err(err).Str("udid", udid).Msg("failed to init XCTest")
+			return
 		}
-
-		log.Info().Str("udid", device.UDID).Msg("select device")
-		return device, nil
 	}
 
-	return nil, errors.Wrap(code.IOSDeviceConnectionError,
-		fmt.Sprintf("device %s not found", device.UDID))
+	log.Info().Str("udid", device.UDID).Msg("select ios device")
+	return device, nil
 }
 
 type IOSDevice struct {
@@ -279,6 +284,10 @@ type IOSDevice struct {
 
 func (dev *IOSDevice) UUID() string {
 	return dev.UDID
+}
+
+func (dev *IOSDevice) LogEnabled() bool {
+	return dev.LogOn
 }
 
 func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
