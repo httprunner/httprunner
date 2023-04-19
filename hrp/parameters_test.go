@@ -74,8 +74,9 @@ func TestLoadParameters(t *testing.T) {
 	variablesMapping := map[string]interface{}{
 		"file": "account.csv",
 	}
+	parser := newParser()
 	for _, data := range testData {
-		value, err := loadParameters(data.configParameters, variablesMapping)
+		value, err := parser.loadParameters(data.configParameters, variablesMapping)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}
@@ -92,21 +93,25 @@ func TestLoadParametersError(t *testing.T) {
 		{
 			map[string]interface{}{
 				"username_password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir),
-				"user_agent":        []interface{}{"iOS/10.1", "iOS/10.2"}},
+				"user_agent":        []interface{}{"iOS/10.1", "iOS/10.2"},
+			},
 		},
 		{
 			map[string]interface{}{
 				"username-password": fmt.Sprintf("${parameterize(%s/account.csv)}", hrpExamplesDir),
-				"user-agent":        []interface{}{"iOS/10.1", "iOS/10.2"}},
+				"user-agent":        []interface{}{"iOS/10.1", "iOS/10.2"},
+			},
 		},
 		{
 			map[string]interface{}{
 				"username-password": fmt.Sprintf("${param(%s/account.csv)}", hrpExamplesDir),
-				"user_agent":        []interface{}{"iOS/10.1", "iOS/10.2"}},
+				"user_agent":        []interface{}{"iOS/10.1", "iOS/10.2"},
+			},
 		},
 	}
+	parser := newParser()
 	for _, data := range testData {
-		_, err := loadParameters(data.configParameters, map[string]interface{}{})
+		_, err := parser.loadParameters(data.configParameters, map[string]interface{}{})
 		if !assert.Error(t, err) {
 			t.Fatal()
 		}
@@ -240,8 +245,9 @@ func TestInitParametersIteratorCount(t *testing.T) {
 			1,
 		},
 	}
+	parser := newParser()
 	for _, data := range testData {
-		iterator, err := initParametersIterator(data.cfg)
+		iterator, err := parser.initParametersIterator(data.cfg)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}
@@ -288,8 +294,9 @@ func TestInitParametersIteratorUnlimitedCount(t *testing.T) {
 			},
 		},
 	}
+	parser := newParser()
 	for _, data := range testData {
-		iterator, err := initParametersIterator(data.cfg)
+		iterator, err := parser.initParametersIterator(data.cfg)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}
@@ -370,8 +377,9 @@ func TestInitParametersIteratorContent(t *testing.T) {
 			map[string]interface{}{},
 		},
 	}
+	parser := newParser()
 	for _, data := range testData {
-		iterator, err := initParametersIterator(data.cfg)
+		iterator, err := parser.initParametersIterator(data.cfg)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}

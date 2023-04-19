@@ -67,8 +67,9 @@ var (
 
 // UI automation related: [70, 80)
 var (
-	MobileUIDriverError     = errors.New("mobile UI driver error")     // 70
-	MobileUIValidationError = errors.New("mobile UI validation error") // 75
+	MobileUIDriverError             = errors.New("mobile UI driver error")                // 70
+	MobileUIValidationError         = errors.New("mobile UI validation error")            // 75
+	MobileUIAppNotInForegroundError = errors.New("mobile UI app not in foreground error") // 76
 )
 
 // OCR related: [80, 90)
@@ -123,8 +124,9 @@ var errorsMap = map[error]int{
 	AndroidCaptureLogError:       66,
 
 	// UI automation related
-	MobileUIDriverError:     70,
-	MobileUIValidationError: 75,
+	MobileUIDriverError:             70,
+	MobileUIValidationError:         75,
+	MobileUIAppNotInForegroundError: 76,
 
 	// OCR related
 	OCREnvMissedError:         80,

@@ -17,7 +17,7 @@ import (
 type adbDriver struct {
 	Driver
 
-	adbClient gadb.Device
+	adbClient *gadb.Device
 	logcat    *AdbLogcat
 }
 
@@ -153,11 +153,11 @@ func (ad *adbDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta) (err error
 	return
 }
 
-func (ad *adbDriver) AppLaunch(bundleId string) (err error) {
+func (ad *adbDriver) AppLaunch(packageName string) (err error) {
 	// 不指定 Activity 名称启动（启动主 Activity）
 	// adb shell monkey -p <packagename> -c android.intent.category.LAUNCHER 1
 	sOutput, err := ad.adbClient.RunShellCommand(
-		"monkey", "-p", bundleId, "-c", "android.intent.category.LAUNCHER", "1",
+		"monkey", "-p", packageName, "-c", "android.intent.category.LAUNCHER", "1",
 	)
 	if err != nil {
 		return err
@@ -165,14 +165,22 @@ func (ad *adbDriver) AppLaunch(bundleId string) (err error) {
 	if strings.Contains(sOutput, "monkey aborted") {
 		return fmt.Errorf("app launch: %s", strings.TrimSpace(sOutput))
 	}
+	ad.lastLaunchedPackageName = packageName
 	return nil
 }
 
-func (ad *adbDriver) AppTerminate(bundleId string) (successful bool, err error) {
+func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err error) {
 	// 强制停止应用，停止 <packagename> 相关的进程
 	// adb shell am force-stop <packagename>
-	_, err = ad.adbClient.RunShellCommand("am", "force-stop", bundleId)
-	return err == nil, err
+	_, err = ad.adbClient.RunShellCommand("am", "force-stop", packageName)
+	if err != nil {
+		return false, err
+	}
+
+	if ad.lastLaunchedPackageName == packageName {
+		ad.lastLaunchedPackageName = "" // reset last launched package name
+	}
+	return true, nil
 }
 
 func (ad *adbDriver) Tap(x, y int, options ...DataOption) error {
@@ -180,6 +188,13 @@ func (ad *adbDriver) Tap(x, y int, options ...DataOption) error {
 }
 
 func (ad *adbDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
+	dataOptions := NewDataOptions(options...)
+
+	if len(dataOptions.Offset) == 2 {
+		x += float64(dataOptions.Offset[0])
+		y += float64(dataOptions.Offset[1])
+	}
+
 	// adb shell input tap x y
 	_, err = ad.adbClient.RunShellCommand(
 		"input", "tap", fmt.Sprintf("%.1f", x), fmt.Sprintf("%.1f", y))
@@ -273,9 +288,7 @@ func (ad *adbDriver) SetRotation(rotation Rotation) (err error) {
 
 func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	// adb shell screencap -p
-	resp, err := ad.adbClient.RunShellCommandWithBytes(
-		"screencap", "-p",
-	)
+	resp, err := ad.adbClient.ScreenCap()
 	if err == nil {
 		return bytes.NewBuffer(resp), nil
 	}
@@ -314,6 +327,13 @@ func (ad *adbDriver) IsHealthy() (healthy bool, err error) {
 
 func (ad *adbDriver) StartCaptureLog(identifier ...string) (err error) {
 	log.Info().Msg("start adb log recording")
+
+	// clear logcat
+	if _, err = ad.adbClient.RunShellCommand("logcat", "-c"); err != nil {
+		return err
+	}
+
+	// start logcat
 	err = ad.logcat.CatchLogcat()
 	if err != nil {
 		err = errors.Wrap(code.AndroidCaptureLogError,
@@ -334,4 +354,36 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 	}
 	content := ad.logcat.logBuffer.String()
 	return ConvertPoints(content), nil
+}
+
+func (ad *adbDriver) GetLastLaunchedApp() (packageName string) {
+	return ad.lastLaunchedPackageName
+}
+
+func (ad *adbDriver) IsAppInForeground(packageName string) (bool, error) {
+	if packageName == "" {
+		return false, errors.New("package name is not given")
+	}
+
+	// adb shell dumpsys activity activities | grep mResumedActivity
+	output, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to dumpsys activities")
+		return false, err
+	}
+
+	lines := strings.Split(string(output), "\n")
+	isInForeground := false
+
+	for _, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmedLine, "mResumedActivity:") {
+			if strings.Contains(trimmedLine, packageName) {
+				isInForeground = true
+			}
+			break
+		}
+	}
+
+	return isInForeground, nil
 }

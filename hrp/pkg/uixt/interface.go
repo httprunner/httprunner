@@ -2,7 +2,6 @@ package uixt
 
 import (
 	"bytes"
-	"fmt"
 	"math"
 	"strings"
 	"time"
@@ -437,7 +436,6 @@ type DataOptions struct {
 	IgnoreNotFoundError bool                   // ignore error if target element not found
 	MaxRetryTimes       int                    // max retry times if target element not found
 	Interval            float64                // interval between retries in seconds
-	ScreenShotFilename  string                 // turn on screenshot and specify file name
 }
 
 type DataOption func(data *DataOptions)
@@ -514,16 +512,6 @@ func WithDataWaitTime(sec float64) DataOption {
 	}
 }
 
-func WithScreenShot(fileName ...string) DataOption {
-	return func(data *DataOptions) {
-		if len(fileName) > 0 {
-			data.ScreenShotFilename = fileName[0]
-		} else {
-			data.ScreenShotFilename = fmt.Sprintf("screenshot_%d", time.Now().Unix())
-		}
-	}
-}
-
 func NewDataOptions(options ...DataOption) *DataOptions {
 	dataOptions := &DataOptions{
 		Data: make(map[string]interface{}),
@@ -581,6 +569,7 @@ func NewData(data map[string]interface{}, options ...DataOption) map[string]inte
 // current implemeted device: IOSDevice, AndroidDevice
 type Device interface {
 	UUID() string // ios udid or android serial
+	LogEnabled() bool
 	NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error)
 
 	StartPerf() error
@@ -626,10 +615,14 @@ type WebDriver interface {
 
 	// AppLaunch Launch an application with given bundle identifier in scope of current session.
 	// !This method is only available since Xcode9 SDK
-	AppLaunch(bundleId string) error
-	// AppTerminate Terminate an application with the given bundle id.
+	AppLaunch(packageName string) error
+	// AppTerminate Terminate an application with the given pacakge name.
 	// Either `true` if the app has been successfully terminated or `false` if it was not running
-	AppTerminate(bundleId string) (bool, error)
+	AppTerminate(packageName string) (bool, error)
+	// GetLastLaunchedApp returns the package name of the last launched app
+	GetLastLaunchedApp() string
+	// IsAppInForeground returns true if the given package is in foreground
+	IsAppInForeground(packageName string) (bool, error)
 
 	// StartCamera Starts a new camera for recording
 	StartCamera() error
