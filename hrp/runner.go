@@ -461,6 +461,7 @@ type SessionRunner struct {
 	startTime         time.Time                  // record start time of the testcase
 	summary           *TestCaseSummary           // record test case summary
 	wsConnMap         map[string]*websocket.Conn // save all websocket connections
+	inheritWsConnMap  map[string]*websocket.Conn // inherit all websocket connections
 	pongResponseChan  chan string                // channel used to receive pong response message
 	closeResponseChan chan *wsCloseRespObject    // channel used to receive close response message
 }
@@ -472,8 +473,20 @@ func (r *SessionRunner) resetSession() {
 	r.startTime = time.Now()
 	r.summary = newSummary()
 	r.wsConnMap = make(map[string]*websocket.Conn)
+	r.inheritWsConnMap = make(map[string]*websocket.Conn)
 	r.pongResponseChan = make(chan string, 1)
 	r.closeResponseChan = make(chan *wsCloseRespObject, 1)
+}
+
+func (r *SessionRunner) inheritConnection(src *SessionRunner) {
+	log.Info().Msg("inherit session runner")
+	r.inheritWsConnMap = make(map[string]*websocket.Conn, len(src.wsConnMap)+len(src.inheritWsConnMap))
+	for k, v := range src.wsConnMap {
+		r.inheritWsConnMap[k] = v
+	}
+	for k, v := range src.inheritWsConnMap {
+		r.inheritWsConnMap[k] = v
+	}
 }
 
 // Start runs the test steps in sequential order.
@@ -481,9 +494,6 @@ func (r *SessionRunner) resetSession() {
 func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	config := r.caseRunner.testCase.Config
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
-
-	// reset session runner
-	r.resetSession()
 
 	// update config variables with given variables
 	r.InitWithParameters(givenVars)
@@ -651,4 +661,16 @@ func (r *SessionRunner) releaseResources() {
 			}
 		}
 	}
+}
+
+func (r *SessionRunner) getWsClient(url string) *websocket.Conn {
+	if client, ok := r.wsConnMap[url]; ok {
+		return client
+	}
+
+	if client, ok := r.inheritWsConnMap[url]; ok {
+		return client
+	}
+
+	return nil
 }
