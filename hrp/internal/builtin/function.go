@@ -24,6 +24,8 @@ var Functions = map[string]interface{}{
 	"get_timestamp":          getTimestamp,    // call without arguments
 	"sleep":                  sleep,           // call with one argument
 	"gen_random_string":      genRandomString, // call with one argument
+	"random_int":             rand.Intn,       // call with one argument
+	"random_range":           random_range,    // call with two arguments
 	"max":                    math.Max,        // call with two arguments
 	"md5":                    MD5,             // call with one argument
 	"parameterize":           loadFromCSV,
@@ -47,6 +49,10 @@ func escapeQuotes(s string) string {
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+}
+
+func random_range(a, b float64) float64 {
+	return a + rand.Float64()*(b-a)
 }
 
 func getTimestamp() int64 {

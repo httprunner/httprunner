@@ -10,7 +10,7 @@ func TestBoomerStandaloneRun(t *testing.T) {
 	defer removeHashicorpGoPlugin()
 
 	testcase1 := &TestCase{
-		Config: NewConfig("TestCase1").SetBaseURL("http://httpbin.org"),
+		Config: NewConfig("TestCase1").SetBaseURL("https://httpbin.org"),
 		TestSteps: []IStep{
 			NewStep("headers").
 				GET("/headers").

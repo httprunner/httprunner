@@ -81,15 +81,6 @@ func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceO
 // uiautomator2 server must be started before
 // adb shell am instrument -w io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
 func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, err error) {
-	deviceList, err := DeviceList()
-	if err != nil {
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
-			fmt.Sprintf("get attached devices failed: %v", err))
-	} else if len(deviceList) == 0 {
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
-			"not attached device found")
-	}
-
 	device = &AndroidDevice{
 		UIA2IP:   UIA2ServerHost,
 		UIA2Port: UIA2ServerPort,
@@ -98,34 +89,56 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 		option(device)
 	}
 
-	serialNumber := device.SerialNumber
-	for _, dev := range deviceList {
-		// find device by serial number if specified
-		if serialNumber != "" && dev.Serial() != serialNumber {
-			continue
-		}
-
-		device.SerialNumber = dev.Serial()
-		device.d = dev
-		device.logcat = NewAdbLogcat(device.SerialNumber)
-		return device, nil
+	deviceList, err := GetAndroidDevices(device.SerialNumber)
+	if err != nil {
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
 	}
 
-	return nil, errors.Wrap(code.AndroidDeviceConnectionError,
-		fmt.Sprintf("device %s not found", device.SerialNumber))
+	dev := deviceList[0]
+	device.SerialNumber = dev.Serial()
+	device.d = dev
+	device.logcat = NewAdbLogcat(device.SerialNumber)
+
+	log.Info().Str("serial", device.SerialNumber).Msg("select android device")
+	return device, nil
 }
 
-func DeviceList() (devices []gadb.Device, err error) {
+func GetAndroidDevices(serial ...string) (devices []*gadb.Device, err error) {
 	var adbClient gadb.Client
 	if adbClient, err = gadb.NewClientWith(AdbServerHost, AdbServerPort); err != nil {
 		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
 	}
 
-	return adbClient.DeviceList()
+	if devices, err = adbClient.DeviceList(); err != nil {
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
+			fmt.Sprintf("list android devices failed: %v", err))
+	}
+
+	var deviceList []*gadb.Device
+	// filter by serial
+	for _, d := range devices {
+		for _, s := range serial {
+			if s != "" && s != d.Serial() {
+				continue
+			}
+			deviceList = append(deviceList, d)
+		}
+	}
+
+	if len(deviceList) == 0 {
+		var err error
+		if serial == nil || (len(serial) == 1 && serial[0] == "") {
+			err = fmt.Errorf("no android device found")
+		} else {
+			err = fmt.Errorf("no android device found for serial %v", serial)
+		}
+		return nil, err
+	}
+	return deviceList, nil
 }
 
 type AndroidDevice struct {
-	d            gadb.Device
+	d            *gadb.Device
 	logcat       *AdbLogcat
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
 	UIA2         bool   `json:"uia2,omitempty" yaml:"uia2,omitempty"`           // use uiautomator2
@@ -136,6 +149,10 @@ type AndroidDevice struct {
 
 func (dev *AndroidDevice) UUID() string {
 	return dev.SerialNumber
+}
+
+func (dev *AndroidDevice) LogEnabled() bool {
+	return dev.LogOn
 }
 
 func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
@@ -311,12 +328,13 @@ func (l *AdbLogcat) CatchLogcat() (err error) {
 	}
 
 	// clear logcat
-	if err = myexec.RunCommand("adb", "-s", l.serial, "logcat", "-c"); err != nil {
+	if err = myexec.RunCommand("adb", "-s", l.serial, "shell", "logcat", "-c"); err != nil {
 		return
 	}
 
 	// start logcat
-	l.cmd = myexec.Command("adb", "-s", l.serial, "logcat", "-v", "time", "-s", "iesqaMonitor:V")
+	l.cmd = myexec.Command("adb", "-s", l.serial,
+		"logcat", "--format", "time", "-s", "iesqaMonitor:V")
 	l.cmd.Stderr = l.logBuffer
 	l.cmd.Stdout = l.logBuffer
 	if err = l.cmd.Start(); err != nil {
@@ -325,7 +343,7 @@ func (l *AdbLogcat) CatchLogcat() (err error) {
 	go func() {
 		<-l.stopping
 		if e := myexec.KillProcessesByGpid(l.cmd); e != nil {
-			l.errs = append(l.errs, fmt.Errorf("kill logcat process err:%v", e))
+			log.Error().Err(e).Msg("kill logcat process failed")
 		}
 		l.done <- struct{}{}
 	}()

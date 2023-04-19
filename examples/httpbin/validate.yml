@@ -1,6 +1,6 @@
 config:
     name: basic test with httpbin
-    base_url: http://httpbin.org/
+    base_url: https://httpbin.org/
 
 teststeps:
 -

@@ -150,11 +150,7 @@ func NewWorldCupLive(device uixt.Device, matchName, bundleID string, duration, i
 
 func (wc *WorldCupLive) getCurrentLiveTime(utcTime time.Time) error {
 	utcTimeStr := utcTime.Format("15:04:05")
-	fileName := filepath.Join(
-		wc.resultDir, "screenshot", utcTimeStr)
-	ocrTexts, err := wc.driver.GetTextsByOCR(
-		uixt.WithScreenShot(fileName),
-	)
+	ocrTexts, err := wc.driver.GetTextsByOCR()
 	if err != nil {
 		log.Error().Err(err).Msg("get ocr texts failed")
 		return err

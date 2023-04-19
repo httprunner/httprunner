@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -140,6 +141,42 @@ func TestDevice_Forward(t *testing.T) {
 	}
 
 	err = devices[0].ForwardKill(localPort)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDevice_ReverseForward(t *testing.T) {
+	adbClient, err := NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	devices, err := adbClient.DeviceList()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	localPort := 5005
+	err = devices[0].ReverseForward(localPort, "localabstract:scrcpy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = devices[0].ReverseForward(localPort, "localabstract:scrcpy1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = devices[0].ReverseForwardList()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = devices[0].ReverseForwardKill("localabstract:scrcpy1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = devices[0].ReverseForwardKillAll()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -313,4 +350,95 @@ func TestDevice_Pull(t *testing.T) {
 	if err = ioutil.WriteFile(userHomeDir+"/Desktop/hello.txt", buffer.Bytes(), DefaultFileMode); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestDevice_RunShellCommandBackgroundWithBytes(t *testing.T) {
+	type fields struct {
+		adbClient Client
+		serial    string
+		attrs     map[string]string
+	}
+	type args struct {
+		cmd  string
+		args []string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name: "runShellCommandBackground",
+			fields: fields{
+				adbClient: func() Client {
+					c, _ := NewClient()
+					return c
+				}(),
+				serial: "63c1ee94",
+			},
+			args: args{
+				cmd: "nohup sleep 10 2>/dev/null 1>/dev/null &",
+				// cmd:  "sleep 10",
+
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := Device{
+				adbClient: tt.fields.adbClient,
+				serial:    tt.fields.serial,
+				attrs:     tt.fields.attrs,
+			}
+			got, err := d.RunShellCommandV2WithBytes(tt.args.cmd, tt.args.args...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Device.RunShellCommandBackgroundWithBytes() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Device.RunShellCommandBackgroundWithBytes() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDevice_InstallAPK(t *testing.T) {
+	apk, _ := os.Open("test.apk")
+	adbClient, err := NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	devices, err := adbClient.DeviceList()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dev := devices[len(devices)-1]
+	dev = devices[0]
+
+	res, err := dev.InstallAPK(apk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(res)
+}
+
+func TestDevice_HasFeature(t *testing.T) {
+	adbClient, err := NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	devices, err := adbClient.DeviceList()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dev := devices[len(devices)-1]
+	dev = devices[0]
+
+	t.Log(dev.GetFeatures())
 }
