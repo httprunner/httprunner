@@ -529,17 +529,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 			stepResult, err = step.Run(r)
 			stepResult.Name = stepName + loopIndex
 
-			// update summary
-			r.summary.Records = append(r.summary.Records, stepResult)
-		}
-
-		r.summary.Stat.Total += 1
-		if stepResult.Success {
-			r.summary.Stat.Successes += 1
-		} else {
-			r.summary.Stat.Failures += 1
-			// update summary result to failed
-			r.summary.Success = false
+			r.updateSummary(stepResult)
 		}
 
 		// update extracted variables
@@ -637,6 +627,37 @@ func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 	}
 
 	return caseSummary, nil
+}
+
+
+// updateSummary updates summary of StepResult.
+func (r *SessionRunner) updateSummary(stepResult *StepResult) {
+	switch stepResult.StepType {
+	case stepTypeTestCase:
+		// record requests of testcase step
+		if records, ok := stepResult.Data.([]*StepResult); ok {
+			for _, result := range records {
+				r.addSingleStepResult(result)
+			}
+		} else {
+			r.addSingleStepResult(stepResult)
+		}
+	default:
+		r.addSingleStepResult(stepResult)
+	}
+}
+
+func (r *SessionRunner) addSingleStepResult(stepResult *StepResult) {
+	// update summary
+	r.summary.Records = append(r.summary.Records, stepResult)
+	r.summary.Stat.Total += 1
+	if stepResult.Success {
+		r.summary.Stat.Successes += 1
+	} else {
+		r.summary.Stat.Failures += 1
+		// update summary result to failed
+		r.summary.Success = false
+	}
 }
 
 // releaseResources releases resources used by session runner
