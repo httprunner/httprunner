@@ -164,7 +164,7 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	// global timeout
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").
-			SetTimeout(2 * time.Second). // set global timeout to 2s
+			SetTimeout(10 * time.Second). // set global timeout to 10s
 			SetBaseURL("https://httpbin.org"),
 		TestSteps: []IStep{
 			NewStep("step1").
@@ -180,11 +180,11 @@ func TestRunCaseWithTimeout(t *testing.T) {
 
 	testcase2 := &TestCase{
 		Config: NewConfig("TestCase2").
-			SetTimeout(2 * time.Second). // set global timeout to 2s
+			SetTimeout(10 * time.Second). // set global timeout to 10s
 			SetBaseURL("https://httpbin.org"),
 		TestSteps: []IStep{
 			NewStep("step1").
-				GET("/delay/3").
+				GET("/delay/11").
 				Validate().
 				AssertEqual("status_code", 200, "check status code"),
 		},
@@ -197,12 +197,12 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	// step timeout
 	testcase3 := &TestCase{
 		Config: NewConfig("TestCase3").
-			SetTimeout(2 * time.Second).
+			SetTimeout(10 * time.Second).
 			SetBaseURL("https://httpbin.org"),
 		TestSteps: []IStep{
 			NewStep("step2").
-				GET("/delay/3").
-				SetTimeout(4*time.Second). // set step timeout to 4s
+				GET("/delay/11").
+				SetTimeout(15*time.Second). // set step timeout to 4s
 				Validate().
 				AssertEqual("status_code", 200, "check status code"),
 		},
