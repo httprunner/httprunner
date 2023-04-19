@@ -11,7 +11,7 @@ class TestHttpSession(unittest.TestCase):
         self.session.request("get", "https://httpbin.org/get")
         address = self.session.data.address
         self.assertGreater(len(address.server_ip), 0)
-        self.assertEqual(address.server_port, 80)
+        self.assertEqual(address.server_port, 443)
         self.assertGreater(len(address.client_ip), 0)
         self.assertGreater(address.client_port, 10000)
 
