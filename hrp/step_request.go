@@ -340,12 +340,33 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	// add request object to step variables, could be used in setup hooks
 	stepVariables["hrp_step_name"] = step.Name
 	stepVariables["hrp_step_request"] = rb.requestMap
+	stepVariables["request"] = rb.requestMap
 
 	// deal with setup hooks
 	for _, setupHook := range step.SetupHooks {
-		_, err = parser.Parse(setupHook, stepVariables)
+		req, err := parser.Parse(setupHook, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run setup hooks failed")
+		}
+		reqMap, ok := req.(map[string]interface{})
+		if ok && reqMap != nil {
+			rb.requestMap = reqMap
+			stepVariables["request"] = reqMap
+		}
+	}
+	if len(step.SetupHooks) > 0 {
+		requestBody, ok := rb.requestMap["body"].(map[string]interface{})
+		if ok {
+			body, err := json.Marshal(requestBody)
+			if err == nil {
+				rb.req.Body = io.NopCloser(bytes.NewReader(body))
+				rb.req.ContentLength = int64(len(body))
+			}
+		}
+		headers, ok := rb.requestMap["headers"].(map[string]string)
+		rb.req.Header = map[string][]string{}
+		for key, value := range headers {
+			rb.req.Header.Set(key, value)
 		}
 	}
 
@@ -417,12 +438,18 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 
 	// add response object to step variables, could be used in teardown hooks
 	stepVariables["hrp_step_response"] = respObj.respObjMeta
+	stepVariables["response"] = respObj.respObjMeta
 
 	// deal with teardown hooks
 	for _, teardownHook := range step.TeardownHooks {
-		_, err = parser.Parse(teardownHook, stepVariables)
+		res, err := parser.Parse(teardownHook, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run teardown hooks failed")
+		}
+		resMpa, ok := res.(map[string]interface{})
+		if ok {
+			stepVariables["response"] = resMpa
+			respObj.respObjMeta = resMpa
 		}
 	}
 
