@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.3 (2023-04-18)
+## v4.3.3 (2023-04-19)
 
 **go version**
 
@@ -18,6 +18,7 @@
 - fix: screencap compatibility for shell v1 and v2 protocol
 - fix: display parsed url in html report
 - fix: fast fail not closing the websocket connection
+- fix #1467: failed to parse parameters with plugin functions
 - fix #1549: avoid duplicate creating plugins
 
 ## v4.3.2 (2022-12-26)

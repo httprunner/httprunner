@@ -386,7 +386,7 @@ func (r *CaseRunner) parseConfig() error {
 	r.parsedConfig.WebSocketSetting.checkWebSocket()
 
 	// parse testcase config parameters
-	parametersIterator, err := initParametersIterator(r.parsedConfig)
+	parametersIterator, err := r.parser.initParametersIterator(r.parsedConfig)
 	if err != nil {
 		log.Error().Err(err).
 			Interface("parameters", r.parsedConfig.Parameters).
@@ -628,7 +628,6 @@ func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 
 	return caseSummary, nil
 }
-
 
 // updateSummary updates summary of StepResult.
 func (r *SessionRunner) updateSummary(stepResult *StepResult) {
