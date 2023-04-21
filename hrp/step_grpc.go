@@ -113,6 +113,17 @@ func runStepGRPC(g *SessionRunner, step *TStep) (stepResult *StepResult, err err
 			stepVariables["request"] = reqMap
 		}
 	}
+	for _, setupHook := range step.SetupHooks {
+		req, err := parser.Parse(setupHook, stepVariables)
+		if err != nil {
+			continue
+		}
+		reqMap, ok := req.(map[string]interface{})
+		if ok && reqMap != nil {
+			rb.requestMap = reqMap
+			stepVariables["request"] = reqMap
+		}
+	}
 	if len(step.SetupHooks) > 0 {
 		requestBody, ok := rb.requestMap["body"].(map[string]interface{})
 		if ok {
@@ -120,6 +131,19 @@ func runStepGRPC(g *SessionRunner, step *TStep) (stepResult *StepResult, err err
 			if err == nil {
 				rb.stepGrpc.Body = io.NopCloser(bytes.NewReader(body))
 				rb.body = io.NopCloser(bytes.NewReader(body))
+			}
+		}
+		requestHeaders, ok := rb.requestMap["headers"].(map[string]interface{})
+		if ok {
+			requestHeadersNew := make(map[string]string)
+			rb.stepGrpc.Headers = make(map[string]string)
+			for k, v := range requestHeaders {
+				requestHeadersNew[k] = fmt.Sprintf("%v", v)
+			}
+			rb.stepGrpc.Headers = requestHeadersNew
+			err = rb.prepareHeaders(stepVariables)
+			if err != nil {
+				return
 			}
 		}
 	}
@@ -234,7 +258,9 @@ type status int
 var statusConnectionFailed status = 1
 var statusTypeFailed status = 2
 
-//response data format
+var _ = statusConnectionFailed
+
+// response data format
 type grpcResponse struct {
 	body    string
 	timer   time.Duration
@@ -289,6 +315,7 @@ func (r *grpcBuilder) prepareHeaders(stepVariables map[string]interface{}) error
 		if err != nil {
 			return errors.Wrap(err, "parse headers failed")
 		}
+		r.Metadata = []plugin.RpcMetadata{}
 		for key, value := range headers {
 			if strings.HasPrefix(key, ":") {
 				continue
