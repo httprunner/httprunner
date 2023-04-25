@@ -12,7 +12,7 @@ import (
 )
 
 type MobileStep struct {
-	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"`
+	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"` // android serial or ios udid
 	uixt.MobileAction `yaml:",inline"`
 	Actions           []uixt.MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
@@ -288,6 +288,14 @@ func (s *StepMobile) Sleep(n float64) *StepMobile {
 func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
 		Method: uixt.CtlSleepRandom,
+		Params: params,
+	})
+	return &StepMobile{step: s.step}
+}
+
+func (s *StepMobile) VideoCrawler(params map[string]interface{}) *StepMobile {
+	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+		Method: uixt.VideoCrawler,
 		Params: params,
 	})
 	return &StepMobile{step: s.step}

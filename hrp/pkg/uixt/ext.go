@@ -39,6 +39,7 @@ const (
 	CtlStopCamera  MobileMethod = "camera_stop"  // alias for app_terminate camera
 	RecordStart    MobileMethod = "record_start"
 	RecordStop     MobileMethod = "record_stop"
+	VideoCrawler   MobileMethod = "video_crawler"
 
 	// UI validation
 	// selectors
@@ -657,50 +658,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		if !ok {
 			return fmt.Errorf("invalid sleep random params: %v(%T)", action.Params, action.Params)
 		}
-		// append default weight 1
-		if len(params) == 2 {
-			params = append(params, 1.0)
-		}
-
-		var sections []struct {
-			min, max, weight float64
-		}
-		totalProb := 0.0
-		for i := 0; i+3 <= len(params); i += 3 {
-			min, err := convertToFloat64(params[i])
-			if err != nil {
-				return errors.Wrapf(err, "invalid minimum time: %v", params[i])
-			}
-			max, err := convertToFloat64(params[i+1])
-			if err != nil {
-				return errors.Wrapf(err, "invalid maximum time: %v", params[i+1])
-			}
-			weight, err := convertToFloat64(params[i+2])
-			if err != nil {
-				return errors.Wrapf(err, "invalid weight value: %v", params[i+2])
-			}
-			totalProb += weight
-			sections = append(sections,
-				struct{ min, max, weight float64 }{min, max, weight},
-			)
-		}
-
-		if totalProb == 0 {
-			log.Warn().Msg("total weight is 0, skip sleep")
-			return nil
-		}
-
-		r := rand.Float64()
-		accProb := 0.0
-		for _, s := range sections {
-			accProb += s.weight / totalProb
-			if r < accProb {
-				n := s.min + rand.Float64()*(s.max-s.min)
-				log.Info().Float64("duration", n).Msg("sleep random seconds")
-				time.Sleep(time.Duration(n*1000) * time.Millisecond)
-				return nil
-			}
-		}
+		return sleepRandom(params)
 	case CtlScreenShot:
 		// take screenshot
 		log.Info().Msg("take screenshot for current screen")
@@ -710,6 +668,60 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return dExt.Driver.StartCamera()
 	case CtlStopCamera:
 		return dExt.Driver.StopCamera()
+	case VideoCrawler:
+		params, ok := action.Params.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("invalid video crawler params: %v(%T)", action.Params, action.Params)
+		}
+		return dExt.VideoCrawler(params)
+	}
+	return nil
+}
+
+func sleepRandom(params []interface{}) error {
+	// append default weight 1
+	if len(params) == 2 {
+		params = append(params, 1.0)
+	}
+
+	var sections []struct {
+		min, max, weight float64
+	}
+	totalProb := 0.0
+	for i := 0; i+3 <= len(params); i += 3 {
+		min, err := convertToFloat64(params[i])
+		if err != nil {
+			return errors.Wrapf(err, "invalid minimum time: %v", params[i])
+		}
+		max, err := convertToFloat64(params[i+1])
+		if err != nil {
+			return errors.Wrapf(err, "invalid maximum time: %v", params[i+1])
+		}
+		weight, err := convertToFloat64(params[i+2])
+		if err != nil {
+			return errors.Wrapf(err, "invalid weight value: %v", params[i+2])
+		}
+		totalProb += weight
+		sections = append(sections,
+			struct{ min, max, weight float64 }{min, max, weight},
+		)
+	}
+
+	if totalProb == 0 {
+		log.Warn().Msg("total weight is 0, skip sleep")
+		return nil
+	}
+
+	r := rand.Float64()
+	accProb := 0.0
+	for _, s := range sections {
+		accProb += s.weight / totalProb
+		if r < accProb {
+			n := s.min + rand.Float64()*(s.max-s.min)
+			log.Info().Float64("duration", n).Msg("sleep random seconds")
+			time.Sleep(time.Duration(n*1000) * time.Millisecond)
+			return nil
+		}
 	}
 	return nil
 }
