@@ -23,23 +23,20 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type MobileMethod string
+type ActionMethod string
 
 const (
-	AppInstall     MobileMethod = "install"
-	AppUninstall   MobileMethod = "uninstall"
-	AppStart       MobileMethod = "app_start"
-	AppLaunch      MobileMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
-	AppTerminate   MobileMethod = "app_terminate"
-	AppStop        MobileMethod = "app_stop"
-	CtlScreenShot  MobileMethod = "screenshot"
-	CtlSleep       MobileMethod = "sleep"
-	CtlSleepRandom MobileMethod = "sleep_random"
-	CtlStartCamera MobileMethod = "camera_start" // alias for app_launch camera
-	CtlStopCamera  MobileMethod = "camera_stop"  // alias for app_terminate camera
-	RecordStart    MobileMethod = "record_start"
-	RecordStop     MobileMethod = "record_stop"
-	VideoCrawler   MobileMethod = "video_crawler"
+	ACTION_AppInstall   ActionMethod = "install"
+	ACTION_AppUninstall ActionMethod = "uninstall"
+	ACTION_AppStart     ActionMethod = "app_start"
+	ACTION_AppLaunch    ActionMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
+	ACTION_AppTerminate ActionMethod = "app_terminate"
+	ACTION_AppStop      ActionMethod = "app_stop"
+	ACTION_ScreenShot   ActionMethod = "screenshot"
+	ACTION_Sleep        ActionMethod = "sleep"
+	ACTION_SleepRandom  ActionMethod = "sleep_random"
+	ACTION_StartCamera  ActionMethod = "camera_start" // alias for app_launch camera
+	ACTION_StopCamera   ActionMethod = "camera_stop"  // alias for app_terminate camera
 
 	// UI validation
 	// selectors
@@ -55,26 +52,27 @@ const (
 	AssertionNotExists string = "not_exists"
 
 	// UI handling
-	ACTION_Home        MobileMethod = "home"
-	ACTION_TapXY       MobileMethod = "tap_xy"
-	ACTION_TapAbsXY    MobileMethod = "tap_abs_xy"
-	ACTION_TapByOCR    MobileMethod = "tap_ocr"
-	ACTION_TapByCV     MobileMethod = "tap_cv"
-	ACTION_Tap         MobileMethod = "tap"
-	ACTION_DoubleTapXY MobileMethod = "double_tap_xy"
-	ACTION_DoubleTap   MobileMethod = "double_tap"
-	ACTION_Swipe       MobileMethod = "swipe"
-	ACTION_Input       MobileMethod = "input"
-	ACTION_Back        MobileMethod = "back"
+	ACTION_Home        ActionMethod = "home"
+	ACTION_TapXY       ActionMethod = "tap_xy"
+	ACTION_TapAbsXY    ActionMethod = "tap_abs_xy"
+	ACTION_TapByOCR    ActionMethod = "tap_ocr"
+	ACTION_TapByCV     ActionMethod = "tap_cv"
+	ACTION_Tap         ActionMethod = "tap"
+	ACTION_DoubleTapXY ActionMethod = "double_tap_xy"
+	ACTION_DoubleTap   ActionMethod = "double_tap"
+	ACTION_Swipe       ActionMethod = "swipe"
+	ACTION_Input       ActionMethod = "input"
+	ACTION_Back        ActionMethod = "back"
 
 	// custom actions
-	ACTION_SwipeToTapApp   MobileMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
-	ACTION_SwipeToTapText  MobileMethod = "swipe_to_tap_text"  // swipe up & down to find text and tap
-	ACTION_SwipeToTapTexts MobileMethod = "swipe_to_tap_texts" // swipe up & down to find text and tap
+	ACTION_SwipeToTapApp   ActionMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
+	ACTION_SwipeToTapText  ActionMethod = "swipe_to_tap_text"  // swipe up & down to find text and tap
+	ACTION_SwipeToTapTexts ActionMethod = "swipe_to_tap_texts" // swipe up & down to find text and tap
+	ACTION_VideoCrawler    ActionMethod = "video_crawler"
 )
 
 type MobileAction struct {
-	Method MobileMethod `json:"method,omitempty" yaml:"method,omitempty"`
+	Method ActionMethod `json:"method,omitempty" yaml:"method,omitempty"`
 	Params interface{}  `json:"params,omitempty" yaml:"params,omitempty"`
 
 	Identifier          string      `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
@@ -397,15 +395,15 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 	log.Info().Str("method", string(action.Method)).Interface("params", action.Params).Msg("start UI action")
 
 	switch action.Method {
-	case AppInstall:
+	case ACTION_AppInstall:
 		// TODO
 		return errActionNotImplemented
-	case AppLaunch:
+	case ACTION_AppLaunch:
 		if bundleId, ok := action.Params.(string); ok {
 			return dExt.Driver.AppLaunch(bundleId)
 		}
 		return fmt.Errorf("invalid %s params, should be bundleId(string), got %v",
-			AppLaunch, action.Params)
+			ACTION_AppLaunch, action.Params)
 	case ACTION_SwipeToTapApp:
 		if appName, ok := action.Params.(string); ok {
 			return dExt.swipeToTapApp(appName, action)
@@ -515,7 +513,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid %s params, should be app text([]string), got %v",
 			ACTION_SwipeToTapText, action.Params)
-	case AppTerminate:
+	case ACTION_AppTerminate:
 		if bundleId, ok := action.Params.(string); ok {
 			success, err := dExt.Driver.AppTerminate(bundleId)
 			if err != nil {
@@ -640,7 +638,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return dExt.Driver.Input(param, options...)
 	case ACTION_Back:
 		return dExt.Driver.PressBack()
-	case CtlSleep:
+	case ACTION_Sleep:
 		if param, ok := action.Params.(json.Number); ok {
 			seconds, _ := param.Float64()
 			time.Sleep(time.Duration(seconds*1000) * time.Millisecond)
@@ -653,22 +651,22 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			return nil
 		}
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
-	case CtlSleepRandom:
+	case ACTION_SleepRandom:
 		params, ok := action.Params.([]interface{})
 		if !ok {
 			return fmt.Errorf("invalid sleep random params: %v(%T)", action.Params, action.Params)
 		}
 		return sleepRandom(params)
-	case CtlScreenShot:
+	case ACTION_ScreenShot:
 		// take screenshot
 		log.Info().Msg("take screenshot for current screen")
 		_, err := dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_screenshot"))
 		return err
-	case CtlStartCamera:
+	case ACTION_StartCamera:
 		return dExt.Driver.StartCamera()
-	case CtlStopCamera:
+	case ACTION_StopCamera:
 		return dExt.Driver.StopCamera()
-	case VideoCrawler:
+	case ACTION_VideoCrawler:
 		params, ok := action.Params.(map[string]interface{})
 		if !ok {
 			return fmt.Errorf("invalid video crawler params: %v(%T)", action.Params, action.Params)
