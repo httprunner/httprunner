@@ -365,9 +365,10 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		}
 		requestParams, ok := rb.requestMap["params"].(map[string]interface{})
 		if ok {
-			params, err := json.Marshal(requestParams)
-			if err == nil {
-				rb.req.URL.RawQuery = string(params)
+			rb.stepRequest.Params = requestParams
+			err = rb.prepareUrlParams(stepVariables)
+			if err != nil {
+				log.Error().Err(err)
 			}
 		}
 		requestHeaders, ok := rb.requestMap["headers"].(map[string]interface{})
