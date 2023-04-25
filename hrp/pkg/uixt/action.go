@@ -222,7 +222,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			// }
 			findTextCondition := func(d *DriverExt) error {
 				var err error
-				point, err = d.GetTextXY(text, indexOption, scopeOption)
+				point, err = d.FindScreenTextByOCR(text, indexOption, scopeOption)
 				return err
 			}
 			foundTextAction := func(d *DriverExt) error {
@@ -268,7 +268,11 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			var point PointF
 			findTexts := func(d *DriverExt) error {
 				var err error
-				points, err := d.GetTextXYs(texts, scopeOption)
+				ocrTexts, err := d.GetScreenTextsByOCR(scopeOption)
+				if err != nil {
+					return err
+				}
+				points, err := ocrTexts.FindTexts(texts, scopeOption)
 				if err != nil {
 					return err
 				}
@@ -455,7 +459,12 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		if !ok {
 			return fmt.Errorf("invalid video crawler params: %v(%T)", action.Params, action.Params)
 		}
-		return dExt.VideoCrawler(params)
+		data, _ := json.Marshal(params)
+		configs := &VideoCrawlerConfigs{}
+		if err := json.Unmarshal(data, configs); err != nil {
+			return errors.Wrapf(err, "invalid video crawler params: %v(%T)", action.Params, action.Params)
+		}
+		return dExt.VideoCrawler(configs)
 	}
 	return nil
 }

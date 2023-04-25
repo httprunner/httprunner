@@ -17,14 +17,12 @@ func (dExt *DriverExt) DragOffsetFloat(pathname string, toX, toY, xOffset, yOffs
 		pressForDuration = []float64{1.0}
 	}
 
-	var x, y, width, height float64
-	if x, y, width, height, err = dExt.FindUIRectInUIKit(pathname); err != nil {
+	point, err := dExt.FindUIRectInUIKit(pathname)
+	if err != nil {
 		return err
 	}
 
-	fromX := x + width*xOffset
-	fromY := y + height*yOffset
-
-	return dExt.Driver.DragFloat(fromX, fromY, toX, toY,
+	// FIXME: handle offset
+	return dExt.Driver.DragFloat(point.X+xOffset, point.Y+yOffset, toX, toY,
 		WithDataPressDuration(pressForDuration[0]))
 }

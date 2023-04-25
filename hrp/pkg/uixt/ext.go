@@ -52,8 +52,8 @@ type DriverExt struct {
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
 	scale           float64
-	ocrService      OCRService // used to get text from image
-	screenShots     []string   // cache screenshot paths
+	OCRService      IOCRService // used to get text from image
+	screenShots     []string    // cache screenshot paths
 
 	CVArgs
 }
@@ -75,7 +75,7 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 		return nil, err
 	}
 
-	if dExt.ocrService, err = newVEDEMOCRService(); err != nil {
+	if dExt.OCRService, err = newVEDEMOCRService(); err != nil {
 		return nil, err
 	}
 
@@ -178,10 +178,10 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...DataOption) (x, y, width, height float64, err error) {
+func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...DataOption) (point PointF, err error) {
 	// click on text, using OCR
 	if !isPathExists(search) {
-		return dExt.FindTextByOCR(search, options...)
+		return dExt.FindScreenTextByOCR(search, options...)
 	}
 	// click on image, using opencv
 	return dExt.FindImageRectInUIKit(search, options...)
@@ -194,12 +194,12 @@ func (dExt *DriverExt) MappingToRectInUIKit(rect image.Rectangle) (x, y, width, 
 }
 
 func (dExt *DriverExt) IsOCRExist(text string) bool {
-	_, _, _, _, err := dExt.FindTextByOCR(text)
+	_, err := dExt.FindScreenTextByOCR(text)
 	return err == nil
 }
 
 func (dExt *DriverExt) IsImageExist(text string) bool {
-	_, _, _, _, err := dExt.FindImageRectInUIKit(text)
+	_, err := dExt.FindImageRectInUIKit(text)
 	return err == nil
 }
 
