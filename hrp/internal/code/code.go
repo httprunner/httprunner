@@ -68,6 +68,7 @@ var (
 // UI automation related: [70, 80)
 var (
 	MobileUIDriverError             = errors.New("mobile UI driver error")                // 70
+	MobileUILaunchAppError          = errors.New("mobile UI launch app error")            // 71
 	MobileUIValidationError         = errors.New("mobile UI validation error")            // 75
 	MobileUIAppNotInForegroundError = errors.New("mobile UI app not in foreground error") // 76
 )
@@ -125,6 +126,7 @@ var errorsMap = map[error]int{
 
 	// UI automation related
 	MobileUIDriverError:             70,
+	MobileUILaunchAppError:          71,
 	MobileUIValidationError:         75,
 	MobileUIAppNotInForegroundError: 76,
 

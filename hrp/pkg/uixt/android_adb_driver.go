@@ -160,10 +160,12 @@ func (ad *adbDriver) AppLaunch(packageName string) (err error) {
 		"monkey", "-p", packageName, "-c", "android.intent.category.LAUNCHER", "1",
 	)
 	if err != nil {
-		return err
+		return errors.Wrap(code.MobileUILaunchAppError,
+			fmt.Sprintf("monkey launch failed: %v", err))
 	}
 	if strings.Contains(sOutput, "monkey aborted") {
-		return fmt.Errorf("app launch: %s", strings.TrimSpace(sOutput))
+		return errors.Wrap(code.MobileUILaunchAppError,
+			fmt.Sprintf("monkey aborted: %s", strings.TrimSpace(sOutput)))
 	}
 	ad.lastLaunchedPackageName = packageName
 	return nil
