@@ -36,7 +36,7 @@ func (s *StepMobile) Serial(serial string) *StepMobile {
 
 func (s *StepMobile) InstallApp(path string) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.AppInstall,
+		Method: uixt.ACTION_AppInstall,
 		Params: path,
 	})
 	return s
@@ -44,7 +44,7 @@ func (s *StepMobile) InstallApp(path string) *StepMobile {
 
 func (s *StepMobile) AppLaunch(bundleId string) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.AppLaunch,
+		Method: uixt.ACTION_AppLaunch,
 		Params: bundleId,
 	})
 	return s
@@ -52,7 +52,7 @@ func (s *StepMobile) AppLaunch(bundleId string) *StepMobile {
 
 func (s *StepMobile) AppTerminate(bundleId string) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.AppTerminate,
+		Method: uixt.ACTION_AppTerminate,
 		Params: bundleId,
 	})
 	return s
@@ -275,7 +275,7 @@ func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobil
 // Sleep specify sleep seconds after last action
 func (s *StepMobile) Sleep(n float64) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.CtlSleep,
+		Method: uixt.ACTION_Sleep,
 		Params: n,
 	})
 	return &StepMobile{step: s.step}
@@ -287,7 +287,7 @@ func (s *StepMobile) Sleep(n float64) *StepMobile {
 // 2. [min1, max1, weight1, min2, max2, weight2, ...] : weight is the probability of the time range
 func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.CtlSleepRandom,
+		Method: uixt.ACTION_SleepRandom,
 		Params: params,
 	})
 	return &StepMobile{step: s.step}
@@ -295,7 +295,7 @@ func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 
 func (s *StepMobile) VideoCrawler(params map[string]interface{}) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.VideoCrawler,
+		Method: uixt.ACTION_VideoCrawler,
 		Params: params,
 	})
 	return &StepMobile{step: s.step}
@@ -303,7 +303,7 @@ func (s *StepMobile) VideoCrawler(params map[string]interface{}) *StepMobile {
 
 func (s *StepMobile) ScreenShot() *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.CtlScreenShot,
+		Method: uixt.ACTION_ScreenShot,
 		Params: nil,
 	})
 	return &StepMobile{step: s.step}
@@ -311,7 +311,7 @@ func (s *StepMobile) ScreenShot() *StepMobile {
 
 func (s *StepMobile) StartCamera() *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.CtlStartCamera,
+		Method: uixt.ACTION_StartCamera,
 		Params: nil,
 	})
 	return &StepMobile{step: s.step}
@@ -319,7 +319,7 @@ func (s *StepMobile) StartCamera() *StepMobile {
 
 func (s *StepMobile) StopCamera() *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.CtlStopCamera,
+		Method: uixt.ACTION_StopCamera,
 		Params: nil,
 	})
 	return &StepMobile{step: s.step}
