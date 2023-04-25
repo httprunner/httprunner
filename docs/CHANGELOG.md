@@ -20,6 +20,8 @@
 - fix: fast fail not closing the websocket connection
 - fix #1467: failed to parse parameters with plugin functions
 - fix #1549: avoid duplicate creating plugins
+- fix #1547: generate html report failed for referenced testcases
+- fix: setup hooks compatible with v3
 
 ## v4.3.2 (2022-12-26)
 
