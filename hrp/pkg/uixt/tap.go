@@ -21,53 +21,10 @@ func (dExt *DriverExt) TapXY(x, y float64, options ...DataOption) error {
 	return dExt.TapAbsXY(x, y, options...)
 }
 
-func (dExt *DriverExt) GetTextXY(ocrText string, options ...DataOption) (point PointF, err error) {
-	x, y, width, height, err := dExt.FindTextByOCR(ocrText, options...)
-	if err != nil {
-		return PointF{}, err
-	}
-
-	point = PointF{
-		X: x + width*0.5,
-		Y: y + height*0.5,
-	}
-	return point, nil
-}
-
-func (dExt *DriverExt) GetTextXYs(ocrText []string, options ...DataOption) (points []PointF, err error) {
-	ps, err := dExt.FindTextsByOCR(ocrText, options...)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, point := range ps {
-		pointF := PointF{
-			X: point[0] + point[2]*0.5,
-			Y: point[1] + point[3]*0.5,
-		}
-		points = append(points, pointF)
-	}
-
-	return points, nil
-}
-
-func (dExt *DriverExt) GetImageXY(imagePath string, options ...DataOption) (point PointF, err error) {
-	x, y, width, height, err := dExt.FindImageRectInUIKit(imagePath, options...)
-	if err != nil {
-		return PointF{}, err
-	}
-
-	point = PointF{
-		X: x + width*0.5,
-		Y: y + height*0.5,
-	}
-	return point, nil
-}
-
 func (dExt *DriverExt) TapByOCR(ocrText string, options ...DataOption) error {
 	dataOptions := NewDataOptions(options...)
 
-	point, err := dExt.GetTextXY(ocrText, options...)
+	point, err := dExt.FindScreenTextByOCR(ocrText, options...)
 	if err != nil {
 		if dataOptions.IgnoreNotFoundError {
 			return nil
@@ -81,7 +38,7 @@ func (dExt *DriverExt) TapByOCR(ocrText string, options ...DataOption) error {
 func (dExt *DriverExt) TapByCV(imagePath string, options ...DataOption) error {
 	dataOptions := NewDataOptions(options...)
 
-	point, err := dExt.GetImageXY(imagePath, options...)
+	point, err := dExt.FindImageRectInUIKit(imagePath, options...)
 	if err != nil {
 		if dataOptions.IgnoreNotFoundError {
 			return nil
@@ -99,7 +56,7 @@ func (dExt *DriverExt) Tap(param string, options ...DataOption) error {
 func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, options ...DataOption) (err error) {
 	dataOptions := NewDataOptions(options...)
 
-	x, y, width, height, err := dExt.FindUIRectInUIKit(param, options...)
+	point, err := dExt.FindUIRectInUIKit(param, options...)
 	if err != nil {
 		if dataOptions.IgnoreNotFoundError {
 			return nil
@@ -107,7 +64,8 @@ func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, options
 		return err
 	}
 
-	return dExt.TapAbsXY(x+width*xOffset, y+height*yOffset, options...)
+	// FIXME: handle offset
+	return dExt.TapAbsXY(point.X+xOffset, point.Y+yOffset, options...)
 }
 
 func (dExt *DriverExt) DoubleTapXY(x, y float64) error {
@@ -126,10 +84,11 @@ func (dExt *DriverExt) DoubleTap(param string) (err error) {
 }
 
 func (dExt *DriverExt) DoubleTapOffset(param string, xOffset, yOffset float64) (err error) {
-	var x, y, width, height float64
-	if x, y, width, height, err = dExt.FindUIRectInUIKit(param); err != nil {
+	point, err := dExt.FindUIRectInUIKit(param)
+	if err != nil {
 		return err
 	}
 
-	return dExt.Driver.DoubleTapFloat(x+width*xOffset, y+height*yOffset)
+	// FIXME: handle offset
+	return dExt.Driver.DoubleTapFloat(point.X+xOffset, point.Y+yOffset)
 }

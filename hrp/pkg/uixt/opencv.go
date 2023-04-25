@@ -113,25 +113,19 @@ func (dExt *DriverExt) FindAllImageRect(search string) (rects []image.Rectangle,
 	return
 }
 
-func (dExt *DriverExt) FindImageRectInUIKit(imagePath string, options ...DataOption) (x, y, width, height float64, err error) {
+func (dExt *DriverExt) FindImageRectInUIKit(imagePath string, options ...DataOption) (point PointF, err error) {
 	var bufSource, bufSearch *bytes.Buffer
 	if bufSearch, err = getBufFromDisk(imagePath); err != nil {
-		return 0, 0, 0, 0, err
-	}
-	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_cv")); err != nil {
-		return 0, 0, 0, 0, err
+		return PointF{}, err
 	}
 
 	var rect image.Rectangle
 	if rect, err = FindImageRectFromRaw(bufSource, bufSearch, float32(dExt.threshold), TemplateMatchMode(dExt.matchMode)); err != nil {
-		return 0, 0, 0, 0, err
+		return PointF{}, err
 	}
 
-	// if rect, err = dExt.findImgRect(search); err != nil {
-	// 	return 0, 0, 0, 0, err
-	// }
-	x, y, width, height = dExt.MappingToRectInUIKit(rect)
-	return
+	point = getRectangleCenterPoint(rect)
+	return point, nil
 }
 
 func getBufFromDisk(name string) (*bytes.Buffer, error) {

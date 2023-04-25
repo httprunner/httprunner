@@ -151,7 +151,7 @@ func (dExt *DriverExt) swipeToTapApp(appName string, action MobileAction) error 
 	}
 	findAppCondition := func(d *DriverExt) error {
 		var err error
-		point, err = d.GetTextXY(appName, scopeOption, indexOption)
+		point, err = d.FindScreenTextByOCR(appName, scopeOption, indexOption)
 		return err
 	}
 	foundAppAction := func(d *DriverExt) error {
