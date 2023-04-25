@@ -308,17 +308,23 @@ func (wd *wdaDriver) AppLaunch(bundleId string) (err error) {
 	data := make(map[string]interface{})
 	data["bundleId"] = bundleId
 	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/apps/launch")
-	if err == nil {
-		wd.lastLaunchedPackageName = bundleId
+	if err != nil {
+		return errors.Wrap(code.MobileUILaunchAppError,
+			fmt.Sprintf("wda launch failed: %v", err))
 	}
-	return
+	wd.lastLaunchedPackageName = bundleId
+	return nil
 }
 
 func (wd *wdaDriver) AppLaunchUnattached(bundleId string) (err error) {
 	// [[FBRoute POST:@"/wda/apps/launchUnattached"].withoutSession respondWithTarget:self action:@selector(handleLaunchUnattachedApp:)]
 	data := map[string]interface{}{"bundleId": bundleId}
 	_, err = wd.httpPOST(data, "/wda/apps/launchUnattached")
-	return
+	if err != nil {
+		return errors.Wrap(code.MobileUILaunchAppError,
+			fmt.Sprintf("wda launchUnattached failed: %v", err))
+	}
+	return nil
 }
 
 func (wd *wdaDriver) AppTerminate(bundleId string) (successful bool, err error) {
