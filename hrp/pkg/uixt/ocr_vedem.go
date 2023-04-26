@@ -62,6 +62,13 @@ func (t OCRTexts) FindText(text string, options ...DataOption) (
 			continue
 		}
 
+		// check if text in scope
+		if rect.Min.X < dataOptions.Scope[0] || rect.Max.X > dataOptions.Scope[2] ||
+			rect.Min.Y < dataOptions.Scope[1] || rect.Max.Y > dataOptions.Scope[3] {
+			// not in scope
+			continue
+		}
+
 		rects = append(rects, rect)
 
 		// contains text while not match exactly
@@ -121,6 +128,7 @@ func newVEDEMOCRService() (*veDEMOCRService, error) {
 	return &veDEMOCRService{}, nil
 }
 
+// veDEMOCRService implements IOCRService interface
 type veDEMOCRService struct{}
 
 func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, error) {
@@ -205,7 +213,7 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, err
 	return ocrResult.OCRResult, nil
 }
 
-func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer, options ...DataOption) (
+func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer) (
 	ocrTexts OCRTexts, err error) {
 
 	ocrResults, err := s.getOCRResult(imageBuf)
@@ -213,8 +221,6 @@ func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer, options ...DataOption
 		log.Error().Err(err).Msg("getOCRResult failed")
 		return
 	}
-
-	dataOptions := NewDataOptions(options...)
 
 	for _, ocrResult := range ocrResults {
 		rect := image.Rectangle{
@@ -229,18 +235,13 @@ func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer, options ...DataOption
 			},
 		}
 
-		// check if text in scope
-		if rect.Min.X < dataOptions.Scope[0] || rect.Max.X > dataOptions.Scope[2] ||
-			rect.Min.Y < dataOptions.Scope[1] || rect.Max.Y > dataOptions.Scope[3] {
-			// not in scope
-			continue
-		}
-
 		ocrTexts = append(ocrTexts, OCRText{
 			Text: ocrResult.Text,
 			Rect: rect,
 		})
 	}
+
+	log.Debug().Interface("texts", ocrTexts).Msg("get screen texts by veDEM OCR")
 	return
 }
 
@@ -270,28 +271,27 @@ func getLogID(header http.Header) string {
 }
 
 type IOCRService interface {
-	GetTexts(imageBuf *bytes.Buffer, options ...DataOption) (ocrTexts OCRTexts, err error)
+	GetTexts(imageBuf *bytes.Buffer) (texts OCRTexts, err error)
 }
 
-func (dExt *DriverExt) GetScreenTextsByOCR(options ...DataOption) (texts OCRTexts, err error) {
+func (dExt *DriverExt) GetScreenTextsByOCR() (texts OCRTexts, err error) {
 	var bufSource *bytes.Buffer
 	if bufSource, err = dExt.TakeScreenShot(
 		builtin.GenNameWithTimestamp("screenshot_%d_ocr")); err != nil {
 		return
 	}
 
-	ocrTexts, err := dExt.OCRService.GetTexts(bufSource, options...)
+	ocrTexts, err := dExt.OCRService.GetTexts(bufSource)
 	if err != nil {
 		log.Error().Err(err).Msg("GetScreenTextsByOCR failed")
 		return
 	}
 
-	log.Debug().Interface("texts", ocrTexts).Msg("get screen texts by OCR")
 	return ocrTexts, nil
 }
 
 func (dExt *DriverExt) FindScreenTextByOCR(text string, options ...DataOption) (point PointF, err error) {
-	ocrTexts, err := dExt.GetScreenTextsByOCR(options...)
+	ocrTexts, err := dExt.GetScreenTextsByOCR()
 	if err != nil {
 		return
 	}

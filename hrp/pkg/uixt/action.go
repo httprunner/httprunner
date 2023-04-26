@@ -268,7 +268,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			var point PointF
 			findTexts := func(d *DriverExt) error {
 				var err error
-				ocrTexts, err := d.GetScreenTextsByOCR(scopeOption)
+				ocrTexts, err := d.GetScreenTextsByOCR()
 				if err != nil {
 					return err
 				}
