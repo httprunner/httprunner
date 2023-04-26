@@ -20,6 +20,7 @@ type Driver struct {
 	urlPrefix *url.URL
 	sessionId string
 	client    *http.Client
+	scale     float64
 	// cache the last launched package name
 	lastLaunchedPackageName string
 }

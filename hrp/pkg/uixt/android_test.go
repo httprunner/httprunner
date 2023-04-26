@@ -153,20 +153,6 @@ func TestDriver_GetAppiumSettings(t *testing.T) {
 	// t.Log(appiumSettings)
 }
 
-func TestDriver_DeviceScaleRatio(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	scaleRatio, err := driver.Scale()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(scaleRatio)
-}
-
 func TestDriver_DeviceInfo(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
 	if err != nil {
