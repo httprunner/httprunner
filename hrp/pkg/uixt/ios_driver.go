@@ -164,9 +164,14 @@ func (wd *wdaDriver) Screen() (screen Screen, err error) {
 func (wd *wdaDriver) Scale() (float64, error) {
 	screen, err := wd.Screen()
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrap(code.MobileUIDriverError,
+			fmt.Sprintf("get screen info failed: %v", err))
 	}
 	return screen.Scale, nil
+}
+
+func (wd *wdaDriver) toScale(x float64) float64 {
+	return x / wd.scale
 }
 
 func (wd *wdaDriver) ActiveAppInfo() (info AppInfo, err error) {
@@ -375,8 +380,8 @@ func (wd *wdaDriver) Tap(x, y int, options ...DataOption) error {
 func (wd *wdaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 	data := map[string]interface{}{
-		"x": x,
-		"y": y,
+		"x": wd.toScale(x),
+		"y": wd.toScale(y),
 	}
 	// new data options in post data for extra WDA configurations
 	newData := NewData(data, options...)
@@ -392,8 +397,8 @@ func (wd *wdaDriver) DoubleTap(x, y int) error {
 func (wd *wdaDriver) DoubleTapFloat(x, y float64) (err error) {
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
 	data := map[string]interface{}{
-		"x": x,
-		"y": y,
+		"x": wd.toScale(x),
+		"y": wd.toScale(y),
 	}
 	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/doubleTap")
 	return
@@ -406,8 +411,8 @@ func (wd *wdaDriver) TouchAndHold(x, y int, second ...float64) error {
 func (wd *wdaDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err error) {
 	// [[FBRoute POST:@"/wda/touchAndHold"] respondWithTarget:self action:@selector(handleTouchAndHoldCoordinate:)]
 	data := map[string]interface{}{
-		"x": x,
-		"y": y,
+		"x": wd.toScale(x),
+		"y": wd.toScale(y),
 	}
 	if len(second) == 0 || second[0] <= 0 {
 		second = []float64{1.0}
@@ -424,10 +429,10 @@ func (wd *wdaDriver) Drag(fromX, fromY, toX, toY int, options ...DataOption) err
 func (wd *wdaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOption) (err error) {
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
 	data := map[string]interface{}{
-		"fromX": fromX,
-		"fromY": fromY,
-		"toX":   toX,
-		"toY":   toY,
+		"fromX": wd.toScale(fromX),
+		"fromY": wd.toScale(fromY),
+		"toX":   wd.toScale(toX),
+		"toY":   wd.toScale(toY),
 	}
 
 	// new data options in post data for extra WDA configurations
@@ -491,10 +496,10 @@ func (wd *wdaDriver) PressBack(options ...DataOption) (err error) {
 	}
 
 	data := map[string]interface{}{
-		"fromX": float64(windowSize.Width) * 0,
-		"fromY": float64(windowSize.Height) * 0.5,
-		"toX":   float64(windowSize.Width) * 0.6,
-		"toY":   float64(windowSize.Height) * 0.5,
+		"fromX": wd.toScale(float64(windowSize.Width) * 0),
+		"fromY": wd.toScale(float64(windowSize.Height) * 0.5),
+		"toX":   wd.toScale(float64(windowSize.Width) * 0.6),
+		"toY":   wd.toScale(float64(windowSize.Height) * 0.5),
 	}
 
 	// new data options in post data for extra WDA configurations

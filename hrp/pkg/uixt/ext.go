@@ -51,7 +51,6 @@ type DriverExt struct {
 	windowSize      Size
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
-	scale           float64
 	OCRService      IOCRService // used to get text from image
 	screenShots     []string    // cache screenshot paths
 
@@ -69,10 +68,6 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 	dExt.windowSize, err = dExt.Driver.WindowSize()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get windows size")
-	}
-
-	if dExt.scale, err = dExt.Driver.Scale(); err != nil {
-		return nil, err
 	}
 
 	if dExt.OCRService, err = newVEDEMOCRService(); err != nil {
@@ -187,12 +182,6 @@ func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...DataOption) (
 	return dExt.FindImageRectInUIKit(search, options...)
 }
 
-func (dExt *DriverExt) MappingToRectInUIKit(rect image.Rectangle) (x, y, width, height float64) {
-	x, y = float64(rect.Min.X)/dExt.scale, float64(rect.Min.Y)/dExt.scale
-	width, height = float64(rect.Dx())/dExt.scale, float64(rect.Dy())/dExt.scale
-	return
-}
-
 func (dExt *DriverExt) IsOCRExist(text string) bool {
 	_, err := dExt.FindScreenTextByOCR(text)
 	return err == nil
@@ -213,11 +202,13 @@ func (dExt *DriverExt) IsAppInForeground(packageName string) bool {
 	return true
 }
 
+// (x1, y1) is the top left corner, (x2, y2) is the bottom right corner
+// the value of (x, y) is between 0 and 1, which means the percentage of the screen
 func (dExt *DriverExt) getAbsScope(x1, y1, x2, y2 float64) (int, int, int, int) {
-	return int(x1 * float64(dExt.windowSize.Width) * dExt.scale),
-		int(y1 * float64(dExt.windowSize.Height) * dExt.scale),
-		int(x2 * float64(dExt.windowSize.Width) * dExt.scale),
-		int(y2 * float64(dExt.windowSize.Height) * dExt.scale)
+	return int(x1 * float64(dExt.windowSize.Width)),
+		int(y1 * float64(dExt.windowSize.Height)),
+		int(x2 * float64(dExt.windowSize.Width)),
+		int(y2 * float64(dExt.windowSize.Height))
 }
 
 func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) bool {

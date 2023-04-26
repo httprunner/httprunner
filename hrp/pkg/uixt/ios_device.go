@@ -631,6 +631,11 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 	}
 	wd.mjpegClient = convertToHTTPClient(wd.mjpegHTTPConn)
 
+	// init WDA scale
+	if wd.scale, err = wd.Scale(); err != nil {
+		return nil, err
+	}
+
 	return wd, nil
 }
 
@@ -657,6 +662,11 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver,
 	}
 	if _, err = wd.NewSession(capabilities); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceUSBDriverError, err.Error())
+	}
+
+	// init WDA scale
+	if wd.scale, err = wd.Scale(); err != nil {
+		return nil, err
 	}
 
 	return wd, nil
