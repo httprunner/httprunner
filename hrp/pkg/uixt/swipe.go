@@ -140,6 +140,10 @@ func (dExt *DriverExt) prepareSwipeAction(action MobileAction) func(d *DriverExt
 }
 
 func (dExt *DriverExt) swipeToTapTexts(texts []string, action MobileAction) error {
+	if len(texts) == 0 {
+		return errors.New("no text to tap")
+	}
+
 	if len(action.Scope) != 4 {
 		action.Scope = []float64{0, 0, 1, 1}
 	}
@@ -169,13 +173,8 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, action MobileAction) erro
 		if err != nil {
 			return err
 		}
-		// FIXME: handle index
-		for _, point = range points {
-			if point != (PointF{X: 0, Y: 0}) {
-				return nil
-			}
-		}
-		return errors.New("failed to find text position")
+		point = points[0] // FIXME
+		return nil
 	}
 	foundTextAction := func(d *DriverExt) error {
 		// tap text
@@ -197,7 +196,7 @@ func (dExt *DriverExt) swipeToTapApp(appName string, action MobileAction) error 
 		dExt.SwipeRight()
 	}
 
-	action.Offset = []int{0, -25}
+	action.Offset = []int{0, -25} // tap app icon above the text
 	action.Params = "left"
 
 	return dExt.swipeToTapTexts([]string{appName}, action)

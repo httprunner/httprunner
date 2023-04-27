@@ -10,7 +10,17 @@ import (
 	"time"
 )
 
-var uiaServerURL = "http://localhost:6790/wd/hub"
+var (
+	uiaServerURL = "http://localhost:6790/wd/hub"
+	driverExt    *DriverExt
+)
+
+func setupAndroid(t *testing.T) {
+	device, err := NewAndroidDevice()
+	checkErr(t, err)
+	driverExt, err = device.NewDriver(nil)
+	checkErr(t, err)
+}
 
 func TestDriver_NewSession(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)

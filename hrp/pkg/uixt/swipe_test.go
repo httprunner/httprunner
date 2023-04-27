@@ -6,43 +6,44 @@ import (
 	"testing"
 )
 
-func TestSwipeUntil(t *testing.T) {
-	driverExt, err := iosDevice.NewDriver(nil)
+func TestAndroidSwipeAction(t *testing.T) {
+	setupAndroid(t)
+
+	action := MobileAction{
+		Method: ACTION_Swipe,
+		Params: "up",
+	}
+	swipeAction := driverExt.prepareSwipeAction(action)
+
+	err := swipeAction(driverExt)
 	checkErr(t, err)
 
-	var point PointF
-	findApp := func(d *DriverExt) error {
-		var err error
-		point, err = d.FindScreenTextByOCR("抖音")
-		return err
+	action = MobileAction{
+		Method: ACTION_Swipe,
+		Params: []float64{0.5, 0.5, 0.5, 0.9},
 	}
-	foundAppAction := func(d *DriverExt) error {
-		// click app, launch douyin
-		return d.TapAbsXY(point.X, point.Y)
-	}
+	swipeAction = driverExt.prepareSwipeAction(action)
 
-	driverExt.Driver.Homescreen()
+	err = swipeAction(driverExt)
+	checkErr(t, err)
+}
 
-	// swipe to first screen
-	for i := 0; i < 5; i++ {
-		driverExt.SwipeRight()
-	}
+func TestAndroidSwipeToTapApp(t *testing.T) {
+	setupAndroid(t)
 
-	// swipe until app found
-	err = driverExt.SwipeUntil("left", findApp, foundAppAction, WithDataMaxRetryTimes(10))
+	err := driverExt.swipeToTapApp("抖音", MobileAction{})
+	checkErr(t, err)
+}
+
+func TestAndroidSwipeToTapTexts(t *testing.T) {
+	setupAndroid(t)
+
+	err := driverExt.Driver.AppLaunch("com.ss.android.ugc.aweme")
 	checkErr(t, err)
 
-	findLive := func(d *DriverExt) error {
-		var err error
-		point, err = d.FindScreenTextByOCR("点击进入直播间")
-		return err
+	action := MobileAction{
+		Params: "up",
 	}
-	foundLiveAction := func(d *DriverExt) error {
-		// enter live room
-		return d.TapAbsXY(point.X, point.Y)
-	}
-
-	// swipe until live room found
-	err = driverExt.SwipeUntil("up", findLive, foundLiveAction, WithDataMaxRetryTimes(20))
+	err = driverExt.swipeToTapTexts([]string{"点击进入直播间", "直播中"}, action)
 	checkErr(t, err)
 }
