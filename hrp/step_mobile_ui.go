@@ -610,7 +610,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 		// take screenshot after each step
 		_, err := uiDriver.TakeScreenShot(
-			builtin.GenNameWithTimestamp("step_%d_") + step.Name)
+			builtin.GenNameWithTimestamp("%d_step_") + step.Name)
 		if err != nil {
 			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed on step finished")
 		}
