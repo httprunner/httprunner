@@ -167,7 +167,9 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, err
 	var resp *http.Response
 	// retry 3 times
 	for i := 1; i <= 3; i++ {
+		start := time.Now()
 		resp, err = client.Do(req)
+		elapsed := time.Since(start)
 		var logID string
 		if resp != nil {
 			logID = getLogID(resp.Header)
@@ -175,7 +177,8 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, err
 		if err == nil && resp.StatusCode == http.StatusOK {
 			log.Debug().
 				Str("X-TT-LOGID", logID).
-				Int("imageBufSize", size).
+				Int("image_bytes", size).
+				Float64("elapsed_seconds", elapsed.Seconds()).
 				Msg("request OCR service success")
 			break
 		}
