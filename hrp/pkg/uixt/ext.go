@@ -87,9 +87,6 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 // TakeScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
 // if fileName is empty, it will not save image file and only return raw image data
 func (dExt *DriverExt) TakeScreenShot(fileName ...string) (raw *bytes.Buffer, err error) {
-	// wait for action done
-	time.Sleep(500 * time.Millisecond)
-
 	// iOS 优先使用 MJPEG 流进行截图，性能最优
 	// 如果 MJPEG 流未开启，则使用 WebDriver 的截图接口
 	if dExt.frame != nil {
@@ -100,10 +97,17 @@ func (dExt *DriverExt) TakeScreenShot(fileName ...string) (raw *bytes.Buffer, er
 		return nil, err
 	}
 
+	// compress image data
+	compressed, err := compressImageBuffer(raw)
+	if err != nil {
+		log.Error().Err(err).Msg("compress screenshot data failed")
+		return nil, err
+	}
+
 	// save screenshot to file
 	if len(fileName) > 0 && fileName[0] != "" {
 		path := filepath.Join(env.ScreenShotsPath, fileName[0])
-		path, err := dExt.saveScreenShot(raw, path)
+		path, err := dExt.saveScreenShot(compressed, path)
 		if err != nil {
 			log.Error().Err(err).Msg("save screenshot file failed")
 			return nil, err
@@ -112,6 +116,11 @@ func (dExt *DriverExt) TakeScreenShot(fileName ...string) (raw *bytes.Buffer, er
 		log.Info().Str("path", path).Msg("save screenshot file success")
 	}
 
+	return compressed, nil
+}
+
+func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error) {
+	// TODO: compress image data
 	return raw, nil
 }
 
