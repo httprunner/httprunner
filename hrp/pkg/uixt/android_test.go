@@ -355,9 +355,12 @@ func TestDriver_IsAppInForeground(t *testing.T) {
 	err := driverExt.Driver.AppLaunch("com.android.settings")
 	checkErr(t, err)
 
-	foreApp, err := driverExt.Driver.GetForegroundApp()
+	app, err := driverExt.Driver.GetForegroundApp()
 	checkErr(t, err)
-	if foreApp != "com.android.settings" {
+	if app.BundleId != "com.android.settings" {
+		t.FailNow()
+	}
+	if app.Activity != ".Settings" {
 		t.FailNow()
 	}
 

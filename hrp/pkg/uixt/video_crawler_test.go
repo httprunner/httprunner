@@ -9,9 +9,11 @@ func TestVideoCrawler(t *testing.T) {
 
 	configs := &VideoCrawlerConfigs{
 		AppPackageName: "com.ss.android.ugc.aweme",
+		TargetCount: VideoStat{
+			FeedCount: 5,
+			LiveCount: 3,
+		},
 	}
 	err := driverExt.VideoCrawler(configs)
-	if err != nil {
-		t.Fatal(err)
-	}
+	checkErr(t, err)
 }

@@ -251,8 +251,9 @@ type AppInfo struct {
 }
 
 type AppBaseInfo struct {
-	Pid      int    `json:"pid"`
-	BundleId string `json:"bundleId"`
+	Pid      int    `json:"pid,omitempty"`
+	BundleId string `json:"bundleId"` // package name for android
+	Activity string // view controller for ios
 }
 
 type AppState int
@@ -579,6 +580,11 @@ type Device interface {
 	StopPcap() string
 }
 
+type ForegroundApp struct {
+	PackageName string
+	Activity    string
+}
+
 // WebDriver defines methods supported by WebDriver drivers.
 type WebDriver interface {
 	// NewSession starts a new session and returns the SessionInfo.
@@ -623,8 +629,8 @@ type WebDriver interface {
 	GetLastLaunchedApp() string
 	// AssertAppForeground returns nil if the given package is in foreground
 	AssertAppForeground(packageName string) error
-	// GetForegroundApp returns current foreground app package name
-	GetForegroundApp() (string, error)
+	// GetForegroundApp returns current foreground app package name and activity name
+	GetForegroundApp() (app AppInfo, err error)
 
 	// StartCamera Starts a new camera for recording
 	StartCamera() error
