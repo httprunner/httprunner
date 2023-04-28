@@ -25,15 +25,21 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	// loop until target count achieved
 	for {
 		// take screenshot and get screen texts by OCR
-		_, err := dExt.GetScreenTextsByOCR()
+		texts, err := dExt.GetScreenTextsByOCR()
 		if err != nil {
 			log.Error().Err(err).Msg("OCR GetTexts failed")
 			return err
 		}
 
-		// TODO: check if text popup exists
+		// check if text popup exists
+		if isTextPopup(texts) {
+			log.Info().Msg("text popup found")
+		}
 
-		// TODO: check if live video
+		// check if live video
+		if isLiveVideo(texts) {
+			log.Info().Msg("live video found")
+		}
 
 		// assert feed video type
 
@@ -47,4 +53,14 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	}
 
 	// return nil
+}
+
+func isTextPopup(texts OCRTexts) bool {
+	texts.FindTexts([]string{"确定", "取消"})
+	return false
+}
+
+func isLiveVideo(texts OCRTexts) bool {
+	_, err := texts.FindTexts([]string{"点击进入直播间", "直播中"})
+	return err == nil
 }

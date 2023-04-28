@@ -5,18 +5,12 @@ package uixt
 import "testing"
 
 func TestVideoCrawler(t *testing.T) {
-	device, err := NewAndroidDevice()
-	if err != nil {
-		t.Fatal(err)
-	}
-	driver, err := device.NewDriver(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupAndroid(t)
+
 	configs := &VideoCrawlerConfigs{
 		AppPackageName: "com.ss.android.ugc.aweme",
 	}
-	err = driver.VideoCrawler(configs)
+	err := driverExt.VideoCrawler(configs)
 	if err != nil {
 		t.Fatal(err)
 	}

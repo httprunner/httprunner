@@ -51,16 +51,17 @@ type DriverExt struct {
 	windowSize      Size
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
-	OCRService      IOCRService // used to get text from image
-	screenShots     []string    // cache screenshot paths
+	OCRService      IOCRService         // used to get texts from image
+	stepScreenShots map[string]OCRTexts // cache screenshot ocr results, key is image path
 
 	CVArgs
 }
 
 func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) {
 	dExt = &DriverExt{
-		Device: device,
-		Driver: driver,
+		Device:          device,
+		Driver:          driver,
+		stepScreenShots: make(map[string]OCRTexts),
 	}
 	dExt.doneMjpegStream = make(chan bool, 1)
 
@@ -86,22 +87,22 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 
 // TakeScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
 // if fileName is empty, it will not save image file and only return raw image data
-func (dExt *DriverExt) TakeScreenShot(fileName ...string) (raw *bytes.Buffer, err error) {
+func (dExt *DriverExt) TakeScreenShot(fileName ...string) (raw *bytes.Buffer, path string, err error) {
 	// iOS 优先使用 MJPEG 流进行截图，性能最优
 	// 如果 MJPEG 流未开启，则使用 WebDriver 的截图接口
 	if dExt.frame != nil {
-		return dExt.frame, nil
+		return dExt.frame, "", nil
 	}
 	if raw, err = dExt.Driver.Screenshot(); err != nil {
 		log.Error().Err(err).Msg("capture screenshot data failed")
-		return nil, err
+		return nil, "", err
 	}
 
 	// compress image data
 	compressed, err := compressImageBuffer(raw)
 	if err != nil {
 		log.Error().Err(err).Msg("compress screenshot data failed")
-		return nil, err
+		return nil, "", err
 	}
 
 	// save screenshot to file
@@ -110,13 +111,12 @@ func (dExt *DriverExt) TakeScreenShot(fileName ...string) (raw *bytes.Buffer, er
 		path, err := dExt.saveScreenShot(compressed, path)
 		if err != nil {
 			log.Error().Err(err).Msg("save screenshot file failed")
-			return nil, err
+			return nil, "", err
 		}
-		dExt.screenShots = append(dExt.screenShots, path)
-		log.Info().Str("path", path).Msg("save screenshot file success")
+		return compressed, path, nil
 	}
 
-	return compressed, nil
+	return compressed, "", nil
 }
 
 func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error) {
@@ -160,14 +160,23 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 		return "", errors.Wrap(err, "encode screenshot image failed")
 	}
 
+	dExt.stepScreenShots[screenshotPath] = nil
+	log.Info().Str("path", screenshotPath).Msg("save screenshot file success")
 	return screenshotPath, nil
 }
 
-func (dExt *DriverExt) GetScreenShots() []string {
+func (dExt *DriverExt) GetScreenShots() map[string]OCRTexts {
 	defer func() {
-		dExt.screenShots = nil
+		for key := range dExt.stepScreenShots {
+			delete(dExt.stepScreenShots, key)
+		}
 	}()
-	return dExt.screenShots
+
+	copied := make(map[string]OCRTexts)
+	for key, value := range dExt.stepScreenShots {
+		copied[key] = value
+	}
+	return copied
 }
 
 // isPathExists returns true if path exists, whether path is file or dir
