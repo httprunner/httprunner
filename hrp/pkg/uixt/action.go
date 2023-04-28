@@ -64,19 +64,20 @@ type MobileAction struct {
 	Method ActionMethod `json:"method,omitempty" yaml:"method,omitempty"`
 	Params interface{}  `json:"params,omitempty" yaml:"params,omitempty"`
 
-	Identifier          string    `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
-	MaxRetryTimes       int       `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
-	WaitTime            float64   `json:"wait_time,omitempty" yaml:"wait_time,omitempty"`                       // wait time between swipe and ocr, unit: second
-	Duration            float64   `json:"duration,omitempty" yaml:"duration,omitempty"`                         // used to set duration of ios swipe action
-	Steps               int       `json:"steps,omitempty" yaml:"steps,omitempty"`                               // used to set steps of android swipe action
-	Scope               []float64 `json:"scope,omitempty" yaml:"scope,omitempty"`                               // used by ocr to get text position in the scope
-	Offset              []int     `json:"offset,omitempty" yaml:"offset,omitempty"`                             // used to tap offset of point
-	Index               int       `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
-	Timeout             int       `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
-	IgnoreNotFoundError bool      `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
-	Text                string    `json:"text,omitempty" yaml:"text,omitempty"`
-	ID                  string    `json:"id,omitempty" yaml:"id,omitempty"`
-	Description         string    `json:"description,omitempty" yaml:"description,omitempty"`
+	Identifier          string      `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
+	MaxRetryTimes       int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
+	WaitTime            float64     `json:"wait_time,omitempty" yaml:"wait_time,omitempty"`                       // wait time between swipe and ocr, unit: second
+	Duration            float64     `json:"duration,omitempty" yaml:"duration,omitempty"`                         // used to set duration of ios swipe action
+	Steps               int         `json:"steps,omitempty" yaml:"steps,omitempty"`                               // used to set steps of android swipe action
+	Direction           interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`                       // used by swipe to tap text or app
+	Scope               []float64   `json:"scope,omitempty" yaml:"scope,omitempty"`                               // used by ocr to get text position in the scope
+	Offset              []int       `json:"offset,omitempty" yaml:"offset,omitempty"`                             // used to tap offset of point
+	Index               int         `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
+	Timeout             int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
+	IgnoreNotFoundError bool        `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
+	Text                string      `json:"text,omitempty" yaml:"text,omitempty"`
+	ID                  string      `json:"id,omitempty" yaml:"id,omitempty"`
+	Description         string      `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 type ActionOption func(o *MobileAction)
@@ -114,14 +115,14 @@ func WithSteps(steps int) ActionOption {
 // WithDirection inputs direction (up, down, left, right)
 func WithDirection(direction string) ActionOption {
 	return func(o *MobileAction) {
-		o.Params = direction
+		o.Direction = direction
 	}
 }
 
 // WithCustomDirection inputs sx, sy, ex, ey
 func WithCustomDirection(sx, sy, ex, ey float64) ActionOption {
 	return func(o *MobileAction) {
-		o.Params = []float64{sx, sy, ex, ey}
+		o.Direction = []float64{sx, sy, ex, ey}
 	}
 }
 

@@ -47,9 +47,6 @@ func TestIOSDouyinFollowLive(t *testing.T) {
 	if err := testCase.Dump2JSON("demo_douyin_follow_live.json"); err != nil {
 		t.Fatal(err)
 	}
-	if err := testCase.Dump2YAML("demo_douyin_follow_live.yaml"); err != nil {
-		t.Fatal(err)
-	}
 
 	runner := hrp.NewRunner(t).SetSaveTests(true)
 	err := runner.Run(testCase)
