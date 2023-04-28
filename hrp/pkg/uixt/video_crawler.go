@@ -45,6 +45,7 @@ var androidActivities = map[string]map[string]string{
 		"feed": "com.yxcorp.gifshow.HomeActivity",
 		"live": "com.kuaishou.live.core.basic.activity.LiveSlideActivity",
 	},
+	// TODO: SPH, XHS
 }
 
 type LiveCrawler struct {
@@ -111,6 +112,12 @@ func (l *LiveCrawler) exitLiveRoom() error {
 			return nil
 		}
 	}
+
+	// exit live room failed, while video count achieved
+	if l.currentStat.IsTargetAchieved(&l.configs.TargetCount) {
+		return nil
+	}
+
 	return errors.New("exit live room failed")
 }
 
@@ -203,9 +210,31 @@ func (dExt *DriverExt) assertActivity(pacakgeName, activityType string) error {
 	return fmt.Errorf("%s activity is not in foreground", activityType)
 }
 
-func (dExt *DriverExt) autoPopupHandler(texts OCRTexts) error {
-	texts.FindTexts([]string{"确定", "取消"})
+// TODO: add more popup texts
+var popups = [][]string{
+	{"青少年", "我知道了"}, // 青少年弹窗
+	{"允许", "拒绝"},
+	{"确定", "取消"},
+}
 
-	// log.Warn().Msg("text popup found")
+func (dExt *DriverExt) autoPopupHandler(texts OCRTexts) error {
+	for _, popup := range popups {
+		if len(popup) != 2 {
+			continue
+		}
+
+		points, err := texts.FindTexts([]string{"确定", "取消"})
+		if err == nil {
+			log.Warn().Msg("text popup found")
+			if err := dExt.TapAbsXY(points[1].X, points[1].Y); err != nil {
+				log.Error().Err(err).Msg("tap popup failed")
+				return err
+			}
+			// tap popup success
+			return nil
+		}
+	}
+
+	// no popup found
 	return nil
 }
