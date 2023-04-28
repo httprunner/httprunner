@@ -373,6 +373,10 @@ func (wd *wdaDriver) AssertAppForeground(packageName string) error {
 	return nil
 }
 
+func (wd *wdaDriver) GetForegroundApp() (string, error) {
+	return "", nil
+}
+
 func (wd *wdaDriver) Tap(x, y int, options ...DataOption) error {
 	return wd.TapFloat(float64(x), float64(y), options...)
 }

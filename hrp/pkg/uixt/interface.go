@@ -623,6 +623,8 @@ type WebDriver interface {
 	GetLastLaunchedApp() string
 	// AssertAppForeground returns nil if the given package is in foreground
 	AssertAppForeground(packageName string) error
+	// GetForegroundApp returns current foreground app package name
+	GetForegroundApp() (string, error)
 
 	// StartCamera Starts a new camera for recording
 	StartCamera() error

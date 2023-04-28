@@ -350,29 +350,29 @@ func TestDriver_AppLaunch(t *testing.T) {
 }
 
 func TestDriver_IsAppInForeground(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewDriver(nil)
-	if err != nil {
-		t.Fatal(err)
+	setupAndroid(t)
+
+	err := driverExt.Driver.AppLaunch("com.android.settings")
+	checkErr(t, err)
+
+	foreApp, err := driverExt.Driver.GetForegroundApp()
+	checkErr(t, err)
+	if foreApp != "com.android.settings" {
+		t.FailNow()
 	}
 
-	err = driver.Driver.AppLaunch("com.android.settings")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.Driver.AssertAppForeground(driver.Driver.GetLastLaunchedApp())
+	err = driverExt.Driver.AssertAppForeground(driverExt.Driver.GetLastLaunchedApp())
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(2 * time.Second)
-	_, err = driver.Driver.AppTerminate("com.android.settings")
+	_, err = driverExt.Driver.AppTerminate("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = driver.Driver.AssertAppForeground("com.android.settings")
+	err = driverExt.Driver.AssertAppForeground("com.android.settings")
 	if err == nil {
 		t.Fatal(err)
 	}

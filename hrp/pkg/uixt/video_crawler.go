@@ -28,8 +28,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	// loop until target count achieved
 	for {
 		// check if app in foreground
-		err := dExt.Driver.AssertAppForeground(configs.AppPackageName)
-		if err != nil {
+		if err := dExt.Driver.AssertAppForeground(configs.AppPackageName); err != nil {
 			log.Error().Err(err).Str("packageName", configs.AppPackageName).Msg("app is not in foreground")
 			err = errors.Wrap(code.MobileUIAppNotInForegroundError, err.Error())
 			return err
