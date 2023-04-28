@@ -101,26 +101,33 @@ func (dExt *DriverExt) prepareSwipeAction(action MobileAction) func(d *DriverExt
 	dataOptions := make([]DataOption, 3)
 	dataOptions = append(dataOptions, identifierOption, durationOption, stepsOption)
 
+	var swipeDirection interface{}
+	if action.Direction != nil {
+		swipeDirection = action.Direction
+	} else {
+		swipeDirection = "up" // default swipe up
+	}
+
 	return func(d *DriverExt) error {
 		defer func() {
 			// wait for swipe action to completed and content to load completely
 			time.Sleep(time.Duration(1000*action.WaitTime) * time.Millisecond)
 		}()
 
-		if d, ok := action.Params.(string); ok {
+		if d, ok := swipeDirection.(string); ok {
 			// enum direction: up, down, left, right
 			if err := dExt.SwipeTo(d, dataOptions...); err != nil {
 				log.Error().Err(err).Msgf("swipe %s failed", d)
 				return err
 			}
-		} else if d, ok := action.Params.([]float64); ok {
+		} else if d, ok := swipeDirection.([]float64); ok {
 			// custom direction: [fromX, fromY, toX, toY]
 			if err := dExt.SwipeRelative(d[0], d[1], d[2], d[3], dataOptions...); err != nil {
 				log.Error().Err(err).Msgf("swipe from (%v, %v) to (%v, %v) failed",
 					d[0], d[1], d[2], d[3])
 				return err
 			}
-		} else if d, ok := action.Params.([]interface{}); ok {
+		} else if d, ok := swipeDirection.([]interface{}); ok {
 			// loaded from json case
 			// custom direction: [fromX, fromY, toX, toY]
 			sx, _ := builtin.Interface2Float64(d[0])
@@ -133,7 +140,7 @@ func (dExt *DriverExt) prepareSwipeAction(action MobileAction) func(d *DriverExt
 				return err
 			}
 		} else {
-			return fmt.Errorf("invalid swipe params %v", action.Params)
+			return fmt.Errorf("invalid swipe params %v", swipeDirection)
 		}
 		return nil
 	}
@@ -197,7 +204,7 @@ func (dExt *DriverExt) swipeToTapApp(appName string, action MobileAction) error 
 	}
 
 	action.Offset = []int{0, -25} // tap app icon above the text
-	action.Params = "left"
+	action.Direction = "left"
 
 	return dExt.swipeToTapTexts([]string{appName}, action)
 }
