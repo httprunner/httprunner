@@ -362,30 +362,29 @@ func (ad *adbDriver) GetLastLaunchedApp() (packageName string) {
 	return ad.lastLaunchedPackageName
 }
 
-func (ad *adbDriver) IsAppInForeground(packageName string) (bool, error) {
+func (ad *adbDriver) AssertAppForeground(packageName string) error {
 	if packageName == "" {
-		return false, errors.New("package name is not given")
+		return errors.New("package name is not given")
 	}
 
 	// adb shell dumpsys activity activities | grep mResumedActivity
 	output, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to dumpsys activities")
-		return false, err
+		return errors.Wrap(code.AndroidShellExecError, err.Error())
 	}
 
 	lines := strings.Split(string(output), "\n")
-	isInForeground := false
 
 	for _, line := range lines {
 		trimmedLine := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmedLine, "mResumedActivity:") {
 			if strings.Contains(trimmedLine, packageName) {
-				isInForeground = true
+				return nil
 			}
 			break
 		}
 	}
 
-	return isInForeground, nil
+	return errors.New("app is not in foreground")
 }

@@ -369,8 +369,8 @@ func (wd *wdaDriver) GetLastLaunchedApp() (packageName string) {
 	return wd.lastLaunchedPackageName
 }
 
-func (wd *wdaDriver) IsAppInForeground(packageName string) (bool, error) {
-	return false, errors.New("not implemented")
+func (wd *wdaDriver) AssertAppForeground(packageName string) error {
+	return nil
 }
 
 func (wd *wdaDriver) Tap(x, y int, options ...DataOption) error {

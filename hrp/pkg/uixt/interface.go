@@ -621,8 +621,8 @@ type WebDriver interface {
 	AppTerminate(packageName string) (bool, error)
 	// GetLastLaunchedApp returns the package name of the last launched app
 	GetLastLaunchedApp() string
-	// IsAppInForeground returns true if the given package is in foreground
-	IsAppInForeground(packageName string) (bool, error)
+	// AssertAppForeground returns nil if the given package is in foreground
+	AssertAppForeground(packageName string) error
 
 	// StartCamera Starts a new camera for recording
 	StartCamera() error

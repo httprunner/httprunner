@@ -3,7 +3,10 @@ package uixt
 import (
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
 type VideoCrawlerConfigs struct {
@@ -24,6 +27,14 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 	// loop until target count achieved
 	for {
+		// check if app in foreground
+		err := dExt.Driver.AssertAppForeground(configs.AppPackageName)
+		if err != nil {
+			log.Error().Err(err).Str("packageName", configs.AppPackageName).Msg("app is not in foreground")
+			err = errors.Wrap(code.MobileUIAppNotInForegroundError, err.Error())
+			return err
+		}
+
 		// take screenshot and get screen texts by OCR
 		texts, err := dExt.GetScreenTextsByOCR()
 		if err != nil {

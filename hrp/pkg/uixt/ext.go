@@ -217,16 +217,6 @@ func (dExt *DriverExt) IsImageExist(text string) bool {
 	return err == nil
 }
 
-func (dExt *DriverExt) IsAppInForeground(packageName string) bool {
-	// check if app is in foreground
-	yes, err := dExt.Driver.IsAppInForeground(packageName)
-	if !yes || err != nil {
-		log.Info().Str("packageName", packageName).Msg("app is not in foreground")
-		return false
-	}
-	return true
-}
-
 // (x1, y1) is the top left corner, (x2, y2) is the bottom right corner
 // the value of (x, y) is between 0 and 1, which means the percentage of the screen
 func (dExt *DriverExt) getAbsScope(x1, y1, x2, y2 float64) (int, int, int, int) {
@@ -250,7 +240,7 @@ func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...s
 	case SelectorImage:
 		result = (dExt.IsImageExist(expected) == exp)
 	case SelectorForegroundApp:
-		result = (dExt.IsAppInForeground(expected) == exp)
+		result = ((dExt.Driver.AssertAppForeground(expected) == nil) == exp)
 	}
 
 	if !result {

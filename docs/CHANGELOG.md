@@ -7,7 +7,7 @@
 - feat: add `sleep_random` to sleep random seconds, with weight for multiple time ranges
 - feat: input text with adb
 - feat: add adb `screencap` sub command
-- feat: add `IsAppInForeground` to check if the given package is in foreground
+- feat: add `AssertAppInForeground` to check if the given package is in foreground
 - feat: check if app is in foreground when step failed
 - feat: add validator AssertAppInForeground and AssertAppNotInForeground
 - feat: save screenshots of all steps including ocr and cv recognition process data
