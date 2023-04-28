@@ -45,23 +45,34 @@ func WithThreshold(threshold float64) CVOption {
 	}
 }
 
+type cacheStepData struct {
+	// cache step screenshot paths
+	ScreenShots []string
+	// cache step screenshot ocr results, key is image path, value is dumped OCRTexts
+	OcrResults map[string]string
+}
+
 type DriverExt struct {
+	CVArgs
 	Device          Device
 	Driver          WebDriver
 	windowSize      Size
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
-	OCRService      IOCRService       // used to get texts from image
-	stepScreenShots map[string]string // cache screenshot ocr results, key is image path, value is dumped OCRTexts
+	OCRService      IOCRService // used to get texts from image
 
-	CVArgs
+	// cache step data
+	cacheStepData cacheStepData
 }
 
 func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) {
 	dExt = &DriverExt{
-		Device:          device,
-		Driver:          driver,
-		stepScreenShots: make(map[string]string),
+		Device: device,
+		Driver: driver,
+		cacheStepData: cacheStepData{
+			ScreenShots: make([]string, 0),
+			OcrResults:  make(map[string]string),
+		},
 	}
 	dExt.doneMjpegStream = make(chan bool, 1)
 
@@ -160,21 +171,17 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 		return "", errors.Wrap(err, "encode screenshot image failed")
 	}
 
-	dExt.stepScreenShots[screenshotPath] = ""
+	dExt.cacheStepData.ScreenShots = append(dExt.cacheStepData.ScreenShots, screenshotPath)
 	log.Info().Str("path", screenshotPath).Msg("save screenshot file success")
 	return screenshotPath, nil
 }
 
-func (dExt *DriverExt) GetScreenShots() map[string]string {
-	defer func() {
-		for key := range dExt.stepScreenShots {
-			delete(dExt.stepScreenShots, key)
-		}
-	}()
-
-	copied := make(map[string]string)
-	for key, value := range dExt.stepScreenShots {
-		copied[key] = value
+func (dExt *DriverExt) GetStepCacheData() cacheStepData {
+	copied := dExt.cacheStepData
+	// clear cache
+	dExt.cacheStepData = cacheStepData{
+		ScreenShots: []string{},
+		OcrResults:  make(map[string]string),
 	}
 	return copied
 }
