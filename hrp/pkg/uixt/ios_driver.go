@@ -373,8 +373,8 @@ func (wd *wdaDriver) AssertAppForeground(packageName string) error {
 	return nil
 }
 
-func (wd *wdaDriver) GetForegroundApp() (string, error) {
-	return "", nil
+func (wd *wdaDriver) GetForegroundApp() (app AppInfo, err error) {
+	return AppInfo{}, nil
 }
 
 func (wd *wdaDriver) Tap(x, y int, options ...DataOption) error {

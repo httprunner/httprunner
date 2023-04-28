@@ -367,22 +367,22 @@ func (ad *adbDriver) AssertAppForeground(packageName string) error {
 		return errors.New("package name is not given")
 	}
 
-	foreApp, err := ad.GetForegroundApp()
+	app, err := ad.GetForegroundApp()
 	if err != nil {
 		return err
 	}
-	if foreApp != packageName {
+	if app.BundleId != packageName {
 		return errors.New("app is not in foreground")
 	}
 	return nil
 }
 
-func (ad *adbDriver) GetForegroundApp() (packageName string, err error) {
+func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	// adb shell dumpsys activity activities | grep mResumedActivity
 	output, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to dumpsys activities")
-		return "", errors.Wrap(code.AndroidShellExecError, err.Error())
+		return AppInfo{}, errors.Wrap(code.AndroidShellExecError, err.Error())
 	}
 
 	lines := strings.Split(string(output), "\n")
@@ -394,11 +394,18 @@ func (ad *adbDriver) GetForegroundApp() (packageName string, err error) {
 			for _, str := range strs {
 				if strings.Contains(str, "/") {
 					// com.android.settings/.Settings
-					return strings.Split(str, "/")[0], nil
+					s := strings.Split(str, "/")
+					app := AppInfo{
+						AppBaseInfo: AppBaseInfo{
+							BundleId: s[0],
+							Activity: s[1],
+						},
+					}
+					return app, nil
 				}
 			}
 		}
 	}
 
-	return "", errors.New("get foreground app failed")
+	return AppInfo{}, errors.New("get foreground app failed")
 }
