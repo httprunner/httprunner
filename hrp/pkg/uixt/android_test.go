@@ -361,18 +361,19 @@ func TestDriver_IsAppInForeground(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	yes, err := driver.Driver.IsAppInForeground(driver.Driver.GetLastLaunchedApp())
-	if err != nil || !yes {
+	err = driver.Driver.AssertAppForeground(driver.Driver.GetLastLaunchedApp())
+	if err != nil {
 		t.Fatal(err)
 	}
 
+	time.Sleep(2 * time.Second)
 	_, err = driver.Driver.AppTerminate("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	yes, err = driver.Driver.IsAppInForeground("com.android.settings")
-	if err != nil || yes {
+	err = driver.Driver.AssertAppForeground("com.android.settings")
+	if err == nil {
 		t.Fatal(err)
 	}
 }
