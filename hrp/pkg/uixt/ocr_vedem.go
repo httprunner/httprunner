@@ -291,7 +291,8 @@ func (dExt *DriverExt) GetScreenTextsByOCR() (texts OCRTexts, err error) {
 		return
 	}
 
-	dExt.stepScreenShots[imagePath] = ocrTexts
+	o, _ := json.Marshal(ocrTexts)
+	dExt.stepScreenShots[imagePath] = string(o)
 	return ocrTexts, nil
 }
 
