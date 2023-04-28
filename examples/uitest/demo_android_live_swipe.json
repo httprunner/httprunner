@@ -97,7 +97,7 @@
                     },
                     {
                         "method": "sleep",
-                        "params": 10
+                        "params": 5
                     },
                     {
                         "method": "screenshot"
@@ -109,7 +109,7 @@
                     },
                     {
                         "method": "sleep",
-                        "params": 10
+                        "params": 5
                     },
                     {
                         "method": "screenshot"

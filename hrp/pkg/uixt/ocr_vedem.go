@@ -279,7 +279,8 @@ type IOCRService interface {
 
 func (dExt *DriverExt) GetScreenTextsByOCR() (texts OCRTexts, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(
+	var imagePath string
+	if bufSource, imagePath, err = dExt.TakeScreenShot(
 		builtin.GenNameWithTimestamp("%d_ocr")); err != nil {
 		return
 	}
@@ -290,6 +291,7 @@ func (dExt *DriverExt) GetScreenTextsByOCR() (texts OCRTexts, err error) {
 		return
 	}
 
+	dExt.stepScreenShots[imagePath] = ocrTexts
 	return ocrTexts, nil
 }
 

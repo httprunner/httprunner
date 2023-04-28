@@ -101,7 +101,7 @@ func (dExt *DriverExt) FindAllImageRect(search string) (rects []image.Rectangle,
 	if bufSearch, err = getBufFromDisk(search); err != nil {
 		return nil, err
 	}
-	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("%d_cv")); err != nil {
+	if bufSource, _, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("%d_cv")); err != nil {
 		return nil, err
 	}
 
