@@ -14,18 +14,26 @@ type VideoStat struct {
 	LiveCount int `json:"live_count"`
 }
 
-func (s *VideoStat) IsTargetAchieved(target *VideoStat) bool {
+func (s *VideoStat) isFeedTargetAchieved(target *VideoStat) bool {
 	log.Info().
-		Interface("current", s).
-		Interface("target", target).
-		Msg("current video stat")
-	if s.FeedCount < target.FeedCount {
-		return false
-	}
-	if s.LiveCount < target.LiveCount {
-		return false
-	}
-	return true
+		Int("count", s.FeedCount).
+		Int("target", target.FeedCount).
+		Msg("current feed count")
+
+	return s.FeedCount >= target.FeedCount
+}
+
+func (s *VideoStat) isLiveTargetAchieved(target *VideoStat) bool {
+	log.Info().
+		Int("count", s.LiveCount).
+		Int("target", target.LiveCount).
+		Msg("current live count")
+
+	return s.LiveCount >= target.LiveCount
+}
+
+func (s *VideoStat) isTargetAchieved(target *VideoStat) bool {
+	return s.isFeedTargetAchieved(target) && s.isLiveTargetAchieved(target)
 }
 
 type VideoCrawlerConfigs struct {
@@ -75,24 +83,24 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 	}
 	time.Sleep(5 * time.Second)
 
-	for l.currentStat.LiveCount < l.configs.TargetCount.LiveCount {
-		// check if entered live room
+	for !l.currentStat.isLiveTargetAchieved(&l.configs.TargetCount) {
+		// check if live room
 		if err := l.driver.assertActivity(l.configs.AppPackageName, "live"); err != nil {
 			return err
 		}
 
-		log.Info().
-			Int("count", l.currentStat.LiveCount).
-			Int("target", l.configs.TargetCount.LiveCount).
-			Msg("current live count")
-
 		// swipe to next live video
 		err := l.driver.SwipeUp()
+		// TODO: sleep custom random time
+		time.Sleep(15 * time.Second)
 		if err != nil {
 			log.Error().Err(err).Msg("swipe up failed")
-			return err
+			// TODO: retry maximum 3 times
+			continue
 		}
-		time.Sleep(2 * time.Second)
+
+		// TODO: check live type
+
 		l.currentStat.LiveCount++
 	}
 
@@ -114,7 +122,7 @@ func (l *LiveCrawler) exitLiveRoom() error {
 	}
 
 	// exit live room failed, while video count achieved
-	if l.currentStat.IsTargetAchieved(&l.configs.TargetCount) {
+	if l.currentStat.isTargetAchieved(&l.configs.TargetCount) {
 		return nil
 	}
 
@@ -159,15 +167,22 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 		// check if live video && run live crawler
 		if enterPoint, isLive := liveCrawler.checkLiveVideo(texts); isLive {
 			log.Info().Msg("live video found")
-			if liveCrawler.currentStat.LiveCount < configs.TargetCount.LiveCount {
+			if !liveCrawler.currentStat.isLiveTargetAchieved(&configs.TargetCount) {
 				if err := liveCrawler.Run(dExt, enterPoint); err != nil {
-					return err
+					log.Error().Err(err).Msg("run live crawler failed, continue")
+					continue
 				}
 			}
 		}
 
+		// TODO: check feed type
+
+		currVideoStat.FeedCount++
+		// TODO: sleep custom random time
+		time.Sleep(5 * time.Second)
+
 		// check if target count achieved
-		if currVideoStat.IsTargetAchieved(&configs.TargetCount) {
+		if currVideoStat.isTargetAchieved(&configs.TargetCount) {
 			log.Info().Msg("target count achieved, exit crawler")
 			break
 		}
@@ -178,8 +193,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			log.Error().Err(err).Msg("swipe up failed")
 			return err
 		}
-		time.Sleep(5 * time.Second)
-		currVideoStat.FeedCount++
 	}
 
 	return nil
