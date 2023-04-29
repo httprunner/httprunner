@@ -21,11 +21,14 @@ func TestAndroidVideoCrawlerTest(t *testing.T) {
 				Android().
 				VideoCrawler(map[string]interface{}{
 					"app_package_name": "com.ss.android.ugc.aweme",
-					"target_count": map[string]interface{}{
-						"feed_count": 5,
-						"live_count": 3,
+					"feed": map[string]interface{}{
+						"target_count": 5,
+						"sleep_random": []float64{0, 5, 0.7, 5, 10, 0.3},
 					},
-					"sleep_random": []float64{0, 5, 0.7, 5, 10, 0.3},
+					"live": map[string]interface{}{
+						"target_count": 3,
+						"sleep_random": []float64{15, 20},
+					},
 				}),
 			hrp.NewStep("exit").
 				Android().

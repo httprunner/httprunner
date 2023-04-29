@@ -9,9 +9,14 @@ func TestVideoCrawler(t *testing.T) {
 
 	configs := &VideoCrawlerConfigs{
 		AppPackageName: "com.ss.android.ugc.aweme",
-		TargetCount: VideoStat{
-			FeedCount: 5,
-			LiveCount: 3,
+
+		Feed: FeedConfig{
+			TargetCount: 5,
+			SleepRandom: []interface{}{0, 5, 0.7, 5, 10, 0.3},
+		},
+		Live: LiveConfig{
+			TargetCount: 3,
+			SleepRandom: []interface{}{15, 20},
 		},
 	}
 	err := driverExt.VideoCrawler(configs)
