@@ -371,7 +371,7 @@ func (ad *adbDriver) AssertAppForeground(packageName string) error {
 	if err != nil {
 		return err
 	}
-	if app.BundleId != packageName {
+	if app.PackageName != packageName {
 		return errors.New("app is not in foreground")
 	}
 	return nil
@@ -397,8 +397,8 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 					s := strings.Split(str, "/")
 					app := AppInfo{
 						AppBaseInfo: AppBaseInfo{
-							BundleId: s[0],
-							Activity: s[1],
+							PackageName: s[0],
+							Activity:    s[1],
 						},
 					}
 					return app, nil

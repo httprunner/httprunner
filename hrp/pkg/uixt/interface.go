@@ -251,9 +251,11 @@ type AppInfo struct {
 }
 
 type AppBaseInfo struct {
-	Pid      int    `json:"pid,omitempty"`
-	BundleId string `json:"bundleId"` // package name for android
-	Activity string // view controller for ios
+	Pid            int    `json:"pid,omitempty"`
+	BundleId       string `json:"bundleId,omitempty"`       // ios package name
+	ViewController string `json:"viewController,omitempty"` // ios view controller
+	PackageName    string `json:"packageName,omitempty"`    // android package name
+	Activity       string `json:"activity,omitempty"`       // android activity
 }
 
 type AppState int
