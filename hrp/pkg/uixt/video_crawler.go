@@ -130,13 +130,17 @@ func (l *LiveCrawler) exitLiveRoom() error {
 }
 
 func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
+	currVideoStat := &VideoStat{}
+	defer func() {
+		dExt.cacheStepData.VideoStat = currVideoStat
+	}()
+
 	// launch app
 	if err = dExt.Driver.AppLaunch(configs.AppPackageName); err != nil {
 		return err
 	}
 	time.Sleep(5 * time.Second)
 
-	currVideoStat := &VideoStat{}
 	liveCrawler := LiveCrawler{
 		driver:      dExt,
 		configs:     configs,
