@@ -89,8 +89,17 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			return err
 		}
 
+		// take screenshot and get screen texts by OCR
+		_, err := l.driver.GetScreenTextsByOCR()
+		if err != nil {
+			log.Error().Err(err).Msg("OCR GetTexts failed")
+			continue
+		}
+
+		// TODO: check live type
+
 		// swipe to next live video
-		err := l.driver.SwipeUp()
+		err = l.driver.SwipeUp()
 		// TODO: sleep custom random time
 		time.Sleep(15 * time.Second)
 		if err != nil {
@@ -110,9 +119,8 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 }
 
 func (l *LiveCrawler) exitLiveRoom() error {
-	// FIXME: exit live room
-	for i := 0; i < 5; i++ {
-		l.driver.SwipeRelative(0, 0.5, 0.5, 0.5)
+	for i := 0; i < 3; i++ {
+		l.driver.SwipeRelative(0.1, 0.5, 0.9, 0.5)
 		time.Sleep(2 * time.Second)
 
 		// check if back to feed page
@@ -159,7 +167,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 		texts, err := dExt.GetScreenTextsByOCR()
 		if err != nil {
 			log.Error().Err(err).Msg("OCR GetTexts failed")
-			return err
+			continue
 		}
 
 		// automatic handling of pop-up windows
@@ -202,8 +210,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	return nil
 }
 
-func (dExt *DriverExt) assertActivity(pacakgeName, activityType string) error {
-	log.Debug().Str("pacakge_name", pacakgeName).
+func (dExt *DriverExt) assertActivity(packageName, activityType string) error {
+	log.Debug().Str("pacakge_name", packageName).
 		Str("activity_type", activityType).Msg("assert activity")
 	app, err := dExt.Driver.GetForegroundApp()
 	if err != nil {
@@ -211,11 +219,11 @@ func (dExt *DriverExt) assertActivity(pacakgeName, activityType string) error {
 		return err
 	}
 
-	if app.BundleId != pacakgeName {
-		return fmt.Errorf("app %s is not in foreground", pacakgeName)
+	if app.PackageName != packageName {
+		return fmt.Errorf("app %s is not in foreground", packageName)
 	}
 
-	if activities, ok := androidActivities[app.BundleId]; ok {
+	if activities, ok := androidActivities[app.PackageName]; ok {
 		if activity, ok := activities[activityType]; ok {
 			if strings.HasSuffix(app.Activity, activity) {
 				return nil

@@ -1,0 +1,59 @@
+{
+    "config": {
+        "name": "抓取抖音视频信息",
+        "variables": {
+            "device": "${ENV(SerialNumber)}"
+        },
+        "android": [
+            {
+                "serial": "$device"
+            }
+        ]
+    },
+    "teststeps": [
+        {
+            "name": "滑动消费 feed 至少 10 个，live 至少 3 个；滑动过程中，70% 随机间隔 0-5s，30% 随机间隔 5-10s",
+            "android": {
+                "actions": [
+                    {
+                        "method": "video_crawler",
+                        "params": {
+                            "app_package_name": "com.ss.android.ugc.aweme",
+                            "sleep_random": [
+    0,
+    5,
+    0.7,
+    5,
+    10,
+    0.3
+],
+                            "target_count": {
+    "feed_count": 5,
+    "live_count": 3
+}
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "exit",
+            "android": {
+                "actions": [
+                    {
+                        "method": "app_terminate",
+                        "params": "com.ss.android.ugc.aweme"
+                    }
+                ]
+            },
+            "validate": [
+                {
+                    "check": "ui_foreground_app",
+                    "assert": "not_equal",
+                    "expect": "com.ss.android.ugc.aweme",
+                    "msg": "app [com.ss.android.ugc.aweme] should not be in foreground"
+                }
+            ]
+        }
+    ]
+}
