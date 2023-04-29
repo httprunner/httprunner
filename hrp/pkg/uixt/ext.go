@@ -50,6 +50,8 @@ type cacheStepData struct {
 	ScreenShots []string
 	// cache step screenshot ocr results, key is image path, value is dumped OCRTexts
 	OcrResults map[string]string
+	// cache feed/live video stat
+	VideoStat *VideoStat
 }
 
 type DriverExt struct {

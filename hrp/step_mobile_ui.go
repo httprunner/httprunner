@@ -619,6 +619,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		cacheData := uiDriver.GetStepCacheData()
 		attachments["screenshots"] = cacheData.ScreenShots
 		attachments["ocr_results"] = cacheData.OcrResults
+		attachments["video_stat"] = cacheData.VideoStat
 		stepResult.Attachments = attachments
 	}()
 
