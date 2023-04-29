@@ -19,7 +19,8 @@
                         "method": "video_crawler",
                         "params": {
                             "app_package_name": "com.ss.android.ugc.aweme",
-                            "sleep_random": [
+                            "feed": {
+    "sleep_random": [
     0,
     5,
     0.7,
@@ -27,9 +28,14 @@
     10,
     0.3
 ],
-                            "target_count": {
-    "feed_count": 5,
-    "live_count": 3
+    "target_count": 5
+},
+                            "live": {
+    "sleep_random": [
+    15,
+    20
+],
+    "target_count": 3
 }
                         }
                     }

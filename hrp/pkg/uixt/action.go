@@ -417,7 +417,8 @@ func sleepRandom(params []interface{}) error {
 		accProb += s.weight / totalProb
 		if r < accProb {
 			n := s.min + rand.Float64()*(s.max-s.min)
-			log.Info().Float64("duration", n).Msg("sleep random seconds")
+			log.Info().Float64("duration", n).
+				Interface("strategy_params", params).Msg("sleep random seconds")
 			time.Sleep(time.Duration(n*1000) * time.Millisecond)
 			return nil
 		}
