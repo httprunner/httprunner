@@ -132,9 +132,6 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		return errors.New("no text to tap")
 	}
 
-	// default to retry 10 times
-	options = append(options, WithMaxRetryTimes(10))
-
 	var point PointF
 	findTexts := func(d *DriverExt) error {
 		var err error
@@ -142,7 +139,7 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		if err != nil {
 			return err
 		}
-		points, err := ocrTexts.FindTexts(texts, options...)
+		points, err := ocrTexts.FindTexts(texts, dExt.ParseActionOptions(options...)...)
 		if err != nil {
 			return err
 		}

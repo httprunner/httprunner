@@ -260,8 +260,9 @@ func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobil
 // Sleep specify sleep seconds after last action
 func (s *StepMobile) Sleep(n float64) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_Sleep,
-		Params: n,
+		Method:  uixt.ACTION_Sleep,
+		Params:  n,
+		Options: nil,
 	})
 	return &StepMobile{step: s.step}
 }
@@ -272,40 +273,45 @@ func (s *StepMobile) Sleep(n float64) *StepMobile {
 // 2. [min1, max1, weight1, min2, max2, weight2, ...] : weight is the probability of the time range
 func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_SleepRandom,
-		Params: params,
+		Method:  uixt.ACTION_SleepRandom,
+		Params:  params,
+		Options: nil,
 	})
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) VideoCrawler(params map[string]interface{}) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_VideoCrawler,
-		Params: params,
+		Method:  uixt.ACTION_VideoCrawler,
+		Params:  params,
+		Options: nil,
 	})
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) ScreenShot() *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_ScreenShot,
-		Params: nil,
+		Method:  uixt.ACTION_ScreenShot,
+		Params:  nil,
+		Options: nil,
 	})
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) StartCamera() *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_StartCamera,
-		Params: nil,
+		Method:  uixt.ACTION_StartCamera,
+		Params:  nil,
+		Options: nil,
 	})
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) StopCamera() *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_StopCamera,
-		Params: nil,
+		Method:  uixt.ACTION_StopCamera,
+		Params:  nil,
+		Options: nil,
 	})
 	return &StepMobile{step: s.step}
 }

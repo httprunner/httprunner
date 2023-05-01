@@ -219,13 +219,20 @@ func (dExt *DriverExt) IsImageExist(text string) bool {
 	return err == nil
 }
 
-// (x1, y1) is the top left corner, (x2, y2) is the bottom right corner
-// the value of (x, y) is between 0 and 1, which means the percentage of the screen
-func (dExt *DriverExt) getAbsScope(x1, y1, x2, y2 float64) (int, int, int, int) {
-	return int(x1 * float64(dExt.windowSize.Width)),
-		int(y1 * float64(dExt.windowSize.Height)),
-		int(x2 * float64(dExt.windowSize.Width)),
-		int(y2 * float64(dExt.windowSize.Height))
+func (dExt *DriverExt) ParseActionOptions(options ...ActionOption) []ActionOption {
+	actionOptions := NewActionOptions(options...)
+
+	// convert relative scope to absolute scope
+	if len(actionOptions.AbsScope) != 4 && len(actionOptions.Scope) == 4 {
+		scope := actionOptions.Scope
+		x1 := int(scope[0] * float64(dExt.windowSize.Width))
+		y1 := int(scope[1] * float64(dExt.windowSize.Height))
+		x2 := int(scope[2] * float64(dExt.windowSize.Width))
+		y2 := int(scope[3] * float64(dExt.windowSize.Height))
+		actionOptions.AbsScope = []int{x1, y1, x2, y2}
+	}
+
+	return actionOptions.Options()
 }
 
 func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) bool {
