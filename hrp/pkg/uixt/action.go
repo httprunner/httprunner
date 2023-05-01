@@ -3,7 +3,6 @@ package uixt
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"math/rand"
 	"time"
 
@@ -82,10 +81,12 @@ type ActionOptions struct {
 	Frequency           int         `json:"frequency,omitempty" yaml:"frequency,omitempty"`
 
 	// scope related
-	Scope    []float64 `json:"scope,omitempty" yaml:"scope,omitempty"`         // used by ocr to get text position in the scope
-	AbsScope []int     `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"` // used by ocr to get text position in the scope
-	Offset   []int     `json:"offset,omitempty" yaml:"offset,omitempty"`       // used to tap offset of point
-	Index    int       `json:"index,omitempty" yaml:"index,omitempty"`         // index of the target element, should start from 1
+	// (x1, y1) is the top left corner, (x2, y2) is the bottom right corner
+	Scope    []float64 `json:"scope,omitempty" yaml:"scope,omitempty"`         // [x1, y1, x2, y2] in percentage of the screen
+	AbsScope []int     `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"` // [x1, y1, x2, y2] in absolute pixels
+
+	Offset []int `json:"offset,omitempty" yaml:"offset,omitempty"` // used to tap offset of point
+	Index  int   `json:"index,omitempty" yaml:"index,omitempty"`   // index of the target element, should start from 1
 
 	// element related
 	Text        string `json:"text,omitempty" yaml:"text,omitempty"`
@@ -146,11 +147,9 @@ func (o *ActionOptions) Options() []ActionOption {
 	if o.Frequency != 0 {
 		options = append(options, WithFrequency(o.Frequency))
 	}
-	if len(o.Scope) != 4 {
-		options = append(options, WithScope(0, 0, 1, 1))
-	}
-	if len(o.AbsScope) != 4 {
-		o.AbsScope = []int{0, 0, math.MaxInt64, math.MaxInt64}
+	if len(o.AbsScope) == 4 {
+		options = append(options, WithAbsScope(
+			o.AbsScope[0], o.AbsScope[1], o.AbsScope[2], o.AbsScope[3]))
 	}
 	if len(o.Offset) == 2 {
 		options = append(options, WithOffset(o.Offset[0], o.Offset[1]))
@@ -167,9 +166,7 @@ func (o *ActionOptions) Options() []ActionOption {
 }
 
 func NewActionOptions(options ...ActionOption) *ActionOptions {
-	actionOptions := &ActionOptions{
-		Custom: make(map[string]interface{}),
-	}
+	actionOptions := &ActionOptions{}
 	for _, option := range options {
 		option(actionOptions)
 	}
@@ -178,11 +175,6 @@ func NewActionOptions(options ...ActionOption) *ActionOptions {
 
 func mergeDataWithOptions(data map[string]interface{}, options ...ActionOption) map[string]interface{} {
 	actionOptions := NewActionOptions(options...)
-
-	// custom options
-	for k, v := range actionOptions.Custom {
-		data[k] = v
-	}
 
 	if actionOptions.Identifier != "" {
 		data["log"] = map[string]interface{}{
@@ -228,6 +220,13 @@ func mergeDataWithOptions(data map[string]interface{}, options ...ActionOption) 
 		data["isReplace"] = true // default true
 	}
 
+	// custom options
+	if actionOptions.Custom != nil {
+		for k, v := range actionOptions.Custom {
+			data[k] = v
+		}
+	}
+
 	return data
 }
 
@@ -235,6 +234,9 @@ type ActionOption func(o *ActionOptions)
 
 func WithCustomOption(key string, value interface{}) ActionOption {
 	return func(o *ActionOptions) {
+		if o.Custom == nil {
+			o.Custom = make(map[string]interface{})
+		}
 		o.Custom[key] = value
 	}
 }
@@ -284,9 +286,18 @@ func WithCustomDirection(sx, sy, ex, ey float64) ActionOption {
 }
 
 // WithScope inputs area of [(x1,y1), (x2,y2)]
+// x1, y1, x2, y2 are all in [0, 1], which means the relative position of the screen
 func WithScope(x1, y1, x2, y2 float64) ActionOption {
 	return func(o *ActionOptions) {
 		o.Scope = []float64{x1, y1, x2, y2}
+	}
+}
+
+// WithAbsScope inputs area of [(x1,y1), (x2,y2)]
+// x1, y1, x2, y2 are all absolute position of the screen
+func WithAbsScope(x1, y1, x2, y2 int) ActionOption {
+	return func(o *ActionOptions) {
+		o.AbsScope = []int{x1, y1, x2, y2}
 	}
 }
 
@@ -346,13 +357,6 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return fmt.Errorf("invalid %s params, should be app text(string), got %v",
 			ACTION_SwipeToTapText, action.Params)
 	case ACTION_SwipeToTapTexts:
-		if texts, ok := action.Params.([]interface{}); ok {
-			var textList []string
-			for _, t := range texts {
-				textList = append(textList, t.(string))
-			}
-			action.Params = textList
-		}
 		if texts, ok := action.Params.([]string); ok {
 			return dExt.swipeToTapTexts(texts, action.Options.Options()...)
 		}
@@ -391,9 +395,6 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			x, _ := location[0].(float64)
 			y, _ := location[1].(float64)
-			if len(action.Options.Offset) != 2 {
-				action.Options.Offset = []int{0, 0}
-			}
 			return dExt.TapAbsXY(x, y, action.Options.Options()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapAbsXY, action.Params)
@@ -404,13 +405,6 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return fmt.Errorf("invalid %s params: %v", ACTION_Tap, action.Params)
 	case ACTION_TapByOCR:
 		if ocrText, ok := action.Params.(string); ok {
-			if len(action.Options.Scope) != 4 {
-				action.Options.Scope = []float64{0, 0, 1, 1}
-			}
-			if len(action.Options.Offset) != 2 {
-				action.Options.Offset = []int{0, 0}
-			}
-
 			return dExt.TapByOCR(ocrText, action.Options.Options()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
@@ -460,11 +454,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
 	case ACTION_SleepRandom:
-		params, ok := action.Params.([]interface{})
-		if !ok {
-			return fmt.Errorf("invalid sleep random params: %v(%T)", action.Params, action.Params)
+		if params, ok := action.Params.([]interface{}); ok {
+			return sleepRandom(params)
 		}
-		return sleepRandom(params)
+		return fmt.Errorf("invalid sleep random params: %v(%T)", action.Params, action.Params)
 	case ACTION_ScreenShot:
 		// take screenshot
 		log.Info().Msg("take screenshot for current screen")

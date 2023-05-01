@@ -57,15 +57,19 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (
 	for _, ocrText := range t {
 		rect := ocrText.Rect
 
-		// not contains text
-		if !strings.Contains(ocrText.Text, text) {
-			continue
+		// check if text in scope
+		if len(actionOptions.AbsScope) == 4 {
+			if rect.Min.X < actionOptions.AbsScope[0] ||
+				rect.Min.Y < actionOptions.AbsScope[1] ||
+				rect.Max.X > actionOptions.AbsScope[2] ||
+				rect.Max.Y > actionOptions.AbsScope[3] {
+				// not in scope
+				continue
+			}
 		}
 
-		// check if text in scope
-		if rect.Min.X < actionOptions.AbsScope[0] || rect.Min.Y < actionOptions.AbsScope[1] ||
-			rect.Max.X > actionOptions.AbsScope[2] || rect.Max.Y > actionOptions.AbsScope[3] {
-			// not in scope
+		// not contains text
+		if !strings.Contains(ocrText.Text, text) {
 			continue
 		}
 
@@ -301,7 +305,7 @@ func (dExt *DriverExt) FindScreenTextByOCR(text string, options ...ActionOption)
 	if err != nil {
 		return
 	}
-	point, err = ocrTexts.FindText(text, options...)
+	point, err = ocrTexts.FindText(text, dExt.ParseActionOptions(options...)...)
 	if err != nil {
 		log.Warn().Msgf("FindText failed: %s", err.Error())
 		return
