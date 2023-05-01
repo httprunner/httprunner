@@ -4,12 +4,12 @@ import (
 	"fmt"
 )
 
-func (dExt *DriverExt) TapAbsXY(x, y float64, options ...DataOption) error {
+func (dExt *DriverExt) TapAbsXY(x, y float64, options ...ActionOption) error {
 	// tap on absolute coordinate [x, y]
 	return dExt.Driver.TapFloat(x, y, options...)
 }
 
-func (dExt *DriverExt) TapXY(x, y float64, options ...DataOption) error {
+func (dExt *DriverExt) TapXY(x, y float64, options ...ActionOption) error {
 	// tap on [x, y] percent of window size
 	if x > 1 || y > 1 {
 		return fmt.Errorf("x, y percentage should be < 1, got x=%v, y=%v", x, y)
@@ -21,12 +21,12 @@ func (dExt *DriverExt) TapXY(x, y float64, options ...DataOption) error {
 	return dExt.TapAbsXY(x, y, options...)
 }
 
-func (dExt *DriverExt) TapByOCR(ocrText string, options ...DataOption) error {
-	dataOptions := NewDataOptions(options...)
+func (dExt *DriverExt) TapByOCR(ocrText string, options ...ActionOption) error {
+	actionOptions := NewActionOptions(options...)
 
 	point, err := dExt.FindScreenTextByOCR(ocrText, options...)
 	if err != nil {
-		if dataOptions.IgnoreNotFoundError {
+		if actionOptions.IgnoreNotFoundError {
 			return nil
 		}
 		return err
@@ -35,12 +35,12 @@ func (dExt *DriverExt) TapByOCR(ocrText string, options ...DataOption) error {
 	return dExt.TapAbsXY(point.X, point.Y, options...)
 }
 
-func (dExt *DriverExt) TapByCV(imagePath string, options ...DataOption) error {
-	dataOptions := NewDataOptions(options...)
+func (dExt *DriverExt) TapByCV(imagePath string, options ...ActionOption) error {
+	actionOptions := NewActionOptions(options...)
 
 	point, err := dExt.FindImageRectInUIKit(imagePath, options...)
 	if err != nil {
-		if dataOptions.IgnoreNotFoundError {
+		if actionOptions.IgnoreNotFoundError {
 			return nil
 		}
 		return err
@@ -49,16 +49,16 @@ func (dExt *DriverExt) TapByCV(imagePath string, options ...DataOption) error {
 	return dExt.TapAbsXY(point.X, point.Y, options...)
 }
 
-func (dExt *DriverExt) Tap(param string, options ...DataOption) error {
+func (dExt *DriverExt) Tap(param string, options ...ActionOption) error {
 	return dExt.TapOffset(param, 0.5, 0.5, options...)
 }
 
-func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, options ...DataOption) (err error) {
-	dataOptions := NewDataOptions(options...)
+func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, options ...ActionOption) (err error) {
+	actionOptions := NewActionOptions(options...)
 
 	point, err := dExt.FindUIRectInUIKit(param, options...)
 	if err != nil {
-		if dataOptions.IgnoreNotFoundError {
+		if actionOptions.IgnoreNotFoundError {
 			return nil
 		}
 		return err

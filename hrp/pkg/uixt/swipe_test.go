@@ -9,21 +9,11 @@ import (
 func TestAndroidSwipeAction(t *testing.T) {
 	setupAndroid(t)
 
-	action := MobileAction{
-		Method: ACTION_Swipe,
-		Params: "up",
-	}
-	swipeAction := driverExt.prepareSwipeAction(action)
-
+	swipeAction := driverExt.prepareSwipeAction(WithDirection("up"))
 	err := swipeAction(driverExt)
 	checkErr(t, err)
 
-	action = MobileAction{
-		Method: ACTION_Swipe,
-		Params: []float64{0.5, 0.5, 0.5, 0.9},
-	}
-	swipeAction = driverExt.prepareSwipeAction(action)
-
+	swipeAction = driverExt.prepareSwipeAction(WithCustomDirection(0.5, 0.5, 0.5, 0.9))
 	err = swipeAction(driverExt)
 	checkErr(t, err)
 }
@@ -31,7 +21,7 @@ func TestAndroidSwipeAction(t *testing.T) {
 func TestAndroidSwipeToTapApp(t *testing.T) {
 	setupAndroid(t)
 
-	err := driverExt.swipeToTapApp("抖音", MobileAction{})
+	err := driverExt.swipeToTapApp("抖音")
 	checkErr(t, err)
 }
 
@@ -41,9 +31,6 @@ func TestAndroidSwipeToTapTexts(t *testing.T) {
 	err := driverExt.Driver.AppLaunch("com.ss.android.ugc.aweme")
 	checkErr(t, err)
 
-	action := MobileAction{
-		Params: "up",
-	}
-	err = driverExt.swipeToTapTexts([]string{"点击进入直播间", "直播中"}, action)
+	err = driverExt.swipeToTapTexts([]string{"点击进入直播间", "直播中"}, WithDirection("up"))
 	checkErr(t, err)
 }

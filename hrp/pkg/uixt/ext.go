@@ -200,7 +200,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...DataOption) (point PointF, err error) {
+func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...ActionOption) (point PointF, err error) {
 	// click on text, using OCR
 	if !isPathExists(search) {
 		return dExt.FindScreenTextByOCR(search, options...)

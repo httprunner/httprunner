@@ -48,10 +48,10 @@ func (t OCRTexts) texts() (texts []string) {
 	return texts
 }
 
-func (t OCRTexts) FindText(text string, options ...DataOption) (
+func (t OCRTexts) FindText(text string, options ...ActionOption) (
 	point PointF, err error) {
 
-	dataOptions := NewDataOptions(options...)
+	actionOptions := NewActionOptions(options...)
 
 	var rects []image.Rectangle
 	for _, ocrText := range t {
@@ -63,8 +63,8 @@ func (t OCRTexts) FindText(text string, options ...DataOption) (
 		}
 
 		// check if text in scope
-		if rect.Min.X < dataOptions.Scope[0] || rect.Max.X > dataOptions.Scope[2] ||
-			rect.Min.Y < dataOptions.Scope[1] || rect.Max.Y > dataOptions.Scope[3] {
+		if rect.Min.X < actionOptions.AbsScope[0] || rect.Min.Y < actionOptions.AbsScope[1] ||
+			rect.Max.X > actionOptions.AbsScope[2] || rect.Max.Y > actionOptions.AbsScope[3] {
 			// not in scope
 			continue
 		}
@@ -77,7 +77,7 @@ func (t OCRTexts) FindText(text string, options ...DataOption) (
 		}
 
 		// match exactly, and not specify index, return the first one
-		if dataOptions.Index == 0 {
+		if actionOptions.Index == 0 {
 			return getRectangleCenterPoint(rect), nil
 		}
 	}
@@ -88,7 +88,7 @@ func (t OCRTexts) FindText(text string, options ...DataOption) (
 	}
 
 	// get index
-	idx := dataOptions.Index
+	idx := actionOptions.Index
 	if idx > 0 {
 		// NOTICE: index start from 1
 		idx = idx - 1
@@ -105,7 +105,7 @@ func (t OCRTexts) FindText(text string, options ...DataOption) (
 	return getRectangleCenterPoint(rects[idx]), nil
 }
 
-func (t OCRTexts) FindTexts(texts []string, options ...DataOption) (points []PointF, err error) {
+func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (points []PointF, err error) {
 	for _, text := range texts {
 		point, err := t.FindText(text, options...)
 		if err != nil {
@@ -296,7 +296,7 @@ func (dExt *DriverExt) GetScreenTextsByOCR() (texts OCRTexts, err error) {
 	return ocrTexts, nil
 }
 
-func (dExt *DriverExt) FindScreenTextByOCR(text string, options ...DataOption) (point PointF, err error) {
+func (dExt *DriverExt) FindScreenTextByOCR(text string, options ...ActionOption) (point PointF, err error) {
 	ocrTexts, err := dExt.GetScreenTextsByOCR()
 	if err != nil {
 		return
