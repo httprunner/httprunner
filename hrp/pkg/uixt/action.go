@@ -3,6 +3,7 @@ package uixt
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 
@@ -61,116 +62,260 @@ const (
 )
 
 type MobileAction struct {
-	Method ActionMethod `json:"method,omitempty" yaml:"method,omitempty"`
-	Params interface{}  `json:"params,omitempty" yaml:"params,omitempty"`
-
-	Identifier          string      `json:"identifier,omitempty" yaml:"identifier,omitempty"`                     // used to identify the action in log
-	MaxRetryTimes       int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
-	WaitTime            float64     `json:"wait_time,omitempty" yaml:"wait_time,omitempty"`                       // wait time between swipe and ocr, unit: second
-	Duration            float64     `json:"duration,omitempty" yaml:"duration,omitempty"`                         // used to set duration of ios swipe action
-	Steps               int         `json:"steps,omitempty" yaml:"steps,omitempty"`                               // used to set steps of android swipe action
-	Direction           interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`                       // used by swipe to tap text or app
-	Scope               []float64   `json:"scope,omitempty" yaml:"scope,omitempty"`                               // used by ocr to get text position in the scope
-	Offset              []int       `json:"offset,omitempty" yaml:"offset,omitempty"`                             // used to tap offset of point
-	Index               int         `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
-	Timeout             int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
-	IgnoreNotFoundError bool        `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
-	Text                string      `json:"text,omitempty" yaml:"text,omitempty"`
-	ID                  string      `json:"id,omitempty" yaml:"id,omitempty"`
-	Description         string      `json:"description,omitempty" yaml:"description,omitempty"`
+	Method  ActionMethod   `json:"method,omitempty" yaml:"method,omitempty"`
+	Params  interface{}    `json:"params,omitempty" yaml:"params,omitempty"`
+	Options *ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
 }
 
-type ActionOption func(o *MobileAction)
+type ActionOptions struct {
+	// log
+	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"` // used to identify the action in log
+
+	// control related
+	MaxRetryTimes       int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
+	IgnoreNotFoundError bool        `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
+	Interval            float64     `json:"interval,omitempty" yaml:"interval,omitempty"`                         // interval between retries in seconds
+	PressDuration       float64     `json:"duration,omitempty" yaml:"duration,omitempty"`                         // used to set duration of ios swipe action
+	Steps               int         `json:"steps,omitempty" yaml:"steps,omitempty"`                               // used to set steps of android swipe action
+	Direction           interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`                       // used by swipe to tap text or app
+	Timeout             int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
+	Frequency           int         `json:"frequency,omitempty" yaml:"frequency,omitempty"`
+
+	// scope related
+	Scope    []float64 `json:"scope,omitempty" yaml:"scope,omitempty"`         // used by ocr to get text position in the scope
+	AbsScope []int     `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"` // used by ocr to get text position in the scope
+	Offset   []int     `json:"offset,omitempty" yaml:"offset,omitempty"`       // used to tap offset of point
+	Index    int       `json:"index,omitempty" yaml:"index,omitempty"`         // index of the target element, should start from 1
+
+	// element related
+	Text        string `json:"text,omitempty" yaml:"text,omitempty"`
+	ID          string `json:"id,omitempty" yaml:"id,omitempty"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+
+	// set custiom options such as textview, id, description
+	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
+}
+
+func (o *ActionOptions) Options() []ActionOption {
+	options := make([]ActionOption, 0)
+
+	if o.Identifier != "" {
+		options = append(options, WithIdentifier(o.Identifier))
+	}
+
+	if o.MaxRetryTimes != 0 {
+		options = append(options, WithMaxRetryTimes(o.MaxRetryTimes))
+	}
+	if o.IgnoreNotFoundError {
+		options = append(options, WithIgnoreNotFoundError(true))
+	}
+	if o.Interval != 0 {
+		options = append(options, WithInterval(o.Interval))
+	}
+	if o.PressDuration != 0 {
+		options = append(options, WithPressDuration(o.PressDuration))
+	}
+	if o.Steps != 0 {
+		options = append(options, WithSteps(o.Steps))
+	}
+
+	switch v := o.Direction.(type) {
+	case string:
+		options = append(options, WithDirection(v))
+	case []float64:
+		options = append(options, WithCustomDirection(
+			v[0], v[1],
+			v[2], v[3],
+		))
+	case []interface{}:
+		// loaded from json case
+		// custom direction: [fromX, fromY, toX, toY]
+		sx, _ := builtin.Interface2Float64(v[0])
+		sy, _ := builtin.Interface2Float64(v[1])
+		ex, _ := builtin.Interface2Float64(v[2])
+		ey, _ := builtin.Interface2Float64(v[3])
+		options = append(options, WithCustomDirection(
+			sx, sy,
+			ex, ey,
+		))
+	}
+
+	if o.Timeout != 0 {
+		options = append(options, WithTimeout(o.Timeout))
+	}
+	if o.Frequency != 0 {
+		options = append(options, WithFrequency(o.Frequency))
+	}
+	if len(o.Scope) != 4 {
+		options = append(options, WithScope(0, 0, 1, 1))
+	}
+	if len(o.AbsScope) != 4 {
+		o.AbsScope = []int{0, 0, math.MaxInt64, math.MaxInt64}
+	}
+	if len(o.Offset) == 2 {
+		options = append(options, WithOffset(o.Offset[0], o.Offset[1]))
+	}
+
+	// custom options
+	if o.Custom != nil {
+		for k, v := range o.Custom {
+			options = append(options, WithCustomOption(k, v))
+		}
+	}
+
+	return options
+}
+
+func NewActionOptions(options ...ActionOption) *ActionOptions {
+	actionOptions := &ActionOptions{
+		Custom: make(map[string]interface{}),
+	}
+	for _, option := range options {
+		option(actionOptions)
+	}
+	return actionOptions
+}
+
+func mergeDataWithOptions(data map[string]interface{}, options ...ActionOption) map[string]interface{} {
+	actionOptions := NewActionOptions(options...)
+
+	// custom options
+	for k, v := range actionOptions.Custom {
+		data[k] = v
+	}
+
+	if actionOptions.Identifier != "" {
+		data["log"] = map[string]interface{}{
+			"enable": true,
+			"data":   actionOptions.Identifier,
+		}
+	}
+
+	// handle point offset
+	if len(actionOptions.Offset) == 2 {
+		if x, ok := data["x"]; ok {
+			xf, _ := builtin.Interface2Float64(x)
+			data["x"] = xf + float64(actionOptions.Offset[0])
+		}
+		if y, ok := data["y"]; ok {
+			yf, _ := builtin.Interface2Float64(y)
+			data["y"] = yf + float64(actionOptions.Offset[1])
+		}
+	}
+
+	if actionOptions.Steps > 0 {
+		data["steps"] = actionOptions.Steps
+	}
+	if _, ok := data["steps"]; !ok {
+		data["steps"] = 12 // default steps
+	}
+
+	if actionOptions.PressDuration > 0 {
+		data["duration"] = actionOptions.PressDuration
+	}
+	if _, ok := data["duration"]; !ok {
+		data["duration"] = 0 // default duration
+	}
+
+	if actionOptions.Frequency > 0 {
+		data["frequency"] = actionOptions.Frequency
+	}
+	if _, ok := data["frequency"]; !ok {
+		data["frequency"] = 60 // default frequency
+	}
+
+	if _, ok := data["isReplace"]; !ok {
+		data["isReplace"] = true // default true
+	}
+
+	return data
+}
+
+type ActionOption func(o *ActionOptions)
+
+func WithCustomOption(key string, value interface{}) ActionOption {
+	return func(o *ActionOptions) {
+		o.Custom[key] = value
+	}
+}
 
 func WithIdentifier(identifier string) ActionOption {
-	return func(o *MobileAction) {
+	return func(o *ActionOptions) {
 		o.Identifier = identifier
 	}
 }
 
 func WithIndex(index int) ActionOption {
-	return func(o *MobileAction) {
+	return func(o *ActionOptions) {
 		o.Index = index
 	}
 }
 
-func WithWaitTime(sec float64) ActionOption {
-	return func(o *MobileAction) {
-		o.WaitTime = sec
+func WithInterval(sec float64) ActionOption {
+	return func(o *ActionOptions) {
+		o.Interval = sec
 	}
 }
 
-func WithDuration(duration float64) ActionOption {
-	return func(o *MobileAction) {
-		o.Duration = duration
+func WithPressDuration(duration float64) ActionOption {
+	return func(o *ActionOptions) {
+		o.PressDuration = duration
 	}
 }
 
 func WithSteps(steps int) ActionOption {
-	return func(o *MobileAction) {
+	return func(o *ActionOptions) {
 		o.Steps = steps
 	}
 }
 
 // WithDirection inputs direction (up, down, left, right)
 func WithDirection(direction string) ActionOption {
-	return func(o *MobileAction) {
+	return func(o *ActionOptions) {
 		o.Direction = direction
 	}
 }
 
 // WithCustomDirection inputs sx, sy, ex, ey
 func WithCustomDirection(sx, sy, ex, ey float64) ActionOption {
-	return func(o *MobileAction) {
+	return func(o *ActionOptions) {
 		o.Direction = []float64{sx, sy, ex, ey}
 	}
 }
 
 // WithScope inputs area of [(x1,y1), (x2,y2)]
 func WithScope(x1, y1, x2, y2 float64) ActionOption {
-	return func(o *MobileAction) {
+	return func(o *ActionOptions) {
 		o.Scope = []float64{x1, y1, x2, y2}
 	}
 }
 
 func WithOffset(offsetX, offsetY int) ActionOption {
-	return func(o *MobileAction) {
+	return func(o *ActionOptions) {
 		o.Offset = []int{offsetX, offsetY}
 	}
 }
 
-func WithText(text string) ActionOption {
-	return func(o *MobileAction) {
-		o.Text = text
-	}
-}
-
-func WithID(id string) ActionOption {
-	return func(o *MobileAction) {
-		o.ID = id
-	}
-}
-
-func WithDescription(description string) ActionOption {
-	return func(o *MobileAction) {
-		o.Description = description
+func WithFrequency(frequency int) ActionOption {
+	return func(o *ActionOptions) {
+		o.Frequency = frequency
 	}
 }
 
 func WithMaxRetryTimes(maxRetryTimes int) ActionOption {
-	return func(o *MobileAction) {
+	return func(o *ActionOptions) {
 		o.MaxRetryTimes = maxRetryTimes
 	}
 }
 
 func WithTimeout(timeout int) ActionOption {
-	return func(o *MobileAction) {
+	return func(o *ActionOptions) {
 		o.Timeout = timeout
 	}
 }
 
 func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
-	return func(o *MobileAction) {
+	return func(o *ActionOptions) {
 		o.IgnoreNotFoundError = ignoreError
 	}
 }
@@ -190,13 +335,13 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			ACTION_AppLaunch, action.Params)
 	case ACTION_SwipeToTapApp:
 		if appName, ok := action.Params.(string); ok {
-			return dExt.swipeToTapApp(appName, action)
+			return dExt.swipeToTapApp(appName, action.Options.Options()...)
 		}
 		return fmt.Errorf("invalid %s params, should be app name(string), got %v",
 			ACTION_SwipeToTapApp, action.Params)
 	case ACTION_SwipeToTapText:
 		if text, ok := action.Params.(string); ok {
-			return dExt.swipeToTapTexts([]string{text}, action)
+			return dExt.swipeToTapTexts([]string{text}, action.Options.Options()...)
 		}
 		return fmt.Errorf("invalid %s params, should be app text(string), got %v",
 			ACTION_SwipeToTapText, action.Params)
@@ -209,7 +354,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			action.Params = textList
 		}
 		if texts, ok := action.Params.([]string); ok {
-			return dExt.swipeToTapTexts(texts, action)
+			return dExt.swipeToTapTexts(texts, action.Options.Options()...)
 		}
 		return fmt.Errorf("invalid %s params, should be app text([]string), got %v",
 			ACTION_SwipeToTapText, action.Params)
@@ -235,7 +380,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			x, _ := location[0].(float64)
 			y, _ := location[1].(float64)
-			return dExt.TapXY(x, y, WithDataIdentifier(action.Identifier))
+			return dExt.TapXY(x, y, action.Options.Options()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapXY, action.Params)
 	case ACTION_TapAbsXY:
@@ -246,37 +391,32 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			x, _ := location[0].(float64)
 			y, _ := location[1].(float64)
-			if len(action.Offset) != 2 {
-				action.Offset = []int{0, 0}
+			if len(action.Options.Offset) != 2 {
+				action.Options.Offset = []int{0, 0}
 			}
-			return dExt.TapAbsXY(x, y, WithDataIdentifier(action.Identifier), WithDataOffset(action.Offset[0], action.Offset[1]))
+			return dExt.TapAbsXY(x, y, action.Options.Options()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapAbsXY, action.Params)
 	case ACTION_Tap:
 		if param, ok := action.Params.(string); ok {
-			return dExt.Tap(param, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(true), WithDataIndex(action.Index))
+			return dExt.Tap(param, action.Options.Options()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_Tap, action.Params)
 	case ACTION_TapByOCR:
 		if ocrText, ok := action.Params.(string); ok {
-			if len(action.Scope) != 4 {
-				action.Scope = []float64{0, 0, 1, 1}
+			if len(action.Options.Scope) != 4 {
+				action.Options.Scope = []float64{0, 0, 1, 1}
 			}
-			if len(action.Offset) != 2 {
-				action.Offset = []int{0, 0}
+			if len(action.Options.Offset) != 2 {
+				action.Options.Offset = []int{0, 0}
 			}
 
-			indexOption := WithDataIndex(action.Index)
-			offsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
-			scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
-			identifierOption := WithDataIdentifier(action.Identifier)
-			IgnoreNotFoundErrorOption := WithDataIgnoreNotFoundError(action.IgnoreNotFoundError)
-			return dExt.TapByOCR(ocrText, identifierOption, IgnoreNotFoundErrorOption, indexOption, scopeOption, offsetOption)
+			return dExt.TapByOCR(ocrText, action.Options.Options()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
 		if imagePath, ok := action.Params.(string); ok {
-			return dExt.TapByCV(imagePath, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(true), WithDataIndex(action.Index))
+			return dExt.TapByCV(imagePath, action.Options.Options()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
@@ -296,27 +436,14 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTap, action.Params)
 	case ACTION_Swipe:
-		swipeAction := dExt.prepareSwipeAction(action)
+		swipeAction := dExt.prepareSwipeAction(action.Options.Options()...)
 		return swipeAction(dExt)
 	case ACTION_Input:
 		// input text on current active element
 		// append \n to send text with enter
 		// send \b\b\b to delete 3 chars
 		param := fmt.Sprintf("%v", action.Params)
-		options := []DataOption{}
-		if action.Text != "" {
-			options = append(options, WithCustomOption("textview", action.Text))
-		}
-		if action.ID != "" {
-			options = append(options, WithCustomOption("id", action.ID))
-		}
-		if action.Description != "" {
-			options = append(options, WithCustomOption("description", action.Description))
-		}
-		if action.Identifier != "" {
-			options = append(options, WithDataIdentifier(action.Identifier))
-		}
-		return dExt.Driver.Input(param, options...)
+		return dExt.Driver.Input(param, action.Options.Options()...)
 	case ACTION_Back:
 		return dExt.Driver.PressBack()
 	case ACTION_Sleep:

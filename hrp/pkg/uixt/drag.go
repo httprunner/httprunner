@@ -24,5 +24,5 @@ func (dExt *DriverExt) DragOffsetFloat(pathname string, toX, toY, xOffset, yOffs
 
 	// FIXME: handle offset
 	return dExt.Driver.DragFloat(point.X+xOffset, point.Y+yOffset, toX, toY,
-		WithDataPressDuration(pressForDuration[0]))
+		WithPressDuration(pressForDuration[0]))
 }

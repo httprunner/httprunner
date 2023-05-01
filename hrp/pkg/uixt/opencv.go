@@ -111,7 +111,7 @@ func (dExt *DriverExt) FindAllImageRect(search string) (rects []image.Rectangle,
 	return
 }
 
-func (dExt *DriverExt) FindImageRectInUIKit(imagePath string, options ...DataOption) (point PointF, err error) {
+func (dExt *DriverExt) FindImageRectInUIKit(imagePath string, options ...ActionOption) (point PointF, err error) {
 	var bufSource, bufSearch *bytes.Buffer
 	if bufSearch, err = getBufFromDisk(imagePath); err != nil {
 		return PointF{}, err

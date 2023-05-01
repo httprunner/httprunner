@@ -81,7 +81,7 @@ func (ad *adbDriver) Scale() (scale float64, err error) {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (ad *adbDriver) PressBack(options ...DataOption) (err error) {
+func (ad *adbDriver) PressBack(options ...ActionOption) (err error) {
 	// adb shell input keyevent 4
 	_, err = ad.adbClient.RunShellCommand("input", "keyevent", fmt.Sprintf("%d", KCBack))
 	return
@@ -185,16 +185,16 @@ func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err erro
 	return true, nil
 }
 
-func (ad *adbDriver) Tap(x, y int, options ...DataOption) error {
+func (ad *adbDriver) Tap(x, y int, options ...ActionOption) error {
 	return ad.TapFloat(float64(x), float64(y), options...)
 }
 
-func (ad *adbDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
-	dataOptions := NewDataOptions(options...)
+func (ad *adbDriver) TapFloat(x, y float64, options ...ActionOption) (err error) {
+	actionOptions := NewActionOptions(options...)
 
-	if len(dataOptions.Offset) == 2 {
-		x += float64(dataOptions.Offset[0])
-		y += float64(dataOptions.Offset[1])
+	if len(actionOptions.Offset) == 2 {
+		x += float64(actionOptions.Offset[0])
+		y += float64(actionOptions.Offset[1])
 	}
 
 	// adb shell input tap x y
@@ -221,20 +221,20 @@ func (ad *adbDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err err
 	return
 }
 
-func (ad *adbDriver) Drag(fromX, fromY, toX, toY int, options ...DataOption) error {
+func (ad *adbDriver) Drag(fromX, fromY, toX, toY int, options ...ActionOption) error {
 	return ad.DragFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
-func (ad *adbDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOption) (err error) {
+func (ad *adbDriver) DragFloat(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
+func (ad *adbDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error {
 	return ad.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
-func (ad *adbDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
+func (ad *adbDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	// adb shell input swipe fromX fromY toX toY
 	_, err := ad.adbClient.RunShellCommand(
 		"input", "swipe",
@@ -263,13 +263,13 @@ func (ad *adbDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 	return
 }
 
-func (ad *adbDriver) SendKeys(text string, options ...DataOption) (err error) {
+func (ad *adbDriver) SendKeys(text string, options ...ActionOption) (err error) {
 	// adb shell input text <text>
 	_, err = ad.adbClient.RunShellCommand("input", "text", text)
 	return
 }
 
-func (ad *adbDriver) Input(text string, options ...DataOption) (err error) {
+func (ad *adbDriver) Input(text string, options ...ActionOption) (err error) {
 	return ad.SendKeys(text, options...)
 }
 

@@ -69,12 +69,11 @@ func (s *StepMobile) Home() *StepMobile {
 // TapXY taps the point {X,Y}, X & Y is percentage of coordinates
 func (s *StepMobile) TapXY(x, y float64, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_TapXY,
-		Params: []float64{x, y},
+		Method:  uixt.ACTION_TapXY,
+		Params:  []float64{x, y},
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
@@ -82,12 +81,11 @@ func (s *StepMobile) TapXY(x, y float64, options ...uixt.ActionOption) *StepMobi
 // TapAbsXY taps the point {X,Y}, X & Y is absolute coordinates
 func (s *StepMobile) TapAbsXY(x, y float64, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_TapAbsXY,
-		Params: []float64{x, y},
+		Method:  uixt.ACTION_TapAbsXY,
+		Params:  []float64{x, y},
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
@@ -95,12 +93,11 @@ func (s *StepMobile) TapAbsXY(x, y float64, options ...uixt.ActionOption) *StepM
 // Tap taps on the target element
 func (s *StepMobile) Tap(params string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Tap,
-		Params: params,
+		Method:  uixt.ACTION_Tap,
+		Params:  params,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
@@ -108,12 +105,11 @@ func (s *StepMobile) Tap(params string, options ...uixt.ActionOption) *StepMobil
 // Tap taps on the target element by OCR recognition
 func (s *StepMobile) TapByOCR(ocrText string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_TapByOCR,
-		Params: ocrText,
+		Method:  uixt.ACTION_TapByOCR,
+		Params:  ocrText,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
@@ -121,153 +117,142 @@ func (s *StepMobile) TapByOCR(ocrText string, options ...uixt.ActionOption) *Ste
 // Tap taps on the target element by CV recognition
 func (s *StepMobile) TapByCV(imagePath string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_TapByCV,
-		Params: imagePath,
+		Method:  uixt.ACTION_TapByCV,
+		Params:  imagePath,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 // DoubleTapXY double taps the point {X,Y}, X & Y is percentage of coordinates
-func (s *StepMobile) DoubleTapXY(x, y float64) *StepMobile {
+func (s *StepMobile) DoubleTapXY(x, y float64, options ...uixt.ActionOption) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_DoubleTapXY,
-		Params: []float64{x, y},
+		Method:  uixt.ACTION_DoubleTapXY,
+		Params:  []float64{x, y},
+		Options: uixt.NewActionOptions(options...),
 	})
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) DoubleTap(params string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_DoubleTap,
-		Params: params,
+		Method:  uixt.ACTION_DoubleTap,
+		Params:  params,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) Back(options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Back,
-		Params: nil,
+		Method:  uixt.ACTION_Back,
+		Params:  nil,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) Swipe(sx, sy, ex, ey float64, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Swipe,
-		Params: []float64{sx, sy, ex, ey},
+		Method:  uixt.ACTION_Swipe,
+		Params:  []float64{sx, sy, ex, ey},
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeUp(options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Swipe,
-		Params: "up",
+		Method:  uixt.ACTION_Swipe,
+		Params:  "up",
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeDown(options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Swipe,
-		Params: "down",
+		Method:  uixt.ACTION_Swipe,
+		Params:  "down",
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeLeft(options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Swipe,
-		Params: "left",
+		Method:  uixt.ACTION_Swipe,
+		Params:  "left",
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeRight(options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Swipe,
-		Params: "right",
+		Method:  uixt.ACTION_Swipe,
+		Params:  "right",
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeToTapApp(appName string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_SwipeToTapApp,
-		Params: appName,
+		Method:  uixt.ACTION_SwipeToTapApp,
+		Params:  appName,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeToTapText(text string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_SwipeToTapText,
-		Params: text,
+		Method:  uixt.ACTION_SwipeToTapText,
+		Params:  text,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeToTapTexts(texts interface{}, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_SwipeToTapTexts,
-		Params: texts,
+		Method:  uixt.ACTION_SwipeToTapTexts,
+		Params:  texts,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Input,
-		Params: text,
+		Method:  uixt.ACTION_Input,
+		Params:  text,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
