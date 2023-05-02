@@ -143,7 +143,7 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		if err != nil {
 			return err
 		}
-		point = points[0] // FIXME
+		point = points[0].Center() // FIXME
 		return nil
 	}
 	foundTextAction := func(d *DriverExt) error {

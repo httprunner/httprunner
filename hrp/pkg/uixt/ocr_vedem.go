@@ -39,6 +39,10 @@ type OCRText struct {
 	Rect image.Rectangle
 }
 
+func (t OCRText) Center() PointF {
+	return getRectangleCenterPoint(t.Rect)
+}
+
 type OCRTexts []OCRText
 
 func (t OCRTexts) texts() (texts []string) {
@@ -49,11 +53,11 @@ func (t OCRTexts) texts() (texts []string) {
 }
 
 func (t OCRTexts) FindText(text string, options ...ActionOption) (
-	point PointF, err error) {
+	result OCRText, err error) {
 
 	actionOptions := NewActionOptions(options...)
 
-	var rects []image.Rectangle
+	var results []OCRText
 	for _, ocrText := range t {
 		rect := ocrText.Rect
 
@@ -80,44 +84,44 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (
 			}
 		}
 
-		rects = append(rects, rect)
+		results = append(results, ocrText)
 	}
 
-	if len(rects) == 0 {
-		return PointF{}, errors.Wrap(code.OCRTextNotFoundError,
+	if len(results) == 0 {
+		return OCRText{}, errors.Wrap(code.OCRTextNotFoundError,
 			fmt.Sprintf("text %s not found in %v", text, t.texts()))
 	}
 
 	// get index
 	idx := actionOptions.Index
 	if idx < 0 {
-		idx = len(rects) + idx
+		idx = len(results) + idx
 	}
 
 	// index out of range
-	if idx >= len(rects) || idx < 0 {
-		return PointF{}, errors.Wrap(code.OCRTextNotFoundError,
-			fmt.Sprintf("text %s found %d, index %d out of range", text, len(rects), idx))
+	if idx >= len(results) || idx < 0 {
+		return OCRText{}, errors.Wrap(code.OCRTextNotFoundError,
+			fmt.Sprintf("text %s found %d, index %d out of range", text, len(results), idx))
 	}
 
-	return getRectangleCenterPoint(rects[idx]), nil
+	return results[idx], nil
 }
 
 func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (
-	points []PointF, err error) {
+	results OCRTexts, err error) {
 	for _, text := range texts {
-		point, err := t.FindText(text, options...)
+		ocrText, err := t.FindText(text, options...)
 		if err != nil {
 			continue
 		}
-		points = append(points, point)
+		results = append(results, ocrText)
 	}
 
-	if len(points) != len(texts) {
+	if len(results) != len(texts) {
 		return nil, errors.Wrap(code.OCRTextNotFoundError,
 			fmt.Sprintf("texts %s not found in %v", texts, t.texts()))
 	}
-	return points, nil
+	return results, nil
 }
 
 func newVEDEMOCRService() (*veDEMOCRService, error) {
@@ -300,11 +304,12 @@ func (dExt *DriverExt) FindScreenTextByOCR(text string, options ...ActionOption)
 	if err != nil {
 		return
 	}
-	point, err = ocrTexts.FindText(text, dExt.ParseActionOptions(options...)...)
+	result, err := ocrTexts.FindText(text, dExt.ParseActionOptions(options...)...)
 	if err != nil {
 		log.Warn().Msgf("FindText failed: %s", err.Error())
 		return
 	}
+	point = result.Center()
 
 	log.Info().Str("text", text).
 		Interface("point", point).Msgf("FindScreenTextByOCR success")
