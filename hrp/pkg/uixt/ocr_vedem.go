@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"strings"
+	"regexp"
 	"time"
 
 	"github.com/pkg/errors"
@@ -68,22 +68,19 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (
 			}
 		}
 
-		// not contains text
-		if !strings.Contains(ocrText.Text, text) {
-			continue
+		if actionOptions.Regex {
+			// regex on, check if match regex
+			if !regexp.MustCompile(text).MatchString(ocrText.Text) {
+				continue
+			}
+		} else {
+			// regex off, check if match exactly
+			if ocrText.Text != text {
+				continue
+			}
 		}
 
 		rects = append(rects, rect)
-
-		// contains text while not match exactly
-		if ocrText.Text != text {
-			continue
-		}
-
-		// match exactly, and not specify index, return the first one
-		if actionOptions.Index == 0 {
-			return getRectangleCenterPoint(rect), nil
-		}
 	}
 
 	if len(rects) == 0 {
@@ -93,15 +90,12 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (
 
 	// get index
 	idx := actionOptions.Index
-	if idx > 0 {
-		// NOTICE: index start from 1
-		idx = idx - 1
-	} else if idx < 0 {
+	if idx < 0 {
 		idx = len(rects) + idx
 	}
 
 	// index out of range
-	if idx >= len(rects) {
+	if idx >= len(rects) || idx < 0 {
 		return PointF{}, errors.Wrap(code.OCRTextNotFoundError,
 			fmt.Sprintf("text %s found %d, index %d out of range", text, len(rects), idx))
 	}
@@ -109,7 +103,8 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (
 	return getRectangleCenterPoint(rects[idx]), nil
 }
 
-func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (points []PointF, err error) {
+func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (
+	points []PointF, err error) {
 	for _, text := range texts {
 		point, err := t.FindText(text, options...)
 		if err != nil {

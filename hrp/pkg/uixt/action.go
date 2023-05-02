@@ -85,13 +85,9 @@ type ActionOptions struct {
 	Scope    []float64 `json:"scope,omitempty" yaml:"scope,omitempty"`         // [x1, y1, x2, y2] in percentage of the screen
 	AbsScope []int     `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"` // [x1, y1, x2, y2] in absolute pixels
 
+	Regex  bool  `json:"regex,omitempty" yaml:"regex,omitempty"`   // use regex to match text
 	Offset []int `json:"offset,omitempty" yaml:"offset,omitempty"` // used to tap offset of point
-	Index  int   `json:"index,omitempty" yaml:"index,omitempty"`   // index of the target element, should start from 1
-
-	// element related
-	Text        string `json:"text,omitempty" yaml:"text,omitempty"`
-	ID          string `json:"id,omitempty" yaml:"id,omitempty"`
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Index  int   `json:"index,omitempty" yaml:"index,omitempty"`   // index of the target element
 
 	// set custiom options such as textview, id, description
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
@@ -153,6 +149,9 @@ func (o *ActionOptions) Options() []ActionOption {
 	}
 	if len(o.Offset) == 2 {
 		options = append(options, WithOffset(o.Offset[0], o.Offset[1]))
+	}
+	if o.Regex {
+		options = append(options, WithRegex(true))
 	}
 
 	// custom options
@@ -304,6 +303,12 @@ func WithAbsScope(x1, y1, x2, y2 int) ActionOption {
 func WithOffset(offsetX, offsetY int) ActionOption {
 	return func(o *ActionOptions) {
 		o.Offset = []int{offsetX, offsetY}
+	}
+}
+
+func WithRegex(regex bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.Regex = regex
 	}
 }
 
