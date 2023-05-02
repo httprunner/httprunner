@@ -66,6 +66,17 @@ type MobileAction struct {
 	Options *ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
 }
 
+// (x1, y1) is the top left corner, (x2, y2) is the bottom right corner
+// [x1, y1, x2, y2] in percentage of the screen
+type Scope []float64
+
+// [x1, y1, x2, y2] in absolute pixels
+type AbsScope []int
+
+func (s AbsScope) Option() ActionOption {
+	return WithAbsScope(s[0], s[1], s[2], s[3])
+}
+
 type ActionOptions struct {
 	// log
 	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"` // used to identify the action in log
@@ -81,9 +92,8 @@ type ActionOptions struct {
 	Frequency           int         `json:"frequency,omitempty" yaml:"frequency,omitempty"`
 
 	// scope related
-	// (x1, y1) is the top left corner, (x2, y2) is the bottom right corner
-	Scope    []float64 `json:"scope,omitempty" yaml:"scope,omitempty"`         // [x1, y1, x2, y2] in percentage of the screen
-	AbsScope []int     `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"` // [x1, y1, x2, y2] in absolute pixels
+	Scope    Scope    `json:"scope,omitempty" yaml:"scope,omitempty"`
+	AbsScope AbsScope `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"`
 
 	Regex  bool  `json:"regex,omitempty" yaml:"regex,omitempty"`   // use regex to match text
 	Offset []int `json:"offset,omitempty" yaml:"offset,omitempty"` // used to tap offset of point
@@ -288,7 +298,7 @@ func WithCustomDirection(sx, sy, ex, ey float64) ActionOption {
 // x1, y1, x2, y2 are all in [0, 1], which means the relative position of the screen
 func WithScope(x1, y1, x2, y2 float64) ActionOption {
 	return func(o *ActionOptions) {
-		o.Scope = []float64{x1, y1, x2, y2}
+		o.Scope = Scope{x1, y1, x2, y2}
 	}
 }
 
@@ -296,7 +306,7 @@ func WithScope(x1, y1, x2, y2 float64) ActionOption {
 // x1, y1, x2, y2 are all absolute position of the screen
 func WithAbsScope(x1, y1, x2, y2 int) ActionOption {
 	return func(o *ActionOptions) {
-		o.AbsScope = []int{x1, y1, x2, y2}
+		o.AbsScope = AbsScope{x1, y1, x2, y2}
 	}
 }
 
@@ -334,6 +344,28 @@ func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
 	return func(o *ActionOptions) {
 		o.IgnoreNotFoundError = ignoreError
 	}
+}
+
+func (dExt *DriverExt) ParseActionOptions(options ...ActionOption) []ActionOption {
+	actionOptions := NewActionOptions(options...)
+
+	// convert relative scope to absolute scope
+	if len(actionOptions.AbsScope) != 4 && len(actionOptions.Scope) == 4 {
+		scope := actionOptions.Scope
+		actionOptions.AbsScope = dExt.GenAbsScope(
+			scope[0], scope[1], scope[2], scope[3])
+	}
+
+	return actionOptions.Options()
+}
+
+func (dExt *DriverExt) GenAbsScope(x1, y1, x2, y2 float64) AbsScope {
+	// convert relative scope to absolute scope
+	absX1 := int(x1 * float64(dExt.windowSize.Width))
+	absY1 := int(y1 * float64(dExt.windowSize.Height))
+	absX2 := int(x2 * float64(dExt.windowSize.Width))
+	absY2 := int(y2 * float64(dExt.windowSize.Height))
+	return AbsScope{absX1, absY1, absX2, absY2}
 }
 
 func (dExt *DriverExt) DoAction(action MobileAction) error {

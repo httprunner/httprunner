@@ -219,22 +219,6 @@ func (dExt *DriverExt) IsImageExist(text string) bool {
 	return err == nil
 }
 
-func (dExt *DriverExt) ParseActionOptions(options ...ActionOption) []ActionOption {
-	actionOptions := NewActionOptions(options...)
-
-	// convert relative scope to absolute scope
-	if len(actionOptions.AbsScope) != 4 && len(actionOptions.Scope) == 4 {
-		scope := actionOptions.Scope
-		x1 := int(scope[0] * float64(dExt.windowSize.Width))
-		y1 := int(scope[1] * float64(dExt.windowSize.Height))
-		x2 := int(scope[2] * float64(dExt.windowSize.Width))
-		y2 := int(scope[3] * float64(dExt.windowSize.Height))
-		actionOptions.AbsScope = []int{x1, y1, x2, y2}
-	}
-
-	return actionOptions.Options()
-}
-
 func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) bool {
 	var exp bool
 	if assert == AssertionExists || assert == AssertionEqual {
