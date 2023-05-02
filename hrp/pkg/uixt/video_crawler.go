@@ -199,6 +199,14 @@ func (l *LiveCrawler) exitLiveRoom() error {
 }
 
 func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
+	// set default sleep random strategy if not set
+	if configs.Feed.SleepRandom == nil {
+		configs.Feed.SleepRandom = []interface{}{1, 5}
+	}
+	if configs.Live.SleepRandom == nil {
+		configs.Live.SleepRandom = []interface{}{10, 15}
+	}
+
 	currVideoStat := &VideoStat{
 		configs: configs,
 
