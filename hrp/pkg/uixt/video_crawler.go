@@ -79,7 +79,7 @@ func (l *LiveCrawler) checkLiveVideo(texts OCRTexts) (enterPoint PointF, yes boo
 	// 预览流入口
 	points, err := texts.FindTexts([]string{"点击进入直播间", "直播中"})
 	if err == nil {
-		return points[0], true
+		return points[0].Center(), true
 	}
 
 	// TODO: 头像入口
@@ -271,7 +271,8 @@ func (dExt *DriverExt) autoPopupHandler(texts OCRTexts) error {
 		points, err := texts.FindTexts([]string{"确定", "取消"})
 		if err == nil {
 			log.Warn().Msg("text popup found")
-			if err := dExt.TapAbsXY(points[1].X, points[1].Y); err != nil {
+			point := points[1].Center()
+			if err := dExt.TapAbsXY(point.X, point.Y); err != nil {
 				log.Error().Err(err).Msg("tap popup failed")
 				return err
 			}
