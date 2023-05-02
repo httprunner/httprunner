@@ -28,7 +28,59 @@
                                     10,
                                     0.3
                                 ],
-                                "target_count": 5
+                                "target_count": 5,
+                                "target_labels": [
+                                    {
+                                        "regex": true,
+                                        "scope": [
+                                            0,
+                                            0.5,
+                                            1,
+                                            1
+                                        ],
+                                        "text": "^广告$"
+                                    },
+                                    {
+                                        "regex": true,
+                                        "scope": [
+                                            0,
+                                            0.5,
+                                            1,
+                                            1
+                                        ],
+                                        "text": "^图文$"
+                                    },
+                                    {
+                                        "regex": true,
+                                        "scope": [
+                                            0,
+                                            0.5,
+                                            1,
+                                            1
+                                        ],
+                                        "text": "^特效\\|"
+                                    },
+                                    {
+                                        "regex": true,
+                                        "scope": [
+                                            0,
+                                            0.5,
+                                            1,
+                                            1
+                                        ],
+                                        "text": "^模板\\|"
+                                    },
+                                    {
+                                        "regex": true,
+                                        "scope": [
+                                            0,
+                                            0.5,
+                                            1,
+                                            1
+                                        ],
+                                        "text": "^购物\\|"
+                                    }
+                                ]
                             },
                             "live": {
                                 "sleep_random": [

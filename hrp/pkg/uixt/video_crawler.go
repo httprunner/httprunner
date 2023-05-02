@@ -12,13 +12,16 @@ import (
 type VideoStat struct {
 	configs *VideoCrawlerConfigs
 
-	FeedCount int `json:"feed_count"`
-	LiveCount int `json:"live_count"`
+	FeedCount int            `json:"feed_count"`
+	FeedStat  map[string]int `json:"feed_stat"` // 分类统计 feed 数量：视频/图文/广告/特效/模板/购物
+	LiveCount int            `json:"live_count"`
+	LiveStat  map[string]int `json:"live_stat"` // 分类统计 live 数量：秀场/游戏/电商/多人
 }
 
 func (s *VideoStat) isFeedTargetAchieved() bool {
 	log.Info().
 		Int("count", s.FeedCount).
+		Interface("stat", s.FeedStat).
 		Int("target", s.configs.Feed.TargetCount).
 		Msg("current feed count")
 
@@ -28,6 +31,7 @@ func (s *VideoStat) isFeedTargetAchieved() bool {
 func (s *VideoStat) isLiveTargetAchieved() bool {
 	log.Info().
 		Int("count", s.LiveCount).
+		Interface("stat", s.FeedStat).
 		Int("target", s.configs.Live.TargetCount).
 		Msg("current live count")
 
@@ -38,14 +42,55 @@ func (s *VideoStat) isTargetAchieved() bool {
 	return s.isFeedTargetAchieved() && s.isLiveTargetAchieved()
 }
 
+// incrFeed increases feed count and feed stat
+func (s *VideoStat) incrFeed(texts OCRTexts, driverExt *DriverExt) error {
+	// feed author
+	actionOptions := []ActionOption{
+		WithRegex(true),
+		driverExt.GenAbsScope(0, 0.5, 1, 1).Option(),
+	}
+	if ocrText, err := texts.FindText("^@", actionOptions...); err == nil {
+		log.Info().Str("author", ocrText.Text).Msg("found feed author")
+	}
+
+	for _, targetLabel := range s.configs.Feed.TargetLabels {
+		scope := targetLabel.Scope
+		actionOptions := []ActionOption{
+			WithRegex(targetLabel.Regex),
+			driverExt.GenAbsScope(scope[0], scope[1], scope[2], scope[3]).Option(),
+		}
+		if ocrText, err := texts.FindText(targetLabel.Text, actionOptions...); err == nil {
+			log.Info().Str("label", targetLabel.Text).
+				Str("text", ocrText.Text).Msg("found feed success")
+
+			key := targetLabel.Text
+			if _, ok := s.FeedStat[key]; !ok {
+				s.FeedStat[key] = 0
+			}
+			s.FeedStat[key]++
+		}
+	}
+
+	s.FeedCount++
+	return nil
+}
+
+type TargetLabel struct {
+	Text  string `json:"text"`
+	Scope Scope  `json:"scope"`
+	Regex bool   `json:"regex"`
+}
+
 type FeedConfig struct {
-	TargetCount int           `json:"target_count"`
-	SleepRandom []interface{} `json:"sleep_random"`
+	TargetCount  int           `json:"target_count"`
+	TargetLabels []TargetLabel `json:"target_labels"`
+	SleepRandom  []interface{} `json:"sleep_random"`
 }
 
 type LiveConfig struct {
-	TargetCount int           `json:"target_count"`
-	SleepRandom []interface{} `json:"sleep_random"`
+	TargetCount  int           `json:"target_count"`
+	TargetLabels []TargetLabel `json:"target_labels"`
+	SleepRandom  []interface{} `json:"sleep_random"`
 }
 
 type VideoCrawlerConfigs struct {
@@ -156,6 +201,11 @@ func (l *LiveCrawler) exitLiveRoom() error {
 func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	currVideoStat := &VideoStat{
 		configs: configs,
+
+		FeedCount: 0,
+		FeedStat:  make(map[string]int),
+		LiveCount: 0,
+		LiveStat:  make(map[string]int),
 	}
 	defer func() {
 		dExt.cacheStepData.VideoStat = currVideoStat
@@ -205,9 +255,11 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			}
 		}
 
-		// TODO: check feed type
+		// check feed type and incr feed count
+		if err := currVideoStat.incrFeed(texts, dExt); err != nil {
+			log.Error().Err(err).Msg("incr feed failed")
+		}
 
-		currVideoStat.FeedCount++
 		// sleep custom random time
 		if err := sleepRandom(configs.Feed.SleepRandom); err != nil {
 			log.Error().Err(err).Msg("sleep random failed")
@@ -225,6 +277,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			log.Error().Err(err).Msg("swipe up failed")
 			return err
 		}
+		time.Sleep(1 * time.Second)
 	}
 
 	return nil
