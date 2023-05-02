@@ -214,7 +214,8 @@ func (wc *WorldCupLive) EnterLive(bundleID string) error {
 	// 青少年弹窗处理
 	if ocrTexts, err := wc.driver.GetScreenTextsByOCR(); err == nil {
 		if points, err := ocrTexts.FindTexts([]string{"青少年模式", "我知道了"}); err == nil {
-			_ = wc.driver.TapAbsXY(points[1].X, points[1].Y)
+			point := points[1].Center()
+			_ = wc.driver.TapAbsXY(point.X, point.Y)
 		}
 	}
 

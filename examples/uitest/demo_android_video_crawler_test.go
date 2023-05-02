@@ -23,6 +23,13 @@ func TestAndroidVideoCrawlerTest(t *testing.T) {
 					"app_package_name": "com.ss.android.ugc.aweme",
 					"feed": map[string]interface{}{
 						"target_count": 5,
+						"target_labels": []map[string]interface{}{
+							{"text": "^广告$", "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+							{"text": "^图文$", "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+							{"text": `^特效\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+							{"text": `^模板\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+							{"text": `^购物\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+						},
 						"sleep_random": []float64{0, 5, 0.7, 5, 10, 0.3},
 					},
 					"live": map[string]interface{}{
