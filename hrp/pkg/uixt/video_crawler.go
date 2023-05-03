@@ -7,10 +7,13 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
 type VideoStat struct {
 	configs *VideoCrawlerConfigs
+	timer   *time.Timer
 
 	FeedCount int            `json:"feed_count"`
 	FeedStat  map[string]int `json:"feed_stat"` // 分类统计 feed 数量：视频/图文/广告/特效/模板/购物
@@ -95,6 +98,7 @@ type LiveConfig struct {
 
 type VideoCrawlerConfigs struct {
 	AppPackageName string `json:"app_package_name"`
+	Timeout        int    `json:"timeout"` // seconds
 
 	Feed FeedConfig `json:"feed"`
 	Live LiveConfig `json:"live"`
@@ -142,36 +146,41 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 	time.Sleep(5 * time.Second)
 
 	for !l.currentStat.isLiveTargetAchieved() {
-		// check if live room
-		if err := l.driver.assertActivity(l.configs.AppPackageName, "live"); err != nil {
-			return err
+		select {
+		case <-l.currentStat.timer.C:
+			return errors.Wrap(code.TimeoutError, "timeout in live crawler")
+		default:
+			// check if live room
+			if err := l.driver.assertActivity(l.configs.AppPackageName, "live"); err != nil {
+				return err
+			}
+
+			// take screenshot and get screen texts by OCR
+			_, err := l.driver.GetScreenTextsByOCR()
+			if err != nil {
+				log.Error().Err(err).Msg("OCR GetTexts failed")
+				continue
+			}
+
+			// TODO: check live type
+
+			// swipe to next live video
+			err = l.driver.SwipeUp()
+			if err != nil {
+				log.Error().Err(err).Msg("swipe up failed")
+				// TODO: retry maximum 3 times
+				continue
+			}
+
+			// sleep custom random time
+			if err := sleepRandom(l.configs.Live.SleepRandom); err != nil {
+				log.Error().Err(err).Msg("sleep random failed")
+			}
+
+			// TODO: check live type
+
+			l.currentStat.LiveCount++
 		}
-
-		// take screenshot and get screen texts by OCR
-		_, err := l.driver.GetScreenTextsByOCR()
-		if err != nil {
-			log.Error().Err(err).Msg("OCR GetTexts failed")
-			continue
-		}
-
-		// TODO: check live type
-
-		// swipe to next live video
-		err = l.driver.SwipeUp()
-		if err != nil {
-			log.Error().Err(err).Msg("swipe up failed")
-			// TODO: retry maximum 3 times
-			continue
-		}
-
-		// sleep custom random time
-		if err := sleepRandom(l.configs.Live.SleepRandom); err != nil {
-			log.Error().Err(err).Msg("sleep random failed")
-		}
-
-		// TODO: check live type
-
-		l.currentStat.LiveCount++
 	}
 
 	log.Info().Msg("live count achieved, exit live room")
@@ -231,64 +240,71 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 		currentStat: currVideoStat,
 	}
 
-	// loop until target count achieved
+	// loop until target count achieved or timeout
 	// the main loop is feed crawler
+	currVideoStat.timer = time.NewTimer(time.Duration(configs.Timeout) * time.Second)
 	for {
-		// check if feed page
-		if err := dExt.assertActivity(configs.AppPackageName, "feed"); err != nil {
-			return err
-		}
+		select {
+		case <-currVideoStat.timer.C:
+			return errors.Wrap(code.TimeoutError, "timeout in feed crawler")
+		default:
+			// check if feed page
+			if err := dExt.assertActivity(configs.AppPackageName, "feed"); err != nil {
+				return err
+			}
 
-		// take screenshot and get screen texts by OCR
-		texts, err := dExt.GetScreenTextsByOCR()
-		if err != nil {
-			log.Error().Err(err).Msg("OCR GetTexts failed")
-			continue
-		}
+			// take screenshot and get screen texts by OCR
+			texts, err := dExt.GetScreenTextsByOCR()
+			if err != nil {
+				log.Error().Err(err).Msg("OCR GetTexts failed")
+				continue
+			}
 
-		// automatic handling of pop-up windows
-		if err := dExt.autoPopupHandler(texts); err != nil {
-			log.Error().Err(err).Msg("auto handle popup failed")
-			return err
-		}
+			// automatic handling of pop-up windows
+			if err := dExt.autoPopupHandler(texts); err != nil {
+				log.Error().Err(err).Msg("auto handle popup failed")
+				return err
+			}
 
-		// check if live video && run live crawler
-		if enterPoint, isLive := liveCrawler.checkLiveVideo(texts); isLive {
-			log.Info().Msg("live video found")
-			if !liveCrawler.currentStat.isLiveTargetAchieved() {
-				if err := liveCrawler.Run(dExt, enterPoint); err != nil {
-					log.Error().Err(err).Msg("run live crawler failed, continue")
-					continue
+			// check if live video && run live crawler
+			if enterPoint, isLive := liveCrawler.checkLiveVideo(texts); isLive {
+				log.Info().Msg("live video found")
+				if !liveCrawler.currentStat.isLiveTargetAchieved() {
+					if err := liveCrawler.Run(dExt, enterPoint); err != nil {
+						if errors.Is(err, code.TimeoutError) {
+							return err
+						}
+						log.Error().Err(err).Msg("run live crawler failed, continue")
+						continue
+					}
 				}
 			}
-		}
 
-		// check feed type and incr feed count
-		if err := currVideoStat.incrFeed(texts, dExt); err != nil {
-			log.Error().Err(err).Msg("incr feed failed")
-		}
+			// check feed type and incr feed count
+			if err := currVideoStat.incrFeed(texts, dExt); err != nil {
+				log.Error().Err(err).Msg("incr feed failed")
+			}
 
-		// sleep custom random time
-		if err := sleepRandom(configs.Feed.SleepRandom); err != nil {
-			log.Error().Err(err).Msg("sleep random failed")
-		}
+			// sleep custom random time
+			if err := sleepRandom(configs.Feed.SleepRandom); err != nil {
+				log.Error().Err(err).Msg("sleep random failed")
+			}
 
-		// check if target count achieved
-		if currVideoStat.isTargetAchieved() {
-			log.Info().Msg("target count achieved, exit crawler")
-			break
-		}
+			// check if target count achieved
+			if currVideoStat.isTargetAchieved() {
+				log.Info().Msg("target count achieved, exit crawler")
+				return nil
+			}
 
-		// swipe to next feed video
-		log.Info().Msg("swipe to next feed video")
-		if err = dExt.SwipeUp(); err != nil {
-			log.Error().Err(err).Msg("swipe up failed")
-			return err
+			// swipe to next feed video
+			log.Info().Msg("swipe to next feed video")
+			if err = dExt.SwipeUp(); err != nil {
+				log.Error().Err(err).Msg("swipe up failed")
+				return err
+			}
+			time.Sleep(1 * time.Second)
 		}
-		time.Sleep(1 * time.Second)
 	}
-
-	return nil
 }
 
 func (dExt *DriverExt) assertActivity(packageName, activityType string) error {

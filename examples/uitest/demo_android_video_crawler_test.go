@@ -21,6 +21,7 @@ func TestAndroidVideoCrawlerTest(t *testing.T) {
 				Android().
 				VideoCrawler(map[string]interface{}{
 					"app_package_name": "com.ss.android.ugc.aweme",
+					"timeout":          600,
 					"feed": map[string]interface{}{
 						"target_count": 5,
 						"target_labels": []map[string]interface{}{

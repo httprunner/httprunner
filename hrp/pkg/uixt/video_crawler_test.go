@@ -9,6 +9,7 @@ func TestVideoCrawler(t *testing.T) {
 
 	configs := &VideoCrawlerConfigs{
 		AppPackageName: "com.ss.android.ugc.aweme",
+		Timeout:        600,
 
 		Feed: FeedConfig{
 			TargetCount: 5,
