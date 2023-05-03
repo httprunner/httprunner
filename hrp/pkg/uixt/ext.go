@@ -47,11 +47,16 @@ func WithThreshold(threshold float64) CVOption {
 	}
 }
 
+type OcrResult struct {
+	Texts OCRTexts `json:"texts"` // dumped OCRTexts
+	Tags  []string `json:"tags"`  // tags for image, e.g. ["feed", "ad", "live"]
+}
+
 type cacheStepData struct {
 	// cache step screenshot paths
 	ScreenShots []string
-	// cache step screenshot ocr results, key is image path, value is dumped OCRTexts
-	OcrResults map[string]string
+	// cache step screenshot ocr results, key is image path, value is OcrResult
+	OcrResults map[string]*OcrResult
 	// cache feed/live video stat
 	VideoStat *VideoStat
 }
@@ -76,7 +81,7 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 		Driver: driver,
 		cacheStepData: cacheStepData{
 			ScreenShots: make([]string, 0),
-			OcrResults:  make(map[string]string),
+			OcrResults:  make(map[string]*OcrResult),
 		},
 		interruptSignal: make(chan os.Signal, 1),
 	}
@@ -188,7 +193,7 @@ func (dExt *DriverExt) GetStepCacheData() cacheStepData {
 	// clear cache
 	dExt.cacheStepData = cacheStepData{
 		ScreenShots: []string{},
-		OcrResults:  make(map[string]string),
+		OcrResults:  make(map[string]*OcrResult),
 	}
 	return copied
 }
