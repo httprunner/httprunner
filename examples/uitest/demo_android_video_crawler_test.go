@@ -25,7 +25,7 @@ func TestAndroidVideoCrawlerTest(t *testing.T) {
 					"feed": map[string]interface{}{
 						"target_count": 5,
 						"target_labels": []map[string]interface{}{
-							{"text": "^广告$", "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+							{"text": "^广告$", "scope": []float64{0, 0.5, 1, 1}, "regex": true, "target": 2},
 							{"text": "^图文$", "scope": []float64{0, 0.5, 1, 1}, "regex": true},
 							{"text": `^特效\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
 							{"text": `^模板\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
