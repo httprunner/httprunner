@@ -59,7 +59,7 @@ func (ad *adbDriver) WindowSize() (size Size, err error) {
 	// adb shell wm size
 	resp, err := ad.adbClient.RunShellCommand("wm", "size")
 	if err != nil {
-		return
+		return size, errors.Wrap(err, "get window size failed")
 	}
 
 	// Physical size: 1080x2340
@@ -84,12 +84,15 @@ func (ad *adbDriver) Scale() (scale float64, err error) {
 func (ad *adbDriver) PressBack(options ...ActionOption) (err error) {
 	// adb shell input keyevent 4
 	_, err = ad.adbClient.RunShellCommand("input", "keyevent", fmt.Sprintf("%d", KCBack))
-	return
+	if err != nil {
+		return errors.Wrap(err, "press back failed")
+	}
+	return nil
 }
 
 func (ad *adbDriver) StartCamera() (err error) {
 	if _, err = ad.adbClient.RunShellCommand("rm", "-r", "/sdcard/DCIM/Camera"); err != nil {
-		return err
+		return errors.Wrap(err, "remove /sdcard/DCIM/Camera failed")
 	}
 	time.Sleep(5 * time.Second)
 	var version string
@@ -176,7 +179,7 @@ func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err erro
 	// adb shell am force-stop <packagename>
 	_, err = ad.adbClient.RunShellCommand("am", "force-stop", packageName)
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "force-stop app failed")
 	}
 
 	if ad.lastLaunchedPackageName == packageName {
@@ -198,9 +201,14 @@ func (ad *adbDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 	}
 
 	// adb shell input tap x y
+	xStr := fmt.Sprintf("%.1f", x)
+	yStr := fmt.Sprintf("%.1f", y)
 	_, err = ad.adbClient.RunShellCommand(
-		"input", "tap", fmt.Sprintf("%.1f", x), fmt.Sprintf("%.1f", y))
-	return
+		"input", "tap", xStr, yStr)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
+	}
+	return nil
 }
 
 func (ad *adbDriver) DoubleTap(x, y int) error {
@@ -241,7 +249,10 @@ func (ad *adbDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...Actio
 		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
 		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
 	)
-	return err
+	if err != nil {
+		return errors.Wrap(err, "swipe failed")
+	}
+	return nil
 }
 
 func (ad *adbDriver) ForceTouch(x, y int, pressure float64, second ...float64) error {
@@ -266,7 +277,10 @@ func (ad *adbDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 func (ad *adbDriver) SendKeys(text string, options ...ActionOption) (err error) {
 	// adb shell input text <text>
 	_, err = ad.adbClient.RunShellCommand("input", "text", text)
-	return
+	if err != nil {
+		return errors.Wrap(err, "send keys failed")
+	}
+	return nil
 }
 
 func (ad *adbDriver) Input(text string, options ...ActionOption) (err error) {
@@ -382,7 +396,7 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	output, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to dumpsys activities")
-		return AppInfo{}, errors.Wrap(code.AndroidShellExecError, err.Error())
+		return AppInfo{}, errors.Wrap(err, "dumpsys activities failed")
 	}
 
 	lines := strings.Split(string(output), "\n")

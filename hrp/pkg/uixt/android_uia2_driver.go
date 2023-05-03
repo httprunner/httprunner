@@ -163,7 +163,7 @@ func (ud *uiaDriver) WindowSize() (size Size, err error) {
 	// register(getHandler, new GetDeviceSize("/wd/hub/session/:sessionId/window/:windowHandle/size"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionId, "window/:windowHandle/size"); err != nil {
-		return Size{}, err
+		return Size{}, errors.Wrap(err, "get window size failed with uiautomator2")
 	}
 	reply := new(struct{ Value struct{ Size } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {

@@ -137,7 +137,7 @@ func (wd *wdaDriver) WindowSize() (size Size, err error) {
 	// [[FBRoute GET:@"/window/size"] respondWithTarget:self action:@selector(handleGetWindowSize:)]
 	var rawResp rawResponse
 	if rawResp, err = wd.httpGET("/session", wd.sessionId, "/window/size"); err != nil {
-		return Size{}, err
+		return Size{}, errors.Wrap(err, "get window size failed with wda")
 	}
 	reply := new(struct{ Value struct{ Size } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {

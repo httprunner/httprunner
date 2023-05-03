@@ -63,7 +63,7 @@ var (
 var (
 	AndroidDeviceConnectionError = errors.New("android device connection error") // 60
 	AndroidDeviceUSBDriverError  = errors.New("android device USB driver error") // 61
-	AndroidShellExecError        = errors.New("android shell exec error")        // 62
+	AndroidShellExecError        = errors.New("android adb shell exec error")    // 62
 	AndroidScreenShotError       = errors.New("android screenshot error")        // 65
 	AndroidCaptureLogError       = errors.New("android capture log error")       // 66
 )
