@@ -1,5 +1,19 @@
 # Release History
 
+## v4.3.4 (2023-05-03)
+
+**go version**
+
+- feat: add video crawler for feed and live
+- feat: cache screenshot ocr texts
+- feat: set testcase and request timeout in seconds
+- feat: catch interrupt signal
+- feat: add new exit code MobileUILaunchAppError/InterruptError/TimeoutError
+- feat: find text with regex
+- refactor: simplify OCR APIs
+- refactor: FindText(s) returns OCRText(s)
+- refactor: merge ActionOption with DataOption
+
 ## v4.3.3 (2023-04-19)
 
 **go version**
