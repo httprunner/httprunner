@@ -280,15 +280,15 @@ type IOCRService interface {
 	GetTexts(imageBuf *bytes.Buffer) (texts OCRTexts, err error)
 }
 
-func (dExt *DriverExt) GetScreenTextsByOCR() (texts OCRTexts, err error) {
+// GetScreenTextsByOCR takes a screenshot, returns the image path and OCR texts.
+func (dExt *DriverExt) GetScreenTextsByOCR() (imagePath string, ocrTexts OCRTexts, err error) {
 	var bufSource *bytes.Buffer
-	var imagePath string
 	if bufSource, imagePath, err = dExt.TakeScreenShot(
 		builtin.GenNameWithTimestamp("%d_ocr")); err != nil {
 		return
 	}
 
-	ocrTexts, err := dExt.OCRService.GetTexts(bufSource)
+	ocrTexts, err = dExt.OCRService.GetTexts(bufSource)
 	if err != nil {
 		log.Error().Err(err).Msg("GetScreenTextsByOCR failed")
 		return
@@ -296,11 +296,11 @@ func (dExt *DriverExt) GetScreenTextsByOCR() (texts OCRTexts, err error) {
 
 	o, _ := json.Marshal(ocrTexts)
 	dExt.cacheStepData.OcrResults[imagePath] = string(o)
-	return ocrTexts, nil
+	return imagePath, ocrTexts, nil
 }
 
 func (dExt *DriverExt) FindScreenTextByOCR(text string, options ...ActionOption) (point PointF, err error) {
-	ocrTexts, err := dExt.GetScreenTextsByOCR()
+	_, ocrTexts, err := dExt.GetScreenTextsByOCR()
 	if err != nil {
 		return
 	}

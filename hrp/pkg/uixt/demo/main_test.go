@@ -35,7 +35,7 @@ func TestIOSDemo(t *testing.T) {
 	// 持续监测手机屏幕，直到出现青少年模式弹窗后，点击「我知道了」
 	for {
 		// take screenshot and get screen texts by OCR
-		texts, err := driverExt.GetScreenTextsByOCR()
+		_, texts, err := driverExt.GetScreenTextsByOCR()
 		if err != nil {
 			log.Error().Err(err).Msg("OCR GetTexts failed")
 			t.Fatal(err)

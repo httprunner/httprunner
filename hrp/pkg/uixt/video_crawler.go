@@ -89,7 +89,7 @@ func (s *VideoStat) incrFeed(texts OCRTexts, driverExt *DriverExt) error {
 		driverExt.GenAbsScope(0, 0.5, 1, 1).Option(),
 	}
 	if ocrText, err := texts.FindText("^@", actionOptions...); err == nil {
-		log.Info().Str("author", ocrText.Text).Msg("found feed author")
+		log.Debug().Str("author", ocrText.Text).Msg("found feed author")
 	}
 
 	for _, targetLabel := range s.configs.Feed.TargetLabels {
@@ -197,7 +197,7 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			}
 
 			// take screenshot and get screen texts by OCR
-			_, err := l.driver.GetScreenTextsByOCR()
+			_, _, err := l.driver.GetScreenTextsByOCR()
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				continue
@@ -299,7 +299,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			}
 
 			// take screenshot and get screen texts by OCR
-			texts, err := dExt.GetScreenTextsByOCR()
+			_, texts, err := dExt.GetScreenTextsByOCR()
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				continue
