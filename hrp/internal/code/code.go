@@ -44,6 +44,7 @@ var (
 	InitPluginFailed    = errors.New("init plugin failed")     // 31
 	BuildGoPluginFailed = errors.New("build go plugin failed") // 32
 	BuildPyPluginFailed = errors.New("build py plugin failed") // 33
+	TimeoutError        = errors.New("timeout error")          // 39
 )
 
 // summary: [40, 50)
@@ -111,6 +112,7 @@ var errorsMap = map[error]int{
 	InitPluginFailed:    31,
 	BuildGoPluginFailed: 32,
 	BuildPyPluginFailed: 33,
+	TimeoutError:        39,
 
 	// ios related
 	IOSDeviceConnectionError: 50,
