@@ -86,7 +86,7 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 	// get device window size
 	dExt.windowSize, err = dExt.Driver.WindowSize()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get windows size")
+		return nil, err
 	}
 
 	if dExt.OCRService, err = newVEDEMOCRService(); err != nil {
