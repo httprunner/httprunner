@@ -12,8 +12,10 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
@@ -62,6 +64,7 @@ type DriverExt struct {
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
 	OCRService      IOCRService // used to get texts from image
+	interruptSignal chan os.Signal
 
 	// cache step data
 	cacheStepData cacheStepData
@@ -75,7 +78,9 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 			ScreenShots: make([]string, 0),
 			OcrResults:  make(map[string]string),
 		},
+		interruptSignal: make(chan os.Signal, 1),
 	}
+	signal.Notify(dExt.interruptSignal, syscall.SIGTERM, syscall.SIGINT)
 	dExt.doneMjpegStream = make(chan bool, 1)
 
 	// get device window size

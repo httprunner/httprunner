@@ -629,18 +629,27 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 	// run actions
 	for _, action := range actions {
-		if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
-			if !code.IsErrorPredefined(err) {
-				err = errors.Wrap(code.ParseError,
-					fmt.Sprintf("parse action params failed: %v", err))
+		select {
+		case <-s.caseRunner.hrpRunner.caseTimeoutTimer.C:
+			log.Warn().Msg("timeout in mobile UI runner")
+			return stepResult, errors.Wrap(code.TimeoutError, "mobile UI runner timeout")
+		case <-s.caseRunner.hrpRunner.interruptSignal:
+			log.Warn().Msg("interrupted in mobile UI runner")
+			return stepResult, errors.Wrap(code.InterruptError, "mobile UI runner interrupted")
+		default:
+			if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
+				if !code.IsErrorPredefined(err) {
+					err = errors.Wrap(code.ParseError,
+						fmt.Sprintf("parse action params failed: %v", err))
+				}
+				return stepResult, err
 			}
-			return stepResult, err
-		}
-		if err := uiDriver.DoAction(action); err != nil {
-			if !code.IsErrorPredefined(err) {
-				err = errors.Wrap(code.MobileUIDriverError, err.Error())
+			if err := uiDriver.DoAction(action); err != nil {
+				if !code.IsErrorPredefined(err) {
+					err = errors.Wrap(code.MobileUIDriverError, err.Error())
+				}
+				return stepResult, err
 			}
-			return stepResult, err
 		}
 	}
 

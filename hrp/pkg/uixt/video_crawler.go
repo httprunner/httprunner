@@ -148,7 +148,11 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 	for !l.currentStat.isLiveTargetAchieved() {
 		select {
 		case <-l.currentStat.timer.C:
-			return errors.Wrap(code.TimeoutError, "timeout in live crawler")
+			log.Warn().Msg("timeout in live crawler")
+			return errors.Wrap(code.TimeoutError, "live crawler timeout")
+		case <-l.driver.interruptSignal:
+			log.Warn().Msg("interrupted in live crawler")
+			return errors.Wrap(code.InterruptError, "live crawler interrupted")
 		default:
 			// check if live room
 			if err := l.driver.assertActivity(l.configs.AppPackageName, "live"); err != nil {
@@ -246,7 +250,11 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	for {
 		select {
 		case <-currVideoStat.timer.C:
-			return errors.Wrap(code.TimeoutError, "timeout in feed crawler")
+			log.Warn().Msg("timeout in feed crawler")
+			return errors.Wrap(code.TimeoutError, "feed crawler timeout")
+		case <-dExt.interruptSignal:
+			log.Warn().Msg("interrupted in feed crawler")
+			return errors.Wrap(code.InterruptError, "feed crawler interrupted")
 		default:
 			// check if feed page
 			if err := dExt.assertActivity(configs.AppPackageName, "feed"); err != nil {
@@ -271,7 +279,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				log.Info().Msg("live video found")
 				if !liveCrawler.currentStat.isLiveTargetAchieved() {
 					if err := liveCrawler.Run(dExt, enterPoint); err != nil {
-						if errors.Is(err, code.TimeoutError) {
+						if errors.Is(err, code.TimeoutError) || errors.Is(err, code.InterruptError) {
 							return err
 						}
 						log.Error().Err(err).Msg("run live crawler failed, continue")
