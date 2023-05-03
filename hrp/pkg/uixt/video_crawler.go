@@ -22,23 +22,59 @@ type VideoStat struct {
 }
 
 func (s *VideoStat) isFeedTargetAchieved() bool {
-	log.Info().
-		Int("count", s.FeedCount).
-		Interface("stat", s.FeedStat).
-		Int("target", s.configs.Feed.TargetCount).
-		Msg("current feed count")
+	targetStat := make(map[string]int)
+	for _, targetLabel := range s.configs.Feed.TargetLabels {
+		targetStat[targetLabel.Text] = targetLabel.Target
+	}
 
-	return s.FeedCount >= s.configs.Feed.TargetCount
+	log.Info().
+		Int("current_total", s.FeedCount).
+		Interface("current_stat", s.FeedStat).
+		Int("target_total", s.configs.Feed.TargetCount).
+		Interface("target_stat", targetStat).
+		Msg("display feed crawler progress")
+
+	// check total feed count
+	if s.FeedCount < s.configs.Feed.TargetCount {
+		return false
+	}
+
+	// check each feed type's count
+	for _, targetLabel := range s.configs.Feed.TargetLabels {
+		if s.FeedStat[targetLabel.Text] < targetLabel.Target {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (s *VideoStat) isLiveTargetAchieved() bool {
-	log.Info().
-		Int("count", s.LiveCount).
-		Interface("stat", s.FeedStat).
-		Int("target", s.configs.Live.TargetCount).
-		Msg("current live count")
+	targetStat := make(map[string]int)
+	for _, targetLabel := range s.configs.Live.TargetLabels {
+		targetStat[targetLabel.Text] = targetLabel.Target
+	}
 
-	return s.LiveCount >= s.configs.Live.TargetCount
+	log.Info().
+		Int("current_total", s.LiveCount).
+		Interface("current_stat", s.LiveStat).
+		Int("target_total", s.configs.Live.TargetCount).
+		Interface("target_stat", targetStat).
+		Msg("display live crawler progress")
+
+	// check total live count
+	if s.LiveCount < s.configs.Live.TargetCount {
+		return false
+	}
+
+	// check each live type's count
+	for _, targetLabel := range s.configs.Live.TargetLabels {
+		if s.LiveStat[targetLabel.Text] < targetLabel.Target {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (s *VideoStat) isTargetAchieved() bool {
@@ -79,9 +115,10 @@ func (s *VideoStat) incrFeed(texts OCRTexts, driverExt *DriverExt) error {
 }
 
 type TargetLabel struct {
-	Text  string `json:"text"`
-	Scope Scope  `json:"scope"`
-	Regex bool   `json:"regex"`
+	Text   string `json:"text"`
+	Scope  Scope  `json:"scope"`
+	Regex  bool   `json:"regex"`
+	Target int    `json:"target"` // target count for current label
 }
 
 type FeedConfig struct {
