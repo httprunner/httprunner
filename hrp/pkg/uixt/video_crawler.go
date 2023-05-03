@@ -82,14 +82,15 @@ func (s *VideoStat) isTargetAchieved() bool {
 }
 
 // incrFeed increases feed count and feed stat
-func (s *VideoStat) incrFeed(texts OCRTexts, driverExt *DriverExt) error {
+func (s *VideoStat) incrFeed(ocrResult *OcrResult, driverExt *DriverExt) error {
 	// feed author
 	actionOptions := []ActionOption{
 		WithRegex(true),
 		driverExt.GenAbsScope(0, 0.5, 1, 1).Option(),
 	}
-	if ocrText, err := texts.FindText("^@", actionOptions...); err == nil {
+	if ocrText, err := ocrResult.Texts.FindText("^@", actionOptions...); err == nil {
 		log.Debug().Str("author", ocrText.Text).Msg("found feed author")
+		ocrResult.Tags = append(ocrResult.Tags, ocrText.Text)
 	}
 
 	for _, targetLabel := range s.configs.Feed.TargetLabels {
@@ -98,7 +99,7 @@ func (s *VideoStat) incrFeed(texts OCRTexts, driverExt *DriverExt) error {
 			WithRegex(targetLabel.Regex),
 			driverExt.GenAbsScope(scope[0], scope[1], scope[2], scope[3]).Option(),
 		}
-		if ocrText, err := texts.FindText(targetLabel.Text, actionOptions...); err == nil {
+		if ocrText, err := ocrResult.Texts.FindText(targetLabel.Text, actionOptions...); err == nil {
 			log.Info().Str("label", targetLabel.Text).
 				Str("text", ocrText.Text).Msg("found feed success")
 
@@ -107,6 +108,7 @@ func (s *VideoStat) incrFeed(texts OCRTexts, driverExt *DriverExt) error {
 				s.FeedStat[key] = 0
 			}
 			s.FeedStat[key]++
+			ocrResult.Tags = append(ocrResult.Tags, key)
 		}
 	}
 
@@ -163,7 +165,7 @@ type LiveCrawler struct {
 
 func (l *LiveCrawler) checkLiveVideo(texts OCRTexts) (enterPoint PointF, yes bool) {
 	// 预览流入口
-	points, err := texts.FindTexts([]string{"点击进入直播间", "直播中"})
+	points, err := texts.FindTexts([]string{".?点击进入直播间", "直播中"}, WithRegex(true))
 	if err == nil {
 		return points[0].Center(), true
 	}
@@ -197,11 +199,12 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			}
 
 			// take screenshot and get screen texts by OCR
-			_, _, err := l.driver.GetScreenTextsByOCR()
+			imagePath, _, err := l.driver.GetScreenTextsByOCR()
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				continue
 			}
+			l.driver.cacheStepData.OcrResults[imagePath].Tags = []string{"live"}
 
 			// TODO: check live type
 
@@ -299,14 +302,16 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			}
 
 			// take screenshot and get screen texts by OCR
-			_, texts, err := dExt.GetScreenTextsByOCR()
+			imagePath, texts, err := dExt.GetScreenTextsByOCR()
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				continue
 			}
+			ocrResult := dExt.cacheStepData.OcrResults[imagePath]
+			ocrResult.Tags = []string{"feed"}
 
 			// automatic handling of pop-up windows
-			if err := dExt.autoPopupHandler(texts); err != nil {
+			if err := dExt.autoPopupHandler(ocrResult); err != nil {
 				log.Error().Err(err).Msg("auto handle popup failed")
 				return err
 			}
@@ -326,7 +331,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			}
 
 			// check feed type and incr feed count
-			if err := currVideoStat.incrFeed(texts, dExt); err != nil {
+			if err := currVideoStat.incrFeed(ocrResult, dExt); err != nil {
 				log.Error().Err(err).Msg("incr feed failed")
 			}
 
@@ -386,13 +391,13 @@ var popups = [][]string{
 	{"确定", "取消"},
 }
 
-func (dExt *DriverExt) autoPopupHandler(texts OCRTexts) error {
+func (dExt *DriverExt) autoPopupHandler(ocrResult *OcrResult) error {
 	for _, popup := range popups {
 		if len(popup) != 2 {
 			continue
 		}
 
-		points, err := texts.FindTexts([]string{"确定", "取消"})
+		points, err := ocrResult.Texts.FindTexts([]string{"确定", "取消"})
 		if err == nil {
 			log.Warn().Msg("text popup found")
 			point := points[1].Center()
