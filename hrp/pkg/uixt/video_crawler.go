@@ -362,7 +362,8 @@ func (dExt *DriverExt) assertActivity(packageName, activityType string) error {
 	}
 
 	if app.PackageName != packageName {
-		return fmt.Errorf("app %s is not in foreground", packageName)
+		return errors.Wrap(code.MobileUIAppNotInForegroundError,
+			fmt.Sprintf("app %s is not in foreground", packageName))
 	}
 
 	if activities, ok := androidActivities[app.PackageName]; ok {
@@ -374,7 +375,8 @@ func (dExt *DriverExt) assertActivity(packageName, activityType string) error {
 	}
 
 	log.Error().Interface("app", app.AppBaseInfo).Msg("app activity not match")
-	return fmt.Errorf("%s activity is not in foreground", activityType)
+	return errors.Wrap(code.MobileUIAppNotInForegroundError,
+		fmt.Sprintf("%s activity is not in foreground", activityType))
 }
 
 // TODO: add more popup texts
@@ -396,7 +398,7 @@ func (dExt *DriverExt) autoPopupHandler(texts OCRTexts) error {
 			point := points[1].Center()
 			if err := dExt.TapAbsXY(point.X, point.Y); err != nil {
 				log.Error().Err(err).Msg("tap popup failed")
-				return err
+				return errors.Wrap(code.MobileUIPopupError, err.Error())
 			}
 			// tap popup success
 			return nil
