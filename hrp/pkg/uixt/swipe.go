@@ -135,7 +135,7 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 	var point PointF
 	findTexts := func(d *DriverExt) error {
 		var err error
-		ocrTexts, err := d.GetScreenTextsByOCR()
+		_, ocrTexts, err := d.GetScreenTextsByOCR()
 		if err != nil {
 			return err
 		}
