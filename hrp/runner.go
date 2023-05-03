@@ -8,8 +8,11 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -39,6 +42,8 @@ func NewRunner(t *testing.T) *HRPRunner {
 		t = &testing.T{}
 	}
 	jar, _ := cookiejar.New(nil)
+	interruptSignal := make(chan os.Signal, 1)
+	signal.Notify(interruptSignal, syscall.SIGTERM, syscall.SIGINT)
 	return &HRPRunner{
 		t:             t,
 		failfast:      true, // default to failfast
@@ -62,6 +67,7 @@ func NewRunner(t *testing.T) *HRPRunner {
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 		caseTimeoutTimer: time.NewTimer(time.Hour * 2), // default case timeout to 2 hour
+		interruptSignal:  interruptSignal,
 	}
 }
 
@@ -79,6 +85,7 @@ type HRPRunner struct {
 	wsDialer         *websocket.Dialer
 	uiClients        map[string]*uixt.DriverExt // UI automation clients for iOS and Android, key is udid/serial
 	caseTimeoutTimer *time.Timer                // case timeout timer
+	interruptSignal  chan os.Signal             // interrupt signal channel
 }
 
 // SetClientTransport configures transport of http client for high concurrency load testing
@@ -520,7 +527,11 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	for _, step := range r.caseRunner.testCase.TestSteps {
 		select {
 		case <-r.caseRunner.hrpRunner.caseTimeoutTimer.C:
+			log.Warn().Msg("timeout in session runner")
 			return errors.Wrap(code.TimeoutError, "session runner timeout")
+		case <-r.caseRunner.hrpRunner.interruptSignal:
+			log.Warn().Msg("interrupted in session runner")
+			return errors.Wrap(code.InterruptError, "session runner interrupted")
 		default:
 			// TODO: parse step struct
 			// parse step name
@@ -578,6 +589,11 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 				Str("type", string(stepResult.StepType)).
 				Bool("success", false).
 				Msg("run step end")
+
+			// interrupted or timeout, abort running
+			if errors.Is(err, code.InterruptError) || errors.Is(err, code.TimeoutError) {
+				return err
+			}
 
 			// check if failfast
 			if r.caseRunner.hrpRunner.failfast {
