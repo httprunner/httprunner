@@ -14,8 +14,8 @@ func TestVideoCrawler(t *testing.T) {
 		Feed: FeedConfig{
 			TargetCount: 5,
 			TargetLabels: []TargetLabel{
-				{Text: `^广告$`, Scope: Scope{0, 0.5, 1, 1}, Regex: true, Target: 2},
-				{Text: `^图文$`, Scope: Scope{0, 0.5, 1, 1}, Regex: true},
+				{Text: `^广告$`, Scope: Scope{0, 0.5, 1, 1}, Regex: true},
+				{Text: `^图文$`, Scope: Scope{0, 0.5, 1, 1}, Regex: true, Target: 2},
 				{Text: `^特效\|`, Scope: Scope{0, 0.5, 1, 1}, Regex: true},
 				{Text: `^模板\|`, Scope: Scope{0, 0.5, 1, 1}, Regex: true},
 				{Text: `^购物\|`, Scope: Scope{0, 0.5, 1, 1}, Regex: true},
