@@ -48,9 +48,17 @@ func WithThreshold(threshold float64) CVOption {
 	}
 }
 
+type Popularity struct {
+	Stars     string `json:"stars"`     // 点赞数
+	Comments  string `json:"comments"`  // 评论数
+	Favorites string `json:"favorites"` // 收藏数
+	Shares    string `json:"shares"`    // 分享数
+}
+
 type OcrResult struct {
-	Texts OCRTexts `json:"texts"` // dumped OCRTexts
-	Tags  []string `json:"tags"`  // tags for image, e.g. ["feed", "ad", "live"]
+	Texts      OCRTexts   `json:"texts"`      // dumped OCRTexts
+	Tags       []string   `json:"tags"`       // tags for image, e.g. ["feed", "ad", "live"]
+	Popularity Popularity `json:"popularity"` // video popularity data
 }
 
 type cacheStepData struct {
