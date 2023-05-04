@@ -115,7 +115,7 @@ func (s *VideoStat) incrFeed(ocrResult *OcrResult, driverExt *DriverExt) error {
 	// add popularity data for feed
 	popularityData := ocrResult.Texts.FilterScope(driverExt.GenAbsScope(0.8, 0.5, 1, 0.8))
 	if len(popularityData) != 4 {
-		log.Warn().Interface("popularity", popularityData).Msg("get popularity data failed")
+		log.Warn().Interface("popularity", popularityData).Msg("get feed popularity data failed")
 	} else {
 		ocrResult.Popularity = Popularity{
 			Stars:     popularityData[0].Text,
@@ -128,6 +128,26 @@ func (s *VideoStat) incrFeed(ocrResult *OcrResult, driverExt *DriverExt) error {
 	}
 
 	s.FeedCount++
+	return nil
+}
+
+// incrLive increases live count and live stat
+func (s *VideoStat) incrLive(ocrResult *OcrResult, driverExt *DriverExt) error {
+	// TODO: check live type
+
+	// add popularity data for live
+	popularityData := ocrResult.Texts.FilterScope(driverExt.GenAbsScope(0.7, 0.05, 1, 0.15))
+	if len(popularityData) != 1 {
+		log.Warn().Interface("popularity", popularityData).Msg("get live popularity data failed")
+	} else {
+		ocrResult.Popularity = Popularity{
+			LiveUsers: popularityData[0].Text,
+		}
+		log.Info().Interface("popularity", ocrResult.Popularity).
+			Msg("found live popularity success")
+	}
+
+	s.LiveCount++
 	return nil
 }
 
@@ -213,18 +233,8 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 				return err
 			}
 
-			// take screenshot and get screen texts by OCR
-			imagePath, _, err := l.driver.GetScreenTextsByOCR()
-			if err != nil {
-				log.Error().Err(err).Msg("OCR GetTexts failed")
-				continue
-			}
-			l.driver.cacheStepData.OcrResults[imagePath].Tags = []string{"live"}
-
-			// TODO: check live type
-
 			// swipe to next live video
-			err = l.driver.SwipeUp()
+			err := l.driver.SwipeUp()
 			if err != nil {
 				log.Error().Err(err).Msg("swipe up failed")
 				// TODO: retry maximum 3 times
@@ -236,9 +246,19 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 				log.Error().Err(err).Msg("sleep random failed")
 			}
 
-			// TODO: check live type
+			// take screenshot and get screen texts by OCR
+			imagePath, _, err := l.driver.GetScreenTextsByOCR()
+			if err != nil {
+				log.Error().Err(err).Msg("OCR GetTexts failed")
+				continue
+			}
+			ocrResult := l.driver.cacheStepData.OcrResults[imagePath]
+			ocrResult.Tags = []string{"live"}
 
-			l.currentStat.LiveCount++
+			// check live type and incr live count
+			if err := l.currentStat.incrLive(ocrResult, l.driver); err != nil {
+				log.Error().Err(err).Msg("incr live failed")
+			}
 		}
 	}
 
