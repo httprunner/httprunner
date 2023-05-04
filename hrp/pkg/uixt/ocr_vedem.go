@@ -52,26 +52,33 @@ func (t OCRTexts) texts() (texts []string) {
 	return texts
 }
 
+func (t OCRTexts) FilterScope(scope AbsScope) (results OCRTexts) {
+	for _, ocrText := range t {
+		rect := ocrText.Rect
+
+		// check if text in scope
+		if len(scope) == 4 {
+			if rect.Min.X < scope[0] ||
+				rect.Min.Y < scope[1] ||
+				rect.Max.X > scope[2] ||
+				rect.Max.Y > scope[3] {
+				// not in scope
+				continue
+			}
+		}
+
+		results = append(results, ocrText)
+	}
+	return
+}
+
 func (t OCRTexts) FindText(text string, options ...ActionOption) (
 	result OCRText, err error) {
 
 	actionOptions := NewActionOptions(options...)
 
 	var results []OCRText
-	for _, ocrText := range t {
-		rect := ocrText.Rect
-
-		// check if text in scope
-		if len(actionOptions.AbsScope) == 4 {
-			if rect.Min.X < actionOptions.AbsScope[0] ||
-				rect.Min.Y < actionOptions.AbsScope[1] ||
-				rect.Max.X > actionOptions.AbsScope[2] ||
-				rect.Max.Y > actionOptions.AbsScope[3] {
-				// not in scope
-				continue
-			}
-		}
-
+	for _, ocrText := range t.FilterScope(actionOptions.AbsScope) {
 		if actionOptions.Regex {
 			// regex on, check if match regex
 			if !regexp.MustCompile(text).MatchString(ocrText.Text) {

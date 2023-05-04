@@ -112,6 +112,21 @@ func (s *VideoStat) incrFeed(ocrResult *OcrResult, driverExt *DriverExt) error {
 		}
 	}
 
+	// add popularity data for feed
+	popularityData := ocrResult.Texts.FilterScope(driverExt.GenAbsScope(0.8, 0.5, 1, 0.8))
+	if len(popularityData) != 4 {
+		log.Warn().Interface("popularity", popularityData).Msg("get popularity data failed")
+	} else {
+		ocrResult.Popularity = Popularity{
+			Stars:     popularityData[0].Text,
+			Comments:  popularityData[1].Text,
+			Favorites: popularityData[2].Text,
+			Shares:    popularityData[3].Text,
+		}
+		log.Info().Interface("popularity", ocrResult.Popularity).
+			Msg("found feed popularity success")
+	}
+
 	s.FeedCount++
 	return nil
 }
@@ -308,7 +323,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				continue
 			}
 			ocrResult := dExt.cacheStepData.OcrResults[imagePath]
-			ocrResult.Tags = []string{"feed"}
 
 			// automatic handling of pop-up windows
 			if err := dExt.autoPopupHandler(ocrResult); err != nil {
@@ -328,11 +342,14 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						continue
 					}
 				}
-			}
+				ocrResult.Tags = []string{"live-preview"}
+			} else {
+				ocrResult.Tags = []string{"feed"}
 
-			// check feed type and incr feed count
-			if err := currVideoStat.incrFeed(ocrResult, dExt); err != nil {
-				log.Error().Err(err).Msg("incr feed failed")
+				// check feed type and incr feed count
+				if err := currVideoStat.incrFeed(ocrResult, dExt); err != nil {
+					log.Error().Err(err).Msg("incr feed failed")
+				}
 			}
 
 			// sleep custom random time
