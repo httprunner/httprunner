@@ -592,10 +592,10 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 			// check if app is in foreground
 			packageName := uiDriver.Driver.GetLastLaunchedApp()
-			err := uiDriver.Driver.AssertAppForeground(packageName)
-			if packageName != "" && err != nil {
-				log.Error().Err(err).Str("packageName", packageName).Msg("app is not in foreground")
-				err = errors.Wrap(code.MobileUIAppNotInForegroundError, err.Error())
+			err2 := uiDriver.Driver.AssertAppForeground(packageName)
+			if packageName != "" && err2 != nil {
+				log.Error().Err(err2).Str("packageName", packageName).Msg("app is not in foreground")
+				err = errors.Wrap(code.MobileUIAppNotInForegroundError, err2.Error())
 			}
 		}
 
@@ -608,9 +608,9 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 		// save attachments
 		cacheData := uiDriver.GetStepCacheData()
-		attachments["screenshots"] = cacheData.ScreenShots
-		attachments["ocr_results"] = cacheData.OcrResults
-		attachments["video_stat"] = cacheData.VideoStat
+		for key, value := range cacheData {
+			attachments[key] = value
+		}
 		stepResult.Attachments = attachments
 	}()
 

@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/gif"
@@ -59,6 +60,12 @@ type cacheStepData struct {
 	OcrResults map[string]*OcrResult
 	// cache feed/live video stat
 	VideoStat *VideoStat
+}
+
+func (d *cacheStepData) reset() {
+	d.ScreenShots = make([]string, 0)
+	d.OcrResults = make(map[string]*OcrResult)
+	d.VideoStat = nil
 }
 
 type DriverExt struct {
@@ -188,14 +195,25 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 	return screenshotPath, nil
 }
 
-func (dExt *DriverExt) GetStepCacheData() cacheStepData {
-	copied := dExt.cacheStepData
-	// clear cache
-	dExt.cacheStepData = cacheStepData{
-		ScreenShots: []string{},
-		OcrResults:  make(map[string]*OcrResult),
+func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
+	cacheData := make(map[string]interface{})
+	cacheData["video_stat"] = dExt.cacheStepData.VideoStat
+	cacheData["screenshots"] = dExt.cacheStepData.ScreenShots
+
+	ocrResults := make(map[string]interface{})
+	for imagePath, ocrResult := range dExt.cacheStepData.OcrResults {
+		o, _ := json.Marshal(ocrResult.Texts)
+		data := map[string]interface{}{
+			"tags":  ocrResult.Tags,
+			"texts": string(o),
+		}
+		ocrResults[imagePath] = data
 	}
-	return copied
+	cacheData["ocr_results"] = ocrResults
+
+	// clear cache
+	dExt.cacheStepData.reset()
+	return cacheData
 }
 
 // isPathExists returns true if path exists, whether path is file or dir
