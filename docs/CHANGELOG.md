@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.4 (2023-05-03)
+## v4.3.4 (2023-05-04)
 
 **go version**
 
@@ -8,11 +8,13 @@
 - feat: cache screenshot ocr texts
 - feat: set testcase and request timeout in seconds
 - feat: catch interrupt signal
-- feat: add new exit code MobileUILaunchAppError/InterruptError/TimeoutError
+- feat: add new exit code MobileUILaunchAppError/InterruptError/TimeoutError/MobileUIPopupError
 - feat: find text with regex
+- feat: add UI ocr tags to summary
 - refactor: simplify OCR APIs
 - refactor: FindText(s) returns OCRText(s)
 - refactor: merge ActionOption with DataOption
+- change: exit with AndroidShellExecError code for adb shell failure
 
 ## v4.3.3 (2023-04-19)
 
