@@ -423,9 +423,8 @@ func (dExt *DriverExt) assertActivity(packageName, activityType string) error {
 
 // TODO: add more popup texts
 var popups = [][]string{
-	{"青少年", "我知道了"}, // 青少年弹窗
-	{"允许", "拒绝"},
-	{"确定", "取消"},
+	{"青少年模式", "我知道了"}, // 青少年弹窗
+	{"个人信息保护指引", "同意"},
 }
 
 func (dExt *DriverExt) autoPopupHandler(ocrResult *OcrResult) error {
@@ -434,9 +433,10 @@ func (dExt *DriverExt) autoPopupHandler(ocrResult *OcrResult) error {
 			continue
 		}
 
-		points, err := ocrResult.Texts.FindTexts([]string{"确定", "取消"})
+		points, err := ocrResult.Texts.FindTexts([]string{popup[0], popup[1]})
 		if err == nil {
-			log.Warn().Msg("text popup found")
+			log.Warn().Interface("popup", popup).
+				Interface("texts", ocrResult.Texts).Msg("text popup found")
 			point := points[1].Center()
 			if err := dExt.TapAbsXY(point.X, point.Y); err != nil {
 				log.Error().Err(err).Msg("tap popup failed")
