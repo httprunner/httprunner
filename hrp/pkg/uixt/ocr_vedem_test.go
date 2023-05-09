@@ -14,22 +14,19 @@ func checkOCR(buff *bytes.Buffer) error {
 	if err != nil {
 		return err
 	}
-	ocrResults, err := service.getOCRResult(buff)
+	ocrResults, url, err := service.getOCRResult(buff)
 	if err != nil {
 		return err
 	}
 	fmt.Println(ocrResults)
+	fmt.Println(url)
 	return nil
 }
 
 func TestOCRWithScreenshot(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewDriver(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupAndroid(t)
 
-	raw, err := driver.Driver.Screenshot()
+	raw, err := driverExt.Driver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
