@@ -64,7 +64,8 @@ type OcrResult struct {
 
 type cacheStepData struct {
 	// cache step screenshot paths
-	ScreenShots []string
+	ScreenShots     []string
+	screenShotsUrls map[string]string // map screenshot file path to uploaded url
 	// cache step screenshot ocr results, key is image path, value is OcrResult
 	OcrResults map[string]*OcrResult
 	// cache feed/live video stat
@@ -73,6 +74,7 @@ type cacheStepData struct {
 
 func (d *cacheStepData) reset() {
 	d.ScreenShots = make([]string, 0)
+	d.screenShotsUrls = make(map[string]string)
 	d.OcrResults = make(map[string]*OcrResult)
 	d.VideoStat = nil
 }
@@ -93,14 +95,12 @@ type DriverExt struct {
 
 func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) {
 	dExt = &DriverExt{
-		Device: device,
-		Driver: driver,
-		cacheStepData: cacheStepData{
-			ScreenShots: make([]string, 0),
-			OcrResults:  make(map[string]*OcrResult),
-		},
+		Device:          device,
+		Driver:          driver,
+		cacheStepData:   cacheStepData{},
 		interruptSignal: make(chan os.Signal, 1),
 	}
+	dExt.cacheStepData.reset()
 	signal.Notify(dExt.interruptSignal, syscall.SIGTERM, syscall.SIGINT)
 	dExt.doneMjpegStream = make(chan bool, 1)
 
@@ -208,6 +208,7 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData := make(map[string]interface{})
 	cacheData["video_stat"] = dExt.cacheStepData.VideoStat
 	cacheData["screenshots"] = dExt.cacheStepData.ScreenShots
+	cacheData["screenshots_urls"] = dExt.cacheStepData.screenShotsUrls
 
 	ocrResults := make(map[string]interface{})
 	for imagePath, ocrResult := range dExt.cacheStepData.OcrResults {

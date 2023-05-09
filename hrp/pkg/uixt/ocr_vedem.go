@@ -31,6 +31,7 @@ type OCRResult struct {
 type ResponseOCR struct {
 	Code      int         `json:"code"`
 	Message   string      `json:"message"`
+	URL       string      `json:"url"` // image uploaded url
 	OCRResult []OCRResult `json:"ocrResult"`
 }
 
@@ -141,33 +142,40 @@ func newVEDEMOCRService() (*veDEMOCRService, error) {
 // veDEMOCRService implements IOCRService interface
 type veDEMOCRService struct{}
 
-func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, error) {
+func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) (
+	ocrResutls []OCRResult, url string, err error) {
+
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	bodyWriter.WriteField("withDet", "true")
+	bodyWriter.WriteField("upload", "true") // get image uploaded url
 	// bodyWriter.WriteField("timestampOnly", "true")
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {
-		return nil, errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.OCRRequestError,
 			fmt.Sprintf("create form file error: %v", err))
+		return
 	}
 	size, err := formWriter.Write(imageBuf.Bytes())
 	if err != nil {
-		return nil, errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.OCRRequestError,
 			fmt.Sprintf("write form error: %v", err))
+		return
 	}
 
 	err = bodyWriter.Close()
 	if err != nil {
-		return nil, errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.OCRRequestError,
 			fmt.Sprintf("close body writer error: %v", err))
+		return
 	}
 
 	req, err := http.NewRequest("POST", env.VEDEM_OCR_URL, bodyBuf)
 	if err != nil {
-		return nil, errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.OCRRequestError,
 			fmt.Sprintf("construct request error: %v", err))
+		return
 	}
 
 	token := builtin.Sign("auth-v2", env.VEDEM_OCR_AK, env.VEDEM_OCR_SK, bodyBuf.Bytes())
@@ -195,41 +203,52 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, err
 		log.Error().Err(err).
 			Str("X-TT-LOGID", logID).
 			Int("imageBufSize", size).
-			Msgf("request OCR service failed, retry %d", i)
+			Msgf("request veDEM OCR service failed, retry %d", i)
 		time.Sleep(1 * time.Second)
 	}
 	if resp == nil {
-		return nil, code.OCRServiceConnectionError
+		err = code.OCRServiceConnectionError
+		return
 	}
 
 	defer resp.Body.Close()
 
 	results, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrap(code.OCRResponseError,
+		err = errors.Wrap(code.OCRResponseError,
 			fmt.Sprintf("read response body error: %v", err))
+		return
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrap(code.OCRResponseError,
+		err = errors.Wrap(code.OCRResponseError,
 			fmt.Sprintf("unexpected response status code: %d, results: %v",
 				resp.StatusCode, string(results)))
+		return
 	}
 
 	var ocrResult ResponseOCR
 	err = json.Unmarshal(results, &ocrResult)
 	if err != nil {
-		return nil, errors.Wrap(code.OCRResponseError,
+		err = errors.Wrap(code.OCRResponseError,
 			fmt.Sprintf("json unmarshal response body error: %v", err))
+		return
 	}
 
-	return ocrResult.OCRResult, nil
+	if ocrResult.Code != 0 {
+		log.Error().
+			Int("code", ocrResult.Code).
+			Str("message", ocrResult.Message).
+			Msg("request veDEM OCR service failed")
+	}
+
+	return ocrResult.OCRResult, ocrResult.URL, nil
 }
 
 func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer) (
-	ocrTexts OCRTexts, err error) {
+	ocrTexts OCRTexts, url string, err error) {
 
-	ocrResults, err := s.getOCRResult(imageBuf)
+	ocrResults, url, err := s.getOCRResult(imageBuf)
 	if err != nil {
 		log.Error().Err(err).Msg("getOCRResult failed")
 		return
@@ -262,6 +281,7 @@ func checkEnv() error {
 	if env.VEDEM_OCR_URL == "" {
 		return errors.Wrap(code.OCREnvMissedError, "VEDEM_OCR_URL missed")
 	}
+	log.Info().Str("VEDEM_OCR_URL", env.VEDEM_OCR_URL).Msg("get env")
 	if env.VEDEM_OCR_AK == "" {
 		return errors.Wrap(code.OCREnvMissedError, "VEDEM_OCR_AK missed")
 	}
@@ -284,7 +304,8 @@ func getLogID(header http.Header) string {
 }
 
 type IOCRService interface {
-	GetTexts(imageBuf *bytes.Buffer) (texts OCRTexts, err error)
+	// GetTexts returns ocr texts and uploaded image url
+	GetTexts(imageBuf *bytes.Buffer) (texts OCRTexts, url string, err error)
 }
 
 // GetScreenTextsByOCR takes a screenshot, returns the image path and OCR texts.
@@ -295,10 +316,16 @@ func (dExt *DriverExt) GetScreenTextsByOCR() (imagePath string, ocrTexts OCRText
 		return
 	}
 
-	ocrTexts, err = dExt.OCRService.GetTexts(bufSource)
+	var imageUrl string
+	ocrTexts, imageUrl, err = dExt.OCRService.GetTexts(bufSource)
 	if err != nil {
 		log.Error().Err(err).Msg("GetScreenTextsByOCR failed")
 		return
+	}
+
+	if imageUrl != "" {
+		dExt.cacheStepData.screenShotsUrls[imagePath] = imageUrl
+		log.Debug().Str("imagePath", imagePath).Str("imageUrl", imageUrl).Msg("log screenshot")
 	}
 
 	dExt.cacheStepData.OcrResults[imagePath] = &OcrResult{
