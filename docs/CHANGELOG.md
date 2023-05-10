@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.4 (2023-05-04)
+## v4.3.4 (2023-05-10)
 
 **go version**
 
@@ -15,6 +15,7 @@
 - refactor: FindText(s) returns OCRText(s)
 - refactor: merge ActionOption with DataOption
 - change: exit with AndroidShellExecError code for adb shell failure
+- change: request vedem ocr with uploading image
 
 ## v4.3.3 (2023-04-19)
 
