@@ -1,6 +1,6 @@
 {
     "config": {
-        "name": "抓取抖音视频信息",
+        "name": "抓取 KS 视频信息",
         "variables": {
             "device": "${ENV(SerialNumber)}"
         },
@@ -12,7 +12,7 @@
     },
     "teststeps": [
         {
-            "name": "滑动消费 feed 至少 10 个，live 至少 3 个；滑动过程中，70% 随机间隔 0-5s，30% 随机间隔 5-10s",
+            "name": "滑动消费 feed 至少 100 个；滑动过程中，70% 随机间隔 0-5s，30% 随机间隔 5-10s",
             "android": {
                 "actions": [
                     {
@@ -28,7 +28,7 @@
                                     10,
                                     0.3
                                 ],
-                                "target_count": 5,
+                                "target_count": 100,
                                 "target_labels": [
                                     {
                                         "regex": true,
@@ -38,7 +38,6 @@
                                             1,
                                             1
                                         ],
-                                        "target": 0,
                                         "text": "^广告$"
                                     },
                                     {
@@ -49,8 +48,7 @@
                                             1,
                                             1
                                         ],
-                                        "target": 0,
-                                        "text": "^图文$"
+                                        "text": "^推广$"
                                     },
                                     {
                                         "regex": true,
@@ -60,27 +58,7 @@
                                             1,
                                             1
                                         ],
-                                        "text": "^特效\\|"
-                                    },
-                                    {
-                                        "regex": true,
-                                        "scope": [
-                                            0,
-                                            0.5,
-                                            1,
-                                            1
-                                        ],
-                                        "text": "^模板\\|"
-                                    },
-                                    {
-                                        "regex": true,
-                                        "scope": [
-                                            0,
-                                            0.5,
-                                            1,
-                                            1
-                                        ],
-                                        "text": "^购物\\|"
+                                        "text": "^磁力广告$"
                                     }
                                 ]
                             },
@@ -91,7 +69,7 @@
                                 ],
                                 "target_count": 0
                             },
-                            "timeout": 600
+                            "timeout": 3600
                         }
                     }
                 ]
@@ -103,7 +81,7 @@
                 "actions": [
                     {
                         "method": "app_terminate",
-                        "params": "com.ss.android.ugc.aweme"
+                        "params": "com.smile.gifmaker"
                     }
                 ]
             },
@@ -111,8 +89,8 @@
                 {
                     "check": "ui_foreground_app",
                     "assert": "not_equal",
-                    "expect": "com.ss.android.ugc.aweme",
-                    "msg": "app [com.ss.android.ugc.aweme] should not be in foreground"
+                    "expect": "com.smile.gifmaker",
+                    "msg": "app [com.smile.gifmaker] should not be in foreground"
                 }
             ]
         }
