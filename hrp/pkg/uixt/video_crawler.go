@@ -99,10 +99,7 @@ func (s *VideoStat) incrFeed(ocrResult *OcrResult, driverExt *DriverExt) error {
 			WithRegex(targetLabel.Regex),
 			driverExt.GenAbsScope(scope[0], scope[1], scope[2], scope[3]).Option(),
 		}
-		if ocrText, err := ocrResult.Texts.FindText(targetLabel.Text, actionOptions...); err == nil {
-			log.Info().Str("label", targetLabel.Text).
-				Str("text", ocrText.Text).Msg("found feed success")
-
+		if _, err := ocrResult.Texts.FindText(targetLabel.Text, actionOptions...); err == nil {
 			key := targetLabel.Text
 			if _, ok := s.FeedStat[key]; !ok {
 				s.FeedStat[key] = 0
@@ -123,10 +120,11 @@ func (s *VideoStat) incrFeed(ocrResult *OcrResult, driverExt *DriverExt) error {
 			Favorites: popularityData[2].Text,
 			Shares:    popularityData[3].Text,
 		}
-		log.Info().Interface("popularity", ocrResult.Popularity).
-			Msg("found feed popularity success")
 	}
 
+	log.Info().Strs("tags", ocrResult.Tags).
+		Interface("popularity", ocrResult.Popularity).
+		Msg("found feed success")
 	s.FeedCount++
 	return nil
 }
@@ -143,10 +141,11 @@ func (s *VideoStat) incrLive(ocrResult *OcrResult, driverExt *DriverExt) error {
 		ocrResult.Popularity = Popularity{
 			LiveUsers: popularityData[0].Text,
 		}
-		log.Info().Interface("popularity", ocrResult.Popularity).
-			Msg("found live popularity success")
 	}
 
+	log.Info().Strs("tags", ocrResult.Tags).
+		Interface("popularity", ocrResult.Popularity).
+		Msg("found live success")
 	s.LiveCount++
 	return nil
 }
