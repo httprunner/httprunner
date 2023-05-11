@@ -200,7 +200,7 @@ type LiveCrawler struct {
 
 func (l *LiveCrawler) checkLiveVideo(texts OCRTexts) (enterPoint PointF, yes bool) {
 	// 预览流入口：DY/KS
-	points, err := texts.FindTexts([]string{".?点击进入直播间"}, WithRegex(true))
+	points, err := texts.FindTexts([]string{".*点击进入直播间"}, WithRegex(true))
 	if err == nil {
 		return points[0].Center(), true
 	}
@@ -434,8 +434,9 @@ func (dExt *DriverExt) assertActivity(packageName, activityType string) error {
 
 // TODO: add more popup texts
 var popups = [][]string{
-	{"青少年模式", "我知道了"}, // 青少年弹窗
-	{"个人信息保护指引", "同意"},
+	{".*青少年.*", "我知道了"}, // 青少年弹窗
+	{".*个人信息保护.*", "同意"},
+	{".*更新.*", "以后再说"},
 }
 
 func (dExt *DriverExt) autoPopupHandler(ocrResult *OcrResult) error {
@@ -444,7 +445,7 @@ func (dExt *DriverExt) autoPopupHandler(ocrResult *OcrResult) error {
 			continue
 		}
 
-		points, err := ocrResult.Texts.FindTexts([]string{popup[0], popup[1]})
+		points, err := ocrResult.Texts.FindTexts([]string{popup[0], popup[1]}, WithRegex(true))
 		if err == nil {
 			log.Warn().Interface("popup", popup).
 				Interface("texts", ocrResult.Texts).Msg("text popup found")
