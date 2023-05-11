@@ -293,6 +293,17 @@ func (l *LiveCrawler) exitLiveRoom() error {
 		return nil
 	}
 
+	// click X button on upper-right corner
+	if err := l.driver.TapXY(0.95, 0.05); err == nil {
+		log.Info().Msg("tap X button on upper-right corner to exit live room")
+		time.Sleep(2 * time.Second)
+
+		// check if back to feed page
+		if err := l.driver.assertActivity(l.configs.AppPackageName, "feed"); err == nil {
+			return nil
+		}
+	}
+
 	return errors.New("exit live room failed")
 }
 
