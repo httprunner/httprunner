@@ -178,8 +178,11 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) (
 		return
 	}
 
-	token := builtin.Sign("auth-v2", env.VEDEM_OCR_AK, env.VEDEM_OCR_SK, bodyBuf.Bytes())
+	signToken := "UNSIGNED-PAYLOAD"
+	token := builtin.Sign("auth-v2", env.VEDEM_OCR_AK, env.VEDEM_OCR_SK, []byte(signToken))
+
 	req.Header.Add("Agw-Auth", token)
+	req.Header.Add("Agw-Auth-Content", signToken)
 	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
 
 	var resp *http.Response
