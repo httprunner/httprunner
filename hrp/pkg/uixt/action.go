@@ -266,6 +266,9 @@ func WithIndex(index int) ActionOption {
 	}
 }
 
+// set alias for compatibility
+var WithWaitTime = WithInterval
+
 func WithInterval(sec float64) ActionOption {
 	return func(o *ActionOptions) {
 		o.Interval = sec
