@@ -106,6 +106,10 @@ type ActionOptions struct {
 func (o *ActionOptions) Options() []ActionOption {
 	options := make([]ActionOption, 0)
 
+	if o == nil {
+		return options
+	}
+
 	if o.Identifier != "" {
 		options = append(options, WithIdentifier(o.Identifier))
 	}
