@@ -594,7 +594,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 			packageName := uiDriver.Driver.GetLastLaunchedApp()
 			err2 := uiDriver.Driver.AssertAppForeground(packageName)
 			if packageName != "" && err2 != nil {
-				log.Error().Err(err2).Str("packageName", packageName).Msg("app is not in foreground")
+				log.Error().Err(err2).Msg("app is not in foreground")
 				err = errors.Wrap(code.MobileUIAppNotInForegroundError, err2.Error())
 			}
 		}

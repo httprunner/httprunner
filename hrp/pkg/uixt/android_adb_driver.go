@@ -386,7 +386,8 @@ func (ad *adbDriver) AssertAppForeground(packageName string) error {
 		return err
 	}
 	if app.PackageName != packageName {
-		return errors.New("app is not in foreground")
+		return fmt.Errorf("%v is not in foreground, current is %v",
+			packageName, app.PackageName)
 	}
 	return nil
 }
