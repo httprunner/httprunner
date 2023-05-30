@@ -28,9 +28,9 @@ You can get more installation introduction on [hybridgroup/gocv].
 
 OCR API is a paid service, you need to pre-purchase and configure the environment variables.
 
-- VEDEM_OCR_URL
-- VEDEM_OCR_AK
-- VEDEM_OCR_SK
+- VEDEM_IMAGE_URL
+- VEDEM_IMAGE_AK
+- VEDEM_IMAGE_SK
 
 ## Thanks
 

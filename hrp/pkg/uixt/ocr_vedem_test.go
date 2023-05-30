@@ -14,12 +14,11 @@ func checkOCR(buff *bytes.Buffer) error {
 	if err != nil {
 		return err
 	}
-	ocrResults, url, err := service.getOCRResult(buff)
+	imageResult, err := service.getImageResult(buff)
 	if err != nil {
 		return err
 	}
-	fmt.Println(ocrResults)
-	fmt.Println(url)
+	fmt.Println(fmt.Sprintf("imageResult: %v", imageResult))
 	return nil
 }
 

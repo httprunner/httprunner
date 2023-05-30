@@ -28,11 +28,16 @@ type OCRResult struct {
 	Points []PointF `json:"points"`
 }
 
-type ResponseOCR struct {
-	Code      int         `json:"code"`
-	Message   string      `json:"message"`
-	URL       string      `json:"url"` // image uploaded url
-	OCRResult []OCRResult `json:"ocrResult"`
+type ImageResult struct {
+	URL       string      `json:"url"`       // image uploaded url
+	OCRResult []OCRResult `json:"ocrResult"` // OCR texts
+	LiveType  string      `json:"liveType"`  // 直播间类型
+}
+
+type ImageResponse struct {
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Result  ImageResult `json:"result"`
 }
 
 type OCRText struct {
@@ -142,14 +147,22 @@ func newVEDEMOCRService() (*veDEMOCRService, error) {
 // veDEMOCRService implements IOCRService interface
 type veDEMOCRService struct{}
 
-func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) (
-	ocrResutls []OCRResult, url string, err error) {
+var actions = []string{
+	"ocr",      // get ocr texts
+	"upload",   // get image uploaded url
+	"liveType", // get live type
+	// "popup",
+	// "close",
+}
+
+func (s *veDEMOCRService) getImageResult(imageBuf *bytes.Buffer) (
+	imageResult ImageResult, err error) {
 
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
-	bodyWriter.WriteField("withDet", "true")
-	bodyWriter.WriteField("upload", "true") // get image uploaded url
-	// bodyWriter.WriteField("timestampOnly", "true")
+	for _, action := range actions {
+		bodyWriter.WriteField("actions", action)
+	}
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {
@@ -171,7 +184,7 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) (
 		return
 	}
 
-	req, err := http.NewRequest("POST", env.VEDEM_OCR_URL, bodyBuf)
+	req, err := http.NewRequest("POST", env.VEDEM_IMAGE_URL, bodyBuf)
 	if err != nil {
 		err = errors.Wrap(code.OCRRequestError,
 			fmt.Sprintf("construct request error: %v", err))
@@ -179,11 +192,15 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) (
 	}
 
 	signToken := "UNSIGNED-PAYLOAD"
-	token := builtin.Sign("auth-v2", env.VEDEM_OCR_AK, env.VEDEM_OCR_SK, []byte(signToken))
+	token := builtin.Sign("auth-v2", env.VEDEM_IMAGE_AK, env.VEDEM_IMAGE_SK, []byte(signToken))
 
 	req.Header.Add("Agw-Auth", token)
 	req.Header.Add("Agw-Auth-Content", signToken)
 	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
+
+	// ppe
+	// req.Header.Add("x-use-ppe", "1")
+	// req.Header.Add("x-tt-env", "ppe_vedem_algorithm")
 
 	var resp *http.Response
 	// retry 3 times
@@ -230,34 +247,37 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) (
 		return
 	}
 
-	var ocrResult ResponseOCR
-	err = json.Unmarshal(results, &ocrResult)
+	var imageResponse ImageResponse
+	err = json.Unmarshal(results, &imageResponse)
 	if err != nil {
+		log.Error().Err(err).
+			Str("response", string(results)).
+			Msg("json unmarshal veDEM image response body failed")
 		err = errors.Wrap(code.OCRResponseError,
-			fmt.Sprintf("json unmarshal response body error: %v", err))
+			"json unmarshal veDEM image response body error")
 		return
 	}
 
-	if ocrResult.Code != 0 {
+	if imageResponse.Code != 0 {
 		log.Error().
-			Int("code", ocrResult.Code).
-			Str("message", ocrResult.Message).
+			Int("code", imageResponse.Code).
+			Str("message", imageResponse.Message).
 			Msg("request veDEM OCR service failed")
 	}
 
-	return ocrResult.OCRResult, ocrResult.URL, nil
+	return imageResponse.Result, nil
 }
 
 func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer) (
 	ocrTexts OCRTexts, url string, err error) {
 
-	ocrResults, url, err := s.getOCRResult(imageBuf)
+	imageResult, err := s.getImageResult(imageBuf)
 	if err != nil {
 		log.Error().Err(err).Msg("getOCRResult failed")
 		return
 	}
 
-	for _, ocrResult := range ocrResults {
+	for _, ocrResult := range imageResult.OCRResult {
 		rect := image.Rectangle{
 			// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
 			Min: image.Point{
@@ -275,20 +295,21 @@ func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer) (
 			Rect: rect,
 		})
 	}
+	url = imageResult.URL
 
 	log.Debug().Interface("texts", ocrTexts).Msg("get screen texts by veDEM OCR")
 	return
 }
 
 func checkEnv() error {
-	if env.VEDEM_OCR_URL == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_OCR_URL missed")
+	if env.VEDEM_IMAGE_URL == "" {
+		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_URL missed")
 	}
-	log.Info().Str("VEDEM_OCR_URL", env.VEDEM_OCR_URL).Msg("get env")
-	if env.VEDEM_OCR_AK == "" {
+	log.Info().Str("VEDEM_IMAGE_URL", env.VEDEM_IMAGE_URL).Msg("get env")
+	if env.VEDEM_IMAGE_AK == "" {
 		return errors.Wrap(code.OCREnvMissedError, "VEDEM_OCR_AK missed")
 	}
-	if env.VEDEM_OCR_SK == "" {
+	if env.VEDEM_IMAGE_SK == "" {
 		return errors.Wrap(code.OCREnvMissedError, "VEDEM_OCR_SK missed")
 	}
 	return nil
