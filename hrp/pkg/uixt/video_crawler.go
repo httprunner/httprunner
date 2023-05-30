@@ -329,10 +329,22 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	}()
 
 	// launch app
-	if err = dExt.Driver.AppLaunch(configs.AppPackageName); err != nil {
-		return err
+	if configs.AppPackageName != "" {
+		if err = dExt.Driver.AppLaunch(configs.AppPackageName); err != nil {
+			return err
+		}
+		time.Sleep(5 * time.Second)
+	} else {
+		app, err := dExt.Driver.GetForegroundApp()
+		if err != nil {
+			return err
+		}
+		log.Info().
+			Str("packageName", app.PackageName).
+			Str("activity", app.Activity).
+			Msg("start to video crawler for current foreground app")
+		configs.AppPackageName = app.PackageName
 	}
-	time.Sleep(5 * time.Second)
 
 	liveCrawler := LiveCrawler{
 		driver:      dExt,
@@ -352,11 +364,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			log.Warn().Msg("interrupted in feed crawler")
 			return errors.Wrap(code.InterruptError, "feed crawler interrupted")
 		default:
-			// check if feed page
-			if err := dExt.assertActivity(configs.AppPackageName, "feed"); err != nil {
-				return err
-			}
-
 			// take screenshot and get screen texts by OCR
 			imagePath, texts, err := dExt.GetScreenTextsByOCR()
 			if err != nil {
@@ -411,6 +418,11 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				return err
 			}
 			time.Sleep(1 * time.Second)
+
+			// check if feed page
+			if err := dExt.assertActivity(configs.AppPackageName, "feed"); err != nil {
+				return err
+			}
 		}
 	}
 }
@@ -448,6 +460,8 @@ var popups = [][]string{
 	{".*个人信息保护.*", "同意"},
 	{".*更新.*", "以后再说"},
 	{".*定位.*", ".*允许.*"},
+	{".*拍照.*", "仅.*允许"},
+	{".*录音.*", "仅.*允许"},
 }
 
 func (dExt *DriverExt) autoPopupHandler(ocrResult *OcrResult) error {
@@ -461,6 +475,7 @@ func (dExt *DriverExt) autoPopupHandler(ocrResult *OcrResult) error {
 			log.Warn().Interface("popup", popup).
 				Interface("texts", ocrResult.Texts).Msg("text popup found")
 			point := points[1].Center()
+			log.Info().Str("text", points[1].Text).Msg("close popup")
 			if err := dExt.TapAbsXY(point.X, point.Y); err != nil {
 				log.Error().Err(err).Msg("tap popup failed")
 				return errors.Wrap(code.MobileUIPopupError, err.Error())
