@@ -246,6 +246,9 @@ func (d *Device) ReverseForwardKillAll() error {
 func (d *Device) RunShellCommand(cmd string, args ...string) (string, error) {
 	raw, err := d.RunShellCommandWithBytes(cmd, args...)
 	if err != nil {
+		if errors.Is(err, code.AndroidDeviceConnectionError) {
+			return "", err
+		}
 		return "", errors.Wrap(code.AndroidShellExecError, err.Error())
 	}
 	return string(raw), nil

@@ -462,6 +462,7 @@ var popups = [][]string{
 	{".*定位.*", ".*允许.*"},
 	{".*拍照.*", "仅.*允许"},
 	{".*录音.*", "仅.*允许"},
+	{"管理使用时间", ".*忽略.*"},
 }
 
 func (dExt *DriverExt) autoPopupHandler(ocrResult *OcrResult) error {
