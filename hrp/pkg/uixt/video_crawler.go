@@ -447,6 +447,7 @@ var popups = [][]string{
 	{".*青少年.*", "我知道了"}, // 青少年弹窗
 	{".*个人信息保护.*", "同意"},
 	{".*更新.*", "以后再说"},
+	{".*定位.*", ".*允许.*"},
 }
 
 func (dExt *DriverExt) autoPopupHandler(ocrResult *OcrResult) error {
