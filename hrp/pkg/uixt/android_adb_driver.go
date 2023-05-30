@@ -392,7 +392,7 @@ func (ad *adbDriver) AssertAppForeground(packageName string) error {
 }
 
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
-	// adb shell dumpsys activity activities | grep mResumedActivity
+	// adb shell dumpsys activity activities
 	output, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to dumpsys activities")
@@ -402,8 +402,10 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	lines := strings.Split(string(output), "\n")
 	for _, line := range lines {
 		trimmedLine := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmedLine, "mResumedActivity:") {
+		// grep mResumedActivity|ResumedActivity
+		if strings.HasPrefix(trimmedLine, "mResumedActivity:") || strings.HasPrefix(trimmedLine, "ResumedActivity:") {
 			// mResumedActivity: ActivityRecord{9656d74 u0 com.android.settings/.Settings t407}
+			// ResumedActivity: ActivityRecord{8265c25 u0 com.android.settings/.Settings t73}
 			strs := strings.Split(trimmedLine, " ")
 			for _, str := range strs {
 				if strings.Contains(str, "/") {
