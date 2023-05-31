@@ -32,8 +32,6 @@ Copyright 2017 debugtalk
 * [hrp boom](hrp_boom.md)	 - run load test with boomer
 * [hrp build](hrp_build.md)	 - build plugin for testing
 * [hrp convert](hrp_convert.md)	 - convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases
-* [hrp dns](hrp_dns.md)	 - DNS resolution for different source and record types
-* [hrp ping](hrp_ping.md)	 - run integrated ping command
 * [hrp pytest](hrp_pytest.md)	 - run API test with pytest
 * [hrp run](hrp_run.md)	 - run API test with go engine
 * [hrp startproject](hrp_startproject.md)	 - create a scaffold project

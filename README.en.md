@@ -92,10 +92,8 @@ Available Commands:
   build        build plugin for testing
   completion   Generate the autocompletion script for the specified shell
   convert      convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases
-  dns          DNS resolution for different source and record types
   help         Help about any command
   ios          simple utils for ios device management
-  ping         run integrated ping command
   pytest       run API test with pytest
   run          run API test with go engine
   startproject create a scaffold project
