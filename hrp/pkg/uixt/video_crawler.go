@@ -260,10 +260,14 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			imageResult, err := l.driver.GetScreenResult()
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
+				time.Sleep(3 * time.Second)
 				continue
 			}
 			screenResult := l.driver.cacheStepData.screenResults[imageResult.imagePath]
 			screenResult.Tags = []string{"live"}
+			if imageResult.LiveType != "" {
+				screenResult.Tags = append(screenResult.Tags, imageResult.LiveType)
+			}
 
 			// check live type and incr live count
 			if err := l.currentStat.incrLive(screenResult, l.driver); err != nil {
@@ -368,6 +372,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			imageResult, err := dExt.GetScreenResult()
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
+				time.Sleep(3 * time.Second)
 				continue
 			}
 			screenResult := dExt.cacheStepData.screenResults[imageResult.imagePath]
@@ -433,26 +438,29 @@ func (dExt *DriverExt) assertActivity(packageName, activityType string) error {
 		Str("activity_type", activityType).Msg("assert activity")
 	app, err := dExt.Driver.GetForegroundApp()
 	if err != nil {
-		log.Error().Err(err).Msg("get foreground app failed")
-		return err
+		log.Warn().Err(err).Msg("get foreground app failed, skip app/activity assertion")
+		return nil // Notice: ignore error when get foreground app failed
 	}
 
 	if app.PackageName != packageName {
 		return errors.Wrap(code.MobileUIAppNotInForegroundError,
-			fmt.Sprintf("app %s is not in foreground", packageName))
+			fmt.Sprintf("foreground app %s, expect %s", app.PackageName, packageName))
 	}
 
+	var expectActivity string
 	if activities, ok := androidActivities[app.PackageName]; ok {
 		if activity, ok := activities[activityType]; ok {
 			if strings.HasSuffix(app.Activity, activity) {
 				return nil
 			}
+			expectActivity = activity
 		}
 	}
 
 	log.Error().Interface("app", app.AppBaseInfo).Msg("app activity not match")
-	return errors.Wrap(code.MobileUIAppNotInForegroundError,
-		fmt.Sprintf("%s activity is not in foreground", activityType))
+	return errors.Wrap(code.MobileUIActivityNotMatchError,
+		fmt.Sprintf("foreground activity %s, expect %s %s",
+			app.Activity, activityType, expectActivity))
 }
 
 // TODO: add more popup texts

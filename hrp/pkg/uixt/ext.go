@@ -214,9 +214,11 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	for imagePath, screenResult := range dExt.cacheStepData.screenResults {
 		o, _ := json.Marshal(screenResult.Texts)
 		data := map[string]interface{}{
-			"tags":  screenResult.Tags,
-			"texts": string(o),
+			"tags":       screenResult.Tags,
+			"texts":      string(o),
+			"popularity": screenResult.Popularity,
 		}
+
 		screenResults[imagePath] = data
 	}
 	cacheData["screen_results"] = screenResults

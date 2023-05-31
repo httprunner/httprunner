@@ -74,7 +74,8 @@ var (
 	MobileUILaunchAppError          = errors.New("mobile UI launch app error")            // 71
 	MobileUIValidationError         = errors.New("mobile UI validation error")            // 75
 	MobileUIAppNotInForegroundError = errors.New("mobile UI app not in foreground error") // 76
-	MobileUIPopupError              = errors.New("mobile UI popup error")                 // 77
+	MobileUIActivityNotMatchError   = errors.New("mobile UI activity not match error")    // 77
+	MobileUIPopupError              = errors.New("mobile UI popup error")                 // 78
 )
 
 // OCR related: [80, 90)
@@ -136,7 +137,8 @@ var errorsMap = map[error]int{
 	MobileUILaunchAppError:          71,
 	MobileUIValidationError:         75,
 	MobileUIAppNotInForegroundError: 76,
-	MobileUIPopupError:              77,
+	MobileUIActivityNotMatchError:   77,
+	MobileUIPopupError:              78,
 
 	// OCR related
 	OCREnvMissedError:         80,
