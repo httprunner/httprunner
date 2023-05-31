@@ -257,12 +257,12 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			}
 
 			// take screenshot and get screen texts by OCR
-			imagePath, _, err := l.driver.GetScreenTextsByOCR()
+			imageResult, err := l.driver.GetScreenResult()
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				continue
 			}
-			screenResult := l.driver.cacheStepData.screenResults[imagePath]
+			screenResult := l.driver.cacheStepData.screenResults[imageResult.imagePath]
 			screenResult.Tags = []string{"live"}
 
 			// check live type and incr live count
@@ -365,12 +365,12 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			return errors.Wrap(code.InterruptError, "feed crawler interrupted")
 		default:
 			// take screenshot and get screen texts by OCR
-			imagePath, texts, err := dExt.GetScreenTextsByOCR()
+			imageResult, err := dExt.GetScreenResult()
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				continue
 			}
-			screenResult := dExt.cacheStepData.screenResults[imagePath]
+			screenResult := dExt.cacheStepData.screenResults[imageResult.imagePath]
 
 			// automatic handling of pop-up windows
 			if err := dExt.autoPopupHandler(screenResult); err != nil {
@@ -379,6 +379,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			}
 
 			// check if live video && run live crawler
+			texts := imageResult.OCRResult.ToOCRTexts()
 			if enterPoint, isLive := liveCrawler.checkLiveVideo(texts); isLive {
 				log.Info().Msg("live video found")
 				if !liveCrawler.currentStat.isLiveTargetAchieved() {

@@ -10,7 +10,7 @@ func TestDriverExtOCR(t *testing.T) {
 	driverExt, err := iosDevice.NewDriver(nil)
 	checkErr(t, err)
 
-	point, err := driverExt.FindScreenTextByOCR("抖音")
+	point, err := driverExt.FindScreenText("抖音")
 	checkErr(t, err)
 
 	t.Logf("point.X: %v, point.Y: %v", point.X, point.Y)

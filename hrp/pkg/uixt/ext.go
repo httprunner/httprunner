@@ -110,7 +110,7 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 		return nil, err
 	}
 
-	if dExt.ImageService, err = newVEDEMImageService(); err != nil {
+	if dExt.ImageService, err = newVEDEMImageService("ocr", "upload", "liveType"); err != nil {
 		return nil, err
 	}
 
@@ -241,14 +241,14 @@ func init() {
 func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...ActionOption) (point PointF, err error) {
 	// click on text, using OCR
 	if !isPathExists(search) {
-		return dExt.FindScreenTextByOCR(search, options...)
+		return dExt.FindScreenText(search, options...)
 	}
 	// click on image, using opencv
 	return dExt.FindImageRectInUIKit(search, options...)
 }
 
 func (dExt *DriverExt) IsOCRExist(text string) bool {
-	_, err := dExt.FindScreenTextByOCR(text)
+	_, err := dExt.FindScreenText(text)
 	return err == nil
 }
 
