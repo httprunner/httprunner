@@ -344,7 +344,7 @@ func (dExt *DriverExt) GetScreenTextsByOCR() (imagePath string, ocrTexts OCRText
 		log.Debug().Str("imagePath", imagePath).Str("imageUrl", imageUrl).Msg("log screenshot")
 	}
 
-	dExt.cacheStepData.OcrResults[imagePath] = &OcrResult{
+	dExt.cacheStepData.screenResults[imagePath] = &ScreenResult{
 		Texts: ocrTexts,
 	}
 

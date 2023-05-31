@@ -56,7 +56,7 @@ type Popularity struct {
 	LiveUsers string `json:"live_users,omitempty"` // 直播间人数
 }
 
-type OcrResult struct {
+type ScreenResult struct {
 	Texts      OCRTexts   `json:"texts"`      // dumped OCRTexts
 	Tags       []string   `json:"tags"`       // tags for image, e.g. ["feed", "ad", "live"]
 	Popularity Popularity `json:"popularity"` // video popularity data
@@ -64,19 +64,19 @@ type OcrResult struct {
 
 type cacheStepData struct {
 	// cache step screenshot paths
-	ScreenShots     []string
+	screenShots     []string
 	screenShotsUrls map[string]string // map screenshot file path to uploaded url
-	// cache step screenshot ocr results, key is image path, value is OcrResult
-	OcrResults map[string]*OcrResult
+	// cache step screenshot ocr results, key is image path, value is ScreenResult
+	screenResults map[string]*ScreenResult
 	// cache feed/live video stat
-	VideoStat *VideoStat
+	videoStat *VideoStat
 }
 
 func (d *cacheStepData) reset() {
-	d.ScreenShots = make([]string, 0)
+	d.screenShots = make([]string, 0)
 	d.screenShotsUrls = make(map[string]string)
-	d.OcrResults = make(map[string]*OcrResult)
-	d.VideoStat = nil
+	d.screenResults = make(map[string]*ScreenResult)
+	d.videoStat = nil
 }
 
 type DriverExt struct {
@@ -199,27 +199,27 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 		return "", errors.Wrap(err, "encode screenshot image failed")
 	}
 
-	dExt.cacheStepData.ScreenShots = append(dExt.cacheStepData.ScreenShots, screenshotPath)
+	dExt.cacheStepData.screenShots = append(dExt.cacheStepData.screenShots, screenshotPath)
 	log.Info().Str("path", screenshotPath).Msg("save screenshot file success")
 	return screenshotPath, nil
 }
 
 func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData := make(map[string]interface{})
-	cacheData["video_stat"] = dExt.cacheStepData.VideoStat
-	cacheData["screenshots"] = dExt.cacheStepData.ScreenShots
+	cacheData["video_stat"] = dExt.cacheStepData.videoStat
+	cacheData["screenshots"] = dExt.cacheStepData.screenShots
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenShotsUrls
 
-	ocrResults := make(map[string]interface{})
-	for imagePath, ocrResult := range dExt.cacheStepData.OcrResults {
-		o, _ := json.Marshal(ocrResult.Texts)
+	screenResults := make(map[string]interface{})
+	for imagePath, screenResult := range dExt.cacheStepData.screenResults {
+		o, _ := json.Marshal(screenResult.Texts)
 		data := map[string]interface{}{
-			"tags":  ocrResult.Tags,
+			"tags":  screenResult.Tags,
 			"texts": string(o),
 		}
-		ocrResults[imagePath] = data
+		screenResults[imagePath] = data
 	}
-	cacheData["ocr_results"] = ocrResults
+	cacheData["screen_results"] = screenResults
 
 	// clear cache
 	dExt.cacheStepData.reset()
