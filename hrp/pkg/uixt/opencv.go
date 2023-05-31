@@ -71,7 +71,6 @@ func (dExt *DriverExt) Debug(dm DebugMode) {
 func (dExt *DriverExt) OnlyOnceThreshold(threshold float64) (newExt *DriverExt) {
 	newExt = new(DriverExt)
 	newExt.Driver = dExt.Driver
-	newExt.scale = dExt.scale
 	newExt.matchMode = dExt.matchMode
 	newExt.threshold = threshold
 	return
@@ -80,7 +79,6 @@ func (dExt *DriverExt) OnlyOnceThreshold(threshold float64) (newExt *DriverExt) 
 func (dExt *DriverExt) OnlyOnceMatchMode(matchMode TemplateMatchMode) (newExt *DriverExt) {
 	newExt = new(DriverExt)
 	newExt.Driver = dExt.Driver
-	newExt.scale = dExt.scale
 	newExt.matchMode = matchMode
 	newExt.threshold = dExt.threshold
 	return
@@ -103,7 +101,7 @@ func (dExt *DriverExt) FindAllImageRect(search string) (rects []image.Rectangle,
 	if bufSearch, err = getBufFromDisk(search); err != nil {
 		return nil, err
 	}
-	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_cv")); err != nil {
+	if bufSource, _, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("%d_cv")); err != nil {
 		return nil, err
 	}
 
@@ -113,25 +111,19 @@ func (dExt *DriverExt) FindAllImageRect(search string) (rects []image.Rectangle,
 	return
 }
 
-func (dExt *DriverExt) FindImageRectInUIKit(imagePath string, options ...DataOption) (x, y, width, height float64, err error) {
+func (dExt *DriverExt) FindImageRectInUIKit(imagePath string, options ...ActionOption) (point PointF, err error) {
 	var bufSource, bufSearch *bytes.Buffer
 	if bufSearch, err = getBufFromDisk(imagePath); err != nil {
-		return 0, 0, 0, 0, err
-	}
-	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_cv")); err != nil {
-		return 0, 0, 0, 0, err
+		return PointF{}, err
 	}
 
 	var rect image.Rectangle
 	if rect, err = FindImageRectFromRaw(bufSource, bufSearch, float32(dExt.threshold), TemplateMatchMode(dExt.matchMode)); err != nil {
-		return 0, 0, 0, 0, err
+		return PointF{}, err
 	}
 
-	// if rect, err = dExt.findImgRect(search); err != nil {
-	// 	return 0, 0, 0, 0, err
-	// }
-	x, y, width, height = dExt.MappingToRectInUIKit(rect)
-	return
+	point = getRectangleCenterPoint(rect)
+	return point, nil
 }
 
 func getBufFromDisk(name string) (*bytes.Buffer, error) {

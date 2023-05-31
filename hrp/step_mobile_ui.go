@@ -12,7 +12,7 @@ import (
 )
 
 type MobileStep struct {
-	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"`
+	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"` // android serial or ios udid
 	uixt.MobileAction `yaml:",inline"`
 	Actions           []uixt.MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
@@ -36,7 +36,7 @@ func (s *StepMobile) Serial(serial string) *StepMobile {
 
 func (s *StepMobile) InstallApp(path string) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.AppInstall,
+		Method: uixt.ACTION_AppInstall,
 		Params: path,
 	})
 	return s
@@ -44,7 +44,7 @@ func (s *StepMobile) InstallApp(path string) *StepMobile {
 
 func (s *StepMobile) AppLaunch(bundleId string) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.AppLaunch,
+		Method: uixt.ACTION_AppLaunch,
 		Params: bundleId,
 	})
 	return s
@@ -52,7 +52,7 @@ func (s *StepMobile) AppLaunch(bundleId string) *StepMobile {
 
 func (s *StepMobile) AppTerminate(bundleId string) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.AppTerminate,
+		Method: uixt.ACTION_AppTerminate,
 		Params: bundleId,
 	})
 	return s
@@ -69,12 +69,11 @@ func (s *StepMobile) Home() *StepMobile {
 // TapXY taps the point {X,Y}, X & Y is percentage of coordinates
 func (s *StepMobile) TapXY(x, y float64, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_TapXY,
-		Params: []float64{x, y},
+		Method:  uixt.ACTION_TapXY,
+		Params:  []float64{x, y},
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
@@ -82,12 +81,11 @@ func (s *StepMobile) TapXY(x, y float64, options ...uixt.ActionOption) *StepMobi
 // TapAbsXY taps the point {X,Y}, X & Y is absolute coordinates
 func (s *StepMobile) TapAbsXY(x, y float64, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_TapAbsXY,
-		Params: []float64{x, y},
+		Method:  uixt.ACTION_TapAbsXY,
+		Params:  []float64{x, y},
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
@@ -95,12 +93,11 @@ func (s *StepMobile) TapAbsXY(x, y float64, options ...uixt.ActionOption) *StepM
 // Tap taps on the target element
 func (s *StepMobile) Tap(params string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Tap,
-		Params: params,
+		Method:  uixt.ACTION_Tap,
+		Params:  params,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
@@ -108,12 +105,11 @@ func (s *StepMobile) Tap(params string, options ...uixt.ActionOption) *StepMobil
 // Tap taps on the target element by OCR recognition
 func (s *StepMobile) TapByOCR(ocrText string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_TapByOCR,
-		Params: ocrText,
+		Method:  uixt.ACTION_TapByOCR,
+		Params:  ocrText,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
@@ -121,153 +117,142 @@ func (s *StepMobile) TapByOCR(ocrText string, options ...uixt.ActionOption) *Ste
 // Tap taps on the target element by CV recognition
 func (s *StepMobile) TapByCV(imagePath string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_TapByCV,
-		Params: imagePath,
+		Method:  uixt.ACTION_TapByCV,
+		Params:  imagePath,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 // DoubleTapXY double taps the point {X,Y}, X & Y is percentage of coordinates
-func (s *StepMobile) DoubleTapXY(x, y float64) *StepMobile {
+func (s *StepMobile) DoubleTapXY(x, y float64, options ...uixt.ActionOption) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_DoubleTapXY,
-		Params: []float64{x, y},
+		Method:  uixt.ACTION_DoubleTapXY,
+		Params:  []float64{x, y},
+		Options: uixt.NewActionOptions(options...),
 	})
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) DoubleTap(params string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_DoubleTap,
-		Params: params,
+		Method:  uixt.ACTION_DoubleTap,
+		Params:  params,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) Back(options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Back,
-		Params: nil,
+		Method:  uixt.ACTION_Back,
+		Params:  nil,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) Swipe(sx, sy, ex, ey float64, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Swipe,
-		Params: []float64{sx, sy, ex, ey},
+		Method:  uixt.ACTION_Swipe,
+		Params:  []float64{sx, sy, ex, ey},
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeUp(options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Swipe,
-		Params: "up",
+		Method:  uixt.ACTION_Swipe,
+		Params:  "up",
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeDown(options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Swipe,
-		Params: "down",
+		Method:  uixt.ACTION_Swipe,
+		Params:  "down",
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeLeft(options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Swipe,
-		Params: "left",
+		Method:  uixt.ACTION_Swipe,
+		Params:  "left",
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeRight(options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Swipe,
-		Params: "right",
+		Method:  uixt.ACTION_Swipe,
+		Params:  "right",
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeToTapApp(appName string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_SwipeToTapApp,
-		Params: appName,
+		Method:  uixt.ACTION_SwipeToTapApp,
+		Params:  appName,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeToTapText(text string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_SwipeToTapText,
-		Params: text,
+		Method:  uixt.ACTION_SwipeToTapText,
+		Params:  text,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) SwipeToTapTexts(texts interface{}, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_SwipeToTapTexts,
-		Params: texts,
+		Method:  uixt.ACTION_SwipeToTapTexts,
+		Params:  texts,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method: uixt.ACTION_Input,
-		Params: text,
+		Method:  uixt.ACTION_Input,
+		Params:  text,
+		Options: uixt.NewActionOptions(options...),
 	}
-	for _, option := range options {
-		option(&action)
-	}
+
 	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
@@ -275,8 +260,9 @@ func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobil
 // Sleep specify sleep seconds after last action
 func (s *StepMobile) Sleep(n float64) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.CtlSleep,
-		Params: n,
+		Method:  uixt.ACTION_Sleep,
+		Params:  n,
+		Options: nil,
 	})
 	return &StepMobile{step: s.step}
 }
@@ -287,32 +273,45 @@ func (s *StepMobile) Sleep(n float64) *StepMobile {
 // 2. [min1, max1, weight1, min2, max2, weight2, ...] : weight is the probability of the time range
 func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.CtlSleepRandom,
-		Params: params,
+		Method:  uixt.ACTION_SleepRandom,
+		Params:  params,
+		Options: nil,
+	})
+	return &StepMobile{step: s.step}
+}
+
+func (s *StepMobile) VideoCrawler(params map[string]interface{}) *StepMobile {
+	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+		Method:  uixt.ACTION_VideoCrawler,
+		Params:  params,
+		Options: nil,
 	})
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) ScreenShot() *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.CtlScreenShot,
-		Params: nil,
+		Method:  uixt.ACTION_ScreenShot,
+		Params:  nil,
+		Options: nil,
 	})
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) StartCamera() *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.CtlStartCamera,
-		Params: nil,
+		Method:  uixt.ACTION_StartCamera,
+		Params:  nil,
+		Options: nil,
 	})
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) StopCamera() *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
-		Method: uixt.CtlStopCamera,
-		Params: nil,
+		Method:  uixt.ACTION_StopCamera,
+		Params:  nil,
+		Options: nil,
 	})
 	return &StepMobile{step: s.step}
 }
@@ -590,25 +589,20 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		attachments := make(map[string]interface{})
 		if err != nil {
 			attachments["error"] = err.Error()
-
-			// check if app is in foreground
-			packageName := uiDriver.Driver.GetLastLaunchedApp()
-			yes, err2 := uiDriver.Driver.IsAppInForeground(packageName)
-			if packageName != "" && (!yes || err2 != nil) {
-				log.Error().Err(err2).Str("packageName", packageName).Msg("app is not in foreground")
-				err = errors.Wrap(code.MobileUIAppNotInForegroundError, err.Error())
-			}
 		}
 
 		// take screenshot after each step
-		_, err := uiDriver.TakeScreenShot(
-			builtin.GenNameWithTimestamp("step_%d_") + step.Name)
+		_, _, err := uiDriver.TakeScreenShot(
+			builtin.GenNameWithTimestamp("%d_step_") + step.Name)
 		if err != nil {
 			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed on step finished")
 		}
 
 		// save attachments
-		attachments["screenshots"] = uiDriver.GetScreenShots()
+		cacheData := uiDriver.GetStepCacheData()
+		for key, value := range cacheData {
+			attachments[key] = value
+		}
 		stepResult.Attachments = attachments
 	}()
 
@@ -627,18 +621,27 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 	// run actions
 	for _, action := range actions {
-		if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
-			if !code.IsErrorPredefined(err) {
-				err = errors.Wrap(code.ParseError,
-					fmt.Sprintf("parse action params failed: %v", err))
+		select {
+		case <-s.caseRunner.hrpRunner.caseTimeoutTimer.C:
+			log.Warn().Msg("timeout in mobile UI runner")
+			return stepResult, errors.Wrap(code.TimeoutError, "mobile UI runner timeout")
+		case <-s.caseRunner.hrpRunner.interruptSignal:
+			log.Warn().Msg("interrupted in mobile UI runner")
+			return stepResult, errors.Wrap(code.InterruptError, "mobile UI runner interrupted")
+		default:
+			if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
+				if !code.IsErrorPredefined(err) {
+					err = errors.Wrap(code.ParseError,
+						fmt.Sprintf("parse action params failed: %v", err))
+				}
+				return stepResult, err
 			}
-			return stepResult, err
-		}
-		if err := uiDriver.DoAction(action); err != nil {
-			if !code.IsErrorPredefined(err) {
-				err = errors.Wrap(code.MobileUIDriverError, err.Error())
+			if err := uiDriver.DoAction(action); err != nil {
+				if !code.IsErrorPredefined(err) {
+					err = errors.Wrap(code.MobileUIDriverError, err.Error())
+				}
+				return stepResult, err
 			}
-			return stepResult, err
 		}
 	}
 

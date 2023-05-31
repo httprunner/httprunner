@@ -8,8 +8,11 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -21,6 +24,7 @@ import (
 	"golang.org/x/net/http2"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
@@ -38,6 +42,8 @@ func NewRunner(t *testing.T) *HRPRunner {
 		t = &testing.T{}
 	}
 	jar, _ := cookiejar.New(nil)
+	interruptSignal := make(chan os.Signal, 1)
+	signal.Notify(interruptSignal, syscall.SIGTERM, syscall.SIGINT)
 	return &HRPRunner{
 		t:             t,
 		failfast:      true, // default to failfast
@@ -60,22 +66,26 @@ func NewRunner(t *testing.T) *HRPRunner {
 		wsDialer: &websocket.Dialer{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
+		caseTimeoutTimer: time.NewTimer(time.Hour * 2), // default case timeout to 2 hour
+		interruptSignal:  interruptSignal,
 	}
 }
 
 type HRPRunner struct {
-	t             *testing.T
-	failfast      bool
-	httpStatOn    bool
-	requestsLogOn bool
-	pluginLogOn   bool
-	venv          string
-	saveTests     bool
-	genHTMLReport bool
-	httpClient    *http.Client
-	http2Client   *http.Client
-	wsDialer      *websocket.Dialer
-	uiClients     map[string]*uixt.DriverExt // UI automation clients for iOS and Android, key is udid/serial
+	t                *testing.T
+	failfast         bool
+	httpStatOn       bool
+	requestsLogOn    bool
+	pluginLogOn      bool
+	venv             string
+	saveTests        bool
+	genHTMLReport    bool
+	httpClient       *http.Client
+	http2Client      *http.Client
+	wsDialer         *websocket.Dialer
+	uiClients        map[string]*uixt.DriverExt // UI automation clients for iOS and Android, key is udid/serial
+	caseTimeoutTimer *time.Timer                // case timeout timer
+	interruptSignal  chan os.Signal             // interrupt signal channel
 }
 
 // SetClientTransport configures transport of http client for high concurrency load testing
@@ -152,10 +162,17 @@ func (r *HRPRunner) SetProxyUrl(proxyUrl string) *HRPRunner {
 	return r
 }
 
-// SetTimeout configures global timeout in seconds.
-func (r *HRPRunner) SetTimeout(timeout time.Duration) *HRPRunner {
-	log.Info().Float64("timeout(seconds)", timeout.Seconds()).Msg("[init] SetTimeout")
-	r.httpClient.Timeout = timeout
+// SetRequestTimeout configures global request timeout in seconds.
+func (r *HRPRunner) SetRequestTimeout(seconds float32) *HRPRunner {
+	log.Info().Float32("timeout_seconds", seconds).Msg("[init] SetRequestTimeout")
+	r.httpClient.Timeout = time.Duration(seconds*1000) * time.Millisecond
+	return r
+}
+
+// SetCaseTimeout configures global testcase timeout in seconds.
+func (r *HRPRunner) SetCaseTimeout(seconds float32) *HRPRunner {
+	log.Info().Float32("timeout_seconds", seconds).Msg("[init] SetCaseTimeout")
+	r.caseTimeoutTimer = time.NewTimer(time.Duration(seconds*1000) * time.Millisecond)
 	return r
 }
 
@@ -291,10 +308,13 @@ func (r *HRPRunner) NewCaseRunner(testcase *TestCase) (*CaseRunner, error) {
 		return nil, errors.Wrap(err, "parse testcase config failed")
 	}
 
+	// set request timeout in seconds
+	if testcase.Config.RequestTimeout != 0 {
+		r.SetRequestTimeout(testcase.Config.RequestTimeout)
+	}
 	// set testcase timeout in seconds
-	if testcase.Config.Timeout != 0 {
-		timeout := time.Duration(testcase.Config.Timeout*1000) * time.Millisecond
-		r.SetTimeout(timeout)
+	if testcase.Config.CaseTimeout != 0 {
+		r.SetCaseTimeout(testcase.Config.CaseTimeout)
 	}
 
 	// load plugin info to testcase config
@@ -432,7 +452,7 @@ func (r *CaseRunner) parseConfig() error {
 		}
 		client, err := device.NewDriver(nil)
 		if err != nil {
-			return errors.Wrap(err, "init Android UIAutomator client failed")
+			return errors.Wrap(err, "init Android client failed")
 		}
 		r.hrpRunner.uiClients[device.SerialNumber] = client
 	}
@@ -505,66 +525,80 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 
 	// run step in sequential order
 	for _, step := range r.caseRunner.testCase.TestSteps {
-		// TODO: parse step struct
-		// parse step name
-		parsedName, err := r.caseRunner.parser.ParseString(step.Name(), r.sessionVariables)
-		if err != nil {
-			parsedName = step.Name()
-		}
-		stepName := convertString(parsedName)
-		log.Info().Str("step", stepName).
-			Str("type", string(step.Type())).Msg("run step start")
+		select {
+		case <-r.caseRunner.hrpRunner.caseTimeoutTimer.C:
+			log.Warn().Msg("timeout in session runner")
+			return errors.Wrap(code.TimeoutError, "session runner timeout")
+		case <-r.caseRunner.hrpRunner.interruptSignal:
+			log.Warn().Msg("interrupted in session runner")
+			return errors.Wrap(code.InterruptError, "session runner interrupted")
+		default:
+			// TODO: parse step struct
+			// parse step name
+			parsedName, err := r.caseRunner.parser.ParseString(step.Name(), r.sessionVariables)
+			if err != nil {
+				parsedName = step.Name()
+			}
+			stepName := convertString(parsedName)
+			log.Info().Str("step", stepName).
+				Str("type", string(step.Type())).Msg("run step start")
 
-		// run times of step
-		loopTimes := step.Struct().Loops
-		if loopTimes < 0 {
-			log.Warn().Int("loops", loopTimes).Msg("loop times should be positive, set to 1")
-			loopTimes = 1
-		} else if loopTimes == 0 {
-			loopTimes = 1
-		} else if loopTimes > 1 {
-			log.Info().Int("loops", loopTimes).Msg("run step with specified loop times")
-		}
-
-		// run step with specified loop times
-		var stepResult *StepResult
-		for i := 1; i <= loopTimes; i++ {
-			var loopIndex string
-			if loopTimes > 1 {
-				log.Info().Int("index", i).Msg("start running step in loop")
-				loopIndex = fmt.Sprintf("_loop_%d", i)
+			// run times of step
+			loopTimes := step.Struct().Loops
+			if loopTimes < 0 {
+				log.Warn().Int("loops", loopTimes).Msg("loop times should be positive, set to 1")
+				loopTimes = 1
+			} else if loopTimes == 0 {
+				loopTimes = 1
+			} else if loopTimes > 1 {
+				log.Info().Int("loops", loopTimes).Msg("run step with specified loop times")
 			}
 
-			// run step
-			stepResult, err = step.Run(r)
-			stepResult.Name = stepName + loopIndex
+			// run step with specified loop times
+			var stepResult *StepResult
+			for i := 1; i <= loopTimes; i++ {
+				var loopIndex string
+				if loopTimes > 1 {
+					log.Info().Int("index", i).Msg("start running step in loop")
+					loopIndex = fmt.Sprintf("_loop_%d", i)
+				}
 
-			r.updateSummary(stepResult)
-		}
+				// run step
+				stepResult, err = step.Run(r)
+				stepResult.Name = stepName + loopIndex
 
-		// update extracted variables
-		for k, v := range stepResult.ExportVars {
-			r.sessionVariables[k] = v
-		}
+				r.updateSummary(stepResult)
+			}
 
-		if err == nil {
-			log.Info().Str("step", stepResult.Name).
+			// update extracted variables
+			for k, v := range stepResult.ExportVars {
+				r.sessionVariables[k] = v
+			}
+
+			if err == nil {
+				log.Info().Str("step", stepResult.Name).
+					Str("type", string(stepResult.StepType)).
+					Bool("success", true).
+					Interface("exportVars", stepResult.ExportVars).
+					Msg("run step end")
+				continue
+			}
+
+			// failed
+			log.Error().Err(err).Str("step", stepResult.Name).
 				Str("type", string(stepResult.StepType)).
-				Bool("success", true).
-				Interface("exportVars", stepResult.ExportVars).
+				Bool("success", false).
 				Msg("run step end")
-			continue
-		}
 
-		// failed
-		log.Error().Err(err).Str("step", stepResult.Name).
-			Str("type", string(stepResult.StepType)).
-			Bool("success", false).
-			Msg("run step end")
+			// interrupted or timeout, abort running
+			if errors.Is(err, code.InterruptError) || errors.Is(err, code.TimeoutError) {
+				return err
+			}
 
-		// check if failfast
-		if r.caseRunner.hrpRunner.failfast {
-			return errors.Wrap(err, "abort running due to failfast setting")
+			// check if failfast
+			if r.caseRunner.hrpRunner.failfast {
+				return errors.Wrap(err, "abort running due to failfast setting")
+			}
 		}
 	}
 

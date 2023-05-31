@@ -1,0 +1,104 @@
+//go:build localtest
+
+package uitest
+
+import (
+	"testing"
+
+	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
+)
+
+func TestAndroidVideoCrawlerTest(t *testing.T) {
+	testCase := &hrp.TestCase{
+		Config: hrp.NewConfig("抓取抖音视频信息").
+			WithVariables(map[string]interface{}{
+				"device": "${ENV(SerialNumber)}",
+			}).
+			SetAndroid(uixt.WithSerialNumber("$device")),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("滑动消费 feed 至少 10 个，live 至少 3 个；滑动过程中，70% 随机间隔 0-5s，30% 随机间隔 5-10s").
+				Android().
+				VideoCrawler(map[string]interface{}{
+					"app_package_name": "com.ss.android.ugc.aweme",
+					"timeout":          600,
+					"feed": map[string]interface{}{
+						"target_count": 5,
+						"target_labels": []map[string]interface{}{
+							{"text": "^广告$", "scope": []float64{0, 0.5, 1, 1}, "regex": true, "target": 1},
+							{"text": "^图文$", "scope": []float64{0, 0.5, 1, 1}, "regex": true, "target": 1},
+							{"text": `^特效\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+							{"text": `^模板\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+							{"text": `^购物\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+						},
+						"sleep_random": []float64{0, 5, 0.7, 5, 10, 0.3},
+					},
+					"live": map[string]interface{}{
+						"target_count": 3,
+						"sleep_random": []float64{15, 20},
+					},
+				}),
+			hrp.NewStep("exit").
+				Android().
+				AppTerminate("com.ss.android.ugc.aweme").
+				Validate().
+				AssertAppNotInForeground("com.ss.android.ugc.aweme"),
+		},
+	}
+
+	if err := testCase.Dump2JSON("demo_android_video_crawler.json"); err != nil {
+		t.Fatal(err)
+	}
+
+	runner := hrp.NewRunner(t).SetSaveTests(true)
+	err := runner.Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAndroidVideoCrawlerKSTest(t *testing.T) {
+	testCase := &hrp.TestCase{
+		Config: hrp.NewConfig("抓取 KS 视频信息").
+			WithVariables(map[string]interface{}{
+				"device": "${ENV(SerialNumber)}",
+			}).
+			SetAndroid(uixt.WithSerialNumber("$device")),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("滑动消费 feed 至少 100 个；滑动过程中，70% 随机间隔 0-5s，30% 随机间隔 5-10s").
+				Android().
+				VideoCrawler(map[string]interface{}{
+					"app_package_name": "com.smile.gifmaker",
+					"timeout":          3600,
+					"feed": map[string]interface{}{
+						"target_count": 100,
+						"target_labels": []map[string]interface{}{
+							{"text": "^广告$", "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+							{"text": "^推广$", "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+							{"text": "^磁力广告$", "scope": []float64{0, 0.5, 1, 1}, "regex": true},
+						},
+						"sleep_random": []float64{0, 5, 0.7, 5, 10, 0.3},
+					},
+					"live": map[string]interface{}{
+						"target_count": 0,
+						"sleep_random": []float64{15, 20},
+					},
+				}),
+			hrp.NewStep("exit").
+				Android().
+				AppTerminate("com.smile.gifmaker").
+				Validate().
+				AssertAppNotInForeground("com.smile.gifmaker"),
+		},
+	}
+
+	if err := testCase.Dump2JSON("demo_android_video_ks_crawler.json"); err != nil {
+		t.Fatal(err)
+	}
+
+	runner := hrp.NewRunner(t).SetSaveTests(true)
+	err := runner.Run(testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
+}

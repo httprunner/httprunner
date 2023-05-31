@@ -59,7 +59,7 @@ func (ad *adbDriver) WindowSize() (size Size, err error) {
 	// adb shell wm size
 	resp, err := ad.adbClient.RunShellCommand("wm", "size")
 	if err != nil {
-		return
+		return size, errors.Wrap(err, "get window size failed")
 	}
 
 	// Physical size: 1080x2340
@@ -81,15 +81,18 @@ func (ad *adbDriver) Scale() (scale float64, err error) {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (ad *adbDriver) PressBack(options ...DataOption) (err error) {
+func (ad *adbDriver) PressBack(options ...ActionOption) (err error) {
 	// adb shell input keyevent 4
 	_, err = ad.adbClient.RunShellCommand("input", "keyevent", fmt.Sprintf("%d", KCBack))
-	return
+	if err != nil {
+		return errors.Wrap(err, "press back failed")
+	}
+	return nil
 }
 
 func (ad *adbDriver) StartCamera() (err error) {
 	if _, err = ad.adbClient.RunShellCommand("rm", "-r", "/sdcard/DCIM/Camera"); err != nil {
-		return err
+		return errors.Wrap(err, "remove /sdcard/DCIM/Camera failed")
 	}
 	time.Sleep(5 * time.Second)
 	var version string
@@ -160,10 +163,12 @@ func (ad *adbDriver) AppLaunch(packageName string) (err error) {
 		"monkey", "-p", packageName, "-c", "android.intent.category.LAUNCHER", "1",
 	)
 	if err != nil {
-		return err
+		return errors.Wrap(code.MobileUILaunchAppError,
+			fmt.Sprintf("monkey launch failed: %v", err))
 	}
 	if strings.Contains(sOutput, "monkey aborted") {
-		return fmt.Errorf("app launch: %s", strings.TrimSpace(sOutput))
+		return errors.Wrap(code.MobileUILaunchAppError,
+			fmt.Sprintf("monkey aborted: %s", strings.TrimSpace(sOutput)))
 	}
 	ad.lastLaunchedPackageName = packageName
 	return nil
@@ -174,7 +179,7 @@ func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err erro
 	// adb shell am force-stop <packagename>
 	_, err = ad.adbClient.RunShellCommand("am", "force-stop", packageName)
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "force-stop app failed")
 	}
 
 	if ad.lastLaunchedPackageName == packageName {
@@ -183,22 +188,27 @@ func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err erro
 	return true, nil
 }
 
-func (ad *adbDriver) Tap(x, y int, options ...DataOption) error {
+func (ad *adbDriver) Tap(x, y int, options ...ActionOption) error {
 	return ad.TapFloat(float64(x), float64(y), options...)
 }
 
-func (ad *adbDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
-	dataOptions := NewDataOptions(options...)
+func (ad *adbDriver) TapFloat(x, y float64, options ...ActionOption) (err error) {
+	actionOptions := NewActionOptions(options...)
 
-	if len(dataOptions.Offset) == 2 {
-		x += float64(dataOptions.Offset[0])
-		y += float64(dataOptions.Offset[1])
+	if len(actionOptions.Offset) == 2 {
+		x += float64(actionOptions.Offset[0])
+		y += float64(actionOptions.Offset[1])
 	}
 
 	// adb shell input tap x y
+	xStr := fmt.Sprintf("%.1f", x)
+	yStr := fmt.Sprintf("%.1f", y)
 	_, err = ad.adbClient.RunShellCommand(
-		"input", "tap", fmt.Sprintf("%.1f", x), fmt.Sprintf("%.1f", y))
-	return
+		"input", "tap", xStr, yStr)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
+	}
+	return nil
 }
 
 func (ad *adbDriver) DoubleTap(x, y int) error {
@@ -219,27 +229,30 @@ func (ad *adbDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err err
 	return
 }
 
-func (ad *adbDriver) Drag(fromX, fromY, toX, toY int, options ...DataOption) error {
+func (ad *adbDriver) Drag(fromX, fromY, toX, toY int, options ...ActionOption) error {
 	return ad.DragFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
-func (ad *adbDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOption) (err error) {
+func (ad *adbDriver) DragFloat(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
+func (ad *adbDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error {
 	return ad.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
-func (ad *adbDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
+func (ad *adbDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	// adb shell input swipe fromX fromY toX toY
 	_, err := ad.adbClient.RunShellCommand(
 		"input", "swipe",
 		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
 		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
 	)
-	return err
+	if err != nil {
+		return errors.Wrap(err, "swipe failed")
+	}
+	return nil
 }
 
 func (ad *adbDriver) ForceTouch(x, y int, pressure float64, second ...float64) error {
@@ -261,13 +274,16 @@ func (ad *adbDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 	return
 }
 
-func (ad *adbDriver) SendKeys(text string, options ...DataOption) (err error) {
+func (ad *adbDriver) SendKeys(text string, options ...ActionOption) (err error) {
 	// adb shell input text <text>
 	_, err = ad.adbClient.RunShellCommand("input", "text", text)
-	return
+	if err != nil {
+		return errors.Wrap(err, "send keys failed")
+	}
+	return nil
 }
 
-func (ad *adbDriver) Input(text string, options ...DataOption) (err error) {
+func (ad *adbDriver) Input(text string, options ...ActionOption) (err error) {
 	return ad.SendKeys(text, options...)
 }
 
@@ -360,30 +376,53 @@ func (ad *adbDriver) GetLastLaunchedApp() (packageName string) {
 	return ad.lastLaunchedPackageName
 }
 
-func (ad *adbDriver) IsAppInForeground(packageName string) (bool, error) {
+func (ad *adbDriver) AssertAppForeground(packageName string) error {
 	if packageName == "" {
-		return false, errors.New("package name is not given")
+		return errors.New("package name is not given")
 	}
 
-	// adb shell dumpsys activity activities | grep mResumedActivity
+	app, err := ad.GetForegroundApp()
+	if err != nil {
+		return err
+	}
+	if app.PackageName != packageName {
+		return fmt.Errorf("%v is not in foreground, current is %v",
+			packageName, app.PackageName)
+	}
+	return nil
+}
+
+func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
+	// adb shell dumpsys activity activities
 	output, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to dumpsys activities")
-		return false, err
+		return AppInfo{}, errors.Wrap(err, "dumpsys activities failed")
 	}
 
 	lines := strings.Split(string(output), "\n")
-	isInForeground := false
-
 	for _, line := range lines {
 		trimmedLine := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmedLine, "mResumedActivity:") {
-			if strings.Contains(trimmedLine, packageName) {
-				isInForeground = true
+		// grep mResumedActivity|ResumedActivity
+		if strings.HasPrefix(trimmedLine, "mResumedActivity:") || strings.HasPrefix(trimmedLine, "ResumedActivity:") {
+			// mResumedActivity: ActivityRecord{9656d74 u0 com.android.settings/.Settings t407}
+			// ResumedActivity: ActivityRecord{8265c25 u0 com.android.settings/.Settings t73}
+			strs := strings.Split(trimmedLine, " ")
+			for _, str := range strs {
+				if strings.Contains(str, "/") {
+					// com.android.settings/.Settings
+					s := strings.Split(str, "/")
+					app := AppInfo{
+						AppBaseInfo: AppBaseInfo{
+							PackageName: s[0],
+							Activity:    s[1],
+						},
+					}
+					return app, nil
+				}
 			}
-			break
 		}
 	}
 
-	return isInForeground, nil
+	return AppInfo{}, errors.New("get foreground app failed")
 }

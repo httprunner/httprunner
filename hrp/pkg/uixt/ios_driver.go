@@ -137,7 +137,7 @@ func (wd *wdaDriver) WindowSize() (size Size, err error) {
 	// [[FBRoute GET:@"/window/size"] respondWithTarget:self action:@selector(handleGetWindowSize:)]
 	var rawResp rawResponse
 	if rawResp, err = wd.httpGET("/session", wd.sessionId, "/window/size"); err != nil {
-		return Size{}, err
+		return Size{}, errors.Wrap(err, "get window size failed with wda")
 	}
 	reply := new(struct{ Value struct{ Size } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
@@ -164,9 +164,14 @@ func (wd *wdaDriver) Screen() (screen Screen, err error) {
 func (wd *wdaDriver) Scale() (float64, error) {
 	screen, err := wd.Screen()
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrap(code.MobileUIDriverError,
+			fmt.Sprintf("get screen info failed: %v", err))
 	}
 	return screen.Scale, nil
+}
+
+func (wd *wdaDriver) toScale(x float64) float64 {
+	return x / wd.scale
 }
 
 func (wd *wdaDriver) ActiveAppInfo() (info AppInfo, err error) {
@@ -308,17 +313,23 @@ func (wd *wdaDriver) AppLaunch(bundleId string) (err error) {
 	data := make(map[string]interface{})
 	data["bundleId"] = bundleId
 	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/apps/launch")
-	if err == nil {
-		wd.lastLaunchedPackageName = bundleId
+	if err != nil {
+		return errors.Wrap(code.MobileUILaunchAppError,
+			fmt.Sprintf("wda launch failed: %v", err))
 	}
-	return
+	wd.lastLaunchedPackageName = bundleId
+	return nil
 }
 
 func (wd *wdaDriver) AppLaunchUnattached(bundleId string) (err error) {
 	// [[FBRoute POST:@"/wda/apps/launchUnattached"].withoutSession respondWithTarget:self action:@selector(handleLaunchUnattachedApp:)]
 	data := map[string]interface{}{"bundleId": bundleId}
 	_, err = wd.httpPOST(data, "/wda/apps/launchUnattached")
-	return
+	if err != nil {
+		return errors.Wrap(code.MobileUILaunchAppError,
+			fmt.Sprintf("wda launchUnattached failed: %v", err))
+	}
+	return nil
 }
 
 func (wd *wdaDriver) AppTerminate(bundleId string) (successful bool, err error) {
@@ -358,22 +369,26 @@ func (wd *wdaDriver) GetLastLaunchedApp() (packageName string) {
 	return wd.lastLaunchedPackageName
 }
 
-func (wd *wdaDriver) IsAppInForeground(packageName string) (bool, error) {
-	return false, errors.New("not implemented")
+func (wd *wdaDriver) AssertAppForeground(packageName string) error {
+	return nil
 }
 
-func (wd *wdaDriver) Tap(x, y int, options ...DataOption) error {
+func (wd *wdaDriver) GetForegroundApp() (app AppInfo, err error) {
+	return AppInfo{}, nil
+}
+
+func (wd *wdaDriver) Tap(x, y int, options ...ActionOption) error {
 	return wd.TapFloat(float64(x), float64(y), options...)
 }
 
-func (wd *wdaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
+func (wd *wdaDriver) TapFloat(x, y float64, options ...ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 	data := map[string]interface{}{
-		"x": x,
-		"y": y,
+		"x": wd.toScale(x),
+		"y": wd.toScale(y),
 	}
 	// new data options in post data for extra WDA configurations
-	newData := NewData(data, options...)
+	newData := mergeDataWithOptions(data, options...)
 
 	_, err = wd.httpPOST(newData, "/session", wd.sessionId, "/wda/tap/0")
 	return
@@ -386,8 +401,8 @@ func (wd *wdaDriver) DoubleTap(x, y int) error {
 func (wd *wdaDriver) DoubleTapFloat(x, y float64) (err error) {
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
 	data := map[string]interface{}{
-		"x": x,
-		"y": y,
+		"x": wd.toScale(x),
+		"y": wd.toScale(y),
 	}
 	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/doubleTap")
 	return
@@ -400,8 +415,8 @@ func (wd *wdaDriver) TouchAndHold(x, y int, second ...float64) error {
 func (wd *wdaDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err error) {
 	// [[FBRoute POST:@"/wda/touchAndHold"] respondWithTarget:self action:@selector(handleTouchAndHoldCoordinate:)]
 	data := map[string]interface{}{
-		"x": x,
-		"y": y,
+		"x": wd.toScale(x),
+		"y": wd.toScale(y),
 	}
 	if len(second) == 0 || second[0] <= 0 {
 		second = []float64{1.0}
@@ -411,31 +426,31 @@ func (wd *wdaDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err err
 	return
 }
 
-func (wd *wdaDriver) Drag(fromX, fromY, toX, toY int, options ...DataOption) error {
+func (wd *wdaDriver) Drag(fromX, fromY, toX, toY int, options ...ActionOption) error {
 	return wd.DragFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
-func (wd *wdaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOption) (err error) {
+func (wd *wdaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
 	data := map[string]interface{}{
-		"fromX": fromX,
-		"fromY": fromY,
-		"toX":   toX,
-		"toY":   toY,
+		"fromX": wd.toScale(fromX),
+		"fromY": wd.toScale(fromY),
+		"toX":   wd.toScale(toX),
+		"toY":   wd.toScale(toY),
 	}
 
 	// new data options in post data for extra WDA configurations
-	newData := NewData(data, options...)
+	newData := mergeDataWithOptions(data, options...)
 
 	_, err = wd.httpPOST(newData, "/session", wd.sessionId, "/wda/dragfromtoforduration")
 	return
 }
 
-func (wd *wdaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
+func (wd *wdaDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error {
 	return wd.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
-func (wd *wdaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
+func (wd *wdaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	return wd.DragFloat(fromX, fromY, toX, toY, options...)
 }
 
@@ -462,37 +477,37 @@ func (wd *wdaDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 	return
 }
 
-func (wd *wdaDriver) SendKeys(text string, options ...DataOption) (err error) {
+func (wd *wdaDriver) SendKeys(text string, options ...ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
 	data := map[string]interface{}{"value": strings.Split(text, "")}
 
 	// new data options in post data for extra WDA configurations
-	newData := NewData(data, options...)
+	newData := mergeDataWithOptions(data, options...)
 
 	_, err = wd.httpPOST(newData, "/session", wd.sessionId, "/wda/keys")
 	return
 }
 
-func (wd *wdaDriver) Input(text string, options ...DataOption) (err error) {
+func (wd *wdaDriver) Input(text string, options ...ActionOption) (err error) {
 	return wd.SendKeys(text, options...)
 }
 
 // PressBack simulates a short press on the BACK button.
-func (wd *wdaDriver) PressBack(options ...DataOption) (err error) {
+func (wd *wdaDriver) PressBack(options ...ActionOption) (err error) {
 	windowSize, err := wd.WindowSize()
 	if err != nil {
 		return
 	}
 
 	data := map[string]interface{}{
-		"fromX": float64(windowSize.Width) * 0,
-		"fromY": float64(windowSize.Height) * 0.5,
-		"toX":   float64(windowSize.Width) * 0.6,
-		"toY":   float64(windowSize.Height) * 0.5,
+		"fromX": wd.toScale(float64(windowSize.Width) * 0),
+		"fromY": wd.toScale(float64(windowSize.Height) * 0.5),
+		"toX":   wd.toScale(float64(windowSize.Width) * 0.6),
+		"toY":   wd.toScale(float64(windowSize.Height) * 0.5),
 	}
 
 	// new data options in post data for extra WDA configurations
-	newData := NewData(data, options...)
+	newData := mergeDataWithOptions(data, options...)
 
 	_, err = wd.httpPOST(newData, "/session", wd.sessionId, "/wda/dragfromtoforduration")
 	return

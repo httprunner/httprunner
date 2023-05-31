@@ -10,7 +10,17 @@ import (
 	"time"
 )
 
-var uiaServerURL = "http://localhost:6790/wd/hub"
+var (
+	uiaServerURL = "http://localhost:6790/wd/hub"
+	driverExt    *DriverExt
+)
+
+func setupAndroid(t *testing.T) {
+	device, err := NewAndroidDevice()
+	checkErr(t, err)
+	driverExt, err = device.NewDriver(nil)
+	checkErr(t, err)
+}
 
 func TestDriver_NewSession(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
@@ -151,20 +161,6 @@ func TestDriver_GetAppiumSettings(t *testing.T) {
 		t.Logf("key: %s\tvalue: %v", k, appiumSettings[k])
 	}
 	// t.Log(appiumSettings)
-}
-
-func TestDriver_DeviceScaleRatio(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	scaleRatio, err := driver.Scale()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(scaleRatio)
 }
 
 func TestDriver_DeviceInfo(t *testing.T) {
@@ -354,29 +350,33 @@ func TestDriver_AppLaunch(t *testing.T) {
 }
 
 func TestDriver_IsAppInForeground(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewDriver(nil)
+	setupAndroid(t)
+
+	err := driverExt.Driver.AppLaunch("com.android.settings")
+	checkErr(t, err)
+
+	app, err := driverExt.Driver.GetForegroundApp()
+	checkErr(t, err)
+	if app.PackageName != "com.android.settings" {
+		t.FailNow()
+	}
+	if app.Activity != ".Settings" {
+		t.FailNow()
+	}
+
+	err = driverExt.Driver.AssertAppForeground(driverExt.Driver.GetLastLaunchedApp())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = driver.Driver.AppLaunch("com.android.settings")
+	time.Sleep(2 * time.Second)
+	_, err = driverExt.Driver.AppTerminate("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	yes, err := driver.Driver.IsAppInForeground(driver.Driver.GetLastLaunchedApp())
-	if err != nil || !yes {
-		t.Fatal(err)
-	}
-
-	_, err = driver.Driver.AppTerminate("com.android.settings")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	yes, err = driver.Driver.IsAppInForeground("com.android.settings")
-	if err != nil || yes {
+	err = driverExt.Driver.AssertAppForeground("com.android.settings")
+	if err == nil {
 		t.Fatal(err)
 	}
 }

@@ -163,7 +163,7 @@ func (ud *uiaDriver) WindowSize() (size Size, err error) {
 	// register(getHandler, new GetDeviceSize("/wd/hub/session/:sessionId/window/:windowHandle/size"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionId, "window/:windowHandle/size"); err != nil {
-		return Size{}, err
+		return Size{}, errors.Wrap(err, "get window size failed with uiautomator2")
 	}
 	reply := new(struct{ Value struct{ Size } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
@@ -174,7 +174,7 @@ func (ud *uiaDriver) WindowSize() (size Size, err error) {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (ud *uiaDriver) PressBack(options ...DataOption) (err error) {
+func (ud *uiaDriver) PressBack(options ...ActionOption) (err error) {
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	_, err = ud.httpPOST(nil, "/session", ud.sessionId, "back")
 	return
@@ -199,18 +199,18 @@ func (ud *uiaDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...K
 	return
 }
 
-func (ud *uiaDriver) Tap(x, y int, options ...DataOption) error {
+func (ud *uiaDriver) Tap(x, y int, options ...ActionOption) error {
 	return ud.TapFloat(float64(x), float64(y), options...)
 }
 
-func (ud *uiaDriver) TapFloat(x, y float64, options ...DataOption) (err error) {
+func (ud *uiaDriver) TapFloat(x, y float64, options ...ActionOption) (err error) {
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
 	}
 	// new data options in post data for extra uiautomator configurations
-	newData := NewData(data, options...)
+	newData := mergeDataWithOptions(data, options...)
 
 	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "appium/tap")
 	return
@@ -240,11 +240,11 @@ func (ud *uiaDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err err
 // the smoothness and speed of the swipe by specifying the number of steps.
 // Each step execution is throttled to 5 milliseconds per step, so for a 100
 // steps, the swipe will take around 0.5 seconds to complete.
-func (ud *uiaDriver) Drag(fromX, fromY, toX, toY int, options ...DataOption) error {
+func (ud *uiaDriver) Drag(fromX, fromY, toX, toY int, options ...ActionOption) error {
 	return ud.DragFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
-func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOption) (err error) {
+func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
 	data := map[string]interface{}{
 		"startX": fromX,
 		"startY": fromY,
@@ -253,7 +253,7 @@ func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 	}
 
 	// new data options in post data for extra uiautomator configurations
-	newData := NewData(data, options...)
+	newData := mergeDataWithOptions(data, options...)
 
 	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
 	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "touch/drag")
@@ -264,11 +264,11 @@ func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...DataOp
 // to determine smoothness and speed. Each step execution is throttled to 5ms
 // per step. So for a 100 steps, the swipe will take about 1/2 second to complete.
 //  `steps` is the number of move steps sent to the system
-func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
+func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error {
 	return ud.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
-func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
+func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
 	data := map[string]interface{}{
 		"startX": fromX,
@@ -278,7 +278,7 @@ func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataO
 	}
 
 	// new data options in post data for extra uiautomator configurations
-	newData := NewData(data, options...)
+	newData := mergeDataWithOptions(data, options...)
 
 	_, err := ud.httpPOST(newData, "/session", ud.sessionId, "touch/perform")
 	return err
@@ -327,20 +327,20 @@ func (ud *uiaDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 	return
 }
 
-func (ud *uiaDriver) SendKeys(text string, options ...DataOption) (err error) {
+func (ud *uiaDriver) SendKeys(text string, options ...ActionOption) (err error) {
 	// register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/keys"))
 	// https://github.com/appium/appium-uiautomator2-server/blob/master/app/src/main/java/io/appium/uiautomator2/handler/SendKeysToElement.java#L76-L85
 	data := map[string]interface{}{
 		"text": text,
 	}
 	// new data options in post data for extra uiautomator configurations
-	newData := NewData(data, options...)
+	newData := mergeDataWithOptions(data, options...)
 
 	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "keys")
 	return
 }
 
-func (ud *uiaDriver) Input(text string, options ...DataOption) (err error) {
+func (ud *uiaDriver) Input(text string, options ...ActionOption) (err error) {
 	return ud.SendKeys(text, options...)
 }
 

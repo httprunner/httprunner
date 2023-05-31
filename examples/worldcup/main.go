@@ -150,7 +150,7 @@ func NewWorldCupLive(device uixt.Device, matchName, bundleID string, duration, i
 
 func (wc *WorldCupLive) getCurrentLiveTime(utcTime time.Time) error {
 	utcTimeStr := utcTime.Format("15:04:05")
-	ocrTexts, err := wc.driver.GetTextsByOCR()
+	ocrTexts, err := wc.driver.GetScreenTexts()
 	if err != nil {
 		log.Error().Err(err).Msg("get ocr texts failed")
 		return err
@@ -212,8 +212,11 @@ func (wc *WorldCupLive) EnterLive(bundleID string) error {
 	time.Sleep(5 * time.Second)
 
 	// 青少年弹窗处理
-	if points, err := wc.driver.GetTextXYs([]string{"青少年模式", "我知道了"}); err == nil {
-		_ = wc.driver.TapAbsXY(points[1].X, points[1].Y)
+	if ocrTexts, err := wc.driver.GetScreenTexts(); err == nil {
+		if points, err := ocrTexts.FindTexts([]string{"青少年模式", "我知道了"}); err == nil {
+			point := points[1].Center()
+			_ = wc.driver.TapAbsXY(point.X, point.Y)
+		}
 	}
 
 	// 进入世界杯 tab

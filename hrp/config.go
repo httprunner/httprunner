@@ -2,7 +2,6 @@ package hrp
 
 import (
 	"reflect"
-	"time"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
@@ -32,7 +31,8 @@ type TConfig struct {
 	WebSocketSetting  *WebSocketConfig       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
 	IOS               []*uixt.IOSDevice      `json:"ios,omitempty" yaml:"ios,omitempty"`
 	Android           []*uixt.AndroidDevice  `json:"android,omitempty" yaml:"android,omitempty"`
-	Timeout           float64                `json:"timeout,omitempty" yaml:"timeout,omitempty"` // global timeout in seconds
+	RequestTimeout    float32                `json:"request_timeout,omitempty" yaml:"request_timeout,omitempty"` // request timeout in seconds
+	CaseTimeout       float32                `json:"case_timeout,omitempty" yaml:"case_timeout,omitempty"`       // testcase timeout in seconds
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
 	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
@@ -75,9 +75,15 @@ func (c *TConfig) SetThinkTime(strategy thinkTimeStrategy, cfg interface{}, limi
 	return c
 }
 
-// SetTimeout sets testcase timeout in seconds.
-func (c *TConfig) SetTimeout(timeout time.Duration) *TConfig {
-	c.Timeout = timeout.Seconds()
+// SetRequestTimeout sets request timeout in seconds.
+func (c *TConfig) SetRequestTimeout(seconds float32) *TConfig {
+	c.RequestTimeout = seconds
+	return c
+}
+
+// SetCaseTimeout sets testcase timeout in seconds.
+func (c *TConfig) SetCaseTimeout(seconds float32) *TConfig {
+	c.CaseTimeout = seconds
 	return c
 }
 

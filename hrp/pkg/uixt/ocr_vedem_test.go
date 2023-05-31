@@ -10,26 +10,22 @@ import (
 )
 
 func checkOCR(buff *bytes.Buffer) error {
-	service, err := newVEDEMOCRService()
+	service, err := newVEDEMImageService()
 	if err != nil {
 		return err
 	}
-	ocrResults, err := service.getOCRResult(buff)
+	imageResult, err := service.GetImage(buff)
 	if err != nil {
 		return err
 	}
-	fmt.Println(ocrResults)
+	fmt.Println(fmt.Sprintf("imageResult: %v", imageResult))
 	return nil
 }
 
 func TestOCRWithScreenshot(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewDriver(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupAndroid(t)
 
-	raw, err := driver.Driver.Screenshot()
+	raw, err := driverExt.Driver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}

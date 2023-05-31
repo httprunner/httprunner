@@ -3,16 +3,17 @@ package gadb
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
 type DeviceFileInfo struct {
@@ -244,7 +245,13 @@ func (d *Device) ReverseForwardKillAll() error {
 
 func (d *Device) RunShellCommand(cmd string, args ...string) (string, error) {
 	raw, err := d.RunShellCommandWithBytes(cmd, args...)
-	return string(raw), err
+	if err != nil {
+		if errors.Is(err, code.AndroidDeviceConnectionError) {
+			return "", err
+		}
+		return "", errors.Wrap(code.AndroidShellExecError, err.Error())
+	}
+	return string(raw), nil
 }
 
 func (d *Device) RunShellCommandWithBytes(cmd string, args ...string) ([]byte, error) {
@@ -548,7 +555,7 @@ func (d *Device) InstallAPK(apk io.ReadSeeker) (string, error) {
 
 	res, err := d.RunShellCommand("pm", "install", "-f", remote)
 	if err != nil {
-		return "", fmt.Errorf("error installing: %v", err)
+		return "", errors.Wrap(err, "install apk failed")
 	}
 	if haserr(res) {
 		return "", errors.New(res)
