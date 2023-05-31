@@ -68,6 +68,17 @@ func TestNewUSBDriver(t *testing.T) {
 	// t.Log(driver.IsWdaHealthy())
 }
 
+func TestDriver_DeviceScaleRatio(t *testing.T) {
+	setup(t)
+
+	scaleRatio, err := driver.Scale()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(scaleRatio)
+}
+
 func Test_remoteWD_DeleteSession(t *testing.T) {
 	setup(t)
 

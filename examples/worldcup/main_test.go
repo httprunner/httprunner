@@ -89,7 +89,7 @@ func TestIOSDouyinWorldCupLive(t *testing.T) {
 					uixt.WithMaxRetryTimes(5),
 					uixt.WithCustomDirection(0.4, 0.07, 0.6, 0.07), // 滑动 tab，从左到右，解决「世界杯」被遮挡的问题
 					uixt.WithScope(0, 0, 1, 0.15),                  // 限定 tab 区域
-					uixt.WithWaitTime(1),
+					uixt.WithInterval(1),
 				),
 			hrp.NewStep("点击进入赛程晋级").
 				Loop(5). // 重复执行 5 次

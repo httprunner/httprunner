@@ -2,11 +2,8 @@ package uixt
 
 import (
 	"bytes"
-	"math"
 	"strings"
 	"time"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 var (
@@ -251,8 +248,11 @@ type AppInfo struct {
 }
 
 type AppBaseInfo struct {
-	Pid      int    `json:"pid"`
-	BundleId string `json:"bundleId"`
+	Pid            int    `json:"pid,omitempty"`
+	BundleId       string `json:"bundleId,omitempty"`       // ios package name
+	ViewController string `json:"viewController,omitempty"` // ios view controller
+	PackageName    string `json:"packageName,omitempty"`    // android package name
+	Activity       string `json:"activity,omitempty"`       // android activity
 }
 
 type AppState int
@@ -428,144 +428,6 @@ type Rect struct {
 	Size
 }
 
-type DataOptions struct {
-	Data                map[string]interface{} // configurations used by ios/android driver
-	Scope               []int                  // used by ocr to get text position in the scope
-	Offset              []int                  // used to tap offset of point
-	Index               int                    // index of the target element, should start from 1
-	IgnoreNotFoundError bool                   // ignore error if target element not found
-	MaxRetryTimes       int                    // max retry times if target element not found
-	Interval            float64                // interval between retries in seconds
-}
-
-type DataOption func(data *DataOptions)
-
-func WithCustomOption(key string, value interface{}) DataOption {
-	return func(data *DataOptions) {
-		data.Data[key] = value
-	}
-}
-
-func WithDataPressDuration(duration float64) DataOption {
-	return func(data *DataOptions) {
-		data.Data["duration"] = duration
-	}
-}
-
-func WithDataSteps(steps int) DataOption {
-	return func(data *DataOptions) {
-		data.Data["steps"] = steps
-	}
-}
-
-func WithDataFrequency(frequency int) DataOption {
-	return func(data *DataOptions) {
-		data.Data["frequency"] = frequency
-	}
-}
-
-func WithDataIndex(index int) DataOption {
-	return func(data *DataOptions) {
-		data.Index = index
-	}
-}
-
-func WithDataScope(x1, x2, y1, y2 int) DataOption {
-	return func(data *DataOptions) {
-		data.Scope = []int{x1, x2, y1, y2}
-	}
-}
-
-func WithDataOffset(offsetX, offsetY int) DataOption {
-	return func(data *DataOptions) {
-		data.Offset = []int{offsetX, offsetY}
-	}
-}
-
-func WithDataIdentifier(identifier string) DataOption {
-	if identifier == "" {
-		return func(data *DataOptions) {}
-	}
-	return func(data *DataOptions) {
-		data.Data["log"] = map[string]interface{}{
-			"enable": true,
-			"data":   identifier,
-		}
-	}
-}
-
-func WithDataIgnoreNotFoundError(ignoreError bool) DataOption {
-	return func(data *DataOptions) {
-		data.IgnoreNotFoundError = ignoreError
-	}
-}
-
-func WithDataMaxRetryTimes(maxRetryTimes int) DataOption {
-	return func(data *DataOptions) {
-		data.MaxRetryTimes = maxRetryTimes
-	}
-}
-
-func WithDataWaitTime(sec float64) DataOption {
-	return func(data *DataOptions) {
-		data.Interval = sec
-	}
-}
-
-func NewDataOptions(options ...DataOption) *DataOptions {
-	dataOptions := &DataOptions{
-		Data: make(map[string]interface{}),
-	}
-	for _, option := range options {
-		option(dataOptions)
-	}
-
-	if len(dataOptions.Scope) == 0 {
-		dataOptions.Scope = []int{0, 0, math.MaxInt64, math.MaxInt64} // default scope
-	}
-	return dataOptions
-}
-
-func NewData(data map[string]interface{}, options ...DataOption) map[string]interface{} {
-	dataOptions := NewDataOptions(options...)
-
-	// merge with data options
-	for k, v := range dataOptions.Data {
-		data[k] = v
-	}
-
-	// handle point offset
-	if len(dataOptions.Offset) == 2 {
-		if x, ok := data["x"]; ok {
-			xf, _ := builtin.Interface2Float64(x)
-			data["x"] = xf + float64(dataOptions.Offset[0])
-		}
-		if y, ok := data["y"]; ok {
-			yf, _ := builtin.Interface2Float64(y)
-			data["y"] = yf + float64(dataOptions.Offset[1])
-		}
-	}
-
-	// add default options
-	if _, ok := data["steps"]; !ok {
-		data["steps"] = 12 // default steps
-	}
-
-	if _, ok := data["duration"]; !ok {
-		data["duration"] = 0 // default duration
-	}
-
-	if _, ok := data["frequency"]; !ok {
-		data["frequency"] = 60 // default frequency
-	}
-
-	if _, ok := data["isReplace"]; !ok {
-		data["isReplace"] = true // default true
-	}
-
-	return data
-}
-
 // current implemeted device: IOSDevice, AndroidDevice
 type Device interface {
 	UUID() string // ios udid or android serial
@@ -577,6 +439,11 @@ type Device interface {
 
 	StartPcap() error
 	StopPcap() string
+}
+
+type ForegroundApp struct {
+	PackageName string
+	Activity    string
 }
 
 // WebDriver defines methods supported by WebDriver drivers.
@@ -621,8 +488,10 @@ type WebDriver interface {
 	AppTerminate(packageName string) (bool, error)
 	// GetLastLaunchedApp returns the package name of the last launched app
 	GetLastLaunchedApp() string
-	// IsAppInForeground returns true if the given package is in foreground
-	IsAppInForeground(packageName string) (bool, error)
+	// AssertAppForeground returns nil if the given package is in foreground
+	AssertAppForeground(packageName string) error
+	// GetForegroundApp returns current foreground app package name and activity name
+	GetForegroundApp() (app AppInfo, err error)
 
 	// StartCamera Starts a new camera for recording
 	StartCamera() error
@@ -630,8 +499,8 @@ type WebDriver interface {
 	StopCamera() error
 
 	// Tap Sends a tap event at the coordinate.
-	Tap(x, y int, options ...DataOption) error
-	TapFloat(x, y float64, options ...DataOption) error
+	Tap(x, y int, options ...ActionOption) error
+	TapFloat(x, y float64, options ...ActionOption) error
 
 	// DoubleTap Sends a double tap event at the coordinate.
 	DoubleTap(x, y int) error
@@ -644,12 +513,12 @@ type WebDriver interface {
 
 	// Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
 	// WithPressDurationOption option can be used to set pressForDuration (default to 1 second).
-	Drag(fromX, fromY, toX, toY int, options ...DataOption) error
-	DragFloat(fromX, fromY, toX, toY float64, options ...DataOption) error
+	Drag(fromX, fromY, toX, toY int, options ...ActionOption) error
+	DragFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error
 
 	// Swipe works like Drag, but `pressForDuration` value is 0
-	Swipe(fromX, fromY, toX, toY int, options ...DataOption) error
-	SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error
+	Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error
+	SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error
 
 	// SetPasteboard Sets data to the general pasteboard
 	SetPasteboard(contentType PasteboardType, content string) error
@@ -660,16 +529,16 @@ type WebDriver interface {
 	// SendKeys Types a string into active element. There must be element with keyboard focus,
 	// otherwise an error is raised.
 	// WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
-	SendKeys(text string, options ...DataOption) error
+	SendKeys(text string, options ...ActionOption) error
 
 	// Input works like SendKeys
-	Input(text string, options ...DataOption) error
+	Input(text string, options ...ActionOption) error
 
 	// PressButton Presses the corresponding hardware button on the device
 	PressButton(devBtn DeviceButton) error
 
 	// PressBack Presses the back button
-	PressBack(options ...DataOption) error
+	PressBack(options ...ActionOption) error
 
 	Screenshot() (*bytes.Buffer, error)
 

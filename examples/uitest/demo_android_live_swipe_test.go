@@ -37,8 +37,8 @@ func TestAndroidLiveSwipeTest(t *testing.T) {
 				SleepRandom(0, 5, 0.6, 5, 10, 0.4),
 			hrp.NewStep("向上滑动，等待 10s").
 				Android().
-				SwipeUp(uixt.WithIdentifier("第一次上划")).Sleep(10).ScreenShot(). // 上划 1 次，等待 10s，截图保存
-				SwipeUp(uixt.WithIdentifier("第二次上划")).Sleep(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
+				SwipeUp(uixt.WithIdentifier("第一次上划")).Sleep(5).ScreenShot(). // 上划 1 次，等待 5s，截图保存
+				SwipeUp(uixt.WithIdentifier("第二次上划")).Sleep(5).ScreenShot(), // 再上划 1 次，等待 5s，截图保存
 			hrp.NewStep("exit").
 				Android().
 				AppTerminate("com.ss.android.ugc.aweme").

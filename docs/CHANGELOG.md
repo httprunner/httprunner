@@ -1,5 +1,23 @@
 # Release History
 
+## v4.3.4 (2023-05-31)
+
+**go version**
+
+- feat: add video crawler for feed and live
+- feat: cache screenshot ocr texts
+- feat: set testcase and request timeout in seconds
+- feat: catch interrupt signal
+- feat: add new exit code MobileUILaunchAppError/InterruptError/TimeoutError/MobileUIActivityNotMatchError/MobileUIPopupError
+- feat: find text with regex
+- feat: add UI ocr tags to summary
+- feat: check android device offline when running shell failed
+- refactor: replace OCR APIs with image APIs
+- refactor: FindText(s) returns OCRText(s)
+- refactor: merge ActionOption with DataOption
+- change: exit with AndroidShellExecError code for adb shell failure
+- change: request vedem ocr with uploading image
+
 ## v4.3.3 (2023-04-19)
 
 **go version**
@@ -7,7 +25,7 @@
 - feat: add `sleep_random` to sleep random seconds, with weight for multiple time ranges
 - feat: input text with adb
 - feat: add adb `screencap` sub command
-- feat: add `IsAppInForeground` to check if the given package is in foreground
+- feat: add `AssertAppInForeground` to check if the given package is in foreground
 - feat: check if app is in foreground when step failed
 - feat: add validator AssertAppInForeground and AssertAppNotInForeground
 - feat: save screenshots of all steps including ocr and cv recognition process data
@@ -20,6 +38,8 @@
 - fix: fast fail not closing the websocket connection
 - fix #1467: failed to parse parameters with plugin functions
 - fix #1549: avoid duplicate creating plugins
+- fix #1547: generate html report failed for referenced testcases
+- fix: setup hooks compatible with v3
 
 ## v4.3.2 (2022-12-26)
 

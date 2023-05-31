@@ -1,15 +1,18 @@
 package gadb
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
+	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
 var ErrConnBroken = errors.New("socket connection broken")
@@ -45,6 +48,8 @@ func (t transport) Conn() net.Conn {
 	return t.sock
 }
 
+var regexDeviceOffline = regexp.MustCompile("device .* not found")
+
 func (t transport) VerifyResponse() (err error) {
 	var status string
 	if status, err = t.ReadStringN(4); err != nil {
@@ -58,9 +63,15 @@ func (t transport) VerifyResponse() (err error) {
 	if sError, err = t.UnpackString(); err != nil {
 		return err
 	}
-	err = fmt.Errorf("command failed: %s", sError)
-	log.Error().Str("status", status).Str("err", sError).Msg("verify adb response failed")
-	return
+
+	if regexDeviceOffline.MatchString(sError) {
+		// device offline
+		return errors.Wrap(code.AndroidDeviceConnectionError, sError)
+	}
+
+	log.Warn().Str("status", status).Str("err", sError).
+		Msg("verify adb response failed")
+	return errors.New(sError)
 }
 
 func (t transport) ReadStringAll() (s string, err error) {

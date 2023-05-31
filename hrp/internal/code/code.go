@@ -44,6 +44,8 @@ var (
 	InitPluginFailed    = errors.New("init plugin failed")     // 31
 	BuildGoPluginFailed = errors.New("build go plugin failed") // 32
 	BuildPyPluginFailed = errors.New("build py plugin failed") // 33
+	InterruptError      = errors.New("interrupt error")        // 38
+	TimeoutError        = errors.New("timeout error")          // 39
 )
 
 // summary: [40, 50)
@@ -61,6 +63,7 @@ var (
 var (
 	AndroidDeviceConnectionError = errors.New("android device connection error") // 60
 	AndroidDeviceUSBDriverError  = errors.New("android device USB driver error") // 61
+	AndroidShellExecError        = errors.New("android adb shell exec error")    // 62
 	AndroidScreenShotError       = errors.New("android screenshot error")        // 65
 	AndroidCaptureLogError       = errors.New("android capture log error")       // 66
 )
@@ -68,8 +71,11 @@ var (
 // UI automation related: [70, 80)
 var (
 	MobileUIDriverError             = errors.New("mobile UI driver error")                // 70
+	MobileUILaunchAppError          = errors.New("mobile UI launch app error")            // 71
 	MobileUIValidationError         = errors.New("mobile UI validation error")            // 75
 	MobileUIAppNotInForegroundError = errors.New("mobile UI app not in foreground error") // 76
+	MobileUIActivityNotMatchError   = errors.New("mobile UI activity not match error")    // 77
+	MobileUIPopupError              = errors.New("mobile UI popup error")                 // 78
 )
 
 // OCR related: [80, 90)
@@ -109,6 +115,8 @@ var errorsMap = map[error]int{
 	InitPluginFailed:    31,
 	BuildGoPluginFailed: 32,
 	BuildPyPluginFailed: 33,
+	InterruptError:      38,
+	TimeoutError:        39,
 
 	// ios related
 	IOSDeviceConnectionError: 50,
@@ -120,13 +128,17 @@ var errorsMap = map[error]int{
 	// android related
 	AndroidDeviceConnectionError: 60,
 	AndroidDeviceUSBDriverError:  61,
+	AndroidShellExecError:        62,
 	AndroidScreenShotError:       65,
 	AndroidCaptureLogError:       66,
 
 	// UI automation related
 	MobileUIDriverError:             70,
+	MobileUILaunchAppError:          71,
 	MobileUIValidationError:         75,
 	MobileUIAppNotInForegroundError: 76,
+	MobileUIActivityNotMatchError:   77,
+	MobileUIPopupError:              78,
 
 	// OCR related
 	OCREnvMissedError:         80,

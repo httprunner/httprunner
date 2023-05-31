@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
@@ -16,7 +15,7 @@ func assertRelative(p float64) bool {
 }
 
 // SwipeRelative swipe from relative position [fromX, fromY] to relative position [toX, toY]
-func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, options ...DataOption) error {
+func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	width := dExt.windowSize.Width
 	height := dExt.windowSize.Height
 
@@ -34,7 +33,7 @@ func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, options ...
 	return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, options...)
 }
 
-func (dExt *DriverExt) SwipeTo(direction string, options ...DataOption) (err error) {
+func (dExt *DriverExt) SwipeTo(direction string, options ...ActionOption) (err error) {
 	switch direction {
 	case "up":
 		return dExt.SwipeUp(options...)
@@ -48,64 +47,28 @@ func (dExt *DriverExt) SwipeTo(direction string, options ...DataOption) (err err
 	return fmt.Errorf("unexpected direction: %s", direction)
 }
 
-func (dExt *DriverExt) SwipeUp(options ...DataOption) (err error) {
+func (dExt *DriverExt) SwipeUp(options ...ActionOption) (err error) {
 	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.1, options...)
 }
 
-func (dExt *DriverExt) SwipeDown(options ...DataOption) (err error) {
+func (dExt *DriverExt) SwipeDown(options ...ActionOption) (err error) {
 	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.9, options...)
 }
 
-func (dExt *DriverExt) SwipeLeft(options ...DataOption) (err error) {
+func (dExt *DriverExt) SwipeLeft(options ...ActionOption) (err error) {
 	return dExt.SwipeRelative(0.5, 0.5, 0.1, 0.5, options...)
 }
 
-func (dExt *DriverExt) SwipeRight(options ...DataOption) (err error) {
+func (dExt *DriverExt) SwipeRight(options ...ActionOption) (err error) {
 	return dExt.SwipeRelative(0.5, 0.5, 0.9, 0.5, options...)
 }
 
 type Action func(driver *DriverExt) error
 
-// findCondition indicates the condition to find a UI element
-// foundAction indicates the action to do after a UI element is found
-func (dExt *DriverExt) SwipeUntil(direction interface{}, findCondition Action, foundAction Action, options ...DataOption) error {
-	dataOptions := NewDataOptions(options...)
-	maxRetryTimes := dataOptions.MaxRetryTimes
-	interval := dataOptions.Interval
-
-	for i := 0; i < maxRetryTimes; i++ {
-		if err := findCondition(dExt); err == nil {
-			// do action after found
-			return foundAction(dExt)
-		}
-		if d, ok := direction.(string); ok {
-			if err := dExt.SwipeTo(d); err != nil {
-				log.Error().Err(err).Msgf("swipe %s failed", d)
-			}
-		} else if d, ok := direction.([]float64); ok {
-			if err := dExt.SwipeRelative(d[0], d[1], d[2], d[3]); err != nil {
-				log.Error().Err(err).Msgf("swipe %v failed", d)
-			}
-		} else if d, ok := direction.([]interface{}); ok {
-			sx, _ := builtin.Interface2Float64(d[0])
-			sy, _ := builtin.Interface2Float64(d[1])
-			ex, _ := builtin.Interface2Float64(d[2])
-			ey, _ := builtin.Interface2Float64(d[3])
-			if err := dExt.SwipeRelative(sx, sy, ex, ey); err != nil {
-				log.Error().Err(err).Msgf("swipe (%v, %v) to (%v, %v) failed", sx, sy, ex, ey)
-			}
-		}
-		// wait for swipe action to completed and content to load completely
-		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
-	}
-	return errors.Wrap(code.OCRTextNotFoundError,
-		fmt.Sprintf("swipe %v %d times, match condition failed", direction, maxRetryTimes))
-}
-
-func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, options ...DataOption) error {
-	dataOptions := NewDataOptions(options...)
-	maxRetryTimes := dataOptions.MaxRetryTimes
-	interval := dataOptions.Interval
+func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, options ...ActionOption) error {
+	actionOptions := NewActionOptions(options...)
+	maxRetryTimes := actionOptions.MaxRetryTimes
+	interval := actionOptions.Interval
 
 	for i := 0; i < maxRetryTimes; i++ {
 		if err := findCondition(dExt); err == nil {
@@ -125,40 +88,74 @@ func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, 
 		fmt.Sprintf("loop %d times, match find condition failed", maxRetryTimes))
 }
 
-func (dExt *DriverExt) swipeToTapApp(appName string, action MobileAction) error {
-	if len(action.Scope) != 4 {
-		action.Scope = []float64{0, 0, 1, 1}
-	}
-	if len(action.Offset) != 2 {
-		action.Offset = []int{0, -25}
+func (dExt *DriverExt) prepareSwipeAction(options ...ActionOption) func(d *DriverExt) error {
+	actionOptions := NewActionOptions(options...)
+	var swipeDirection interface{}
+	if actionOptions.Direction != nil {
+		swipeDirection = actionOptions.Direction
+	} else {
+		swipeDirection = "up" // default swipe up
 	}
 
-	identifierOption := WithDataIdentifier(action.Identifier)
-	indexOption := WithDataIndex(action.Index)
-	offsetOption := WithDataOffset(action.Offset[0], action.Offset[1])
-	scopeOption := WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3]))
-
-	// default to retry 5 times
-	if action.MaxRetryTimes == 0 {
-		action.MaxRetryTimes = 5
+	if actionOptions.Steps == 0 {
+		actionOptions.Steps = 10
 	}
-	maxRetryOption := WithDataMaxRetryTimes(action.MaxRetryTimes)
-	waitTimeOption := WithDataWaitTime(action.WaitTime)
+
+	return func(d *DriverExt) error {
+		defer func() {
+			// wait for swipe action to completed and content to load completely
+			time.Sleep(time.Duration(1000*actionOptions.Interval) * time.Millisecond)
+		}()
+
+		if d, ok := swipeDirection.(string); ok {
+			// enum direction: up, down, left, right
+			if err := dExt.SwipeTo(d, options...); err != nil {
+				log.Error().Err(err).Msgf("swipe %s failed", d)
+				return err
+			}
+		} else if d, ok := swipeDirection.([]float64); ok {
+			// custom direction: [fromX, fromY, toX, toY]
+			if err := dExt.SwipeRelative(d[0], d[1], d[2], d[3], options...); err != nil {
+				log.Error().Err(err).Msgf("swipe from (%v, %v) to (%v, %v) failed",
+					d[0], d[1], d[2], d[3])
+				return err
+			}
+		} else {
+			return fmt.Errorf("invalid swipe params %v", swipeDirection)
+		}
+		return nil
+	}
+}
+
+func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) error {
+	if len(texts) == 0 {
+		return errors.New("no text to tap")
+	}
 
 	var point PointF
-	findAppAction := func(d *DriverExt) error {
-		return dExt.SwipeLeft()
-	}
-	findAppCondition := func(d *DriverExt) error {
+	findTexts := func(d *DriverExt) error {
 		var err error
-		point, err = d.GetTextXY(appName, scopeOption, indexOption)
-		return err
+		ocrTexts, err := d.GetScreenTexts()
+		if err != nil {
+			return err
+		}
+		points, err := ocrTexts.FindTexts(texts, dExt.ParseActionOptions(options...)...)
+		if err != nil {
+			return err
+		}
+		point = points[0].Center() // FIXME
+		return nil
 	}
-	foundAppAction := func(d *DriverExt) error {
-		// click app to launch
-		return d.TapAbsXY(point.X, point.Y, identifierOption, offsetOption)
+	foundTextAction := func(d *DriverExt) error {
+		// tap text
+		return d.TapAbsXY(point.X, point.Y, options...)
 	}
 
+	findAction := dExt.prepareSwipeAction(options...)
+	return dExt.LoopUntil(findAction, findTexts, foundTextAction, options...)
+}
+
+func (dExt *DriverExt) swipeToTapApp(appName string, options ...ActionOption) error {
 	// go to home screen
 	if err := dExt.Driver.Homescreen(); err != nil {
 		return errors.Wrap(err, "go to home screen failed")
@@ -169,6 +166,8 @@ func (dExt *DriverExt) swipeToTapApp(appName string, action MobileAction) error 
 		dExt.SwipeRight()
 	}
 
-	// swipe next screen until app found
-	return dExt.LoopUntil(findAppAction, findAppCondition, foundAppAction, maxRetryOption, waitTimeOption)
+	options = append(options, WithOffset(0, -25)) // tap app icon above the text
+	options = append(options, WithDirection("left"))
+
+	return dExt.swipeToTapTexts([]string{appName}, options...)
 }

@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
-	"strings"
+	"regexp"
 	"time"
 
 	"github.com/pkg/errors"
@@ -28,71 +28,216 @@ type OCRResult struct {
 	Points []PointF `json:"points"`
 }
 
-type ResponseOCR struct {
-	Code      int         `json:"code"`
-	Message   string      `json:"message"`
-	OCRResult []OCRResult `json:"ocrResult"`
+type OCRResults []OCRResult
+
+func (o OCRResults) ToOCRTexts() (ocrTexts OCRTexts) {
+	for _, ocrResult := range o {
+		rect := image.Rectangle{
+			// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
+			Min: image.Point{
+				X: int(ocrResult.Points[0].X),
+				Y: int(ocrResult.Points[0].Y),
+			},
+			Max: image.Point{
+				X: int(ocrResult.Points[2].X),
+				Y: int(ocrResult.Points[2].Y),
+			},
+		}
+		ocrText := OCRText{
+			Text: ocrResult.Text,
+			Rect: rect,
+		}
+		ocrTexts = append(ocrTexts, ocrText)
+	}
+	return
 }
 
-type veDEMOCRService struct{}
+type ImageResult struct {
+	imagePath string
+	URL       string     `json:"url"`       // image uploaded url
+	OCRResult OCRResults `json:"ocrResult"` // OCR texts
+	LiveType  string     `json:"liveType"`  // 直播间类型
+}
 
-func newVEDEMOCRService() (*veDEMOCRService, error) {
+type ImageResponse struct {
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Result  ImageResult `json:"result"`
+}
+
+type OCRText struct {
+	Text string
+	Rect image.Rectangle
+}
+
+func (t OCRText) Center() PointF {
+	return getRectangleCenterPoint(t.Rect)
+}
+
+type OCRTexts []OCRText
+
+func (t OCRTexts) texts() (texts []string) {
+	for _, text := range t {
+		texts = append(texts, text.Text)
+	}
+	return texts
+}
+
+func (t OCRTexts) FilterScope(scope AbsScope) (results OCRTexts) {
+	for _, ocrText := range t {
+		rect := ocrText.Rect
+
+		// check if text in scope
+		if len(scope) == 4 {
+			if rect.Min.X < scope[0] ||
+				rect.Min.Y < scope[1] ||
+				rect.Max.X > scope[2] ||
+				rect.Max.Y > scope[3] {
+				// not in scope
+				continue
+			}
+		}
+
+		results = append(results, ocrText)
+	}
+	return
+}
+
+func (t OCRTexts) FindText(text string, options ...ActionOption) (
+	result OCRText, err error) {
+
+	actionOptions := NewActionOptions(options...)
+
+	var results []OCRText
+	for _, ocrText := range t.FilterScope(actionOptions.AbsScope) {
+		if actionOptions.Regex {
+			// regex on, check if match regex
+			if !regexp.MustCompile(text).MatchString(ocrText.Text) {
+				continue
+			}
+		} else {
+			// regex off, check if match exactly
+			if ocrText.Text != text {
+				continue
+			}
+		}
+
+		results = append(results, ocrText)
+	}
+
+	if len(results) == 0 {
+		return OCRText{}, errors.Wrap(code.OCRTextNotFoundError,
+			fmt.Sprintf("text %s not found in %v", text, t.texts()))
+	}
+
+	// get index
+	idx := actionOptions.Index
+	if idx < 0 {
+		idx = len(results) + idx
+	}
+
+	// index out of range
+	if idx >= len(results) || idx < 0 {
+		return OCRText{}, errors.Wrap(code.OCRTextNotFoundError,
+			fmt.Sprintf("text %s found %d, index %d out of range", text, len(results), idx))
+	}
+
+	return results[idx], nil
+}
+
+func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (
+	results OCRTexts, err error) {
+	for _, text := range texts {
+		ocrText, err := t.FindText(text, options...)
+		if err != nil {
+			continue
+		}
+		results = append(results, ocrText)
+	}
+
+	if len(results) != len(texts) {
+		return nil, errors.Wrap(code.OCRTextNotFoundError,
+			fmt.Sprintf("texts %s not found in %v", texts, t.texts()))
+	}
+	return results, nil
+}
+
+func newVEDEMImageService(actions ...string) (*veDEMImageService, error) {
 	if err := checkEnv(); err != nil {
 		return nil, err
 	}
-	return &veDEMOCRService{}, nil
+	if len(actions) == 0 {
+		actions = []string{"ocr"}
+	}
+	return &veDEMImageService{
+		actions: actions,
+	}, nil
 }
 
-func checkEnv() error {
-	if env.VEDEM_OCR_URL == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_OCR_URL missed")
-	}
-	if env.VEDEM_OCR_AK == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_OCR_AK missed")
-	}
-	if env.VEDEM_OCR_SK == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_OCR_SK missed")
-	}
-	return nil
+// veDEMImageService implements IImageService interface
+// actions:
+// 	ocr - get ocr texts
+// 	upload - get image uploaded url
+// 	liveType - get live type
+// 	popup - get popup windows
+// 	close - get close popup
+type veDEMImageService struct {
+	actions []string
 }
 
-func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, error) {
+func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
+	imageResult ImageResult, err error) {
+
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
-	bodyWriter.WriteField("withDet", "true")
-	// bodyWriter.WriteField("timestampOnly", "true")
+	for _, action := range s.actions {
+		bodyWriter.WriteField("actions", action)
+	}
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {
-		return nil, errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.OCRRequestError,
 			fmt.Sprintf("create form file error: %v", err))
+		return
 	}
 	size, err := formWriter.Write(imageBuf.Bytes())
 	if err != nil {
-		return nil, errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.OCRRequestError,
 			fmt.Sprintf("write form error: %v", err))
+		return
 	}
 
 	err = bodyWriter.Close()
 	if err != nil {
-		return nil, errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.OCRRequestError,
 			fmt.Sprintf("close body writer error: %v", err))
+		return
 	}
 
-	req, err := http.NewRequest("POST", env.VEDEM_OCR_URL, bodyBuf)
+	req, err := http.NewRequest("POST", env.VEDEM_IMAGE_URL, bodyBuf)
 	if err != nil {
-		return nil, errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.OCRRequestError,
 			fmt.Sprintf("construct request error: %v", err))
+		return
 	}
 
-	token := builtin.Sign("auth-v2", env.VEDEM_OCR_AK, env.VEDEM_OCR_SK, bodyBuf.Bytes())
+	signToken := "UNSIGNED-PAYLOAD"
+	token := builtin.Sign("auth-v2", env.VEDEM_IMAGE_AK, env.VEDEM_IMAGE_SK, []byte(signToken))
+
 	req.Header.Add("Agw-Auth", token)
+	req.Header.Add("Agw-Auth-Content", signToken)
 	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
+
+	// ppe
+	// req.Header.Add("x-use-ppe", "1")
+	// req.Header.Add("x-tt-env", "ppe_vedem_algorithm")
 
 	var resp *http.Response
 	// retry 3 times
 	for i := 1; i <= 3; i++ {
+		start := time.Now()
 		resp, err = client.Do(req)
+		elapsed := time.Since(start)
 		var logID string
 		if resp != nil {
 			logID = getLogID(resp.Header)
@@ -100,42 +245,73 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, err
 		if err == nil && resp.StatusCode == http.StatusOK {
 			log.Debug().
 				Str("X-TT-LOGID", logID).
-				Int("imageBufSize", size).
+				Int("image_bytes", size).
+				Float64("elapsed_seconds", elapsed.Seconds()).
 				Msg("request OCR service success")
 			break
 		}
 		log.Error().Err(err).
 			Str("X-TT-LOGID", logID).
 			Int("imageBufSize", size).
-			Msgf("request OCR service failed, retry %d", i)
+			Msgf("request veDEM OCR service failed, retry %d", i)
 		time.Sleep(1 * time.Second)
 	}
 	if resp == nil {
-		return nil, code.OCRServiceConnectionError
+		err = code.OCRServiceConnectionError
+		return
 	}
 
 	defer resp.Body.Close()
 
 	results, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrap(code.OCRResponseError,
+		err = errors.Wrap(code.OCRResponseError,
 			fmt.Sprintf("read response body error: %v", err))
+		return
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrap(code.OCRResponseError,
+		err = errors.Wrap(code.OCRResponseError,
 			fmt.Sprintf("unexpected response status code: %d, results: %v",
 				resp.StatusCode, string(results)))
+		return
 	}
 
-	var ocrResult ResponseOCR
-	err = json.Unmarshal(results, &ocrResult)
+	var imageResponse ImageResponse
+	err = json.Unmarshal(results, &imageResponse)
 	if err != nil {
-		return nil, errors.Wrap(code.OCRResponseError,
-			fmt.Sprintf("json unmarshal response body error: %v", err))
+		log.Error().Err(err).
+			Str("response", string(results)).
+			Msg("json unmarshal veDEM image response body failed")
+		err = errors.Wrap(code.OCRResponseError,
+			"json unmarshal veDEM image response body error")
+		return
 	}
 
-	return ocrResult.OCRResult, nil
+	if imageResponse.Code != 0 {
+		log.Error().
+			Int("code", imageResponse.Code).
+			Str("message", imageResponse.Message).
+			Msg("request veDEM OCR service failed")
+	}
+
+	imageResult = imageResponse.Result
+	log.Debug().Interface("imageResult", imageResult).Msg("get image data by veDEM")
+	return imageResult, nil
+}
+
+func checkEnv() error {
+	if env.VEDEM_IMAGE_URL == "" {
+		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_URL missed")
+	}
+	log.Info().Str("VEDEM_IMAGE_URL", env.VEDEM_IMAGE_URL).Msg("get env")
+	if env.VEDEM_IMAGE_AK == "" {
+		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_AK missed")
+	}
+	if env.VEDEM_IMAGE_SK == "" {
+		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_SK missed")
+	}
+	return nil
 }
 
 func getLogID(header http.Header) string {
@@ -150,210 +326,72 @@ func getLogID(header http.Header) string {
 	return logID[0]
 }
 
-type OCRText struct {
-	Text string
-	Rect image.Rectangle
+type IImageService interface {
+	// GetImage returns image result including ocr texts, uploaded image url, etc
+	GetImage(imageBuf *bytes.Buffer) (imageResult ImageResult, err error)
 }
 
-type OCRTexts []OCRText
-
-func (t OCRTexts) Texts() (texts []string) {
-	for _, text := range t {
-		texts = append(texts, text.Text)
-	}
-	return texts
-}
-
-func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer, options ...DataOption) (
-	ocrTexts OCRTexts, err error) {
-
-	ocrResults, err := s.getOCRResult(imageBuf)
-	if err != nil {
-		log.Error().Err(err).Msg("getOCRResult failed")
-		return
-	}
-
-	dataOptions := NewDataOptions(options...)
-
-	for _, ocrResult := range ocrResults {
-		rect := image.Rectangle{
-			// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
-			Min: image.Point{
-				X: int(ocrResult.Points[0].X),
-				Y: int(ocrResult.Points[0].Y),
-			},
-			Max: image.Point{
-				X: int(ocrResult.Points[2].X),
-				Y: int(ocrResult.Points[2].Y),
-			},
-		}
-
-		// check if text in scope
-		if rect.Min.X < dataOptions.Scope[0] || rect.Max.X > dataOptions.Scope[2] ||
-			rect.Min.Y < dataOptions.Scope[1] || rect.Max.Y > dataOptions.Scope[3] {
-			// not in scope
-			continue
-		}
-
-		ocrTexts = append(ocrTexts, OCRText{
-			Text: ocrResult.Text,
-			Rect: rect,
-		})
-	}
-	return
-}
-
-func (s *veDEMOCRService) FindText(text string, imageBuf *bytes.Buffer, options ...DataOption) (
-	rect image.Rectangle, err error) {
-
-	ocrTexts, err := s.GetTexts(imageBuf, options...)
-	if err != nil {
-		log.Error().Err(err).Msg("GetTexts failed")
-		return
-	}
-
-	dataOptions := NewDataOptions(options...)
-
-	var rects []image.Rectangle
-	for _, ocrText := range ocrTexts {
-		rect = ocrText.Rect
-
-		// not contains text
-		if !strings.Contains(ocrText.Text, text) {
-			continue
-		}
-
-		rects = append(rects, rect)
-
-		// contains text while not match exactly
-		if ocrText.Text != text {
-			continue
-		}
-
-		// match exactly, and not specify index, return the first one
-		if dataOptions.Index == 0 {
-			return rect, nil
-		}
-	}
-
-	if len(rects) == 0 {
-		return image.Rectangle{}, errors.Wrap(code.OCRTextNotFoundError,
-			fmt.Sprintf("text %s not found in %v", text, ocrTexts.Texts()))
-	}
-
-	// get index
-	idx := dataOptions.Index
-	if idx > 0 {
-		// NOTICE: index start from 1
-		idx = idx - 1
-	} else if idx < 0 {
-		idx = len(rects) + idx
-	}
-
-	// index out of range
-	if idx >= len(rects) {
-		return image.Rectangle{}, errors.Wrap(code.OCRTextNotFoundError,
-			fmt.Sprintf("text %s found %d, index %d out of range", text, len(rects), idx))
-	}
-
-	return rects[idx], nil
-}
-
-func (s *veDEMOCRService) FindTexts(texts []string, imageBuf *bytes.Buffer, options ...DataOption) (
-	rects []image.Rectangle, err error) {
-
-	ocrTexts, err := s.GetTexts(imageBuf, options...)
-	if err != nil {
-		log.Error().Err(err).Msg("GetTexts failed")
-		return
-	}
-
-	var success bool
-	for _, text := range texts {
-		var found bool
-		for _, ocrText := range ocrTexts {
-			rect := ocrText.Rect
-
-			// not contains text
-			if !strings.Contains(ocrText.Text, text) {
-				continue
-			}
-
-			found = true
-			rects = append(rects, rect)
-			break
-		}
-		if !found {
-			rects = append(rects, image.Rectangle{})
-		}
-		success = found || success
-	}
-
-	if !success {
-		return rects, errors.Wrap(code.OCRTextNotFoundError,
-			fmt.Sprintf("texts %s not found in %v", texts, ocrTexts.Texts()))
-	}
-
-	return rects, nil
-}
-
-type OCRService interface {
-	GetTexts(imageBuf *bytes.Buffer, options ...DataOption) (ocrTexts OCRTexts, err error)
-	FindText(text string, imageBuf *bytes.Buffer, options ...DataOption) (rect image.Rectangle, err error)
-	FindTexts(texts []string, imageBuf *bytes.Buffer, options ...DataOption) (rects []image.Rectangle, err error)
-}
-
-func (dExt *DriverExt) GetTextsByOCR(options ...DataOption) (texts OCRTexts, err error) {
+// GetScreenResult takes a screenshot, returns the image recognization result
+func (dExt *DriverExt) GetScreenResult() (imageResult ImageResult, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_ocr")); err != nil {
+	var imagePath string
+	if bufSource, imagePath, err = dExt.TakeScreenShot(
+		builtin.GenNameWithTimestamp("%d_ocr")); err != nil {
 		return
 	}
 
-	ocrTexts, err := dExt.ocrService.GetTexts(bufSource, options...)
+	imageResult, err = dExt.ImageService.GetImage(bufSource)
 	if err != nil {
-		log.Error().Err(err).Msg("GetTexts failed")
+		log.Error().Err(err).Msg("GetScreenResult failed")
 		return
 	}
 
-	return ocrTexts, nil
+	imageUrl := imageResult.URL
+	if imageUrl != "" {
+		dExt.cacheStepData.screenShotsUrls[imagePath] = imageUrl
+		log.Debug().Str("imagePath", imagePath).Str("imageUrl", imageUrl).Msg("log screenshot")
+	}
+
+	dExt.cacheStepData.screenResults[imagePath] = &ScreenResult{
+		Texts: imageResult.OCRResult.ToOCRTexts(),
+	}
+
+	imageResult.imagePath = imagePath
+	return imageResult, nil
 }
 
-func (dExt *DriverExt) FindTextByOCR(ocrText string, options ...DataOption) (x, y, width, height float64, err error) {
-	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_ocr")); err != nil {
+func (dExt *DriverExt) GetScreenTexts() (ocrTexts OCRTexts, err error) {
+	imageResult, err := dExt.GetScreenResult()
+	if err != nil {
+		return
+	}
+	return imageResult.OCRResult.ToOCRTexts(), nil
+}
+
+func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (point PointF, err error) {
+	ocrTexts, err := dExt.GetScreenTexts()
+	if err != nil {
 		return
 	}
 
-	rect, err := dExt.ocrService.FindText(ocrText, bufSource, options...)
+	result, err := ocrTexts.FindText(text, dExt.ParseActionOptions(options...)...)
 	if err != nil {
 		log.Warn().Msgf("FindText failed: %s", err.Error())
 		return
 	}
+	point = result.Center()
 
-	log.Info().Str("ocrText", ocrText).
-		Interface("rect", rect).Msgf("FindTextByOCR success")
-	x, y, width, height = dExt.MappingToRectInUIKit(rect)
+	log.Info().Str("text", text).
+		Interface("point", point).Msgf("FindScreenText success")
 	return
 }
 
-func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string, options ...DataOption) (points [][]float64, err error) {
-	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_ocr")); err != nil {
-		return
+func getRectangleCenterPoint(rect image.Rectangle) (point PointF) {
+	x, y := float64(rect.Min.X), float64(rect.Min.Y)
+	width, height := float64(rect.Dx()), float64(rect.Dy())
+	point = PointF{
+		X: x + width*0.5,
+		Y: y + height*0.5,
 	}
-
-	rects, err := dExt.ocrService.FindTexts(ocrTexts, bufSource, options...)
-	if err != nil {
-		log.Warn().Msgf("FindTexts failed: %s", err.Error())
-		return
-	}
-
-	log.Info().Interface("ocrTexts", ocrTexts).
-		Interface("rects", rects).Msgf("FindTextsByOCR success")
-	for _, rect := range rects {
-		x, y, width, height := dExt.MappingToRectInUIKit(rect)
-		points = append(points, []float64{x, y, width, height})
-	}
-
-	return
+	return point
 }

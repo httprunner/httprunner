@@ -39,7 +39,7 @@ func TestAndroidKuaiShouFeedCardLive(t *testing.T) {
 					uixt.WithCustomDirection(0.9, 0.7, 0.9, 0.3),
 					uixt.WithScope(0.2, 0.5, 0.8, 0.8),
 					uixt.WithMaxRetryTimes(20),
-					uixt.WithWaitTime(60),
+					uixt.WithInterval(60),
 					uixt.WithIdentifier("click_live"),
 				),
 			hrp.NewStep("等待1分钟").
