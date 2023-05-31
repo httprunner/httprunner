@@ -24,7 +24,7 @@ func (dExt *DriverExt) TapXY(x, y float64, options ...ActionOption) error {
 func (dExt *DriverExt) TapByOCR(ocrText string, options ...ActionOption) error {
 	actionOptions := NewActionOptions(options...)
 
-	point, err := dExt.FindScreenTextByOCR(ocrText, options...)
+	point, err := dExt.FindScreenText(ocrText, options...)
 	if err != nil {
 		if actionOptions.IgnoreNotFoundError {
 			return nil

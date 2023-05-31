@@ -28,29 +28,35 @@ type OCRResult struct {
 	Points []PointF `json:"points"`
 }
 
-func (o OCRResult) ToOCRText() OCRText {
-	rect := image.Rectangle{
-		// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
-		Min: image.Point{
-			X: int(o.Points[0].X),
-			Y: int(o.Points[0].Y),
-		},
-		Max: image.Point{
-			X: int(o.Points[2].X),
-			Y: int(o.Points[2].Y),
-		},
-	}
+type OCRResults []OCRResult
 
-	return OCRText{
-		Text: o.Text,
-		Rect: rect,
+func (o OCRResults) ToOCRTexts() (ocrTexts OCRTexts) {
+	for _, ocrResult := range o {
+		rect := image.Rectangle{
+			// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
+			Min: image.Point{
+				X: int(ocrResult.Points[0].X),
+				Y: int(ocrResult.Points[0].Y),
+			},
+			Max: image.Point{
+				X: int(ocrResult.Points[2].X),
+				Y: int(ocrResult.Points[2].Y),
+			},
+		}
+		ocrText := OCRText{
+			Text: ocrResult.Text,
+			Rect: rect,
+		}
+		ocrTexts = append(ocrTexts, ocrText)
 	}
+	return
 }
 
 type ImageResult struct {
-	URL       string      `json:"url"`       // image uploaded url
-	OCRResult []OCRResult `json:"ocrResult"` // OCR texts
-	LiveType  string      `json:"liveType"`  // 直播间类型
+	imagePath string
+	URL       string     `json:"url"`       // image uploaded url
+	OCRResult OCRResults `json:"ocrResult"` // OCR texts
+	LiveType  string     `json:"liveType"`  // 直播间类型
 }
 
 type ImageResponse struct {
@@ -156,22 +162,27 @@ func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (
 	return results, nil
 }
 
-func newVEDEMImageService() (*veDEMImageService, error) {
+func newVEDEMImageService(actions ...string) (*veDEMImageService, error) {
 	if err := checkEnv(); err != nil {
 		return nil, err
 	}
-	return &veDEMImageService{}, nil
+	if len(actions) == 0 {
+		actions = []string{"ocr"}
+	}
+	return &veDEMImageService{
+		actions: actions,
+	}, nil
 }
 
 // veDEMImageService implements IImageService interface
-type veDEMImageService struct{}
-
-var actions = []string{
-	"ocr",      // get ocr texts
-	"upload",   // get image uploaded url
-	"liveType", // get live type
-	// "popup",
-	// "close",
+// actions:
+// 	ocr - get ocr texts
+// 	upload - get image uploaded url
+// 	liveType - get live type
+// 	popup - get popup windows
+// 	close - get close popup
+type veDEMImageService struct {
+	actions []string
 }
 
 func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
@@ -179,7 +190,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
-	for _, action := range actions {
+	for _, action := range s.actions {
 		bodyWriter.WriteField("actions", action)
 	}
 
@@ -320,22 +331,19 @@ type IImageService interface {
 	GetImage(imageBuf *bytes.Buffer) (imageResult ImageResult, err error)
 }
 
-// GetScreenTextsByOCR takes a screenshot, returns the image path and OCR texts.
-func (dExt *DriverExt) GetScreenTextsByOCR() (imagePath string, ocrTexts OCRTexts, err error) {
+// GetScreenResult takes a screenshot, returns the image recognization result
+func (dExt *DriverExt) GetScreenResult() (imageResult ImageResult, err error) {
 	var bufSource *bytes.Buffer
+	var imagePath string
 	if bufSource, imagePath, err = dExt.TakeScreenShot(
 		builtin.GenNameWithTimestamp("%d_ocr")); err != nil {
 		return
 	}
 
-	imageResult, err := dExt.ImageService.GetImage(bufSource)
+	imageResult, err = dExt.ImageService.GetImage(bufSource)
 	if err != nil {
-		log.Error().Err(err).Msg("GetScreenTextsByOCR failed")
+		log.Error().Err(err).Msg("GetScreenResult failed")
 		return
-	}
-
-	for _, ocrResult := range imageResult.OCRResult {
-		ocrTexts = append(ocrTexts, ocrResult.ToOCRText())
 	}
 
 	imageUrl := imageResult.URL
@@ -345,18 +353,19 @@ func (dExt *DriverExt) GetScreenTextsByOCR() (imagePath string, ocrTexts OCRText
 	}
 
 	dExt.cacheStepData.screenResults[imagePath] = &ScreenResult{
-		Texts: ocrTexts,
+		Texts: imageResult.OCRResult.ToOCRTexts(),
 	}
 
-	return imagePath, ocrTexts, nil
+	imageResult.imagePath = imagePath
+	return imageResult, nil
 }
 
-func (dExt *DriverExt) FindScreenTextByOCR(text string, options ...ActionOption) (point PointF, err error) {
-	_, ocrTexts, err := dExt.GetScreenTextsByOCR()
+func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (point PointF, err error) {
+	imageResult, err := dExt.GetScreenResult()
 	if err != nil {
 		return
 	}
-	result, err := ocrTexts.FindText(text, dExt.ParseActionOptions(options...)...)
+	result, err := imageResult.OCRResult.ToOCRTexts().FindText(text, dExt.ParseActionOptions(options...)...)
 	if err != nil {
 		log.Warn().Msgf("FindText failed: %s", err.Error())
 		return
@@ -364,7 +373,7 @@ func (dExt *DriverExt) FindScreenTextByOCR(text string, options ...ActionOption)
 	point = result.Center()
 
 	log.Info().Str("text", text).
-		Interface("point", point).Msgf("FindScreenTextByOCR success")
+		Interface("point", point).Msgf("FindScreenText success")
 	return
 }
 
