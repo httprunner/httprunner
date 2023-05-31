@@ -434,6 +434,7 @@ type DataOptions struct {
 	Offset              []int                  // used to tap offset of point
 	Index               int                    // index of the target element, should start from 1
 	IgnoreNotFoundError bool                   // ignore error if target element not found
+	DisableRetry        bool                   // disable retry when action fail
 	MaxRetryTimes       int                    // max retry times if target element not found
 	Interval            float64                // interval between retries in seconds
 }
@@ -497,6 +498,12 @@ func WithDataIdentifier(identifier string) DataOption {
 func WithDataIgnoreNotFoundError(ignoreError bool) DataOption {
 	return func(data *DataOptions) {
 		data.IgnoreNotFoundError = ignoreError
+	}
+}
+
+func WithDataDisableRetry(disableRetry bool) DataOption {
+	return func(data *DataOptions) {
+		data.DisableRetry = disableRetry
 	}
 }
 
@@ -671,7 +678,7 @@ type WebDriver interface {
 	// PressBack Presses the back button
 	PressBack(options ...DataOption) error
 
-	Screenshot() (*bytes.Buffer, error)
+	Screenshot(options ...DataOption) (*bytes.Buffer, error)
 
 	// Source Return application elements tree
 	Source(srcOpt ...SourceOption) (string, error)

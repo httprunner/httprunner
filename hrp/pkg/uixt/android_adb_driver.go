@@ -286,8 +286,10 @@ func (ad *adbDriver) SetRotation(rotation Rotation) (err error) {
 	return
 }
 
-func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
+func (ad *adbDriver) Screenshot(options ...DataOption) (raw *bytes.Buffer, err error) {
 	// adb shell screencap -p
+	ad.lock.Lock()
+	defer ad.lock.Unlock()
 	resp, err := ad.adbClient.ScreenCap()
 	if err == nil {
 		return bytes.NewBuffer(resp), nil

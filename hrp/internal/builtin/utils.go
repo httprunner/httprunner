@@ -450,3 +450,10 @@ func GenNameWithTimestamp(tmpl string) string {
 	}
 	return fmt.Sprintf(tmpl, time.Now().Unix())
 }
+
+func GenNameWithTimestampMS(tmpl string) string {
+	if !strings.Contains(tmpl, "%d") {
+		tmpl = tmpl + "_%d"
+	}
+	return fmt.Sprintf(tmpl, time.Now().UnixNano()/1e6)
+}

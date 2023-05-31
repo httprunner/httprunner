@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net"
@@ -14,17 +13,19 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
 type Driver struct {
-	urlPrefix *url.URL
-	sessionId string
-	client    *http.Client
-	// cache the last launched package name
-	lastLaunchedPackageName string
+	urlPrefix               *url.URL
+	sessionId               string
+	client                  *http.Client
+	lastLaunchedPackageName string     // cache the last launched package name
+	lock                    sync.Mutex // screenshot lock to avoid race
 }
 
 // HTTPClient is the default client to use to communicate with the WebDriver server.
@@ -111,6 +112,10 @@ func (wd *Driver) tempHttpGET(pathElem ...string) (rawResp rawResponse, err erro
 	return wd.tempHttpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
 }
 
+func (wd *Driver) tempHttpGETWithRetry(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.tempHttpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil, true)
+}
+
 func (wd *Driver) tempHttpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
@@ -125,7 +130,7 @@ func (wd *Driver) tempHttpDELETE(pathElem ...string) (rawResp rawResponse, err e
 	return wd.tempHttpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *Driver) tempHttpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
+func (wd *Driver) tempHttpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (rawResp rawResponse, err error) {
 	var localPort int
 	{
 		tmpURL, _ := url.Parse(rawURL)
@@ -170,7 +175,13 @@ func (wd *Driver) tempHttpRequest(method string, rawURL string, rawBody []byte) 
 			break
 		}
 		if err != nil {
-			log.Error().Str("err", err.Error()).Msg("get response")
+			log.Error().Str("err", err.Error()).Msg("request failed")
+		} else {
+			log.Error().Int("http status code", resp.StatusCode).Msg("invlaid response status code")
+		}
+
+		if len(disableRetry) > 0 && disableRetry[0] {
+			return
 		}
 
 		time.Sleep(3 * time.Second)
@@ -203,7 +214,7 @@ func (wd *Driver) tempHttpRequest(method string, rawURL string, rawBody []byte) 
 		return nil, err
 	}
 
-	var reply = new(struct {
+	reply := new(struct {
 		Value struct {
 			Err        string `json:"error"`
 			Message    string `json:"message"`
@@ -287,7 +298,7 @@ func (wd *Driver) getSessionID() (sessionID string, err error) {
 		return "", err
 	}
 
-	var reply = new(struct {
+	reply := new(struct {
 		Value struct {
 			Err        string `json:"error"`
 			Message    string `json:"message"`

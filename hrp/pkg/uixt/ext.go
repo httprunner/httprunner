@@ -15,12 +15,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 type MobileMethod string
@@ -89,6 +91,7 @@ type MobileAction struct {
 	Index               int         `json:"index,omitempty" yaml:"index,omitempty"`                               // index of the target element, should start from 1
 	Timeout             int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
 	IgnoreNotFoundError bool        `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
+	DisableRetry        bool        `json:"disable_retry,omitempty" yaml:"disable_retry,omitempty"`               // disable retry when action fail
 	Text                string      `json:"text,omitempty" yaml:"text,omitempty"`
 	ID                  string      `json:"id,omitempty" yaml:"id,omitempty"`
 	Description         string      `json:"description,omitempty" yaml:"description,omitempty"`
@@ -189,6 +192,12 @@ func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
 	}
 }
 
+func WithDisableRetry(disableRetry bool) ActionOption {
+	return func(o *MobileAction) {
+		o.DisableRetry = disableRetry
+	}
+}
+
 type MatchMethod int
 
 // MatchMode is the type of the matching operation.
@@ -233,7 +242,8 @@ type DriverExt struct {
 	perfStop        chan struct{} // stop performance monitor
 	perfData        []string      // save perf data
 	ClosePopup      bool
-
+	Wg              sync.WaitGroup // used to wait all screenshot recorded
+	screenShotLock  sync.Mutex
 	CVArgs
 }
 
@@ -268,39 +278,39 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 	return dExt, nil
 }
 
-// TakeScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
-// if fileName is empty, it will not save image file and only return raw image data
-func (dExt *DriverExt) TakeScreenShot(fileName ...string) (raw *bytes.Buffer, err error) {
+func (dExt *DriverExt) TakeScreenShotAfterAction(dataOption ...DataOption) (raw *bytes.Buffer, err error) {
 	// wait for action done
 	time.Sleep(500 * time.Millisecond)
+	return dExt.TakeScreenShot(dataOption...)
+}
 
+// TakeScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
+// if fileName is empty, it will not save image file and only return raw image data
+func (dExt *DriverExt) TakeScreenShot(dataOption ...DataOption) (raw *bytes.Buffer, err error) {
 	// iOS 优先使用 MJPEG 流进行截图，性能最优
 	// 如果 MJPEG 流未开启，则使用 WebDriver 的截图接口
 	if dExt.frame != nil {
 		return dExt.frame, nil
 	}
-	if raw, err = dExt.Driver.Screenshot(); err != nil {
+	if raw, err = dExt.Driver.Screenshot(dataOption...); err != nil {
 		log.Error().Err(err).Msg("capture screenshot data failed")
 		return nil, err
-	}
-
-	// save screenshot to file
-	if len(fileName) > 0 && fileName[0] != "" {
-		path := filepath.Join(env.ScreenShotsPath, fileName[0])
-		path, err := dExt.saveScreenShot(raw, path)
-		if err != nil {
-			log.Error().Err(err).Msg("save screenshot file failed")
-			return nil, err
-		}
-		dExt.screenShots = append(dExt.screenShots, path)
-		log.Info().Str("path", path).Msg("save screenshot file success")
 	}
 
 	return raw, nil
 }
 
 // saveScreenShot saves image file with file name
-func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
+func (dExt *DriverExt) SaveScreenShot(fileName string, dataOption ...DataOption) error {
+	raw, err := dExt.TakeScreenShot(dataOption...)
+	if err != nil {
+		return err
+	}
+	// save screenshot to file
+	if len(fileName) == 0 {
+		return errors.New("empty screenshot file name")
+	}
+	path := filepath.Join(env.ScreenShotsPath, fileName)
 	// notice: screenshot data is a stream, so we need to copy it to a new buffer
 	copiedBuffer := &bytes.Buffer{}
 	if _, err := copiedBuffer.Write(raw.Bytes()); err != nil {
@@ -309,13 +319,13 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 
 	img, format, err := image.Decode(copiedBuffer)
 	if err != nil {
-		return "", errors.Wrap(err, "decode screenshot image failed")
+		return errors.Wrap(err, "decode screenshot image failed")
 	}
 
-	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, format))
+	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", path, format))
 	file, err := os.Create(screenshotPath)
 	if err != nil {
-		return "", errors.Wrap(err, "create screenshot image file failed")
+		return errors.Wrap(err, "create screenshot image file failed")
 	}
 	defer func() {
 		_ = file.Close()
@@ -329,13 +339,20 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 	case "gif":
 		err = gif.Encode(file, img, nil)
 	default:
-		return "", fmt.Errorf("unsupported image format: %s", format)
+		return fmt.Errorf("unsupported image format: %s", format)
 	}
 	if err != nil {
-		return "", errors.Wrap(err, "encode screenshot image failed")
+		return errors.Wrap(err, "encode screenshot image failed")
 	}
-
-	return screenshotPath, nil
+	if err != nil {
+		log.Error().Err(err).Msg("save screenshot file failed")
+		return err
+	}
+	dExt.screenShotLock.Lock()
+	dExt.screenShots = append(dExt.screenShots, screenshotPath)
+	dExt.screenShotLock.Unlock()
+	log.Info().Str("path", path).Msg("save screenshot file success")
+	return nil
 }
 
 func (dExt *DriverExt) GetScreenShots() []string {
@@ -723,9 +740,13 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		}
 	case CtlScreenShot:
 		// take screenshot
-		log.Info().Msg("take screenshot for current screen")
-		_, err := dExt.TakeScreenShot(builtin.GenNameWithTimestamp("step_%d_screenshot"))
-		return err
+		log.Info().Msg("take screenshot for current screen (no-blocking)")
+		go func() {
+			defer dExt.Wg.Done()
+			disableRetryOption := WithDataDisableRetry(action.DisableRetry)
+			_ = dExt.SaveScreenShot(builtin.GenNameWithTimestampMS("step_%d_screenshot"), disableRetryOption)
+		}()
+		return nil
 	case CtlStartCamera:
 		return dExt.Driver.StartCamera()
 	case CtlStopCamera:

@@ -359,7 +359,8 @@ func (wd *wdaDriver) GetLastLaunchedApp() (packageName string) {
 }
 
 func (wd *wdaDriver) IsAppInForeground(packageName string) (bool, error) {
-	return false, errors.New("not implemented")
+	// return false, errors.New("not implemented")
+	return true, nil
 }
 
 func (wd *wdaDriver) Tap(x, y int, options ...DataOption) error {
@@ -563,11 +564,14 @@ func (wd *wdaDriver) SetRotation(rotation Rotation) (err error) {
 	return
 }
 
-func (wd *wdaDriver) Screenshot() (raw *bytes.Buffer, err error) {
+func (wd *wdaDriver) Screenshot(dataOptions ...DataOption) (raw *bytes.Buffer, err error) {
 	// [[FBRoute GET:@"/screenshot"] respondWithTarget:self action:@selector(handleGetScreenshot:)]
 	// [[FBRoute GET:@"/screenshot"].withoutSession respondWithTarget:self action:@selector(handleGetScreenshot:)]
 	var rawResp rawResponse
-	if rawResp, err = wd.httpGET("/session", wd.sessionId, "/screenshot"); err != nil {
+	wd.lock.Lock()
+	rawResp, err = wd.httpGET("/session", wd.sessionId, "/screenshot")
+	wd.lock.Unlock()
+	if err != nil {
 		return nil, errors.Wrap(code.IOSScreenShotError,
 			fmt.Sprintf("get WDA screenshot data failed: %v", err))
 	}

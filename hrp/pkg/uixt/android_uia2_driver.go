@@ -359,10 +359,19 @@ func (ud *uiaDriver) Rotation() (rotation Rotation, err error) {
 	return
 }
 
-func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {
+func (ud *uiaDriver) Screenshot(options ...DataOption) (raw *bytes.Buffer, err error) {
 	// register(getHandler, new CaptureScreenshot("/wd/hub/session/:sessionId/screenshot"))
 	var rawResp rawResponse
-	if rawResp, err = ud.tempHttpGET("/session", ud.sessionId, "screenshot"); err != nil {
+	dataOptions := NewDataOptions(options...)
+	ud.lock.Lock()
+	if dataOptions.DisableRetry {
+		rawResp, err = ud.tempHttpGETWithRetry("/session", ud.sessionId, "screenshot")
+	} else {
+		rawResp, err = ud.tempHttpGET("/session", ud.sessionId, "screenshot")
+	}
+	ud.lock.Unlock()
+
+	if err != nil {
 		return nil, errors.Wrap(code.AndroidScreenShotError,
 			fmt.Sprintf("get UIA screenshot data failed: %v", err))
 	}

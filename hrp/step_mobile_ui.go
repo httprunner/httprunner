@@ -293,11 +293,15 @@ func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 	return &StepMobile{step: s.step}
 }
 
-func (s *StepMobile) ScreenShot() *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+func (s *StepMobile) ScreenShot(options ...uixt.ActionOption) *StepMobile {
+	action := uixt.MobileAction{
 		Method: uixt.CtlScreenShot,
 		Params: nil,
-	})
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -601,6 +605,28 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		return
 	}
 
+	// prepare actions
+	var actions []uixt.MobileAction
+	if mobileStep.Actions == nil {
+		actions = []uixt.MobileAction{
+			{
+				Method: mobileStep.Method,
+				Params: mobileStep.Params,
+			},
+		}
+	} else {
+		actions = mobileStep.Actions
+	}
+
+	// init wait group
+	var screenshotCount int
+	for _, action := range actions {
+		if action.Method == uixt.CtlScreenShot {
+			screenshotCount += 1
+		}
+	}
+	uiDriver.Wg.Add(screenshotCount)
+
 	defer func() {
 		attachments := make(map[string]interface{})
 		if err != nil {
@@ -615,9 +641,10 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 			}
 		}
 
-		// take screenshot after each step
-		_, err := uiDriver.TakeScreenShot(
-			builtin.GenNameWithTimestamp("step_%d_") + step.Name)
+		// wait for screenshot actions done
+		uiDriver.Wg.Wait()
+		// save screenshot after each step
+		err := uiDriver.SaveScreenShot(builtin.GenNameWithTimestampMS("step_%d_") + step.Name)
 		if err != nil {
 			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed on step finished")
 		}
@@ -626,19 +653,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		attachments["screenshots"] = uiDriver.GetScreenShots()
 		stepResult.Attachments = attachments
 	}()
-
-	// prepare actions
-	var actions []uixt.MobileAction
-	if mobileStep.Actions == nil {
-		actions = []uixt.MobileAction{
-			{
-				Method: mobileStep.Method,
-				Params: mobileStep.Params,
-			},
-		}
-	} else {
-		actions = mobileStep.Actions
-	}
 
 	// run actions
 	for _, action := range actions {

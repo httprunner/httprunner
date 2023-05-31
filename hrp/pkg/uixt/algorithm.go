@@ -9,9 +9,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 const (
@@ -143,7 +144,7 @@ func (dExt *DriverExt) FindAllImageRect(search string, options ...DataOption) (r
 	if bufSearch, err = im.read(); err != nil {
 		return nil, err
 	}
-	if bufSource, err = dExt.TakeScreenShot(); err != nil {
+	if bufSource, err = dExt.TakeScreenShotAfterAction(); err != nil {
 		return nil, err
 	}
 
@@ -162,7 +163,7 @@ func (dExt *DriverExt) FindImageRectInUIKit(imagePath string, options ...DataOpt
 	if bufSearch, err = im.read(); err != nil {
 		return 0, 0, 0, 0, err
 	}
-	if bufSource, err = dExt.TakeScreenShot(); err != nil {
+	if bufSource, err = dExt.TakeScreenShotAfterAction(); err != nil {
 		return 0, 0, 0, 0, err
 	}
 
@@ -197,7 +198,7 @@ type CVService interface {
 
 func (dExt *DriverExt) FindImageByCV(cvImage string, options ...DataOption) (rect image.Rectangle, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(); err != nil {
+	if bufSource, err = dExt.TakeScreenShotAfterAction(); err != nil {
 		err = fmt.Errorf("TakeScreenShot error: %v", err)
 		return
 	}
@@ -245,7 +246,7 @@ func (dExt *DriverExt) ClosePopupHandler() {
 
 func (dExt *DriverExt) FindPopupCloseButton(options ...DataOption) (rect image.Rectangle, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(); err != nil {
+	if bufSource, err = dExt.TakeScreenShotAfterAction(); err != nil {
 		err = fmt.Errorf("TakeScreenShot error: %v", err)
 		return
 	}
@@ -273,7 +274,7 @@ type OCRService interface {
 
 func (dExt *DriverExt) GetTextsByOCR(options ...DataOption) (texts OCRTexts, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(); err != nil {
+	if bufSource, err = dExt.TakeScreenShotAfterAction(); err != nil {
 		err = fmt.Errorf("TakeScreenShot error: %v", err)
 		return
 	}
@@ -289,7 +290,7 @@ func (dExt *DriverExt) GetTextsByOCR(options ...DataOption) (texts OCRTexts, err
 
 func (dExt *DriverExt) FindTextByOCR(ocrText string, options ...DataOption) (x, y, width, height float64, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(); err != nil {
+	if bufSource, err = dExt.TakeScreenShotAfterAction(); err != nil {
 		err = fmt.Errorf("TakeScreenShot error: %v", err)
 		return
 	}
@@ -308,7 +309,7 @@ func (dExt *DriverExt) FindTextByOCR(ocrText string, options ...DataOption) (x, 
 
 func (dExt *DriverExt) FindTextsByOCR(ocrTexts []string, options ...DataOption) (points [][]float64, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(); err != nil {
+	if bufSource, err = dExt.TakeScreenShotAfterAction(); err != nil {
 		err = fmt.Errorf("TakeScreenShot error: %v", err)
 		return
 	}
@@ -335,7 +336,7 @@ type SDService interface {
 
 func (dExt *DriverExt) ScenarioDetect(scenarioType string, options ...DataOption) (res bool, err error) {
 	var bufSource *bytes.Buffer
-	if bufSource, err = dExt.TakeScreenShot(); err != nil {
+	if bufSource, err = dExt.TakeScreenShotAfterAction(); err != nil {
 		err = fmt.Errorf("TakeScreenShot error: %v", err)
 		return
 	}
