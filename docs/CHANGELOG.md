@@ -17,6 +17,7 @@
 - refactor: merge ActionOption with DataOption
 - change: exit with AndroidShellExecError code for adb shell failure
 - change: request vedem ocr with uploading image
+- change: remove ping/dns sub commands
 
 ## v4.3.3 (2023-04-19)
 
