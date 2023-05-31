@@ -5,7 +5,7 @@ func (dExt *DriverExt) Drag(pathname string, toX, toY int, pressForDuration ...f
 }
 
 func (dExt *DriverExt) DragFloat(pathname string, toX, toY float64, pressForDuration ...float64) (err error) {
-	return dExt.DragOffsetFloat(pathname, toX, toY, 0.5, 0.5, pressForDuration...)
+	return dExt.DragOffsetFloat(pathname, toX, toY, 0, 0, pressForDuration...)
 }
 
 func (dExt *DriverExt) DragOffset(pathname string, toX, toY int, xOffset, yOffset float64, pressForDuration ...float64) (err error) {
@@ -22,7 +22,6 @@ func (dExt *DriverExt) DragOffsetFloat(pathname string, toX, toY, xOffset, yOffs
 		return err
 	}
 
-	// FIXME: handle offset
 	return dExt.Driver.DragFloat(point.X+xOffset, point.Y+yOffset, toX, toY,
 		WithPressDuration(pressForDuration[0]))
 }

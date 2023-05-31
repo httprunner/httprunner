@@ -50,7 +50,7 @@ func (dExt *DriverExt) TapByCV(imagePath string, options ...ActionOption) error 
 }
 
 func (dExt *DriverExt) Tap(param string, options ...ActionOption) error {
-	return dExt.TapOffset(param, 0.5, 0.5, options...)
+	return dExt.TapOffset(param, 0, 0, options...)
 }
 
 func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, options ...ActionOption) (err error) {
@@ -64,7 +64,6 @@ func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, options
 		return err
 	}
 
-	// FIXME: handle offset
 	return dExt.TapAbsXY(point.X+xOffset, point.Y+yOffset, options...)
 }
 
@@ -80,7 +79,7 @@ func (dExt *DriverExt) DoubleTapXY(x, y float64) error {
 }
 
 func (dExt *DriverExt) DoubleTap(param string) (err error) {
-	return dExt.DoubleTapOffset(param, 0.5, 0.5)
+	return dExt.DoubleTapOffset(param, 0, 0)
 }
 
 func (dExt *DriverExt) DoubleTapOffset(param string, xOffset, yOffset float64) (err error) {
@@ -89,6 +88,5 @@ func (dExt *DriverExt) DoubleTapOffset(param string, xOffset, yOffset float64) (
 		return err
 	}
 
-	// FIXME: handle offset
 	return dExt.Driver.DoubleTapFloat(point.X+xOffset, point.Y+yOffset)
 }
