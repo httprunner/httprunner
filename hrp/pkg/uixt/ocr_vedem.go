@@ -307,10 +307,10 @@ func checkEnv() error {
 	}
 	log.Info().Str("VEDEM_IMAGE_URL", env.VEDEM_IMAGE_URL).Msg("get env")
 	if env.VEDEM_IMAGE_AK == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_OCR_AK missed")
+		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_AK missed")
 	}
 	if env.VEDEM_IMAGE_SK == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_OCR_SK missed")
+		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_SK missed")
 	}
 	return nil
 }
