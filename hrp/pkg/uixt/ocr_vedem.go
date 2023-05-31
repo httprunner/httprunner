@@ -360,12 +360,21 @@ func (dExt *DriverExt) GetScreenResult() (imageResult ImageResult, err error) {
 	return imageResult, nil
 }
 
-func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (point PointF, err error) {
+func (dExt *DriverExt) GetScreenTexts() (ocrTexts OCRTexts, err error) {
 	imageResult, err := dExt.GetScreenResult()
 	if err != nil {
 		return
 	}
-	result, err := imageResult.OCRResult.ToOCRTexts().FindText(text, dExt.ParseActionOptions(options...)...)
+	return imageResult.OCRResult.ToOCRTexts(), nil
+}
+
+func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (point PointF, err error) {
+	ocrTexts, err := dExt.GetScreenTexts()
+	if err != nil {
+		return
+	}
+
+	result, err := ocrTexts.FindText(text, dExt.ParseActionOptions(options...)...)
 	if err != nil {
 		log.Warn().Msgf("FindText failed: %s", err.Error())
 		return
