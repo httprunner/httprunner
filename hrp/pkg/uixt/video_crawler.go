@@ -82,15 +82,15 @@ func (s *VideoStat) isTargetAchieved() bool {
 }
 
 // incrFeed increases feed count and feed stat
-func (s *VideoStat) incrFeed(ocrResult *OcrResult, driverExt *DriverExt) error {
+func (s *VideoStat) incrFeed(screenResult *ScreenResult, driverExt *DriverExt) error {
 	// feed author
 	actionOptions := []ActionOption{
 		WithRegex(true),
 		driverExt.GenAbsScope(0, 0.5, 1, 1).Option(),
 	}
-	if ocrText, err := ocrResult.Texts.FindText("^@", actionOptions...); err == nil {
+	if ocrText, err := screenResult.Texts.FindText("^@", actionOptions...); err == nil {
 		log.Debug().Str("author", ocrText.Text).Msg("found feed author")
-		ocrResult.Tags = append(ocrResult.Tags, ocrText.Text)
+		screenResult.Tags = append(screenResult.Tags, ocrText.Text)
 	}
 
 	for _, targetLabel := range s.configs.Feed.TargetLabels {
@@ -99,22 +99,22 @@ func (s *VideoStat) incrFeed(ocrResult *OcrResult, driverExt *DriverExt) error {
 			WithRegex(targetLabel.Regex),
 			driverExt.GenAbsScope(scope[0], scope[1], scope[2], scope[3]).Option(),
 		}
-		if _, err := ocrResult.Texts.FindText(targetLabel.Text, actionOptions...); err == nil {
+		if _, err := screenResult.Texts.FindText(targetLabel.Text, actionOptions...); err == nil {
 			key := targetLabel.Text
 			if _, ok := s.FeedStat[key]; !ok {
 				s.FeedStat[key] = 0
 			}
 			s.FeedStat[key]++
-			ocrResult.Tags = append(ocrResult.Tags, key)
+			screenResult.Tags = append(screenResult.Tags, key)
 		}
 	}
 
 	// add popularity data for feed
-	popularityData := ocrResult.Texts.FilterScope(driverExt.GenAbsScope(0.8, 0.5, 1, 0.8))
+	popularityData := screenResult.Texts.FilterScope(driverExt.GenAbsScope(0.8, 0.5, 1, 0.8))
 	if len(popularityData) != 4 {
 		log.Warn().Interface("popularity", popularityData).Msg("get feed popularity data failed")
 	} else {
-		ocrResult.Popularity = Popularity{
+		screenResult.Popularity = Popularity{
 			Stars:     popularityData[0].Text,
 			Comments:  popularityData[1].Text,
 			Favorites: popularityData[2].Text,
@@ -122,29 +122,29 @@ func (s *VideoStat) incrFeed(ocrResult *OcrResult, driverExt *DriverExt) error {
 		}
 	}
 
-	log.Info().Strs("tags", ocrResult.Tags).
-		Interface("popularity", ocrResult.Popularity).
+	log.Info().Strs("tags", screenResult.Tags).
+		Interface("popularity", screenResult.Popularity).
 		Msg("found feed success")
 	s.FeedCount++
 	return nil
 }
 
 // incrLive increases live count and live stat
-func (s *VideoStat) incrLive(ocrResult *OcrResult, driverExt *DriverExt) error {
+func (s *VideoStat) incrLive(screenResult *ScreenResult, driverExt *DriverExt) error {
 	// TODO: check live type
 
 	// add popularity data for live
-	popularityData := ocrResult.Texts.FilterScope(driverExt.GenAbsScope(0.7, 0.05, 1, 0.15))
+	popularityData := screenResult.Texts.FilterScope(driverExt.GenAbsScope(0.7, 0.05, 1, 0.15))
 	if len(popularityData) != 1 {
 		log.Warn().Interface("popularity", popularityData).Msg("get live popularity data failed")
 	} else {
-		ocrResult.Popularity = Popularity{
+		screenResult.Popularity = Popularity{
 			LiveUsers: popularityData[0].Text,
 		}
 	}
 
-	log.Info().Strs("tags", ocrResult.Tags).
-		Interface("popularity", ocrResult.Popularity).
+	log.Info().Strs("tags", screenResult.Tags).
+		Interface("popularity", screenResult.Popularity).
 		Msg("found live success")
 	s.LiveCount++
 	return nil
@@ -262,11 +262,11 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				continue
 			}
-			ocrResult := l.driver.cacheStepData.OcrResults[imagePath]
-			ocrResult.Tags = []string{"live"}
+			screenResult := l.driver.cacheStepData.screenResults[imagePath]
+			screenResult.Tags = []string{"live"}
 
 			// check live type and incr live count
-			if err := l.currentStat.incrLive(ocrResult, l.driver); err != nil {
+			if err := l.currentStat.incrLive(screenResult, l.driver); err != nil {
 				log.Error().Err(err).Msg("incr live failed")
 			}
 		}
@@ -325,7 +325,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 		LiveStat:  make(map[string]int),
 	}
 	defer func() {
-		dExt.cacheStepData.VideoStat = currVideoStat
+		dExt.cacheStepData.videoStat = currVideoStat
 	}()
 
 	// launch app
@@ -370,10 +370,10 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				continue
 			}
-			ocrResult := dExt.cacheStepData.OcrResults[imagePath]
+			screenResult := dExt.cacheStepData.screenResults[imagePath]
 
 			// automatic handling of pop-up windows
-			if err := dExt.autoPopupHandler(ocrResult); err != nil {
+			if err := dExt.autoPopupHandler(screenResult); err != nil {
 				log.Error().Err(err).Msg("auto handle popup failed")
 				return err
 			}
@@ -390,12 +390,12 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						continue
 					}
 				}
-				ocrResult.Tags = []string{"live-preview"}
+				screenResult.Tags = []string{"live-preview"}
 			} else {
-				ocrResult.Tags = []string{"feed"}
+				screenResult.Tags = []string{"feed"}
 
 				// check feed type and incr feed count
-				if err := currVideoStat.incrFeed(ocrResult, dExt); err != nil {
+				if err := currVideoStat.incrFeed(screenResult, dExt); err != nil {
 					log.Error().Err(err).Msg("incr feed failed")
 				}
 			}
@@ -465,16 +465,16 @@ var popups = [][]string{
 	{"管理使用时间", ".*忽略.*"},
 }
 
-func (dExt *DriverExt) autoPopupHandler(ocrResult *OcrResult) error {
+func (dExt *DriverExt) autoPopupHandler(screenResult *ScreenResult) error {
 	for _, popup := range popups {
 		if len(popup) != 2 {
 			continue
 		}
 
-		points, err := ocrResult.Texts.FindTexts([]string{popup[0], popup[1]}, WithRegex(true))
+		points, err := screenResult.Texts.FindTexts([]string{popup[0], popup[1]}, WithRegex(true))
 		if err == nil {
 			log.Warn().Interface("popup", popup).
-				Interface("texts", ocrResult.Texts).Msg("text popup found")
+				Interface("texts", screenResult.Texts).Msg("text popup found")
 			point := points[1].Center()
 			log.Info().Str("text", points[1].Text).Msg("close popup")
 			if err := dExt.TapAbsXY(point.X, point.Y); err != nil {
