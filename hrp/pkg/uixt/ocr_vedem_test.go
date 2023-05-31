@@ -10,11 +10,11 @@ import (
 )
 
 func checkOCR(buff *bytes.Buffer) error {
-	service, err := newVEDEMOCRService()
+	service, err := newVEDEMImageService()
 	if err != nil {
 		return err
 	}
-	imageResult, err := service.getImageResult(buff)
+	imageResult, err := service.GetImage(buff)
 	if err != nil {
 		return err
 	}
