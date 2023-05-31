@@ -8,10 +8,11 @@
 - feat: cache screenshot ocr texts
 - feat: set testcase and request timeout in seconds
 - feat: catch interrupt signal
-- feat: add new exit code MobileUILaunchAppError/InterruptError/TimeoutError/MobileUIPopupError
+- feat: add new exit code MobileUILaunchAppError/InterruptError/TimeoutError/MobileUIActivityNotMatchError/MobileUIPopupError
 - feat: find text with regex
 - feat: add UI ocr tags to summary
-- refactor: simplify OCR APIs
+- feat: check android device offline when running shell failed
+- refactor: replace OCR APIs with image APIs
 - refactor: FindText(s) returns OCRText(s)
 - refactor: merge ActionOption with DataOption
 - change: exit with AndroidShellExecError code for adb shell failure

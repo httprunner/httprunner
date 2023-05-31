@@ -452,7 +452,7 @@ func (r *CaseRunner) parseConfig() error {
 		}
 		client, err := device.NewDriver(nil)
 		if err != nil {
-			return errors.Wrap(err, "init Android UIAutomator client failed")
+			return errors.Wrap(err, "init Android client failed")
 		}
 		r.hrpRunner.uiClients[device.SerialNumber] = client
 	}
