@@ -28,6 +28,25 @@ type OCRResult struct {
 	Points []PointF `json:"points"`
 }
 
+func (o OCRResult) ToOCRText() OCRText {
+	rect := image.Rectangle{
+		// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
+		Min: image.Point{
+			X: int(o.Points[0].X),
+			Y: int(o.Points[0].Y),
+		},
+		Max: image.Point{
+			X: int(o.Points[2].X),
+			Y: int(o.Points[2].Y),
+		},
+	}
+
+	return OCRText{
+		Text: o.Text,
+		Rect: rect,
+	}
+}
+
 type ImageResult struct {
 	URL       string      `json:"url"`       // image uploaded url
 	OCRResult []OCRResult `json:"ocrResult"` // OCR texts
@@ -137,15 +156,15 @@ func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (
 	return results, nil
 }
 
-func newVEDEMOCRService() (*veDEMOCRService, error) {
+func newVEDEMImageService() (*veDEMImageService, error) {
 	if err := checkEnv(); err != nil {
 		return nil, err
 	}
-	return &veDEMOCRService{}, nil
+	return &veDEMImageService{}, nil
 }
 
-// veDEMOCRService implements IOCRService interface
-type veDEMOCRService struct{}
+// veDEMImageService implements IImageService interface
+type veDEMImageService struct{}
 
 var actions = []string{
 	"ocr",      // get ocr texts
@@ -155,7 +174,7 @@ var actions = []string{
 	// "close",
 }
 
-func (s *veDEMOCRService) getImageResult(imageBuf *bytes.Buffer) (
+func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 	imageResult ImageResult, err error) {
 
 	bodyBuf := &bytes.Buffer{}
@@ -265,40 +284,9 @@ func (s *veDEMOCRService) getImageResult(imageBuf *bytes.Buffer) (
 			Msg("request veDEM OCR service failed")
 	}
 
-	return imageResponse.Result, nil
-}
-
-func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer) (
-	ocrTexts OCRTexts, url string, err error) {
-
-	imageResult, err := s.getImageResult(imageBuf)
-	if err != nil {
-		log.Error().Err(err).Msg("getOCRResult failed")
-		return
-	}
-
-	for _, ocrResult := range imageResult.OCRResult {
-		rect := image.Rectangle{
-			// ocrResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
-			Min: image.Point{
-				X: int(ocrResult.Points[0].X),
-				Y: int(ocrResult.Points[0].Y),
-			},
-			Max: image.Point{
-				X: int(ocrResult.Points[2].X),
-				Y: int(ocrResult.Points[2].Y),
-			},
-		}
-
-		ocrTexts = append(ocrTexts, OCRText{
-			Text: ocrResult.Text,
-			Rect: rect,
-		})
-	}
-	url = imageResult.URL
-
-	log.Debug().Interface("texts", ocrTexts).Msg("get screen texts by veDEM OCR")
-	return
+	imageResult = imageResponse.Result
+	log.Debug().Interface("imageResult", imageResult).Msg("get image data by veDEM")
+	return imageResult, nil
 }
 
 func checkEnv() error {
@@ -327,9 +315,9 @@ func getLogID(header http.Header) string {
 	return logID[0]
 }
 
-type IOCRService interface {
-	// GetTexts returns ocr texts and uploaded image url
-	GetTexts(imageBuf *bytes.Buffer) (texts OCRTexts, url string, err error)
+type IImageService interface {
+	// GetImage returns image result including ocr texts, uploaded image url, etc
+	GetImage(imageBuf *bytes.Buffer) (imageResult ImageResult, err error)
 }
 
 // GetScreenTextsByOCR takes a screenshot, returns the image path and OCR texts.
@@ -340,13 +328,17 @@ func (dExt *DriverExt) GetScreenTextsByOCR() (imagePath string, ocrTexts OCRText
 		return
 	}
 
-	var imageUrl string
-	ocrTexts, imageUrl, err = dExt.OCRService.GetTexts(bufSource)
+	imageResult, err := dExt.ImageService.GetImage(bufSource)
 	if err != nil {
 		log.Error().Err(err).Msg("GetScreenTextsByOCR failed")
 		return
 	}
 
+	for _, ocrResult := range imageResult.OCRResult {
+		ocrTexts = append(ocrTexts, ocrResult.ToOCRText())
+	}
+
+	imageUrl := imageResult.URL
 	if imageUrl != "" {
 		dExt.cacheStepData.screenShotsUrls[imagePath] = imageUrl
 		log.Debug().Str("imagePath", imagePath).Str("imageUrl", imageUrl).Msg("log screenshot")

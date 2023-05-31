@@ -86,7 +86,7 @@ type DriverExt struct {
 	windowSize      Size
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
-	OCRService      IOCRService // used to get texts from image
+	ImageService    IImageService // used to extract image data
 	interruptSignal chan os.Signal
 
 	// cache step data
@@ -110,7 +110,7 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 		return nil, err
 	}
 
-	if dExt.OCRService, err = newVEDEMOCRService(); err != nil {
+	if dExt.ImageService, err = newVEDEMImageService(); err != nil {
 		return nil, err
 	}
 
