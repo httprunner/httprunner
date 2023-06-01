@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.4 (2023-05-31)
+## v4.3.4 (2023-06-01)
 
 **go version**
 
@@ -8,10 +8,12 @@
 - feat: cache screenshot ocr texts
 - feat: set testcase and request timeout in seconds
 - feat: catch interrupt signal
-- feat: add new exit code MobileUILaunchAppError/InterruptError/TimeoutError/MobileUIActivityNotMatchError/MobileUIPopupError
+- feat: add new exit code MobileUILaunchAppError/InterruptError/TimeoutError/MobileUIActivityNotMatchError/MobileUIPopupError/LoopActionNotFoundError
 - feat: find text with regex
 - feat: add UI ocr tags to summary
 - feat: check android device offline when running shell failed
+- feat: print hrp runner exit code when running finished
+- feat: add screen resolution and step start time in summary
 - refactor: replace OCR APIs with image APIs
 - refactor: FindText(s) returns OCRText(s)
 - refactor: merge ActionOption with DataOption
