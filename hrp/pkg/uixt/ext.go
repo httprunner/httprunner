@@ -210,6 +210,11 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData["screenshots"] = dExt.cacheStepData.screenShots
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenShotsUrls
 
+	screenSize, err := dExt.Driver.WindowSize()
+	if err != nil {
+		log.Warn().Err(err).Msg("get screen resolution failed")
+		screenSize = Size{}
+	}
 	screenResults := make(map[string]interface{})
 	for imagePath, screenResult := range dExt.cacheStepData.screenResults {
 		o, _ := json.Marshal(screenResult.Texts)
@@ -217,6 +222,10 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 			"tags":       screenResult.Tags,
 			"texts":      string(o),
 			"popularity": screenResult.Popularity,
+			"resolution": map[string]int{
+				"width":  screenSize.Width,
+				"height": screenSize.Height,
+			},
 		}
 
 		screenResults[imagePath] = data
