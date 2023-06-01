@@ -84,7 +84,7 @@ func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, 
 		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
 	}
 
-	return errors.Wrap(code.OCRTextNotFoundError,
+	return errors.Wrap(code.LoopActionNotFoundError,
 		fmt.Sprintf("loop %d times, match find condition failed", maxRetryTimes))
 }
 
