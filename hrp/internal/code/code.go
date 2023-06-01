@@ -80,11 +80,12 @@ var (
 
 // OCR related: [80, 90)
 var (
-	OCREnvMissedError         = errors.New("OCR env missed error")      // 80
-	OCRRequestError           = errors.New("OCR prepare request error") // 81
-	OCRServiceConnectionError = errors.New("OCR service connect error") // 82
-	OCRResponseError          = errors.New("OCR parse response error")  // 83
-	OCRTextNotFoundError      = errors.New("OCR text not found")        // 84
+	OCREnvMissedError         = errors.New("OCR env missed error")        // 80
+	OCRRequestError           = errors.New("OCR prepare request error")   // 81
+	OCRServiceConnectionError = errors.New("OCR service connect error")   // 82
+	OCRResponseError          = errors.New("OCR parse response error")    // 83
+	OCRTextNotFoundError      = errors.New("OCR text not found")          // 84
+	LoopActionNotFoundError   = errors.New("loop action not found error") // 85
 )
 
 // CV related: [90, 100)
@@ -146,6 +147,7 @@ var errorsMap = map[error]int{
 	OCRServiceConnectionError: 82,
 	OCRResponseError:          83,
 	OCRTextNotFoundError:      84,
+	LoopActionNotFoundError:   85,
 }
 
 func IsErrorPredefined(err error) bool {

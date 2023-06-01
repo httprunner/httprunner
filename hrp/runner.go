@@ -191,7 +191,7 @@ func (r *HRPRunner) GenHTMLReport() *HRPRunner {
 }
 
 // Run starts to execute one or multiple testcases.
-func (r *HRPRunner) Run(testcases ...ITestCase) error {
+func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	log.Info().Str("hrp_version", version.VERSION).Msg("start running")
 	event := sdk.EventTracking{
 		Category: "RunAPITests",
@@ -203,6 +203,11 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 	defer sdk.SendEvent(event.StartTiming("execution"))
 	// record execution data to summary
 	s := newOutSummary()
+
+	defer func() {
+		exitCode := code.GetErrorCode(err)
+		log.Info().Int("code", exitCode).Msg("hrp runner exit code")
+	}()
 
 	// load all testcases
 	testCases, err := LoadTestCases(testcases...)
@@ -221,7 +226,6 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 		})
 	}()
 
-	var runErr error
 	// run testcase one by one
 	for _, testcase := range testCases {
 		// each testcase has its own case runner
@@ -245,20 +249,20 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 			err1 := sessionRunner.Start(it.Next())
 			if err1 != nil {
 				log.Error().Err(err1).Msg("[Run] run testcase failed")
-				runErr = err1
+				err = err1
 			}
 			caseSummary, err2 := sessionRunner.GetSummary()
 			s.appendCaseSummary(caseSummary)
 			if err2 != nil {
 				log.Error().Err(err2).Msg("[Run] get summary failed")
 				if err1 != nil {
-					runErr = errors.Wrap(err1, err2.Error())
+					err = errors.Wrap(err1, err2.Error())
 				} else {
-					runErr = err2
+					err = err2
 				}
 			}
 
-			if runErr != nil && r.failfast {
+			if err != nil && r.failfast {
 				break
 			}
 		}
@@ -267,21 +271,19 @@ func (r *HRPRunner) Run(testcases ...ITestCase) error {
 
 	// save summary
 	if r.saveTests {
-		err := s.genSummary()
-		if err != nil {
+		if err := s.genSummary(); err != nil {
 			return err
 		}
 	}
 
 	// generate HTML report
 	if r.genHTMLReport {
-		err := s.genHTMLReport()
-		if err != nil {
+		if err := s.genHTMLReport(); err != nil {
 			return err
 		}
 	}
 
-	return runErr
+	return err
 }
 
 // NewCaseRunner creates a new case runner for testcase.
@@ -564,8 +566,10 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 				}
 
 				// run step
+				stepStartTime := time.Now().Unix()
 				stepResult, err = step.Run(r)
 				stepResult.Name = stepName + loopIndex
+				stepResult.StartTime = stepStartTime
 
 				r.updateSummary(stepResult)
 			}
