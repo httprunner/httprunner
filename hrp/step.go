@@ -16,6 +16,7 @@ const (
 
 type StepResult struct {
 	Name        string                 `json:"name" yaml:"name"`                                   // step name
+	Time        int64                  `json:"time" yaml:"time"`                                   // step time
 	StepType    StepType               `json:"step_type" yaml:"step_type"`                         // step type, testcase/request/transaction/rendezvous
 	Success     bool                   `json:"success" yaml:"success"`                             // step execution result
 	Elapsed     int64                  `json:"elapsed_ms" yaml:"elapsed_ms"`                       // step execution time in millisecond(ms)
