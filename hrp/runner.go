@@ -569,7 +569,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 				stepStartTime := time.Now().Unix()
 				stepResult, err = step.Run(r)
 				stepResult.Name = stepName + loopIndex
-				stepResult.Time = stepStartTime
+				stepResult.StartTime = stepStartTime
 
 				r.updateSummary(stepResult)
 			}
