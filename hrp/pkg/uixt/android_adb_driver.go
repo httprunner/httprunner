@@ -59,7 +59,7 @@ func (ad *adbDriver) WindowSize() (size Size, err error) {
 	// adb shell wm size
 	resp, err := ad.adbClient.RunShellCommand("wm", "size")
 	if err != nil {
-		return size, errors.Wrap(err, "get window size failed")
+		return size, errors.Wrap(err, "get window size failed with adb")
 	}
 
 	// Physical size: 1080x2340
