@@ -183,8 +183,18 @@ var androidActivities = map[string]map[string]string{
 		"feed": ".splash.SplashActivity",
 		"live": ".live.LivePlayActivity",
 	},
+	// DY lite
+	"com.ss.android.ugc.aweme.lite": {
+		"feed": ".splash.SplashActivity",
+		"live": ".live.LivePlayActivity",
+	},
 	// KS
 	"com.smile.gifmaker": {
+		"feed": "com.yxcorp.gifshow.HomeActivity",
+		"live": "com.kuaishou.live.core.basic.activity.LiveSlideActivity",
+	},
+	// KS lite
+	"com.kuaishou.nebula": {
 		"feed": "com.yxcorp.gifshow.HomeActivity",
 		"live": "com.kuaishou.live.core.basic.activity.LiveSlideActivity",
 	},
@@ -447,16 +457,26 @@ func (dExt *DriverExt) assertActivity(packageName, activityType string) error {
 			fmt.Sprintf("foreground app %s, expect %s", app.PackageName, packageName))
 	}
 
-	var expectActivity string
-	if activities, ok := androidActivities[app.PackageName]; ok {
-		if activity, ok := activities[activityType]; ok {
-			if strings.HasSuffix(app.Activity, activity) {
-				return nil
-			}
-			expectActivity = activity
-		}
+	activities, ok := androidActivities[app.PackageName]
+	if !ok {
+		msg := fmt.Sprintf("app package %s not configured", app.PackageName)
+		log.Error().Interface("app", app.AppBaseInfo).Msg(msg)
+		return errors.Wrap(code.MobileUIActivityNotMatchError, msg)
 	}
 
+	expectActivity, ok := activities[activityType]
+	if !ok {
+		msg := fmt.Sprintf("app package %s %s not configured", app.PackageName, activityType)
+		log.Error().Interface("app", app.AppBaseInfo).Msg(msg)
+		return errors.Wrap(code.MobileUIActivityNotMatchError, msg)
+	}
+
+	// assert success
+	if strings.HasSuffix(app.Activity, expectActivity) {
+		return nil
+	}
+
+	// assert failed
 	log.Error().Interface("app", app.AppBaseInfo).Msg("app activity not match")
 	return errors.Wrap(code.MobileUIActivityNotMatchError,
 		fmt.Sprintf("foreground activity %s, expect %s %s",
