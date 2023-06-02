@@ -271,15 +271,15 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 
 	// save summary
 	if r.saveTests {
-		if err := s.genSummary(); err != nil {
-			return err
+		if e := s.genSummary(); e != nil {
+			return e
 		}
 	}
 
 	// generate HTML report
 	if r.genHTMLReport {
-		if err := s.genHTMLReport(); err != nil {
-			return err
+		if e := s.genHTMLReport(); e != nil {
+			return e
 		}
 	}
 
