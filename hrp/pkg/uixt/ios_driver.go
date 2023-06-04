@@ -161,6 +161,10 @@ func (wd *wdaDriver) Screen() (screen Screen, err error) {
 	return
 }
 
+func (wd *wdaDriver) GetTimestamp() (timestamp int64, err error) {
+	return 0, errDriverNotImplemented
+}
+
 func (wd *wdaDriver) Scale() (float64, error) {
 	screen, err := wd.Screen()
 	if err != nil {
