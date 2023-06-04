@@ -92,6 +92,21 @@ func (ad *adbDriver) Scale() (scale float64, err error) {
 	return 1, nil
 }
 
+func (ad *adbDriver) GetTimestamp() (timestamp int64, err error) {
+	// adb shell date +%s
+	output, err := ad.adbClient.RunShellCommand("date", "+%s")
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to get timestamp by adb")
+	}
+
+	timestamp, err = strconv.ParseInt(strings.TrimSpace(output), 10, 64)
+	if err != nil {
+		return 0, errors.Wrap(err, "convert timestamp failed")
+	}
+
+	return timestamp, nil
+}
+
 // PressBack simulates a short press on the BACK button.
 func (ad *adbDriver) PressBack(options ...ActionOption) (err error) {
 	// adb shell input keyevent 4

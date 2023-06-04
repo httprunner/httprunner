@@ -477,6 +477,9 @@ type WebDriver interface {
 	Screen() (Screen, error)
 	Scale() (float64, error)
 
+	// GetTimestamp returns the timestamp of the mobile device
+	GetTimestamp() (timestamp int64, err error)
+
 	// Homescreen Forces the device under test to switch to the home screen
 	Homescreen() error
 
