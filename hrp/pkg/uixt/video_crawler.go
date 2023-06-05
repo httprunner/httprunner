@@ -358,7 +358,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	} else {
 		app, err := dExt.Driver.GetForegroundApp()
 		if err != nil {
-			return err
+			// ignore error when get foreground app failed
+			log.Warn().Err(err).Msg("get foreground app failed, ignore")
 		}
 		log.Info().
 			Str("packageName", app.PackageName).
@@ -484,10 +485,13 @@ func (dExt *DriverExt) assertActivity(packageName, activityType string) error {
 	}
 
 	// assert failed
-	log.Error().Interface("app", app.AppBaseInfo).Msg("app activity not match")
-	return errors.Wrap(code.MobileUIActivityNotMatchError,
-		fmt.Sprintf("foreground activity %s, expect %s %s",
-			app.Activity, activityType, expectActivity))
+	log.Error().
+		Interface("app", app.AppBaseInfo).
+		Str("expectActivityType", activityType).
+		Str("expectActivity", expectActivity).
+		Msg("assert activity failed")
+
+	return errors.Wrap(code.MobileUIActivityNotMatchError, "assert activity failed")
 }
 
 // TODO: add more popup texts
