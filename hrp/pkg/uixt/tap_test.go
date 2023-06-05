@@ -12,16 +12,6 @@ func init() {
 	iosDevice, _ = NewIOSDevice()
 }
 
-func checkErr(t *testing.T, err error, msg ...string) {
-	if err != nil {
-		if len(msg) == 0 {
-			t.Fatal(err)
-		} else {
-			t.Fatal(msg, err)
-		}
-	}
-}
-
 func TestDriverExt_TapXY(t *testing.T) {
 	driverExt, err := iosDevice.NewDriver(nil)
 	checkErr(t, err)

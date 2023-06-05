@@ -542,8 +542,11 @@ func convertToFloat64(val interface{}) (float64, error) {
 }
 
 func sleepRandom(params []interface{}) error {
-	// append default weight 1
-	if len(params) == 2 {
+	if len(params) == 1 {
+		// constant sleep time
+		params = append(params, params[0], 1.0)
+	} else if len(params) == 2 {
+		// append default weight 1
 		params = append(params, 1.0)
 	}
 
