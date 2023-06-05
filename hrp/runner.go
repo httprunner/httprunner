@@ -226,6 +226,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 		})
 	}()
 
+	var runErr error
 	// run testcase one by one
 	for _, testcase := range testCases {
 		// each testcase has its own case runner
@@ -249,20 +250,20 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			err1 := sessionRunner.Start(it.Next())
 			if err1 != nil {
 				log.Error().Err(err1).Msg("[Run] run testcase failed")
-				err = err1
+				runErr = err1
 			}
 			caseSummary, err2 := sessionRunner.GetSummary()
 			s.appendCaseSummary(caseSummary)
 			if err2 != nil {
 				log.Error().Err(err2).Msg("[Run] get summary failed")
 				if err1 != nil {
-					err = errors.Wrap(err1, err2.Error())
+					runErr = errors.Wrap(err1, err2.Error())
 				} else {
-					err = err2
+					runErr = err2
 				}
 			}
 
-			if err != nil && r.failfast {
+			if runErr != nil && r.failfast {
 				break
 			}
 		}
@@ -271,19 +272,19 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 
 	// save summary
 	if r.saveTests {
-		if e := s.genSummary(); e != nil {
-			return e
+		if err := s.genSummary(); err != nil {
+			return err
 		}
 	}
 
 	// generate HTML report
 	if r.genHTMLReport {
-		if e := s.genHTMLReport(); e != nil {
-			return e
+		if err := s.genHTMLReport(); err != nil {
+			return err
 		}
 	}
 
-	return err
+	return runErr
 }
 
 // NewCaseRunner creates a new case runner for testcase.
