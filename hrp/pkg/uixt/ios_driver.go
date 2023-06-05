@@ -162,7 +162,8 @@ func (wd *wdaDriver) Screen() (screen Screen, err error) {
 }
 
 func (wd *wdaDriver) GetTimestamp() (timestamp int64, err error) {
-	return 0, errDriverNotImplemented
+	return 0, errors.Wrap(errDriverNotImplemented,
+		"GetTimestamp not implemented for ios")
 }
 
 func (wd *wdaDriver) Scale() (float64, error) {
@@ -378,7 +379,19 @@ func (wd *wdaDriver) AssertAppForeground(packageName string) error {
 }
 
 func (wd *wdaDriver) GetForegroundApp() (app AppInfo, err error) {
-	return AppInfo{}, nil
+	// appInfo, err := wd.ActiveAppInfo()
+	// if err != nil {
+	// 	return AppInfo{}, err
+	// }
+
+	// app = AppInfo{
+	// 	AppBaseInfo: AppBaseInfo{
+	// 		PackageName: appInfo.BundleId,
+	// 		Activity:    "",
+	// 	},
+	// }
+	return AppInfo{}, errors.Wrap(errDriverNotImplemented,
+		"GetForegroundApp not implemented for ios")
 }
 
 func (wd *wdaDriver) Tap(x, y int, options ...ActionOption) error {
