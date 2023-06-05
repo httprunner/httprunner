@@ -209,13 +209,20 @@ type LiveCrawler struct {
 
 func (l *LiveCrawler) checkLiveVideo(texts OCRTexts) (enterPoint PointF, yes bool) {
 	// 预览流入口：DY/KS
-	points, err := texts.FindTexts([]string{".*点击进入直播间"}, WithRegex(true))
+	points, err := texts.FindTexts([]string{".*点击进入直播间"}, WithScope(0, 0.3, 1, 0.7), WithRegex(true))
+	if err == nil {
+		return points[0].Center(), true
+	}
+	// 标签文案：直播中|直播卖货|直播团购
+	points, err = texts.FindTexts([]string{"直播中|直播卖货|直播团购"},
+		WithScope(0, 0.7, 0.5, 1), WithRegex(true))
 	if err == nil {
 		return points[0].Center(), true
 	}
 
-	// 预览流入口：KS
-	points, err = texts.FindTexts([]string{"和主播聊聊天.*"}, WithRegex(true))
+	// 预览流入口：KS/KSLite
+	// 评论框文案：和主播聊聊天...|聊聊天...
+	points, err = texts.FindTexts([]string{".*聊聊天.*", "更多直播"}, WithRegex(true))
 	if err == nil {
 		point := points[0].Center()
 		enterPoint = PointF{
