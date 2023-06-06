@@ -18,7 +18,7 @@
                     {
                         "method": "video_crawler",
                         "params": {
-                            "app_package_name": "com.smile.gifmaker",
+                            "app_package_name": "com.ss.android.ugc.aweme",
                             "feed": {
                                 "sleep_random": [
                                     0,
@@ -38,7 +38,7 @@
                                             1,
                                             1
                                         ],
-                                        "target": 0,
+                                        "target": 1,
                                         "text": "^广告$"
                                     },
                                     {
@@ -49,7 +49,7 @@
                                             1,
                                             1
                                         ],
-                                        "target": 0,
+                                        "target": 1,
                                         "text": "^图文$"
                                     },
                                     {
@@ -89,7 +89,7 @@
                                     15,
                                     20
                                 ],
-                                "target_count": 0
+                                "target_count": 3
                             },
                             "timeout": 600
                         }

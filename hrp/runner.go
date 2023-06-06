@@ -30,10 +30,11 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
-// Run starts to run API test with default configs.
-func Run(testcases ...ITestCase) error {
-	t := &testing.T{}
-	return NewRunner(t).SetRequestsLogOn().Run(testcases...)
+// Run starts to run testcase with default configs.
+func Run(t *testing.T, testcases ...ITestCase) error {
+	err := NewRunner(t).SetSaveTests(true).Run(testcases...)
+	code.GetErrorCode(err)
+	return err
 }
 
 // NewRunner constructs a new runner instance.
@@ -203,11 +204,6 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	defer sdk.SendEvent(event.StartTiming("execution"))
 	// record execution data to summary
 	s := newOutSummary()
-
-	defer func() {
-		exitCode := code.GetErrorCode(err)
-		log.Info().Int("code", exitCode).Msg("hrp runner exit code")
-	}()
 
 	// load all testcases
 	testCases, err := LoadTestCases(testcases...)

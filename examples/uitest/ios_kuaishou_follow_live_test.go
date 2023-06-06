@@ -53,12 +53,8 @@ func TestIOSKuaiShouLive(t *testing.T) {
 	if err := testCase.Dump2JSON("ios_kuaishou_follow_live_test.json"); err != nil {
 		t.Fatal(err)
 	}
-	if err := testCase.Dump2YAML("ios_kuaishou_follow_live_test.yaml"); err != nil {
-		t.Fatal(err)
-	}
 
-	runner := hrp.NewRunner(t).SetSaveTests(true)
-	err := runner.Run(testCase)
+	err := hrp.Run(t, testCase)
 	if err != nil {
 		t.Fatal(err)
 	}
