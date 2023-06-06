@@ -50,8 +50,7 @@ func TestAndroidVideoCrawlerTest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	runner := hrp.NewRunner(t).SetSaveTests(true)
-	err := runner.Run(testCase)
+	err := hrp.Run(t, testCase)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,8 +95,7 @@ func TestAndroidVideoCrawlerKSTest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	runner := hrp.NewRunner(t).SetSaveTests(true)
-	err := runner.Run(testCase)
+	err := hrp.Run(t, testCase)
 	if err != nil {
 		t.Fatal(err)
 	}

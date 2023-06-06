@@ -155,18 +155,20 @@ func IsErrorPredefined(err error) bool {
 	return ok
 }
 
-func GetErrorCode(err error) (exitCode int) {
+func GetErrorCode(err error) (errCode int) {
+	defer func() {
+		log.Debug().Int("code", errCode).Msg("get error code")
+	}()
+
 	if err == nil {
 		return Success
 	}
 
 	e := errors.Cause(err)
 	if code, ok := errorsMap[e]; ok {
-		exitCode = code
+		errCode = code
 	} else {
-		exitCode = GeneralFail
+		errCode = GeneralFail
 	}
-
-	log.Warn().Int("code", exitCode).Msg("hrp exit")
 	return
 }

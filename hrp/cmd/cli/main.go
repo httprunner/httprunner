@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/cmd"
 )
@@ -21,5 +22,7 @@ func main() {
 		}
 	}()
 
-	os.Exit(cmd.Execute())
+	exitCode := cmd.Execute()
+	log.Info().Int("code", exitCode).Msg("hrp exit")
+	os.Exit(exitCode)
 }
