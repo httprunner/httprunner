@@ -192,6 +192,25 @@ func (dExt *DriverExt) FindImageRectInUIKit(imagePath string, options ...DataOpt
 	return
 }
 
+func (dExt *DriverExt) FindDetectUIRectInUIKit(uiName string, options ...DataOption) (x, y, width, height float64, err error) {
+	var bufSource *bytes.Buffer
+	if bufSource, err = dExt.TakeScreenShotAfterAction(); err != nil {
+		return 0, 0, 0, 0, err
+	}
+
+	service, err := newVEDEMUIService()
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	var rect image.Rectangle
+	rect, err = service.FindUI(uiName, bufSource.Bytes())
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	x, y, width, height = dExt.MappingToRectInUIKit(rect)
+	return
+}
+
 type CVService interface {
 	FindImage(byteSearch []byte, byteSource []byte, options ...DataOption) (rect image.Rectangle, err error)
 }

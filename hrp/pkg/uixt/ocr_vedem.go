@@ -85,8 +85,10 @@ func (s *veDEMOCRService) getOCRResult(imageBuf *bytes.Buffer) ([]OCRResult, err
 			fmt.Sprintf("construct request error: %v", err))
 	}
 
-	token := builtin.Sign("auth-v2", env.VEDEM_OCR_AK, env.VEDEM_OCR_SK, bodyBuf.Bytes())
+	signToken := "UNSIGNED-PAYLOAD"
+	token := builtin.Sign("auth-v2", env.VEDEM_OCR_AK, env.VEDEM_OCR_SK, []byte(signToken))
 	req.Header.Add("Agw-Auth", token)
+	req.Header.Add("Agw-Auth-Content", signToken)
 	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
 
 	var resp *http.Response
@@ -165,8 +167,8 @@ func (t OCRTexts) Texts() (texts []string) {
 }
 
 func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer, options ...DataOption) (
-	ocrTexts OCRTexts, err error) {
-
+	ocrTexts OCRTexts, err error,
+) {
 	ocrResults, err := s.getOCRResult(imageBuf)
 	if err != nil {
 		log.Error().Err(err).Msg("getOCRResult failed")
@@ -204,8 +206,8 @@ func (s *veDEMOCRService) GetTexts(imageBuf *bytes.Buffer, options ...DataOption
 }
 
 func (s *veDEMOCRService) FindText(text string, imageBuf *bytes.Buffer, options ...DataOption) (
-	rect image.Rectangle, err error) {
-
+	rect image.Rectangle, err error,
+) {
 	ocrTexts, err := s.GetTexts(imageBuf, options...)
 	if err != nil {
 		log.Error().Err(err).Msg("GetTexts failed")
@@ -260,8 +262,8 @@ func (s *veDEMOCRService) FindText(text string, imageBuf *bytes.Buffer, options 
 }
 
 func (s *veDEMOCRService) FindTexts(texts []string, imageBuf *bytes.Buffer, options ...DataOption) (
-	rects []image.Rectangle, err error) {
-
+	rects []image.Rectangle, err error,
+) {
 	ocrTexts, err := s.GetTexts(imageBuf, options...)
 	if err != nil {
 		log.Error().Err(err).Msg("GetTexts failed")

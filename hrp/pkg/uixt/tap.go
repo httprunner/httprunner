@@ -63,12 +63,18 @@ func (dExt *DriverExt) GetTextXYs(ocrText []string, options ...DataOption) (poin
 	return points, nil
 }
 
-func (dExt *DriverExt) GetImageXY(imagePath string, options ...DataOption) (point PointF, err error) {
+func (dExt *DriverExt) GetImageXY(imageParam string, options ...DataOption) (point PointF, err error) {
 	// close popup if necessary
 	if dExt.ClosePopup {
 		dExt.ClosePopupHandler()
 	}
-	x, y, width, height, err := dExt.FindImageRectInUIKit(imagePath, options...)
+	var x, y, width, height float64
+	switch imageParam {
+	case ShoppingBag, DyHouse:
+		x, y, width, height, err = dExt.FindDetectUIRectInUIKit(imageParam, options...)
+	default:
+		x, y, width, height, err = dExt.FindImageRectInUIKit(imageParam, options...)
+	}
 	if err != nil {
 		return PointF{}, err
 	}
@@ -147,7 +153,6 @@ func (dExt *DriverExt) DoubleTap(param string) (err error) {
 }
 
 func (dExt *DriverExt) DoubleTapOffset(param string, xOffset, yOffset float64) (err error) {
-
 	// close popup if necessary
 	if dExt.ClosePopup {
 		dExt.ClosePopupHandler()
