@@ -18,17 +18,12 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
-const (
-	ShoppingBag = "shoppingbag"
-	DyHouse     = "dyhouse"
-)
-
-type UIResult map[string][]Box
+type UIResultMap map[string][]Box
 
 type UIResponse struct {
-	Code    int      `json:"code"`
-	Message string   `json:"message"`
-	Result  UIResult `json:"result"`
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Result  UIResultMap `json:"result"`
 }
 
 type veDEMUIService struct{}
@@ -53,10 +48,12 @@ func checkUIEnv() error {
 	return nil
 }
 
-func (s *veDEMUIService) getUIResult(uiType string, sourceImage []byte) (UIResult, error) {
+func (s *veDEMUIService) getUIResult(uiTypes []string, sourceImage []byte) (UIResultMap, error) {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
-	bodyWriter.WriteField("types", uiType)
+	for _, uiType := range uiTypes {
+		bodyWriter.WriteField("types", uiType)
+	}
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {
@@ -136,18 +133,25 @@ func (s *veDEMUIService) getUIResult(uiType string, sourceImage []byte) (UIResul
 	return uiResult.Result, nil
 }
 
-func (s *veDEMUIService) FindUI(uiType string, byteSource []byte, options ...DataOption) (rect image.Rectangle, err error) {
+func (s *veDEMUIService) FindUI(uiTypes []string, byteSource []byte, options ...DataOption) (rect image.Rectangle, err error) {
 	data := NewDataOptions(options...)
 
-	uiResultMap, err := s.getUIResult(uiType, byteSource)
+	uiResultMap, err := s.getUIResult(uiTypes, byteSource)
 	if err != nil {
 		log.Error().Err(err).Msg("getUIResult failed")
 		return
 	}
 
-	uiResult, ok := uiResultMap[uiType]
-	if !ok {
-		err = fmt.Errorf("UI type %v not detected", uiResult)
+	var uiResult []Box
+	var ok bool
+	for _, uiType := range uiTypes {
+		uiResult, ok = uiResultMap[uiType]
+		if ok && len(uiResult) != 0 {
+			break
+		}
+	}
+	if len(uiResult) == 0 {
+		err = fmt.Errorf("UI types %v not detected", uiTypes)
 		log.Error().Err(err).Msg("getUIResult failed")
 		return
 	}

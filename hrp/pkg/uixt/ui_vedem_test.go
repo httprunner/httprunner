@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-func checkUI(uiName string, source []byte) error {
+func checkUI(uiTypes []string, source []byte) error {
 	service, err := newVEDEMUIService()
 	if err != nil {
 		return err
 	}
-	uiResults, err := service.getUIResult(uiName, source)
+	uiResults, err := service.FindUI(uiTypes, source)
 	if err != nil {
 		return err
 	}
@@ -26,7 +26,7 @@ func TestUIWithLocalFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := checkUI("dyhouse", file); err != nil {
+	if err := checkUI([]string{"dyhouse", "shoppingbag"}, file); err != nil {
 		t.Fatal(err)
 	}
 }

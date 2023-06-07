@@ -131,6 +131,19 @@ func (s *StepMobile) TapByCV(imagePath string, options ...uixt.ActionOption) *St
 	return &StepMobile{step: s.step}
 }
 
+// Tap taps on the target element by UI Detection
+func (s *StepMobile) TapByUI(uiTypes []string, options ...uixt.ActionOption) *StepMobile {
+	action := uixt.MobileAction{
+		Method: uixt.ACTION_TapByCV,
+		Params: uiTypes,
+	}
+	for _, option := range options {
+		option(&action)
+	}
+	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	return &StepMobile{step: s.step}
+}
+
 // DoubleTapXY double taps the point {X,Y}, X & Y is percentage of coordinates
 func (s *StepMobile) DoubleTapXY(x, y float64) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{

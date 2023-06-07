@@ -192,7 +192,7 @@ func (dExt *DriverExt) FindImageRectInUIKit(imagePath string, options ...DataOpt
 	return
 }
 
-func (dExt *DriverExt) FindDetectUIRectInUIKit(uiName string, options ...DataOption) (x, y, width, height float64, err error) {
+func (dExt *DriverExt) FindDetectUIRectInUIKit(uiTypes []string, options ...DataOption) (x, y, width, height float64, err error) {
 	var bufSource *bytes.Buffer
 	if bufSource, err = dExt.TakeScreenShotAfterAction(); err != nil {
 		return 0, 0, 0, 0, err
@@ -203,7 +203,7 @@ func (dExt *DriverExt) FindDetectUIRectInUIKit(uiName string, options ...DataOpt
 		return 0, 0, 0, 0, err
 	}
 	var rect image.Rectangle
-	rect, err = service.FindUI(uiName, bufSource.Bytes())
+	rect, err = service.FindUI(uiTypes, bufSource.Bytes())
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}

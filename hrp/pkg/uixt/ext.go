@@ -616,6 +616,9 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		if imagePath, ok := action.Params.(string); ok {
 			return dExt.TapByCV(imagePath, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(true), WithDataIndex(action.Index))
 		}
+		if uiTypes, ok := action.Params.([]string); ok {
+			return dExt.TapByUIDetection(uiTypes, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(true), WithDataIndex(action.Index))
+		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
 		if location, ok := action.Params.([]interface{}); ok {

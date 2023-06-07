@@ -63,18 +63,29 @@ func (dExt *DriverExt) GetTextXYs(ocrText []string, options ...DataOption) (poin
 	return points, nil
 }
 
-func (dExt *DriverExt) GetImageXY(imageParam string, options ...DataOption) (point PointF, err error) {
+func (dExt *DriverExt) GetImageXY(imagePath string, options ...DataOption) (point PointF, err error) {
 	// close popup if necessary
 	if dExt.ClosePopup {
 		dExt.ClosePopupHandler()
 	}
-	var x, y, width, height float64
-	switch imageParam {
-	case ShoppingBag, DyHouse:
-		x, y, width, height, err = dExt.FindDetectUIRectInUIKit(imageParam, options...)
-	default:
-		x, y, width, height, err = dExt.FindImageRectInUIKit(imageParam, options...)
+	x, y, width, height, err := dExt.FindImageRectInUIKit(imagePath, options...)
+	if err != nil {
+		return PointF{}, err
 	}
+
+	point = PointF{
+		X: x + width*0.5,
+		Y: y + height*0.5,
+	}
+	return point, nil
+}
+
+func (dExt *DriverExt) GetUIXY(uiTypes []string, options ...DataOption) (point PointF, err error) {
+	// close popup if necessary
+	if dExt.ClosePopup {
+		dExt.ClosePopupHandler()
+	}
+	x, y, width, height, err := dExt.FindDetectUIRectInUIKit(uiTypes, options...)
 	if err != nil {
 		return PointF{}, err
 	}
@@ -104,6 +115,20 @@ func (dExt *DriverExt) TapByCV(imagePath string, options ...DataOption) error {
 	dataOptions := NewDataOptions(options...)
 
 	point, err := dExt.GetImageXY(imagePath, options...)
+	if err != nil {
+		if dataOptions.IgnoreNotFoundError {
+			return nil
+		}
+		return err
+	}
+
+	return dExt.TapAbsXY(point.X, point.Y, options...)
+}
+
+func (dExt *DriverExt) TapByUIDetection(uiTypes []string, options ...DataOption) error {
+	dataOptions := NewDataOptions(options...)
+
+	point, err := dExt.GetUIXY(uiTypes, options...)
 	if err != nil {
 		if dataOptions.IgnoreNotFoundError {
 			return nil
