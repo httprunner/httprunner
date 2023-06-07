@@ -495,6 +495,8 @@ type WebDriver interface {
 	AssertAppForeground(packageName string) error
 	// GetForegroundApp returns current foreground app package name and activity name
 	GetForegroundApp() (app AppInfo, err error)
+	// AssertUI returns nil if the given package and activity are in foreground
+	AssertUI(packageName, activityType string) error
 
 	// StartCamera Starts a new camera for recording
 	StartCamera() error
