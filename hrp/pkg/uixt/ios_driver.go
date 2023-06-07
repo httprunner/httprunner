@@ -394,6 +394,13 @@ func (wd *wdaDriver) GetForegroundApp() (app AppInfo, err error) {
 		"GetForegroundApp not implemented for ios")
 }
 
+func (wd *wdaDriver) AssertUI(bundleId, viewControllerType string) error {
+	log.Debug().Str("bundleId", bundleId).
+		Str("viewControllerType", viewControllerType).
+		Msg("ios view controller assertion not implemented, skip")
+	return nil
+}
+
 func (wd *wdaDriver) Tap(x, y int, options ...ActionOption) error {
 	return wd.TapFloat(float64(x), float64(y), options...)
 }

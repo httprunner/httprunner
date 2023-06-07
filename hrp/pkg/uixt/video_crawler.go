@@ -1,8 +1,6 @@
 package uixt
 
 import (
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -177,31 +175,6 @@ type VideoCrawlerConfigs struct {
 	Live LiveConfig `json:"live"`
 }
 
-var androidActivities = map[string]map[string]string{
-	// DY
-	"com.ss.android.ugc.aweme": {
-		"feed": ".splash.SplashActivity",
-		"live": ".live.LivePlayActivity",
-	},
-	// DY lite
-	"com.ss.android.ugc.aweme.lite": {
-		"feed": ".splash.SplashActivity",
-		"live": ".live.LivePlayActivity",
-	},
-	// KS
-	"com.smile.gifmaker": {
-		"feed": "com.yxcorp.gifshow.HomeActivity",
-		"live": "com.kuaishou.live.core.basic.activity.LiveSlideActivity",
-		// "com.yxcorp.gifshow.detail.PhotoDetailActivity"
-	},
-	// KS lite
-	"com.kuaishou.nebula": {
-		"feed": "com.yxcorp.gifshow.HomeActivity",
-		"live": "com.kuaishou.live.core.basic.activity.LiveSlideActivity",
-	},
-	// TODO: SPH, XHS
-}
-
 type LiveCrawler struct {
 	driver      *DriverExt
 	configs     *VideoCrawlerConfigs // target video count
@@ -258,7 +231,7 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			return errors.Wrap(code.InterruptError, "live crawler interrupted")
 		default:
 			// check if live room
-			if err := l.driver.assertActivity(l.configs.AppPackageName, "live"); err != nil {
+			if err := l.driver.Driver.AssertUI(l.configs.AppPackageName, "live"); err != nil {
 				return err
 			}
 
@@ -306,7 +279,7 @@ func (l *LiveCrawler) exitLiveRoom() error {
 		time.Sleep(2 * time.Second)
 
 		// check if back to feed page
-		if err := l.driver.assertActivity(l.configs.AppPackageName, "feed"); err == nil {
+		if err := l.driver.Driver.AssertUI(l.configs.AppPackageName, "feed"); err == nil {
 			return nil
 		}
 	}
@@ -322,7 +295,7 @@ func (l *LiveCrawler) exitLiveRoom() error {
 		time.Sleep(2 * time.Second)
 
 		// check if back to feed page
-		if err := l.driver.assertActivity(l.configs.AppPackageName, "feed"); err == nil {
+		if err := l.driver.Driver.AssertUI(l.configs.AppPackageName, "feed"); err == nil {
 			return nil
 		}
 	}
@@ -446,52 +419,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			time.Sleep(1 * time.Second)
 
 			// check if feed page
-			if err := dExt.assertActivity(configs.AppPackageName, "feed"); err != nil {
+			if err := dExt.Driver.AssertUI(configs.AppPackageName, "feed"); err != nil {
 				return err
 			}
 		}
 	}
-}
-
-func (dExt *DriverExt) assertActivity(packageName, activityType string) error {
-	log.Debug().Str("pacakge_name", packageName).
-		Str("activity_type", activityType).Msg("assert activity")
-	app, err := dExt.Driver.GetForegroundApp()
-	if err != nil {
-		log.Warn().Err(err).Msg("get foreground app failed, skip app/activity assertion")
-		return nil // Notice: ignore error when get foreground app failed
-	}
-
-	if app.PackageName != packageName {
-		return errors.Wrap(code.MobileUIAppNotInForegroundError,
-			fmt.Sprintf("foreground app %s, expect %s", app.PackageName, packageName))
-	}
-
-	activities, ok := androidActivities[app.PackageName]
-	if !ok {
-		msg := fmt.Sprintf("app package %s not configured", app.PackageName)
-		log.Error().Interface("app", app.AppBaseInfo).Msg(msg)
-		return errors.Wrap(code.MobileUIActivityNotMatchError, msg)
-	}
-
-	expectActivity, ok := activities[activityType]
-	if !ok {
-		msg := fmt.Sprintf("app package %s %s not configured", app.PackageName, activityType)
-		log.Error().Interface("app", app.AppBaseInfo).Msg(msg)
-		return errors.Wrap(code.MobileUIActivityNotMatchError, msg)
-	}
-
-	// assert success
-	if strings.HasSuffix(app.Activity, expectActivity) {
-		return nil
-	}
-
-	// assert failed
-	log.Error().
-		Interface("app", app.AppBaseInfo).
-		Str("expectActivityType", activityType).
-		Str("expectActivity", expectActivity).
-		Msg("assert activity failed")
-
-	return errors.Wrap(code.MobileUIActivityNotMatchError, "assert activity failed")
 }

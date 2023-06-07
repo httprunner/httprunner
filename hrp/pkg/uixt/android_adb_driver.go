@@ -453,3 +453,84 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 
 	return AppInfo{}, errors.New("get foreground app failed")
 }
+
+func (ad *adbDriver) AssertUI(packageName, activityType string) error {
+	log.Debug().Str("pacakge_name", packageName).
+		Str("activity_type", activityType).Msg("assert android activity")
+	app, err := ad.GetForegroundApp()
+	if err != nil {
+		log.Warn().Err(err).Msg("get foreground app failed, skip app/activity assertion")
+		return nil // Notice: ignore error when get foreground app failed
+	}
+
+	if app.PackageName != packageName {
+		return errors.Wrap(code.MobileUIAppNotInForegroundError,
+			fmt.Sprintf("foreground app %s, expect %s", app.PackageName, packageName))
+	}
+
+	activities, ok := androidActivities[app.PackageName]
+	if !ok {
+		msg := fmt.Sprintf("app package %s not configured", app.PackageName)
+		log.Error().Interface("app", app.AppBaseInfo).Msg(msg)
+		return errors.Wrap(code.MobileUIActivityNotMatchError, msg)
+	}
+
+	expectActivities, ok := activities[activityType]
+	if !ok {
+		msg := fmt.Sprintf("app package %s %s not configured", app.PackageName, activityType)
+		log.Error().Interface("app", app.AppBaseInfo).Msg(msg)
+		return errors.Wrap(code.MobileUIActivityNotMatchError, msg)
+	}
+
+	// assert success
+	for _, expectActivity := range expectActivities {
+		if strings.HasSuffix(app.Activity, expectActivity) {
+			return nil
+		}
+	}
+
+	// assert failed
+	log.Error().
+		Interface("app", app.AppBaseInfo).
+		Str("expectActivityType", activityType).
+		Strs("expectActivities", expectActivities).
+		Msg("assert activity failed")
+
+	return errors.Wrap(code.MobileUIActivityNotMatchError, "assert activity failed")
+}
+
+var androidActivities = map[string]map[string][]string{
+	// DY
+	"com.ss.android.ugc.aweme": {
+		"feed": []string{".splash.SplashActivity"},
+		"live": []string{".live.LivePlayActivity"},
+	},
+	// DY lite
+	"com.ss.android.ugc.aweme.lite": {
+		"feed": []string{".splash.SplashActivity"},
+		"live": []string{".live.LivePlayActivity"},
+	},
+	// KS
+	"com.smile.gifmaker": {
+		"feed": []string{
+			"com.yxcorp.gifshow.HomeActivity",
+			"com.yxcorp.gifshow.detail.PhotoDetailActivity",
+		},
+		"live": []string{
+			"com.kuaishou.live.core.basic.activity.LiveSlideActivity",
+			"com.yxcorp.gifshow.detail.PhotoDetailActivity",
+		},
+	},
+	// KS lite
+	"com.kuaishou.nebula": {
+		"feed": []string{
+			"com.yxcorp.gifshow.HomeActivity",
+			"com.yxcorp.gifshow.detail.PhotoDetailActivity",
+		},
+		"live": []string{
+			"com.kuaishou.live.core.basic.activity.LiveSlideActivity",
+			"com.yxcorp.gifshow.detail.PhotoDetailActivity",
+		},
+	},
+	// TODO: SPH, XHS
+}
