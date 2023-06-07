@@ -332,9 +332,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 		time.Sleep(5 * time.Second)
 	} else {
 		app, err := dExt.Driver.GetForegroundApp()
-		if err != nil {
-			// ignore error when get foreground app failed
+		if err != nil && !errors.Is(err, errDriverNotImplemented) {
 			log.Warn().Err(err).Msg("get foreground app failed, ignore")
+			return errors.Wrap(code.MobileUIAssertForegroundAppError, err.Error())
 		}
 		log.Info().
 			Str("packageName", app.PackageName).
