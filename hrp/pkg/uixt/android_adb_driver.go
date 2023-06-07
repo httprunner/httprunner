@@ -197,7 +197,6 @@ func (ad *adbDriver) AppLaunch(packageName string) (err error) {
 		return errors.Wrap(code.MobileUILaunchAppError,
 			fmt.Sprintf("monkey aborted: %s", strings.TrimSpace(sOutput)))
 	}
-	ad.lastLaunchedPackageName = packageName
 	return nil
 }
 
@@ -209,9 +208,6 @@ func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err erro
 		return false, errors.Wrap(err, "force-stop app failed")
 	}
 
-	if ad.lastLaunchedPackageName == packageName {
-		ad.lastLaunchedPackageName = "" // reset last launched package name
-	}
 	return true, nil
 }
 
@@ -397,10 +393,6 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 	}
 	content := ad.logcat.logBuffer.String()
 	return ConvertPoints(content), nil
-}
-
-func (ad *adbDriver) GetLastLaunchedApp() (packageName string) {
-	return ad.lastLaunchedPackageName
 }
 
 func (ad *adbDriver) AssertAppForeground(packageName string) error {

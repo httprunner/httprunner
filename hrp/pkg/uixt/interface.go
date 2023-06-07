@@ -489,8 +489,6 @@ type WebDriver interface {
 	// AppTerminate Terminate an application with the given pacakge name.
 	// Either `true` if the app has been successfully terminated or `false` if it was not running
 	AppTerminate(packageName string) (bool, error)
-	// GetLastLaunchedApp returns the package name of the last launched app
-	GetLastLaunchedApp() string
 	// AssertAppForeground returns nil if the given package is in foreground
 	AssertAppForeground(packageName string) error
 	// GetForegroundApp returns current foreground app package name and activity name

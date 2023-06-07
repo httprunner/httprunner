@@ -364,7 +364,7 @@ func TestDriver_IsAppInForeground(t *testing.T) {
 		t.FailNow()
 	}
 
-	err = driverExt.Driver.AssertAppForeground(driverExt.Driver.GetLastLaunchedApp())
+	err = driverExt.Driver.AssertAppForeground("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
