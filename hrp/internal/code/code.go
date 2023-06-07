@@ -70,12 +70,12 @@ var (
 
 // UI automation related: [70, 80)
 var (
-	MobileUIDriverError             = errors.New("mobile UI driver error")                // 70
-	MobileUILaunchAppError          = errors.New("mobile UI launch app error")            // 71
-	MobileUIValidationError         = errors.New("mobile UI validation error")            // 75
-	MobileUIAppNotInForegroundError = errors.New("mobile UI app not in foreground error") // 76
-	MobileUIActivityNotMatchError   = errors.New("mobile UI activity not match error")    // 77
-	MobileUIPopupError              = errors.New("mobile UI popup error")                 // 78
+	MobileUIDriverError                   = errors.New("mobile UI driver error")                     // 70
+	MobileUILaunchAppError                = errors.New("mobile UI launch app error")                 // 71
+	MobileUIValidationError               = errors.New("mobile UI validation error")                 // 75
+	MobileUIAssertForegroundAppError      = errors.New("mobile UI assert foreground app error")      // 76
+	MobileUIAssertForegroundActivityError = errors.New("mobile UI assert foreground activity error") // 77
+	MobileUIPopupError                    = errors.New("mobile UI popup error")                      // 78
 )
 
 // OCR related: [80, 90)
@@ -134,12 +134,12 @@ var errorsMap = map[error]int{
 	AndroidCaptureLogError:       66,
 
 	// UI automation related
-	MobileUIDriverError:             70,
-	MobileUILaunchAppError:          71,
-	MobileUIValidationError:         75,
-	MobileUIAppNotInForegroundError: 76,
-	MobileUIActivityNotMatchError:   77,
-	MobileUIPopupError:              78,
+	MobileUIDriverError:                   70,
+	MobileUILaunchAppError:                71,
+	MobileUIValidationError:               75,
+	MobileUIAssertForegroundAppError:      76,
+	MobileUIAssertForegroundActivityError: 77,
+	MobileUIPopupError:                    78,
 
 	// OCR related
 	OCREnvMissedError:         80,

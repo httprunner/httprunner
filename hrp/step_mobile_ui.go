@@ -589,13 +589,19 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		attachments := make(map[string]interface{})
 		if err != nil {
 			attachments["error"] = err.Error()
+
+			// save foreground app
+			if app, err1 := uiDriver.Driver.GetForegroundApp(); err1 == nil {
+				attachments["foreground_app"] = app.AppBaseInfo
+			} else {
+				log.Warn().Err(err1).Msg("save foreground app failed, ignore")
+			}
 		}
 
 		// take screenshot after each step
-		_, _, err := uiDriver.TakeScreenShot(
-			builtin.GenNameWithTimestamp("%d_step_") + step.Name)
-		if err != nil {
-			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed on step finished")
+		if _, _, err2 := uiDriver.TakeScreenShot(
+			builtin.GenNameWithTimestamp("%d_step_") + step.Name); err2 != nil {
+			log.Error().Err(err2).Str("step", step.Name).Msg("take screenshot failed on step finished")
 		}
 
 		// save attachments

@@ -427,7 +427,7 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 		}
 	}
 
-	return AppInfo{}, errors.New("get foreground app failed")
+	return AppInfo{}, errors.Wrap(code.MobileUIAssertForegroundAppError, "get foreground app failed")
 }
 
 func (ad *adbDriver) AssertForegroundApp(packageName string, activityType ...string) error {
@@ -447,20 +447,21 @@ func (ad *adbDriver) AssertForegroundApp(packageName string, activityType ...str
 			Interface("foreground_app", app.AppBaseInfo).
 			Str("expected_package", packageName).
 			Msg("assert package failed")
-		return errors.Wrap(code.MobileUIAppNotInForegroundError, "assert package failed")
+		return errors.Wrap(code.MobileUIAssertForegroundAppError,
+			"assert foreground package failed")
 	}
 
-	// assert activity
 	if len(activityType) == 0 {
 		return nil
 	}
-	expectActivityType := activityType[0]
 
+	// assert activity
+	expectActivityType := activityType[0]
 	activities, ok := androidActivities[packageName]
 	if !ok {
 		msg := fmt.Sprintf("activities not configured for package %s", packageName)
 		log.Error().Msg(msg)
-		return errors.Wrap(code.MobileUIActivityNotMatchError, msg)
+		return errors.Wrap(code.MobileUIAssertForegroundActivityError, msg)
 	}
 
 	expectActivities, ok := activities[expectActivityType]
@@ -468,24 +469,25 @@ func (ad *adbDriver) AssertForegroundApp(packageName string, activityType ...str
 		msg := fmt.Sprintf("activity type %s not configured for package %s",
 			expectActivityType, packageName)
 		log.Error().Msg(msg)
-		return errors.Wrap(code.MobileUIActivityNotMatchError, msg)
+		return errors.Wrap(code.MobileUIAssertForegroundActivityError, msg)
 	}
 
 	// assertion
 	for _, expectActivity := range expectActivities {
 		if strings.HasSuffix(app.Activity, expectActivity) {
-			// assert success
+			// assert activity success
 			return nil
 		}
 	}
 
-	// assert failed
+	// assert activity failed
 	log.Error().
 		Interface("foreground_app", app.AppBaseInfo).
 		Str("expected_activity_type", expectActivityType).
 		Strs("expected_activities", expectActivities).
 		Msg("assert activity failed")
-	return errors.Wrap(code.MobileUIActivityNotMatchError, "assert activity failed")
+	return errors.Wrap(code.MobileUIAssertForegroundActivityError,
+		"assert foreground activity failed")
 }
 
 var androidActivities = map[string]map[string][]string{
