@@ -82,11 +82,10 @@ func (s *veDEMUIService) getUIResult(uiType string, sourceImage []byte) (UIResul
 	}
 
 	signToken := "UNSIGNED-PAYLOAD"
-	token := builtin.Sign("auth-v2", env.VEDEM_OCR_AK, env.VEDEM_OCR_SK, []byte(signToken))
+	token := builtin.Sign("auth-v2", env.VEDEM_UI_AK, env.VEDEM_UI_SK, []byte(signToken))
 	req.Header.Add("Agw-Auth", token)
 	req.Header.Add("Agw-Auth-Content", signToken)
 	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
-	req.Header.Add("x-tt-env", "boe_0529162338")
 
 	var resp *http.Response
 	// retry 3 times
