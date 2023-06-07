@@ -192,6 +192,7 @@ var androidActivities = map[string]map[string]string{
 	"com.smile.gifmaker": {
 		"feed": "com.yxcorp.gifshow.HomeActivity",
 		"live": "com.kuaishou.live.core.basic.activity.LiveSlideActivity",
+		// "com.yxcorp.gifshow.detail.PhotoDetailActivity"
 	},
 	// KS lite
 	"com.kuaishou.nebula": {
@@ -493,46 +494,4 @@ func (dExt *DriverExt) assertActivity(packageName, activityType string) error {
 		Msg("assert activity failed")
 
 	return errors.Wrap(code.MobileUIActivityNotMatchError, "assert activity failed")
-}
-
-// TODO: add more popup texts
-var popups = [][]string{
-	{".*青少年.*", "我知道了"}, // 青少年弹窗
-	{".*个人信息保护.*", "同意"},
-	{".*通讯录.*", "拒绝"},
-	{".*更新.*", "以后再说|稍后"},
-	{".*升级.*", "以后再说|稍后"},
-	{".*定位.*", "仅.*允许"},
-	{".*拍照.*", "仅.*允许"},
-	{".*录音.*", "仅.*允许"},
-	{".*位置.*", "仅.*允许"},
-	{".*权限.*", "仅.*允许|始终允许"},
-	{".*允许.*", "仅.*允许|始终允许"},
-	{".*风险.*", "继续使用"},
-	{"管理使用时间", ".*忽略.*"},
-}
-
-func (dExt *DriverExt) autoPopupHandler(screenResult *ScreenResult) error {
-	for _, popup := range popups {
-		if len(popup) != 2 {
-			continue
-		}
-
-		points, err := screenResult.Texts.FindTexts([]string{popup[0], popup[1]}, WithRegex(true))
-		if err == nil {
-			log.Warn().Interface("popup", popup).
-				Interface("texts", screenResult.Texts).Msg("text popup found")
-			point := points[1].Center()
-			log.Info().Str("text", points[1].Text).Msg("close popup")
-			if err := dExt.TapAbsXY(point.X, point.Y); err != nil {
-				log.Error().Err(err).Msg("tap popup failed")
-				return errors.Wrap(code.MobileUIPopupError, err.Error())
-			}
-			// tap popup success
-			return nil
-		}
-	}
-
-	// no popup found
-	return nil
 }
