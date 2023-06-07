@@ -486,15 +486,13 @@ type WebDriver interface {
 	// AppLaunch Launch an application with given bundle identifier in scope of current session.
 	// !This method is only available since Xcode9 SDK
 	AppLaunch(packageName string) error
-	// AppTerminate Terminate an application with the given pacakge name.
+	// AppTerminate Terminate an application with the given package name.
 	// Either `true` if the app has been successfully terminated or `false` if it was not running
 	AppTerminate(packageName string) (bool, error)
-	// AssertAppForeground returns nil if the given package is in foreground
-	AssertAppForeground(packageName string) error
 	// GetForegroundApp returns current foreground app package name and activity name
 	GetForegroundApp() (app AppInfo, err error)
-	// AssertUI returns nil if the given package and activity are in foreground
-	AssertUI(packageName, activityType string) error
+	// AssertForegroundApp returns nil if the given package and activity are in foreground
+	AssertForegroundApp(packageName string, activityType ...string) error
 
 	// StartCamera Starts a new camera for recording
 	StartCamera() error

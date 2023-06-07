@@ -395,22 +395,6 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 	return ConvertPoints(content), nil
 }
 
-func (ad *adbDriver) AssertAppForeground(packageName string) error {
-	if packageName == "" {
-		return errors.New("package name is not given")
-	}
-
-	app, err := ad.GetForegroundApp()
-	if err != nil {
-		return err
-	}
-	if app.PackageName != packageName {
-		return fmt.Errorf("%v is not in foreground, current is %v",
-			packageName, app.PackageName)
-	}
-	return nil
-}
-
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	// adb shell dumpsys activity activities
 	output, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities")
@@ -446,48 +430,61 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	return AppInfo{}, errors.New("get foreground app failed")
 }
 
-func (ad *adbDriver) AssertUI(packageName, activityType string) error {
-	log.Debug().Str("pacakge_name", packageName).
-		Str("activity_type", activityType).Msg("assert android activity")
+func (ad *adbDriver) AssertForegroundApp(packageName string, activityType ...string) error {
+	log.Debug().Str("package_name", packageName).
+		Strs("activity_type", activityType).
+		Msg("assert android foreground package and activity")
+
 	app, err := ad.GetForegroundApp()
 	if err != nil {
 		log.Warn().Err(err).Msg("get foreground app failed, skip app/activity assertion")
 		return nil // Notice: ignore error when get foreground app failed
 	}
 
+	// assert package
 	if app.PackageName != packageName {
-		return errors.Wrap(code.MobileUIAppNotInForegroundError,
-			fmt.Sprintf("foreground app %s, expect %s", app.PackageName, packageName))
+		log.Error().
+			Interface("foreground_app", app.AppBaseInfo).
+			Str("expected_package", packageName).
+			Msg("assert package failed")
+		return errors.Wrap(code.MobileUIAppNotInForegroundError, "assert package failed")
 	}
 
-	activities, ok := androidActivities[app.PackageName]
+	// assert activity
+	if len(activityType) == 0 {
+		return nil
+	}
+	expectActivityType := activityType[0]
+
+	activities, ok := androidActivities[packageName]
 	if !ok {
-		msg := fmt.Sprintf("app package %s not configured", app.PackageName)
-		log.Error().Interface("app", app.AppBaseInfo).Msg(msg)
+		msg := fmt.Sprintf("activities not configured for package %s", packageName)
+		log.Error().Msg(msg)
 		return errors.Wrap(code.MobileUIActivityNotMatchError, msg)
 	}
 
-	expectActivities, ok := activities[activityType]
+	expectActivities, ok := activities[expectActivityType]
 	if !ok {
-		msg := fmt.Sprintf("app package %s %s not configured", app.PackageName, activityType)
-		log.Error().Interface("app", app.AppBaseInfo).Msg(msg)
+		msg := fmt.Sprintf("activity type %s not configured for package %s",
+			expectActivityType, packageName)
+		log.Error().Msg(msg)
 		return errors.Wrap(code.MobileUIActivityNotMatchError, msg)
 	}
 
-	// assert success
+	// assertion
 	for _, expectActivity := range expectActivities {
 		if strings.HasSuffix(app.Activity, expectActivity) {
+			// assert success
 			return nil
 		}
 	}
 
 	// assert failed
 	log.Error().
-		Interface("app", app.AppBaseInfo).
-		Str("expectActivityType", activityType).
-		Strs("expectActivities", expectActivities).
+		Interface("foreground_app", app.AppBaseInfo).
+		Str("expected_activity_type", expectActivityType).
+		Strs("expected_activities", expectActivities).
 		Msg("assert activity failed")
-
 	return errors.Wrap(code.MobileUIActivityNotMatchError, "assert activity failed")
 }
 

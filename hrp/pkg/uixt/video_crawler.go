@@ -231,7 +231,7 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			return errors.Wrap(code.InterruptError, "live crawler interrupted")
 		default:
 			// check if live room
-			if err := l.driver.Driver.AssertUI(l.configs.AppPackageName, "live"); err != nil {
+			if err := l.driver.Driver.AssertForegroundApp(l.configs.AppPackageName, "live"); err != nil {
 				return err
 			}
 
@@ -279,7 +279,7 @@ func (l *LiveCrawler) exitLiveRoom() error {
 		time.Sleep(2 * time.Second)
 
 		// check if back to feed page
-		if err := l.driver.Driver.AssertUI(l.configs.AppPackageName, "feed"); err == nil {
+		if err := l.driver.Driver.AssertForegroundApp(l.configs.AppPackageName, "feed"); err == nil {
 			return nil
 		}
 	}
@@ -295,7 +295,7 @@ func (l *LiveCrawler) exitLiveRoom() error {
 		time.Sleep(2 * time.Second)
 
 		// check if back to feed page
-		if err := l.driver.Driver.AssertUI(l.configs.AppPackageName, "feed"); err == nil {
+		if err := l.driver.Driver.AssertForegroundApp(l.configs.AppPackageName, "feed"); err == nil {
 			return nil
 		}
 	}
@@ -419,7 +419,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			time.Sleep(1 * time.Second)
 
 			// check if feed page
-			if err := dExt.Driver.AssertUI(configs.AppPackageName, "feed"); err != nil {
+			if err := dExt.Driver.AssertForegroundApp(configs.AppPackageName, "feed"); err != nil {
 				return err
 			}
 		}

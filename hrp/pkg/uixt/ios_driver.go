@@ -366,10 +366,6 @@ func (wd *wdaDriver) AppDeactivate(second float64) (err error) {
 	return
 }
 
-func (wd *wdaDriver) AssertAppForeground(packageName string) error {
-	return nil
-}
-
 func (wd *wdaDriver) GetForegroundApp() (app AppInfo, err error) {
 	// appInfo, err := wd.ActiveAppInfo()
 	// if err != nil {
@@ -386,9 +382,9 @@ func (wd *wdaDriver) GetForegroundApp() (app AppInfo, err error) {
 		"GetForegroundApp not implemented for ios")
 }
 
-func (wd *wdaDriver) AssertUI(bundleId, viewControllerType string) error {
-	log.Debug().Str("bundleId", bundleId).
-		Str("viewControllerType", viewControllerType).
+func (wd *wdaDriver) AssertForegroundApp(bundleId string, viewControllerType ...string) error {
+	log.Warn().Str("bundleId", bundleId).
+		Strs("viewControllerType", viewControllerType).
 		Msg("ios view controller assertion not implemented, skip")
 	return nil
 }
