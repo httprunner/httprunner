@@ -57,17 +57,29 @@ func (ad *adbDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 
 func (ad *adbDriver) WindowSize() (size Size, err error) {
 	// adb shell wm size
-	resp, err := ad.adbClient.RunShellCommand("wm", "size")
+	output, err := ad.adbClient.RunShellCommand("wm", "size")
 	if err != nil {
-		return
+		return size, errors.Wrap(err, "get window size failed with adb")
 	}
 
+	// output may contain both Physical and Override size
 	// Physical size: 1080x2340
-	s := strings.Trim(strings.Split(resp, ": ")[1], "\n")
-	ss := strings.Split(s, "x")
-	width, _ := strconv.Atoi(ss[0])
-	height, _ := strconv.Atoi(ss[1])
-	size = Size{Width: width, Height: height}
+	// Override size: 1080x2220
+	var resolution string
+	sizeList := strings.Split(output, "\n")
+	log.Info().Msgf("window size: %v", sizeList)
+	for _, size := range sizeList {
+		if strings.Contains(size, "Physical") {
+			resolution = strings.Split(size, ": ")[1]
+			// 1080x2340
+			ss := strings.Split(resolution, "x")
+			width, _ := strconv.Atoi(ss[0])
+			height, _ := strconv.Atoi(ss[1])
+			return Size{Width: width, Height: height}, nil
+		}
+	}
+
+	err = errors.New("physical window size not found by adb")
 	return
 }
 
@@ -355,6 +367,7 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 		return "", err
 	}
 	content := ad.logcat.logBuffer.String()
+	log.Info().Str("logcat content", content).Msg("display logcat content")
 	return ConvertPoints(content), nil
 }
 
