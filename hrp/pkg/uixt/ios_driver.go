@@ -322,7 +322,6 @@ func (wd *wdaDriver) AppLaunch(bundleId string) (err error) {
 		return errors.Wrap(code.MobileUILaunchAppError,
 			fmt.Sprintf("wda launch failed: %v", err))
 	}
-	wd.lastLaunchedPackageName = bundleId
 	return nil
 }
 
@@ -347,9 +346,6 @@ func (wd *wdaDriver) AppTerminate(bundleId string) (successful bool, err error) 
 	if successful, err = rawResp.valueConvertToBool(); err != nil {
 		return false, err
 	}
-	if wd.lastLaunchedPackageName == bundleId {
-		wd.lastLaunchedPackageName = "" // reset last launched package name
-	}
 	return
 }
 
@@ -368,10 +364,6 @@ func (wd *wdaDriver) AppDeactivate(second float64) (err error) {
 	data := map[string]interface{}{"duration": second}
 	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/deactivateApp")
 	return
-}
-
-func (wd *wdaDriver) GetLastLaunchedApp() (packageName string) {
-	return wd.lastLaunchedPackageName
 }
 
 func (wd *wdaDriver) AssertAppForeground(packageName string) error {
