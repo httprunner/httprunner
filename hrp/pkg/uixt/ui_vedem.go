@@ -141,6 +141,7 @@ func (s *veDEMUIService) FindUI(uiTypes []string, byteSource []byte, options ...
 		log.Error().Err(err).Msg("getUIResult failed")
 		return
 	}
+	log.Info().Interface("ui detection result", uiResultMap).Msg("ui detection successful")
 
 	var uiResult []Box
 	var ok bool

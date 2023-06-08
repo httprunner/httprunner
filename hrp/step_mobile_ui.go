@@ -656,11 +656,9 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 		// wait for screenshot actions done
 		uiDriver.Wg.Wait()
-		// save screenshot after each step, except the step ends with sleep
-		if len(actions) > 0 && actions[len(actions)-1].Method != uixt.CtlSleep {
-			if err := uiDriver.SaveScreenShot(builtin.GenNameWithTimestampMS("step_%d_") + step.Name); err != nil {
-				log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed on step finished")
-			}
+		// save screenshot after each step
+		if err := uiDriver.SaveScreenShot(builtin.GenNameWithTimestampMS("step_%d_") + step.Name); err != nil {
+			log.Error().Err(err).Str("step", step.Name).Msg("take screenshot failed on step finished")
 		}
 
 		// save attachments
