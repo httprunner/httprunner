@@ -156,10 +156,6 @@ func IsErrorPredefined(err error) bool {
 }
 
 func GetErrorCode(err error) (errCode int) {
-	defer func() {
-		log.Debug().Int("code", errCode).Msg("get error code")
-	}()
-
 	if err == nil {
 		return Success
 	}
@@ -170,5 +166,7 @@ func GetErrorCode(err error) (errCode int) {
 	} else {
 		errCode = GeneralFail
 	}
+
+	log.Warn().Int("code", errCode).Msg("hrp exit")
 	return
 }
