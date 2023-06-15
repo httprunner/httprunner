@@ -592,7 +592,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapAbsXY, action.Params)
 	case ACTION_Tap:
 		if param, ok := action.Params.(string); ok {
-			return dExt.Tap(param, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(true), WithDataIndex(action.Index))
+			return dExt.Tap(param, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(action.IgnoreNotFoundError), WithDataIndex(action.Index))
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_Tap, action.Params)
 	case ACTION_TapByOCR:
@@ -614,7 +614,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
 		if imagePath, ok := action.Params.(string); ok {
-			return dExt.TapByCV(imagePath, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(true), WithDataIndex(action.Index))
+			return dExt.TapByCV(imagePath, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(action.IgnoreNotFoundError), WithDataIndex(action.Index))
 		}
 		if uiParams, ok := action.Params.([]interface{}); ok {
 			var uiTypes []string
@@ -622,7 +622,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				uiType, _ := uiParam.(string)
 				uiTypes = append(uiTypes, uiType)
 			}
-			return dExt.TapByUIDetection(uiTypes, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(true), WithDataIndex(action.Index))
+			return dExt.TapByUIDetection(uiTypes, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(action.IgnoreNotFoundError), WithDataIndex(action.Index))
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
