@@ -200,6 +200,8 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 			fmt.Sprintf("create form file error: %v", err))
 		return
 	}
+	bodyWriter.WriteField("ocrCluster", "highPrecision")
+
 	size, err := formWriter.Write(imageBuf.Bytes())
 	if err != nil {
 		err = errors.Wrap(code.OCRRequestError,
