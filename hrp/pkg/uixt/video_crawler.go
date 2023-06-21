@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -365,6 +366,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// take screenshot and get screen texts by OCR
 			imageResult, err := dExt.GetScreenResult()
 			if err != nil {
+				if strings.Contains(err.Error(), "connect: connection refused") {
+					return err
+				}
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				time.Sleep(3 * time.Second)
 				continue
