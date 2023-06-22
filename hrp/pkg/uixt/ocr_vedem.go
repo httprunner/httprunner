@@ -344,7 +344,7 @@ func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error)
 
 	imageResult, err := dExt.ImageService.GetImage(bufSource)
 	if err != nil {
-		log.Error().Err(err).Msg("GetScreenResult failed")
+		log.Error().Err(err).Msg("GetImage from ImageService failed")
 		return
 	}
 	imageResult.imagePath = imagePath
