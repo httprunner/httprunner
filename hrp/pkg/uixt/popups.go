@@ -24,16 +24,16 @@ var popups = [][]string{
 	{"管理使用时间", ".*忽略.*"},
 }
 
-func (dExt *DriverExt) autoPopupHandler(screenResult *ScreenResult) error {
+func (dExt *DriverExt) AutoPopupHandler(screenTexts OCRTexts) error {
 	for _, popup := range popups {
 		if len(popup) != 2 {
 			continue
 		}
 
-		points, err := screenResult.Texts.FindTexts([]string{popup[0], popup[1]}, WithRegex(true))
+		points, err := screenTexts.FindTexts([]string{popup[0], popup[1]}, WithRegex(true))
 		if err == nil {
 			log.Warn().Interface("popup", popup).
-				Interface("texts", screenResult.Texts).Msg("text popup found")
+				Interface("texts", screenTexts).Msg("text popup found")
 			point := points[1].Center()
 			log.Info().Str("text", points[1].Text).Msg("close popup")
 			if err := dExt.TapAbsXY(point.X, point.Y); err != nil {
