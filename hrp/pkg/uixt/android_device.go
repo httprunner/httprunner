@@ -91,7 +91,7 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 
 	deviceList, err := GetAndroidDevices(device.SerialNumber)
 	if err != nil {
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
+		return nil, err
 	}
 
 	dev := deviceList[0]
@@ -106,12 +106,11 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 func GetAndroidDevices(serial ...string) (devices []*gadb.Device, err error) {
 	var adbClient gadb.Client
 	if adbClient, err = gadb.NewClientWith(AdbServerHost, AdbServerPort); err != nil {
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
+		return nil, err
 	}
 
 	if devices, err = adbClient.DeviceList(); err != nil {
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
-			fmt.Sprintf("list android devices failed: %v", err))
+		return nil, err
 	}
 
 	var deviceList []*gadb.Device
@@ -190,11 +189,11 @@ func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *Drive
 func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver, err error) {
 	var localPort int
 	if localPort, err = getFreePort(); err != nil {
-		return nil, errors.Wrap(code.AndroidDeviceUSBDriverError,
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
 			fmt.Sprintf("get free port failed: %v", err))
 	}
 	if err = dev.d.Forward(localPort, UIA2ServerPort); err != nil {
-		return nil, errors.Wrap(code.AndroidDeviceUSBDriverError,
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
 			fmt.Sprintf("forward port %d->%d failed: %v",
 				localPort, UIA2ServerPort, err))
 	}
@@ -204,7 +203,7 @@ func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver WebDri
 	uiaDriver, err := NewUIADriver(capabilities, rawURL)
 	if err != nil {
 		_ = dev.d.ForwardKill(localPort)
-		return nil, errors.Wrap(code.AndroidDeviceUSBDriverError, err.Error())
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
 	}
 	uiaDriver.adbClient = dev.d
 	uiaDriver.logcat = dev.logcat

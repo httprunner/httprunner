@@ -7,6 +7,7 @@ import (
 	"net"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -19,6 +20,8 @@ var ErrConnBroken = errors.New("socket connection broken")
 
 var DefaultAdbReadTimeout time.Duration = 60
 
+var regexDeviceOffline = regexp.MustCompile("device .* not found")
+
 type transport struct {
 	sock        net.Conn
 	readTimeout time.Duration
@@ -29,9 +32,26 @@ func newTransport(address string, readTimeout ...time.Duration) (tp transport, e
 		readTimeout = []time.Duration{DefaultAdbReadTimeout}
 	}
 	tp.readTimeout = readTimeout[0]
-	if tp.sock, err = net.Dial("tcp", address); err != nil {
-		err = fmt.Errorf("adb transport: %w", err)
+	tp.sock, err = net.Dial("tcp", address)
+	if err == nil {
+		// dial success
+		return tp, nil
 	}
+
+	// connection refused
+	if strings.Contains(err.Error(), "connect: connection refused") {
+		err = errors.Wrap(code.AndroidDeviceConnectionRefusedError, err.Error())
+		return
+	}
+
+	// device offline
+	if regexDeviceOffline.MatchString(err.Error()) {
+		err = errors.Wrap(code.AndroidDeviceOfflineError, err.Error())
+		return
+	}
+
+	// other connection errors
+	err = errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
 	return
 }
 
@@ -48,8 +68,6 @@ func (t transport) Conn() net.Conn {
 	return t.sock
 }
 
-var regexDeviceOffline = regexp.MustCompile("device .* not found")
-
 func (t transport) VerifyResponse() (err error) {
 	var status string
 	if status, err = t.ReadStringN(4); err != nil {
@@ -62,11 +80,6 @@ func (t transport) VerifyResponse() (err error) {
 	var sError string
 	if sError, err = t.UnpackString(); err != nil {
 		return err
-	}
-
-	if regexDeviceOffline.MatchString(sError) {
-		// device offline
-		return errors.Wrap(code.AndroidDeviceConnectionError, sError)
 	}
 
 	log.Warn().Str("status", status).Str("err", sError).
