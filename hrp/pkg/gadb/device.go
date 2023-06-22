@@ -264,9 +264,6 @@ func (d *Device) RunShellCommandWithBytes(cmd string, args ...string) ([]byte, e
 	if strings.TrimSpace(cmd) == "" {
 		return nil, errors.New("adb shell: command cannot be empty")
 	}
-	log.Debug().Str("cmd",
-		fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
-		Msg("run adb command")
 	raw, err := d.executeCommand(fmt.Sprintf("shell:%s", cmd))
 	return raw, err
 }
@@ -284,9 +281,7 @@ func (d *Device) RunShellCommandV2WithBytes(cmd string, args ...string) ([]byte,
 	if strings.TrimSpace(cmd) == "" {
 		return nil, errors.New("adb shell: command cannot be empty")
 	}
-	log.Debug().Str("cmd",
-		fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
-		Msg("run adb command in v2")
+
 	raw, err := d.executeCommand(fmt.Sprintf("shell,v2,raw:%s", cmd))
 	if err != nil {
 		return raw, err
@@ -355,9 +350,6 @@ func (d *Device) EnableAdbOverTCP(port ...int) (err error) {
 		port = []int{AdbDaemonPort}
 	}
 
-	log.Info().Str("cmd",
-		fmt.Sprintf("adb -s %s tcpip %d", d.serial, port[0])).
-		Msg("enable adb over tcp")
 	_, err = d.executeCommand(fmt.Sprintf("tcpip:%d", port[0]), true)
 	return
 }
@@ -375,6 +367,31 @@ func (d *Device) createDeviceTransport() (tp transport, err error) {
 }
 
 func (d *Device) executeCommand(command string, onlyVerifyResponse ...bool) (raw []byte, err error) {
+	startTime := time.Now()
+	defer func() {
+		// log elapsed seconds for shell execution
+		elapsed := time.Since(startTime).Seconds()
+		if strings.HasPrefix(command, "shell,v2,raw:") {
+			cmd := strings.TrimPrefix(command, "shell,v2,raw:")
+			log.Debug().Str("cmd",
+				fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
+				Float64("elapsed(s)", elapsed).
+				Msg("run adb shell in v2")
+		} else if strings.HasPrefix(command, "shell:") {
+			cmd := strings.TrimPrefix(command, "shell:")
+			log.Debug().Str("cmd",
+				fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
+				Float64("elapsed(s)", elapsed).
+				Msg("run adb shell")
+		} else {
+			cmd := strings.ReplaceAll(command, ":", " ")
+			log.Debug().Str("command",
+				fmt.Sprintf("adb -s %s %s", d.serial, cmd)).
+				Float64("elapsed(s)", elapsed).
+				Msg("run adb command")
+		}
+	}()
+
 	if len(onlyVerifyResponse) == 0 {
 		onlyVerifyResponse = []bool{false}
 	}

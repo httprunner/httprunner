@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -244,7 +245,7 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			}
 
 			// sleep custom random time
-			if err := sleepRandom(l.configs.Live.SleepRandom); err != nil {
+			if err := sleepRandom(time.Now(), l.configs.Live.SleepRandom); err != nil {
 				log.Error().Err(err).Msg("sleep random failed")
 			}
 
@@ -352,6 +353,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	// loop until target count achieved or timeout
 	// the main loop is feed crawler
 	currVideoStat.timer = time.NewTimer(time.Duration(configs.Timeout) * time.Second)
+	lastSwipeTime := time.Now()
 	for {
 		select {
 		case <-currVideoStat.timer.C:
@@ -364,6 +366,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// take screenshot and get screen texts by OCR
 			imageResult, err := dExt.GetScreenResult()
 			if err != nil {
+				if strings.Contains(err.Error(), "connect: connection refused") {
+					return err
+				}
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				time.Sleep(3 * time.Second)
 				continue
@@ -400,7 +405,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			}
 
 			// sleep custom random time
-			if err := sleepRandom(configs.Feed.SleepRandom); err != nil {
+			if err := sleepRandom(lastSwipeTime, configs.Feed.SleepRandom); err != nil {
 				log.Error().Err(err).Msg("sleep random failed")
 			}
 
@@ -416,7 +421,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				log.Error().Err(err).Msg("swipe up failed")
 				return err
 			}
-			time.Sleep(1 * time.Second)
+			lastSwipeTime = time.Now()
 
 			// check if feed page
 			if err := dExt.Driver.AssertForegroundApp(configs.AppPackageName, "feed"); err != nil {

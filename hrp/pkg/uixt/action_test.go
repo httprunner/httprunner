@@ -16,20 +16,31 @@ func checkErr(t *testing.T, err error, msg ...string) {
 }
 
 func TestSleepRandom(t *testing.T) {
-	startTime := time.Now()
+	startTime1 := time.Now()
 	params := []interface{}{1}
-	err := sleepRandom(params)
+	err := sleepRandom(startTime1, params)
 	checkErr(t, err)
-	dur := time.Since(startTime).Seconds()
-	if dur < 0.9 || dur > 1.1 {
+	dur := time.Since(startTime1).Seconds()
+	t.Log(dur)
+	if dur < 1 || dur > 1.1 {
 		t.Fatal("sleepRandom failed")
 	}
 
-	startTime = time.Now()
-	params = []interface{}{1, 2}
-	err = sleepRandom(params)
+	params = []interface{}{0, 2}
+	err = sleepRandom(startTime1, params)
 	checkErr(t, err)
-	dur = time.Since(startTime).Seconds()
+	dur = time.Since(startTime1).Seconds()
+	t.Log(dur)
+	if dur < 1 || dur > 2 {
+		t.Fatal("sleepRandom failed")
+	}
+
+	startTime2 := time.Now()
+	params = []interface{}{1, 2}
+	err = sleepRandom(startTime2, params)
+	checkErr(t, err)
+	dur = time.Since(startTime2).Seconds()
+	t.Log(dur)
 	if dur < 1 || dur > 2 {
 		t.Fatal("sleepRandom failed")
 	}
