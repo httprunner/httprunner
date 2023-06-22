@@ -36,12 +36,18 @@ const (
 	StateOnline       DeviceState = "online"
 	StateOffline      DeviceState = "offline"
 	StateDisconnected DeviceState = "disconnected"
+	StateBootloader   DeviceState = "bootloader"
+	StateRecovery     DeviceState = "recovery"
+	StateUnauthorized DeviceState = "unauthorized"
 )
 
 var deviceStateStrings = map[string]DeviceState{
-	"":        StateDisconnected,
-	"offline": StateOffline,
-	"device":  StateOnline,
+	"":             StateDisconnected, // no devices/emulators found
+	"offline":      StateOffline,
+	"bootloader":   StateBootloader,
+	"recovery":     StateRecovery,
+	"unauthorized": StateUnauthorized,
+	"device":       StateOnline,
 }
 
 func deviceStateConv(k string) (deviceState DeviceState) {
@@ -245,13 +251,10 @@ func (d *Device) ReverseForwardKillAll() error {
 
 func (d *Device) RunShellCommand(cmd string, args ...string) (string, error) {
 	raw, err := d.RunShellCommandWithBytes(cmd, args...)
-	if err != nil {
-		if errors.Is(err, code.AndroidDeviceConnectionError) {
-			return "", err
-		}
-		return "", errors.Wrap(code.AndroidShellExecError, err.Error())
+	if err != nil && errors.Cause(err) == nil {
+		err = errors.Wrap(code.AndroidShellExecError, err.Error())
 	}
-	return string(raw), nil
+	return string(raw), err
 }
 
 func (d *Device) RunShellCommandWithBytes(cmd string, args ...string) ([]byte, error) {
@@ -266,11 +269,6 @@ func (d *Device) RunShellCommandWithBytes(cmd string, args ...string) ([]byte, e
 	}
 	raw, err := d.executeCommand(fmt.Sprintf("shell:%s", cmd))
 	return raw, err
-}
-
-func (d *Device) RunShellCommandV2(cmd string, args ...string) (string, error) {
-	raw, err := d.RunShellCommandV2WithBytes(cmd, args...)
-	return string(raw), err
 }
 
 // RunShellCommandV2WithBytes shell v2, 支持后台运行而不会阻断
@@ -594,7 +592,7 @@ func (d *Device) Uninstall(packageName string, keepData ...bool) (string, error)
 		args = append(args, "-k")
 	}
 	args = append(args, packageName)
-	return d.RunShellCommandV2("pm", args...)
+	return d.RunShellCommand("pm", args...)
 }
 
 func (d *Device) ScreenCap() ([]byte, error) {
