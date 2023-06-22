@@ -59,7 +59,7 @@ type ImageResult struct {
 	LiveType  string     `json:"liveType"`  // 直播间类型
 }
 
-type ImageResponse struct {
+type APIResponseImage struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
 	Result  ImageResult `json:"result"`
@@ -279,7 +279,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 		return
 	}
 
-	var imageResponse ImageResponse
+	var imageResponse APIResponseImage
 	err = json.Unmarshal(results, &imageResponse)
 	if err != nil {
 		log.Error().Err(err).
@@ -334,19 +334,20 @@ type IImageService interface {
 }
 
 // GetScreenResult takes a screenshot, returns the image recognization result
-func (dExt *DriverExt) GetScreenResult() (imageResult ImageResult, err error) {
+func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error) {
 	var bufSource *bytes.Buffer
 	var imagePath string
-	if bufSource, imagePath, err = dExt.TakeScreenShot(
+	if bufSource, imagePath, err = dExt.takeScreenShot(
 		builtin.GenNameWithTimestamp("%d_ocr")); err != nil {
 		return
 	}
 
-	imageResult, err = dExt.ImageService.GetImage(bufSource)
+	imageResult, err := dExt.ImageService.GetImage(bufSource)
 	if err != nil {
 		log.Error().Err(err).Msg("GetScreenResult failed")
 		return
 	}
+	imageResult.imagePath = imagePath
 
 	imageUrl := imageResult.URL
 	if imageUrl != "" {
@@ -354,20 +355,25 @@ func (dExt *DriverExt) GetScreenResult() (imageResult ImageResult, err error) {
 		log.Debug().Str("imagePath", imagePath).Str("imageUrl", imageUrl).Msg("log screenshot")
 	}
 
-	dExt.cacheStepData.screenResults[imagePath] = &ScreenResult{
-		Texts: imageResult.OCRResult.ToOCRTexts(),
+	screenResult = &ScreenResult{
+		Texts:      imageResult.OCRResult.ToOCRTexts(),
+		Tags:       nil,
+		Popularity: Popularity{},
 	}
+	if imageResult.LiveType != "" {
+		screenResult.Tags = []string{imageResult.LiveType}
+	}
+	dExt.cacheStepData.screenResults[imagePath] = screenResult
 
-	imageResult.imagePath = imagePath
-	return imageResult, nil
+	return screenResult, nil
 }
 
 func (dExt *DriverExt) GetScreenTexts() (ocrTexts OCRTexts, err error) {
-	imageResult, err := dExt.GetScreenResult()
+	screenResult, err := dExt.GetScreenResult()
 	if err != nil {
 		return
 	}
-	return imageResult.OCRResult.ToOCRTexts(), nil
+	return screenResult.Texts, nil
 }
 
 func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (point PointF, err error) {
