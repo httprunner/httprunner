@@ -598,13 +598,11 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		}
 
 		// take screenshot and get screen texts by OCR
-		screenResult, err2 := uiDriver.GetScreenResult()
+		screenTexts, err2 := uiDriver.GetScreenTexts()
 		if err2 != nil {
 			log.Error().Err(err2).Str("step", step.Name).Msg("take screenshot failed on step finished")
-		}
-
-		// automatic handling of pop-up windows on each step finished
-		if err3 := uiDriver.AutoPopupHandler(screenResult.Texts); err3 != nil {
+		} else if err3 := uiDriver.AutoPopupHandler(screenTexts); err3 != nil {
+			// automatic handling of pop-up windows on each step finished
 			log.Error().Err(err3).Msg("auto handle popup failed")
 		}
 
