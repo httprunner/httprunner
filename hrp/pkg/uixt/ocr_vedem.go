@@ -193,6 +193,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 	for _, action := range s.actions {
 		bodyWriter.WriteField("actions", action)
 	}
+	bodyWriter.WriteField("ocrCluster", "highPrecision")
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {
@@ -200,6 +201,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 			fmt.Sprintf("create form file error: %v", err))
 		return
 	}
+
 	size, err := formWriter.Write(imageBuf.Bytes())
 	if err != nil {
 		err = errors.Wrap(code.OCRRequestError,

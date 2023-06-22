@@ -3,6 +3,7 @@ package uixt
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 
@@ -499,7 +500,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
 	case ACTION_SleepRandom:
 		if params, ok := action.Params.([]interface{}); ok {
-			return sleepRandom(params)
+			return sleepRandom(time.Now(), params)
 		}
 		return fmt.Errorf("invalid sleep random params: %v(%T)", action.Params, action.Params)
 	case ACTION_ScreenShot:
@@ -541,7 +542,9 @@ func convertToFloat64(val interface{}) (float64, error) {
 	}
 }
 
-func sleepRandom(params []interface{}) error {
+// sleepRandom sleeps random time with given params
+// startTime is used to correct sleep duration caused by process time
+func sleepRandom(startTime time.Time, params []interface{}) error {
 	if len(params) == 1 {
 		// constant sleep time
 		params = append(params, params[0], 1.0)
@@ -583,10 +586,20 @@ func sleepRandom(params []interface{}) error {
 	for _, s := range sections {
 		accProb += s.weight / totalProb
 		if r < accProb {
-			n := s.min + rand.Float64()*(s.max-s.min)
-			log.Info().Float64("duration", n).
-				Interface("strategy_params", params).Msg("sleep random seconds")
-			time.Sleep(time.Duration(n*1000) * time.Millisecond)
+			elapsed := time.Since(startTime).Seconds()
+			randomSeconds := s.min + rand.Float64()*(s.max-s.min)
+			dur := randomSeconds - elapsed
+
+			// if elapsed time is greater than random seconds, skip sleep to reduce deviation caused by process time
+			if dur <= 0 {
+				log.Info().Float64("elapsed", elapsed).Float64("randomSeconds", randomSeconds).
+					Interface("strategy_params", params).Msg("elapsed duration >= random seconds, skip sleep")
+			} else {
+				log.Info().Float64("sleepDuration", dur).Float64("elapsed", elapsed).Float64("randomSeconds", randomSeconds).
+					Interface("strategy_params", params).Msg("sleep remaining random seconds")
+				time.Sleep(time.Duration(math.Ceil(dur*1000)) * time.Millisecond)
+			}
+
 			return nil
 		}
 	}
