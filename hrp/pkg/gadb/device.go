@@ -357,10 +357,7 @@ func (d *Device) createDeviceTransport() (tp transport, err error) {
 		return transport{}, err
 	}
 
-	if err = tp.Send(fmt.Sprintf("host:transport:%s", d.serial)); err != nil {
-		return transport{}, err
-	}
-	err = tp.VerifyResponse()
+	err = tp.SendWithCheck(fmt.Sprintf("host:transport:%s", d.serial))
 	return
 }
 
@@ -400,11 +397,7 @@ func (d *Device) executeCommand(command string, onlyVerifyResponse ...bool) (raw
 	}
 	defer func() { _ = tp.Close() }()
 
-	if err = tp.Send(command); err != nil {
-		return nil, err
-	}
-
-	if err = tp.VerifyResponse(); err != nil {
+	if err = tp.SendWithCheck(command); err != nil {
 		return nil, err
 	}
 
@@ -528,13 +521,12 @@ func (d *Device) installViaABBExec(apk io.ReadSeeker) (raw []byte, err error) {
 		return nil, err
 	}
 	defer func() { _ = tp.Close() }()
-	if err = tp.Send(fmt.Sprintf("abb_exec:package\x00install\x00-t\x00-S\x00%d", filesize)); err != nil {
+
+	cmd := fmt.Sprintf("abb_exec:package\x00install\x00-t\x00-S\x00%d", filesize)
+	if err = tp.SendWithCheck(cmd); err != nil {
 		return nil, err
 	}
 
-	if err = tp.VerifyResponse(); err != nil {
-		return nil, err
-	}
 	_, err = apk.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, err

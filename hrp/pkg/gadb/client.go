@@ -221,10 +221,7 @@ func (c Client) executeCommand(command string, onlyVerifyResponse ...bool) (resp
 	}
 	defer func() { _ = tp.Close() }()
 
-	if err = tp.Send(command); err != nil {
-		return "", err
-	}
-	if err = tp.VerifyResponse(); err != nil {
+	if err = tp.SendWithCheck(command); err != nil {
 		return "", err
 	}
 
