@@ -27,11 +27,14 @@ type transport struct {
 	readTimeout time.Duration
 }
 
+// newTransport creates a new tcp socket connection
 func newTransport(address string, readTimeout ...time.Duration) (tp transport, err error) {
 	if len(readTimeout) == 0 {
 		readTimeout = []time.Duration{DefaultAdbReadTimeout}
 	}
-	tp.readTimeout = readTimeout[0]
+	tp = transport{
+		readTimeout: readTimeout[0],
+	}
 	tp.sock, err = net.Dial("tcp", address)
 	if err == nil {
 		// dial success
@@ -139,11 +142,15 @@ func (t transport) Close() (err error) {
 	return t.sock.Close()
 }
 
-func (t transport) CreateSyncTransport() (sTp syncTransport, err error) {
-	if err = t.Send("sync:"); err != nil {
-		return syncTransport{}, err
+func (t transport) SendWithCheck(command string) (err error) {
+	if err = t.Send(command); err != nil {
+		return err
 	}
-	if err = t.VerifyResponse(); err != nil {
+	return t.VerifyResponse()
+}
+
+func (t transport) CreateSyncTransport() (sTp syncTransport, err error) {
+	if err = t.SendWithCheck("sync:"); err != nil {
 		return syncTransport{}, err
 	}
 	sTp = newSyncTransport(t.sock, t.readTimeout)
