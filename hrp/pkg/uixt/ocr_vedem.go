@@ -248,7 +248,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 			log.Debug().
 				Str("X-TT-LOGID", logID).
 				Int("image_bytes", size).
-				Float64("elapsed_seconds", elapsed.Seconds()).
+				Float64("elapsed(s)", elapsed.Seconds()).
 				Msg("request OCR service success")
 			break
 		}
