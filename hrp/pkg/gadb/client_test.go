@@ -7,11 +7,18 @@ import (
 	"testing"
 )
 
-func TestClient_ServerVersion(t *testing.T) {
-	adbClient, err := NewClient()
+var adbClient Client
+
+func setupClient(t *testing.T) {
+	var err error
+	adbClient, err = NewClient()
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestClient_ServerVersion(t *testing.T) {
+	setupClient(t)
 
 	adbServerVersion, err := adbClient.ServerVersion()
 	if err != nil {
@@ -22,10 +29,7 @@ func TestClient_ServerVersion(t *testing.T) {
 }
 
 func TestClient_DeviceSerialList(t *testing.T) {
-	adbClient, err := NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupClient(t)
 
 	serials, err := adbClient.DeviceSerialList()
 	if err != nil {
@@ -38,15 +42,7 @@ func TestClient_DeviceSerialList(t *testing.T) {
 }
 
 func TestClient_DeviceList(t *testing.T) {
-	adbClient, err := NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	devices, err := adbClient.DeviceList()
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupDevices(t)
 
 	for i := range devices {
 		t.Log(devices[i].serial, devices[i].DeviceInfo())
@@ -54,10 +50,7 @@ func TestClient_DeviceList(t *testing.T) {
 }
 
 func TestClient_ForwardList(t *testing.T) {
-	adbClient, err := NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupClient(t)
 
 	deviceForwardList, err := adbClient.ForwardList()
 	if err != nil {
@@ -70,80 +63,59 @@ func TestClient_ForwardList(t *testing.T) {
 }
 
 func TestClient_ForwardKillAll(t *testing.T) {
-	adbClient, err := NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupClient(t)
 
-	err = adbClient.ForwardKillAll()
+	err := adbClient.ForwardKillAll()
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClient_Connect(t *testing.T) {
-	adbClient, err := NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupClient(t)
 
-	err = adbClient.Connect("192.168.1.28")
+	err := adbClient.Connect("192.168.1.28")
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClient_Disconnect(t *testing.T) {
-	adbClient, err := NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupClient(t)
 
-	err = adbClient.Disconnect("192.168.1.28")
+	err := adbClient.Disconnect("192.168.1.28")
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClient_DisconnectAll(t *testing.T) {
-	adbClient, err := NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupClient(t)
 
-	err = adbClient.DisconnectAll()
+	err := adbClient.DisconnectAll()
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestClient_KillServer(t *testing.T) {
-	adbClient, err := NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupClient(t)
 
-	err = adbClient.KillServer()
+	err := adbClient.KillServer()
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestScreenCap(t *testing.T) {
-	adbClient, err := NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupDevices(t)
 
-	dl, err := adbClient.DeviceList()
-	if err != nil {
-		t.Error(err)
+	for _, d := range devices {
+		res, err := d.ScreenCap()
+		if err != nil {
+			t.Error(err)
+		}
+		t.Log(len(res))
+		ioutil.WriteFile("/tmp/1.png", res, 0o644)
 	}
-	d := dl[0]
-	res, err := d.ScreenCap()
-	if err != nil {
-		t.Error(err)
-	}
-	t.Log(len(res))
-	ioutil.WriteFile("/tmp/1.png", res, 0o644)
 }

@@ -36,12 +36,18 @@ const (
 	StateOnline       DeviceState = "online"
 	StateOffline      DeviceState = "offline"
 	StateDisconnected DeviceState = "disconnected"
+	StateBootloader   DeviceState = "bootloader"
+	StateRecovery     DeviceState = "recovery"
+	StateUnauthorized DeviceState = "unauthorized"
 )
 
 var deviceStateStrings = map[string]DeviceState{
-	"":        StateDisconnected,
-	"offline": StateOffline,
-	"device":  StateOnline,
+	"":             StateDisconnected, // no devices/emulators found
+	"offline":      StateOffline,
+	"bootloader":   StateBootloader,
+	"recovery":     StateRecovery,
+	"unauthorized": StateUnauthorized,
+	"device":       StateOnline,
 }
 
 func deviceStateConv(k string) (deviceState DeviceState) {
@@ -245,13 +251,10 @@ func (d *Device) ReverseForwardKillAll() error {
 
 func (d *Device) RunShellCommand(cmd string, args ...string) (string, error) {
 	raw, err := d.RunShellCommandWithBytes(cmd, args...)
-	if err != nil {
-		if errors.Is(err, code.AndroidDeviceConnectionError) {
-			return "", err
-		}
-		return "", errors.Wrap(code.AndroidShellExecError, err.Error())
+	if err != nil && errors.Cause(err) == nil {
+		err = errors.Wrap(code.AndroidShellExecError, err.Error())
 	}
-	return string(raw), nil
+	return string(raw), err
 }
 
 func (d *Device) RunShellCommandWithBytes(cmd string, args ...string) ([]byte, error) {
@@ -264,13 +267,18 @@ func (d *Device) RunShellCommandWithBytes(cmd string, args ...string) ([]byte, e
 	if strings.TrimSpace(cmd) == "" {
 		return nil, errors.New("adb shell: command cannot be empty")
 	}
+
+	startTime := time.Now()
+	defer func() {
+		// log elapsed seconds for shell execution
+		log.Debug().Str("cmd",
+			fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
+			Float64("elapsed(s)", time.Since(startTime).Seconds()).
+			Msg("run adb shell")
+	}()
+
 	raw, err := d.executeCommand(fmt.Sprintf("shell:%s", cmd))
 	return raw, err
-}
-
-func (d *Device) RunShellCommandV2(cmd string, args ...string) (string, error) {
-	raw, err := d.RunShellCommandV2WithBytes(cmd, args...)
-	return string(raw), err
 }
 
 // RunShellCommandV2WithBytes shell v2, 支持后台运行而不会阻断
@@ -281,6 +289,15 @@ func (d *Device) RunShellCommandV2WithBytes(cmd string, args ...string) ([]byte,
 	if strings.TrimSpace(cmd) == "" {
 		return nil, errors.New("adb shell: command cannot be empty")
 	}
+
+	startTime := time.Now()
+	defer func() {
+		// log elapsed seconds for shell execution
+		log.Debug().Str("cmd",
+			fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
+			Float64("elapsed(s)", time.Since(startTime).Seconds()).
+			Msg("run adb shell in v2")
+	}()
 
 	raw, err := d.executeCommand(fmt.Sprintf("shell,v2,raw:%s", cmd))
 	if err != nil {
@@ -359,39 +376,11 @@ func (d *Device) createDeviceTransport() (tp transport, err error) {
 		return transport{}, err
 	}
 
-	if err = tp.Send(fmt.Sprintf("host:transport:%s", d.serial)); err != nil {
-		return transport{}, err
-	}
-	err = tp.VerifyResponse()
+	err = tp.SendWithCheck(fmt.Sprintf("host:transport:%s", d.serial))
 	return
 }
 
 func (d *Device) executeCommand(command string, onlyVerifyResponse ...bool) (raw []byte, err error) {
-	startTime := time.Now()
-	defer func() {
-		// log elapsed seconds for shell execution
-		elapsed := time.Since(startTime).Seconds()
-		if strings.HasPrefix(command, "shell,v2,raw:") {
-			cmd := strings.TrimPrefix(command, "shell,v2,raw:")
-			log.Debug().Str("cmd",
-				fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
-				Float64("elapsed(s)", elapsed).
-				Msg("run adb shell in v2")
-		} else if strings.HasPrefix(command, "shell:") {
-			cmd := strings.TrimPrefix(command, "shell:")
-			log.Debug().Str("cmd",
-				fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
-				Float64("elapsed(s)", elapsed).
-				Msg("run adb shell")
-		} else {
-			cmd := strings.ReplaceAll(command, ":", " ")
-			log.Debug().Str("command",
-				fmt.Sprintf("adb -s %s %s", d.serial, cmd)).
-				Float64("elapsed(s)", elapsed).
-				Msg("run adb command")
-		}
-	}()
-
 	if len(onlyVerifyResponse) == 0 {
 		onlyVerifyResponse = []bool{false}
 	}
@@ -402,11 +391,7 @@ func (d *Device) executeCommand(command string, onlyVerifyResponse ...bool) (raw
 	}
 	defer func() { _ = tp.Close() }()
 
-	if err = tp.Send(command); err != nil {
-		return nil, err
-	}
-
-	if err = tp.VerifyResponse(); err != nil {
+	if err = tp.SendWithCheck(command); err != nil {
 		return nil, err
 	}
 
@@ -530,13 +515,12 @@ func (d *Device) installViaABBExec(apk io.ReadSeeker) (raw []byte, err error) {
 		return nil, err
 	}
 	defer func() { _ = tp.Close() }()
-	if err = tp.Send(fmt.Sprintf("abb_exec:package\x00install\x00-t\x00-S\x00%d", filesize)); err != nil {
+
+	cmd := fmt.Sprintf("abb_exec:package\x00install\x00-t\x00-S\x00%d", filesize)
+	if err = tp.SendWithCheck(cmd); err != nil {
 		return nil, err
 	}
 
-	if err = tp.VerifyResponse(); err != nil {
-		return nil, err
-	}
 	_, err = apk.Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, err
@@ -594,7 +578,7 @@ func (d *Device) Uninstall(packageName string, keepData ...bool) (string, error)
 		args = append(args, "-k")
 	}
 	args = append(args, packageName)
-	return d.RunShellCommandV2("pm", args...)
+	return d.RunShellCommand("pm", args...)
 }
 
 func (d *Device) ScreenCap() ([]byte, error) {
