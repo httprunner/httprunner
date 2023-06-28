@@ -152,15 +152,13 @@ func (s *veDEMUIService) FindUI(uiTypes []string, byteSource []byte, options ...
 		}
 	}
 	if len(uiResult) == 0 {
-		err = fmt.Errorf("UI types %v not detected", uiTypes)
-		log.Error().Err(err).Msg("getUIResult failed")
-		return
+		return image.Rectangle{}, errors.Wrap(code.CVImageNotFoundError,
+			fmt.Sprintf("ui types %v not found", uiTypes))
 	}
 
 	var rects []image.Rectangle
 	for _, box := range uiResult {
 		rect = image.Rectangle{
-			// cvResult.Points 顺序：左上 -> 右上 -> 右下 -> 左下
 			Min: image.Point{
 				X: int(box.Point.X),
 				Y: int(box.Point.Y),
@@ -182,7 +180,7 @@ func (s *veDEMUIService) FindUI(uiTypes []string, byteSource []byte, options ...
 
 	if len(rects) == 0 {
 		return image.Rectangle{}, errors.Wrap(code.CVImageNotFoundError,
-			fmt.Sprintf("image not found"))
+			fmt.Sprintf("ui found, but out of scope %v", data.Scope))
 	}
 
 	// get index
@@ -197,7 +195,7 @@ func (s *veDEMUIService) FindUI(uiTypes []string, byteSource []byte, options ...
 	// index out of range
 	if idx >= len(rects) {
 		return image.Rectangle{}, errors.Wrap(code.CVImageNotFoundError,
-			fmt.Sprintf("image found, index %d out of range", idx))
+			fmt.Sprintf("ui found, but index %d out of range", idx))
 	}
 
 	return rects[idx], nil

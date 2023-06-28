@@ -203,7 +203,7 @@ func (dExt *DriverExt) FindDetectUIRectInUIKit(uiTypes []string, options ...Data
 		return 0, 0, 0, 0, err
 	}
 	var rect image.Rectangle
-	rect, err = service.FindUI(uiTypes, bufSource.Bytes())
+	rect, err = service.FindUI(uiTypes, bufSource.Bytes(), options...)
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}

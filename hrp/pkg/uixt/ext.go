@@ -614,15 +614,30 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
 		if imagePath, ok := action.Params.(string); ok {
-			return dExt.TapByCV(imagePath, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(action.IgnoreNotFoundError), WithDataIndex(action.Index))
+			return dExt.TapByCV(
+				imagePath,
+				WithDataIdentifier(action.Identifier),
+				WithDataIgnoreNotFoundError(action.IgnoreNotFoundError),
+				WithDataIndex(action.Index),
+				WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3])),
+			)
 		}
 		if uiParams, ok := action.Params.([]interface{}); ok {
 			var uiTypes []string
 			for _, uiParam := range uiParams {
-				uiType, _ := uiParam.(string)
+				uiType, ok := uiParam.(string)
+				if !ok {
+					continue
+				}
 				uiTypes = append(uiTypes, uiType)
 			}
-			return dExt.TapByUIDetection(uiTypes, WithDataIdentifier(action.Identifier), WithDataIgnoreNotFoundError(action.IgnoreNotFoundError), WithDataIndex(action.Index))
+			return dExt.TapByUIDetection(
+				uiTypes,
+				WithDataIdentifier(action.Identifier),
+				WithDataIgnoreNotFoundError(action.IgnoreNotFoundError),
+				WithDataIndex(action.Index),
+				WithDataScope(dExt.getAbsScope(action.Scope[0], action.Scope[1], action.Scope[2], action.Scope[3])),
+			)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
