@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
@@ -598,10 +597,13 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 			}
 		}
 
-		// take screenshot after each step
-		if _, _, err2 := uiDriver.TakeScreenShot(
-			builtin.GenNameWithTimestamp("%d_step_") + step.Name); err2 != nil {
+		// take screenshot and get screen texts by OCR
+		screenTexts, err2 := uiDriver.GetScreenTexts()
+		if err2 != nil {
 			log.Error().Err(err2).Str("step", step.Name).Msg("take screenshot failed on step finished")
+		} else if err3 := uiDriver.AutoPopupHandler(screenTexts); err3 != nil {
+			// automatic handling of pop-up windows on each step finished
+			log.Error().Err(err3).Msg("auto handle popup failed")
 		}
 
 		// save attachments

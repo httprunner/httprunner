@@ -539,8 +539,9 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 				parsedName = step.Name()
 			}
 			stepName := convertString(parsedName)
-			log.Info().Str("step", stepName).
-				Str("type", string(step.Type())).Msg("run step start")
+			stepType := string(step.Type())
+			log.Info().Str("step", stepName).Str("type", stepType).Msg("run step start")
+			stepStartTime := time.Now()
 
 			// run times of step
 			loopTimes := step.Struct().Loops
@@ -563,10 +564,10 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 				}
 
 				// run step
-				stepStartTime := time.Now().Unix()
+				startTime := time.Now().Unix()
 				stepResult, err = step.Run(r)
 				stepResult.Name = stepName + loopIndex
-				stepResult.StartTime = stepStartTime
+				stepResult.StartTime = startTime
 
 				r.updateSummary(stepResult)
 			}
@@ -576,19 +577,22 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 				r.sessionVariables[k] = v
 			}
 
+			stepElapsed := time.Since(stepStartTime).Seconds()
 			if err == nil {
-				log.Info().Str("step", stepResult.Name).
-					Str("type", string(stepResult.StepType)).
+				log.Info().Str("step", stepName).
+					Str("type", stepType).
 					Bool("success", true).
+					Float64("elapsed(s)", stepElapsed).
 					Interface("exportVars", stepResult.ExportVars).
 					Msg("run step end")
 				continue
 			}
 
 			// failed
-			log.Error().Err(err).Str("step", stepResult.Name).
-				Str("type", string(stepResult.StepType)).
+			log.Error().Err(err).Str("step", stepName).
+				Str("type", stepType).
 				Bool("success", false).
+				Float64("elapsed(s)", stepElapsed).
 				Msg("run step end")
 
 			// interrupted or timeout, abort running

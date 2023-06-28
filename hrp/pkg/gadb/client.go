@@ -5,7 +5,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
 const (
@@ -84,6 +87,12 @@ func (c Client) DeviceSerialList() (serials []string, err error) {
 }
 
 func (c Client) DeviceList() (devices []*Device, err error) {
+	defer func() {
+		if err != nil && errors.Cause(err) == nil {
+			err = errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
+		}
+	}()
+
 	var resp string
 	if resp, err = c.executeCommand("host:devices-l"); err != nil {
 		return
@@ -212,10 +221,7 @@ func (c Client) executeCommand(command string, onlyVerifyResponse ...bool) (resp
 	}
 	defer func() { _ = tp.Close() }()
 
-	if err = tp.Send(command); err != nil {
-		return "", err
-	}
-	if err = tp.VerifyResponse(); err != nil {
+	if err = tp.SendWithCheck(command); err != nil {
 		return "", err
 	}
 

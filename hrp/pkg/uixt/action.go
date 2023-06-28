@@ -377,7 +377,19 @@ func (dExt *DriverExt) GenAbsScope(x1, y1, x2, y2 float64) AbsScope {
 }
 
 func (dExt *DriverExt) DoAction(action MobileAction) error {
-	log.Info().Str("method", string(action.Method)).Interface("params", action.Params).Msg("start UI action")
+	log.Debug().
+		Str("method", string(action.Method)).
+		Interface("params", action.Params).
+		Msg("uixt action start")
+	actionStartTime := time.Now()
+
+	defer func() {
+		log.Debug().
+			Str("method", string(action.Method)).
+			Interface("params", action.Params).
+			Float64("elapsed(s)", time.Since(actionStartTime).Seconds()).
+			Msg("uixt action end")
+	}()
 
 	switch action.Method {
 	case ACTION_AppInstall:
@@ -506,7 +518,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 	case ACTION_ScreenShot:
 		// take screenshot
 		log.Info().Msg("take screenshot for current screen")
-		_, _, err := dExt.TakeScreenShot(builtin.GenNameWithTimestamp("%d_screenshot"))
+		_, _, err := dExt.takeScreenShot(builtin.GenNameWithTimestamp("%d_screenshot"))
 		return err
 	case ACTION_StartCamera:
 		return dExt.Driver.StartCamera()

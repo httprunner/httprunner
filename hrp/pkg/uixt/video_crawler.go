@@ -250,17 +250,13 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			}
 
 			// take screenshot and get screen texts by OCR
-			imageResult, err := l.driver.GetScreenResult()
+			screenResult, err := l.driver.GetScreenResult()
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				time.Sleep(3 * time.Second)
 				continue
 			}
-			screenResult := l.driver.cacheStepData.screenResults[imageResult.imagePath]
-			screenResult.Tags = []string{"live"}
-			if imageResult.LiveType != "" {
-				screenResult.Tags = append(screenResult.Tags, imageResult.LiveType)
-			}
+			screenResult.Tags = append([]string{"live"}, screenResult.Tags...)
 
 			// check live type and incr live count
 			if err := l.currentStat.incrLive(screenResult, l.driver); err != nil {
@@ -364,7 +360,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			return errors.Wrap(code.InterruptError, "feed crawler interrupted")
 		default:
 			// take screenshot and get screen texts by OCR
-			imageResult, err := dExt.GetScreenResult()
+			screenResult, err := dExt.GetScreenResult()
 			if err != nil {
 				if strings.Contains(err.Error(), "connect: connection refused") {
 					return err
@@ -373,17 +369,15 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				time.Sleep(3 * time.Second)
 				continue
 			}
-			screenResult := dExt.cacheStepData.screenResults[imageResult.imagePath]
 
 			// automatic handling of pop-up windows
-			if err := dExt.autoPopupHandler(screenResult); err != nil {
+			if err := dExt.AutoPopupHandler(screenResult.Texts); err != nil {
 				log.Error().Err(err).Msg("auto handle popup failed")
 				return err
 			}
 
 			// check if live video && run live crawler
-			texts := imageResult.OCRResult.ToOCRTexts()
-			if enterPoint, isLive := liveCrawler.checkLiveVideo(texts); isLive {
+			if enterPoint, isLive := liveCrawler.checkLiveVideo(screenResult.Texts); isLive {
 				log.Info().Msg("live video found")
 				if !liveCrawler.currentStat.isLiveTargetAchieved() {
 					if err := liveCrawler.Run(dExt, enterPoint); err != nil {

@@ -17,6 +17,7 @@ type syncTransport struct {
 	readTimeout time.Duration
 }
 
+// newSyncTransport creates a new sync transport with existed tcp socket connection
 func newSyncTransport(sock net.Conn, readTimeout time.Duration) syncTransport {
 	return syncTransport{sock: sock, readTimeout: readTimeout}
 }

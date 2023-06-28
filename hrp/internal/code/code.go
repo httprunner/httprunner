@@ -61,11 +61,12 @@ var (
 
 // android device related: [60, 70)
 var (
-	AndroidDeviceConnectionError = errors.New("android device connection error") // 60
-	AndroidDeviceUSBDriverError  = errors.New("android device USB driver error") // 61
-	AndroidShellExecError        = errors.New("android adb shell exec error")    // 62
-	AndroidScreenShotError       = errors.New("android screenshot error")        // 65
-	AndroidCaptureLogError       = errors.New("android capture log error")       // 66
+	AndroidDeviceConnectionError        = errors.New("android device general connection error") // 60
+	AndroidDeviceConnectionRefusedError = errors.New("android device connection refused")       // 61
+	AndroidShellExecError               = errors.New("android adb shell exec error")            // 62
+	AndroidDeviceOfflineError           = errors.New("android device offline")                  // 63
+	AndroidScreenShotError              = errors.New("android screenshot error")                // 65
+	AndroidCaptureLogError              = errors.New("android capture log error")               // 66
 )
 
 // UI automation related: [70, 80)
@@ -127,11 +128,12 @@ var errorsMap = map[error]int{
 	IOSCaptureLogError:       56,
 
 	// android related
-	AndroidDeviceConnectionError: 60,
-	AndroidDeviceUSBDriverError:  61,
-	AndroidShellExecError:        62,
-	AndroidScreenShotError:       65,
-	AndroidCaptureLogError:       66,
+	AndroidDeviceConnectionError:        60,
+	AndroidDeviceConnectionRefusedError: 61,
+	AndroidShellExecError:               62,
+	AndroidDeviceOfflineError:           63,
+	AndroidScreenShotError:              65,
+	AndroidCaptureLogError:              66,
 
 	// UI automation related
 	MobileUIDriverError:                   70,
