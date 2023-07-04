@@ -91,6 +91,7 @@ type DriverExt struct {
 
 	// cache step data
 	cacheStepData cacheStepData
+	lastStartTime time.Time
 }
 
 func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) {

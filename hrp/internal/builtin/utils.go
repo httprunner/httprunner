@@ -448,5 +448,5 @@ func GenNameWithTimestamp(tmpl string) string {
 	if !strings.Contains(tmpl, "%d") {
 		tmpl = tmpl + "_%d"
 	}
-	return fmt.Sprintf(tmpl, time.Now().Unix())
+	return fmt.Sprintf(tmpl, time.Now().UnixNano()/1e6)
 }

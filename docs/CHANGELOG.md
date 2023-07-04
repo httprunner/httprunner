@@ -1,5 +1,11 @@
 # Release History
 
+## v4.3.5 (2023-07-04)
+
+**go version**
+
+- feat: add `sleep_strcit` to sleep n seconds after the start of last action
+
 ## v4.3.4 (2023-06-01)
 
 **go version**

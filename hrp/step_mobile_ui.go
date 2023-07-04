@@ -256,10 +256,22 @@ func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobil
 	return &StepMobile{step: s.step}
 }
 
-// Sleep specify sleep seconds after last action
+// Sleep specify sleep seconds after the end of last action
 func (s *StepMobile) Sleep(n float64) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_Sleep,
+		Params:  n,
+		Options: nil,
+	})
+	return &StepMobile{step: s.step}
+}
+
+// Sleep specify sleep seconds after the start of last action
+// if n > actual process time of last action (t), sleep (n-t) seconds
+// if n < actual process time of last action, skip sleep
+func (s *StepMobile) SleepStrict(n float64) *StepMobile {
+	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+		Method:  uixt.ACTION_SleepStrict,
 		Params:  n,
 		Options: nil,
 	})

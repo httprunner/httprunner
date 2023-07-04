@@ -25,6 +25,7 @@ const (
 	ACTION_ScreenShot   ActionMethod = "screenshot"
 	ACTION_Sleep        ActionMethod = "sleep"
 	ACTION_SleepRandom  ActionMethod = "sleep_random"
+	ACTION_SleepStrict  ActionMethod = "sleep_strict"
 	ACTION_StartCamera  ActionMethod = "camera_start" // alias for app_launch camera
 	ACTION_StopCamera   ActionMethod = "camera_stop"  // alias for app_terminate camera
 
@@ -65,6 +66,7 @@ type MobileAction struct {
 	Method  ActionMethod   `json:"method,omitempty" yaml:"method,omitempty"`
 	Params  interface{}    `json:"params,omitempty" yaml:"params,omitempty"`
 	Options *ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
+	ActionOptions
 }
 
 // (x1, y1) is the top left corner, (x2, y2) is the bottom right corner
@@ -391,6 +393,9 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			Msg("uixt action end")
 	}()
 
+	if action.Method != ACTION_SleepStrict {
+		dExt.lastStartTime = time.Now()
+	}
 	switch action.Method {
 	case ACTION_AppInstall:
 		// TODO
@@ -498,18 +503,16 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 	case ACTION_Back:
 		return dExt.Driver.PressBack()
 	case ACTION_Sleep:
-		if param, ok := action.Params.(json.Number); ok {
-			seconds, _ := param.Float64()
-			time.Sleep(time.Duration(seconds*1000) * time.Millisecond)
-			return nil
-		} else if param, ok := action.Params.(float64); ok {
-			time.Sleep(time.Duration(param*1000) * time.Millisecond)
-			return nil
-		} else if param, ok := action.Params.(int64); ok {
-			time.Sleep(time.Duration(param) * time.Second)
-			return nil
+		seconds, err := convertToFloat64(action.Params)
+		if err != nil {
+			return errors.Wrapf(err, "invalid sleep params: %v(%T)", action.Params, action.Params)
 		}
-		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
+		time.Sleep(time.Duration(seconds) * time.Second)
+	case ACTION_SleepStrict:
+		if dExt.lastStartTime.IsZero() {
+			return sleepStrict(time.Now(), action.Params)
+		}
+		return sleepStrict(dExt.lastStartTime, action.Params)
 	case ACTION_SleepRandom:
 		if params, ok := action.Params.([]interface{}); ok {
 			return sleepRandom(time.Now(), params)
@@ -543,6 +546,8 @@ var errActionNotImplemented = errors.New("UI action not implemented")
 
 func convertToFloat64(val interface{}) (float64, error) {
 	switch v := val.(type) {
+	case json.Number:
+		return v.Float64()
 	case float64:
 		return v, nil
 	case int:
@@ -552,6 +557,26 @@ func convertToFloat64(val interface{}) (float64, error) {
 	default:
 		return 0, fmt.Errorf("invalid type for conversion to float64: %T, value: %+v", val, val)
 	}
+}
+
+// sleepStrict sleeps with given params
+// startTime is used to correct sleep duration caused by the process time of last action
+func sleepStrict(startTime time.Time, params interface{}) error {
+	strictSeconds, err := convertToFloat64(params)
+	if err != nil {
+		return err
+	}
+	elapsed := time.Since(startTime).Seconds()
+	dur := strictSeconds - elapsed
+	if dur <= 0 {
+		log.Info().Float64("elapsed", elapsed).
+			Interface("strategy_params", params).Msg("elapsed duration >= strict seconds, skip sleep")
+	} else {
+		log.Info().Float64("sleepDuration", dur).Float64("elapsed", elapsed).
+			Interface("strategy_params", params).Msg("sleep remaining strict seconds")
+		time.Sleep(time.Duration(math.Ceil(dur*1000)) * time.Millisecond)
+	}
+	return nil
 }
 
 // sleepRandom sleeps random time with given params
