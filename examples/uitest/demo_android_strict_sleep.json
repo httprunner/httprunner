@@ -1,0 +1,68 @@
+{
+    "config": {
+        "name": "浏览器时间戳截图",
+        "variables": {
+            "device": "${ENV(SerialNumber)}"
+        },
+        "android": [
+            {
+                "serial": "$device"
+            }
+        ]
+    },
+    "teststeps": [
+        {
+            "name": "打开浏览器local-time时间戳界面",
+            "android": {
+                "actions": [
+                    {
+                        "method": "home"
+                    },
+                    {
+                        "method": "swipe_to_tap_app",
+                        "params": "local",
+                        "options": {
+                            "max_retry_times": 5
+                        }
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 7
+                    }
+                ]
+            }
+        },
+        {
+            "name": "循环2次，每次截图四张，截图间隔为1s/2s/3s",
+            "android": {
+                "actions": [
+                    {
+                        "method": "screenshot"
+                    },
+                    {
+                        "method": "sleep_strict",
+                        "params": 1
+                    },
+                    {
+                        "method": "screenshot"
+                    },
+                    {
+                        "method": "sleep_strict",
+                        "params": 2
+                    },
+                    {
+                        "method": "screenshot"
+                    },
+                    {
+                        "method": "sleep_strict",
+                        "params": 3
+                    },
+                    {
+                        "method": "screenshot"
+                    }
+                ]
+            },
+            "loops": 2
+        }
+    ]
+}
