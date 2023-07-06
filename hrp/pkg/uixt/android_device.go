@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
@@ -156,7 +157,8 @@ func (dev *AndroidDevice) LogEnabled() bool {
 
 func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
 	var driver WebDriver
-	if dev.UIA2 {
+	envDisableUIA2 := env.DISABLE_UIAUTOMATOR_SERVER == "true"
+	if dev.UIA2 || !envDisableUIA2 {
 		driver, err = dev.NewUSBDriver(capabilities)
 	} else {
 		driver, err = dev.NewAdbDriver()
