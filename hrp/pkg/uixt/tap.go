@@ -5,6 +5,10 @@ import (
 )
 
 func (dExt *DriverExt) TapAbsXY(x, y float64, options ...ActionOption) error {
+	// close popup if necessary
+	if dExt.ClosePopup {
+		dExt.ClosePopupHandler()
+	}
 	// tap on absolute coordinate [x, y]
 	return dExt.Driver.TapFloat(x, y, options...)
 }
@@ -73,6 +77,11 @@ func (dExt *DriverExt) DoubleTapXY(x, y float64) error {
 		return fmt.Errorf("x, y percentage should be < 1, got x=%v, y=%v", x, y)
 	}
 
+	// close popup if necessary
+	if dExt.ClosePopup {
+		dExt.ClosePopupHandler()
+	}
+
 	x = x * float64(dExt.windowSize.Width)
 	y = y * float64(dExt.windowSize.Height)
 	return dExt.Driver.DoubleTapFloat(x, y)
@@ -86,6 +95,11 @@ func (dExt *DriverExt) DoubleTapOffset(param string, xOffset, yOffset float64) (
 	point, err := dExt.FindUIRectInUIKit(param)
 	if err != nil {
 		return err
+	}
+
+	// close popup if necessary
+	if dExt.ClosePopup {
+		dExt.ClosePopupHandler()
 	}
 
 	return dExt.Driver.DoubleTapFloat(point.X+xOffset, point.Y+yOffset)

@@ -26,6 +26,7 @@ type ImageResult struct {
 	imagePath string
 	URL       string     `json:"url"`       // image uploaded url
 	OCRResult OCRResults `json:"ocrResult"` // OCR texts
+	CPResult  CPResults  `json:closeResult` // close popup
 	LiveType  string     `json:"liveType"`  // 直播间类型
 }
 
@@ -151,6 +152,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 				resp.StatusCode, string(results)))
 		return
 	}
+	log.Debug().Str("resp body", string(results)).Msg("get response from veDEM image service")
 
 	var imageResponse APIResponseImage
 	err = json.Unmarshal(results, &imageResponse)
@@ -214,4 +216,11 @@ func getRectangleCenterPoint(rect image.Rectangle) (point PointF) {
 		Y: y + height*0.5,
 	}
 	return point
+}
+
+func getCenterPoint(point PointF, width, height float64) PointF {
+	return PointF{
+		X: point.X + width*0.5,
+		Y: point.Y + height*0.5,
+	}
 }

@@ -123,6 +123,12 @@ func WithXCTest(bundleID string) IOSDeviceOption {
 	}
 }
 
+func WithClosePopup(isTrue bool) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.ClosePopup = isTrue
+	}
+}
+
 func WithIOSPerfOptions(options ...gidevice.PerfOption) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.PerfOptions = &gidevice.PerfOptions{}
@@ -214,6 +220,9 @@ func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
 	if dev.DismissAlertButtonSelector != "" {
 		deviceOptions = append(deviceOptions, WithDismissAlertButtonSelector(dev.DismissAlertButtonSelector))
 	}
+	if dev.ClosePopup {
+		deviceOptions = append(deviceOptions, WithClosePopup(true))
+	}
 	return
 }
 
@@ -264,6 +273,7 @@ type IOSDevice struct {
 	MjpegPort      int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
 	LogOn          bool                  `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 	XCTestBundleID string                `json:"xctest_bundle_id,omitempty" yaml:"xctest_bundle_id,omitempty"`
+	ClosePopup     bool                  `json:"close_popup,omitempty" yaml:"close_popup,omitempty"`
 
 	// switch to iOS springboard before init WDA session
 	ResetHomeOnStartup bool `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
@@ -352,6 +362,8 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 			return nil, err
 		}
 	}
+
+	driverExt.ClosePopup = dev.ClosePopup
 
 	return driverExt, nil
 }

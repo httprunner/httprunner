@@ -88,6 +88,7 @@ type DriverExt struct {
 	doneMjpegStream chan bool
 	ImageService    IImageService // used to extract image data
 	interruptSignal chan os.Signal
+	ClosePopup      bool
 
 	// cache step data
 	cacheStepData cacheStepData
@@ -110,6 +111,7 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 		return nil, err
 	}
 
+	// TODO remove ImageService from dExt
 	if dExt.ImageService, err = newVEDEMImageService("ocr", "upload", "liveType"); err != nil {
 		return nil, err
 	}
