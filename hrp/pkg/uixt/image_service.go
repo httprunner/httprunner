@@ -24,10 +24,11 @@ var client = &http.Client{
 
 type ImageResult struct {
 	imagePath string
-	URL       string     `json:"url"`       // image uploaded url
-	OCRResult OCRResults `json:"ocrResult"` // OCR texts
-	CPResult  CPResults  `json:closeResult` // close popup
-	LiveType  string     `json:"liveType"`  // 直播间类型
+	URL       string      `json:"url"`         // image uploaded url
+	OCRResult OCRResults  `json:"ocrResult"`   // OCR texts
+	CPResult  CPResults   `json:"closeResult"` // close popup
+	LiveType  string      `json:"liveType"`    // 直播间类型
+	UIResult  UIResultMap `json:"uiResult"`    // 图标检测
 }
 
 type APIResponseImage struct {
@@ -48,6 +49,11 @@ func newVEDEMImageService(actions ...string) (*veDEMImageService, error) {
 	}, nil
 }
 
+func (v *veDEMImageService) WithUITypes(uiTypes ...string) *veDEMImageService {
+	v.uiTypes = uiTypes
+	return v
+}
+
 // veDEMImageService implements IImageService interface
 // actions:
 // 	ocr - get ocr texts
@@ -57,6 +63,7 @@ func newVEDEMImageService(actions ...string) (*veDEMImageService, error) {
 // 	close - get close popup
 type veDEMImageService struct {
 	actions []string
+	uiTypes []string
 }
 
 func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
@@ -66,6 +73,9 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	for _, action := range s.actions {
 		bodyWriter.WriteField("actions", action)
+	}
+	for _, uiType := range s.uiTypes {
+		bodyWriter.WriteField("uiTypes", uiType)
 	}
 	bodyWriter.WriteField("ocrCluster", "highPrecision")
 
