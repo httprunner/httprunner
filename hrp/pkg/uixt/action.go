@@ -35,6 +35,7 @@ const (
 	SelectorOCR           string = "ui_ocr"
 	SelectorImage         string = "ui_image"
 	SelectorForegroundApp string = "ui_foreground_app"
+	SelectorLiveType      string = "ui_live_type"
 	// assertions
 	AssertionEqual     string = "equal"
 	AssertionNotEqual  string = "not_equal"

@@ -274,27 +274,33 @@ func (v *responseObject) searchRegexp(expr string) interface{} {
 	return expr
 }
 
-func validateUI(ud *uixt.DriverExt, iValidators []interface{}) (validateResults []*ValidationResult, err error) {
+func validateUI(ud *uixt.DriverExt, iValidators []interface{}, parser *Parser, variablesMapping map[string]interface{}) (validateResults []*ValidationResult, err error) {
 	for _, iValidator := range iValidators {
 		validator, ok := iValidator.(Validator)
 		if !ok {
 			return nil, errors.New("validator type error")
 		}
 
-		validataResult := &ValidationResult{
+		validateResult := &ValidationResult{
 			Validator:   validator,
 			CheckResult: "fail",
 		}
 
 		// parse check value
 		if !strings.HasPrefix(validator.Check, "ui_") {
-			validataResult.CheckResult = "skip"
+			validateResult.CheckResult = "skip"
 			log.Warn().Interface("validator", validator).Msg("skip validator")
-			validateResults = append(validateResults, validataResult)
+			validateResults = append(validateResults, validateResult)
 			continue
 		}
 
-		expected, ok := validator.Expect.(string)
+		// parse expected value
+		expectValue, err := parser.Parse(validator.Expect, variablesMapping)
+		if err != nil {
+			return nil, errors.New("failed to parse expected value")
+		}
+
+		expected, ok := expectValue.(string)
 		if !ok {
 			return nil, errors.New("validator expect should be string")
 		}
@@ -303,8 +309,8 @@ func validateUI(ud *uixt.DriverExt, iValidators []interface{}) (validateResults 
 			return validateResults, errors.New("step validation failed")
 		}
 
-		validataResult.CheckResult = "pass"
-		validateResults = append(validateResults, validataResult)
+		validateResult.CheckResult = "pass"
+		validateResults = append(validateResults, validateResult)
 	}
 	return validateResults, nil
 }

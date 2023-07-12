@@ -280,6 +280,8 @@ func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...s
 		result = (dExt.IsImageExist(expected) == exp)
 	case SelectorForegroundApp:
 		result = ((dExt.Driver.AssertForegroundApp(expected) == nil) == exp)
+	case SelectorLiveType:
+		result = (dExt.AssertLiveType(expected) == exp)
 	}
 
 	if !result {

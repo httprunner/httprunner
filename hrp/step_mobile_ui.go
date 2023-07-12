@@ -512,6 +512,21 @@ func (s *StepMobileUIValidation) Run(r *SessionRunner) (*StepResult, error) {
 	return runStepMobileUI(r, s.step)
 }
 
+func (s *StepMobileUIValidation) AssertLiveType(liveType string, msg ...string) *StepMobileUIValidation {
+	v := Validator{
+		Check:  uixt.SelectorLiveType,
+		Assert: uixt.AssertionExists,
+		Expect: liveType,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("cv image [%s] not found", liveType)
+	}
+	s.step.Validators = append(s.step.Validators, v)
+	return s
+}
+
 func (r *HRPRunner) initUIClient(uuid string, osType string) (client *uixt.DriverExt, err error) {
 	// avoid duplicate init
 	if uuid == "" && len(r.uiClients) > 0 {
@@ -654,7 +669,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	}
 
 	// validate
-	validateResults, err := validateUI(uiDriver, step.Validators)
+	validateResults, err := validateUI(uiDriver, step.Validators, s.caseRunner.parser, stepVariables)
 	if err != nil {
 		if !code.IsErrorPredefined(err) {
 			err = errors.Wrap(code.MobileUIValidationError, err.Error())
