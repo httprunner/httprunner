@@ -141,6 +141,12 @@ var errorsMap = map[error]int{
 	OCRServiceConnectionError: 82,
 	OCRResponseError:          83,
 	OCRTextNotFoundError:      84,
+
+	CVEnvMissedError:         90,
+	CVRequestError:           91,
+	CVServiceConnectionError: 92,
+	CVResponseError:          93,
+	CVImageNotFoundError:     94,
 }
 
 func IsErrorPredefined(err error) bool {
