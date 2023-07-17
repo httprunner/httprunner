@@ -59,7 +59,10 @@ func (dExt *DriverExt) FindPopupCloseButton(options ...ActionOption) (point Poin
 	actionOptions := NewActionOptions(options...)
 	// get index
 	idx := actionOptions.Index
-	if idx < 0 {
+	if idx > 0 {
+		// NOTICE: index start from 1
+		idx = idx - 1
+	} else if idx < 0 {
 		idx = len(cpResult) + idx
 	}
 

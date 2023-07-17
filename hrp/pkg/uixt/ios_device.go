@@ -318,6 +318,7 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
 
+	// TODO: wait 10 seconds for iOS driver done
 	if dev.ResetHomeOnStartup {
 		log.Info().Msg("go back to home screen")
 		if err = driver.Homescreen(); err != nil {

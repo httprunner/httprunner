@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"image"
 	"regexp"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -94,7 +96,7 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (
 			}
 		} else {
 			// regex off, check if match exactly
-			if ocrText.Text != text {
+			if !strings.Contains(ocrText.Text, text) {
 				continue
 			}
 		}
@@ -109,7 +111,10 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (
 
 	// get index
 	idx := actionOptions.Index
-	if idx < 0 {
+	if idx > 0 {
+		// NOTICE: index start from 1
+		idx = idx - 1
+	} else if idx < 0 {
 		idx = len(results) + idx
 	}
 
@@ -176,6 +181,8 @@ func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error)
 }
 
 func (dExt *DriverExt) GetScreenTexts() (ocrTexts OCRTexts, err error) {
+	// wait 500 ms for last swipe done
+	time.Sleep(500 * time.Millisecond)
 	screenResult, err := dExt.GetScreenResult()
 	if err != nil {
 		return

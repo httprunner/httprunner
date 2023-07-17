@@ -66,6 +66,14 @@ type MobileAction struct {
 	Method  ActionMethod   `json:"method,omitempty" yaml:"method,omitempty"`
 	Params  interface{}    `json:"params,omitempty" yaml:"params,omitempty"`
 	Options *ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
+	ActionOptions
+}
+
+func (ma MobileAction) GetOptions() []ActionOption {
+	if ma.Options != nil {
+		return ma.Options.Options()
+	}
+	return ma.ActionOptions.Options()
 }
 
 // (x1, y1) is the top left corner, (x2, y2) is the bottom right corner
@@ -404,19 +412,19 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			ACTION_AppLaunch, action.Params)
 	case ACTION_SwipeToTapApp:
 		if appName, ok := action.Params.(string); ok {
-			return dExt.swipeToTapApp(appName, action.Options.Options()...)
+			return dExt.swipeToTapApp(appName, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params, should be app name(string), got %v",
 			ACTION_SwipeToTapApp, action.Params)
 	case ACTION_SwipeToTapText:
 		if text, ok := action.Params.(string); ok {
-			return dExt.swipeToTapTexts([]string{text}, action.Options.Options()...)
+			return dExt.swipeToTapTexts([]string{text}, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params, should be app text(string), got %v",
 			ACTION_SwipeToTapText, action.Params)
 	case ACTION_SwipeToTapTexts:
 		if texts, ok := action.Params.([]string); ok {
-			return dExt.swipeToTapTexts(texts, action.Options.Options()...)
+			return dExt.swipeToTapTexts(texts, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params, should be app text([]string), got %v",
 			ACTION_SwipeToTapText, action.Params)
@@ -442,7 +450,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			x, _ := location[0].(float64)
 			y, _ := location[1].(float64)
-			return dExt.TapXY(x, y, action.Options.Options()...)
+			return dExt.TapXY(x, y, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapXY, action.Params)
 	case ACTION_TapAbsXY:
@@ -453,22 +461,22 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 			}
 			x, _ := location[0].(float64)
 			y, _ := location[1].(float64)
-			return dExt.TapAbsXY(x, y, action.Options.Options()...)
+			return dExt.TapAbsXY(x, y, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapAbsXY, action.Params)
 	case ACTION_Tap:
 		if param, ok := action.Params.(string); ok {
-			return dExt.Tap(param, action.Options.Options()...)
+			return dExt.Tap(param, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_Tap, action.Params)
 	case ACTION_TapByOCR:
 		if ocrText, ok := action.Params.(string); ok {
-			return dExt.TapByOCR(ocrText, action.Options.Options()...)
+			return dExt.TapByOCR(ocrText, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
 		if imagePath, ok := action.Params.(string); ok {
-			return dExt.TapByCV(imagePath, action.Options.Options()...)
+			return dExt.TapByCV(imagePath, action.GetOptions()...)
 		}
 		if uiParams, ok := action.Params.([]interface{}); ok {
 			var uiTypes []string
@@ -479,7 +487,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 				}
 				uiTypes = append(uiTypes, uiType)
 			}
-			return dExt.TapByUIDetection(uiTypes, action.Options.Options()...)
+			return dExt.TapByUIDetection(uiTypes, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
@@ -499,14 +507,14 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTap, action.Params)
 	case ACTION_Swipe:
-		swipeAction := dExt.prepareSwipeAction(action.Options.Options()...)
+		swipeAction := dExt.prepareSwipeAction(action.GetOptions()...)
 		return swipeAction(dExt)
 	case ACTION_Input:
 		// input text on current active element
 		// append \n to send text with enter
 		// send \b\b\b to delete 3 chars
 		param := fmt.Sprintf("%v", action.Params)
-		return dExt.Driver.Input(param, action.Options.Options()...)
+		return dExt.Driver.Input(param, action.GetOptions()...)
 	case ACTION_Back:
 		return dExt.Driver.PressBack()
 	case ACTION_Sleep:

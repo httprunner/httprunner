@@ -1,5 +1,18 @@
 # Release History
 
+## v4.3.5 (2023-07-17)
+
+**go version**
+
+- feat: `tap_cv` action supports ui type detection and tap
+- feat: support auto close popups button detection and tap by indicating `close_popup` in testcase config
+- feat: support scenario(`ui_live_type`) validation
+- fix: wait 500 ms for last swipe done before GetScreenResult especially for iOS devices
+- change: ocr texts default validation method(when regex off): equal -> contains
+- compatibility: add default `max_retry_times` for `swipe_to_tap_app` action
+- compatibility: support indicating `options` separately in `actions` level
+- compatibility: `index` starts from 1 if index > 0
+
 ## v4.3.4 (2023-06-01)
 
 **go version**

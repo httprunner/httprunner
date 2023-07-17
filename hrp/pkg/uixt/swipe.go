@@ -141,13 +141,14 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		}
 		points, err := screenTexts.FindTexts(texts, dExt.ParseActionOptions(options...)...)
 		if err != nil {
+			log.Warn().Msgf("swipeToTapTexts failed: %s", err.Error())
 			// target texts not found, try to auto handle popup
 			if e := dExt.AutoPopupHandler(screenTexts); e != nil {
 				log.Error().Err(e).Msg("auto handle popup failed")
 			}
 			return err
 		}
-
+		log.Info().Strs("tests", texts).Interface("results", points).Msg("swipeToTapTexts successful")
 		// target texts found, pick the first one
 		point = points[0].Center() // FIXME
 		return nil
@@ -172,8 +173,17 @@ func (dExt *DriverExt) swipeToTapApp(appName string, options ...ActionOption) er
 		dExt.SwipeRight()
 	}
 
-	options = append(options, WithOffset(0, -25)) // tap app icon above the text
 	options = append(options, WithDirection("left"))
+
+	actionOptions := NewActionOptions(options...)
+	// default to retry 5 times
+	if actionOptions.MaxRetryTimes == 0 {
+		options = append(options, WithMaxRetryTimes(5))
+	}
+	// tap app icon above the text
+	if len(actionOptions.Offset) == 0 {
+		options = append(options, WithOffset(0, -25))
+	}
 
 	return dExt.swipeToTapTexts([]string{appName}, options...)
 }
