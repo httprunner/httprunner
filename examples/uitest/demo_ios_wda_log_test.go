@@ -51,7 +51,7 @@ func TestWDALog(t *testing.T) {
 		},
 	}
 
-	if err := testCase.Dump2JSON("wda_log_data.json"); err != nil {
+	if err := testCase.Dump2JSON("demo_ios_wda_log.json"); err != nil {
 		t.Fatal(err)
 	}
 

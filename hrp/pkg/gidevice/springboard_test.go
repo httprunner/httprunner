@@ -28,7 +28,7 @@ func setupSpringBoardSrv(t *testing.T) {
 
 func Test_springBoard_GetIcon(t *testing.T) {
 	setupSpringBoardSrv(t)
-	raw, _ := springBoardSrv.GetIconPNGData("com.tencent.xin")
+	raw, _ := springBoardSrv.GetIconPNGData("com.ss.iphone.ugc.Aweme")
 	img, format, err := image.Decode(raw)
 	if err != nil {
 		t.Fatal(err)
