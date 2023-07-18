@@ -212,12 +212,6 @@ func Test_remoteWD_Homescreen(t *testing.T) {
 func Test_remoteWD_AppLaunch(t *testing.T) {
 	setup(t)
 
-	// bundleId = "com.hustlzp.xcz"
-	// bundleId = "com.github.stormbreaker.prod"
-	// bundleId = "com.360buy.jdmobile"
-	// bundleId = "com.zhihu.ios"
-	// bundleId = "com.tencent.xin"
-	// bundleId = "com.jsmcc.ZP7267A6ES"
 	err := driver.AppLaunch(bundleId)
 	// err := driver.AppLaunch(bundleId, NewAppLaunchOption().WithShouldWaitForQuiescence(true))
 	// err := driver.AppLaunch(bundleId, NewAppLaunchOption().WithArguments([]string{"-AppleLanguages", "(Russian)"}))
