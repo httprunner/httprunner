@@ -8,10 +8,7 @@ import (
 )
 
 func OpenWiki() error {
-	sdk.SendEvent(sdk.EventTracking{
-		Category: "OpenWiki",
-		Action:   "hrp wiki",
-	})
+	sdk.SendGA4Event("hrp_wiki", nil)
 	log.Info().Msgf("%s https://httprunner.com", openCmd)
 	return myexec.RunCommand(openCmd, "https://httprunner.com")
 }

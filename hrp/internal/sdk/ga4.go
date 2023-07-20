@@ -3,7 +3,6 @@ package sdk
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/denisbrodbeck/machineid"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	uuid "github.com/satori/go.uuid"
 
@@ -159,18 +159,17 @@ func (g *GA4Client) SendEvent(event Event) error {
 			Msg("send GA4 event")
 	}
 	if err != nil {
-		return err
+		return errors.Wrap(err, "marshal GA4 request payload failed")
 	}
 
 	body := bytes.NewReader(bs)
 	res, err := g.httpClient.Post(uri, "application/json", body)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "request GA4 failed")
 	}
 
 	if res.StatusCode >= 300 {
-		log.Error().Int("statusCode", res.StatusCode).Msg("validation response got unexpected status")
-		return errors.New("validation response got unexpected status")
+		return fmt.Errorf("validation response got unexpected status %d", res.StatusCode)
 	}
 
 	if !g.debug {
@@ -179,13 +178,13 @@ func (g *GA4Client) SendEvent(event Event) error {
 
 	bs, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "read GA4 response body failed")
 	}
 
 	validationResponse := ValidationResponse{}
 	err = json.Unmarshal(bs, &validationResponse)
 	if err != nil {
-		return fmt.Errorf("unmarshal response body error: %w", err)
+		return errors.Wrap(err, "unmarshal GA4 response body failed")
 	}
 
 	log.Debug().
@@ -195,10 +194,18 @@ func (g *GA4Client) SendEvent(event Event) error {
 	return nil
 }
 
-func SendGA4Event(e IEvent) error {
+func SendGA4Event(name string, params map[string]interface{}) {
 	if env.DISABLE_GA == "true" {
 		// do not send GA4 events in CI environment
-		return nil
+		return
 	}
-	return gaClient.SendEvent(e)
+
+	event := Event{
+		Name:   name,
+		Params: params,
+	}
+	err := ga4Client.SendEvent(event)
+	if err != nil {
+		log.Error().Err(err).Msg("send GA4 event failed")
+	}
 }

@@ -55,10 +55,7 @@ func CopyFile(templateFile, targetFile string) error {
 
 func CreateScaffold(projectName string, pluginType PluginType, venv string, force bool) error {
 	// report event
-	sdk.SendEvent(sdk.EventTracking{
-		Category: "Scaffold",
-		Action:   "hrp startproject",
-	})
+	sdk.SendGA4Event("hrp_startproject", nil)
 
 	log.Info().
 		Str("projectName", projectName).

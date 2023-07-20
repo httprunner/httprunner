@@ -93,17 +93,14 @@ func (b *HRPBoomer) SetPython3Venv(venv string) *HRPBoomer {
 
 // Run starts to run load test for one or multiple testcases.
 func (b *HRPBoomer) Run(testcases ...ITestCase) {
-	event := sdk.EventTracking{
-		Category: "RunLoadTests",
-		Action:   "hrp boom",
-	}
-	// report start event
-	go sdk.SendEvent(event)
-	// report execution timing event
-	defer sdk.SendEvent(event.StartTiming("execution"))
-
-	// quit all plugins
+	startTime := time.Now()
 	defer func() {
+		// report boom event
+		sdk.SendGA4Event("hrp_boom", map[string]interface{}{
+			"engagement_time_msec": time.Since(startTime).Milliseconds(),
+		})
+
+		// quit all plugins
 		pluginMap.Range(func(key, value interface{}) bool {
 			if plugin, ok := value.(funplugin.IPlugin); ok {
 				plugin.Quit()

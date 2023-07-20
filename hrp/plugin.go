@@ -90,15 +90,14 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 	pluginMap.Store(pluginPath, plugin)
 
 	// report event for initializing plugin
-	event := sdk.EventTracking{
-		Category: "InitPlugin",
-		Action:   fmt.Sprintf("Init %s plugin", plugin.Type()),
-		Value:    0, // success
+	params := map[string]interface{}{
+		"type":   plugin.Type(),
+		"result": "success",
 	}
 	if err != nil {
-		event.Value = 1 // failed
+		params["result"] = "failed"
 	}
-	go sdk.SendEvent(event)
+	go sdk.SendGA4Event("init_plugin", params)
 
 	return
 }
