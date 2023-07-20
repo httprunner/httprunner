@@ -1,5 +1,12 @@
 # Release History
 
+## v4.3.5 (2023-07-20)
+
+**go version**
+
+- feat: support to reset driver automatically when uia2 crashed
+- feat: support to reset session when wda request failed
+
 ## v4.3.4 (2023-06-01)
 
 **go version**

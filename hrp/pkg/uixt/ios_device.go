@@ -660,9 +660,11 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver,
 	if wd.urlPrefix, err = url.Parse("http://" + dev.UDID); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceUSBDriverError, err.Error())
 	}
-	if _, err = wd.NewSession(capabilities); err != nil {
+	var sessionInfo SessionInfo
+	if sessionInfo, err = wd.NewSession(capabilities); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceUSBDriverError, err.Error())
 	}
+	wd.sessionId = sessionInfo.SessionId
 
 	// init WDA scale
 	if wd.scale, err = wd.Scale(); err != nil {
