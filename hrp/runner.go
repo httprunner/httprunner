@@ -194,14 +194,15 @@ func (r *HRPRunner) GenHTMLReport() *HRPRunner {
 // Run starts to execute one or multiple testcases.
 func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	log.Info().Str("hrp_version", version.VERSION).Msg("start running")
-	event := sdk.EventTracking{
-		Category: "RunAPITests",
-		Action:   "hrp run",
-	}
-	// report start event
-	go sdk.SendEvent(event)
-	// report execution timing event
-	defer sdk.SendEvent(event.StartTiming("execution"))
+
+	startTime := time.Now()
+	defer func() {
+		// report run event
+		sdk.SendGA4Event("hrp_run", map[string]interface{}{
+			"engagement_time_msec": time.Since(startTime).Milliseconds(),
+		})
+	}()
+
 	// record execution data to summary
 	s := newOutSummary()
 

@@ -2,7 +2,6 @@ package convert
 
 import (
 	_ "embed"
-	"fmt"
 	"path/filepath"
 
 	"github.com/rs/zerolog/log"
@@ -141,10 +140,13 @@ func (c *TCaseConverter) loadCase(casePath string, fromType FromType) error {
 
 func (c *TCaseConverter) Convert(casePath string, fromType FromType, outputType OutputType) error {
 	// report event
-	sdk.SendEvent(sdk.EventTracking{
-		Category: "ConvertTests",
-		Action:   fmt.Sprintf("hrp convert --to-%s", outputType.String()),
-	})
+	sdk.SendGA4Event(
+		"hrp_convert",
+		map[string]interface{}{
+			"from": fromType.String(),
+			"to":   outputType.String(),
+		},
+	)
 	log.Info().Str("path", casePath).
 		Str("fromType", fromType.String()).
 		Str("outputType", outputType.String()).

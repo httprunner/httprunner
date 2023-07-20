@@ -6,10 +6,7 @@ import (
 )
 
 func RunPytest(args []string) error {
-	sdk.SendEvent(sdk.EventTracking{
-		Category: "RunAPITests",
-		Action:   "hrp pytest",
-	})
+	sdk.SendGA4Event("hrp_pytest", nil)
 
 	args = append([]string{"run"}, args...)
 	return myexec.ExecPython3Command("httprunner", args...)
