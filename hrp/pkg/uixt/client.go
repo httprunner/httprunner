@@ -93,6 +93,119 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 	return
 }
 
+func (wd *Driver) resetUIA2Driver() (string, error) {
+	ud, err := NewUIADriver(NewCapabilities(), wd.urlPrefix.String())
+	if err != nil {
+		return "", err
+	}
+	wd.client = ud.client
+	wd.sessionId = ud.sessionId
+	return ud.sessionId, nil
+}
+
+func (wd *Driver) uia2HttpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (rawResp rawResponse, err error) {
+	disableRetryBool := len(disableRetry) > 0 && disableRetry[0]
+	for retryCount := 1; retryCount <= 5; retryCount++ {
+		rawResp, err = wd.httpRequest(method, rawURL, rawBody)
+		if err == nil || disableRetryBool {
+			return
+		}
+		// wait for UIA2 server to resume automatically
+		time.Sleep(3 * time.Second)
+		var oldSessionID, newSessionID string
+		oldSessionID = wd.sessionId
+		if newSessionID, err = wd.resetUIA2Driver(); err != nil {
+			log.Err(err).Msgf("failed to reset uia2 session, retry count: %v", retryCount)
+			continue
+		}
+		log.Debug().Str("new session", newSessionID).Str("old session", oldSessionID).Msgf("successful to reset uia2 session, retry count: %v", retryCount)
+		if oldSessionID != "" {
+			rawURL = strings.Replace(rawURL, oldSessionID, wd.sessionId, 1)
+		}
+	}
+	return
+}
+
+func (wd *Driver) uia2HttpGET(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.uia2HttpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
+}
+
+func (wd *Driver) uia2HttpGETWithRetry(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.uia2HttpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil, true)
+}
+
+func (wd *Driver) uia2HttpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+	var bsJSON []byte = nil
+	if data != nil {
+		if bsJSON, err = json.Marshal(data); err != nil {
+			return nil, err
+		}
+	}
+	return wd.uia2HttpRequest(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
+}
+
+func (wd *Driver) uia2HttpDELETE(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.uia2HttpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
+}
+
+func (wd *Driver) resetWDASession() (string, error) {
+	capabilities := NewCapabilities()
+	capabilities.WithDefaultAlertAction(AlertActionAccept)
+
+	// [[FBRoute POST:@"/session"].withoutSession respondWithTarget:self action:@selector(handleCreateSession:)]
+	data := make(map[string]interface{})
+	data["capabilities"] = map[string]interface{}{"alwaysMatch": capabilities}
+
+	var rawResp rawResponse
+	var err error
+	if rawResp, err = wd.httpPOST(data, "/session"); err != nil {
+		return "", err
+	}
+	var sessionInfo SessionInfo
+	if sessionInfo, err = rawResp.valueConvertToSessionInfo(); err != nil {
+		return "", err
+	}
+	return sessionInfo.SessionId, nil
+}
+
+func (wd *Driver) wdaHttpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (rawResp rawResponse, err error) {
+	disableRetryBool := len(disableRetry) > 0 && disableRetry[0]
+	for retryCount := 1; retryCount <= 5; retryCount++ {
+		rawResp, err = wd.httpRequest(method, rawURL, rawBody)
+		if err == nil || disableRetryBool {
+			return
+		}
+		if _, err = wd.resetWDASession(); err != nil {
+			log.Err(err).Msgf("failed to reset wda session, retry count: %v", retryCount)
+			continue
+		}
+		log.Debug().Str("new session", wd.sessionId).Msgf("successful to reset wda session, retry count: %v", retryCount)
+	}
+	return
+}
+
+func (wd *Driver) wdaHttpGET(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.wdaHttpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
+}
+
+func (wd *Driver) wdaHttpGETWithRetry(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.wdaHttpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil, true)
+}
+
+func (wd *Driver) wdaHttpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+	var bsJSON []byte = nil
+	if data != nil {
+		if bsJSON, err = json.Marshal(data); err != nil {
+			return nil, err
+		}
+	}
+	return wd.wdaHttpRequest(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
+}
+
+func (wd *Driver) wdaHttpDELETE(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.wdaHttpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
+}
+
 func convertToHTTPClient(conn net.Conn) *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
