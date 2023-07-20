@@ -28,9 +28,18 @@ const (
 	ga4MeasurementID = "G-9KHR3VC2LN"
 )
 
-var ga4Client *GA4Client
+var (
+	ga4Client *GA4Client
+	userID    string
+)
 
 func init() {
+	var err error
+	userID, err = machineid.ProtectedID("hrp")
+	if err != nil {
+		userID = uuid.NewV1().String()
+	}
+
 	// init GA4 client
 	ga4Client = NewGA4Client(ga4MeasurementID, ga4APISecret)
 }
@@ -48,11 +57,6 @@ func NewGA4Client(measurementID, apiSecret string, debug ...bool) *GA4Client {
 	dbg := false
 	if len(debug) > 0 {
 		dbg = debug[0]
-	}
-
-	userID, err := machineid.ProtectedID("hrp")
-	if err != nil {
-		userID = uuid.NewV1().String()
 	}
 
 	return &GA4Client{
