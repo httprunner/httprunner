@@ -93,14 +93,14 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 	return
 }
 
-func (wd *Driver) resetUIA2Driver() (string, error) {
+func (wd *Driver) resetUIA2Driver() error {
 	ud, err := NewUIADriver(NewCapabilities(), wd.urlPrefix.String())
 	if err != nil {
-		return "", err
+		return err
 	}
 	wd.client = ud.client
 	wd.sessionId = ud.sessionId
-	return ud.sessionId, nil
+	return nil
 }
 
 func (wd *Driver) uia2HttpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (rawResp rawResponse, err error) {
@@ -112,13 +112,12 @@ func (wd *Driver) uia2HttpRequest(method string, rawURL string, rawBody []byte, 
 		}
 		// wait for UIA2 server to resume automatically
 		time.Sleep(3 * time.Second)
-		var oldSessionID, newSessionID string
-		oldSessionID = wd.sessionId
-		if newSessionID, err = wd.resetUIA2Driver(); err != nil {
-			log.Err(err).Msgf("failed to reset uia2 session, retry count: %v", retryCount)
+		oldSessionID := wd.sessionId
+		if err = wd.resetUIA2Driver(); err != nil {
+			log.Err(err).Msgf("failed to reset uia2 driver, retry count: %v", retryCount)
 			continue
 		}
-		log.Debug().Str("new session", newSessionID).Str("old session", oldSessionID).Msgf("successful to reset uia2 session, retry count: %v", retryCount)
+		log.Debug().Str("new session", wd.sessionId).Str("old session", oldSessionID).Msgf("successful to reset uia2 driver, retry count: %v", retryCount)
 		if oldSessionID != "" {
 			rawURL = strings.Replace(rawURL, oldSessionID, wd.sessionId, 1)
 		}
