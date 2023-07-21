@@ -16,6 +16,11 @@ jobs:
 
     name: smoketest - httprunner - ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    services:
+      service-httpbin:
+        image: kennethreitz/httpbin
+        ports:
+           - 80:80
     strategy:
       fail-fast: false
       max-parallel: 6
@@ -30,10 +35,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         architecture: x64
-    - name: start httpbin server with docker
-      run: |
-        docker pull kennethreitz/httpbin
-        docker run -p 80:80 kennethreitz/httpbin
     - name: Install dependencies
       run: |
         pip install poetry
