@@ -1445,4 +1445,4 @@ upload = ["filetype", "requests-toolbelt"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "8d2344dcc7c5523df4816312ff6cdd7a91459a528a10bf3a9e3a64ff200577a3"
+content-hash = "675dfcd83503f921cd61fed07e6386febe77cc571c6fcc1b2a23b43b1ad81342"
