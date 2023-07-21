@@ -5,7 +5,9 @@ import json
 import os
 import os.path
 import platform
+import random
 import sys
+import time
 import uuid
 from multiprocessing import Queue
 from typing import Any, Dict, List, Text
@@ -16,6 +18,16 @@ from loguru import logger
 
 from httprunner import __version__, exceptions
 from httprunner.models import VariablesMapping
+
+
+def get_platform():
+    return {
+        "httprunner_version": __version__,
+        "python_version": "{} {}".format(
+            platform.python_implementation(), platform.python_version()
+        ),
+        "platform": platform.platform(),
+    }
 
 
 def init_sentry_sdk():
@@ -30,8 +42,78 @@ def init_sentry_sdk():
         scope.set_user({"id": uuid.getnode()})
 
 
-class GAClient(object):
+class GA4Client(object):
+    def __init__(
+        self, measurement_id: str, api_secret: str, debug: bool = False
+    ) -> None:
+        self.http_client = requests.Session()
 
+        self.debug = debug
+        if debug:
+            uri = "https://www.google-analytics.com/debug/mp/collect"
+        else:
+            uri = "https://www.google-analytics.com/mp/collect"
+
+        self.uri = f"{uri}?measurement_id={measurement_id}&api_secret={api_secret}"
+        self.user_id = str(uuid.getnode())
+        self.common_event_params = get_platform()
+
+        # do not send GA events in CI environment
+        self.__is_ci = os.getenv("DISABLE_GA") == "true"
+
+    def send_event(self, name: str, event_params: dict = None) -> None:
+        if self.__is_ci:
+            return
+
+        event_params = event_params or {}
+        event_params.update(self.common_event_params)
+        event = {
+            "name": name,
+            "params": event_params,
+        }
+
+        payload = {
+            "client_id": f"{random.randint(-2147483648, 2147483647)}.{int(time.time())}",
+            "user_id": self.user_id,
+            "timestamp_micros": int(time.time() * 10**6),
+            "events": [event],
+        }
+
+        if self.debug:
+            logger.debug(f"send GA4 event, uri: {self.uri}, payload: {payload}")
+
+        try:
+            resp = self.http_client.post(self.uri, json=payload, timeout=5)
+        except Exception as err:  # ProxyError, SSLError, ConnectionError
+            logger.error(f"request GA4 failed, error: {err}")
+            return
+
+        if resp.status_code >= 300:
+            logger.error(
+                f"validation response got unexpected status: {resp.status_code}"
+            )
+            return
+
+        if not self.debug:
+            return
+
+        try:
+            resp_body = resp.json()
+            logger.debug(
+                "get GA4 validation response, "
+                f"status code: {resp.status_code}, body: {resp_body}"
+            )
+        except Exception:
+            pass
+
+
+GA4_MEASUREMENT_ID = "G-9KHR3VC2LN"
+GA4_API_SECRET = "w7lKNQIrQsKNS4ikgMPp0Q"
+
+ga4_client = GA4Client(GA4_MEASUREMENT_ID, GA4_API_SECRET, False)
+
+
+class GAClient(object):
     version = "1"  # GA API Version
     report_url = "https://www.google-analytics.com/collect"
     report_debug_url = (
@@ -217,16 +299,6 @@ def omit_long_data(body, omit_len=512):
         appendix_str = appendix_str.encode("utf-8")
 
     return omitted_body + appendix_str
-
-
-def get_platform():
-    return {
-        "httprunner_version": __version__,
-        "python_version": "{} {}".format(
-            platform.python_implementation(), platform.python_version()
-        ),
-        "platform": platform.platform(),
-    }
 
 
 def sort_dict_by_custom_order(raw_dict: Dict, custom_order: List):
