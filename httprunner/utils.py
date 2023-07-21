@@ -10,7 +10,7 @@ import sys
 import time
 import uuid
 from multiprocessing import Queue
-from typing import Any, Dict, List, Text
+from typing import Any, Dict, List
 
 import requests
 import sentry_sdk
@@ -43,6 +43,10 @@ def init_sentry_sdk():
 
 
 class GA4Client(object):
+    """send events to Google Analytics 4 via Measurement Protocol.
+    get details in hrp/internal/sdk/ga4.go
+    """
+
     def __init__(
         self, measurement_id: str, api_secret: str, debug: bool = False
     ) -> None:
@@ -111,63 +115,6 @@ GA4_MEASUREMENT_ID = "G-9KHR3VC2LN"
 GA4_API_SECRET = "w7lKNQIrQsKNS4ikgMPp0Q"
 
 ga4_client = GA4Client(GA4_MEASUREMENT_ID, GA4_API_SECRET, False)
-
-
-class GAClient(object):
-    version = "1"  # GA API Version
-    report_url = "https://www.google-analytics.com/collect"
-    report_debug_url = (
-        "https://www.google-analytics.com/debug/collect"  # used for debug
-    )
-
-    def __init__(self, tracking_id: Text):
-        self.http_client = requests.Session()
-        self.label = f"v{__version__}"
-        self.common_params = {
-            "v": self.version,
-            "tid": tracking_id,  # Tracking ID / Property ID, XX-XXXXXXX-X
-            "cid": uuid.getnode(),  # Anonymous Client ID
-            "ua": f"HttpRunner/{__version__}",
-        }
-        # do not send GA events in CI environment
-        self.__is_ci = os.getenv("DISABLE_GA") == "true"
-
-    def track_event(self, category: Text, action: Text, value: int = 0):
-        if self.__is_ci:
-            return
-
-        data = {
-            "t": "event",  # Event hit type = event
-            "ec": category,  # Required. Event Category.
-            "ea": action,  # Required. Event Action.
-            "el": self.label,  # Optional. Event label, used as version.
-            "ev": value,  # Optional. Event value, must be non-negative integer
-        }
-        data.update(self.common_params)
-        try:
-            self.http_client.post(self.report_url, data=data, timeout=5)
-        except Exception:  # ProxyError, SSLError, ConnectionError
-            pass
-
-    def track_user_timing(self, category: Text, variable: Text, duration: int):
-        if self.__is_ci:
-            return
-
-        data = {
-            "t": "timing",  # Event hit type = timing
-            "utc": category,  # Required. user timing category. e.g. jsonLoader
-            "utv": variable,  # Required. timing variable. e.g. load
-            "utt": duration,  # Required. time took duration.
-            "utl": self.label,  # Optional. user timing label, used as version.
-        }
-        data.update(self.common_params)
-        try:
-            self.http_client.post(self.report_url, data=data, timeout=5)
-        except Exception:  # ProxyError, SSLError, ConnectionError
-            pass
-
-
-ga_client = GAClient("UA-114587036-1")
 
 
 def set_os_environ(variables_mapping):
