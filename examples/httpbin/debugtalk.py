@@ -6,9 +6,11 @@ import uuid
 
 from loguru import logger
 
+from httprunner.utils_test import HTTP_BIN_URL
+
 
 def get_httpbin_server():
-    return "https://httpbin.org"
+    return HTTP_BIN_URL
 
 
 def setup_testcase(variables):
@@ -17,7 +19,7 @@ def setup_testcase(variables):
 
 
 def teardown_testcase():
-    logger.info(f"teardown_testcase.")
+    logger.info("teardown_testcase.")
 
 
 def setup_teststep(request, variables):

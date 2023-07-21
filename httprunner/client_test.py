@@ -1,6 +1,7 @@
 import unittest
 
 from httprunner.client import HttpSession
+from httprunner.utils_test import HTTP_BIN_URL
 
 
 class TestHttpSession(unittest.TestCase):
@@ -8,7 +9,7 @@ class TestHttpSession(unittest.TestCase):
         self.session = HttpSession()
 
     def test_request_http(self):
-        self.session.request("get", "http://httpbin.org/get")
+        self.session.request("get", f"{HTTP_BIN_URL}/get")
         address = self.session.data.address
         self.assertGreater(len(address.server_ip), 0)
         self.assertEqual(address.server_port, 80)
@@ -26,7 +27,7 @@ class TestHttpSession(unittest.TestCase):
     def test_request_http_allow_redirects(self):
         self.session.request(
             "get",
-            "http://httpbin.org/redirect-to?url=https%3A%2F%2Fgithub.com",
+            f"{HTTP_BIN_URL}/redirect-to?url=https%3A%2F%2Fgithub.com",
             allow_redirects=True,
         )
         address = self.session.data.address
@@ -50,7 +51,7 @@ class TestHttpSession(unittest.TestCase):
     def test_request_http_not_allow_redirects(self):
         self.session.request(
             "get",
-            "http://httpbin.org/redirect-to?url=https%3A%2F%2Fgithub.com",
+            f"{HTTP_BIN_URL}/redirect-to?url=https%3A%2F%2Fgithub.com",
             allow_redirects=False,
         )
         address = self.session.data.address

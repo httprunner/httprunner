@@ -28,6 +28,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         architecture: x64
+    - name: start httpbin server with docker
+      run: |
+        docker pull kennethreitz/httpbin
+        docker run -p 80:80 kennethreitz/httpbin
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip

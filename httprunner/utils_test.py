@@ -10,6 +10,9 @@ from httprunner import __version__, loader, utils
 from httprunner.utils import ExtendJSONEncoder, merge_variables, ga4_client
 
 
+HTTP_BIN_URL = "http://127.0.0.1:80"
+
+
 class TestUtils(unittest.TestCase):
     def test_set_os_environ(self):
         self.assertNotIn("abc", os.environ)
@@ -121,10 +124,10 @@ class TestUtils(unittest.TestCase):
 
     def test_override_config_variables(self):
         step_variables = {"base_url": "$base_url", "foo1": "bar1"}
-        config_variables = {"base_url": "https://httpbin.org", "foo1": "bar111"}
+        config_variables = {"base_url": HTTP_BIN_URL, "foo1": "bar111"}
         self.assertEqual(
             merge_variables(step_variables, config_variables),
-            {"base_url": "https://httpbin.org", "foo1": "bar1"},
+            {"base_url": HTTP_BIN_URL, "foo1": "bar1"},
         )
 
     def test_cartesian_product_one(self):
