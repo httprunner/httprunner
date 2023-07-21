@@ -7,7 +7,7 @@ from pathlib import Path
 import toml
 
 from httprunner import __version__, loader, utils
-from httprunner.utils import ExtendJSONEncoder, merge_variables
+from httprunner.utils import ExtendJSONEncoder, merge_variables, ga4_client
 
 
 class TestUtils(unittest.TestCase):
@@ -160,3 +160,12 @@ class TestUtils(unittest.TestCase):
         pyproject = toml.loads(open(str(path)).read())
         pyproject_version = pyproject["tool"]["poetry"]["version"]
         self.assertEqual(pyproject_version, __version__)
+
+    def test_ga4_send_event(self):
+        ga4_client.send_event(
+            "httprunner_debug_event",
+            {
+                "a": 123,
+                "b": 456,
+            },
+        )
