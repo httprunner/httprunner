@@ -4,12 +4,13 @@ import requests
 
 from httprunner.parser import Parser
 from httprunner.response import ResponseObject, uniform_validator
+from httprunner.utils_test import HTTP_BIN_URL
 
 
 class TestResponse(unittest.TestCase):
     def setUp(self) -> None:
         resp = requests.post(
-            "https://httpbin.org/anything",
+            f"{HTTP_BIN_URL}/anything",
             json={
                 "locations": [
                     {"name": "Seattle", "state": "WA"},

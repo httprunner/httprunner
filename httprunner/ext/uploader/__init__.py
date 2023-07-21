@@ -47,7 +47,7 @@ import sys
 from typing import Text
 
 from httprunner.models import VariablesMapping, FunctionsMapping, TStep
-from httprunner.parser import parse_data, parse_variables_mapping
+from httprunner.parser import parse_data
 from loguru import logger
 
 try:
@@ -138,7 +138,6 @@ def multipart_encoder(**kwargs):
     ensure_upload_ready()
     fields_dict = {}
     for key, value in kwargs.items():
-
         if os.path.isabs(value):
             # value is absolute file path
             _file_path = value
