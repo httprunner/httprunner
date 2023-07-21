@@ -555,8 +555,9 @@ func (s UiSelectorHelper) Index(index int) UiSelectorHelper {
 // 2, the `className(String)` matches the image
 // widget class, and `enabled(boolean)` is true.
 // The code would look like this:
-//  `new UiSelector().className("android.widget.ImageView")
-//    .enabled(true).instance(2);`
+//
+//	`new UiSelector().className("android.widget.ImageView")
+//	  .enabled(true).instance(2);`
 func (s UiSelectorHelper) Instance(instance int) UiSelectorHelper {
 	s.value.WriteString(fmt.Sprintf(`.instance(%d)`, instance))
 	return s
