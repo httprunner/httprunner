@@ -50,7 +50,11 @@ func buildURL(baseURL, stepURL string) string {
 	// merge url
 	uStep.Scheme = uConfig.Scheme
 	uStep.Host = uConfig.Host
+	originalHasSuffix := strings.HasSuffix(uStep.Path, "/")
 	uStep.Path = path.Join(uConfig.Path, uStep.Path)
+	if originalHasSuffix && !strings.HasSuffix(uStep.Path, "/") {
+		uStep.Path += "/"
+	}
 
 	// base url missed
 	return uStep.String()
