@@ -1,7 +1,7 @@
 import unittest
 
 from httprunner.client import HttpSession
-from httprunner.utils_test import HTTP_BIN_URL
+from httprunner.utils import HTTP_BIN_URL
 
 
 class TestHttpSession(unittest.TestCase):

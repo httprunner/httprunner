@@ -4,7 +4,7 @@ import requests
 
 from httprunner.parser import Parser
 from httprunner.response import ResponseObject, uniform_validator
-from httprunner.utils_test import HTTP_BIN_URL
+from httprunner.utils import HTTP_BIN_URL
 
 
 class TestResponse(unittest.TestCase):

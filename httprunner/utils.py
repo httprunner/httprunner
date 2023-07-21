@@ -20,6 +20,15 @@ from httprunner import __version__, exceptions
 from httprunner.models import VariablesMapping
 
 
+""" run httpbin as test service
+https://github.com/postmanlabs/httpbin
+
+$ docker pull kennethreitz/httpbin
+$ docker run -p 80:80 kennethreitz/httpbin
+"""
+HTTP_BIN_URL = "http://127.0.0.1:80"
+
+
 def get_platform():
     return {
         "httprunner_version": __version__,
