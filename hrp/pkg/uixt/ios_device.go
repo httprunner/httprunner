@@ -474,7 +474,7 @@ func (dev *IOSDevice) forward(localPort, remotePort int) error {
 			rInnerConn, err := device.NewConnect(remotePort)
 			if err != nil {
 				log.Error().Err(err).Msg("connect to ios device failed")
-				os.Exit(code.GetErrorCode(code.IOSDeviceConnectionError))
+				continue
 			}
 
 			rConn := rInnerConn.RawConn()
@@ -484,11 +484,15 @@ func (dev *IOSDevice) forward(localPort, remotePort int) error {
 				go func(lConn, rConn net.Conn) {
 					if _, err := io.Copy(lConn, rConn); err != nil {
 						log.Error().Err(err).Msg("copy local -> remote")
+						rConn.Close()
+						accept.Close()
 					}
 				}(lConn, rConn)
 				go func(lConn, rConn net.Conn) {
 					if _, err := io.Copy(rConn, lConn); err != nil {
 						log.Error().Err(err).Msg("copy local <- remote")
+						rConn.Close()
+						accept.Close()
 					}
 				}(lConn, rConn)
 			}(accept)
