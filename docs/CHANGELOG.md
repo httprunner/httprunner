@@ -1,5 +1,14 @@
 # Release History
 
+## v4.3.5 (2023-07-21)
+
+- refactor: send events to Google Analytics 4, replace GA v1
+
+**python version**
+
+- change: upgrade pyyaml from 5.4.1 to 6.0.1
+- refactor: update httprunner dependencies
+
 ## v4.3.4 (2023-06-01)
 
 **go version**
