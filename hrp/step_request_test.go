@@ -165,7 +165,7 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").
 			SetRequestTimeout(10). // set global timeout to 10s
-			SetBaseURL("https://httpbin.org"),
+			SetBaseURL(HTTP_BIN_URL),
 		TestSteps: []IStep{
 			NewStep("step1").
 				GET("/delay/1").
@@ -181,7 +181,7 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	testcase2 := &TestCase{
 		Config: NewConfig("TestCase2").
 			SetRequestTimeout(10). // set global timeout to 10s
-			SetBaseURL("https://httpbin.org"),
+			SetBaseURL(HTTP_BIN_URL),
 		TestSteps: []IStep{
 			NewStep("step1").
 				GET("/delay/11").
@@ -198,7 +198,7 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	testcase3 := &TestCase{
 		Config: NewConfig("TestCase3").
 			SetRequestTimeout(10).
-			SetBaseURL("https://httpbin.org"),
+			SetBaseURL(HTTP_BIN_URL),
 		TestSteps: []IStep{
 			NewStep("step2").
 				GET("/delay/11").

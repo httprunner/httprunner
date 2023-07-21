@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const HTTP_BIN_URL = "http://127.0.0.1:80"
+
 func buildHashicorpGoPlugin() {
 	log.Info().Msg("[init] build hashicorp go plugin")
 	err := BuildPlugin(tmpl("plugin/debugtalk.go"), tmpl("debugtalk.bin"))
@@ -63,7 +65,7 @@ func assertRunTestCases(t *testing.T) {
 	refCase := TestCasePath(demoTestCaseWithPluginJSONPath)
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").
-			SetBaseURL("https://httpbin.org"),
+			SetBaseURL(HTTP_BIN_URL),
 		TestSteps: []IStep{
 			NewStep("testcase1-step1").
 				GET("/headers").
@@ -77,7 +79,7 @@ func assertRunTestCases(t *testing.T) {
 				AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
 			NewStep("testcase1-step3").CallRefCase(
 				&TestCase{
-					Config: NewConfig("testcase1-step3-ref-case").SetBaseURL("https://httpbin.org"),
+					Config: NewConfig("testcase1-step3-ref-case").SetBaseURL(HTTP_BIN_URL),
 					TestSteps: []IStep{
 						NewStep("ip").
 							GET("/ip").
