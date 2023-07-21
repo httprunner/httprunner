@@ -6,7 +6,7 @@ import uuid
 
 from loguru import logger
 
-from httprunner.utils_test import HTTP_BIN_URL
+from httprunner.utils import HTTP_BIN_URL
 
 
 def get_httpbin_server():

@@ -2,7 +2,7 @@ import os
 import unittest
 
 from httprunner import compat, exceptions, loader
-from httprunner.utils_test import HTTP_BIN_URL
+from httprunner.utils import HTTP_BIN_URL
 
 
 class TestCompat(unittest.TestCase):
