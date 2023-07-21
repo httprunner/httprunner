@@ -263,7 +263,8 @@ func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...Action
 // Swipe performs a swipe from one coordinate to another using the number of steps
 // to determine smoothness and speed. Each step execution is throttled to 5ms
 // per step. So for a 100 steps, the swipe will take about 1/2 second to complete.
-//  `steps` is the number of move steps sent to the system
+//
+//	`steps` is the number of move steps sent to the system
 func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error {
 	return ud.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
