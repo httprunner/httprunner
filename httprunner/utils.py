@@ -77,7 +77,7 @@ class GA4Client(object):
         }
 
         payload = {
-            "client_id": f"{random.randint(-2147483648, 2147483647)}.{int(time.time())}",
+            "client_id": f"{int(random.random() * 10**8)}.{int(time.time())}",
             "user_id": self.user_id,
             "timestamp_micros": int(time.time() * 10**6),
             "events": [event],
