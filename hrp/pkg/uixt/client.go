@@ -147,7 +147,7 @@ func (wd *Driver) uia2HttpDELETE(pathElem ...string) (rawResp rawResponse, err e
 	return wd.uia2HttpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *Driver) resetWDASession() (string, error) {
+func (wd *Driver) resetWDASession() error {
 	capabilities := NewCapabilities()
 	capabilities.WithDefaultAlertAction(AlertActionAccept)
 
@@ -158,13 +158,14 @@ func (wd *Driver) resetWDASession() (string, error) {
 	var rawResp rawResponse
 	var err error
 	if rawResp, err = wd.httpPOST(data, "/session"); err != nil {
-		return "", err
+		return err
 	}
 	var sessionInfo SessionInfo
 	if sessionInfo, err = rawResp.valueConvertToSessionInfo(); err != nil {
-		return "", err
+		return err
 	}
-	return sessionInfo.SessionId, nil
+	wd.sessionId = sessionInfo.SessionId
+	return nil
 }
 
 func (wd *Driver) wdaHttpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (rawResp rawResponse, err error) {
@@ -174,7 +175,9 @@ func (wd *Driver) wdaHttpRequest(method string, rawURL string, rawBody []byte, d
 		if err == nil || disableRetryBool {
 			return
 		}
-		if _, err = wd.resetWDASession(); err != nil {
+		// wait for WDA to resume automatically
+		time.Sleep(20 * time.Second)
+		if err = wd.resetWDASession(); err != nil {
 			log.Err(err).Msgf("failed to reset wda session, retry count: %v", retryCount)
 			continue
 		}
