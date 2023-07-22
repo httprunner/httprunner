@@ -121,10 +121,10 @@ class TestUtils(unittest.TestCase):
 
     def test_override_config_variables(self):
         step_variables = {"base_url": "$base_url", "foo1": "bar1"}
-        config_variables = {"base_url": "https://httpbin.org", "foo1": "bar111"}
+        config_variables = {"base_url": "https://postman-echo.com", "foo1": "bar111"}
         self.assertEqual(
             merge_variables(step_variables, config_variables),
-            {"base_url": "https://httpbin.org", "foo1": "bar1"},
+            {"base_url": "https://postman-echo.com", "foo1": "bar1"},
         )
 
     def test_cartesian_product_one(self):

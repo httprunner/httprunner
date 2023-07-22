@@ -17,7 +17,7 @@ class TestHttpSession(unittest.TestCase):
         self.assertGreater(address.client_port, 10000)
 
     def test_request_https(self):
-        self.session.request("get", "https://httpbin.org/get")
+        self.session.request("get", "https://postman-echo.com/get")
         address = self.session.data.address
         self.assertGreater(len(address.server_ip), 0)
         self.assertEqual(address.server_port, 443)
@@ -39,7 +39,7 @@ class TestHttpSession(unittest.TestCase):
     def test_request_https_allow_redirects(self):
         self.session.request(
             "get",
-            "https://httpbin.org/redirect-to?url=https%3A%2F%2Fgithub.com",
+            "https://postman-echo.com/redirect-to?url=https%3A%2F%2Fgithub.com",
             allow_redirects=True,
         )
         address = self.session.data.address
@@ -63,7 +63,7 @@ class TestHttpSession(unittest.TestCase):
     def test_request_https_not_allow_redirects(self):
         self.session.request(
             "get",
-            "https://httpbin.org/redirect-to?url=https%3A%2F%2Fgithub.com",
+            "https://postman-echo.com/redirect-to?url=https%3A%2F%2Fgithub.com",
             allow_redirects=False,
         )
         address = self.session.data.address
