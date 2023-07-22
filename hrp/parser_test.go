@@ -12,15 +12,15 @@ func TestBuildURL(t *testing.T) {
 	var url string
 
 	url = buildURL("https://postman-echo.com", "/get")
-	if !assert.Equal(t, url, "https://postman-echo.com/get") {
+	if !assert.Equal(t, url, "https://postman-echo.com/get/") {
 		t.Fatal()
 	}
 	url = buildURL("https://postman-echo.com", "get")
-	if !assert.Equal(t, url, "https://postman-echo.com/get") {
+	if !assert.Equal(t, url, "https://postman-echo.com/get/") {
 		t.Fatal()
 	}
 	url = buildURL("https://postman-echo.com/", "/get")
-	if !assert.Equal(t, url, "https://postman-echo.com/get") {
+	if !assert.Equal(t, url, "https://postman-echo.com/get/") {
 		t.Fatal()
 	}
 
@@ -40,29 +40,29 @@ func TestBuildURL(t *testing.T) {
 	}
 
 	url = buildURL("", "https://postman-echo.com/get")
-	if !assert.Equal(t, url, "https://postman-echo.com/get") {
+	if !assert.Equal(t, url, "https://postman-echo.com/get/") {
 		t.Fatal()
 	}
 
 	// notice: step request url > config base url
 	url = buildURL("https://postman-echo.com", "https://httpbin.org/get")
-	if !assert.Equal(t, url, "https://httpbin.org/get") {
+	if !assert.Equal(t, url, "https://httpbin.org/get/") {
 		t.Fatal()
 	}
 
 	// websocket url
 	url = buildURL("wss://ws.postman-echo.com/raw", "")
-	if !assert.Equal(t, url, "wss://ws.postman-echo.com/raw") {
+	if !assert.Equal(t, url, "wss://ws.postman-echo.com/raw/") {
 		t.Fatal()
 	}
 
 	url = buildURL("wss://ws.postman-echo.com", "/raw")
-	if !assert.Equal(t, url, "wss://ws.postman-echo.com/raw") {
+	if !assert.Equal(t, url, "wss://ws.postman-echo.com/raw/") {
 		t.Fatal()
 	}
 
 	url = buildURL("wss://ws.postman-echo.com/raw", "ws://echo.websocket.events")
-	if !assert.Equal(t, url, "ws://echo.websocket.events") {
+	if !assert.Equal(t, url, "ws://echo.websocket.events/") {
 		t.Fatal()
 	}
 }

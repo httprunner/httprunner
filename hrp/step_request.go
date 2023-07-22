@@ -173,7 +173,7 @@ func (r *requestBuilder) prepareUrlParams(stepVariables map[string]interface{}) 
 		// append params to url
 		paramStr := queryParams.Encode()
 		if strings.IndexByte(rawUrl, '?') == -1 {
-			rawUrl = rawUrl + "?" + paramStr
+			rawUrl = strings.TrimRight(rawUrl, "/") + "?" + paramStr
 		} else {
 			rawUrl = rawUrl + "&" + paramStr
 		}
