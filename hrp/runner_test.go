@@ -7,12 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
-)
 
-const HTTP_BIN_URL = "http://127.0.0.1:80"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+)
 
 func buildHashicorpGoPlugin() {
 	log.Info().Msg("[init] build hashicorp go plugin")
@@ -65,31 +64,26 @@ func assertRunTestCases(t *testing.T) {
 	refCase := TestCasePath(demoTestCaseWithPluginJSONPath)
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").
-			SetBaseURL(HTTP_BIN_URL),
+			SetBaseURL("https://postman-echo.com"),
 		TestSteps: []IStep{
 			NewStep("testcase1-step1").
 				GET("/headers").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
-				AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
-			NewStep("testcase1-step2").
-				GET("/user-agent").
-				Validate().
-				AssertEqual("status_code", 200, "check status code").
-				AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
-			NewStep("testcase1-step3").CallRefCase(
+				AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check http response Content-Type"),
+			NewStep("testcase1-step2").CallRefCase(
 				&TestCase{
-					Config: NewConfig("testcase1-step3-ref-case").SetBaseURL(HTTP_BIN_URL),
+					Config: NewConfig("testcase1-step3-ref-case").SetBaseURL("https://postman-echo.com"),
 					TestSteps: []IStep{
 						NewStep("ip").
 							GET("/ip").
 							Validate().
 							AssertEqual("status_code", 200, "check status code").
-							AssertEqual("headers.\"Content-Type\"", "application/json", "check http response Content-Type"),
+							AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check http response Content-Type"),
 					},
 				},
 			),
-			NewStep("testcase1-step4").CallRefCase(&refCase),
+			NewStep("testcase1-step3").CallRefCase(&refCase),
 		},
 	}
 	testcase2 := &TestCase{

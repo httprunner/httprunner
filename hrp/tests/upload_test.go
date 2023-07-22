@@ -6,12 +6,10 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp"
 )
 
-const HTTP_BIN_URL = "http://127.0.0.1:80"
-
 func TestCaseUploadFile(t *testing.T) {
 	testcase := &hrp.TestCase{
 		Config: hrp.NewConfig("test upload file to httpbin").
-			SetBaseURL(HTTP_BIN_URL).
+			SetBaseURL("https://httpbin.org").
 			WithVariables(map[string]interface{}{"upload_file": "test.env"}),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("upload file explicitly").
