@@ -1,12 +1,17 @@
 # Release History
 
-## v4.3.5 (2023-07-21)
+## v4.3.5 (2023-07-23)
 
 - refactor: send events to Google Analytics 4, replace GA v1
+- fix: failure unittests caused by httpbin.org, replace with docker service
+
+**go version**
+
+- fix #1603: ensure path suffix '/' exists
 
 **python version**
 
-- change: upgrade pyyaml from 5.4.1 to 6.0.1
+- fix: upgrade pyyaml from 5.4.1 to 6.0.1, fix installing error
 - refactor: update httprunner dependencies
 
 ## v4.3.4 (2023-06-01)
