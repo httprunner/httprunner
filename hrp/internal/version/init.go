@@ -8,4 +8,4 @@ import (
 var VERSION string
 
 // httprunner python version
-const HttpRunnerMinimumVersion = "v4.3.0"
+const HttpRunnerMinimumVersion = "v4.3.5"

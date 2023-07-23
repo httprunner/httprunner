@@ -7,6 +7,7 @@
 
 **go version**
 
+- change: create python venv with httprunner minimum version v4.3.5
 - fix #1603: ensure path suffix '/' exists
 
 **python version**
