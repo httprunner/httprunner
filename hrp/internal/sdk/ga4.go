@@ -41,7 +41,7 @@ func init() {
 	}
 
 	// init GA4 client
-	ga4Client = NewGA4Client(ga4MeasurementID, ga4APISecret)
+	ga4Client = NewGA4Client(ga4MeasurementID, ga4APISecret, false)
 }
 
 type GA4Client struct {

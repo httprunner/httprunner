@@ -3,16 +3,28 @@ package adb
 import (
 	"fmt"
 	"io/ioutil"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
 var screencapAndroidDevicesCmd = &cobra.Command{
 	Use:   "screencap",
 	Short: "Start android screen capture",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		startTime := time.Now()
+		defer func() {
+			sdk.SendGA4Event("hrp_adb_screencap", map[string]interface{}{
+				"args":                 strings.Join(args, "-"),
+				"success":              err == nil,
+				"engagement_time_msec": time.Since(startTime).Milliseconds(),
+			})
+		}()
+
 		device, err := getDevice(serial)
 		if err != nil {
 			return err
