@@ -28,24 +28,34 @@ type Parser struct {
 	plugin funplugin.IPlugin // plugin is used to call functions
 }
 
-func buildURL(baseURL, stepURL string) (fullUrl string) {
+func buildURL(baseURL, stepURL string, queryParams url.Values) (fullUrl *url.URL) {
 	uStep, err := url.Parse(stepURL)
 	if err != nil {
 		log.Error().Str("stepURL", stepURL).Err(err).Msg("[buildURL] parse url failed")
-		return stepURL
+		return nil
 	}
 
 	defer func() {
+		// append query params
+		if paramStr := queryParams.Encode(); paramStr != "" {
+			if uStep.RawQuery == "" {
+				uStep.RawQuery = paramStr
+			} else {
+				uStep.RawQuery = uStep.RawQuery + "&" + paramStr
+			}
+		}
+
 		// ensure path suffix '/' exists
 		if uStep.RawQuery == "" {
 			uStep.Path = strings.TrimRight(uStep.Path, "/") + "/"
 		}
-		fullUrl = uStep.String()
+
+		fullUrl = uStep
 	}()
 
 	// step url is absolute url
 	if uStep.Host != "" {
-		return
+		return uStep
 	}
 
 	// step url is relative, based on base url
@@ -59,7 +69,7 @@ func buildURL(baseURL, stepURL string) (fullUrl string) {
 	uStep.Scheme = uConfig.Scheme
 	uStep.Host = uConfig.Host
 	uStep.Path = path.Join(uConfig.Path, uStep.Path)
-	return
+	return uStep
 }
 
 func (p *Parser) ParseHeaders(rawHeaders map[string]string, variablesMapping map[string]interface{}) (map[string]string, error) {
