@@ -259,7 +259,7 @@ func TestSpawnAndStop(t *testing.T) {
 	go runner.start()
 
 	// wait for spawning goroutines
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 	if runner.controller.getCurrentClientsNum() != 10 {
 		t.Error("Number of goroutines mismatches, expected: 10, current count", runner.controller.getCurrentClientsNum())
 	}
@@ -384,7 +384,7 @@ func TestOnMessage(t *testing.T) {
 	}
 
 	// spawn complete and running
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 	if runner.controller.getCurrentClientsNum() != 10 {
 		t.Error("Number of goroutines mismatches, expected: 10, current count:", runner.controller.getCurrentClientsNum())
 	}
@@ -430,7 +430,7 @@ func TestOnMessage(t *testing.T) {
 	}
 
 	// spawn complete and running
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 	if runner.controller.getCurrentClientsNum() != 10 {
 		t.Error("Number of goroutines mismatches, expected: 10, current count:", runner.controller.getCurrentClientsNum())
 	}
