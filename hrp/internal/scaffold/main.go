@@ -54,11 +54,15 @@ func CopyFile(templateFile, targetFile string) error {
 }
 
 func CreateScaffold(projectName string, pluginType PluginType, venv string, force bool) error {
-	// report event
-	sdk.SendEvent(sdk.EventTracking{
-		Category: "Scaffold",
-		Action:   "hrp startproject",
-	})
+	// report GA event
+	startTime := time.Now()
+	defer func() {
+		sdk.SendGA4Event("hrp_startproject", map[string]interface{}{
+			"pluginType":           string(pluginType),
+			"force":                force,
+			"engagement_time_msec": time.Since(startTime).Milliseconds(),
+		})
+	}()
 
 	log.Info().
 		Str("projectName", projectName).

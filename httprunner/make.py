@@ -22,7 +22,7 @@ from httprunner.loader import (
     load_testcase,
 )
 from httprunner.response import uniform_validator
-from httprunner.utils import ga_client, is_support_multiprocessing
+from httprunner.utils import ga4_client, is_support_multiprocessing
 
 """ cache converted pytest files, avoid duplicate making
 """
@@ -541,7 +541,7 @@ def main_make(tests_paths: List[Text]) -> List[Text]:
     if not tests_paths:
         return []
 
-    ga_client.track_event("ConvertTests", "hmake")
+    ga4_client.send_event("hmake")
 
     for tests_path in tests_paths:
         tests_path = ensure_path_sep(tests_path)

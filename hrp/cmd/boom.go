@@ -10,6 +10,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer"
 )
 
@@ -29,7 +30,16 @@ var boomCmd = &cobra.Command{
 		}
 		setLogLevel(logLevel)
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		startTime := time.Now()
+		defer func() {
+			sdk.SendGA4Event("hrp_boom", map[string]interface{}{
+				"args":                 strings.Join(args, "-"),
+				"success":              err == nil,
+				"engagement_time_msec": time.Since(startTime).Milliseconds(),
+			})
+		}()
+
 		var paths []hrp.ITestCase
 		for _, arg := range args {
 			path := hrp.TestCasePath(arg)

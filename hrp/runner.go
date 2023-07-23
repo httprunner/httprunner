@@ -194,14 +194,16 @@ func (r *HRPRunner) GenHTMLReport() *HRPRunner {
 // Run starts to execute one or multiple testcases.
 func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	log.Info().Str("hrp_version", version.VERSION).Msg("start running")
-	event := sdk.EventTracking{
-		Category: "RunAPITests",
-		Action:   "hrp run",
-	}
-	// report start event
-	go sdk.SendEvent(event)
-	// report execution timing event
-	defer sdk.SendEvent(event.StartTiming("execution"))
+
+	startTime := time.Now()
+	defer func() {
+		// report run event
+		sdk.SendGA4Event("hrp_run", map[string]interface{}{
+			"success":              err == nil,
+			"engagement_time_msec": time.Since(startTime).Milliseconds(),
+		})
+	}()
+
 	// record execution data to summary
 	s := newOutSummary()
 
@@ -511,6 +513,9 @@ func (r *SessionRunner) inheritConnection(src *SessionRunner) {
 // Start runs the test steps in sequential order.
 // givenVars is used for data driven
 func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
+	// report GA event
+	sdk.SendGA4Event("hrp_session_runner_start", nil)
+
 	config := r.caseRunner.testCase.Config
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 

@@ -176,11 +176,12 @@ func newVEDEMImageService(actions ...string) (*veDEMImageService, error) {
 
 // veDEMImageService implements IImageService interface
 // actions:
-// 	ocr - get ocr texts
-// 	upload - get image uploaded url
-// 	liveType - get live type
-// 	popup - get popup windows
-// 	close - get close popup
+//
+//	ocr - get ocr texts
+//	upload - get image uploaded url
+//	liveType - get live type
+//	popup - get popup windows
+//	close - get close popup
 type veDEMImageService struct {
 	actions []string
 }
@@ -229,10 +230,6 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 	req.Header.Add("Agw-Auth", token)
 	req.Header.Add("Agw-Auth-Content", signToken)
 	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
-
-	// ppe
-	// req.Header.Add("x-use-ppe", "1")
-	// req.Header.Add("x-tt-env", "ppe_vedem_algorithm")
 
 	var resp *http.Response
 	// retry 3 times

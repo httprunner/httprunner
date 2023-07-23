@@ -86,23 +86,29 @@ func EndsWith(t assert.TestingT, actual, expected interface{}, msgAndArgs ...int
 func EqualLength(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	length, err := convertInt(expected)
 	if err != nil {
-		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("expect int type, got %#v", expected), msgAndArgs...)
 	}
-
-	return assert.Len(t, actual, length, msgAndArgs...)
+	ok, l := getLen(actual)
+	if !ok {
+		return assert.Fail(t, fmt.Sprintf("actual value %v(%T) can't get length", actual, actual), msgAndArgs...)
+	}
+	if l != length {
+		return assert.Fail(t, fmt.Sprintf("%v length == %d, expect == %d", actual, l, length), msgAndArgs...)
+	}
+	return true
 }
 
 func GreaterThanLength(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	length, err := convertInt(expected)
 	if err != nil {
-		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("expect int type, got %#v", expected), msgAndArgs...)
 	}
 	ok, l := getLen(actual)
 	if !ok {
-		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("actual value %v(%T) can't get length", actual, actual), msgAndArgs...)
 	}
 	if l <= length {
-		return assert.Fail(t, fmt.Sprintf("\"%s\" should be more than %d item(s), but has %d", actual, length, l), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("%v length == %d, expect > %d", actual, l, length), msgAndArgs...)
 	}
 	return true
 }
@@ -110,14 +116,14 @@ func GreaterThanLength(t assert.TestingT, actual, expected interface{}, msgAndAr
 func GreaterOrEqualsLength(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	length, err := convertInt(expected)
 	if err != nil {
-		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("expect int type, got %#v", expected), msgAndArgs...)
 	}
 	ok, l := getLen(actual)
 	if !ok {
-		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("actual value %v(%T) can't get length", actual, actual), msgAndArgs...)
 	}
 	if l < length {
-		return assert.Fail(t, fmt.Sprintf("\"%s\" should be no less than %d item(s), but has %d", actual, length, l), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("%v length == %d, expect >= %d", actual, l, length), msgAndArgs...)
 	}
 	return true
 }
@@ -125,14 +131,14 @@ func GreaterOrEqualsLength(t assert.TestingT, actual, expected interface{}, msgA
 func LessThanLength(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	length, err := convertInt(expected)
 	if err != nil {
-		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("expect int type, got %#v", expected), msgAndArgs...)
 	}
 	ok, l := getLen(actual)
 	if !ok {
-		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("actual value %v(%T) can't get length", actual, actual), msgAndArgs...)
 	}
 	if l >= length {
-		return assert.Fail(t, fmt.Sprintf("\"%s\" should be less than %d item(s), but has %d", actual, length, l), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("%v length == %d, expect < %d", actual, l, length), msgAndArgs...)
 	}
 	return true
 }
@@ -140,14 +146,14 @@ func LessThanLength(t assert.TestingT, actual, expected interface{}, msgAndArgs 
 func LessOrEqualsLength(t assert.TestingT, actual, expected interface{}, msgAndArgs ...interface{}) bool {
 	length, err := convertInt(expected)
 	if err != nil {
-		return assert.Fail(t, fmt.Sprintf("expected type is not int, got %#v", expected), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("expect int type, got %#v", expected), msgAndArgs...)
 	}
 	ok, l := getLen(actual)
 	if !ok {
-		return assert.Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", actual), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("actual value %v(%T) can't get length", actual, actual), msgAndArgs...)
 	}
 	if l > length {
-		return assert.Fail(t, fmt.Sprintf("\"%s\" should be no more than %d item(s), but has %d", actual, length, l), msgAndArgs...)
+		return assert.Fail(t, fmt.Sprintf("%v length == %d, expect <= %d", actual, l, length), msgAndArgs...)
 	}
 	return true
 }

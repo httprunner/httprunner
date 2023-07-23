@@ -18,6 +18,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
@@ -172,6 +173,12 @@ func (pt *pluginTemplate) generateGo(output string) error {
 // buildGo builds debugtalk.go to debugtalk.bin
 func buildGo(path string, output string) error {
 	log.Info().Str("path", path).Str("output", output).Msg("start to build go plugin")
+
+	// report GA event
+	sdk.SendGA4Event("hrp_build_plugin", map[string]interface{}{
+		"pluginType": "go",
+	})
+
 	content, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to read file")
@@ -197,6 +204,12 @@ func buildGo(path string, output string) error {
 // buildPy completes funppy information in debugtalk.py
 func buildPy(path string, output string) error {
 	log.Info().Str("path", path).Str("output", output).Msg("start to prepare python plugin")
+
+	// report GA event
+	sdk.SendGA4Event("hrp_build_plugin", map[string]interface{}{
+		"pluginType": "python",
+	})
+
 	// check the syntax of debugtalk.py
 	err := myexec.ExecPython3Command("py_compile", path)
 	if err != nil {

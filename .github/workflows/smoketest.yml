@@ -16,12 +16,17 @@ jobs:
 
     name: smoketest - httprunner - ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    services:
+      service-httpbin:
+        image: kennethreitz/httpbin
+        ports:
+           - 80:80
     strategy:
       fail-fast: false
       max-parallel: 6
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10']
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]  # FIXME: docker services are not supported on macos-latest, windows-latest
 
     steps:
     - uses: actions/checkout@v2
