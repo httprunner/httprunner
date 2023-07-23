@@ -96,7 +96,7 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	startTime := time.Now()
 	defer func() {
 		// report boom event
-		sdk.SendGA4Event("hrp_boom", map[string]interface{}{
+		sdk.SendGA4Event("hrp_boomer_run", map[string]interface{}{
 			"engagement_time_msec": time.Since(startTime).Milliseconds(),
 		})
 

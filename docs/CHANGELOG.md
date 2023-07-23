@@ -8,6 +8,7 @@
 
 **go version**
 
+- feat: report GA4 events for hrp cmd
 - change: create python venv with httprunner minimum version v4.3.5
 - fix #1603: ensure path suffix '/' exists
 

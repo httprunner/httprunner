@@ -199,6 +199,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	defer func() {
 		// report run event
 		sdk.SendGA4Event("hrp_run", map[string]interface{}{
+			"success":              err == nil,
 			"engagement_time_msec": time.Since(startTime).Milliseconds(),
 		})
 	}()
@@ -512,6 +513,9 @@ func (r *SessionRunner) inheritConnection(src *SessionRunner) {
 // Start runs the test steps in sequential order.
 // givenVars is used for data driven
 func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
+	// report GA event
+	sdk.SendGA4Event("hrp_session_runner_start", nil)
+
 	config := r.caseRunner.testCase.Config
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 

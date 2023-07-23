@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
@@ -563,6 +564,11 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		osType = "android"
 		mobileStep = step.Android
 	}
+
+	// report GA event
+	sdk.SendGA4Event("hrp_run_ui", map[string]interface{}{
+		"osType": osType,
+	})
 
 	stepResult = &StepResult{
 		Name:        step.Name,
