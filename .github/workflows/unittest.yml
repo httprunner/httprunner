@@ -50,7 +50,7 @@ jobs:
         poetry run coverage xml
         poetry run coverage report -m
     - name: Codecov
-      uses: codecov/codecov-action@v1.0.5
+      uses: codecov/codecov-action@v3
       with:
         # User defined upload name. Visible in Codecov UI
         name: httprunner
@@ -83,7 +83,7 @@ jobs:
       - name: Run coverage
         run: go test -coverprofile="cover.out" -covermode=atomic -race ./...
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           name: hrp (HttpRunner+) # User defined upload name. Visible in Codecov UI
           token: ${{ secrets.CODECOV_TOKEN }} # Repository upload token
