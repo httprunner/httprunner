@@ -4,6 +4,7 @@
 
 - refactor: send events to Google Analytics 4, replace GA v1
 - fix: failure unittests caused by httpbin.org, replace with docker service
+- fix: handle unstable unittests, restore github actions pipeline
 
 **go version**
 
