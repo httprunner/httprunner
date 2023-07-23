@@ -180,11 +180,11 @@ func TestRunCaseWithTimeout(t *testing.T) {
 
 	testcase2 := &TestCase{
 		Config: NewConfig("TestCase2").
-			SetRequestTimeout(10). // set global timeout to 10s
+			SetRequestTimeout(5). // set global timeout to 10s
 			SetBaseURL("https://postman-echo.com"),
 		TestSteps: []IStep{
 			NewStep("step1").
-				GET("/delay/11").
+				GET("/delay/10").
 				Validate().
 				AssertEqual("status_code", 200, "check status code"),
 		},
