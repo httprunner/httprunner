@@ -2,8 +2,8 @@ package convert
 
 import (
 	_ "embed"
-	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -139,19 +139,25 @@ func (c *TCaseConverter) loadCase(casePath string, fromType FromType) error {
 	return err
 }
 
-func (c *TCaseConverter) Convert(casePath string, fromType FromType, outputType OutputType) error {
-	// report event
-	sdk.SendEvent(sdk.EventTracking{
-		Category: "ConvertTests",
-		Action:   fmt.Sprintf("hrp convert --to-%s", outputType.String()),
-	})
+func (c *TCaseConverter) Convert(casePath string, fromType FromType, outputType OutputType) (err error) {
+	// report GA event
+	startTime := time.Now()
+	defer func() {
+		sdk.SendGA4Event("hrp_convert", map[string]interface{}{
+			"from":                 fromType.String(),
+			"to":                   outputType.String(),
+			"success":              err == nil,
+			"engagement_time_msec": time.Since(startTime).Milliseconds(),
+		})
+	}()
+
 	log.Info().Str("path", casePath).
 		Str("fromType", fromType.String()).
 		Str("outputType", outputType.String()).
 		Msg("convert testcase")
 
 	// load source file
-	err := c.loadCase(casePath, fromType)
+	err = c.loadCase(casePath, fromType)
 	if err != nil {
 		return err
 	}

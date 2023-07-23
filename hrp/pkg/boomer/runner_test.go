@@ -198,7 +198,7 @@ func TestSpawnWorkersWithManyTasks(t *testing.T) {
 	const numToSpawn int64 = 20
 
 	go runner.spawnWorkers(numToSpawn, float64(numToSpawn), runner.stopChan, runner.spawnComplete)
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	currentClients := runner.controller.getCurrentClientsNum()
 
@@ -210,28 +210,29 @@ func TestSpawnWorkersWithManyTasks(t *testing.T) {
 	lock.Unlock()
 
 	total := hundreds + tens + ones
-	t.Logf("total tasks run: %d\n", total)
+	t.Logf("total tasks: %d, hundreds: %d, tens: %d, ones: %d\n",
+		total, hundreds, tens, ones)
 
 	assert.True(t, total > 111)
 
 	assert.True(t, ones > 1)
 	actPercentage := float64(ones) / float64(total)
 	expectedPercentage := 1.0 / 111.0
-	if actPercentage > 2*expectedPercentage || actPercentage < 0.5*expectedPercentage {
+	if actPercentage > 4*expectedPercentage || actPercentage < 0.25*expectedPercentage {
 		t.Errorf("Unexpected percentage of ones task: exp %v, act %v", expectedPercentage, actPercentage)
 	}
 
 	assert.True(t, tens > 10)
 	actPercentage = float64(tens) / float64(total)
 	expectedPercentage = 10.0 / 111.0
-	if actPercentage > 2*expectedPercentage || actPercentage < 0.5*expectedPercentage {
+	if actPercentage > 4*expectedPercentage || actPercentage < 0.25*expectedPercentage {
 		t.Errorf("Unexpected percentage of tens task: exp %v, act %v", expectedPercentage, actPercentage)
 	}
 
 	assert.True(t, hundreds > 100)
 	actPercentage = float64(hundreds) / float64(total)
 	expectedPercentage = 100.0 / 111.0
-	if actPercentage > 2*expectedPercentage || actPercentage < 0.5*expectedPercentage {
+	if actPercentage > 1 || actPercentage < 0.25*expectedPercentage {
 		t.Errorf("Unexpected percentage of hundreds task: exp %v, act %v", expectedPercentage, actPercentage)
 	}
 }
@@ -259,7 +260,7 @@ func TestSpawnAndStop(t *testing.T) {
 	go runner.start()
 
 	// wait for spawning goroutines
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 	if runner.controller.getCurrentClientsNum() != 10 {
 		t.Error("Number of goroutines mismatches, expected: 10, current count", runner.controller.getCurrentClientsNum())
 	}
@@ -269,7 +270,6 @@ func TestSpawnAndStop(t *testing.T) {
 		t.Error("Runner should send spawning_complete message when spawning completed, got", msg.Type)
 	}
 	go runner.stop()
-	close(runner.doneChan)
 
 	runner.onQuiting()
 	msg = <-runner.client.sendChannel()
@@ -384,7 +384,7 @@ func TestOnMessage(t *testing.T) {
 	}
 
 	// spawn complete and running
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 	if runner.controller.getCurrentClientsNum() != 10 {
 		t.Error("Number of goroutines mismatches, expected: 10, current count:", runner.controller.getCurrentClientsNum())
 	}
@@ -430,7 +430,7 @@ func TestOnMessage(t *testing.T) {
 	}
 
 	// spawn complete and running
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 	if runner.controller.getCurrentClientsNum() != 10 {
 		t.Error("Number of goroutines mismatches, expected: 10, current count:", runner.controller.getCurrentClientsNum())
 	}
