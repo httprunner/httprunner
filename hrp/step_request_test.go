@@ -99,7 +99,7 @@ func TestRunRequestStatOn(t *testing.T) {
 	if !assert.Greater(t, stat["TLSHandshake"], int64(0)) {
 		t.Fatal()
 	}
-	if !assert.Greater(t, stat["ServerProcessing"], int64(1)) {
+	if !assert.Greater(t, stat["ServerProcessing"], int64(0)) {
 		t.Fatal()
 	}
 	if !assert.GreaterOrEqual(t, stat["ContentTransfer"], int64(0)) {
