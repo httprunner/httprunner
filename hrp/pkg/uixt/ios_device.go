@@ -67,8 +67,6 @@ var (
 	WithIOSPcapBundleID = gidevice.WithPcapBundleID
 )
 
-var WDALocalPort, WDALocalMjpegPort int
-
 type IOSDeviceOption func(*IOSDevice)
 
 func WithUDID(udid string) IOSDeviceOption {
@@ -476,7 +474,7 @@ func (dev *IOSDevice) forward(localPort, remotePort int) error {
 			rInnerConn, err := device.NewConnect(remotePort)
 			if err != nil {
 				log.Error().Err(err).Msg("connect to ios device failed")
-				continue
+				os.Exit(code.GetErrorCode(code.IOSDeviceConnectionError))
 			}
 
 			rConn := rInnerConn.RawConn()
@@ -594,7 +592,6 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 	} else {
 		log.Info().Int("WDA_LOCAL_PORT", localPort).Msg("reuse WDA local port")
 	}
-	WDALocalPort = localPort
 
 	var localMjpegPort int
 	localMjpegPort, err = strconv.Atoi(env.WDA_LOCAL_MJPEG_PORT)
@@ -612,12 +609,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 		log.Info().Int("WDA_LOCAL_MJPEG_PORT", localMjpegPort).
 			Msg("reuse WDA local mjpeg port")
 	}
-	WDALocalMjpegPort = localMjpegPort
 
-	return NewWDADriver(capabilities, localPort, localMjpegPort)
-}
-
-func NewWDADriver(capabilities Capabilities, localPort, localMjpegPort int) (driver *wdaDriver, err error) {
 	log.Info().Interface("capabilities", capabilities).
 		Int("localPort", localPort).Int("localMjpegPort", localMjpegPort).
 		Msg("init WDA HTTP driver")

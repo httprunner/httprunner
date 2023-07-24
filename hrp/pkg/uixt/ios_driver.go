@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -31,6 +32,62 @@ type wdaDriver struct {
 	mjpegClient   *http.Client
 }
 
+func (wd *wdaDriver) resetWDASession() error {
+	capabilities := NewCapabilities()
+	capabilities.WithDefaultAlertAction(AlertActionAccept)
+
+	sessionInfo, err := wd.NewSession(capabilities)
+	if err != nil {
+		return err
+	}
+	wd.sessionId = sessionInfo.SessionId
+	return nil
+}
+
+func (wd *wdaDriver) wdaHttpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (rawResp rawResponse, err error) {
+	disableRetryBool := len(disableRetry) > 0 && disableRetry[0]
+	for retryCount := 1; retryCount <= 5; retryCount++ {
+		rawResp, err = wd.httpRequest(method, rawURL, rawBody)
+		if err == nil || disableRetryBool {
+			return
+		}
+		// TODO: polling WDA to check if resumed automatically
+		time.Sleep(5 * time.Second)
+		oldSessionID := wd.sessionId
+		if err = wd.resetWDASession(); err != nil {
+			log.Err(err).Msgf("failed to reset wda driver, retry count: %v", retryCount)
+			continue
+		}
+		log.Debug().Str("new session", wd.sessionId).Str("old session", oldSessionID).Msgf("successful to reset wda driver, retry count: %v", retryCount)
+		if oldSessionID != "" {
+			rawURL = strings.Replace(rawURL, oldSessionID, wd.sessionId, 1)
+		}
+	}
+	return
+}
+
+func (wd *wdaDriver) wdaHttpGET(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.wdaHttpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
+}
+
+func (wd *wdaDriver) wdaHttpGETWithRetry(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.wdaHttpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil, true)
+}
+
+func (wd *wdaDriver) wdaHttpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+	var bsJSON []byte = nil
+	if data != nil {
+		if bsJSON, err = json.Marshal(data); err != nil {
+			return nil, err
+		}
+	}
+	return wd.wdaHttpRequest(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
+}
+
+func (wd *wdaDriver) wdaHttpDELETE(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.wdaHttpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
+}
+
 func (wd *wdaDriver) GetMjpegClient() *http.Client {
 	return wd.mjpegClient
 }
@@ -45,7 +102,7 @@ func (wd *wdaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 	}
 
 	var rawResp rawResponse
-	if rawResp, err = wd.wdaHttpPOST(data, "/session"); err != nil {
+	if rawResp, err = wd.httpPOST(data, "/session"); err != nil {
 		return SessionInfo{}, err
 	}
 	if sessionInfo, err = rawResp.valueConvertToSessionInfo(); err != nil {

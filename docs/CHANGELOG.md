@@ -1,12 +1,14 @@
 # Release History
 
+## v4.3.6 (2023-07-24)
+
+- feat: support to reset driver (or session only) automatically when UIA2 / WDA crashed or WebDriver request failed
+
 ## v4.3.5 (2023-07-23)
 
 - refactor: send events to Google Analytics 4, replace GA v1
 - fix: failure unittests caused by httpbin.org, replace with docker service
 - fix: handle unstable unittests, restore github actions pipeline
-- feat: support to reset driver automatically when uia2 crashed
-- feat: support to reset session when wda request failed
 
 **go version**
 
