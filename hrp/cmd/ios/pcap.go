@@ -3,6 +3,7 @@ package ios
 import (
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -11,13 +12,23 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 var pcapCmd = &cobra.Command{
 	Use:   "pcap",
 	Short: "capture ios network packets",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		startTime := time.Now()
+		defer func() {
+			sdk.SendGA4Event("hrp_ios_pcap", map[string]interface{}{
+				"args":                 strings.Join(args, "-"),
+				"success":              err == nil,
+				"engagement_time_msec": time.Since(startTime).Milliseconds(),
+			})
+		}()
+
 		pcapOptions := []uixt.IOSPcapOption{}
 		if pid > 0 {
 			pcapOptions = append(pcapOptions, uixt.WithIOSPcapPID(pid))

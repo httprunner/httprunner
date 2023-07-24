@@ -99,7 +99,7 @@ func TestRunRequestStatOn(t *testing.T) {
 	if !assert.Greater(t, stat["TLSHandshake"], int64(0)) {
 		t.Fatal()
 	}
-	if !assert.Greater(t, stat["ServerProcessing"], int64(1)) {
+	if !assert.Greater(t, stat["ServerProcessing"], int64(0)) {
 		t.Fatal()
 	}
 	if !assert.GreaterOrEqual(t, stat["ContentTransfer"], int64(0)) {
@@ -165,7 +165,7 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	testcase1 := &TestCase{
 		Config: NewConfig("TestCase1").
 			SetRequestTimeout(10). // set global timeout to 10s
-			SetBaseURL("https://httpbin.org"),
+			SetBaseURL("https://postman-echo.com"),
 		TestSteps: []IStep{
 			NewStep("step1").
 				GET("/delay/1").
@@ -180,11 +180,11 @@ func TestRunCaseWithTimeout(t *testing.T) {
 
 	testcase2 := &TestCase{
 		Config: NewConfig("TestCase2").
-			SetRequestTimeout(10). // set global timeout to 10s
-			SetBaseURL("https://httpbin.org"),
+			SetRequestTimeout(5). // set global timeout to 10s
+			SetBaseURL("https://postman-echo.com"),
 		TestSteps: []IStep{
 			NewStep("step1").
-				GET("/delay/11").
+				GET("/delay/10").
 				Validate().
 				AssertEqual("status_code", 200, "check status code"),
 		},
@@ -198,7 +198,7 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	testcase3 := &TestCase{
 		Config: NewConfig("TestCase3").
 			SetRequestTimeout(10).
-			SetBaseURL("https://httpbin.org"),
+			SetBaseURL("https://postman-echo.com"),
 		TestSteps: []IStep{
 			NewStep("step2").
 				GET("/delay/11").

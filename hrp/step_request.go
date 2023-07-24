@@ -149,9 +149,8 @@ func (r *requestBuilder) prepareUrlParams(stepVariables map[string]interface{}) 
 	}
 	var baseURL string
 	if stepVariables["base_url"] != nil {
-		baseURL = stepVariables["base_url"].(string)
+		baseURL, _ = stepVariables["base_url"].(string)
 	}
-	rawUrl := buildURL(baseURL, convertString(requestUrl))
 
 	// prepare request params
 	var queryParams url.Values
@@ -161,35 +160,24 @@ func (r *requestBuilder) prepareUrlParams(stepVariables map[string]interface{}) 
 			return errors.Wrap(err, "parse request params failed")
 		}
 		parsedParams := params.(map[string]interface{})
-		r.requestMap["params"] = parsedParams
 		if len(parsedParams) > 0 {
 			queryParams = make(url.Values)
 			for k, v := range parsedParams {
 				queryParams.Add(k, convertString(v))
 			}
 		}
-	}
-	if queryParams != nil {
-		// append params to url
-		paramStr := queryParams.Encode()
-		if strings.IndexByte(rawUrl, '?') == -1 {
-			rawUrl = rawUrl + "?" + paramStr
-		} else {
-			rawUrl = rawUrl + "&" + paramStr
-		}
+
+		// request params has been appended to url, thus delete it here
+		delete(r.requestMap, "params")
 	}
 
 	// prepare url
-	u, err := url.Parse(rawUrl)
-	if err != nil {
-		return errors.Wrap(err, "parse url failed")
-	}
-	r.req.URL = u
-	r.req.Host = u.Host
+	preparedURL := buildURL(baseURL, convertString(requestUrl), queryParams)
+	r.req.URL = preparedURL
+	r.req.Host = preparedURL.Host
 
 	// update url
-	r.requestMap["url"] = u.String()
-
+	r.requestMap["url"] = preparedURL.String()
 	return nil
 }
 
@@ -340,42 +328,13 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	// add request object to step variables, could be used in setup hooks
 	stepVariables["hrp_step_name"] = step.Name
 	stepVariables["hrp_step_request"] = rb.requestMap
-	stepVariables["request"] = rb.requestMap
+	stepVariables["request"] = rb.requestMap // setup hooks compatible with v3
 
 	// deal with setup hooks
 	for _, setupHook := range step.SetupHooks {
-		req, err := parser.Parse(setupHook, stepVariables)
+		_, err := parser.Parse(setupHook, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run setup hooks failed")
-		}
-		reqMap, ok := req.(map[string]interface{})
-		if ok && reqMap != nil {
-			rb.requestMap = reqMap
-			stepVariables["request"] = reqMap
-		}
-	}
-	if len(step.SetupHooks) > 0 {
-		requestBody, ok := rb.requestMap["body"].(map[string]interface{})
-		if ok {
-			body, err := json.Marshal(requestBody)
-			if err == nil {
-				rb.req.Body = io.NopCloser(bytes.NewReader(body))
-				rb.req.ContentLength = int64(len(body))
-			}
-		}
-		requestParams, ok := rb.requestMap["params"].(map[string]interface{})
-		if ok {
-			params, err := json.Marshal(requestParams)
-			if err == nil {
-				rb.req.URL.RawQuery = string(params)
-			}
-		}
-		requestHeaders, ok := rb.requestMap["headers"].(map[string]interface{})
-		if ok {
-			rb.req.Header = http.Header{}
-			for k, v := range requestHeaders {
-				rb.req.Header.Set(k, v.(string))
-			}
 		}
 	}
 
@@ -451,14 +410,9 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 
 	// deal with teardown hooks
 	for _, teardownHook := range step.TeardownHooks {
-		res, err := parser.Parse(teardownHook, stepVariables)
+		_, err := parser.Parse(teardownHook, stepVariables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run teardown hooks failed")
-		}
-		resMpa, ok := res.(map[string]interface{})
-		if ok {
-			stepVariables["response"] = resMpa
-			respObj.respObjMeta = resMpa
 		}
 	}
 

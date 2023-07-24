@@ -31,7 +31,8 @@ func (caps Capabilities) WithDefaultAlertAction(alertAction AlertAction) Capabil
 }
 
 // WithMaxTypingFrequency
-//  Defaults to `60`.
+//
+//	Defaults to `60`.
 func (caps Capabilities) WithMaxTypingFrequency(n int) Capabilities {
 	if n <= 0 {
 		n = 60
@@ -41,21 +42,24 @@ func (caps Capabilities) WithMaxTypingFrequency(n int) Capabilities {
 }
 
 // WithWaitForIdleTimeout
-//  Defaults to `10`
+//
+//	Defaults to `10`
 func (caps Capabilities) WithWaitForIdleTimeout(second float64) Capabilities {
 	caps["waitForIdleTimeout"] = second
 	return caps
 }
 
 // WithShouldUseTestManagerForVisibilityDetection If set to YES will ask TestManagerDaemon for element visibility
-//  Defaults to  `false`
+//
+//	Defaults to  `false`
 func (caps Capabilities) WithShouldUseTestManagerForVisibilityDetection(b bool) Capabilities {
 	caps["shouldUseTestManagerForVisibilityDetection"] = b
 	return caps
 }
 
 // WithShouldUseCompactResponses If set to YES will use compact (standards-compliant) & faster responses
-//  Defaults to `true`
+//
+//	Defaults to `true`
 func (caps Capabilities) WithShouldUseCompactResponses(b bool) Capabilities {
 	caps["shouldUseCompactResponses"] = b
 	return caps
@@ -63,28 +67,32 @@ func (caps Capabilities) WithShouldUseCompactResponses(b bool) Capabilities {
 
 // WithElementResponseAttributes If shouldUseCompactResponses == NO,
 // is the comma-separated list of fields to return with each element.
-//  Defaults to `type,label`.
+//
+//	Defaults to `type,label`.
 func (caps Capabilities) WithElementResponseAttributes(s string) Capabilities {
 	caps["elementResponseAttributes"] = s
 	return caps
 }
 
 // WithShouldUseSingletonTestManager
-//  Defaults to `true`
+//
+//	Defaults to `true`
 func (caps Capabilities) WithShouldUseSingletonTestManager(b bool) Capabilities {
 	caps["shouldUseSingletonTestManager"] = b
 	return caps
 }
 
 // WithDisableAutomaticScreenshots
-//  Defaults to `true`
+//
+//	Defaults to `true`
 func (caps Capabilities) WithDisableAutomaticScreenshots(b bool) Capabilities {
 	caps["disableAutomaticScreenshots"] = b
 	return caps
 }
 
 // WithShouldTerminateApp
-//  Defaults to `true`
+//
+//	Defaults to `true`
 func (caps Capabilities) WithShouldTerminateApp(b bool) Capabilities {
 	caps["shouldTerminateApp"] = b
 	return caps
@@ -376,7 +384,8 @@ func (opt SourceOption) WithFormatAsDescription() SourceOption {
 }
 
 // WithScope Allows to provide XML scope.
-//  only `xml` is supported.
+//
+//	only `xml` is supported.
 func (opt SourceOption) WithScope(scope string) SourceOption {
 	if vFormat, ok := opt["format"]; ok && vFormat != "xml" {
 		return opt

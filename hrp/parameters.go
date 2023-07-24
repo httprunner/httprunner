@@ -27,8 +27,10 @@ const (
 
 /*
 [
+
 	{"username": "test1", "password": "111111"},
 	{"username": "test2", "password": "222222"},
+
 ]
 */
 type Parameters []map[string]interface{}
@@ -205,36 +207,38 @@ func genCartesianProduct(multiParameters []Parameters) Parameters {
 	return cartesianProduct
 }
 
-/* loadParameters loads parameters from multiple sources.
+/*
+	loadParameters loads parameters from multiple sources.
 
 parameter value may be in three types:
+
 	(1) data list, e.g. ["iOS/10.1", "iOS/10.2", "iOS/10.3"]
 	(2) call built-in parameterize function, "${parameterize(account.csv)}"
 	(3) call custom function in debugtalk.py, "${gen_app_version()}"
 
-configParameters = {
-	"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"],		// case 1
-	"username-password": "${parameterize(account.csv)}", 	// case 2
-	"app_version": "${gen_app_version()}", 					// case 3
-}
+	configParameters = {
+		"user_agent": ["iOS/10.1", "iOS/10.2", "iOS/10.3"],		// case 1
+		"username-password": "${parameterize(account.csv)}", 	// case 2
+		"app_version": "${gen_app_version()}", 					// case 3
+	}
 
 =>
 
-{
-	"user_agent": [
-		{"user_agent": "iOS/10.1"},
-		{"user_agent": "iOS/10.2"},
-		{"user_agent": "iOS/10.3"},
-	],
-	"username-password": [
-		{"username": "test1", "password": "111111"},
-		{"username": "test2", "password": "222222"},
-	],
-	"app_version": [
-		{"app_version": "1.0.0"},
-		{"app_version": "1.0.1"},
-	]
-}
+	{
+		"user_agent": [
+			{"user_agent": "iOS/10.1"},
+			{"user_agent": "iOS/10.2"},
+			{"user_agent": "iOS/10.3"},
+		],
+		"username-password": [
+			{"username": "test1", "password": "111111"},
+			{"username": "test2", "password": "222222"},
+		],
+		"app_version": [
+			{"app_version": "1.0.0"},
+			{"app_version": "1.0.1"},
+		]
+	}
 */
 func (p *Parser) loadParameters(configParameters map[string]interface{}, variablesMapping map[string]interface{}) (
 	map[string]Parameters, error) {
@@ -296,19 +300,23 @@ func (p *Parser) loadParameters(configParameters map[string]interface{}, variabl
 	return parsedParameters, nil
 }
 
-/* convert parameters to standard format
+/*
+	convert parameters to standard format
 
 key and parametersRawList may be in three types:
 
 case 1:
+
 	key = "user_agent"
 	parametersRawList = ["iOS/10.1", "iOS/10.2"]
 
 case 2:
+
 	key = "username-password"
 	parametersRawList = [{"username": "test1", "password": "111111"}, {"username": "test2", "password": "222222"}]
 
 case 3:
+
 	key = "username-password"
 	parametersRawList = [["test1", "111111"], ["test2", "222222"]]
 */

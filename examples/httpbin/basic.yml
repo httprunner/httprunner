@@ -1,6 +1,6 @@
 config:
     name: basic test with httpbin
-    base_url: https://httpbin.org/
+    base_url: ${get_httpbin_server()}
 
 teststeps:
 -
@@ -10,7 +10,7 @@ teststeps:
         method: GET
     validate:
         - eq: ["status_code", 200]
-        - eq: [body.headers.Host, "httpbin.org"]
+        - eq: [body.headers.Host, "127.0.0.1"]
 
 -
     name: user-agent

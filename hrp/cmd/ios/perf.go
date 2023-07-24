@@ -3,6 +3,7 @@ package ios
 import (
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -11,13 +12,23 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 var perfCmd = &cobra.Command{
 	Use:   "perf",
 	Short: "capture ios performance data (cpu,mem,disk,net,fps,etc.)",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		startTime := time.Now()
+		defer func() {
+			sdk.SendGA4Event("hrp_ios_perf", map[string]interface{}{
+				"args":                 strings.Join(args, "-"),
+				"success":              err == nil,
+				"engagement_time_msec": time.Since(startTime).Milliseconds(),
+			})
+		}()
+
 		perfOptions := []uixt.IOSPerfOption{}
 		for _, p := range indicators {
 			switch p {

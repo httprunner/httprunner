@@ -9,7 +9,7 @@ from loguru import logger
 from httprunner import __description__, __version__
 from httprunner.compat import ensure_cli_args
 from httprunner.make import init_make_parser, main_make
-from httprunner.utils import ga_client, init_logger, init_sentry_sdk
+from httprunner.utils import ga4_client, init_logger, init_sentry_sdk
 
 init_sentry_sdk()
 
@@ -22,7 +22,7 @@ def init_parser_run(subparsers):
 
 
 def main_run(extra_args) -> enum.IntEnum:
-    ga_client.track_event("RunAPITests", "hrun")
+    ga4_client.send_event("hrun")
     # keep compatibility with v2
     extra_args = ensure_cli_args(extra_args)
 
