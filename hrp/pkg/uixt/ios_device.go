@@ -484,11 +484,15 @@ func (dev *IOSDevice) forward(localPort, remotePort int) error {
 				go func(lConn, rConn net.Conn) {
 					if _, err := io.Copy(lConn, rConn); err != nil {
 						log.Error().Err(err).Msg("copy local -> remote")
+						rConn.Close()
+						accept.Close()
 					}
 				}(lConn, rConn)
 				go func(lConn, rConn net.Conn) {
 					if _, err := io.Copy(rConn, lConn); err != nil {
 						log.Error().Err(err).Msg("copy local <- remote")
+						rConn.Close()
+						accept.Close()
 					}
 				}(lConn, rConn)
 			}(accept)
@@ -660,9 +664,11 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver,
 	if wd.urlPrefix, err = url.Parse("http://" + dev.UDID); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceUSBDriverError, err.Error())
 	}
-	if _, err = wd.NewSession(capabilities); err != nil {
+	var sessionInfo SessionInfo
+	if sessionInfo, err = wd.NewSession(capabilities); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceUSBDriverError, err.Error())
 	}
+	wd.sessionId = sessionInfo.SessionId
 
 	// init WDA scale
 	if wd.scale, err = wd.Scale(); err != nil {
