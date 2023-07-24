@@ -1,5 +1,9 @@
 # Release History
 
+## v4.3.6 (2023-07-24)
+
+- feat: support to reset driver (or session only) automatically when UIA2 / WDA crashed or WebDriver request failed
+
 ## v4.3.5 (2023-07-23)
 
 - refactor: send events to Google Analytics 4, replace GA v1

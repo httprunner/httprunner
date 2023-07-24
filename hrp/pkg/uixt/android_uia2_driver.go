@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -46,12 +48,10 @@ func NewUIADriver(capabilities Capabilities, urlPrefix string) (driver *uiaDrive
 	driver.client = convertToHTTPClient(conn)
 
 	session, err := driver.NewSession(capabilities)
-	if err == nil {
-		driver.sessionId = session.SessionId
-	} else {
-		log.Warn().Msg(
-			"create UIAutomator session failed, use adb driver instead")
+	if err != nil {
+		return nil, errors.Wrap(err, "create UIAutomator session failed")
 	}
+	driver.sessionId = session.SessionId
 	return driver, nil
 }
 
@@ -83,11 +83,65 @@ func (bs BatteryStatus) String() string {
 	}
 }
 
+func (ud *uiaDriver) resetDriver() error {
+	newUIADriver, err := NewUIADriver(NewCapabilities(), ud.urlPrefix.String())
+	if err != nil {
+		return err
+	}
+	ud.client = newUIADriver.client
+	ud.sessionId = newUIADriver.sessionId
+	return nil
+}
+
+func (ud *uiaDriver) httpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (rawResp rawResponse, err error) {
+	disableRetryBool := len(disableRetry) > 0 && disableRetry[0]
+	for retryCount := 1; retryCount <= 5; retryCount++ {
+		rawResp, err = ud.Driver.httpRequest(method, rawURL, rawBody)
+		if err == nil || disableRetryBool {
+			return
+		}
+		// wait for UIA2 server to resume automatically
+		time.Sleep(3 * time.Second)
+		oldSessionID := ud.sessionId
+		if err = ud.resetDriver(); err != nil {
+			log.Err(err).Msgf("failed to reset uia2 driver, retry count: %v", retryCount)
+			continue
+		}
+		log.Debug().Str("new session", ud.sessionId).Str("old session", oldSessionID).Msgf("successful to reset uia2 driver, retry count: %v", retryCount)
+		if oldSessionID != "" {
+			rawURL = strings.Replace(rawURL, oldSessionID, ud.sessionId, 1)
+		}
+	}
+	return
+}
+
+func (ud *uiaDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
+	return ud.httpRequest(http.MethodGet, ud.concatURL(nil, pathElem...), nil)
+}
+
+func (ud *uiaDriver) httpGETWithRetry(pathElem ...string) (rawResp rawResponse, err error) {
+	return ud.httpRequest(http.MethodGet, ud.concatURL(nil, pathElem...), nil, true)
+}
+
+func (ud *uiaDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+	var bsJSON []byte = nil
+	if data != nil {
+		if bsJSON, err = json.Marshal(data); err != nil {
+			return nil, err
+		}
+	}
+	return ud.httpRequest(http.MethodPost, ud.concatURL(nil, pathElem...), bsJSON)
+}
+
+func (ud *uiaDriver) httpDELETE(pathElem ...string) (rawResp rawResponse, err error) {
+	return ud.httpRequest(http.MethodDelete, ud.concatURL(nil, pathElem...), nil)
+}
+
 func (ud *uiaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
 	// register(postHandler, new NewSession("/wd/hub/session"))
 	var rawResp rawResponse
 	data := map[string]interface{}{"capabilities": capabilities}
-	if rawResp, err = ud.httpPOST(data, "/session"); err != nil {
+	if rawResp, err = ud.Driver.httpPOST(data, "/session"); err != nil {
 		return SessionInfo{SessionId: ""}, err
 	}
 	reply := new(struct{ Value struct{ SessionId string } })
