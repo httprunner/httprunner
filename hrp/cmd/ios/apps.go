@@ -2,10 +2,13 @@ package ios
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 )
 
@@ -19,7 +22,16 @@ var listAppsCmd = &cobra.Command{
 	Use:              "apps",
 	Short:            "List all iOS installed apps",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		startTime := time.Now()
+		defer func() {
+			sdk.SendGA4Event("hrp_ios_apps", map[string]interface{}{
+				"args":                 strings.Join(args, "-"),
+				"success":              err == nil,
+				"engagement_time_msec": time.Since(startTime).Milliseconds(),
+			})
+		}()
+
 		device, err := getDevice(udid)
 		if err != nil {
 			return err

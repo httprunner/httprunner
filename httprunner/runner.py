@@ -27,7 +27,7 @@ from httprunner.models import (
     VariablesMapping,
 )
 from httprunner.parser import Parser
-from httprunner.utils import LOGGER_FORMAT, merge_variables
+from httprunner.utils import LOGGER_FORMAT, merge_variables, ga4_client
 
 
 class SessionRunner(object):
@@ -210,6 +210,7 @@ class SessionRunner(object):
 
     def test_start(self, param: Dict = None) -> "SessionRunner":
         """main entrance, discovered by pytest"""
+        ga4_client.send_event("test_start")
         print("\n")
         self.__init()
         self.__parse_config(param)

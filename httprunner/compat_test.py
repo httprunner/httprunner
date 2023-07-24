@@ -2,6 +2,7 @@ import os
 import unittest
 
 from httprunner import compat, exceptions, loader
+from httprunner.utils import HTTP_BIN_URL
 
 
 class TestCompat(unittest.TestCase):
@@ -155,7 +156,7 @@ class TestCompat(unittest.TestCase):
 
     def test_ensure_testcase_v4(self):
         testcase_content = {
-            "config": {"name": "xxx", "base_url": "https://httpbin.org"},
+            "config": {"name": "xxx", "base_url": HTTP_BIN_URL},
             "teststeps": [
                 {
                     "name": "get with params",
@@ -179,7 +180,7 @@ class TestCompat(unittest.TestCase):
         self.assertEqual(
             compat.ensure_testcase_v4(testcase_content),
             {
-                "config": {"name": "xxx", "base_url": "https://httpbin.org"},
+                "config": {"name": "xxx", "base_url": HTTP_BIN_URL},
                 "teststeps": [
                     {
                         "name": "get with params",

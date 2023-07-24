@@ -38,7 +38,7 @@
         {
             "check": "body.url",
             "assert": "equals",
-            "expect": "https://postman-echo.com/post",
+            "expect": "https://postman-echo.com/post/",
             "msg": "assert response body url"
         }
     ]

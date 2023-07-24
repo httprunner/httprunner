@@ -5,10 +5,12 @@ import json
 import os
 import os.path
 import platform
+import random
 import sys
+import time
 import uuid
 from multiprocessing import Queue
-from typing import Any, Dict, List, Text
+from typing import Any, Dict, List
 
 import requests
 import sentry_sdk
@@ -16,6 +18,25 @@ from loguru import logger
 
 from httprunner import __version__, exceptions
 from httprunner.models import VariablesMapping
+
+
+""" run httpbin as test service
+https://github.com/postmanlabs/httpbin
+
+$ docker pull kennethreitz/httpbin
+$ docker run -p 80:80 kennethreitz/httpbin
+"""
+HTTP_BIN_URL = "http://127.0.0.1:80"
+
+
+def get_platform():
+    return {
+        "httprunner_version": __version__,
+        "python_version": "{} {}".format(
+            platform.python_implementation(), platform.python_version()
+        ),
+        "platform": platform.platform(),
+    }
 
 
 def init_sentry_sdk():
@@ -30,62 +51,79 @@ def init_sentry_sdk():
         scope.set_user({"id": uuid.getnode()})
 
 
-class GAClient(object):
+class GA4Client(object):
+    """send events to Google Analytics 4 via Measurement Protocol.
+    get details in hrp/internal/sdk/ga4.go
+    """
 
-    version = "1"  # GA API Version
-    report_url = "https://www.google-analytics.com/collect"
-    report_debug_url = (
-        "https://www.google-analytics.com/debug/collect"  # used for debug
-    )
-
-    def __init__(self, tracking_id: Text):
+    def __init__(
+        self, measurement_id: str, api_secret: str, debug: bool = False
+    ) -> None:
         self.http_client = requests.Session()
-        self.label = f"v{__version__}"
-        self.common_params = {
-            "v": self.version,
-            "tid": tracking_id,  # Tracking ID / Property ID, XX-XXXXXXX-X
-            "cid": uuid.getnode(),  # Anonymous Client ID
-            "ua": f"HttpRunner/{__version__}",
-        }
+
+        self.debug = debug
+        if debug:
+            uri = "https://www.google-analytics.com/debug/mp/collect"
+        else:
+            uri = "https://www.google-analytics.com/mp/collect"
+
+        self.uri = f"{uri}?measurement_id={measurement_id}&api_secret={api_secret}"
+        self.user_id = str(uuid.getnode())
+        self.common_event_params = get_platform()
+
         # do not send GA events in CI environment
         self.__is_ci = os.getenv("DISABLE_GA") == "true"
 
-    def track_event(self, category: Text, action: Text, value: int = 0):
+    def send_event(self, name: str, event_params: dict = None) -> None:
         if self.__is_ci:
             return
 
-        data = {
-            "t": "event",  # Event hit type = event
-            "ec": category,  # Required. Event Category.
-            "ea": action,  # Required. Event Action.
-            "el": self.label,  # Optional. Event label, used as version.
-            "ev": value,  # Optional. Event value, must be non-negative integer
+        event_params = event_params or {}
+        event_params.update(self.common_event_params)
+        event = {
+            "name": name,
+            "params": event_params,
         }
-        data.update(self.common_params)
-        try:
-            self.http_client.post(self.report_url, data=data, timeout=5)
-        except Exception:  # ProxyError, SSLError, ConnectionError
-            pass
 
-    def track_user_timing(self, category: Text, variable: Text, duration: int):
-        if self.__is_ci:
+        payload = {
+            "client_id": f"{int(random.random() * 10**8)}.{int(time.time())}",
+            "user_id": self.user_id,
+            "timestamp_micros": int(time.time() * 10**6),
+            "events": [event],
+        }
+
+        if self.debug:
+            logger.debug(f"send GA4 event, uri: {self.uri}, payload: {payload}")
+
+        try:
+            resp = self.http_client.post(self.uri, json=payload, timeout=5)
+        except Exception as err:  # ProxyError, SSLError, ConnectionError
+            logger.error(f"request GA4 failed, error: {err}")
             return
 
-        data = {
-            "t": "timing",  # Event hit type = timing
-            "utc": category,  # Required. user timing category. e.g. jsonLoader
-            "utv": variable,  # Required. timing variable. e.g. load
-            "utt": duration,  # Required. time took duration.
-            "utl": self.label,  # Optional. user timing label, used as version.
-        }
-        data.update(self.common_params)
+        if resp.status_code >= 300:
+            logger.error(
+                f"validation response got unexpected status: {resp.status_code}"
+            )
+            return
+
+        if not self.debug:
+            return
+
         try:
-            self.http_client.post(self.report_url, data=data, timeout=5)
-        except Exception:  # ProxyError, SSLError, ConnectionError
+            resp_body = resp.json()
+            logger.debug(
+                "get GA4 validation response, "
+                f"status code: {resp.status_code}, body: {resp_body}"
+            )
+        except Exception:
             pass
 
 
-ga_client = GAClient("UA-114587036-1")
+GA4_MEASUREMENT_ID = "G-9KHR3VC2LN"
+GA4_API_SECRET = "w7lKNQIrQsKNS4ikgMPp0Q"
+
+ga4_client = GA4Client(GA4_MEASUREMENT_ID, GA4_API_SECRET, False)
 
 
 def set_os_environ(variables_mapping):
@@ -217,16 +255,6 @@ def omit_long_data(body, omit_len=512):
         appendix_str = appendix_str.encode("utf-8")
 
     return omitted_body + appendix_str
-
-
-def get_platform():
-    return {
-        "httprunner_version": __version__,
-        "python_version": "{} {}".format(
-            platform.python_implementation(), platform.python_version()
-        ),
-        "platform": platform.platform(),
-    }
 
 
 def sort_dict_by_custom_order(raw_dict: Dict, custom_order: List):

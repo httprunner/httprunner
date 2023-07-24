@@ -12,6 +12,7 @@ func TestGenDemoExamples(t *testing.T) {
 		t.Fatal()
 	}
 
+	// FIXME
 	dir = "../../../examples/demo-with-py-plugin"
 	venv := filepath.Join(dir, ".venv")
 	err = CreateScaffold(dir, Py, venv, true)
