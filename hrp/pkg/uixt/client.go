@@ -147,7 +147,7 @@ func (wd *Driver) uia2HttpDELETE(pathElem ...string) (rawResp rawResponse, err e
 	return wd.uia2HttpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *Driver) resetWDASession() error {
+func (wd *Driver) resetWDASession() (err error) {
 	capabilities := NewCapabilities()
 	capabilities.WithDefaultAlertAction(AlertActionAccept)
 
@@ -156,7 +156,6 @@ func (wd *Driver) resetWDASession() error {
 	data["capabilities"] = map[string]interface{}{"alwaysMatch": capabilities}
 
 	var rawResp rawResponse
-	var err error
 	if rawResp, err = wd.httpPOST(data, "/session"); err != nil {
 		return err
 	}
@@ -165,6 +164,19 @@ func (wd *Driver) resetWDASession() error {
 		return err
 	}
 	wd.sessionId = sessionInfo.SessionId
+	return
+}
+
+func (wd *Driver) resetWDADriver() error {
+	capabilities := NewCapabilities()
+	capabilities.WithDefaultAlertAction(AlertActionAccept)
+
+	wdaDriver, err := NewWDADriver(capabilities, WDALocalPort, WDALocalMjpegPort)
+	if err != nil {
+		return err
+	}
+	wd.client = wdaDriver.client
+	wd.sessionId = wdaDriver.sessionId
 	return nil
 }
 
@@ -175,13 +187,17 @@ func (wd *Driver) wdaHttpRequest(method string, rawURL string, rawBody []byte, d
 		if err == nil || disableRetryBool {
 			return
 		}
-		// wait for WDA to resume automatically
-		time.Sleep(20 * time.Second)
+		// TODO: polling WDA to check if resumed automatically
+		time.Sleep(5 * time.Second)
+		oldSessionID := wd.sessionId
 		if err = wd.resetWDASession(); err != nil {
-			log.Err(err).Msgf("failed to reset wda session, retry count: %v", retryCount)
+			log.Err(err).Msgf("failed to reset wda driver, retry count: %v", retryCount)
 			continue
 		}
-		log.Debug().Str("new session", wd.sessionId).Msgf("successful to reset wda session, retry count: %v", retryCount)
+		log.Debug().Str("new session", wd.sessionId).Str("old session", oldSessionID).Msgf("successful to reset wda driver, retry count: %v", retryCount)
+		if oldSessionID != "" {
+			rawURL = strings.Replace(rawURL, oldSessionID, wd.sessionId, 1)
+		}
 	}
 	return
 }
