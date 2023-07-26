@@ -3,6 +3,10 @@
 ## v4.3.6 (2023-07-24)
 
 - feat: support to reset driver (or session only) automatically when UIA2 / WDA crashed or WebDriver request failed
+- refactor: extract image_service.go from ocr_vedem.go
+- compatibility: support indicating options separately in MobileAction level
+- fix: add default `regex`, `max_retry_times`, `offset`, `interval` for `swipe_to_tap_app` action
+- fix: ocr texts validation distinguishes `exists` from `equal`
 
 ## v4.3.5 (2023-07-23)
 

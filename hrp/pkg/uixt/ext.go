@@ -253,8 +253,13 @@ func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...ActionOption)
 	return dExt.FindImageRectInUIKit(search, options...)
 }
 
-func (dExt *DriverExt) IsOCRExist(text string) bool {
-	_, err := dExt.FindScreenText(text)
+func (dExt *DriverExt) IsOCRCorrect(text, assert string) bool {
+	var err error
+	if assert == AssertionEqual {
+		_, err = dExt.FindScreenText(text)
+		return err == nil
+	}
+	_, err = dExt.FindScreenText(text, WithRegex(true))
 	return err == nil
 }
 
@@ -273,7 +278,7 @@ func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...s
 	var result bool
 	switch check {
 	case SelectorOCR:
-		result = (dExt.IsOCRExist(expected) == exp)
+		result = (dExt.IsOCRCorrect(expected, assert) == exp)
 	case SelectorImage:
 		result = (dExt.IsImageExist(expected) == exp)
 	case SelectorForegroundApp:
