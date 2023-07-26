@@ -71,6 +71,9 @@ func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, 
 	interval := actionOptions.Interval
 
 	for i := 0; i < maxRetryTimes; i++ {
+		// wait interval between each findAction
+		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
+
 		if err := findCondition(dExt); err == nil {
 			// do action after found
 			return foundAction(dExt)
@@ -79,9 +82,6 @@ func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, 
 		if err := findAction(dExt); err != nil {
 			log.Error().Err(err).Msgf("find action failed")
 		}
-
-		// wait interval between each findAction
-		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
 	}
 
 	return errors.Wrap(code.LoopActionNotFoundError,
@@ -141,12 +141,14 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		}
 		points, err := screenTexts.FindTexts(texts, dExt.ParseActionOptions(options...)...)
 		if err != nil {
+			log.Warn().Msgf("swipeToTapTexts failed: %s", err.Error())
 			// target texts not found, try to auto handle popup
 			if e := dExt.AutoPopupHandler(screenTexts); e != nil {
 				log.Error().Err(e).Msg("auto handle popup failed")
 			}
 			return err
 		}
+		log.Info().Strs("tests", texts).Interface("results", points).Msg("swipeToTapTexts successful")
 
 		// target texts found, pick the first one
 		point = points[0].Center() // FIXME
@@ -172,8 +174,22 @@ func (dExt *DriverExt) swipeToTapApp(appName string, options ...ActionOption) er
 		dExt.SwipeRight()
 	}
 
-	options = append(options, WithOffset(0, -25)) // tap app icon above the text
 	options = append(options, WithDirection("left"))
+	options = append(options, WithRegex(true))
+
+	actionOptions := NewActionOptions(options...)
+	// default to retry 5 times
+	if actionOptions.MaxRetryTimes == 0 {
+		options = append(options, WithMaxRetryTimes(5))
+	}
+	// tap app icon above the text
+	if len(actionOptions.Offset) == 0 {
+		options = append(options, WithOffset(0, -25))
+	}
+	// set default swipe interval to 1 second
+	if actionOptions.Interval == 0 {
+		options = append(options, WithInterval(1))
+	}
 
 	return dExt.swipeToTapTexts([]string{appName}, options...)
 }
