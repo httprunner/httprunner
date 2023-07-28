@@ -58,9 +58,7 @@ type veDEMImageService struct {
 	actions []string
 }
 
-func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
-	imageResult ImageResult, err error,
-) {
+func (s *veDEMImageService) GetImageResultBytes(imageBuf *bytes.Buffer) (results []byte, err error) {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	for _, action := range s.actions {
@@ -108,37 +106,37 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 	// req.Header.Add("x-tt-env", "ppe_vedem_algorithm")
 
 	var resp *http.Response
-	// retry 3 times
-	for i := 1; i <= 3; i++ {
-		start := time.Now()
-		resp, err = client.Do(req)
-		elapsed := time.Since(start)
-		var logID string
-		if resp != nil {
-			logID = getLogID(resp.Header)
-		}
-		if err == nil && resp.StatusCode == http.StatusOK {
-			log.Debug().
-				Str("X-TT-LOGID", logID).
-				Int("image_bytes", size).
-				Float64("elapsed(s)", elapsed.Seconds()).
-				Msg("request OCR service success")
-			break
-		}
+
+	start := time.Now()
+	resp, err = client.Do(req)
+	elapsed := time.Since(start)
+
+	var logID string
+	if resp != nil {
+		logID = getLogID(resp.Header)
+	}
+	if err != nil {
 		log.Error().Err(err).
 			Str("X-TT-LOGID", logID).
-			Int("imageBufSize", size).
-			Msgf("request veDEM OCR service failed, retry %d", i)
-		time.Sleep(1 * time.Second)
+			Int("image_bytes", size).
+			Msg("request veDEM image service failed")
+		err = errors.Wrap(code.OCRRequestError,
+			fmt.Sprintf("do request error: %v", err))
+		return
 	}
 	if resp == nil {
 		err = code.OCRServiceConnectionError
 		return
 	}
+	log.Debug().
+		Str("X-TT-LOGID", logID).
+		Int("image_bytes", size).
+		Float64("elapsed(s)", elapsed.Seconds()).
+		Msg("request veDEM image service successful")
 
 	defer resp.Body.Close()
 
-	results, err := ioutil.ReadAll(resp.Body)
+	results, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		err = errors.Wrap(code.OCRResponseError,
 			fmt.Sprintf("read response body error: %v", err))
@@ -151,7 +149,22 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 				resp.StatusCode, string(results)))
 		return
 	}
+	return
+}
 
+func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageResult, err error) {
+	var results []byte
+	// retry 3 times
+	for i := 1; i <= 3; i++ {
+		results, err = s.GetImageResultBytes(imageBuf)
+		if err == nil {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+	if err != nil {
+		return
+	}
 	var imageResponse APIResponseImage
 	err = json.Unmarshal(results, &imageResponse)
 	if err != nil {
