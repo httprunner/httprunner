@@ -7,6 +7,7 @@
 - compatibility: support indicating options separately in MobileAction level
 - fix: add default `regex`, `max_retry_times`, `offset`, `interval` for `swipe_to_tap_app` action
 - fix: ocr texts validation distinguishes `exists` from `equal`
+- fix: use Override size if existed, otherwise use Physical size
 
 ## v4.3.5 (2023-07-23)
 
