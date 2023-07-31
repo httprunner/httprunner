@@ -103,9 +103,7 @@ func (t OCRTexts) FilterScope(scope AbsScope) (results OCRTexts) {
 	return
 }
 
-func (t OCRTexts) FindText(text string, options ...ActionOption) (
-	result OCRText, err error) {
-
+func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText, err error) {
 	actionOptions := NewActionOptions(options...)
 
 	var results []OCRText
@@ -145,8 +143,7 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (
 	return results[idx], nil
 }
 
-func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (
-	results OCRTexts, err error) {
+func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (results OCRTexts, err error) {
 	for _, text := range texts {
 		ocrText, err := t.FindText(text, options...)
 		if err != nil {
@@ -186,9 +183,7 @@ type veDEMImageService struct {
 	actions []string
 }
 
-func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
-	imageResult ImageResult, err error) {
-
+func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageResult, err error) {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	for _, action := range s.actions {
@@ -216,24 +211,30 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (
 			fmt.Sprintf("close body writer error: %v", err))
 		return
 	}
-
-	req, err := http.NewRequest("POST", env.VEDEM_IMAGE_URL, bodyBuf)
-	if err != nil {
-		err = errors.Wrap(code.OCRRequestError,
-			fmt.Sprintf("construct request error: %v", err))
-		return
-	}
-
-	signToken := "UNSIGNED-PAYLOAD"
-	token := builtin.Sign("auth-v2", env.VEDEM_IMAGE_AK, env.VEDEM_IMAGE_SK, []byte(signToken))
-
-	req.Header.Add("Agw-Auth", token)
-	req.Header.Add("Agw-Auth-Content", signToken)
-	req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
-
+	var req *http.Request
 	var resp *http.Response
 	// retry 3 times
 	for i := 1; i <= 3; i++ {
+		copiedBodyBuf := &bytes.Buffer{}
+		if _, err := copiedBodyBuf.Write(bodyBuf.Bytes()); err != nil {
+			log.Error().Err(err).Msg("copy screenshot buffer failed")
+			continue
+		}
+
+		req, err = http.NewRequest("POST", env.VEDEM_IMAGE_URL, copiedBodyBuf)
+		if err != nil {
+			err = errors.Wrap(code.OCRRequestError,
+				fmt.Sprintf("construct request error: %v", err))
+			return
+		}
+
+		signToken := "UNSIGNED-PAYLOAD"
+		token := builtin.Sign("auth-v2", env.VEDEM_IMAGE_AK, env.VEDEM_IMAGE_SK, []byte(signToken))
+
+		req.Header.Add("Agw-Auth", token)
+		req.Header.Add("Agw-Auth-Content", signToken)
+		req.Header.Add("Content-Type", bodyWriter.FormDataContentType())
+
 		start := time.Now()
 		resp, err = client.Do(req)
 		elapsed := time.Since(start)
