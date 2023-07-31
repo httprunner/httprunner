@@ -141,14 +141,14 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		}
 		points, err := screenTexts.FindTexts(texts, dExt.ParseActionOptions(options...)...)
 		if err != nil {
-			log.Warn().Msgf("swipeToTapTexts failed: %s", err.Error())
+			log.Error().Err(err).Msg("swipeToTapTexts failed")
 			// target texts not found, try to auto handle popup
 			if e := dExt.AutoPopupHandler(screenTexts); e != nil {
 				log.Error().Err(e).Msg("auto handle popup failed")
 			}
 			return err
 		}
-		log.Info().Strs("tests", texts).Interface("results", points).Msg("swipeToTapTexts successful")
+		log.Info().Strs("texts", texts).Interface("results", points).Msg("swipeToTapTexts successful")
 
 		// target texts found, pick the first one
 		point = points[0].Center() // FIXME
