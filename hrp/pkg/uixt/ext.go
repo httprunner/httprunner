@@ -253,31 +253,66 @@ func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...ActionOption)
 	return dExt.FindImageRectInUIKit(search, options...)
 }
 
-func (dExt *DriverExt) IsOCRExist(text string) bool {
-	_, err := dExt.FindScreenText(text)
-	return err == nil
+func (dExt *DriverExt) AssertOCR(text, assert string) bool {
+	var err error
+	switch assert {
+	case AssertionEqual:
+		_, err = dExt.FindScreenText(text)
+		return err == nil
+	case AssertionNotEqual:
+		_, err = dExt.FindScreenText(text)
+		return err != nil
+	case AssertionExists:
+		_, err = dExt.FindScreenText(text, WithRegex(true))
+		return err == nil
+	case AssertionNotExists:
+		_, err = dExt.FindScreenText(text, WithRegex(true))
+		return err != nil
+	default:
+		log.Warn().Str("assert method", assert).Msg("unexpected assert method")
+	}
+	return false
 }
 
-func (dExt *DriverExt) IsImageExist(text string) bool {
-	_, err := dExt.FindImageRectInUIKit(text)
-	return err == nil
+func (dExt *DriverExt) AssertImage(imagePath, assert string) bool {
+	var err error
+	switch assert {
+	case AssertionExists:
+		_, err = dExt.FindImageRectInUIKit(imagePath)
+		return err == nil
+	case AssertionNotExists:
+		_, err = dExt.FindImageRectInUIKit(imagePath)
+		return err != nil
+	default:
+		log.Warn().Str("assert method", assert).Msg("unexpected assert method")
+	}
+	return false
+}
+
+func (dExt *DriverExt) AssertForegroundApp(appName, assert string) bool {
+	var err error
+	switch assert {
+	case AssertionEqual:
+		err = dExt.Driver.AssertForegroundApp(appName)
+		return err == nil
+	case AssertionNotEqual:
+		err = dExt.Driver.AssertForegroundApp(appName)
+		return err != nil
+	default:
+		log.Warn().Str("assert method", assert).Msg("unexpected assert method")
+	}
+	return false
 }
 
 func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) bool {
-	var exp bool
-	if assert == AssertionExists || assert == AssertionEqual {
-		exp = true
-	} else {
-		exp = false
-	}
 	var result bool
 	switch check {
 	case SelectorOCR:
-		result = (dExt.IsOCRExist(expected) == exp)
+		result = dExt.AssertOCR(expected, assert)
 	case SelectorImage:
-		result = (dExt.IsImageExist(expected) == exp)
+		result = dExt.AssertImage(expected, assert)
 	case SelectorForegroundApp:
-		result = ((dExt.Driver.AssertForegroundApp(expected) == nil) == exp)
+		result = dExt.AssertForegroundApp(expected, assert)
 	}
 
 	if !result {
