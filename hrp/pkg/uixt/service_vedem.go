@@ -125,7 +125,7 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText
 	}
 
 	if len(results) == 0 {
-		return OCRText{}, errors.Wrap(code.OCRTextNotFoundError,
+		return OCRText{}, errors.Wrap(code.CVResultNotFoundError,
 			fmt.Sprintf("text %s not found in %v", text, t.texts()))
 	}
 
@@ -137,7 +137,7 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText
 
 	// index out of range
 	if idx >= len(results) || idx < 0 {
-		return OCRText{}, errors.Wrap(code.OCRTextNotFoundError,
+		return OCRText{}, errors.Wrap(code.CVResultNotFoundError,
 			fmt.Sprintf("text %s found %d, index %d out of range", text, len(results), idx))
 	}
 
@@ -154,7 +154,7 @@ func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (results OC
 	}
 
 	if len(results) != len(texts) {
-		return nil, errors.Wrap(code.OCRTextNotFoundError,
+		return nil, errors.Wrap(code.CVResultNotFoundError,
 			fmt.Sprintf("texts %s not found in %v", texts, t.texts()))
 	}
 	return results, nil
@@ -203,21 +203,21 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageR
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {
-		err = errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.CVRequestError,
 			fmt.Sprintf("create form file error: %v", err))
 		return
 	}
 
 	size, err := formWriter.Write(imageBuf.Bytes())
 	if err != nil {
-		err = errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.CVRequestError,
 			fmt.Sprintf("write form error: %v", err))
 		return
 	}
 
 	err = bodyWriter.Close()
 	if err != nil {
-		err = errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.CVRequestError,
 			fmt.Sprintf("close body writer error: %v", err))
 		return
 	}
@@ -233,7 +233,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageR
 
 		req, err = http.NewRequest("POST", env.VEDEM_IMAGE_URL, copiedBodyBuf)
 		if err != nil {
-			err = errors.Wrap(code.OCRRequestError,
+			err = errors.Wrap(code.CVRequestError,
 				fmt.Sprintf("construct request error: %v", err))
 			return
 		}
@@ -267,7 +267,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageR
 		time.Sleep(1 * time.Second)
 	}
 	if resp == nil {
-		err = code.OCRServiceConnectionError
+		err = code.CVServiceConnectionError
 		return
 	}
 
@@ -275,13 +275,13 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageR
 
 	results, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		err = errors.Wrap(code.OCRResponseError,
+		err = errors.Wrap(code.CVResponseError,
 			fmt.Sprintf("read response body error: %v", err))
 		return
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		err = errors.Wrap(code.OCRResponseError,
+		err = errors.Wrap(code.CVResponseError,
 			fmt.Sprintf("unexpected response status code: %d, results: %v",
 				resp.StatusCode, string(results)))
 		return
@@ -293,7 +293,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageR
 		log.Error().Err(err).
 			Str("response", string(results)).
 			Msg("json unmarshal veDEM image response body failed")
-		err = errors.Wrap(code.OCRResponseError,
+		err = errors.Wrap(code.CVResponseError,
 			"json unmarshal veDEM image response body error")
 		return
 	}
@@ -312,14 +312,14 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageR
 
 func checkEnv() error {
 	if env.VEDEM_IMAGE_URL == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_URL missed")
+		return errors.Wrap(code.CVEnvMissedError, "VEDEM_IMAGE_URL missed")
 	}
 	log.Info().Str("VEDEM_IMAGE_URL", env.VEDEM_IMAGE_URL).Msg("get env")
 	if env.VEDEM_IMAGE_AK == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_AK missed")
+		return errors.Wrap(code.CVEnvMissedError, "VEDEM_IMAGE_AK missed")
 	}
 	if env.VEDEM_IMAGE_SK == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_SK missed")
+		return errors.Wrap(code.CVEnvMissedError, "VEDEM_IMAGE_SK missed")
 	}
 	return nil
 }
@@ -478,7 +478,7 @@ func (u UIResults) GetUIResult(options ...ActionOption) (UIResult, error) {
 
 	uiResults := u.FilterScope(actionOptions.AbsScope)
 	if len(uiResults) == 0 {
-		return UIResult{}, errors.Wrap(code.OCRTextNotFoundError,
+		return UIResult{}, errors.Wrap(code.CVResultNotFoundError,
 			"ui types not found in scope")
 	}
 	// get index
@@ -489,7 +489,7 @@ func (u UIResults) GetUIResult(options ...ActionOption) (UIResult, error) {
 
 	// index out of range
 	if idx >= len(uiResults) || idx < 0 {
-		return UIResult{}, errors.Wrap(code.OCRTextNotFoundError,
+		return UIResult{}, errors.Wrap(code.CVResultNotFoundError,
 			fmt.Sprintf("ui types index %d out of range", idx))
 	}
 	return uiResults[idx], nil
