@@ -72,3 +72,17 @@ func TestMatchRegex(t *testing.T) {
 		}
 	}
 }
+
+func TestTapUIWithScreenshot(t *testing.T) {
+	serialNumber := os.Getenv("SERIAL_NUMBER")
+	device, _ := NewAndroidDevice(WithSerialNumber(serialNumber))
+	driver, err := device.NewDriver(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = driver.TapByUIDetection([]string{"dyhouse", "shoppingbag"})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
