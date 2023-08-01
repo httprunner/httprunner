@@ -79,17 +79,15 @@ var (
 	MobileUIPopupError                    = errors.New("mobile UI popup error")                      // 78
 )
 
-// OCR related: [80, 90)
+// CV related: [80, 90)
 var (
-	OCREnvMissedError         = errors.New("OCR env missed error")        // 80
-	OCRRequestError           = errors.New("OCR prepare request error")   // 81
-	OCRServiceConnectionError = errors.New("OCR service connect error")   // 82
-	OCRResponseError          = errors.New("OCR parse response error")    // 83
-	OCRTextNotFoundError      = errors.New("OCR text not found")          // 84
-	LoopActionNotFoundError   = errors.New("loop action not found error") // 85
+	CVEnvMissedError         = errors.New("CV env missed error")         // 80
+	CVRequestError           = errors.New("CV prepare request error")    // 81
+	CVServiceConnectionError = errors.New("CV service connect error")    // 82
+	CVResponseError          = errors.New("CV parse response error")     // 83
+	CVResultNotFoundError    = errors.New("CV result not found")         // 84
+	LoopActionNotFoundError  = errors.New("loop action not found error") // 85
 )
-
-// CV related: [90, 100)
 
 var errorsMap = map[error]int{
 	// environment
@@ -144,12 +142,12 @@ var errorsMap = map[error]int{
 	MobileUIPopupError:                    78,
 
 	// OCR related
-	OCREnvMissedError:         80,
-	OCRRequestError:           81,
-	OCRServiceConnectionError: 82,
-	OCRResponseError:          83,
-	OCRTextNotFoundError:      84,
-	LoopActionNotFoundError:   85,
+	CVEnvMissedError:         80,
+	CVRequestError:           81,
+	CVServiceConnectionError: 82,
+	CVResponseError:          83,
+	CVResultNotFoundError:    84,
+	LoopActionNotFoundError:  85,
 }
 
 func IsErrorPredefined(err error) bool {

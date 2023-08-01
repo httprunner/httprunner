@@ -49,6 +49,20 @@ func (dExt *DriverExt) TapByCV(imagePath string, options ...ActionOption) error 
 	return dExt.TapAbsXY(point.X, point.Y, options...)
 }
 
+func (dExt *DriverExt) TapByUIDetection(uiTypes []string, options ...ActionOption) error {
+	actionOptions := NewActionOptions(options...)
+
+	point, err := dExt.FindUIResult(uiTypes, options...)
+	if err != nil {
+		if actionOptions.IgnoreNotFoundError {
+			return nil
+		}
+		return err
+	}
+
+	return dExt.TapAbsXY(point.X, point.Y, options...)
+}
+
 func (dExt *DriverExt) Tap(param string, options ...ActionOption) error {
 	return dExt.TapOffset(param, 0, 0, options...)
 }

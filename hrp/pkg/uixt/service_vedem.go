@@ -54,9 +54,10 @@ func (o OCRResults) ToOCRTexts() (ocrTexts OCRTexts) {
 
 type ImageResult struct {
 	imagePath string
-	URL       string     `json:"url"`       // image uploaded url
-	OCRResult OCRResults `json:"ocrResult"` // OCR texts
-	LiveType  string     `json:"liveType"`  // 直播间类型
+	URL       string      `json:"url"`       // image uploaded url
+	OCRResult OCRResults  `json:"ocrResult"` // OCR texts
+	LiveType  string      `json:"liveType"`  // 直播间类型
+	UIResult  UIResultMap `json:"uiResult"`  // 图标检测
 }
 
 type APIResponseImage struct {
@@ -124,7 +125,7 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText
 	}
 
 	if len(results) == 0 {
-		return OCRText{}, errors.Wrap(code.OCRTextNotFoundError,
+		return OCRText{}, errors.Wrap(code.CVResultNotFoundError,
 			fmt.Sprintf("text %s not found in %v", text, t.texts()))
 	}
 
@@ -136,7 +137,7 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText
 
 	// index out of range
 	if idx >= len(results) || idx < 0 {
-		return OCRText{}, errors.Wrap(code.OCRTextNotFoundError,
+		return OCRText{}, errors.Wrap(code.CVResultNotFoundError,
 			fmt.Sprintf("text %s found %d, index %d out of range", text, len(results), idx))
 	}
 
@@ -153,22 +154,17 @@ func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (results OC
 	}
 
 	if len(results) != len(texts) {
-		return nil, errors.Wrap(code.OCRTextNotFoundError,
+		return nil, errors.Wrap(code.CVResultNotFoundError,
 			fmt.Sprintf("texts %s not found in %v", texts, t.texts()))
 	}
 	return results, nil
 }
 
-func newVEDEMImageService(actions ...string) (*veDEMImageService, error) {
+func newVEDEMImageService() (*veDEMImageService, error) {
 	if err := checkEnv(); err != nil {
 		return nil, err
 	}
-	if len(actions) == 0 {
-		actions = []string{"ocr"}
-	}
-	return &veDEMImageService{
-		actions: actions,
-	}, nil
+	return &veDEMImageService{}, nil
 }
 
 // veDEMImageService implements IImageService interface
@@ -179,35 +175,49 @@ func newVEDEMImageService(actions ...string) (*veDEMImageService, error) {
 //	liveType - get live type
 //	popup - get popup windows
 //	close - get close popup
-type veDEMImageService struct {
-	actions []string
-}
+//  ui - get ui position by type(s)
+type veDEMImageService struct{}
+type (
+	actionOptions []string
+	uiTypeOptions []string
+)
 
-func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageResult, err error) {
+func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...interface{}) (imageResult ImageResult, err error) {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
-	for _, action := range s.actions {
-		bodyWriter.WriteField("actions", action)
+	for _, option := range options {
+		switch ov := option.(type) {
+		case actionOptions:
+			for _, action := range ov {
+				bodyWriter.WriteField("actions", action)
+			}
+		case uiTypeOptions:
+			for _, uiType := range ov {
+				bodyWriter.WriteField("uiTypes", uiType)
+			}
+		default:
+			log.Warn().Interface("option", ov).Msgf("unexpected image service option")
+		}
 	}
 	bodyWriter.WriteField("ocrCluster", "highPrecision")
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {
-		err = errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.CVRequestError,
 			fmt.Sprintf("create form file error: %v", err))
 		return
 	}
 
 	size, err := formWriter.Write(imageBuf.Bytes())
 	if err != nil {
-		err = errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.CVRequestError,
 			fmt.Sprintf("write form error: %v", err))
 		return
 	}
 
 	err = bodyWriter.Close()
 	if err != nil {
-		err = errors.Wrap(code.OCRRequestError,
+		err = errors.Wrap(code.CVRequestError,
 			fmt.Sprintf("close body writer error: %v", err))
 		return
 	}
@@ -223,7 +233,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageR
 
 		req, err = http.NewRequest("POST", env.VEDEM_IMAGE_URL, copiedBodyBuf)
 		if err != nil {
-			err = errors.Wrap(code.OCRRequestError,
+			err = errors.Wrap(code.CVRequestError,
 				fmt.Sprintf("construct request error: %v", err))
 			return
 		}
@@ -257,7 +267,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageR
 		time.Sleep(1 * time.Second)
 	}
 	if resp == nil {
-		err = code.OCRServiceConnectionError
+		err = code.CVServiceConnectionError
 		return
 	}
 
@@ -265,13 +275,13 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageR
 
 	results, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		err = errors.Wrap(code.OCRResponseError,
+		err = errors.Wrap(code.CVResponseError,
 			fmt.Sprintf("read response body error: %v", err))
 		return
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		err = errors.Wrap(code.OCRResponseError,
+		err = errors.Wrap(code.CVResponseError,
 			fmt.Sprintf("unexpected response status code: %d, results: %v",
 				resp.StatusCode, string(results)))
 		return
@@ -283,7 +293,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageR
 		log.Error().Err(err).
 			Str("response", string(results)).
 			Msg("json unmarshal veDEM image response body failed")
-		err = errors.Wrap(code.OCRResponseError,
+		err = errors.Wrap(code.CVResponseError,
 			"json unmarshal veDEM image response body error")
 		return
 	}
@@ -302,14 +312,14 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageR
 
 func checkEnv() error {
 	if env.VEDEM_IMAGE_URL == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_URL missed")
+		return errors.Wrap(code.CVEnvMissedError, "VEDEM_IMAGE_URL missed")
 	}
 	log.Info().Str("VEDEM_IMAGE_URL", env.VEDEM_IMAGE_URL).Msg("get env")
 	if env.VEDEM_IMAGE_AK == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_AK missed")
+		return errors.Wrap(code.CVEnvMissedError, "VEDEM_IMAGE_AK missed")
 	}
 	if env.VEDEM_IMAGE_SK == "" {
-		return errors.Wrap(code.OCREnvMissedError, "VEDEM_IMAGE_SK missed")
+		return errors.Wrap(code.CVEnvMissedError, "VEDEM_IMAGE_SK missed")
 	}
 	return nil
 }
@@ -328,7 +338,7 @@ func getLogID(header http.Header) string {
 
 type IImageService interface {
 	// GetImage returns image result including ocr texts, uploaded image url, etc
-	GetImage(imageBuf *bytes.Buffer) (imageResult ImageResult, err error)
+	GetImage(imageBuf *bytes.Buffer, options ...interface{}) (imageResult ImageResult, err error)
 }
 
 // GetScreenResult takes a screenshot, returns the image recognization result
@@ -336,11 +346,11 @@ func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error)
 	var bufSource *bytes.Buffer
 	var imagePath string
 	if bufSource, imagePath, err = dExt.takeScreenShot(
-		builtin.GenNameWithTimestamp("%d_ocr")); err != nil {
+		builtin.GenNameWithTimestamp("%d_cv")); err != nil {
 		return
 	}
 
-	imageResult, err := dExt.ImageService.GetImage(bufSource)
+	imageResult, err := dExt.ImageService.GetImage(bufSource, actionOptions{"ocr", "upload", "liveType"})
 	if err != nil {
 		log.Error().Err(err).Msg("GetImage from ImageService failed")
 		return
@@ -400,4 +410,127 @@ func getRectangleCenterPoint(rect image.Rectangle) (point PointF) {
 		Y: y + height*0.5,
 	}
 	return point
+}
+
+func getCenterPoint(point PointF, width, height float64) PointF {
+	return PointF{
+		X: point.X + width*0.5,
+		Y: point.Y + height*0.5,
+	}
+}
+
+type UIResult struct {
+	Point  PointF  `json:"point"`
+	Width  float64 `json:"width"`
+	Height float64 `json:"height"`
+}
+
+func (u UIResult) Center() PointF {
+	return getCenterPoint(u.Point, u.Width, u.Height)
+}
+
+type UIResults []UIResult
+
+func (u UIResults) FilterScope(scope AbsScope) (results UIResults) {
+	for _, uiResult := range u {
+		rect := image.Rectangle{
+			Min: image.Point{
+				X: int(uiResult.Point.X),
+				Y: int(uiResult.Point.Y),
+			},
+			Max: image.Point{
+				X: int(uiResult.Point.X + uiResult.Width),
+				Y: int(uiResult.Point.Y + uiResult.Height),
+			},
+		}
+
+		// check if ui result in scope
+		if len(scope) == 4 {
+			if rect.Min.X < scope[0] ||
+				rect.Min.Y < scope[1] ||
+				rect.Max.X > scope[2] ||
+				rect.Max.Y > scope[3] {
+				// not in scope
+				continue
+			}
+		}
+		results = append(results, uiResult)
+	}
+	return
+}
+
+type UIResultMap map[string]UIResults
+
+func (u UIResultMap) FilterUIResults(uiTypes []string) (uiResults UIResults, err error) {
+	var ok bool
+	for _, uiType := range uiTypes {
+		uiResults, ok = u[uiType]
+		if ok && len(uiResults) != 0 {
+			return
+		}
+	}
+	err = errors.Errorf("UI types %v not detected", uiTypes)
+	return
+}
+
+func (u UIResults) GetUIResult(options ...ActionOption) (UIResult, error) {
+	actionOptions := NewActionOptions(options...)
+
+	uiResults := u.FilterScope(actionOptions.AbsScope)
+	if len(uiResults) == 0 {
+		return UIResult{}, errors.Wrap(code.CVResultNotFoundError,
+			"ui types not found in scope")
+	}
+	// get index
+	idx := actionOptions.Index
+	if idx < 0 {
+		idx = len(uiResults) + idx
+	}
+
+	// index out of range
+	if idx >= len(uiResults) || idx < 0 {
+		return UIResult{}, errors.Wrap(code.CVResultNotFoundError,
+			fmt.Sprintf("ui types index %d out of range", idx))
+	}
+	return uiResults[idx], nil
+}
+
+func (dExt *DriverExt) GetUIResultMap(uiTypes []string) (uiResultMap UIResultMap, err error) {
+	var bufSource *bytes.Buffer
+	var imagePath string
+	if bufSource, imagePath, err = dExt.takeScreenShot(
+		builtin.GenNameWithTimestamp("%d_cv")); err != nil {
+		return
+	}
+
+	imageResult, err := dExt.ImageService.GetImage(bufSource, actionOptions{"ui"}, uiTypeOptions(uiTypes))
+	if err != nil {
+		log.Error().Err(err).Msg("GetImage from ImageService failed")
+		return
+	}
+
+	imageUrl := imageResult.URL
+	if imageUrl != "" {
+		dExt.cacheStepData.screenShotsUrls[imagePath] = imageUrl
+		log.Debug().Str("imagePath", imagePath).Str("imageUrl", imageUrl).Msg("log screenshot")
+	}
+	uiResultMap = imageResult.UIResult
+	return
+}
+
+func (dExt *DriverExt) FindUIResult(uiTypes []string, options ...ActionOption) (point PointF, err error) {
+	uiResultMap, err := dExt.GetUIResultMap(uiTypes)
+	if err != nil {
+		return
+	}
+	uiResults, err := uiResultMap.FilterUIResults(uiTypes)
+	if err != nil {
+		return
+	}
+	uiResult, err := uiResults.GetUIResult(dExt.ParseActionOptions(options...)...)
+	point = uiResult.Center()
+
+	log.Info().Interface("text", uiTypes).
+		Interface("point", point).Msg("FindUIResult success")
+	return
 }
