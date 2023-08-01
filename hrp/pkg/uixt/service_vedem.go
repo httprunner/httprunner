@@ -160,21 +160,11 @@ func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (results OC
 	return results, nil
 }
 
-func newVEDEMImageService(actions ...string) (*veDEMImageService, error) {
+func newVEDEMImageService() (*veDEMImageService, error) {
 	if err := checkEnv(); err != nil {
 		return nil, err
 	}
-	if len(actions) == 0 {
-		actions = []string{"ocr"}
-	}
-	return &veDEMImageService{
-		actions: actions,
-	}, nil
-}
-
-func (v *veDEMImageService) WithUITypes(uiTypes ...string) *veDEMImageService {
-	v.uiTypes = uiTypes
-	return v
+	return &veDEMImageService{}, nil
 }
 
 // veDEMImageService implements IImageService interface
@@ -185,19 +175,29 @@ func (v *veDEMImageService) WithUITypes(uiTypes ...string) *veDEMImageService {
 //	liveType - get live type
 //	popup - get popup windows
 //	close - get close popup
-type veDEMImageService struct {
-	actions []string
-	uiTypes []string
-}
+//  ui - get ui position by type(s)
+type veDEMImageService struct{}
+type (
+	actionOptions []string
+	uiTypeOptions []string
+)
 
-func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer) (imageResult ImageResult, err error) {
+func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...interface{}) (imageResult ImageResult, err error) {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
-	for _, action := range s.actions {
-		bodyWriter.WriteField("actions", action)
-	}
-	for _, uiType := range s.uiTypes {
-		bodyWriter.WriteField("uiTypes", uiType)
+	for _, option := range options {
+		switch ov := option.(type) {
+		case actionOptions:
+			for _, action := range ov {
+				bodyWriter.WriteField("actions", action)
+			}
+		case uiTypeOptions:
+			for _, uiType := range ov {
+				bodyWriter.WriteField("uiTypes", uiType)
+			}
+		default:
+			log.Warn().Interface("option", ov).Msgf("unexpected image service option")
+		}
 	}
 	bodyWriter.WriteField("ocrCluster", "highPrecision")
 
@@ -338,7 +338,7 @@ func getLogID(header http.Header) string {
 
 type IImageService interface {
 	// GetImage returns image result including ocr texts, uploaded image url, etc
-	GetImage(imageBuf *bytes.Buffer) (imageResult ImageResult, err error)
+	GetImage(imageBuf *bytes.Buffer, options ...interface{}) (imageResult ImageResult, err error)
 }
 
 // GetScreenResult takes a screenshot, returns the image recognization result
@@ -346,11 +346,11 @@ func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error)
 	var bufSource *bytes.Buffer
 	var imagePath string
 	if bufSource, imagePath, err = dExt.takeScreenShot(
-		builtin.GenNameWithTimestamp("%d_ocr")); err != nil {
+		builtin.GenNameWithTimestamp("%d_cv")); err != nil {
 		return
 	}
 
-	imageResult, err := dExt.ImageService.GetImage(bufSource)
+	imageResult, err := dExt.ImageService.GetImage(bufSource, actionOptions{"ocr", "upload", "liveType"})
 	if err != nil {
 		log.Error().Err(err).Msg("GetImage from ImageService failed")
 		return
@@ -495,28 +495,15 @@ func (u UIResults) GetUIResult(options ...ActionOption) (UIResult, error) {
 	return uiResults[idx], nil
 }
 
-// newVEDEMUIService return image service for
-func newVEDEMUIService(uiTypes []string) (*veDEMImageService, error) {
-	vedemUIService, err := newVEDEMImageService("ui")
-	if err != nil {
-		return nil, err
-	}
-	return vedemUIService.WithUITypes(uiTypes...), nil
-}
-
 func (dExt *DriverExt) GetUIResultMap(uiTypes []string) (uiResultMap UIResultMap, err error) {
 	var bufSource *bytes.Buffer
 	var imagePath string
 	if bufSource, imagePath, err = dExt.takeScreenShot(
-		builtin.GenNameWithTimestamp("%d_ocr")); err != nil {
+		builtin.GenNameWithTimestamp("%d_cv")); err != nil {
 		return
 	}
 
-	vedemUIService, err := newVEDEMUIService(uiTypes)
-	if err != nil {
-		return
-	}
-	imageResult, err := vedemUIService.GetImage(bufSource)
+	imageResult, err := dExt.ImageService.GetImage(bufSource, actionOptions{"ui"}, uiTypeOptions(uiTypes))
 	if err != nil {
 		log.Error().Err(err).Msg("GetImage from ImageService failed")
 		return

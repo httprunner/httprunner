@@ -110,7 +110,7 @@ func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) 
 		return nil, err
 	}
 
-	if dExt.ImageService, err = newVEDEMImageService("ocr", "upload", "liveType"); err != nil {
+	if dExt.ImageService, err = newVEDEMImageService(); err != nil {
 		return nil, err
 	}
 

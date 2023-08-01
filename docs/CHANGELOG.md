@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.6 (2023-07-31)
+## v4.3.6-beta (2023-08-01)
 
 - feat: support to reset driver (or session only) automatically when UIA2 / WDA crashed or WebDriver request failed
 - feat: `tap_cv` action supports ui type detection and tap
