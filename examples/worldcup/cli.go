@@ -7,7 +7,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
@@ -15,9 +14,6 @@ var rootCmd = &cobra.Command{
 	Use:     "wcl",
 	Short:   "Monitor FIFA World Cup Live",
 	Version: "2022.12.03.0018",
-	PreRun: func(cmd *cobra.Command, args []string) {
-		hrp.InitLogger("INFO", false)
-	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var device uixt.Device
 		var bundleID string

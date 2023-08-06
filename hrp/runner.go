@@ -429,6 +429,7 @@ func (r *CaseRunner) parseConfig() error {
 			}
 			iosDeviceConfig.UDID = udid.(string)
 		}
+
 		device, err := uixt.NewIOSDevice(uixt.GetIOSDeviceOptions(iosDeviceConfig)...)
 		if err != nil {
 			return errors.Wrap(err, "init iOS device failed")
@@ -447,6 +448,7 @@ func (r *CaseRunner) parseConfig() error {
 			}
 			androidDeviceConfig.SerialNumber = sn.(string)
 		}
+
 		device, err := uixt.NewAndroidDevice(uixt.GetAndroidDeviceOptions(androidDeviceConfig)...)
 		if err != nil {
 			return errors.Wrap(err, "init Android device failed")
