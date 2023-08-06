@@ -14,9 +14,6 @@ var wikiCmd = &cobra.Command{
 	Use:     "wiki",
 	Aliases: []string{"info", "docs", "doc"},
 	Short:   "visit https://httprunner.com",
-	PreRun: func(cmd *cobra.Command, args []string) {
-		setLogLevel(logLevel)
-	},
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		startTime := time.Now()
 		defer func() {

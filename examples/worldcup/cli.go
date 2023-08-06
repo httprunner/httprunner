@@ -3,12 +3,11 @@ package main
 import (
 	"errors"
 	"os"
-	"strings"
 
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
@@ -17,11 +16,7 @@ var rootCmd = &cobra.Command{
 	Short:   "Monitor FIFA World Cup Live",
 	Version: "2022.12.03.0018",
 	PreRun: func(cmd *cobra.Command, args []string) {
-		log.Logger = zerolog.New(
-			zerolog.ConsoleWriter{NoColor: false, Out: os.Stderr},
-		).With().Timestamp().Logger()
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-		setLogLevel(logLevel)
+		hrp.InitLogger("INFO", false)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var device uixt.Device
@@ -76,24 +71,5 @@ func main() {
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
-	}
-}
-
-func setLogLevel(level string) {
-	level = strings.ToUpper(level)
-	log.Info().Str("level", level).Msg("Set log level")
-	switch level {
-	case "DEBUG":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	case "INFO":
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	case "WARN":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	case "ERROR":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-	case "FATAL":
-		zerolog.SetGlobalLevel(zerolog.FatalLevel)
-	case "PANIC":
-		zerolog.SetGlobalLevel(zerolog.PanicLevel)
 	}
 }

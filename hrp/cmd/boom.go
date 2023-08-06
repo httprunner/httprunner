@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -26,9 +27,10 @@ var boomCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 		boomer.SetUlimit(10240) // ulimit -n 10240
 		if !strings.EqualFold(logLevel, "DEBUG") {
-			logLevel = "WARN" // disable info logs for load testing
+			// disable info logs for load testing
+			log.Info().Msg("Set global log level to WARN for load testing")
+			zerolog.SetGlobalLevel(zerolog.WarnLevel)
 		}
-		setLogLevel(logLevel)
 	},
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		startTime := time.Now()
