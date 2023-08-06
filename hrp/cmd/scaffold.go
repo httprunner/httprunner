@@ -14,9 +14,6 @@ var scaffoldCmd = &cobra.Command{
 	Aliases: []string{"scaffold"},
 	Short:   "create a scaffold project",
 	Args:    cobra.ExactValidArgs(1),
-	PreRun: func(cmd *cobra.Command, args []string) {
-		setLogLevel(logLevel)
-	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !ignorePlugin && !genPythonPlugin && !genGoPlugin {
 			return errors.New("please specify function plugin type")

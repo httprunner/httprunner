@@ -19,9 +19,6 @@ var convertCmd = &cobra.Command{
 	Short:        "convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases",
 	Args:         cobra.MinimumNArgs(1),
 	SilenceUsage: false,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		setLogLevel(logLevel)
-	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		caseConverter := convert.NewConverter(outputDir, profilePath)
 

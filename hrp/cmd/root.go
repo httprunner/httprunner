@@ -1,14 +1,9 @@
 package cmd
 
 import (
-	"os"
-	"runtime"
-	"strings"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/cmd/adb"
 	"github.com/httprunner/httprunner/v4/hrp/cmd/ios"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
@@ -36,14 +31,7 @@ Website: https://httprunner.com
 Github: https://github.com/httprunner/httprunner
 Copyright 2017 debugtalk`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		noColor := false
-		if runtime.GOOS == "windows" {
-			noColor = true
-		}
-		if !logJSON {
-			log.Logger = zerolog.New(zerolog.ConsoleWriter{NoColor: noColor, Out: os.Stderr}).With().Timestamp().Logger()
-			log.Info().Msg("Set log to color console")
-		}
+		hrp.InitLogger(logLevel, logJSON)
 	},
 	Version:          version.VERSION,
 	TraverseChildren: true, // parses flags on all parents before executing child command
@@ -60,7 +48,7 @@ var (
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() int {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "INFO", "set log level")
-	rootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format")
+	rootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format (default colorized console)")
 	rootCmd.PersistentFlags().StringVar(&venv, "venv", "", "specify python3 venv path")
 
 	ios.Init(rootCmd)
@@ -68,23 +56,4 @@ func Execute() int {
 
 	err := rootCmd.Execute()
 	return code.GetErrorCode(err)
-}
-
-func setLogLevel(level string) {
-	level = strings.ToUpper(level)
-	log.Info().Str("level", level).Msg("Set log level")
-	switch level {
-	case "DEBUG":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	case "INFO":
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	case "WARN":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	case "ERROR":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-	case "FATAL":
-		zerolog.SetGlobalLevel(zerolog.FatalLevel)
-	case "PANIC":
-		zerolog.SetGlobalLevel(zerolog.PanicLevel)
-	}
 }
