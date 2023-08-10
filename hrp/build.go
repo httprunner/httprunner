@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/httprunner/funplugin/shared"
+	"github.com/httprunner/funplugin/fungo"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -142,7 +142,7 @@ func (pt *pluginTemplate) generateGo(output string) error {
 
 		// download plugin dependency
 		// funplugin version should be locked
-		funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", shared.Version)
+		funplugin := fmt.Sprintf("github.com/httprunner/funplugin@%s", fungo.Version)
 		if err := myexec.ExecCommandInDir(myexec.Command("go", "get", funplugin), pluginDir); err != nil {
 			return errors.Wrap(err, "go get funplugin failed")
 		}
