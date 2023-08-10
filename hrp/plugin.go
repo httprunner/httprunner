@@ -53,7 +53,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		return p.(funplugin.IPlugin), nil
 	}
 
-	pluginOptions := []funplugin.Option{funplugin.WithLogOn(logOn)}
+	pluginOptions := []funplugin.Option{funplugin.WithDebugLogger(logOn)}
 
 	if strings.HasSuffix(pluginPath, ".py") {
 		// register funppy plugin
