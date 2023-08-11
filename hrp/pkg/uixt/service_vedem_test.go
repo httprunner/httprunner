@@ -76,7 +76,7 @@ func TestMatchRegex(t *testing.T) {
 func TestTapUIWithScreenshot(t *testing.T) {
 	serialNumber := os.Getenv("SERIAL_NUMBER")
 	device, _ := NewAndroidDevice(WithSerialNumber(serialNumber))
-	driver, err := device.NewDriver(nil)
+	driver, err := device.NewDriver()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +88,7 @@ func TestTapUIWithScreenshot(t *testing.T) {
 }
 
 func TestDriverExtOCR(t *testing.T) {
-	driverExt, err := iosDevice.NewDriver(nil)
+	driverExt, err := iosDevice.NewDriver()
 	checkErr(t, err)
 
 	point, err := driverExt.FindScreenText("抖音")

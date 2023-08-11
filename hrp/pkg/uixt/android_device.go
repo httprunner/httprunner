@@ -154,10 +154,15 @@ func (dev *AndroidDevice) LogEnabled() bool {
 	return dev.LogOn
 }
 
-func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
+func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, err error) {
+	driverOptions := &DriverOptions{}
+	for _, option := range options {
+		option(driverOptions)
+	}
+
 	var driver WebDriver
 	if dev.UIA2 {
-		driver, err = dev.NewUSBDriver(capabilities)
+		driver, err = dev.NewUSBDriver(driverOptions.capabilities)
 	} else {
 		driver, err = dev.NewAdbDriver()
 	}
@@ -165,7 +170,7 @@ func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *Drive
 		return nil, errors.Wrap(err, "failed to init UIA driver")
 	}
 
-	driverExt, err = NewDriverExt(dev, driver)
+	driverExt, err = newDriverExt(dev, driver)
 	if err != nil {
 		return nil, err
 	}

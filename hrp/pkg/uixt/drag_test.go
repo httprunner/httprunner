@@ -7,7 +7,7 @@ import (
 )
 
 func TestDriverExt_Drag(t *testing.T) {
-	driverExt, err := iosDevice.NewDriver(nil)
+	driverExt, err := iosDevice.NewDriver()
 	checkErr(t, err)
 
 	pathSearch := "/Users/hero/Documents/temp/2020-05/opencv/IMG_map.png"

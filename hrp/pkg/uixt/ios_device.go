@@ -290,8 +290,14 @@ func (dev *IOSDevice) LogEnabled() bool {
 	return dev.LogOn
 }
 
-func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
+func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, err error) {
+	driverOptions := &DriverOptions{}
+	for _, option := range options {
+		option(driverOptions)
+	}
+
 	// init WDA driver
+	capabilities := driverOptions.capabilities
 	if capabilities == nil {
 		capabilities = NewCapabilities()
 		capabilities.WithDefaultAlertAction(AlertActionAccept)
@@ -316,7 +322,7 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 		}
 	}
 
-	driverExt, err = NewDriverExt(dev, driver)
+	driverExt, err = newDriverExt(dev, driver)
 	if err != nil {
 		return nil, err
 	}
