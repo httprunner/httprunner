@@ -435,7 +435,7 @@ func (r *CaseRunner) parseConfig() error {
 		if err != nil {
 			return errors.Wrap(err, "init iOS device failed")
 		}
-		client, err := device.NewDriver()
+		client, err := device.NewDriver(uixt.WithDriverPlugin(r.parser.plugin))
 		if err != nil {
 			return errors.Wrap(err, "init iOS WDA client failed")
 		}
@@ -454,7 +454,7 @@ func (r *CaseRunner) parseConfig() error {
 		if err != nil {
 			return errors.Wrap(err, "init Android device failed")
 		}
-		client, err := device.NewDriver()
+		client, err := device.NewDriver(uixt.WithDriverPlugin(r.parser.plugin))
 		if err != nil {
 			return errors.Wrap(err, "init Android client failed")
 		}

@@ -170,14 +170,9 @@ func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverE
 		return nil, errors.Wrap(err, "failed to init UIA driver")
 	}
 
-	driverExt, err = newDriverExt(dev, driver)
+	driverExt, err = newDriverExt(dev, driver, driverOptions.plugin)
 	if err != nil {
 		return nil, err
-	}
-	err = driverExt.extendCV()
-	if err != nil {
-		return nil, errors.Wrap(code.MobileUIDriverError,
-			fmt.Sprintf("extend OpenCV failed: %v", err))
 	}
 
 	if dev.LogOn {

@@ -538,7 +538,7 @@ func (r *CaseRunner) initUIClient(uuid string, osType string) (client *uixt.Driv
 		return nil, errors.Wrapf(err, "init %s device failed", osType)
 	}
 
-	client, err = device.NewDriver()
+	client, err = device.NewDriver(uixt.WithDriverPlugin(r.parser.plugin))
 	if err != nil {
 		return nil, err
 	}
