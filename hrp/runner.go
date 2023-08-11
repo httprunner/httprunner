@@ -84,9 +84,8 @@ type HRPRunner struct {
 	httpClient       *http.Client
 	http2Client      *http.Client
 	wsDialer         *websocket.Dialer
-	uiClients        map[string]*uixt.DriverExt // UI automation clients for iOS and Android, key is udid/serial
-	caseTimeoutTimer *time.Timer                // case timeout timer
-	interruptSignal  chan os.Signal             // interrupt signal channel
+	caseTimeoutTimer *time.Timer    // case timeout timer
+	interruptSignal  chan os.Signal // interrupt signal channel
 }
 
 // SetClientTransport configures transport of http client for high concurrency load testing
@@ -236,7 +235,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 
 		// release UI driver session
 		defer func() {
-			for _, client := range r.uiClients {
+			for _, client := range caseRunner.uiClients {
 				client.Driver.DeleteSession()
 			}
 		}()
@@ -339,13 +338,15 @@ func (r *HRPRunner) NewCaseRunner(testcase *TestCase) (*CaseRunner, error) {
 }
 
 type CaseRunner struct {
-	testCase  *TestCase
-	hrpRunner *HRPRunner
-	parser    *Parser
+	hrpRunner *HRPRunner // all case runners share one HRPRunner
+
+	testCase *TestCase // each testcase init its own CaseRunner
+	parser   *Parser   // each CaseRunner init its own Parser
 
 	parsedConfig       *TConfig
 	parametersIterator *ParametersIterator
-	rootDir            string // project root dir
+	rootDir            string                     // project root dir
+	uiClients          map[string]*uixt.DriverExt // UI automation clients for iOS and Android, key is udid/serial
 }
 
 // parseConfig parses testcase config, stores to parsedConfig.
@@ -418,8 +419,8 @@ func (r *CaseRunner) parseConfig() error {
 	r.parametersIterator = parametersIterator
 
 	// init iOS/Android clients
-	if r.hrpRunner.uiClients == nil {
-		r.hrpRunner.uiClients = make(map[string]*uixt.DriverExt)
+	if r.uiClients == nil {
+		r.uiClients = make(map[string]*uixt.DriverExt)
 	}
 	for _, iosDeviceConfig := range r.parsedConfig.IOS {
 		if iosDeviceConfig.UDID != "" {
@@ -438,7 +439,7 @@ func (r *CaseRunner) parseConfig() error {
 		if err != nil {
 			return errors.Wrap(err, "init iOS WDA client failed")
 		}
-		r.hrpRunner.uiClients[device.UDID] = client
+		r.uiClients[device.UDID] = client
 	}
 	for _, androidDeviceConfig := range r.parsedConfig.Android {
 		if androidDeviceConfig.SerialNumber != "" {
@@ -457,7 +458,7 @@ func (r *CaseRunner) parseConfig() error {
 		if err != nil {
 			return errors.Wrap(err, "init Android client failed")
 		}
-		r.hrpRunner.uiClients[device.SerialNumber] = client
+		r.uiClients[device.SerialNumber] = client
 	}
 
 	return nil
@@ -476,7 +477,8 @@ func (r *CaseRunner) NewSession() *SessionRunner {
 // SessionRunner is used to run testcase and its steps.
 // each testcase has its own SessionRunner instance and share session variables.
 type SessionRunner struct {
-	caseRunner       *CaseRunner
+	caseRunner *CaseRunner // all session runners share one CaseRunner
+
 	sessionVariables map[string]interface{}
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
@@ -661,7 +663,7 @@ func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 	caseSummary.InOut.ExportVars = exportVars
 	caseSummary.InOut.ConfigVars = r.caseRunner.parsedConfig.Variables
 
-	for uuid, client := range r.caseRunner.hrpRunner.uiClients {
+	for uuid, client := range r.caseRunner.uiClients {
 		// add WDA/UIA logs to summary
 		logs := map[string]interface{}{
 			"uuid": uuid,
