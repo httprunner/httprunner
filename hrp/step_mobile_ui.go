@@ -513,7 +513,7 @@ func (s *StepMobileUIValidation) Run(r *SessionRunner) (*StepResult, error) {
 	return runStepMobileUI(r, s.step)
 }
 
-func (r *HRPRunner) initUIClient(uuid string, osType string) (client *uixt.DriverExt, err error) {
+func (r *CaseRunner) initUIClient(uuid string, osType string) (client *uixt.DriverExt, err error) {
 	// avoid duplicate init
 	if uuid == "" && len(r.uiClients) > 0 {
 		for _, v := range r.uiClients {
@@ -585,7 +585,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	}
 
 	// init wda/uia driver
-	uiDriver, err := s.caseRunner.hrpRunner.initUIClient(mobileStep.Serial, osType)
+	uiDriver, err := s.caseRunner.initUIClient(mobileStep.Serial, osType)
 	if err != nil {
 		return
 	}
