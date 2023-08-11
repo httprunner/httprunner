@@ -170,12 +170,12 @@ func newVEDEMImageService() (*veDEMImageService, error) {
 // veDEMImageService implements IImageService interface
 // actions:
 //
-//	ocr - get ocr texts
-//	upload - get image uploaded url
-//	liveType - get live type
-//	popup - get popup windows
-//	close - get close popup
-//  ui - get ui position by type(s)
+//		ocr - get ocr texts
+//		upload - get image uploaded url
+//		liveType - get live type
+//		popup - get popup windows
+//		close - get close popup
+//	 ui - get ui position by type(s)
 type veDEMImageService struct{}
 type (
 	actionOptions []string

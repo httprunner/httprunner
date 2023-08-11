@@ -73,7 +73,7 @@ func (ad *adbDriver) WindowSize() (size Size, err error) {
 
 	var resolution string
 	sizeList := strings.Split(output, "\n")
-	log.Info().Msgf("window size: %v", sizeList)
+	log.Trace().Msgf("window size: %v", sizeList)
 	for _, size := range sizeList {
 		if strings.Contains(size, matchedSizeType) {
 			resolution = strings.Split(size, ": ")[1]

@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/httprunner/funplugin"
-	"github.com/httprunner/funplugin/shared"
+	"github.com/httprunner/funplugin/fungo"
 	"github.com/maja42/goval"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -283,7 +283,7 @@ func (p *Parser) callFunc(funcName string, arguments ...interface{}) (interface{
 		if p.plugin.Has(funcName) {
 			return p.plugin.Call(funcName, arguments...)
 		}
-		commonName := shared.ConvertCommonName(funcName)
+		commonName := fungo.ConvertCommonName(funcName)
 		if p.plugin.Has(commonName) {
 			return p.plugin.Call(commonName, arguments...)
 		}
@@ -297,7 +297,7 @@ func (p *Parser) callFunc(funcName string, arguments ...interface{}) (interface{
 	fn := reflect.ValueOf(function)
 
 	// call with builtin function
-	return shared.CallFunc(fn, arguments...)
+	return fungo.CallFunc(fn, arguments...)
 }
 
 // merge two variables mapping, the first variables have higher priority

@@ -17,9 +17,6 @@ var buildCmd = &cobra.Command{
 	Example: `  $ hrp build plugin/debugtalk.go
   $ hrp build plugin/debugtalk.py`,
 	Args: cobra.ExactArgs(1),
-	PreRun: func(cmd *cobra.Command, args []string) {
-		setLogLevel(logLevel)
-	},
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		startTime := time.Now()
 		defer func() {
