@@ -538,7 +538,7 @@ func (r *HRPRunner) initUIClient(uuid string, osType string) (client *uixt.Drive
 		return nil, errors.Wrapf(err, "init %s device failed", osType)
 	}
 
-	client, err = device.NewDriver(nil)
+	client, err = device.NewDriver()
 	if err != nil {
 		return nil, err
 	}

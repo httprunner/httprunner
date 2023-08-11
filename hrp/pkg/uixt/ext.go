@@ -19,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/httprunner/funplugin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -91,9 +92,12 @@ type DriverExt struct {
 
 	// cache step data
 	cacheStepData cacheStepData
+
+	// funplugin
+	plugin funplugin.IPlugin
 }
 
-func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) {
+func newDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) {
 	dExt = &DriverExt{
 		Device:          device,
 		Driver:          driver,

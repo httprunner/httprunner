@@ -22,7 +22,7 @@ func TestIOSDemo(t *testing.T) {
 
 	capabilities := uixt.NewCapabilities()
 	capabilities.WithDefaultAlertAction(uixt.AlertActionAccept) // or uixt.AlertActionDismiss
-	driverExt, err := device.NewDriver(capabilities)
+	driverExt, err := device.NewDriver(uixt.WithDriverCapabilities(capabilities))
 	if err != nil {
 		t.Fatal(err)
 	}
