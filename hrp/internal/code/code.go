@@ -1,8 +1,9 @@
 package code
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 // general: [0, 2)
@@ -167,6 +168,6 @@ func GetErrorCode(err error) (errCode int) {
 		errCode = GeneralFail
 	}
 
-	log.Warn().Int("code", errCode).Msg("hrp exit")
+	fmt.Printf("hrp exit %d\n", errCode)
 	return
 }

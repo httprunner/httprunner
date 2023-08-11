@@ -8,11 +8,11 @@ import (
 	"image"
 	"image/color"
 	"io/ioutil"
-	"log"
 	"math"
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"gocv.io/x/gocv"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
@@ -409,14 +409,14 @@ func getMatchingLocation(matImage gocv.Mat, matTpl gocv.Mat, threshold float32, 
 	val, loc = getValLoc(minVal, maxVal, minLoc, maxLoc, matchMode)
 
 	if debug == DmEachMatch {
-		log.Println(fmt.Sprintf(dmOutputMsg, val, threshold))
+		log.Debug().Msg(fmt.Sprintf(dmOutputMsg, val, threshold))
 	}
 
 	if val >= threshold {
 		return loc, nil
 	} else {
 		if debug == DmNotMatch {
-			log.Println(fmt.Sprintf(dmOutputMsg, val, threshold))
+			log.Debug().Msg(fmt.Sprintf(dmOutputMsg, val, threshold))
 		}
 		return image.Point{}, errors.New("no such target search image")
 	}

@@ -4,9 +4,11 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/pkgerrors"
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp/cmd/adb"
@@ -36,14 +38,7 @@ Website: https://httprunner.com
 Github: https://github.com/httprunner/httprunner
 Copyright 2017 debugtalk`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		noColor := false
-		if runtime.GOOS == "windows" {
-			noColor = true
-		}
-		if !logJSON {
-			log.Logger = zerolog.New(zerolog.ConsoleWriter{NoColor: noColor, Out: os.Stderr}).With().Timestamp().Logger()
-			log.Info().Msg("Set log to color console")
-		}
+		initLogger(logLevel, logJSON)
 	},
 	Version:          version.VERSION,
 	TraverseChildren: true, // parses flags on all parents before executing child command
@@ -60,7 +55,7 @@ var (
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() int {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "INFO", "set log level")
-	rootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format")
+	rootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format (default colorized console)")
 	rootCmd.PersistentFlags().StringVar(&venv, "venv", "", "specify python3 venv path")
 
 	ios.Init(rootCmd)
@@ -70,9 +65,34 @@ func Execute() int {
 	return code.GetErrorCode(err)
 }
 
-func setLogLevel(level string) {
-	level = strings.ToUpper(level)
-	log.Info().Str("level", level).Msg("Set log level")
+func initLogger(logLevel string, logJSON bool) {
+	// Error Logging with Stacktrace
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+
+	if !logJSON {
+		// log a human-friendly, colorized output
+		noColor := false
+		if runtime.GOOS == "windows" {
+			noColor = true
+		}
+
+		log.Logger = zerolog.New(
+			zerolog.ConsoleWriter{
+				Out:        os.Stderr,
+				TimeFormat: time.RFC3339,
+				NoColor:    noColor,
+			},
+		).With().Timestamp().Logger()
+		log.Info().Msg("log with colorized console")
+	} else {
+		// default logger
+		log.Info().Msg("log with json output")
+		log.Logger = zerolog.New(os.Stderr).With().Timestamp().Logger()
+	}
+
+	// Setting Global Log Level
+	level := strings.ToUpper(logLevel)
+	log.Info().Str("log_level", level).Msg("set global log level")
 	switch level {
 	case "DEBUG":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
