@@ -24,6 +24,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 )
 
@@ -97,13 +98,21 @@ type DriverExt struct {
 	plugin funplugin.IPlugin
 }
 
-func newDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) {
+func newDriverExt(device Device, driver WebDriver, plugin funplugin.IPlugin) (dExt *DriverExt, err error) {
 	dExt = &DriverExt{
 		Device:          device,
 		Driver:          driver,
+		plugin:          plugin,
 		cacheStepData:   cacheStepData{},
 		interruptSignal: make(chan os.Signal, 1),
 	}
+
+	err = dExt.extendCV()
+	if err != nil {
+		return nil, errors.Wrap(code.MobileUIDriverError,
+			fmt.Sprintf("extend OpenCV failed: %v", err))
+	}
+
 	dExt.cacheStepData.reset()
 	signal.Notify(dExt.interruptSignal, syscall.SIGTERM, syscall.SIGINT)
 	dExt.doneMjpegStream = make(chan bool, 1)

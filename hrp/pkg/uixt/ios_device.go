@@ -322,15 +322,11 @@ func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, 
 		}
 	}
 
-	driverExt, err = newDriverExt(dev, driver)
+	driverExt, err = newDriverExt(dev, driver, driverOptions.plugin)
 	if err != nil {
 		return nil, err
 	}
-	err = driverExt.extendCV()
-	if err != nil {
-		return nil, errors.Wrap(code.MobileUIDriverError,
-			fmt.Sprintf("extend OpenCV failed: %v", err))
-	}
+
 	settings, err := driverExt.Driver.SetAppiumSettings(map[string]interface{}{
 		"snapshotMaxDepth":          dev.SnapshotMaxDepth,
 		"acceptAlertButtonSelector": dev.AcceptAlertButtonSelector,
