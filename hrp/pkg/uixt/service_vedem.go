@@ -364,12 +364,14 @@ func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error)
 	}
 
 	screenResult = &ScreenResult{
-		Texts:      imageResult.OCRResult.ToOCRTexts(),
-		Tags:       nil,
-		Popularity: Popularity{},
+		Texts: imageResult.OCRResult.ToOCRTexts(),
+		Tags:  nil,
 	}
 	if imageResult.LiveType != "" {
-		screenResult.Tags = []string{imageResult.LiveType}
+		screenResult.VideoType = "live"
+		screenResult.Live = &LiveRoom{
+			LiveType: imageResult.LiveType,
+		}
 	}
 	dExt.cacheStepData.screenResults[imagePath] = screenResult
 
