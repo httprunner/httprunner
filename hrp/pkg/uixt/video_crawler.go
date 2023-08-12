@@ -4,10 +4,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/httprunner/funplugin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 type VideoStat struct {
@@ -82,16 +84,24 @@ func (s *VideoStat) isTargetAchieved() bool {
 
 // incrFeed increases feed count and feed stat
 func (s *VideoStat) incrFeed(screenResult *ScreenResult, driverExt *DriverExt) error {
-	// feed author
+	screenResult.VideoType = "feed"
+
+	// find feed author
 	actionOptions := []ActionOption{
 		WithRegex(true),
 		driverExt.GenAbsScope(0, 0.5, 1, 1).Option(),
 	}
-	if ocrText, err := screenResult.Texts.FindText("^@", actionOptions...); err == nil {
-		log.Debug().Str("author", ocrText.Text).Msg("found feed author")
-		screenResult.Tags = append(screenResult.Tags, ocrText.Text)
+	ocrText, err := screenResult.Texts.FindText("^@", actionOptions...)
+	if err != nil {
+		return errors.Wrap(err, "find feed author failed")
+	}
+	author := ocrText.Text
+	log.Info().Str("author", author).Msg("found feed author by OCR")
+	screenResult.Feed = &FeedVideo{
+		UserName: author,
 	}
 
+	// find target labels
 	for _, targetLabel := range s.configs.Feed.TargetLabels {
 		scope := targetLabel.Scope
 		actionOptions := []ActionOption{
@@ -108,21 +118,23 @@ func (s *VideoStat) incrFeed(screenResult *ScreenResult, driverExt *DriverExt) e
 		}
 	}
 
-	// add popularity data for feed
-	popularityData := screenResult.Texts.FilterScope(driverExt.GenAbsScope(0.8, 0.5, 1, 0.8))
-	if len(popularityData) != 4 {
-		log.Warn().Interface("popularity", popularityData).Msg("get feed popularity data failed")
-	} else {
-		screenResult.Popularity = Popularity{
-			Stars:     popularityData[0].Text,
-			Comments:  popularityData[1].Text,
-			Favorites: popularityData[2].Text,
-			Shares:    popularityData[3].Text,
+	// get feed trackings by author
+	if driverExt.plugin != nil {
+		feedVideo, err := getFeedVideo(driverExt.plugin, author)
+		if err != nil {
+			log.Error().Err(err).Msg("get feed video from plugin failed")
+			return err
 		}
+		screenResult.Feed = feedVideo
+	}
+
+	// get simulation play duration
+	if screenResult.Feed.PlayDuration == 0 {
+		screenResult.Feed.PlayDuration = getSimulationDuration(s.configs.Feed.SleepRandom)
 	}
 
 	log.Info().Strs("tags", screenResult.Tags).
-		Interface("popularity", screenResult.Popularity).
+		Interface("feed", screenResult.Feed).
 		Msg("found feed success")
 	s.FeedCount++
 	return nil
@@ -130,20 +142,19 @@ func (s *VideoStat) incrFeed(screenResult *ScreenResult, driverExt *DriverExt) e
 
 // incrLive increases live count and live stat
 func (s *VideoStat) incrLive(screenResult *ScreenResult, driverExt *DriverExt) error {
+	screenResult.VideoType = "live"
 	// TODO: check live type
 
-	// add popularity data for live
-	popularityData := screenResult.Texts.FilterScope(driverExt.GenAbsScope(0.7, 0.05, 1, 0.15))
-	if len(popularityData) != 1 {
-		log.Warn().Interface("popularity", popularityData).Msg("get live popularity data failed")
-	} else {
-		screenResult.Popularity = Popularity{
-			LiveUsers: popularityData[0].Text,
-		}
+	if screenResult.Live == nil {
+		screenResult.Live = &LiveRoom{}
 	}
 
+	// TODO: add popularity data for live
+
+	screenResult.Live.WatchDuration = getSimulationDuration(s.configs.Live.SleepRandom)
+
 	log.Info().Strs("tags", screenResult.Tags).
-		Interface("popularity", screenResult.Popularity).
+		Interface("live", screenResult.Live).
 		Msg("found live success")
 	s.LiveCount++
 	return nil
@@ -221,6 +232,7 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 		return err
 	}
 	time.Sleep(5 * time.Second)
+	lastSwipeTime := time.Now()
 
 	for !l.currentStat.isLiveTargetAchieved() {
 		select {
@@ -231,24 +243,6 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			log.Warn().Msg("interrupted in live crawler")
 			return errors.Wrap(code.InterruptError, "live crawler interrupted")
 		default:
-			// check if live room
-			if err := l.driver.Driver.AssertForegroundApp(l.configs.AppPackageName, "live"); err != nil {
-				return err
-			}
-
-			// swipe to next live video
-			err := l.driver.SwipeUp()
-			if err != nil {
-				log.Error().Err(err).Msg("swipe up failed")
-				// TODO: retry maximum 3 times
-				continue
-			}
-
-			// sleep custom random time
-			if err := sleepRandom(time.Now(), l.configs.Live.SleepRandom); err != nil {
-				log.Error().Err(err).Msg("sleep random failed")
-			}
-
 			// take screenshot and get screen texts by OCR
 			screenResult, err := l.driver.GetScreenResult()
 			if err != nil {
@@ -256,11 +250,27 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 				time.Sleep(3 * time.Second)
 				continue
 			}
-			screenResult.Tags = append([]string{"live"}, screenResult.Tags...)
 
 			// check live type and incr live count
 			if err := l.currentStat.incrLive(screenResult, l.driver); err != nil {
 				log.Error().Err(err).Msg("incr live failed")
+			}
+
+			// simulation watch live video
+			sleepStrict(lastSwipeTime, screenResult.Live.WatchDuration)
+
+			// swipe to next live video
+			err = l.driver.SwipeUp()
+			if err != nil {
+				log.Error().Err(err).Msg("swipe up failed")
+				// TODO: retry maximum 3 times
+				continue
+			}
+			lastSwipeTime = time.Now()
+
+			// check if live room
+			if err := l.driver.Driver.AssertForegroundApp(l.configs.AppPackageName, "live"); err != nil {
+				return err
 			}
 		}
 	}
@@ -388,19 +398,18 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						continue
 					}
 				}
-				screenResult.Tags = []string{"live-preview"}
+				// 直播预览流
+				screenResult.VideoType = "live-preview"
 			} else {
-				screenResult.Tags = []string{"feed"}
-
+				// 点播
 				// check feed type and incr feed count
 				if err := currVideoStat.incrFeed(screenResult, dExt); err != nil {
 					log.Error().Err(err).Msg("incr feed failed")
+					continue
 				}
-			}
 
-			// sleep custom random time
-			if err := sleepRandom(lastSwipeTime, configs.Feed.SleepRandom); err != nil {
-				log.Error().Err(err).Msg("sleep random failed")
+				// simulation watch feed video
+				sleepStrict(lastSwipeTime, screenResult.Feed.PlayDuration)
 			}
 
 			// check if target count achieved
@@ -423,4 +432,54 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			}
 		}
 	}
+}
+
+func getFeedVideo(plugin funplugin.IPlugin, authorName string) (feedVideo *FeedVideo, err error) {
+	if !plugin.Has("GetFeedVideo") {
+		return nil, errors.New("plugin missing GetFeedVideo method")
+	}
+
+	resp, err := plugin.Call("GetFeedVideo", authorName)
+	if err != nil {
+		return nil, errors.Wrap(err, "call plugin GetFeedVideo failed")
+	}
+
+	feedBytes, err := json.Marshal(resp)
+	if err != nil {
+		return nil, errors.New("json marshal feed video info failed")
+	}
+
+	err = json.Unmarshal(feedBytes, &feedVideo)
+	if err != nil {
+		return nil, errors.Wrap(err, "json unmarshal feed video info failed")
+	}
+
+	log.Info().Interface("feedVideo", feedVideo).Msg("get feed video success")
+	return feedVideo, nil
+}
+
+type FeedVideo struct {
+	// 视频基础数据
+	UserName string `json:"user_name"` // 视频作者
+	Duration int64  `json:"duration"`  // 视频时长(ms)
+	Caption  string `json:"caption"`   // 视频文案
+	// 视频热度数据
+	ViewCount    int64 `json:"view_count"`    // feed 观看数
+	LikeCount    int64 `json:"like_count"`    // feed 点赞数
+	CommentCount int64 `json:"comment_count"` // feed 评论数
+	CollectCount int64 `json:"collect_count"` // feed 收藏数
+	ForwardCount int64 `json:"forward_count"` // feed 转发数
+	ShareCount   int64 `json:"share_count"`   // feed 分享数
+	// 记录仿真决策信息
+	PlayDuration int64 `json:"play_duration"` // 播放时长(ms)
+}
+
+type LiveRoom struct {
+	// 视频基础数据
+	UserName string `json:"user_name"` // 主播名
+	LiveType string `json:"live_type"` // 直播间类型
+	// 直播热度数据
+	LiveUsers string `json:"live_users"` // 直播间人数
+	// 记录仿真决策信息
+	WatchDuration int64 `json:"watch_duration"` // 观看时长(ms)
 }

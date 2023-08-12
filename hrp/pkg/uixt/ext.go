@@ -50,18 +50,12 @@ func WithThreshold(threshold float64) CVOption {
 	}
 }
 
-type Popularity struct {
-	Stars     string `json:"stars,omitempty"`      // 点赞数
-	Comments  string `json:"comments,omitempty"`   // 评论数
-	Favorites string `json:"favorites,omitempty"`  // 收藏数
-	Shares    string `json:"shares,omitempty"`     // 分享数
-	LiveUsers string `json:"live_users,omitempty"` // 直播间人数
-}
-
 type ScreenResult struct {
-	Texts      OCRTexts   `json:"texts"`      // dumped OCRTexts
-	Tags       []string   `json:"tags"`       // tags for image, e.g. ["feed", "ad", "live"]
-	Popularity Popularity `json:"popularity"` // video popularity data
+	Texts     OCRTexts   `json:"texts"`                // dumped raw OCRTexts
+	Tags      []string   `json:"tags"`                 // tags for image, e.g. ["feed", "ad", "live"]
+	VideoType string     `json:"video_type,omitempty"` // video type: feed, live-preview or live
+	Feed      *FeedVideo `json:"feed,omitempty"`
+	Live      *LiveRoom  `json:"live,omitempty"`
 }
 
 type cacheStepData struct {
@@ -227,9 +221,8 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	for imagePath, screenResult := range dExt.cacheStepData.screenResults {
 		o, _ := json.Marshal(screenResult.Texts)
 		data := map[string]interface{}{
-			"tags":       screenResult.Tags,
-			"texts":      string(o),
-			"popularity": screenResult.Popularity,
+			"tags":  screenResult.Tags,
+			"texts": string(o),
 			"resolution": map[string]int{
 				"width":  screenSize.Width,
 				"height": screenSize.Height,
