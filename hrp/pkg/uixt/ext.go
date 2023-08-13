@@ -231,6 +231,12 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 				"width":  screenSize.Width,
 				"height": screenSize.Height,
 			},
+			"video_type":        screenResult.VideoType,
+			"feed":              screenResult.Feed,
+			"live":              screenResult.Live,
+			"swipe_start_time":  screenResult.SwipeStartTime,
+			"swipe_finish_time": screenResult.SwipeFinishTime,
+			"elapsed":           screenResult.Elapsed,
 		}
 
 		screenResults[imagePath] = data

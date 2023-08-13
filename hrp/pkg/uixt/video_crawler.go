@@ -127,8 +127,11 @@ func (s *VideoStat) incrFeed(screenResult *ScreenResult, driverExt *DriverExt) e
 	}
 
 	// get simulation play duration
-	if screenResult.Feed.PlayDuration == 0 {
-		screenResult.Feed.PlayDuration = getSimulationDuration(s.configs.Feed.SleepRandom)
+	if screenResult.Feed.SimulationPlayDuration != 0 {
+		screenResult.Feed.PlayDuration = screenResult.Feed.SimulationPlayDuration
+	} else {
+		screenResult.Feed.RandomPlayDuration = getSimulationDuration(s.configs.Feed.SleepRandom)
+		screenResult.Feed.PlayDuration = screenResult.Feed.RandomPlayDuration
 	}
 
 	log.Info().Strs("tags", screenResult.Tags).
@@ -475,6 +478,7 @@ type FeedVideo struct {
 	UserName string `json:"user_name"` // 视频作者
 	Duration int64  `json:"duration"`  // 视频时长(ms)
 	Caption  string `json:"caption"`   // 视频文案
+
 	// 视频热度数据
 	ViewCount    int64 `json:"view_count"`    // feed 观看数
 	LikeCount    int64 `json:"like_count"`    // feed 点赞数
@@ -482,8 +486,11 @@ type FeedVideo struct {
 	CollectCount int64 `json:"collect_count"` // feed 收藏数
 	ForwardCount int64 `json:"forward_count"` // feed 转发数
 	ShareCount   int64 `json:"share_count"`   // feed 分享数
+
 	// 记录仿真决策信息
-	PlayDuration int64 `json:"play_duration"` // 播放时长(ms)
+	PlayDuration           int64 `json:"play_duration"`            // 播放时长(ms)，取自 Simulation/Random
+	SimulationPlayDuration int64 `json:"simulation_play_duration"` // 仿真播放时长(ms)
+	RandomPlayDuration     int64 `json:"random_play_duration"`     // 随机播放时长(ms)
 
 	// timelines
 	PreloadTimestamp int64 `json:"preload_timestamp"` // 预加载时间戳

@@ -367,8 +367,7 @@ func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error)
 		Texts: imageResult.OCRResult.ToOCRTexts(),
 		Tags:  nil,
 	}
-	if imageResult.LiveType != "" {
-		screenResult.VideoType = "live"
+	if imageResult.LiveType != "" && imageResult.LiveType != "NoLive" {
 		screenResult.Live = &LiveRoom{
 			LiveType: imageResult.LiveType,
 		}
