@@ -277,7 +277,7 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			// log swipe timelines
 			screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
 			screenResult.SwipeFinishTime = swipeFinishTime.UnixMilli()
-			screenResult.Elapsed = time.Since(swipeFinishTime).Milliseconds()
+			screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 		}
 	}
 
@@ -440,7 +440,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// log swipe timelines
 			screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
 			screenResult.SwipeFinishTime = swipeFinishTime.UnixMilli()
-			screenResult.Elapsed = time.Since(swipeFinishTime).Milliseconds()
+			screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 		}
 	}
 }

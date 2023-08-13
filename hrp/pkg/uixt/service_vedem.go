@@ -343,12 +343,14 @@ type IImageService interface {
 
 // GetScreenResult takes a screenshot, returns the image recognization result
 func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error) {
+	startTime := time.Now()
 	var bufSource *bytes.Buffer
 	var imagePath string
 	if bufSource, imagePath, err = dExt.takeScreenShot(
 		builtin.GenNameWithTimestamp("%d_cv")); err != nil {
 		return
 	}
+	screenshotTakeElapsed := time.Since(startTime).Milliseconds()
 
 	imageResult, err := dExt.ImageService.GetImage(bufSource, actionOptions{"ocr", "upload", "liveType"})
 	if err != nil {
@@ -364,8 +366,10 @@ func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error)
 	}
 
 	screenResult = &ScreenResult{
-		Texts: imageResult.OCRResult.ToOCRTexts(),
-		Tags:  nil,
+		Texts:                 imageResult.OCRResult.ToOCRTexts(),
+		Tags:                  nil,
+		ScreenshotTakeElapsed: screenshotTakeElapsed,
+		ScreenshotCVElapsed:   time.Since(startTime).Milliseconds() - screenshotTakeElapsed,
 	}
 	if imageResult.LiveType != "" && imageResult.LiveType != "NoLive" {
 		screenResult.Live = &LiveRoom{
@@ -374,6 +378,10 @@ func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error)
 	}
 	dExt.cacheStepData.screenResults[imagePath] = screenResult
 
+	log.Debug().
+		Int64("ScreenshotTakeElapsed", screenResult.ScreenshotTakeElapsed).
+		Int64("ScreenshotCVElapsed", screenResult.ScreenshotCVElapsed).
+		Msg("get screenshot result success")
 	return screenResult, nil
 }
 
