@@ -85,6 +85,7 @@ func (s *VideoStat) isTargetAchieved() bool {
 // incrFeed increases feed count and feed stat
 func (s *VideoStat) incrFeed(screenResult *ScreenResult, driverExt *DriverExt) error {
 	screenResult.VideoType = "feed"
+	screenResult.Feed = &FeedVideo{}
 
 	// find feed author
 	actionOptions := []ActionOption{
@@ -97,9 +98,7 @@ func (s *VideoStat) incrFeed(screenResult *ScreenResult, driverExt *DriverExt) e
 	}
 	author := ocrText.Text
 	log.Info().Str("author", author).Msg("found feed author by OCR")
-	screenResult.Feed = &FeedVideo{
-		UserName: author,
-	}
+	screenResult.Feed.UserName = author
 
 	// find target labels
 	for _, targetLabel := range s.configs.Feed.TargetLabels {
@@ -358,7 +357,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	// loop until target count achieved or timeout
 	// the main loop is feed crawler
 	currVideoStat.timer = time.NewTimer(time.Duration(configs.Timeout) * time.Second)
-	lastSwipeTime := time.Now()
 	for {
 		select {
 		case <-currVideoStat.timer.C:
@@ -368,6 +366,15 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			log.Warn().Msg("interrupted in feed crawler")
 			return errors.Wrap(code.InterruptError, "feed crawler interrupted")
 		default:
+			// swipe to next feed video
+			log.Info().Msg("swipe to next feed video")
+			swipeStartTime := time.Now()
+			if err = dExt.SwipeUp(); err != nil {
+				log.Error().Err(err).Msg("swipe up failed")
+				return err
+			}
+			swipeFinishTime := time.Now()
+
 			// take screenshot and get screen texts by OCR
 			screenResult, err := dExt.GetScreenResult()
 			if err != nil {
@@ -387,6 +394,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 			// check if live video && run live crawler
 			if enterPoint, isLive := liveCrawler.checkLiveVideo(screenResult.Texts); isLive {
+				// 直播预览流
+				screenResult.VideoType = "live-preview"
 				log.Info().Msg("live video found")
 				if !liveCrawler.currentStat.isLiveTargetAchieved() {
 					if err := liveCrawler.Run(dExt, enterPoint); err != nil {
@@ -397,8 +406,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						continue
 					}
 				}
-				// 直播预览流
-				screenResult.VideoType = "live-preview"
 			} else {
 				// 点播
 				// check feed type and incr feed count
@@ -407,7 +414,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Warn().Err(err).Msg("incr feed failed")
 				} else {
 					// simulation watch feed video
-					sleepStrict(lastSwipeTime, screenResult.Feed.PlayDuration)
+					sleepStrict(swipeFinishTime, screenResult.Feed.PlayDuration)
 				}
 			}
 
@@ -417,18 +424,15 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				return nil
 			}
 
-			// swipe to next feed video
-			log.Info().Msg("swipe to next feed video")
-			if err = dExt.SwipeUp(); err != nil {
-				log.Error().Err(err).Msg("swipe up failed")
-				return err
-			}
-			lastSwipeTime = time.Now()
-
 			// check if feed page
 			if err := dExt.Driver.AssertForegroundApp(configs.AppPackageName, "feed"); err != nil {
 				return err
 			}
+
+			// log swipe timelines
+			screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
+			screenResult.SwipeFinishTime = swipeFinishTime.UnixMilli()
+			screenResult.Elapsed = time.Since(swipeFinishTime).Milliseconds()
 		}
 	}
 }
@@ -475,6 +479,9 @@ type FeedVideo struct {
 	ShareCount   int64 `json:"share_count"`   // feed 分享数
 	// 记录仿真决策信息
 	PlayDuration int64 `json:"play_duration"` // 播放时长(ms)
+
+	// timelines
+	PreloadTimestamp int64 `json:"preload_timestamp"` // 预加载时间戳
 }
 
 type LiveRoom struct {

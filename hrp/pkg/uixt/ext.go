@@ -56,6 +56,10 @@ type ScreenResult struct {
 	VideoType string     `json:"video_type,omitempty"` // video type: feed, live-preview or live
 	Feed      *FeedVideo `json:"feed,omitempty"`
 	Live      *LiveRoom  `json:"live,omitempty"`
+
+	SwipeStartTime  int64 `json:"swipe_start_time"`  // 滑动开始时间戳
+	SwipeFinishTime int64 `json:"swipe_finish_time"` // 滑动结束时间戳
+	Elapsed         int64 `json:"elapsed"`           // current_swipe_finish -> next_swipe_start 整体耗时(ms)
 }
 
 type cacheStepData struct {
