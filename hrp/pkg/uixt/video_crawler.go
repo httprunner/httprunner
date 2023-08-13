@@ -122,8 +122,7 @@ func (s *VideoStat) incrFeed(screenResult *ScreenResult, driverExt *DriverExt) e
 	if driverExt.plugin != nil {
 		feedVideo, err := getFeedVideo(driverExt.plugin, author)
 		if err != nil {
-			log.Error().Err(err).Msg("get feed video from plugin failed")
-			return err
+			return errors.Wrap(err, "get feed video from plugin failed")
 		}
 		screenResult.Feed = feedVideo
 	}
@@ -403,13 +402,13 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			} else {
 				// 点播
 				// check feed type and incr feed count
-				if err := currVideoStat.incrFeed(screenResult, dExt); err != nil {
+				err := currVideoStat.incrFeed(screenResult, dExt)
+				if err != nil {
 					log.Error().Err(err).Msg("incr feed failed")
-					continue
+				} else {
+					// simulation watch feed video
+					sleepStrict(lastSwipeTime, screenResult.Feed.PlayDuration)
 				}
-
-				// simulation watch feed video
-				sleepStrict(lastSwipeTime, screenResult.Feed.PlayDuration)
 			}
 
 			// check if target count achieved
@@ -442,6 +441,10 @@ func getFeedVideo(plugin funplugin.IPlugin, authorName string) (feedVideo *FeedV
 	resp, err := plugin.Call("GetFeedVideo", authorName)
 	if err != nil {
 		return nil, errors.Wrap(err, "call plugin GetFeedVideo failed")
+	}
+
+	if resp == nil {
+		return nil, errors.New("feed not found")
 	}
 
 	feedBytes, err := json.Marshal(resp)
