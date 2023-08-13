@@ -404,7 +404,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				// check feed type and incr feed count
 				err := currVideoStat.incrFeed(screenResult, dExt)
 				if err != nil {
-					log.Error().Err(err).Msg("incr feed failed")
+					log.Warn().Err(err).Msg("incr feed failed")
 				} else {
 					// simulation watch feed video
 					sleepStrict(lastSwipeTime, screenResult.Feed.PlayDuration)
