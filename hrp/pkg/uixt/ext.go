@@ -59,7 +59,12 @@ type ScreenResult struct {
 
 	SwipeStartTime  int64 `json:"swipe_start_time"`  // 滑动开始时间戳
 	SwipeFinishTime int64 `json:"swipe_finish_time"` // 滑动结束时间戳
-	Elapsed         int64 `json:"elapsed"`           // current_swipe_finish -> next_swipe_start 整体耗时(ms)
+
+	ScreenshotTakeElapsed int64 `json:"screenshot_take_elapsed"` // 设备截图耗时(ms)
+	ScreenshotCVElapsed   int64 `json:"screenshot_cv_elapsed"`   // CV 识别耗时(ms)
+
+	// 当前 Feed/Live 整体耗时
+	TotalElapsed int64 `json:"total_elapsed"` // current_swipe_finish -> next_swipe_start 整体耗时(ms)
 }
 
 type cacheStepData struct {
@@ -231,12 +236,14 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 				"width":  screenSize.Width,
 				"height": screenSize.Height,
 			},
-			"video_type":        screenResult.VideoType,
-			"feed":              screenResult.Feed,
-			"live":              screenResult.Live,
-			"swipe_start_time":  screenResult.SwipeStartTime,
-			"swipe_finish_time": screenResult.SwipeFinishTime,
-			"elapsed":           screenResult.Elapsed,
+			"video_type":              screenResult.VideoType,
+			"feed":                    screenResult.Feed,
+			"live":                    screenResult.Live,
+			"swipe_start_time":        screenResult.SwipeStartTime,
+			"swipe_finish_time":       screenResult.SwipeFinishTime,
+			"screenshot_take_elapsed": screenResult.ScreenshotTakeElapsed,
+			"screenshot_cv_elapsed":   screenResult.ScreenshotCVElapsed,
+			"total_elapsed":           screenResult.TotalElapsed,
 		}
 
 		screenResults[imagePath] = data
