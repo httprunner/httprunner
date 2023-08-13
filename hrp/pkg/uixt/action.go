@@ -629,10 +629,10 @@ func getSimulationDuration(params []interface{}) (milliseconds int64) {
 	for _, s := range sections {
 		accProb += s.weight / totalProb
 		if r < accProb {
-			seconds := s.min + rand.Float64()*(s.max-s.min)
-			log.Info().Float64("randomSeconds", seconds).
+			milliseconds := int64((s.min + rand.Float64()*(s.max-s.min)) * 1000)
+			log.Info().Int64("random(ms)", milliseconds).
 				Interface("strategy_params", params).Msg("get simulation duration")
-			return int64(seconds * 1000)
+			return milliseconds
 		}
 	}
 
@@ -649,7 +649,7 @@ func sleepStrict(startTime time.Time, strictMilliseconds int64) {
 
 	// if elapsed time is greater than given duration, skip sleep to reduce deviation caused by process time
 	if dur <= 0 {
-		log.Info().
+		log.Warn().
 			Int64("elapsed(ms)", elapsed).
 			Int64("strictSleep(ms)", strictMilliseconds).
 			Msg("elapsed >= simulation duration, skip sleep")
