@@ -230,8 +230,6 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 		return err
 	}
 	time.Sleep(5 * time.Second)
-	lastSwipeTime := time.Now()
-
 	for !l.currentStat.isLiveTargetAchieved() {
 		select {
 		case <-l.currentStat.timer.C:
@@ -241,6 +239,17 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			log.Warn().Msg("interrupted in live crawler")
 			return errors.Wrap(code.InterruptError, "live crawler interrupted")
 		default:
+			// swipe to next live video
+			swipeStartTime := time.Now()
+			if err := l.driver.SwipeUp(); err != nil {
+				log.Error().Err(err).Msg("live swipe up failed")
+				return err
+			}
+			swipeFinishTime := time.Now()
+
+			// wait for live video loading
+			time.Sleep(5 * time.Second)
+
 			// take screenshot and get screen texts by OCR
 			screenResult, err := l.driver.GetScreenResult()
 			if err != nil {
@@ -255,21 +264,17 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			}
 
 			// simulation watch live video
-			sleepStrict(lastSwipeTime, screenResult.Live.WatchDuration)
-
-			// swipe to next live video
-			err = l.driver.SwipeUp()
-			if err != nil {
-				log.Error().Err(err).Msg("swipe up failed")
-				// TODO: retry maximum 3 times
-				continue
-			}
-			lastSwipeTime = time.Now()
+			sleepStrict(swipeFinishTime, screenResult.Live.WatchDuration)
 
 			// check if live room
 			if err := l.driver.Driver.AssertForegroundApp(l.configs.AppPackageName, "live"); err != nil {
 				return err
 			}
+
+			// log swipe timelines
+			screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
+			screenResult.SwipeFinishTime = swipeFinishTime.UnixMilli()
+			screenResult.Elapsed = time.Since(swipeFinishTime).Milliseconds()
 		}
 	}
 
@@ -370,7 +375,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			log.Info().Msg("swipe to next feed video")
 			swipeStartTime := time.Now()
 			if err = dExt.SwipeUp(); err != nil {
-				log.Error().Err(err).Msg("swipe up failed")
+				log.Error().Err(err).Msg("feed swipe up failed")
 				return err
 			}
 			swipeFinishTime := time.Now()
