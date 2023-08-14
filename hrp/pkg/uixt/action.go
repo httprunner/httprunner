@@ -396,7 +396,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		log.Debug().
 			Str("method", string(action.Method)).
 			Interface("params", action.Params).
-			Float64("elapsed(s)", time.Since(actionStartTime).Seconds()).
+			Int64("elapsed(ms)", time.Since(actionStartTime).Milliseconds()).
 			Msg("uixt action end")
 	}()
 
