@@ -488,12 +488,14 @@ type FeedVideo struct {
 	ShareCount   int64 `json:"share_count"`   // feed 分享数
 
 	// 记录仿真决策信息
-	PlayDuration           int64 `json:"play_duration"`            // 播放时长(ms)，取自 Simulation/Random
-	SimulationPlayDuration int64 `json:"simulation_play_duration"` // 仿真播放时长(ms)
-	RandomPlayDuration     int64 `json:"random_play_duration"`     // 随机播放时长(ms)
+	PlayDuration           int64   `json:"play_duration"`            // 播放时长(ms)，取自 Simulation/Random
+	SimulationPlayProgress float64 `json:"simulation_play_progress"` // 仿真播放比例（完播率）
+	SimulationPlayDuration int64   `json:"simulation_play_duration"` // 仿真播放时长(ms)
+	RandomPlayDuration     int64   `json:"random_play_duration"`     // 随机播放时长(ms)
 
 	// timelines
-	PreloadTimestamp int64 `json:"preload_timestamp"` // 预加载时间戳
+	PublishTimestamp int64 `json:"publish_timestamp"` // feed 发布时间戳
+	PreloadTimestamp int64 `json:"preload_timestamp"` // feed 预加载时间戳
 }
 
 type LiveRoom struct {
