@@ -256,7 +256,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...interfac
 			log.Debug().
 				Str("X-TT-LOGID", logID).
 				Int("image_bytes", size).
-				Float64("elapsed(s)", elapsed.Seconds()).
+				Int64("elapsed(ms)", elapsed.Milliseconds()).
 				Msg("request OCR service success")
 			break
 		}
@@ -379,8 +379,8 @@ func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error)
 	dExt.cacheStepData.screenResults[imagePath] = screenResult
 
 	log.Debug().
-		Int64("ScreenshotTakeElapsed", screenResult.ScreenshotTakeElapsed).
-		Int64("ScreenshotCVElapsed", screenResult.ScreenshotCVElapsed).
+		Int64("screenshot_take_elapsed(ms)", screenResult.ScreenshotTakeElapsed).
+		Int64("screenshot_cv_elapsed(ms)", screenResult.ScreenshotCVElapsed).
 		Msg("get screenshot result success")
 	return screenResult, nil
 }

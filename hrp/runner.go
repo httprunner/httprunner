@@ -586,12 +586,12 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 				r.sessionVariables[k] = v
 			}
 
-			stepElapsed := time.Since(stepStartTime).Seconds()
+			stepElapsed := time.Since(stepStartTime).Milliseconds()
 			if err == nil {
 				log.Info().Str("step", stepName).
 					Str("type", stepType).
 					Bool("success", true).
-					Float64("elapsed(s)", stepElapsed).
+					Int64("elapsed(ms)", stepElapsed).
 					Interface("exportVars", stepResult.ExportVars).
 					Msg("run step end")
 				continue
@@ -601,7 +601,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 			log.Error().Err(err).Str("step", stepName).
 				Str("type", stepType).
 				Bool("success", false).
-				Float64("elapsed(s)", stepElapsed).
+				Int64("elapsed(ms)", stepElapsed).
 				Msg("run step end")
 
 			// interrupted or timeout, abort running
