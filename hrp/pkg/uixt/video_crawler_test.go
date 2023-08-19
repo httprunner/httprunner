@@ -2,7 +2,11 @@
 
 package uixt
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestVideoCrawler(t *testing.T) {
 	setupAndroid(t)
@@ -29,4 +33,21 @@ func TestVideoCrawler(t *testing.T) {
 	}
 	err := driverExt.VideoCrawler(configs)
 	checkErr(t, err)
+}
+
+func TestRemoveNonAlphanumeric(t *testing.T) {
+	testData := []struct {
+		input  string
+		expect string
+	}{
+		{"@Hello 你好123#@！", "Hello你好123"},
+		{"@夏夏在发呆。", "夏夏在发呆"},
+		{"@·霖霖", "霖霖"},
+		{"@我❤️小云朵", "我小云朵"},
+	}
+
+	for _, data := range testData {
+		out := removeNonAlphanumeric(data.input)
+		assert.Equal(t, data.expect, out)
+	}
 }

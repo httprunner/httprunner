@@ -1,6 +1,8 @@
 package uixt
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -96,7 +98,7 @@ func (s *VideoStat) incrFeed(screenResult *ScreenResult, driverExt *DriverExt) e
 	if err != nil {
 		return errors.Wrap(err, "find feed author failed")
 	}
-	author := ocrText.Text
+	author := fmt.Sprintf("@%s", removeNonAlphanumeric(ocrText.Text))
 	log.Info().Str("author", author).Msg("found feed author by OCR")
 	screenResult.Feed.UserName = author
 
@@ -471,6 +473,14 @@ func getFeedVideo(plugin funplugin.IPlugin, authorName string) (feedVideo *FeedV
 
 	log.Info().Interface("feedVideo", feedVideo).Msg("get feed video success")
 	return feedVideo, nil
+}
+
+func removeNonAlphanumeric(input string) string {
+	// 使用正则表达式匹配中英文字符以外的内容
+	re := regexp.MustCompile(`[^\p{L}\p{N}]+`)
+	// 删除匹配到的非中英文字符
+	processed := re.ReplaceAllString(input, "")
+	return processed
 }
 
 type FeedVideo struct {
