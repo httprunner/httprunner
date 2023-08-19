@@ -343,6 +343,19 @@ type IImageService interface {
 
 // GetScreenResult takes a screenshot, returns the image recognization result
 func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error) {
+	if dExt.plugin != nil {
+		// get screen info from app event trackings
+		if feedVideo, err := getCurrentFeedVideo(dExt.plugin); err == nil && feedVideo != nil {
+			screenResult = &ScreenResult{
+				Feed:  feedVideo,
+				Texts: nil,
+				Tags:  nil,
+			}
+			dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
+			return screenResult, nil
+		}
+	}
+
 	startTime := time.Now()
 	var bufSource *bytes.Buffer
 	var imagePath string

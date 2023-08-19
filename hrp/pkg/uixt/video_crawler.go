@@ -87,45 +87,51 @@ func (s *VideoStat) isTargetAchieved() bool {
 // incrFeed increases feed count and feed stat
 func (s *VideoStat) incrFeed(screenResult *ScreenResult, driverExt *DriverExt) error {
 	screenResult.VideoType = "feed"
-	screenResult.Feed = &FeedVideo{}
 
-	// find feed author
-	actionOptions := []ActionOption{
-		WithRegex(true),
-		driverExt.GenAbsScope(0, 0.5, 1, 1).Option(),
-	}
-	ocrText, err := screenResult.Texts.FindText("^@", actionOptions...)
-	if err != nil {
-		return errors.Wrap(err, "find feed author failed")
-	}
-	author := fmt.Sprintf("@%s", removeNonAlphanumeric(ocrText.Text))
-	log.Info().Str("author", author).Msg("found feed author by OCR")
-	screenResult.Feed.UserName = author
-
-	// find target labels
-	for _, targetLabel := range s.configs.Feed.TargetLabels {
-		scope := targetLabel.Scope
+	var author string
+	if screenResult.Texts != nil {
+		// handle screenshot
+		// find feed author
 		actionOptions := []ActionOption{
-			WithRegex(targetLabel.Regex),
-			driverExt.GenAbsScope(scope[0], scope[1], scope[2], scope[3]).Option(),
+			WithRegex(true),
+			driverExt.GenAbsScope(0, 0.5, 1, 1).Option(),
 		}
-		if _, err := screenResult.Texts.FindText(targetLabel.Text, actionOptions...); err == nil {
-			key := targetLabel.Text
-			if _, ok := s.FeedStat[key]; !ok {
-				s.FeedStat[key] = 0
+		ocrText, err := screenResult.Texts.FindText("^@", actionOptions...)
+		if err != nil {
+			return errors.Wrap(err, "find feed author failed")
+		}
+		author = fmt.Sprintf("@%s", removeNonAlphanumeric(ocrText.Text))
+		log.Info().Str("author", author).Msg("found feed author by OCR")
+
+		// find target labels
+		for _, targetLabel := range s.configs.Feed.TargetLabels {
+			scope := targetLabel.Scope
+			actionOptions := []ActionOption{
+				WithRegex(targetLabel.Regex),
+				driverExt.GenAbsScope(scope[0], scope[1], scope[2], scope[3]).Option(),
 			}
-			s.FeedStat[key]++
-			screenResult.Tags = append(screenResult.Tags, key)
+			if _, err := screenResult.Texts.FindText(targetLabel.Text, actionOptions...); err == nil {
+				key := targetLabel.Text
+				if _, ok := s.FeedStat[key]; !ok {
+					s.FeedStat[key] = 0
+				}
+				s.FeedStat[key]++
+				screenResult.Tags = append(screenResult.Tags, key)
+			}
 		}
 	}
 
-	// get feed trackings by author
-	if driverExt.plugin != nil {
-		feedVideo, err := getFeedVideo(driverExt.plugin, author)
-		if err != nil {
-			return errors.Wrap(err, "get feed video from plugin failed")
+	if screenResult.Feed == nil {
+		// get feed trackings by author
+		if driverExt.plugin != nil {
+			feedVideo, err := getFeedVideo(driverExt.plugin, author)
+			if err != nil {
+				return errors.Wrap(err, "get feed video from plugin failed")
+			}
+			screenResult.Feed = feedVideo
+		} else {
+			screenResult.Feed = &FeedVideo{}
 		}
-		screenResult.Feed = feedVideo
 	}
 
 	// get simulation play duration
@@ -519,4 +525,38 @@ type LiveRoom struct {
 	LiveUsers string `json:"live_users"` // 直播间人数
 	// 记录仿真决策信息
 	WatchDuration int64 `json:"watch_duration"` // 观看时长(ms)
+}
+
+func getCurrentFeedVideo(plugin funplugin.IPlugin) (feedVideo *FeedVideo, err error) {
+	if !plugin.Has("GetCurrentFeedVideo") {
+		return nil, errors.New("plugin missing GetCurrentFeedVideo method")
+	}
+
+	// FIXME: wait for cache update
+	time.Sleep(1000 * time.Millisecond)
+
+	resp, err := plugin.Call("GetCurrentFeedVideo")
+	if err != nil {
+		return nil, errors.Wrap(err, "call plugin GetCurrentFeedVideo failed")
+	}
+
+	if resp == nil {
+		return nil, errors.New("feed not found")
+	}
+
+	feedBytes, err := json.Marshal(resp)
+	if err != nil {
+		return nil, errors.New("json marshal feed video info failed")
+	}
+
+	feedVideo = &FeedVideo{}
+	err = json.Unmarshal(feedBytes, feedVideo)
+	if err != nil {
+		return nil, errors.Wrap(err, "json unmarshal feed video info failed")
+	}
+
+	log.Info().
+		Interface("feedVideoCaption", feedVideo.Caption).
+		Msg("get current feed video success")
+	return feedVideo, nil
 }
