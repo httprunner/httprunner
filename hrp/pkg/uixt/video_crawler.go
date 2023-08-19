@@ -533,7 +533,7 @@ func getCurrentFeedVideo(plugin funplugin.IPlugin) (feedVideo *FeedVideo, err er
 	}
 
 	// FIXME: wait for cache update
-	time.Sleep(1000 * time.Millisecond)
+	time.Sleep(2000 * time.Millisecond)
 
 	resp, err := plugin.Call("GetCurrentFeedVideo")
 	if err != nil {
