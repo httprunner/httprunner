@@ -466,7 +466,8 @@ func getFeedVideo(plugin funplugin.IPlugin, authorName string) (feedVideo *FeedV
 		return nil, errors.New("json marshal feed video info failed")
 	}
 
-	err = json.Unmarshal(feedBytes, &feedVideo)
+	feedVideo = &FeedVideo{}
+	err = json.Unmarshal(feedBytes, feedVideo)
 	if err != nil {
 		return nil, errors.Wrap(err, "json unmarshal feed video info failed")
 	}
@@ -485,9 +486,11 @@ func removeNonAlphanumeric(input string) string {
 
 type FeedVideo struct {
 	// 视频基础数据
+	CacheKey string `json:"cache_key"` // 视频 CacheKey
 	UserName string `json:"user_name"` // 视频作者
 	Duration int64  `json:"duration"`  // 视频时长(ms)
 	Caption  string `json:"caption"`   // 视频文案
+	Type     string `json:"type"`      // 视频类型, feed/live
 
 	// 视频热度数据
 	ViewCount    int64 `json:"view_count"`    // feed 观看数
