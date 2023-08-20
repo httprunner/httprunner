@@ -5,11 +5,11 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/convert"
 )

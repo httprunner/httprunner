@@ -1,7 +1,7 @@
 package pytest
 
 import (
-	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
+	"github.com/httprunner/funplugin/myexec"
 )
 
 func RunPytest(args []string) error {
