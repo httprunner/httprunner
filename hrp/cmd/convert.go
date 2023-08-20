@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -12,7 +11,6 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
-	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/convert"
 )
 
@@ -42,9 +40,7 @@ var convertCmd = &cobra.Command{
 		if toYAMLFlag {
 			outputType = convert.OutputTypeYAML
 		} else if toPyTestFlag {
-			packages := []string{
-				fmt.Sprintf("httprunner==%s", version.HttpRunnerMinimumVersion),
-			}
+			packages := []string{"httprunner"}
 			_, err := myexec.EnsurePython3Venv(venv, packages...)
 			if err != nil {
 				log.Error().Err(err).Msg("python3 venv is not ready")
