@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/pytest"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
-	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
 var pytestCmd = &cobra.Command{
@@ -31,9 +29,7 @@ var pytestCmd = &cobra.Command{
 			})
 		}()
 
-		packages := []string{
-			fmt.Sprintf("httprunner==%s", version.HttpRunnerMinimumVersion),
-		}
+		packages := []string{"httprunner"}
 		_, err = myexec.EnsurePython3Venv(venv, packages...)
 		if err != nil {
 			log.Error().Err(err).Msg("python3 venv is not ready")

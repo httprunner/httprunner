@@ -1,14 +1,12 @@
 package hrp
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/httprunner/funplugin"
-	"github.com/httprunner/funplugin/fungo"
 	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -65,9 +63,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		}
 		pluginPath = genPyPluginPath
 
-		packages := []string{
-			fmt.Sprintf("funppy==%s", fungo.Version),
-		}
+		packages := []string{"funppy"}
 		python3, err := myexec.EnsurePython3Venv(venv, packages...)
 		if err != nil {
 			log.Error().Err(err).
