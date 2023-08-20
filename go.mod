@@ -10,7 +10,7 @@ require (
 	github.com/go-openapi/spec v0.20.7
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gorilla/websocket v1.5.0
-	github.com/httprunner/funplugin v0.5.3-0.20230820060317-610ea1f2421e
+	github.com/httprunner/funplugin v0.5.3
 	github.com/jinzhu/copier v0.3.5
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.12
