@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/httprunner/funplugin/myexec"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/pytest"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
@@ -35,7 +37,7 @@ var pytestCmd = &cobra.Command{
 		_, err = myexec.EnsurePython3Venv(venv, packages...)
 		if err != nil {
 			log.Error().Err(err).Msg("python3 venv is not ready")
-			return err
+			return errors.Wrap(code.InvalidPython3Venv, err.Error())
 		}
 		return pytest.RunPytest(args)
 	},
