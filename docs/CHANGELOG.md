@@ -26,7 +26,8 @@ UI related:
 
 others:
 
-- change: log elapsed duration in miliseconds
+- change: log elapsed duration in milliseconds
+- change: set log timestamp precise to milliseconds
 
 ## v4.3.5 (2023-07-23)
 
