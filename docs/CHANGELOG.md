@@ -7,7 +7,7 @@
 plugin related:
 
 - feat: add hrp executable directory for searching plugin
-- feat: init device driver with plugin option
+- feat: init device driver with plugin options, `WithDriverCapabilities` and `WithDriverPlugin`
 - feat: support printing stderr output in myexec.RunCommand
 - change: upgrade funplugin to 0.5.3
 - refactor: move internal myexec to funplugin/myexec
