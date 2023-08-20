@@ -1,9 +1,8 @@
 package wiki
 
 import (
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/rs/zerolog/log"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 )
 
 func OpenWiki() error {

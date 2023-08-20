@@ -9,12 +9,12 @@ import (
 
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/funplugin/fungo"
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
-	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 

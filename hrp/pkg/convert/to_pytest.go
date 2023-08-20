@@ -1,9 +1,8 @@
 package convert
 
 import (
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 )
 
 // convert TCase to pytest case
