@@ -1,6 +1,7 @@
 package myexec
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -53,7 +54,7 @@ func ExecPython3Command(cmdName string, args ...string) error {
 }
 
 func AssertPythonPackage(python3 string, pkgName, pkgVersion string) error {
-	out, err := exec.Command(
+	out, err := Command(
 		python3, "-c", fmt.Sprintf("import %s; print(%s.__version__)", pkgName, pkgName),
 	).Output()
 	if err != nil {
@@ -132,13 +133,13 @@ func RunCommand(cmdName string, args ...string) error {
 		}
 	}
 
-	// print output with colors
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	// print stderr output
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 
 	err := cmd.Run()
 	if err != nil {
-		log.Error().Err(err).Msg("exec command failed")
+		log.Error().Err(err).Str("stderr", stderr.String()).Msg("exec command failed")
 		return err
 	}
 
@@ -149,13 +150,13 @@ func ExecCommandInDir(cmd *exec.Cmd, dir string) error {
 	log.Info().Str("cmd", cmd.String()).Str("dir", dir).Msg("exec command")
 	cmd.Dir = dir
 
-	// print output with colors
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	// print stderr output
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 
 	err := cmd.Run()
 	if err != nil {
-		log.Error().Err(err).Msg("exec command failed")
+		log.Error().Err(err).Str("stderr", stderr.String()).Msg("exec command failed")
 		return err
 	}
 
