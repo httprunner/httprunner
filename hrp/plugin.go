@@ -73,7 +73,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 			log.Error().Err(err).
 				Interface("packages", packages).
 				Msg("python3 venv is not ready")
-			return nil, err
+			return nil, errors.Wrap(code.InvalidPython3Venv, err.Error())
 		}
 		pluginOptions = append(pluginOptions, funplugin.WithPython3(python3))
 	}

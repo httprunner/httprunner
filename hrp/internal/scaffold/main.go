@@ -14,6 +14,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
@@ -216,7 +217,7 @@ func createPythonPlugin(projectName, venv string) error {
 	}
 	_, err = myexec.EnsurePython3Venv(venv, packages...)
 	if err != nil {
-		return err
+		return errors.Wrap(code.InvalidPython3Venv, err.Error())
 	}
 
 	return nil
