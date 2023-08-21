@@ -11,10 +11,9 @@ import (
 func TestVideoCrawler(t *testing.T) {
 	setupAndroid(t)
 
+	driverExt.Driver.AppLaunch("com.ss.android.ugc.aweme")
 	configs := &VideoCrawlerConfigs{
-		AppPackageName: "com.ss.android.ugc.aweme",
-		Timeout:        600,
-
+		Timeout: 600,
 		Feed: FeedConfig{
 			TargetCount: 5,
 			TargetLabels: []TargetLabel{

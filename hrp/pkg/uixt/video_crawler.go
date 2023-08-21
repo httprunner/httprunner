@@ -160,7 +160,7 @@ func (s *VideoStat) incrLive(screenResult *ScreenResult, driverExt *DriverExt) e
 
 	// TODO: add popularity data for live
 
-	screenResult.Live.WatchDuration = getSimulationDuration(s.configs.Live.SleepRandom)
+	screenResult.Live.SimulationWatchDuration = getSimulationDuration(s.configs.Live.SleepRandom)
 
 	log.Info().Strs("tags", screenResult.Tags).
 		Interface("live", screenResult.Live).
@@ -189,8 +189,7 @@ type LiveConfig struct {
 }
 
 type VideoCrawlerConfigs struct {
-	AppPackageName string `json:"app_package_name"`
-	Timeout        int    `json:"timeout"` // seconds
+	Timeout int `json:"timeout"` // seconds
 
 	Feed FeedConfig `json:"feed"`
 	Live LiveConfig `json:"live"`
@@ -275,12 +274,7 @@ func (l *LiveCrawler) Run(driver *DriverExt, enterPoint PointF) error {
 			}
 
 			// simulation watch live video
-			sleepStrict(swipeFinishTime, screenResult.Live.WatchDuration)
-
-			// check if live room
-			if err := l.driver.Driver.AssertForegroundApp(l.configs.AppPackageName, "live"); err != nil {
-				return err
-			}
+			sleepStrict(swipeFinishTime, screenResult.Live.SimulationWatchDuration)
 
 			// log swipe timelines
 			screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
@@ -298,11 +292,6 @@ func (l *LiveCrawler) exitLiveRoom() error {
 	for i := 0; i < 3; i++ {
 		l.driver.SwipeRelative(0.1, 0.5, 0.9, 0.5)
 		time.Sleep(2 * time.Second)
-
-		// check if back to feed page
-		if err := l.driver.Driver.AssertForegroundApp(l.configs.AppPackageName, "feed"); err == nil {
-			return nil
-		}
 	}
 
 	// exit live room failed, while video count achieved
@@ -314,11 +303,6 @@ func (l *LiveCrawler) exitLiveRoom() error {
 	if err := l.driver.TapXY(0.95, 0.05); err == nil {
 		log.Info().Msg("tap X button on upper-right corner to exit live room")
 		time.Sleep(2 * time.Second)
-
-		// check if back to feed page
-		if err := l.driver.Driver.AssertForegroundApp(l.configs.AppPackageName, "feed"); err == nil {
-			return nil
-		}
 	}
 
 	return errors.New("exit live room failed")
@@ -344,25 +328,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	defer func() {
 		dExt.cacheStepData.videoStat = currVideoStat
 	}()
-
-	// launch app
-	if configs.AppPackageName != "" {
-		if err = dExt.Driver.AppLaunch(configs.AppPackageName); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-	} else {
-		app, err := dExt.Driver.GetForegroundApp()
-		if err != nil && !errors.Is(err, errDriverNotImplemented) {
-			log.Warn().Err(err).Msg("get foreground app failed, ignore")
-			return errors.Wrap(code.MobileUIAssertForegroundAppError, err.Error())
-		}
-		log.Info().
-			Str("packageName", app.PackageName).
-			Str("activity", app.Activity).
-			Msg("start to video crawler for current foreground app")
-		configs.AppPackageName = app.PackageName
-	}
 
 	liveCrawler := LiveCrawler{
 		driver:      dExt,
@@ -391,15 +356,30 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			}
 			swipeFinishTime := time.Now()
 
-			// take screenshot and get screen texts by OCR
-			screenResult, err := dExt.GetScreenResult()
-			if err != nil {
-				if strings.Contains(err.Error(), "connect: connection refused") {
-					return err
+			var screenResult *ScreenResult
+			if dExt.plugin != nil {
+				// get screen info from app event trackings
+				if feedVideo, err := getCurrentFeedVideo(dExt.plugin); err == nil && feedVideo != nil {
+					screenResult = &ScreenResult{
+						Feed:  feedVideo,
+						Texts: nil,
+						Tags:  nil,
+					}
+					dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 				}
-				log.Error().Err(err).Msg("OCR GetTexts failed")
-				time.Sleep(3 * time.Second)
-				continue
+			}
+
+			if screenResult == nil {
+				// take screenshot and get screen texts by OCR
+				screenResult, err = dExt.GetScreenResult()
+				if err != nil {
+					if strings.Contains(err.Error(), "connect: connection refused") {
+						return err
+					}
+					log.Error().Err(err).Msg("OCR GetTexts failed")
+					time.Sleep(3 * time.Second)
+					continue
+				}
 			}
 
 			// automatic handling of pop-up windows
@@ -438,11 +418,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			if currVideoStat.isTargetAchieved() {
 				log.Info().Msg("target count achieved, exit crawler")
 				return nil
-			}
-
-			// check if feed page
-			if err := dExt.Driver.AssertForegroundApp(configs.AppPackageName, "feed"); err != nil {
-				return err
 			}
 
 			// log swipe timelines
@@ -519,12 +494,20 @@ type FeedVideo struct {
 
 type LiveRoom struct {
 	// 视频基础数据
-	UserName string `json:"user_name"` // 主播名
-	LiveType string `json:"live_type"` // 直播间类型
-	// 直播热度数据
-	LiveUsers string `json:"live_users"` // 直播间人数
+	LiveStreamID string `json:"live_stream_id"` // 直播流 ID
+	UserName     string `json:"user_name"`      // 视频作者
+	Caption      string `json:"caption"`        // 视频文案
+	LiveType     string `json:"live_type"`      // 直播间类型
+
+	// 视频热度数据
+	AudienceCount string `json:"audience_count"` // 直播间人数
+	LikeCount     int64  `json:"like_count"`     // 点赞数
+
 	// 记录仿真决策信息
-	WatchDuration int64 `json:"watch_duration"` // 观看时长(ms)
+	SimulationWatchDuration int64 `json:"simulation_watch_duration"` // 仿真观播时长(ms)
+
+	// timelines
+	PreloadTimestamp int64 `json:"preload_timestamp"` // feed 预加载时间戳
 }
 
 func getCurrentFeedVideo(plugin funplugin.IPlugin) (feedVideo *FeedVideo, err error) {
@@ -559,4 +542,8 @@ func getCurrentFeedVideo(plugin funplugin.IPlugin) (feedVideo *FeedVideo, err er
 		Interface("feedVideoCaption", feedVideo.Caption).
 		Msg("get current feed video success")
 	return feedVideo, nil
+}
+
+func getCurrentLiveRoom(plugin funplugin.IPlugin) (liveVideo *LiveRoom, err error) {
+	return
 }
