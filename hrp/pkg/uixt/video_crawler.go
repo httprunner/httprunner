@@ -179,13 +179,13 @@ func (vc *VideoCrawler) incrLive(screenResult *ScreenResult) error {
 	screenResult.VideoType = "live"
 	// TODO: check live type
 
-	if screenResult.Live == nil {
-		screenResult.Live = &LiveRoom{}
+	// get simulation watch duration
+	if screenResult.Live.SimulationWatchDuration != 0 {
+		screenResult.Live.WatchDuration = screenResult.Live.SimulationWatchDuration
+	} else {
+		screenResult.Live.RandomWatchDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
+		screenResult.Live.WatchDuration = screenResult.Live.RandomWatchDuration
 	}
-
-	// TODO: add popularity data for live
-
-	screenResult.Live.SimulationWatchDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
 
 	log.Info().Strs("tags", screenResult.Tags).
 		Interface("live", screenResult.Live).
@@ -264,6 +264,12 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 			// wait for live video loading
 			time.Sleep(5 * time.Second)
 
+			// TODO: get app event trackings
+			liveRoom, err := vc.getCurrentLiveRoom()
+			if err != nil {
+				return errors.Wrap(err, "get current live event trackings failed")
+			}
+
 			// take screenshot and get screen texts by OCR
 			screenResult, err := vc.driverExt.GetScreenResult()
 			if err != nil {
@@ -271,14 +277,16 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 				time.Sleep(3 * time.Second)
 				continue
 			}
+			screenResult.Live = liveRoom
 
-			// check live type and incr live count
-			if err := vc.incrLive(screenResult); err != nil {
-				log.Error().Err(err).Msg("incr live failed")
+			// incr live count
+			err = vc.incrLive(screenResult)
+			if err != nil {
+				log.Warn().Err(err).Msg("incr live failed")
+			} else {
+				// simulation watch live video
+				sleepStrict(swipeFinishTime, screenResult.Live.SimulationWatchDuration)
 			}
-
-			// simulation watch live video
-			sleepStrict(swipeFinishTime, screenResult.Live.SimulationWatchDuration)
 
 			// log swipe timelines
 			screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
@@ -359,13 +367,12 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			}
 			swipeFinishTime := time.Now()
 
-			var screenResult *ScreenResult
 			// get app event trackings
 			feedVideo, err := crawler.getCurrentFeedVideo()
 			if err != nil {
-				return errors.Wrap(err, "get app event trackings failed")
+				return errors.Wrap(err, "get current feed event trackings failed")
 			}
-			screenResult = &ScreenResult{
+			screenResult := &ScreenResult{
 				Feed:  feedVideo,
 				Texts: nil,
 				Tags:  nil,
@@ -451,7 +458,9 @@ type LiveRoom struct {
 	LikeCount     int64  `json:"like_count"`     // 点赞数
 
 	// 记录仿真决策信息
+	WatchDuration           int64 `json:"watch_duration"`            // 观播时长(ms)，取自 Simulation/Random
 	SimulationWatchDuration int64 `json:"simulation_watch_duration"` // 仿真观播时长(ms)
+	RandomWatchDuration     int64 `json:"random_watch_duration"`     // 随机观播时长(ms)
 
 	// timelines
 	PreloadTimestamp int64 `json:"preload_timestamp"` // feed 预加载时间戳
