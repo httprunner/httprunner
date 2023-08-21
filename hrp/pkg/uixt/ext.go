@@ -74,14 +74,14 @@ type cacheStepData struct {
 	// cache step screenshot ocr results, key is image path, value is ScreenResult
 	screenResults map[string]*ScreenResult
 	// cache feed/live video stat
-	videoStat *VideoStat
+	videoCrawler *VideoCrawler
 }
 
 func (d *cacheStepData) reset() {
 	d.screenShots = make([]string, 0)
 	d.screenShotsUrls = make(map[string]string)
 	d.screenResults = make(map[string]*ScreenResult)
-	d.videoStat = nil
+	d.videoCrawler = nil
 }
 
 type DriverExt struct {
@@ -217,7 +217,7 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 
 func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData := make(map[string]interface{})
-	cacheData["video_stat"] = dExt.cacheStepData.videoStat
+	cacheData["video_stat"] = dExt.cacheStepData.videoCrawler
 	cacheData["screenshots"] = dExt.cacheStepData.screenShots
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenShotsUrls
 
