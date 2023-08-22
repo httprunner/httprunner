@@ -41,6 +41,11 @@ type VideoCrawler struct {
 	configs   *VideoCrawlerConfigs
 	timer     *time.Timer
 
+	// used to help checking if swipe success
+	failedCount int64
+	lastFeed    *FeedVideo
+	lastLive    *LiveRoom
+
 	FeedCount int            `json:"feed_count"`
 	FeedStat  map[string]int `json:"feed_stat"` // 分类统计 feed 数量：视频/图文/广告/特效/模板/购物
 	LiveCount int            `json:"live_count"`
@@ -260,6 +265,10 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 		driverExt: dExt,
 		configs:   configs,
 
+		failedCount: 0,
+		lastFeed:    &FeedVideo{},
+		lastLive:    &LiveRoom{},
+
 		FeedCount: 0,
 		FeedStat:  make(map[string]int),
 		LiveCount: 0,
@@ -291,21 +300,37 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			swipeFinishTime := time.Now()
 
 			// get app event trackings
+			// retry 3 times if get feed failed, abort if fail 3 consecutive times
 			feedVideo, err := crawler.getCurrentFeedVideo()
-			if err != nil {
-				return errors.Wrap(err, "get current feed event trackings failed")
+			if err != nil || feedVideo.VideoID == "" {
+				if crawler.failedCount >= 3 {
+					// failed 3 consecutive times
+					return errors.New("get current feed video failed 3 consecutive times")
+				}
+				log.Warn().Interface("feedVideo", feedVideo).Msg("get current feed video failed")
+				// retry
+				crawler.failedCount++
+				continue
 			}
-			screenResult := &ScreenResult{
-				Feed:  feedVideo,
-				Texts: nil,
-				Tags:  nil,
+
+			if feedVideo.VideoID == crawler.lastFeed.VideoID {
+				// app event tracking not changed
+				// check and handle popups
+				if err = crawler.driverExt.AutoPopupHandler(); err != nil {
+					return err
+				}
 			}
+			crawler.lastFeed = feedVideo
+
+			screenResult := &ScreenResult{}
 			dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 
 			// check if live video && run live crawler
 			if enterPoint, isLive := crawler.checkLiveVideo(feedVideo); isLive {
 				// 直播预览流
 				screenResult.VideoType = "live-preview"
+				// TODO
+				// screenResult.Live = feedVideo
 				log.Info().Msg("live video found")
 				if !crawler.isLiveTargetAchieved() {
 					if err := crawler.startLiveCrawler(enterPoint); err != nil {
@@ -320,6 +345,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				// 点播
 				// check feed type and incr feed count
 				screenResult.VideoType = "feed"
+				screenResult.Feed = feedVideo
 				crawler.FeedCount++
 				log.Info().
 					Strs("tags", screenResult.Tags).
@@ -348,17 +374,20 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
 			screenResult.SwipeFinishTime = swipeFinishTime.UnixMilli()
 			screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
+
+			// reset failed count
+			crawler.failedCount = 0
 		}
 	}
 }
 
 type FeedVideo struct {
 	// 视频基础数据
-	CacheKey string `json:"cache_key"` // 视频 CacheKey
+	VideoID  string `json:"video_id"`  // 视频 video ID
 	UserName string `json:"user_name"` // 视频作者
 	Duration int64  `json:"duration"`  // 视频时长(ms)
 	Caption  string `json:"caption"`   // 视频文案
-	Type     string `json:"type"`      // 视频类型, feed/live
+	Type     string `json:"type"`      // 视频类型, feed/live // TODO: 区分视频、图文、广告
 
 	// 视频热度数据
 	ViewCount    int64 `json:"view_count"`    // feed 观看数
@@ -384,7 +413,7 @@ type LiveRoom struct {
 	LiveStreamID string `json:"live_stream_id"` // 直播流 ID
 	UserName     string `json:"user_name"`      // 视频作者
 	Caption      string `json:"caption"`        // 视频文案
-	LiveType     string `json:"live_type"`      // 直播间类型
+	LiveType     string `json:"live_type"`      // 直播间类型, 基于算法服务获取
 
 	// 视频热度数据
 	AudienceCount string `json:"audience_count"` // 直播间人数
@@ -404,10 +433,6 @@ func (vc *VideoCrawler) getCurrentFeedVideo() (feedVideo *FeedVideo, err error) 
 		return nil, errors.New("plugin missing GetCurrentFeedVideo method")
 	}
 
-	// FIXME: wait for cache update
-	time.Sleep(2000 * time.Millisecond)
-
-	// TODO: retry 3 times if get failed, abort if fail more than 3 times
 	resp, err := vc.driverExt.plugin.Call("GetCurrentFeedVideo")
 	if err != nil {
 		return nil, errors.Wrap(err, "call plugin GetCurrentFeedVideo failed")
@@ -428,8 +453,6 @@ func (vc *VideoCrawler) getCurrentFeedVideo() (feedVideo *FeedVideo, err error) 
 		return nil, errors.Wrap(err, "json unmarshal feed video info failed")
 	}
 
-	// TODO: check if app event trackings changed
-	// TODO: check and handle popups if event trackings not changed
 	log.Info().
 		Interface("feedVideoCaption", feedVideo.Caption).
 		Msg("get current feed video success")
