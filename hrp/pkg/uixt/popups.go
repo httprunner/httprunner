@@ -24,7 +24,7 @@ var popups = [][]string{
 	{"管理使用时间", ".*忽略.*"},
 }
 
-func (dExt *DriverExt) AutoPopupHandler(screenTexts OCRTexts) error {
+func findTextPopup(screenTexts OCRTexts) (closePoint *OCRText) {
 	for _, popup := range popups {
 		if len(popup) != 2 {
 			continue
@@ -34,17 +34,38 @@ func (dExt *DriverExt) AutoPopupHandler(screenTexts OCRTexts) error {
 		if err == nil {
 			log.Warn().Interface("popup", popup).
 				Interface("texts", screenTexts).Msg("text popup found")
-			point := points[1].Center()
-			log.Info().Str("text", points[1].Text).Msg("close popup")
-			if err := dExt.TapAbsXY(point.X, point.Y); err != nil {
-				log.Error().Err(err).Msg("tap popup failed")
-				return errors.Wrap(code.MobileUIPopupError, err.Error())
-			}
-			// tap popup success
-			return nil
+			closePoint = &points[1]
+			break
 		}
 	}
+	return
+}
 
-	// no popup found
+func (dExt *DriverExt) handleTextPopup(screenTexts OCRTexts) error {
+	closePoint := findTextPopup(screenTexts)
+	if closePoint == nil {
+		// no popup found
+		return nil
+	}
+
+	log.Info().Str("text", closePoint.Text).Msg("close popup")
+	pointCenter := closePoint.Center()
+	if err := dExt.TapAbsXY(pointCenter.X, pointCenter.Y); err != nil {
+		log.Error().Err(err).Msg("tap popup failed")
+		return errors.Wrap(code.MobileUIPopupError, err.Error())
+	}
+	// tap popup success
 	return nil
+}
+
+func (dExt *DriverExt) AutoPopupHandler() error {
+	// TODO: check popup by activity type
+
+	// check popup by screenshot
+	screenResult, err := dExt.GetScreenResult()
+	if err != nil {
+		return errors.Wrap(err, "get screen result failed for popup handler")
+	}
+
+	return dExt.handleTextPopup(screenResult.Texts)
 }
