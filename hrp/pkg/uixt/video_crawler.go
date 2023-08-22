@@ -1,8 +1,6 @@
 package uixt
 
 import (
-	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/pkg/errors"
@@ -109,91 +107,6 @@ func (vc *VideoCrawler) isTargetAchieved() bool {
 	return vc.isFeedTargetAchieved() && vc.isLiveTargetAchieved()
 }
 
-// incrFeed increases feed count and feed stat
-func (vc *VideoCrawler) incrFeed(screenResult *ScreenResult) error {
-	screenResult.VideoType = "feed"
-
-	var author string
-	if screenResult.Texts != nil {
-		// handle screenshot
-		// find feed author
-		actionOptions := []ActionOption{
-			WithRegex(true),
-			vc.driverExt.GenAbsScope(0, 0.5, 1, 1).Option(),
-		}
-		ocrText, err := screenResult.Texts.FindText("^@", actionOptions...)
-		if err != nil {
-			return errors.Wrap(err, "find feed author failed")
-		}
-		author = fmt.Sprintf("@%s", removeNonAlphanumeric(ocrText.Text))
-		log.Info().Str("author", author).Msg("found feed author by OCR")
-
-		// find target labels
-		for _, targetLabel := range vc.configs.Feed.TargetLabels {
-			scope := targetLabel.Scope
-			actionOptions := []ActionOption{
-				WithRegex(targetLabel.Regex),
-				vc.driverExt.GenAbsScope(scope[0], scope[1], scope[2], scope[3]).Option(),
-			}
-			if _, err := screenResult.Texts.FindText(targetLabel.Text, actionOptions...); err == nil {
-				key := targetLabel.Text
-				if _, ok := vc.FeedStat[key]; !ok {
-					vc.FeedStat[key] = 0
-				}
-				vc.FeedStat[key]++
-				screenResult.Tags = append(screenResult.Tags, key)
-			}
-		}
-	}
-
-	if screenResult.Feed == nil {
-		// get feed trackings by author
-		if vc.driverExt.plugin != nil {
-			feedVideo, err := vc.getFeedVideo(author)
-			if err != nil {
-				return errors.Wrap(err, "get feed video from plugin failed")
-			}
-			screenResult.Feed = feedVideo
-		} else {
-			screenResult.Feed = &FeedVideo{}
-		}
-	}
-
-	// get simulation play duration
-	if screenResult.Feed.SimulationPlayDuration != 0 {
-		screenResult.Feed.PlayDuration = screenResult.Feed.SimulationPlayDuration
-	} else {
-		screenResult.Feed.RandomPlayDuration = getSimulationDuration(vc.configs.Feed.SleepRandom)
-		screenResult.Feed.PlayDuration = screenResult.Feed.RandomPlayDuration
-	}
-
-	log.Info().Strs("tags", screenResult.Tags).
-		Interface("feed", screenResult.Feed).
-		Msg("found feed success")
-	vc.FeedCount++
-	return nil
-}
-
-// incrLive increases live count and live stat
-func (vc *VideoCrawler) incrLive(screenResult *ScreenResult) error {
-	screenResult.VideoType = "live"
-	// TODO: check live type
-
-	// get simulation watch duration
-	if screenResult.Live.SimulationWatchDuration != 0 {
-		screenResult.Live.WatchDuration = screenResult.Live.SimulationWatchDuration
-	} else {
-		screenResult.Live.RandomWatchDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
-		screenResult.Live.WatchDuration = screenResult.Live.RandomWatchDuration
-	}
-
-	log.Info().Strs("tags", screenResult.Tags).
-		Interface("live", screenResult.Live).
-		Msg("found live success")
-	vc.LiveCount++
-	return nil
-}
-
 func (vc *VideoCrawler) checkLiveVideo(feedVideo *FeedVideo) (enterPoint PointF, yes bool) {
 	// TODO: check if preview-live from feedVideo
 	if feedVideo.Type != "live" {
@@ -279,14 +192,24 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 			}
 			screenResult.Live = liveRoom
 
+			// TODO: check live type
+
 			// incr live count
-			err = vc.incrLive(screenResult)
-			if err != nil {
-				log.Warn().Err(err).Msg("incr live failed")
+			screenResult.VideoType = "live"
+			vc.LiveCount++
+			log.Info().Strs("tags", screenResult.Tags).
+				Interface("live", screenResult.Live).
+				Msg("found live success")
+
+			// get simulation watch duration
+			if screenResult.Live.SimulationWatchDuration != 0 {
+				screenResult.Live.WatchDuration = screenResult.Live.SimulationWatchDuration
 			} else {
-				// simulation watch live video
-				sleepStrict(swipeFinishTime, screenResult.Live.SimulationWatchDuration)
+				screenResult.Live.RandomWatchDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
+				screenResult.Live.WatchDuration = screenResult.Live.RandomWatchDuration
 			}
+			// simulation watch live video
+			sleepStrict(swipeFinishTime, screenResult.Live.WatchDuration)
 
 			// log swipe timelines
 			screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
@@ -396,13 +319,23 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			} else {
 				// 点播
 				// check feed type and incr feed count
-				err := crawler.incrFeed(screenResult)
-				if err != nil {
-					log.Warn().Err(err).Msg("incr feed failed")
+				screenResult.VideoType = "feed"
+				crawler.FeedCount++
+				log.Info().
+					Strs("tags", screenResult.Tags).
+					Interface("feed", screenResult.Feed).
+					Msg("found feed success")
+
+				// get simulation play duration
+				if screenResult.Feed.SimulationPlayDuration != 0 {
+					screenResult.Feed.PlayDuration = screenResult.Feed.SimulationPlayDuration
 				} else {
-					// simulation watch feed video
-					sleepStrict(swipeFinishTime, screenResult.Feed.PlayDuration)
+					screenResult.Feed.RandomPlayDuration = getSimulationDuration(crawler.configs.Feed.SleepRandom)
+					screenResult.Feed.PlayDuration = screenResult.Feed.RandomPlayDuration
 				}
+
+				// simulation watch feed video
+				sleepStrict(swipeFinishTime, screenResult.Feed.PlayDuration)
 			}
 
 			// check if target count achieved
@@ -466,35 +399,6 @@ type LiveRoom struct {
 	PreloadTimestamp int64 `json:"preload_timestamp"` // feed 预加载时间戳
 }
 
-func (vc *VideoCrawler) getFeedVideo(authorName string) (feedVideo *FeedVideo, err error) {
-	if !vc.driverExt.plugin.Has("GetFeedVideo") {
-		return nil, errors.New("plugin missing GetFeedVideo method")
-	}
-
-	resp, err := vc.driverExt.plugin.Call("GetFeedVideo", authorName)
-	if err != nil {
-		return nil, errors.Wrap(err, "call plugin GetFeedVideo failed")
-	}
-
-	if resp == nil {
-		return nil, errors.New("feed not found")
-	}
-
-	feedBytes, err := json.Marshal(resp)
-	if err != nil {
-		return nil, errors.New("json marshal feed video info failed")
-	}
-
-	feedVideo = &FeedVideo{}
-	err = json.Unmarshal(feedBytes, feedVideo)
-	if err != nil {
-		return nil, errors.Wrap(err, "json unmarshal feed video info failed")
-	}
-
-	log.Info().Interface("feedVideo", feedVideo).Msg("get feed video success")
-	return feedVideo, nil
-}
-
 func (vc *VideoCrawler) getCurrentFeedVideo() (feedVideo *FeedVideo, err error) {
 	if !vc.driverExt.plugin.Has("GetCurrentFeedVideo") {
 		return nil, errors.New("plugin missing GetCurrentFeedVideo method")
@@ -535,12 +439,4 @@ func (vc *VideoCrawler) getCurrentFeedVideo() (feedVideo *FeedVideo, err error) 
 func (vc *VideoCrawler) getCurrentLiveRoom() (liveVideo *LiveRoom, err error) {
 	// TODO
 	return
-}
-
-func removeNonAlphanumeric(input string) string {
-	// 使用正则表达式匹配中英文字符以外的内容
-	re := regexp.MustCompile(`[^\p{L}\p{N}]+`)
-	// 删除匹配到的非中英文字符
-	processed := re.ReplaceAllString(input, "")
-	return processed
 }
