@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.6 (2023-08-20)
+## v4.3.6 (2023-08-22)
 
 **go version**
 
@@ -19,6 +19,7 @@ UI related:
 - feat: log feed screenshot take/cv elapsed time
 - feat: support to reset driver (or session only) automatically when UIA2 / WDA crashed or WebDriver request failed
 - feat: `tap_cv` action supports ui type detection and tap
+- feat: support action options for `ScreenShot`, `WithScreenShotOCR`/`WithScreenShotUpload`/`WithScreenShotLiveType`/`WithScreenShotUIType`
 - fix: add compatible support for indicating options separately at the `MobileAction` level
 - fix: use Override size if existed, otherwise use Physical size (android devices)
 - fix: add default options for `swipe_to_tap_app` action

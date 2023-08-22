@@ -189,7 +189,8 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 			}
 
 			// take screenshot and get screen texts by OCR
-			screenResult, err := vc.driverExt.GetScreenResult()
+			screenResult, err := vc.driverExt.GetScreenResult(
+				WithScreenShotOCR(true), WithScreenShotUpload(true))
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				time.Sleep(3 * time.Second)

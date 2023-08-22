@@ -14,8 +14,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gocv.io/x/gocv"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 const (
@@ -101,9 +99,11 @@ func (dExt *DriverExt) FindAllImageRect(search string) (rects []image.Rectangle,
 	if bufSearch, err = getBufFromDisk(search); err != nil {
 		return nil, err
 	}
-	if bufSource, _, err = dExt.takeScreenShot(builtin.GenNameWithTimestamp("%d_cv")); err != nil {
+	screenResult, err := dExt.GetScreenResult()
+	if err != nil {
 		return nil, err
 	}
+	bufSource = screenResult.bufSource
 
 	if rects, err = FindAllImageRectsFromRaw(bufSource, bufSearch, float32(dExt.threshold), TemplateMatchMode(dExt.matchMode)); err != nil {
 		return nil, err

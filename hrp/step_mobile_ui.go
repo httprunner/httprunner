@@ -289,11 +289,11 @@ func (s *StepMobile) VideoCrawler(params map[string]interface{}) *StepMobile {
 	return &StepMobile{step: s.step}
 }
 
-func (s *StepMobile) ScreenShot() *StepMobile {
+func (s *StepMobile) ScreenShot(options ...uixt.ActionOption) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_ScreenShot,
 		Params:  nil,
-		Options: nil,
+		Options: uixt.NewActionOptions(options...),
 	})
 	return &StepMobile{step: s.step}
 }
