@@ -144,6 +144,22 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText
 	return results[idx], nil
 }
 
+func (t OCRTexts) FindTextsExisted(texts []string, options ...ActionOption) (results OCRTexts, err error) {
+	for _, text := range texts {
+		ocrText, err := t.FindText(text, options...)
+		if err != nil {
+			continue
+		}
+		results = append(results, ocrText)
+	}
+
+	if len(results) == 0 {
+		return nil, errors.Wrap(code.CVResultNotFoundError,
+			fmt.Sprintf("texts %s not found in %v", texts, t.texts()))
+	}
+	return results, nil
+}
+
 func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (results OCRTexts, err error) {
 	for _, text := range texts {
 		ocrText, err := t.FindText(text, options...)

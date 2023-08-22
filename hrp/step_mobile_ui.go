@@ -115,10 +115,10 @@ func (s *StepMobile) TapByOCR(ocrText string, options ...uixt.ActionOption) *Ste
 }
 
 // Tap taps on the target element by CV recognition
-func (s *StepMobile) TapByCV(imagePath string, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) TapByCV(cvInput interface{}, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_TapByCV,
-		Params:  imagePath,
+		Params:  cvInput,
 		Options: uixt.NewActionOptions(options...),
 	}
 
@@ -660,7 +660,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	}
 
 	// validate
-	validateResults, err := validateUI(uiDriver, step.Validators)
+	validateResults, err := validateUI(uiDriver, step.Validators, s.caseRunner.parser, stepVariables)
 	if err != nil {
 		if !code.IsErrorPredefined(err) {
 			err = errors.Wrap(code.MobileUIValidationError, err.Error())

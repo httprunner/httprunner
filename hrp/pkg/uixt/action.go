@@ -427,8 +427,18 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		if texts, ok := action.Params.([]string); ok {
 			return dExt.swipeToTapTexts(texts, action.GetOptions()...)
 		}
-		return fmt.Errorf("invalid %s params, should be app text([]string), got %v",
-			ACTION_SwipeToTapText, action.Params)
+		if iTexts, ok := action.Params.([]interface{}); ok {
+			var texts []string
+			for _, iText := range iTexts {
+				text, ok := iText.(string)
+				if !ok {
+					continue
+				}
+				texts = append(texts, text)
+			}
+			return dExt.swipeToTapTexts(texts, action.GetOptions()...)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_SwipeToTapTexts, action.Params)
 	case ACTION_AppTerminate:
 		if bundleId, ok := action.Params.(string); ok {
 			success, err := dExt.Driver.AppTerminate(bundleId)

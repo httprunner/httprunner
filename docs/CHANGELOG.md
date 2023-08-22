@@ -7,7 +7,7 @@
 - compatibility: support indicating options separately in `MobileAction` level
 - fix: use Override size if existed, otherwise use Physical size (android devices)
 - fix: add default options for `swipe_to_tap_app` action
-- refactor: ui validation methods
+- refactor: ui validation methods, support parsing expect value
 - fix: reuse the same request body during `GetImage` retry
 - change: upgrade funplugin to 0.5.2
 
