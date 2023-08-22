@@ -51,6 +51,9 @@ func WithThreshold(threshold float64) CVOption {
 }
 
 type ScreenResult struct {
+	bufSource *bytes.Buffer // raw image buffer bytes
+	imagePath string        // image file path
+
 	Texts     OCRTexts   `json:"texts"`                // dumped raw OCRTexts
 	Tags      []string   `json:"tags"`                 // tags for image, e.g. ["feed", "ad", "live"]
 	VideoType string     `json:"video_type,omitempty"` // video type: feed, live-preview or live

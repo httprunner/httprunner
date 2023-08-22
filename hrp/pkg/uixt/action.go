@@ -111,6 +111,12 @@ type ActionOptions struct {
 
 	// set custiom options such as textview, id, description
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
+
+	// screenshot related
+	ScreenShotWithOCR      bool `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
+	ScreenShotWithUpload   bool `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
+	ScreenShotWithLiveType bool `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
+	ScreenShotWithUIType   bool `json:"screenshot_with_ui_type,omitempty" yaml:"screenshot_with_ui_type,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -185,6 +191,37 @@ func (o *ActionOptions) Options() []ActionOption {
 		}
 	}
 
+	// screenshot options
+	if o.ScreenShotWithOCR {
+		options = append(options, WithScreenShotOCR(true))
+	}
+	if o.ScreenShotWithUpload {
+		options = append(options, WithScreenShotUpload(true))
+	}
+	if o.ScreenShotWithLiveType {
+		options = append(options, WithScreenShotLiveType(true))
+	}
+	if o.ScreenShotWithUIType {
+		options = append(options, WithScreenShotUIType(true))
+	}
+
+	return options
+}
+
+func (o *ActionOptions) screenshotOptions() screenshotActionOptions {
+	options := screenshotActionOptions{}
+	if o.ScreenShotWithOCR {
+		options = append(options, "ocr")
+	}
+	if o.ScreenShotWithUpload {
+		options = append(options, "upload")
+	}
+	if o.ScreenShotWithLiveType {
+		options = append(options, "liveType")
+	}
+	if o.ScreenShotWithUIType {
+		options = append(options, "ui")
+	}
 	return options
 }
 
@@ -360,6 +397,30 @@ func WithTimeout(timeout int) ActionOption {
 func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
 	return func(o *ActionOptions) {
 		o.IgnoreNotFoundError = ignoreError
+	}
+}
+
+func WithScreenShotOCR(ocrOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithOCR = ocrOn
+	}
+}
+
+func WithScreenShotUpload(uploadOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithUpload = uploadOn
+	}
+}
+
+func WithScreenShotLiveType(liveTypeOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithLiveType = liveTypeOn
+	}
+}
+
+func WithScreenShotUIType(uiTypeOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithUIType = uiTypeOn
 	}
 }
 
@@ -547,7 +608,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 	case ACTION_ScreenShot:
 		// take screenshot
 		log.Info().Msg("take screenshot for current screen")
-		_, _, err := dExt.takeScreenShot(builtin.GenNameWithTimestamp("%d_screenshot"))
+		_, err := dExt.GetScreenResult(action.GetOptions()...)
 		return err
 	case ACTION_StartCamera:
 		return dExt.Driver.StartCamera()

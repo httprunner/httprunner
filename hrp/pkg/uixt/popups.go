@@ -62,7 +62,8 @@ func (dExt *DriverExt) AutoPopupHandler() error {
 	// TODO: check popup by activity type
 
 	// check popup by screenshot
-	screenResult, err := dExt.GetScreenResult()
+	screenResult, err := dExt.GetScreenResult(
+		WithScreenShotOCR(true), WithScreenShotUpload(true))
 	if err != nil {
 		return errors.Wrap(err, "get screen result failed for popup handler")
 	}
