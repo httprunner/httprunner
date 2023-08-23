@@ -156,7 +156,7 @@ func (dev *AndroidDevice) LogEnabled() bool {
 
 func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
 	var driver WebDriver
-	if dev.UIA2 {
+	if dev.UIA2 || dev.LogOn {
 		driver, err = dev.NewUSBDriver(capabilities)
 	} else {
 		driver, err = dev.NewAdbDriver()

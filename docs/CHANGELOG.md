@@ -4,6 +4,7 @@
 
 - feat: support to reset driver (or session only) automatically when UIA2 / WDA crashed or WebDriver request failed
 - feat: `tap_cv` action supports ui type detection and tap
+- feat: enable uia2 driver if `log_on` is true for android devices
 - compatibility: support indicating options separately in `MobileAction` level
 - fix: use Override size if existed, otherwise use Physical size (android devices)
 - fix: add default options for `swipe_to_tap_app` action

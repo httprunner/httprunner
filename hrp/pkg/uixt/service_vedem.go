@@ -144,6 +144,7 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText
 	return results[idx], nil
 }
 
+// FindTextsExisted returns if one of texts matched
 func (t OCRTexts) FindTextsExisted(texts []string, options ...ActionOption) (results OCRTexts, err error) {
 	for _, text := range texts {
 		ocrText, err := t.FindText(text, options...)
@@ -160,6 +161,7 @@ func (t OCRTexts) FindTextsExisted(texts []string, options ...ActionOption) (res
 	return results, nil
 }
 
+// FindTexts returns if all texts matched
 func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (results OCRTexts, err error) {
 	for _, text := range texts {
 		ocrText, err := t.FindText(text, options...)
