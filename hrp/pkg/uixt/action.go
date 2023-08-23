@@ -106,9 +106,10 @@ type ActionOptions struct {
 	Scope    Scope    `json:"scope,omitempty" yaml:"scope,omitempty"`
 	AbsScope AbsScope `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"`
 
-	Regex  bool  `json:"regex,omitempty" yaml:"regex,omitempty"`   // use regex to match text
-	Offset []int `json:"offset,omitempty" yaml:"offset,omitempty"` // used to tap offset of point
-	Index  int   `json:"index,omitempty" yaml:"index,omitempty"`   // index of the target element
+	Regex    bool  `json:"regex,omitempty" yaml:"regex,omitempty"`                 // use regex to match text
+	Offset   []int `json:"offset,omitempty" yaml:"offset,omitempty"`               // used to tap offset of point
+	Index    int   `json:"index,omitempty" yaml:"index,omitempty"`                 // index of the target element
+	MatchOne bool  `json:"match_existed,omitempty" yaml:"match_existed,omitempty"` // match one of the targets if existed
 
 	// set custiom options such as textview, id, description
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
@@ -177,6 +178,12 @@ func (o *ActionOptions) Options() []ActionOption {
 	}
 	if o.Regex {
 		options = append(options, WithRegex(true))
+	}
+	if o.Index == -1 {
+		options = append(options, WithIndex(o.Index))
+	}
+	if o.MatchOne {
+		options = append(options, WithMatchOne(true))
 	}
 
 	// custom options
@@ -364,6 +371,12 @@ func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
 	}
 }
 
+func WithMatchOne(matchOne bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.MatchOne = matchOne
+	}
+}
+
 func (dExt *DriverExt) ParseActionOptions(options ...ActionOption) []ActionOption {
 	actionOptions := NewActionOptions(options...)
 
@@ -427,15 +440,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		if texts, ok := action.Params.([]string); ok {
 			return dExt.swipeToTapTexts(texts, action.GetOptions()...)
 		}
-		if iTexts, ok := action.Params.([]interface{}); ok {
-			var texts []string
-			for _, iText := range iTexts {
-				text, ok := iText.(string)
-				if !ok {
-					continue
-				}
-				texts = append(texts, text)
-			}
+		if texts, err := convertToStringSlice(action.Params); err == nil {
 			return dExt.swipeToTapTexts(texts, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_SwipeToTapTexts, action.Params)
@@ -489,15 +494,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		if imagePath, ok := action.Params.(string); ok {
 			return dExt.TapByCV(imagePath, action.GetOptions()...)
 		}
-		if uiParams, ok := action.Params.([]interface{}); ok {
-			var uiTypes []string
-			for _, uiParam := range uiParams {
-				uiType, ok := uiParam.(string)
-				if !ok {
-					continue
-				}
-				uiTypes = append(uiTypes, uiType)
-			}
+		if uiTypes, err := convertToStringSlice(action.Params); err == nil {
 			return dExt.TapByUIDetection(uiTypes, action.Options.Options()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
@@ -583,6 +580,21 @@ func convertToFloat64(val interface{}) (float64, error) {
 	default:
 		return 0, fmt.Errorf("invalid type for conversion to float64: %T, value: %+v", val, val)
 	}
+}
+
+func convertToStringSlice(val interface{}) ([]string, error) {
+	if valSlice, ok := val.([]interface{}); ok {
+		var res []string
+		for _, iVal := range valSlice {
+			valString, ok := iVal.(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid type for converting one of the elements to string: %T, value: %v", iVal, iVal)
+			}
+			res = append(res, valString)
+		}
+		return res, nil
+	}
+	return nil, fmt.Errorf("invalid type for conversion to []string")
 }
 
 // sleepRandom sleeps random time with given params
