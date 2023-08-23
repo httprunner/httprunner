@@ -342,10 +342,12 @@ type IImageService interface {
 
 // GetScreenResult takes a screenshot, returns the image recognization result
 func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
-	screenshotOptions := NewActionOptions(options...).screenshotOptions()
+	actionOptions := NewActionOptions(options...)
+	screenActionOptions := actionOptions.screenshotActionOptions()
+	screenUITypeOptions := screenshotUITypeOptions(actionOptions.ScreenShotWithUITypes)
 
 	var fileName string
-	if len(screenshotOptions) == 0 {
+	if len(screenActionOptions) == 0 {
 		fileName = builtin.GenNameWithTimestamp("%d_screenshot")
 	} else {
 		fileName = builtin.GenNameWithTimestamp("%d_cv")
@@ -366,8 +368,9 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	}
 
 	var imageUrl string
-	if len(screenshotOptions) > 0 {
-		imageResult, err := dExt.ImageService.GetImage(bufSource, screenshotOptions)
+	if len(screenActionOptions) > 0 {
+		imageResult, err := dExt.ImageService.GetImage(bufSource,
+			screenActionOptions, screenUITypeOptions)
 		if err != nil {
 			log.Error().Err(err).Msg("GetImage from ImageService failed")
 			return nil, err

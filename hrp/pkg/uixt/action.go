@@ -113,10 +113,10 @@ type ActionOptions struct {
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
 
 	// screenshot related
-	ScreenShotWithOCR      bool `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
-	ScreenShotWithUpload   bool `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
-	ScreenShotWithLiveType bool `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
-	ScreenShotWithUIType   bool `json:"screenshot_with_ui_type,omitempty" yaml:"screenshot_with_ui_type,omitempty"`
+	ScreenShotWithOCR      bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
+	ScreenShotWithUpload   bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
+	ScreenShotWithLiveType bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
+	ScreenShotWithUITypes  []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -201,14 +201,14 @@ func (o *ActionOptions) Options() []ActionOption {
 	if o.ScreenShotWithLiveType {
 		options = append(options, WithScreenShotLiveType(true))
 	}
-	if o.ScreenShotWithUIType {
-		options = append(options, WithScreenShotUIType(true))
+	if len(o.ScreenShotWithUITypes) > 0 {
+		options = append(options, WithScreenShotUITypes(o.ScreenShotWithUITypes...))
 	}
 
 	return options
 }
 
-func (o *ActionOptions) screenshotOptions() screenshotActionOptions {
+func (o *ActionOptions) screenshotActionOptions() screenshotActionOptions {
 	options := screenshotActionOptions{}
 	if o.ScreenShotWithOCR {
 		options = append(options, "ocr")
@@ -219,7 +219,8 @@ func (o *ActionOptions) screenshotOptions() screenshotActionOptions {
 	if o.ScreenShotWithLiveType {
 		options = append(options, "liveType")
 	}
-	if o.ScreenShotWithUIType {
+	// UI detection
+	if len(o.ScreenShotWithUITypes) > 0 {
 		options = append(options, "ui")
 	}
 	return options
@@ -418,9 +419,9 @@ func WithScreenShotLiveType(liveTypeOn bool) ActionOption {
 	}
 }
 
-func WithScreenShotUIType(uiTypeOn bool) ActionOption {
+func WithScreenShotUITypes(uiTypes ...string) ActionOption {
 	return func(o *ActionOptions) {
-		o.ScreenShotWithUIType = uiTypeOn
+		o.ScreenShotWithUITypes = uiTypes
 	}
 }
 
