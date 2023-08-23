@@ -176,28 +176,24 @@ func newVEDEMImageService() (*veDEMImageService, error) {
 //	close - get close popup
 //	ui - get ui position by type(s)
 type veDEMImageService struct{}
-type (
-	screenshotActionOptions []string
-	screenshotUITypeOptions []string
-)
 
-func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...interface{}) (imageResult ImageResult, err error) {
+func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOption) (imageResult *ImageResult, err error) {
+	actionOptions := NewActionOptions(options...)
+	screenshotActions := actionOptions.screenshotActions()
+	if len(screenshotActions) == 0 {
+		// skip
+		return nil, nil
+	}
+
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
-	for _, option := range options {
-		switch ov := option.(type) {
-		case screenshotActionOptions:
-			for _, action := range ov {
-				bodyWriter.WriteField("actions", action)
-			}
-		case screenshotUITypeOptions:
-			for _, uiType := range ov {
-				bodyWriter.WriteField("uiTypes", uiType)
-			}
-		default:
-			log.Warn().Interface("option", ov).Msgf("unexpected image service option")
-		}
+	for _, action := range screenshotActions {
+		bodyWriter.WriteField("actions", action)
 	}
+	for _, uiType := range actionOptions.ScreenShotWithUITypes {
+		bodyWriter.WriteField("uiTypes", uiType)
+	}
+
 	bodyWriter.WriteField("ocrCluster", "highPrecision")
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
@@ -304,7 +300,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...interfac
 			Msg("request veDEM OCR service failed")
 	}
 
-	imageResult = imageResponse.Result
+	imageResult = &imageResponse.Result
 	log.Debug().Interface("imageResult", imageResult).Msg("get image data by veDEM")
 	return imageResult, nil
 }
@@ -337,23 +333,13 @@ func getLogID(header http.Header) string {
 
 type IImageService interface {
 	// GetImage returns image result including ocr texts, uploaded image url, etc
-	GetImage(imageBuf *bytes.Buffer, options ...interface{}) (imageResult ImageResult, err error)
+	GetImage(imageBuf *bytes.Buffer, options ...ActionOption) (imageResult *ImageResult, err error)
 }
 
 // GetScreenResult takes a screenshot, returns the image recognization result
 func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
-	actionOptions := NewActionOptions(options...)
-	screenActionOptions := actionOptions.screenshotActionOptions()
-	screenUITypeOptions := screenshotUITypeOptions(actionOptions.ScreenShotWithUITypes)
-
-	var fileName string
-	if len(screenActionOptions) == 0 {
-		fileName = builtin.GenNameWithTimestamp("%d_screenshot")
-	} else {
-		fileName = builtin.GenNameWithTimestamp("%d_cv")
-	}
-
 	startTime := time.Now()
+	fileName := builtin.GenNameWithTimestamp("%d_screenshot")
 	bufSource, imagePath, err := dExt.takeScreenShot(fileName)
 	if err != nil {
 		return
@@ -368,13 +354,12 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	}
 
 	var imageUrl string
-	if len(screenActionOptions) > 0 {
-		imageResult, err := dExt.ImageService.GetImage(bufSource,
-			screenActionOptions, screenUITypeOptions)
-		if err != nil {
-			log.Error().Err(err).Msg("GetImage from ImageService failed")
-			return nil, err
-		}
+	imageResult, err := dExt.ImageService.GetImage(bufSource, options...)
+	if err != nil {
+		log.Error().Err(err).Msg("GetImage from ImageService failed")
+		return nil, err
+	}
+	if imageResult != nil {
 		screenResult.ScreenshotCVElapsed = time.Since(startTime).Milliseconds() - screenshotTakeElapsed
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 
@@ -530,9 +515,7 @@ func (dExt *DriverExt) GetUIResultMap(uiTypes []string) (uiResultMap UIResultMap
 	imagePath := screenResult.imagePath
 
 	imageResult, err := dExt.ImageService.GetImage(bufSource,
-		screenshotActionOptions{"ui"}, // turn on UI type detection
-		screenshotUITypeOptions(uiTypes),
-	)
+		WithScreenShotUITypes(uiTypes...)) // turn on UI type detection
 	if err != nil {
 		log.Error().Err(err).Msg("GetImage from ImageService failed")
 		return

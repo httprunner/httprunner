@@ -208,22 +208,22 @@ func (o *ActionOptions) Options() []ActionOption {
 	return options
 }
 
-func (o *ActionOptions) screenshotActionOptions() screenshotActionOptions {
-	options := screenshotActionOptions{}
+func (o *ActionOptions) screenshotActions() []string {
+	actions := []string{}
 	if o.ScreenShotWithOCR {
-		options = append(options, "ocr")
+		actions = append(actions, "ocr")
 	}
 	if o.ScreenShotWithUpload {
-		options = append(options, "upload")
+		actions = append(actions, "upload")
 	}
 	if o.ScreenShotWithLiveType {
-		options = append(options, "liveType")
+		actions = append(actions, "liveType")
 	}
 	// UI detection
 	if len(o.ScreenShotWithUITypes) > 0 {
-		options = append(options, "ui")
+		actions = append(actions, "ui")
 	}
-	return options
+	return actions
 }
 
 func NewActionOptions(options ...ActionOption) *ActionOptions {
