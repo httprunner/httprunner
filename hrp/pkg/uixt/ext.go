@@ -54,11 +54,13 @@ type ScreenResult struct {
 	bufSource *bytes.Buffer // raw image buffer bytes
 	imagePath string        // image file path
 
-	Texts     OCRTexts   `json:"texts"`                // dumped raw OCRTexts
-	Tags      []string   `json:"tags"`                 // tags for image, e.g. ["feed", "ad", "live"]
-	VideoType string     `json:"video_type,omitempty"` // video type: feed, live-preview or live
-	Feed      *FeedVideo `json:"feed,omitempty"`
-	Live      *LiveRoom  `json:"live,omitempty"`
+	UploadedURL string      `json:"uploaded_url"`         // uploaded image url
+	Texts       OCRTexts    `json:"texts"`                // dumped raw OCRTexts
+	Icons       UIResultMap `json:"icons"`                // CV 识别的图标
+	Tags        []string    `json:"tags"`                 // tags for image, e.g. ["feed", "ad", "live"]
+	VideoType   string      `json:"video_type,omitempty"` // video type: feed, live-preview or live
+	Feed        *FeedVideo  `json:"feed,omitempty"`
+	Live        *LiveRoom   `json:"live,omitempty"`
 
 	SwipeStartTime  int64 `json:"swipe_start_time"`  // 滑动开始时间戳
 	SwipeFinishTime int64 `json:"swipe_finish_time"` // 滑动结束时间戳
@@ -72,8 +74,7 @@ type ScreenResult struct {
 
 type cacheStepData struct {
 	// cache step screenshot paths
-	screenShots     []string
-	screenShotsUrls map[string]string // map screenshot file path to uploaded url
+	screenShots []string
 	// cache step screenshot ocr results, key is image path, value is ScreenResult
 	screenResults map[string]*ScreenResult
 	// cache feed/live video stat
@@ -82,7 +83,6 @@ type cacheStepData struct {
 
 func (d *cacheStepData) reset() {
 	d.screenShots = make([]string, 0)
-	d.screenShotsUrls = make(map[string]string)
 	d.screenResults = make(map[string]*ScreenResult)
 	d.videoCrawler = nil
 }
@@ -222,7 +222,15 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData := make(map[string]interface{})
 	cacheData["video_stat"] = dExt.cacheStepData.videoCrawler
 	cacheData["screenshots"] = dExt.cacheStepData.screenShots
-	cacheData["screenshots_urls"] = dExt.cacheStepData.screenShotsUrls
+
+	screenShotsUrls := make(map[string]string)
+	for imagePath, screenResult := range dExt.cacheStepData.screenResults {
+		if screenResult.UploadedURL == "" {
+			continue
+		}
+		screenShotsUrls[imagePath] = screenResult.UploadedURL
+	}
+	cacheData["screenshots_urls"] = screenShotsUrls
 
 	screenSize, err := dExt.Driver.WindowSize()
 	if err != nil {

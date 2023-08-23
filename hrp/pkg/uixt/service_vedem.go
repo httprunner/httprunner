@@ -353,7 +353,6 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		ScreenshotTakeElapsed: screenshotTakeElapsed,
 	}
 
-	var imageUrl string
 	imageResult, err := dExt.ImageService.GetImage(bufSource, options...)
 	if err != nil {
 		log.Error().Err(err).Msg("GetImage from ImageService failed")
@@ -362,11 +361,8 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	if imageResult != nil {
 		screenResult.ScreenshotCVElapsed = time.Since(startTime).Milliseconds() - screenshotTakeElapsed
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
-
-		imageUrl = imageResult.URL
-		if imageUrl != "" {
-			dExt.cacheStepData.screenShotsUrls[imagePath] = imageUrl
-		}
+		screenResult.UploadedURL = imageResult.URL
+		screenResult.Icons = imageResult.UIResult
 
 		if imageResult.LiveType != "" && imageResult.LiveType != "NoLive" {
 			screenResult.Live = &LiveRoom{
@@ -379,7 +375,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 
 	log.Debug().
 		Str("imagePath", imagePath).
-		Str("imageUrl", imageUrl).
+		Str("imageUrl", screenResult.UploadedURL).
 		Int64("screenshot_take_elapsed(ms)", screenResult.ScreenshotTakeElapsed).
 		Int64("screenshot_cv_elapsed(ms)", screenResult.ScreenshotCVElapsed).
 		Msg("log screenshot")
@@ -506,36 +502,13 @@ func (u UIResults) GetUIResult(options ...ActionOption) (UIResult, error) {
 	return uiResults[idx], nil
 }
 
-func (dExt *DriverExt) GetUIResultMap(uiTypes []string) (uiResultMap UIResultMap, err error) {
-	screenResult, err := dExt.GetScreenResult()
-	if err != nil {
-		return nil, err
-	}
-	bufSource := screenResult.bufSource
-	imagePath := screenResult.imagePath
-
-	imageResult, err := dExt.ImageService.GetImage(bufSource,
-		WithScreenShotUITypes(uiTypes...)) // turn on UI type detection
-	if err != nil {
-		log.Error().Err(err).Msg("GetImage from ImageService failed")
-		return
-	}
-
-	imageUrl := imageResult.URL
-	if imageUrl != "" {
-		dExt.cacheStepData.screenShotsUrls[imagePath] = imageUrl
-		log.Debug().Str("imagePath", imagePath).Str("imageUrl", imageUrl).Msg("log screenshot")
-	}
-	uiResultMap = imageResult.UIResult
-	return
-}
-
 func (dExt *DriverExt) FindUIResult(uiTypes []string, options ...ActionOption) (point PointF, err error) {
-	uiResultMap, err := dExt.GetUIResultMap(uiTypes)
+	screenResult, err := dExt.GetScreenResult(WithScreenShotUITypes(uiTypes...))
 	if err != nil {
 		return
 	}
-	uiResults, err := uiResultMap.FilterUIResults(uiTypes)
+
+	uiResults, err := screenResult.Icons.FilterUIResults(uiTypes)
 	if err != nil {
 		return
 	}
