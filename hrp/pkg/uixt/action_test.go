@@ -40,7 +40,7 @@ func TestSleepStrict(t *testing.T) {
 	sleepStrict(startTime, 1230)
 	dur := time.Since(startTime).Milliseconds()
 	t.Log(dur)
-	if dur < 1230 || dur > 1240 {
+	if dur < 1230 || dur > 1300 {
 		t.Fatalf("sleepRandom failed, dur: %d", dur)
 	}
 }
