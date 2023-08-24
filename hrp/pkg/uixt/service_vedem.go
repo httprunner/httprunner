@@ -53,10 +53,20 @@ func (o OCRResults) ToOCRTexts() (ocrTexts OCRTexts) {
 }
 
 type ImageResult struct {
-	URL       string      `json:"url"`       // image uploaded url
-	OCRResult OCRResults  `json:"ocrResult"` // OCR texts
-	LiveType  string      `json:"liveType"`  // 直播间类型
-	UIResult  UIResultMap `json:"uiResult"`  // 图标检测
+	URL       string     `json:"url"`       // image uploaded url
+	OCRResult OCRResults `json:"ocrResult"` // OCR texts
+	// NoLive（非直播间）
+	// Shop（电商）
+	// LifeService（生活服务）
+	// Show（秀场）
+	// Game（游戏）
+	// People（多人）
+	// PK（PK）
+	// Media（媒体）
+	// Chat（语音）
+	// Event（赛事）
+	LiveType string      `json:"liveType"` // 直播间类型
+	UIResult UIResultMap `json:"uiResult"` // 图标检测
 }
 
 type APIResponseImage struct {

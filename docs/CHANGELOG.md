@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.6 (2023-08-22)
+## v4.3.6 (2023-08-24)
 
 **go version**
 
