@@ -98,6 +98,10 @@ func (ad *adbDriver) Scale() (scale float64, err error) {
 	return 1, nil
 }
 
+func (ad *adbDriver) GetCachedScale() float64 {
+	return 1
+}
+
 func (ad *adbDriver) GetTimestamp() (timestamp int64, err error) {
 	// adb shell date +%s
 	output, err := ad.adbClient.RunShellCommand("date", "+%s")

@@ -485,6 +485,7 @@ type WebDriver interface {
 	WindowSize() (Size, error)
 	Screen() (Screen, error)
 	Scale() (float64, error)
+	GetCachedScale() float64
 
 	// GetTimestamp returns the timestamp of the mobile device
 	GetTimestamp() (timestamp int64, err error)

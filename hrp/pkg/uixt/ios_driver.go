@@ -231,6 +231,10 @@ func (wd *wdaDriver) Scale() (float64, error) {
 	return screen.Scale, nil
 }
 
+func (wd *wdaDriver) GetCachedScale() float64 {
+	return wd.scale
+}
+
 func (wd *wdaDriver) toScale(x float64) float64 {
 	return x / wd.scale
 }
