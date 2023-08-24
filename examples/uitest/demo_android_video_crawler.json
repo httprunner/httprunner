@@ -12,13 +12,35 @@
     },
     "teststeps": [
         {
+            "name": "启动 app",
+            "android": {
+                "actions": [
+                    {
+                        "method": "app_launch",
+                        "params": "com.ss.android.ugc.aweme"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            },
+            "validate": [
+                {
+                    "check": "ui_foreground_app",
+                    "assert": "equal",
+                    "expect": "com.ss.android.ugc.aweme",
+                    "msg": "app [com.ss.android.ugc.aweme] should be in foreground"
+                }
+            ]
+        },
+        {
             "name": "滑动消费 feed 至少 10 个，live 至少 3 个；滑动过程中，70% 随机间隔 0-5s，30% 随机间隔 5-10s",
             "android": {
                 "actions": [
                     {
                         "method": "video_crawler",
                         "params": {
-                            "app_package_name": "com.ss.android.ugc.aweme",
                             "feed": {
                                 "sleep_random": [
                                     0,
