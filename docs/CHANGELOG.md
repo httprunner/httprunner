@@ -24,6 +24,7 @@ UI related:
 - fix: use Override size if existed, otherwise use Physical size (android devices)
 - fix: add default options for `swipe_to_tap_app` action
 - fix: reuse the same request body during `GetImage` retry
+- fix: iOS `tap_xy` scale adaption error
 
 others:
 

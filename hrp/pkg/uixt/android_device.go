@@ -161,7 +161,7 @@ func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverE
 	}
 
 	var driver WebDriver
-	if dev.UIA2 {
+	if dev.UIA2 || dev.LogOn {
 		driver, err = dev.NewUSBDriver(driverOptions.capabilities)
 	} else {
 		driver, err = dev.NewAdbDriver()
