@@ -656,7 +656,11 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	}
 
 	// validate
-	validateResults, err := validateUI(uiDriver, step.Validators)
+	stepValidators, err := s.ParseStepValidators(step.Validators, stepVariables)
+	if err != nil {
+		return
+	}
+	validateResults, err := validateUI(uiDriver, stepValidators)
 	if err != nil {
 		if !code.IsErrorPredefined(err) {
 			err = errors.Wrap(code.MobileUIValidationError, err.Error())
