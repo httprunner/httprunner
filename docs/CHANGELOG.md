@@ -23,6 +23,7 @@ UI related:
 - fix: add compatible support for indicating options separately at the `MobileAction` level
 - fix: use Override size if existed, otherwise use Physical size (android devices)
 - fix: add default options for `swipe_to_tap_app` action
+- refactor: ui validation methods, support parsing expect value
 - fix: reuse the same request body during `GetImage` retry
 
 others:
