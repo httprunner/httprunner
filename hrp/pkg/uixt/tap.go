@@ -12,11 +12,15 @@ func (dExt *DriverExt) TapAbsXY(x, y float64, options ...ActionOption) error {
 func (dExt *DriverExt) TapXY(x, y float64, options ...ActionOption) error {
 	// tap on [x, y] percent of window size
 	if x > 1 || y > 1 {
-		return fmt.Errorf("x, y percentage should be < 1, got x=%v, y=%v", x, y)
+		return fmt.Errorf("x, y percentage should be <= 1, got x=%v, y=%v", x, y)
 	}
 
-	x = x * float64(dExt.windowSize.Width)
-	y = y * float64(dExt.windowSize.Height)
+	scale, err := dExt.Driver.Scale()
+	if err != nil {
+		return fmt.Errorf("failed to get scale: %v", err)
+	}
+	x = x * float64(dExt.windowSize.Width) * scale
+	y = y * float64(dExt.windowSize.Height) * scale
 
 	return dExt.TapAbsXY(x, y, options...)
 }

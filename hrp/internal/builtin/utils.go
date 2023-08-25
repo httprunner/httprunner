@@ -450,3 +450,8 @@ func GenNameWithTimestamp(tmpl string) string {
 	}
 	return fmt.Sprintf(tmpl, time.Now().Unix())
 }
+
+func IsZeroFloat64(f float64) bool {
+	threshold := 1e-3
+	return math.Abs(f) < threshold
+}

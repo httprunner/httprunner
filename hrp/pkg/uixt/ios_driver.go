@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
@@ -223,6 +224,9 @@ func (wd *wdaDriver) GetTimestamp() (timestamp int64, err error) {
 }
 
 func (wd *wdaDriver) Scale() (float64, error) {
+	if !builtin.IsZeroFloat64(wd.scale) {
+		return wd.scale, nil
+	}
 	screen, err := wd.Screen()
 	if err != nil {
 		return 0, errors.Wrap(code.MobileUIDriverError,

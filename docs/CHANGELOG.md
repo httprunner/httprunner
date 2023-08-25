@@ -25,6 +25,7 @@ UI related:
 - fix: add default options for `swipe_to_tap_app` action
 - refactor: ui validation methods, support parsing expect value
 - fix: reuse the same request body during `GetImage` retry
+- fix: iOS `tap_xy` scale adaption error
 
 others:
 
