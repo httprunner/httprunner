@@ -638,6 +638,23 @@ func (r *SessionRunner) ParseStepVariables(stepVariables map[string]interface{})
 	return parsedVariables, nil
 }
 
+func (r *SessionRunner) ParseStepValidators(iValidators []interface{}, stepVariables map[string]interface{}) ([]interface{}, error) {
+	var parsedValidators []interface{}
+	var err error
+	for _, iValidator := range iValidators {
+		validator, ok := iValidator.(Validator)
+		if !ok {
+			return nil, errors.New("validator type error")
+		}
+		validator.Expect, err = r.caseRunner.parser.Parse(validator.Expect, stepVariables)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse validator expect")
+		}
+		parsedValidators = append(parsedValidators, validator)
+	}
+	return parsedValidators, nil
+}
+
 // InitWithParameters updates session variables with given parameters.
 // this is used for data driven
 func (r *SessionRunner) InitWithParameters(parameters map[string]interface{}) {
