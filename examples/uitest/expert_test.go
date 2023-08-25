@@ -24,13 +24,13 @@ func TestAndroidExpertTest(t *testing.T) {
 				uixt.WithUIA2(true),
 			),
 		TestSteps: []hrp.IStep{
+			// 温启动
 			hrp.NewStep("app_launch 以及 ui_foreground_app equal 断言").
 				Android().
 				AppLaunch("$bundle_id").
 				Sleep(2).
 				Validate().
 				AssertAppInForeground("$bundle_id"),
-			// 直播赛道
 			hrp.NewStep("home 以及 swipe_to_tap_app 默认配置").
 				Android().
 				Home().
@@ -44,6 +44,7 @@ func TestAndroidExpertTest(t *testing.T) {
 				).
 				Validate().
 				AssertOCRExists("推荐", "进入抖音失败"),
+			// 直播赛道
 			hrp.NewStep("【直播】feed头像或卡片进房 swipe_to_tap_texts 自定义配置").
 				Android().
 				SwipeToTapTexts(
@@ -93,19 +94,19 @@ func TestAndroidExpertTest(t *testing.T) {
 				Android().
 				TapByOCR("直播").
 				Sleep(5),
+			// 生活服务赛道
 			hrp.NewStep("【生活服务】进入直播间 tap_xy").
 				Android().
 				TapXY(0.5, 0.5).
 				Sleep(5),
-			// 生活服务赛道
 			hrp.NewStep("【生活服务】点击货架商品 tap_ocr 自定义配置").
 				Android().
 				TapByUITypes(
-					[]string{"dyhouse", "shoppingbag"},
+					uixt.WithScreenShotUITypes("dyhouse", "shoppingbag"),
 					uixt.WithIdentifier("click_sales_rack"),
 				).
 				Sleep(5),
-			// 重新进入应用程序
+			// 冷启动
 			hrp.NewStep("app_terminate 以及 ui_foreground_app not_equal 断言").
 				Android().
 				AppTerminate("$bundle_id").
@@ -182,12 +183,12 @@ func TestIOSExpertTest(t *testing.T) {
 				uixt.WithWDAMjpegPort(8800),
 			),
 		TestSteps: []hrp.IStep{
-			hrp.NewStep("app_launch 以及 ui_foreground_app equal 断言").
+			// 温启动
+			// iOS 不支持前台 App 断言操作
+			hrp.NewStep("启动应用程序 app_launch").
 				IOS().
 				AppLaunch("$bundle_id").
 				Sleep(2),
-			// iOS 不支持前台 App 断言操作
-			// 直播赛道
 			hrp.NewStep("home 以及 swipe_to_tap_app 默认配置").
 				IOS().
 				Home().
@@ -201,6 +202,7 @@ func TestIOSExpertTest(t *testing.T) {
 				).
 				Validate().
 				AssertOCRExists("推荐", "进入抖音失败"),
+			// 直播赛道
 			hrp.NewStep("【直播】feed头像或卡片进房 swipe_to_tap_texts 自定义配置").
 				IOS().
 				SwipeToTapTexts(
@@ -246,6 +248,7 @@ func TestIOSExpertTest(t *testing.T) {
 					uixt.WithIndex(0),
 				).
 				Sleep(5),
+			// 生活服务赛道
 			hrp.NewStep("选择直播页签 tap_ocr 默认配置").
 				IOS().
 				TapByOCR("直播").
@@ -254,20 +257,19 @@ func TestIOSExpertTest(t *testing.T) {
 				IOS().
 				TapXY(0.5, 0.5).
 				Sleep(5),
-			// 生活服务赛道
 			hrp.NewStep("【生活服务】点击货架商品 tap_ocr 自定义配置").
 				IOS().
 				TapByUITypes(
-					[]string{"dyhouse", "shoppingbag"},
+					uixt.WithScreenShotUITypes("dyhouse", "shoppingbag"),
 					uixt.WithIdentifier("click_sales_rack"),
 				).
 				Sleep(5),
-			// 重新进入应用程序
-			hrp.NewStep("app_terminate 以及 ui_foreground_app not_equal 断言").
+			// 冷启动
+			// iOS 不支持前台 App 断言操作
+			hrp.NewStep("终止应用程序 app_terminate").
 				IOS().
 				AppTerminate("$bundle_id").
 				Sleep(2),
-			// iOS 不支持前台 App 断言操作
 			hrp.NewStep("home 以及 swipe_to_tap_app 自定义配置").
 				IOS().
 				Home().

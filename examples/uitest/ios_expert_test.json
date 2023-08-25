@@ -18,7 +18,7 @@
     },
     "teststeps": [
         {
-            "name": "app_launch 以及 ui_foreground_app equal 断言",
+            "name": "启动应用程序 app_launch",
             "ios": {
                 "actions": [
                     {
@@ -42,9 +42,7 @@
                     {
                         "method": "swipe_to_tap_app",
                         "params": "$app_name",
-                        "options": {
-                            
-                        }
+                        "options": {}
                     },
                     {
                         "method": "sleep",
@@ -140,9 +138,7 @@
                     },
                     {
                         "method": "back",
-                        "options": {
-                            
-                        }
+                        "options": {}
                     },
                     {
                         "method": "sleep",
@@ -215,9 +211,7 @@
                     {
                         "method": "tap_ocr",
                         "params": "直播",
-                        "options": {
-                            
-                        }
+                        "options": {}
                     },
                     {
                         "method": "sleep",
@@ -236,9 +230,7 @@
                             0.5,
                             0.5
                         ],
-                        "options": {
-                            
-                        }
+                        "options": {}
                     },
                     {
                         "method": "sleep",
@@ -253,12 +245,12 @@
                 "actions": [
                     {
                         "method": "tap_cv",
-                        "params": [
-                            "dyhouse",
-                            "shoppingbag"
-                        ],
                         "options": {
-                            "identifier": "click_sales_rack"
+                            "identifier": "click_sales_rack",
+                            "screenshot_with_ui_types": [
+                                "dyhouse",
+                                "shoppingbag"
+                            ]
                         }
                     },
                     {
@@ -269,7 +261,7 @@
             }
         },
         {
-            "name": "app_terminate 以及 ui_foreground_app not_equal 断言",
+            "name": "终止应用程序 app_terminate",
             "ios": {
                 "actions": [
                     {
@@ -339,78 +331,78 @@
                         "method": "video_crawler",
                         "params": {
                             "feed": {
-    "sleep_random": [
-    0,
-    5,
-    0.6,
-    5,
-    15,
-    0.2,
-    15,
-    50,
-    0.2
-],
-    "target_count": 10,
-    "target_labels": [
-    {
-        "regex": true,
-        "scope": [
-    0,
-    0.5,
-    1,
-    1
-],
-        "text": "^广告$"
-    },
-    {
-        "regex": true,
-        "scope": [
-    0,
-    0.5,
-    1,
-    1
-],
-        "text": "^图文$"
-    },
-    {
-        "regex": true,
-        "scope": [
-    0,
-    0.5,
-    1,
-    1
-],
-        "text": "^特效\\|"
-    },
-    {
-        "regex": true,
-        "scope": [
-    0,
-    0.5,
-    1,
-    1
-],
-        "text": "^模板\\|"
-    },
-    {
-        "regex": true,
-        "scope": [
-    0,
-    0.5,
-    1,
-    1
-],
-        "text": "^购物\\|"
-    }
-]
-},
+                                "sleep_random": [
+                                    0,
+                                    5,
+                                    0.6,
+                                    5,
+                                    15,
+                                    0.2,
+                                    15,
+                                    50,
+                                    0.2
+                                ],
+                                "target_count": 10,
+                                "target_labels": [
+                                    {
+                                        "regex": true,
+                                        "scope": [
+                                            0,
+                                            0.5,
+                                            1,
+                                            1
+                                        ],
+                                        "text": "^广告$"
+                                    },
+                                    {
+                                        "regex": true,
+                                        "scope": [
+                                            0,
+                                            0.5,
+                                            1,
+                                            1
+                                        ],
+                                        "text": "^图文$"
+                                    },
+                                    {
+                                        "regex": true,
+                                        "scope": [
+                                            0,
+                                            0.5,
+                                            1,
+                                            1
+                                        ],
+                                        "text": "^特效\\|"
+                                    },
+                                    {
+                                        "regex": true,
+                                        "scope": [
+                                            0,
+                                            0.5,
+                                            1,
+                                            1
+                                        ],
+                                        "text": "^模板\\|"
+                                    },
+                                    {
+                                        "regex": true,
+                                        "scope": [
+                                            0,
+                                            0.5,
+                                            1,
+                                            1
+                                        ],
+                                        "text": "^购物\\|"
+                                    }
+                                ]
+                            },
                             "live": {
-    "sleep_random": [
-    20,
-    20
-],
-    "target_count": 0
-},
+                                "sleep_random": [
+                                    20,
+                                    20
+                                ],
+                                "target_count": 0
+                            },
                             "timeout": 600
                         }
                     }
@@ -451,7 +443,8 @@
             "ios": {
                 "actions": [
                     {
-                        "method": "screenshot"
+                        "method": "screenshot",
+                        "options": {}
                     },
                     {
                         "method": "sleep_random",

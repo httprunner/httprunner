@@ -127,10 +127,9 @@ func (s *StepMobile) TapByCV(imagePath string, options ...uixt.ActionOption) *St
 }
 
 // TapByUITypes taps on the target element specified by uiTypes, the higher the uiTypes, the higher the priority
-func (s *StepMobile) TapByUITypes(uiTypes []string, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) TapByUITypes(options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_TapByCV,
-		Params:  uiTypes,
 		Options: uixt.NewActionOptions(options...),
 	}
 
