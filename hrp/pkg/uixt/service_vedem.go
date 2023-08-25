@@ -53,11 +53,20 @@ func (o OCRResults) ToOCRTexts() (ocrTexts OCRTexts) {
 }
 
 type ImageResult struct {
-	imagePath string
-	URL       string      `json:"url"`       // image uploaded url
-	OCRResult OCRResults  `json:"ocrResult"` // OCR texts
-	LiveType  string      `json:"liveType"`  // 直播间类型
-	UIResult  UIResultMap `json:"uiResult"`  // 图标检测
+	URL       string     `json:"url"`       // image uploaded url
+	OCRResult OCRResults `json:"ocrResult"` // OCR texts
+	// NoLive（非直播间）
+	// Shop（电商）
+	// LifeService（生活服务）
+	// Show（秀场）
+	// Game（游戏）
+	// People（多人）
+	// PK（PK）
+	// Media（媒体）
+	// Chat（语音）
+	// Event（赛事）
+	LiveType string      `json:"liveType"` // 直播间类型
+	UIResult UIResultMap `json:"uiResult"` // 图标检测
 }
 
 type APIResponseImage struct {
@@ -170,35 +179,31 @@ func newVEDEMImageService() (*veDEMImageService, error) {
 // veDEMImageService implements IImageService interface
 // actions:
 //
-//		ocr - get ocr texts
-//		upload - get image uploaded url
-//		liveType - get live type
-//		popup - get popup windows
-//		close - get close popup
-//	 ui - get ui position by type(s)
+//	ocr - get ocr texts
+//	upload - get image uploaded url
+//	liveType - get live type
+//	popup - get popup windows
+//	close - get close popup
+//	ui - get ui position by type(s)
 type veDEMImageService struct{}
-type (
-	actionOptions []string
-	uiTypeOptions []string
-)
 
-func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...interface{}) (imageResult ImageResult, err error) {
+func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOption) (imageResult *ImageResult, err error) {
+	actionOptions := NewActionOptions(options...)
+	screenshotActions := actionOptions.screenshotActions()
+	if len(screenshotActions) == 0 {
+		// skip
+		return nil, nil
+	}
+
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
-	for _, option := range options {
-		switch ov := option.(type) {
-		case actionOptions:
-			for _, action := range ov {
-				bodyWriter.WriteField("actions", action)
-			}
-		case uiTypeOptions:
-			for _, uiType := range ov {
-				bodyWriter.WriteField("uiTypes", uiType)
-			}
-		default:
-			log.Warn().Interface("option", ov).Msgf("unexpected image service option")
-		}
+	for _, action := range screenshotActions {
+		bodyWriter.WriteField("actions", action)
 	}
+	for _, uiType := range actionOptions.ScreenShotWithUITypes {
+		bodyWriter.WriteField("uiTypes", uiType)
+	}
+
 	bodyWriter.WriteField("ocrCluster", "highPrecision")
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
@@ -256,7 +261,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...interfac
 			log.Debug().
 				Str("X-TT-LOGID", logID).
 				Int("image_bytes", size).
-				Float64("elapsed(s)", elapsed.Seconds()).
+				Int64("elapsed(ms)", elapsed.Milliseconds()).
 				Msg("request OCR service success")
 			break
 		}
@@ -305,7 +310,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...interfac
 			Msg("request veDEM OCR service failed")
 	}
 
-	imageResult = imageResponse.Result
+	imageResult = &imageResponse.Result
 	log.Debug().Interface("imageResult", imageResult).Msg("get image data by veDEM")
 	return imageResult, nil
 }
@@ -338,46 +343,58 @@ func getLogID(header http.Header) string {
 
 type IImageService interface {
 	// GetImage returns image result including ocr texts, uploaded image url, etc
-	GetImage(imageBuf *bytes.Buffer, options ...interface{}) (imageResult ImageResult, err error)
+	GetImage(imageBuf *bytes.Buffer, options ...ActionOption) (imageResult *ImageResult, err error)
 }
 
 // GetScreenResult takes a screenshot, returns the image recognization result
-func (dExt *DriverExt) GetScreenResult() (screenResult *ScreenResult, err error) {
-	var bufSource *bytes.Buffer
-	var imagePath string
-	if bufSource, imagePath, err = dExt.takeScreenShot(
-		builtin.GenNameWithTimestamp("%d_cv")); err != nil {
-		return
-	}
-
-	imageResult, err := dExt.ImageService.GetImage(bufSource, actionOptions{"ocr", "upload", "liveType"})
+func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
+	startTime := time.Now()
+	fileName := builtin.GenNameWithTimestamp("%d_screenshot")
+	bufSource, imagePath, err := dExt.takeScreenShot(fileName)
 	if err != nil {
-		log.Error().Err(err).Msg("GetImage from ImageService failed")
 		return
 	}
-	imageResult.imagePath = imagePath
-
-	imageUrl := imageResult.URL
-	if imageUrl != "" {
-		dExt.cacheStepData.screenShotsUrls[imagePath] = imageUrl
-		log.Debug().Str("imagePath", imagePath).Str("imageUrl", imageUrl).Msg("log screenshot")
-	}
+	screenshotTakeElapsed := time.Since(startTime).Milliseconds()
 
 	screenResult = &ScreenResult{
-		Texts:      imageResult.OCRResult.ToOCRTexts(),
-		Tags:       nil,
-		Popularity: Popularity{},
+		bufSource:             bufSource,
+		imagePath:             imagePath,
+		Tags:                  nil,
+		ScreenshotTakeElapsed: screenshotTakeElapsed,
 	}
-	if imageResult.LiveType != "" {
-		screenResult.Tags = []string{imageResult.LiveType}
+
+	imageResult, err := dExt.ImageService.GetImage(bufSource, options...)
+	if err != nil {
+		log.Error().Err(err).Msg("GetImage from ImageService failed")
+		return nil, err
 	}
+	if imageResult != nil {
+		screenResult.ScreenshotCVElapsed = time.Since(startTime).Milliseconds() - screenshotTakeElapsed
+		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
+		screenResult.UploadedURL = imageResult.URL
+		screenResult.Icons = imageResult.UIResult
+
+		if imageResult.LiveType != "" && imageResult.LiveType != "NoLive" {
+			screenResult.Live = &LiveRoom{
+				LiveType: imageResult.LiveType,
+			}
+		}
+	}
+
 	dExt.cacheStepData.screenResults[imagePath] = screenResult
 
+	log.Debug().
+		Str("imagePath", imagePath).
+		Str("imageUrl", screenResult.UploadedURL).
+		Int64("screenshot_take_elapsed(ms)", screenResult.ScreenshotTakeElapsed).
+		Int64("screenshot_cv_elapsed(ms)", screenResult.ScreenshotCVElapsed).
+		Msg("log screenshot")
 	return screenResult, nil
 }
 
 func (dExt *DriverExt) GetScreenTexts() (ocrTexts OCRTexts, err error) {
-	screenResult, err := dExt.GetScreenResult()
+	screenResult, err := dExt.GetScreenResult(
+		WithScreenShotOCR(true), WithScreenShotUpload(true))
 	if err != nil {
 		return
 	}
@@ -495,35 +512,13 @@ func (u UIResults) GetUIResult(options ...ActionOption) (UIResult, error) {
 	return uiResults[idx], nil
 }
 
-func (dExt *DriverExt) GetUIResultMap(uiTypes []string) (uiResultMap UIResultMap, err error) {
-	var bufSource *bytes.Buffer
-	var imagePath string
-	if bufSource, imagePath, err = dExt.takeScreenShot(
-		builtin.GenNameWithTimestamp("%d_cv")); err != nil {
-		return
-	}
-
-	imageResult, err := dExt.ImageService.GetImage(bufSource, actionOptions{"ui"}, uiTypeOptions(uiTypes))
-	if err != nil {
-		log.Error().Err(err).Msg("GetImage from ImageService failed")
-		return
-	}
-
-	imageUrl := imageResult.URL
-	if imageUrl != "" {
-		dExt.cacheStepData.screenShotsUrls[imagePath] = imageUrl
-		log.Debug().Str("imagePath", imagePath).Str("imageUrl", imageUrl).Msg("log screenshot")
-	}
-	uiResultMap = imageResult.UIResult
-	return
-}
-
 func (dExt *DriverExt) FindUIResult(uiTypes []string, options ...ActionOption) (point PointF, err error) {
-	uiResultMap, err := dExt.GetUIResultMap(uiTypes)
+	screenResult, err := dExt.GetScreenResult(WithScreenShotUITypes(uiTypes...))
 	if err != nil {
 		return
 	}
-	uiResults, err := uiResultMap.FilterUIResults(uiTypes)
+
+	uiResults, err := screenResult.Icons.FilterUIResults(uiTypes)
 	if err != nil {
 		return
 	}

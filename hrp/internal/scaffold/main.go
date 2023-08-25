@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/httprunner/funplugin/fungo"
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
-	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
@@ -210,13 +210,10 @@ func createPythonPlugin(projectName, venv string) error {
 		return errors.Wrap(err, "copy file failed")
 	}
 
-	packages := []string{
-		fmt.Sprintf("funppy==%s", fungo.Version),
-		fmt.Sprintf("httprunner==%s", version.HttpRunnerMinimumVersion),
-	}
+	packages := []string{"funppy", "httprunner"}
 	_, err = myexec.EnsurePython3Venv(venv, packages...)
 	if err != nil {
-		return err
+		return errors.Wrap(code.InvalidPython3Venv, err.Error())
 	}
 
 	return nil

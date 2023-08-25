@@ -13,7 +13,7 @@ func init() {
 }
 
 func TestDriverExt_TapXY(t *testing.T) {
-	driverExt, err := iosDevice.NewDriver(nil)
+	driverExt, err := iosDevice.NewDriver()
 	checkErr(t, err)
 
 	err = driverExt.TapXY(0.4, 0.5)
@@ -21,7 +21,7 @@ func TestDriverExt_TapXY(t *testing.T) {
 }
 
 func TestDriverExt_TapAbsXY(t *testing.T) {
-	driverExt, err := iosDevice.NewDriver(nil)
+	driverExt, err := iosDevice.NewDriver()
 	checkErr(t, err)
 
 	err = driverExt.TapAbsXY(100, 300)
@@ -29,7 +29,7 @@ func TestDriverExt_TapAbsXY(t *testing.T) {
 }
 
 func TestDriverExt_TapWithOCR(t *testing.T) {
-	driverExt, err := iosDevice.NewDriver(nil)
+	driverExt, err := iosDevice.NewDriver()
 	checkErr(t, err)
 
 	// 需要点击文字上方的图标

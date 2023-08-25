@@ -15,33 +15,32 @@ func checkErr(t *testing.T, err error, msg ...string) {
 	}
 }
 
-func TestSleepRandom(t *testing.T) {
-	startTime1 := time.Now()
-	params := []interface{}{1}
-	err := sleepRandom(startTime1, params)
-	checkErr(t, err)
-	dur := time.Since(startTime1).Seconds()
-	t.Log(dur)
-	if dur < 1 || dur > 1.1 {
-		t.Fatal("sleepRandom failed")
+func TestGetSimulationDuration(t *testing.T) {
+	params := []interface{}{1.23}
+	duration := getSimulationDuration(params)
+	if duration != 1230 {
+		t.Fatal("getSimulationDuration failed")
 	}
 
-	params = []interface{}{0, 2}
-	err = sleepRandom(startTime1, params)
-	checkErr(t, err)
-	dur = time.Since(startTime1).Seconds()
-	t.Log(dur)
-	if dur < 1 || dur > 2 {
-		t.Fatal("sleepRandom failed")
-	}
-
-	startTime2 := time.Now()
 	params = []interface{}{1, 2}
-	err = sleepRandom(startTime2, params)
-	checkErr(t, err)
-	dur = time.Since(startTime2).Seconds()
+	duration = getSimulationDuration(params)
+	if duration < 1000 || duration > 2000 {
+		t.Fatal("getSimulationDuration failed")
+	}
+
+	params = []interface{}{1, 5, 0.7, 5, 10, 0.3}
+	duration = getSimulationDuration(params)
+	if duration < 1000 || duration > 10000 {
+		t.Fatal("getSimulationDuration failed")
+	}
+}
+
+func TestSleepStrict(t *testing.T) {
+	startTime := time.Now()
+	sleepStrict(startTime, 1230)
+	dur := time.Since(startTime).Milliseconds()
 	t.Log(dur)
-	if dur < 1 || dur > 2 {
-		t.Fatal("sleepRandom failed")
+	if dur < 1230 || dur > 1300 {
+		t.Fatalf("sleepRandom failed, dur: %d", dur)
 	}
 }

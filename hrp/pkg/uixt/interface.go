@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"time"
+
+	"github.com/httprunner/funplugin"
 )
 
 var (
@@ -437,11 +439,30 @@ type Rect struct {
 	Size
 }
 
+type DriverOptions struct {
+	capabilities Capabilities
+	plugin       funplugin.IPlugin
+}
+
+type DriverOption func(*DriverOptions)
+
+func WithDriverCapabilities(capabilities Capabilities) DriverOption {
+	return func(options *DriverOptions) {
+		options.capabilities = capabilities
+	}
+}
+
+func WithDriverPlugin(plugin funplugin.IPlugin) DriverOption {
+	return func(options *DriverOptions) {
+		options.plugin = plugin
+	}
+}
+
 // current implemeted device: IOSDevice, AndroidDevice
 type Device interface {
 	UUID() string // ios udid or android serial
 	LogEnabled() bool
-	NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error)
+	NewDriver(...DriverOption) (driverExt *DriverExt, err error)
 
 	StartPerf() error
 	StopPerf() string

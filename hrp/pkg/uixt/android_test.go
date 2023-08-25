@@ -18,7 +18,7 @@ var (
 func setupAndroid(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
-	driverExt, err = device.NewDriver(nil)
+	driverExt, err = device.NewDriver()
 	checkErr(t, err)
 }
 
@@ -331,7 +331,7 @@ func TestDeviceList(t *testing.T) {
 
 func TestDriver_AppLaunch(t *testing.T) {
 	device, _ := NewAndroidDevice()
-	driver, err := device.NewDriver(nil)
+	driver, err := device.NewDriver()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -383,7 +383,7 @@ func TestDriver_IsAppInForeground(t *testing.T) {
 
 func TestDriver_KeepAlive(t *testing.T) {
 	device, _ := NewAndroidDevice()
-	driver, err := device.NewDriver(nil)
+	driver, err := device.NewDriver()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -408,7 +408,7 @@ func TestDriver_KeepAlive(t *testing.T) {
 
 func TestDriver_AppTerminate(t *testing.T) {
 	device, _ := NewAndroidDevice()
-	driver, err := device.NewDriver(nil)
+	driver, err := device.NewDriver()
 	if err != nil {
 		t.Fatal(err)
 	}
