@@ -102,7 +102,7 @@ func (s *StepMobile) Tap(params string, options ...uixt.ActionOption) *StepMobil
 	return &StepMobile{step: s.step}
 }
 
-// Tap taps on the target element by OCR recognition
+// TapByOCR taps on the target element by OCR recognition
 func (s *StepMobile) TapByOCR(ocrText string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_TapByOCR,
@@ -114,11 +114,22 @@ func (s *StepMobile) TapByOCR(ocrText string, options ...uixt.ActionOption) *Ste
 	return &StepMobile{step: s.step}
 }
 
-// Tap taps on the target element by CV recognition
+// TapByCV taps on the target element by CV recognition
 func (s *StepMobile) TapByCV(imagePath string, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_TapByCV,
 		Params:  imagePath,
+		Options: uixt.NewActionOptions(options...),
+	}
+
+	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	return &StepMobile{step: s.step}
+}
+
+// TapByUITypes taps on the target element specified by uiTypes, the higher the uiTypes, the higher the priority
+func (s *StepMobile) TapByUITypes(options ...uixt.ActionOption) *StepMobile {
+	action := uixt.MobileAction{
+		Method:  uixt.ACTION_TapByCV,
 		Options: uixt.NewActionOptions(options...),
 	}
 

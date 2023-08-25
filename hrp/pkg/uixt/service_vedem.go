@@ -478,6 +478,7 @@ func (u UIResults) FilterScope(scope AbsScope) (results UIResults) {
 
 type UIResultMap map[string]UIResults
 
+// FilterUIResults filters ui icons, the former the uiTypes, the higher the priority
 func (u UIResultMap) FilterUIResults(uiTypes []string) (uiResults UIResults, err error) {
 	var ok bool
 	for _, uiType := range uiTypes {
@@ -512,20 +513,22 @@ func (u UIResults) GetUIResult(options ...ActionOption) (UIResult, error) {
 	return uiResults[idx], nil
 }
 
-func (dExt *DriverExt) FindUIResult(uiTypes []string, options ...ActionOption) (point PointF, err error) {
-	screenResult, err := dExt.GetScreenResult(WithScreenShotUITypes(uiTypes...))
+func (dExt *DriverExt) FindUIResult(options ...ActionOption) (point PointF, err error) {
+	actionOptions := NewActionOptions(options...)
+
+	screenResult, err := dExt.GetScreenResult(options...)
 	if err != nil {
 		return
 	}
 
-	uiResults, err := screenResult.Icons.FilterUIResults(uiTypes)
+	uiResults, err := screenResult.Icons.FilterUIResults(actionOptions.ScreenShotWithUITypes)
 	if err != nil {
 		return
 	}
 	uiResult, err := uiResults.GetUIResult(dExt.ParseActionOptions(options...)...)
 	point = uiResult.Center()
 
-	log.Info().Interface("text", uiTypes).
+	log.Info().Interface("text", actionOptions.ScreenShotWithUITypes).
 		Interface("point", point).Msg("FindUIResult success")
 	return
 }
