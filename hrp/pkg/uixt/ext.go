@@ -61,6 +61,7 @@ type ScreenResult struct {
 	VideoType   string      `json:"video_type,omitempty"` // video type: feed, live-preview or live
 	Feed        *FeedVideo  `json:"feed,omitempty"`
 	Live        *LiveRoom   `json:"live,omitempty"`
+	Popup       *CPResult   `json:"popup,omitempty"`
 
 	SwipeStartTime  int64 `json:"swipe_start_time"`  // 滑动开始时间戳
 	SwipeFinishTime int64 `json:"swipe_finish_time"` // 滑动结束时间戳
@@ -255,6 +256,7 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 			"screenshot_take_elapsed": screenResult.ScreenshotTakeElapsed,
 			"screenshot_cv_elapsed":   screenResult.ScreenshotCVElapsed,
 			"total_elapsed":           screenResult.TotalElapsed,
+			"popup":                   screenResult.Popup,
 		}
 
 		screenResults[imagePath] = data

@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/httprunner/funplugin"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 var (
@@ -432,6 +434,10 @@ type Point struct {
 type PointF struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
+}
+
+func (p PointF) IsOriginal() bool {
+	return builtin.IsZeroFloat64(p.X) && builtin.IsZeroFloat64(p.Y)
 }
 
 type Rect struct {

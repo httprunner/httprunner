@@ -58,6 +58,7 @@ const (
 	ACTION_SwipeToTapText  ActionMethod = "swipe_to_tap_text"  // swipe up & down to find text and tap
 	ACTION_SwipeToTapTexts ActionMethod = "swipe_to_tap_texts" // swipe up & down to find text and tap
 	ACTION_VideoCrawler    ActionMethod = "video_crawler"
+	ACTION_ClosePopups     ActionMethod = "close_popups"
 )
 
 type MobileAction struct {
@@ -118,6 +119,7 @@ type ActionOptions struct {
 	ScreenShotWithUpload   bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
 	ScreenShotWithLiveType bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
 	ScreenShotWithUITypes  []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
+	ScreenShotWithClose    bool     `json:"screenshot_with_close,omitempty" yaml:"screenshot_with_close,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -438,6 +440,12 @@ func WithScreenShotUITypes(uiTypes ...string) ActionOption {
 	}
 }
 
+func WithScreenShotClose(closeOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithClose = closeOn
+	}
+}
+
 func (dExt *DriverExt) ParseActionOptions(options ...ActionOption) []ActionOption {
 	actionOptions := NewActionOptions(options...)
 
@@ -632,6 +640,8 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 			return errors.Wrapf(err, "invalid video crawler params: %v(%T)", action.Params, action.Params)
 		}
 		return dExt.VideoCrawler(configs)
+	case ACTION_ClosePopups:
+		return dExt.ClosePopup(action.GetOptions()...)
 	}
 	return nil
 }
