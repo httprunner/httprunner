@@ -65,8 +65,9 @@ type ImageResult struct {
 	// Media（媒体）
 	// Chat（语音）
 	// Event（赛事）
-	LiveType string      `json:"liveType"` // 直播间类型
-	UIResult UIResultMap `json:"uiResult"` // 图标检测
+	LiveType string      `json:"liveType"`    // 直播间类型
+	UIResult UIResultMap `json:"uiResult"`    // 图标检测
+	CPResult CPResult    `json:"closeResult"` // 弹窗按钮检测
 }
 
 type APIResponseImage struct {
@@ -385,6 +386,9 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 				LiveType: imageResult.LiveType,
 			}
 		}
+		if !imageResult.CPResult.CloseArea.IsEmpty() && !imageResult.CPResult.CloseArea.Point.IsOriginal() {
+			screenResult.Popup = &imageResult.CPResult
+		}
 	}
 
 	dExt.cacheStepData.screenResults[imagePath] = screenResult
@@ -435,21 +439,25 @@ func getRectangleCenterPoint(rect image.Rectangle) (point PointF) {
 	return point
 }
 
-func getCenterPoint(point PointF, width, height float64) PointF {
-	return PointF{
-		X: point.X + width*0.5,
-		Y: point.Y + height*0.5,
-	}
-}
-
-type UIResult struct {
+type Box struct {
 	Point  PointF  `json:"point"`
 	Width  float64 `json:"width"`
 	Height float64 `json:"height"`
 }
 
-func (u UIResult) Center() PointF {
-	return getCenterPoint(u.Point, u.Width, u.Height)
+func (box Box) IsEmpty() bool {
+	return builtin.IsZeroFloat64(box.Width) && builtin.IsZeroFloat64(box.Height)
+}
+
+func (box Box) Center() PointF {
+	return PointF{
+		X: box.Point.X + box.Width*0.5,
+		Y: box.Point.Y + box.Height*0.5,
+	}
+}
+
+type UIResult struct {
+	Box
 }
 
 type UIResults []UIResult

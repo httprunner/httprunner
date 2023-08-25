@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
@@ -188,7 +189,7 @@ func (dExt *DriverExt) swipeToTapApp(appName string, options ...ActionOption) er
 		options = append(options, WithOffset(0, -25))
 	}
 	// set default swipe interval to 1 second
-	if actionOptions.Interval == 0 {
+	if builtin.IsZeroFloat64(actionOptions.Interval) {
 		options = append(options, WithInterval(1))
 	}
 

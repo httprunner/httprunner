@@ -26,6 +26,7 @@ UI related:
 - refactor: ui validation methods, support parsing expect value
 - fix: reuse the same request body during `GetImage` retry
 - fix: iOS `tap_xy` scale adaption error
+- feat: support new action: `close_popups`
 
 others:
 
