@@ -154,6 +154,7 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText
 }
 
 func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (results OCRTexts, err error) {
+	actionOptions := NewActionOptions(options...)
 	for _, text := range texts {
 		ocrText, err := t.FindText(text, options...)
 		if err != nil {
@@ -162,7 +163,12 @@ func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (results OC
 		results = append(results, ocrText)
 	}
 
-	if len(results) != len(texts) {
+	if actionOptions.MatchOne && len(results) == 0 {
+		return nil, errors.Wrap(code.CVResultNotFoundError,
+			fmt.Sprintf("texts %s not found in %v", texts, t.texts()))
+	}
+
+	if !actionOptions.MatchOne && len(results) != len(texts) {
 		return nil, errors.Wrap(code.CVResultNotFoundError,
 			fmt.Sprintf("texts %s not found in %v", texts, t.texts()))
 	}

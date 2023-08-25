@@ -132,6 +132,7 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		return errors.New("no text to tap")
 	}
 
+	options = append(options, WithMatchOne(true))
 	var point PointF
 	findTexts := func(d *DriverExt) error {
 		var err error
