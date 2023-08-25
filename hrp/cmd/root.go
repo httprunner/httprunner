@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"io"
 	"os"
 	"runtime"
 	"strings"
@@ -69,6 +70,11 @@ func initLogger(logLevel string, logJSON bool) {
 	// Error Logging with Stacktrace
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 
+	// set log timestamp precise to milliseconds
+	zerolog.TimeFieldFormat = "2006-01-02T15:04:05.999Z0700"
+
+	// init log writer
+	var writer io.Writer
 	if !logJSON {
 		// log a human-friendly, colorized output
 		noColor := false
@@ -76,19 +82,18 @@ func initLogger(logLevel string, logJSON bool) {
 			noColor = true
 		}
 
-		log.Logger = zerolog.New(
-			zerolog.ConsoleWriter{
-				Out:        os.Stderr,
-				TimeFormat: time.RFC3339,
-				NoColor:    noColor,
-			},
-		).With().Timestamp().Logger()
+		writer = zerolog.ConsoleWriter{
+			Out:        os.Stderr,
+			TimeFormat: time.RFC3339Nano,
+			NoColor:    noColor,
+		}
 		log.Info().Msg("log with colorized console")
 	} else {
 		// default logger
 		log.Info().Msg("log with json output")
-		log.Logger = zerolog.New(os.Stderr).With().Timestamp().Logger()
+		writer = os.Stderr
 	}
+	log.Logger = zerolog.New(writer).With().Timestamp().Logger()
 
 	// Setting Global Log Level
 	level := strings.ToUpper(logLevel)

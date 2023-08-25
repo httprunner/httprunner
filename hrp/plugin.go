@@ -1,20 +1,18 @@
 package hrp
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/httprunner/funplugin"
-	"github.com/httprunner/funplugin/fungo"
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
-	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
@@ -65,15 +63,13 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		}
 		pluginPath = genPyPluginPath
 
-		packages := []string{
-			fmt.Sprintf("funppy==%s", fungo.Version),
-		}
+		packages := []string{"funppy"}
 		python3, err := myexec.EnsurePython3Venv(venv, packages...)
 		if err != nil {
 			log.Error().Err(err).
 				Interface("packages", packages).
 				Msg("python3 venv is not ready")
-			return nil, err
+			return nil, errors.Wrap(code.InvalidPython3Venv, err.Error())
 		}
 		pluginOptions = append(pluginOptions, funplugin.WithPython3(python3))
 	}
@@ -120,14 +116,15 @@ func locatePlugin(path string) (pluginPath string, err error) {
 		return
 	}
 
-	return "", fmt.Errorf("plugin file not found")
+	return "", errors.New("plugin file not found")
 }
 
 // locateFile searches destFile upward recursively until system root dir
-func locateFile(startPath string, destFile string) (string, error) {
+// if not found, then searches in hrp executable dir
+func locateFile(startPath string, destFile string) (pluginPath string, err error) {
 	stat, err := os.Stat(startPath)
 	if os.IsNotExist(err) {
-		return "", err
+		return "", errors.Wrap(err, "start path not exists")
 	}
 
 	var startDir string
@@ -139,7 +136,7 @@ func locateFile(startPath string, destFile string) (string, error) {
 	startDir, _ = filepath.Abs(startDir)
 
 	// convention over configuration
-	pluginPath := filepath.Join(startDir, destFile)
+	pluginPath = filepath.Join(startDir, destFile)
 	if _, err := os.Stat(pluginPath); err == nil {
 		return pluginPath, nil
 	}
@@ -147,10 +144,29 @@ func locateFile(startPath string, destFile string) (string, error) {
 	// system root dir
 	parentDir, _ := filepath.Abs(filepath.Dir(startDir))
 	if parentDir == startDir {
-		return "", fmt.Errorf("searched to system root dir, plugin file not found")
+		if pluginPath, err = locateExecutable(destFile); err == nil {
+			return
+		}
+		return "", errors.New("searched to system root dir, plugin file not found")
 	}
 
 	return locateFile(parentDir, destFile)
+}
+
+// locateExecutable finds destFile in hrp executable dir
+func locateExecutable(destFile string) (string, error) {
+	exePath, err := os.Executable()
+	if err != nil {
+		return "", errors.Wrap(err, "get hrp executable failed")
+	}
+
+	exeDir := filepath.Dir(exePath)
+	pluginPath := filepath.Join(exeDir, destFile)
+	if _, err := os.Stat(pluginPath); err == nil {
+		return pluginPath, nil
+	}
+
+	return "", errors.New("plugin file not found in hrp executable dir")
 }
 
 func GetProjectRootDirPath(path string) (rootDir string, err error) {

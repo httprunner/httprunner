@@ -273,7 +273,7 @@ func (d *Device) RunShellCommandWithBytes(cmd string, args ...string) ([]byte, e
 		// log elapsed seconds for shell execution
 		log.Debug().Str("cmd",
 			fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
-			Float64("elapsed(s)", time.Since(startTime).Seconds()).
+			Int64("elapsed(ms)", time.Since(startTime).Milliseconds()).
 			Msg("run adb shell")
 	}()
 
@@ -295,7 +295,7 @@ func (d *Device) RunShellCommandV2WithBytes(cmd string, args ...string) ([]byte,
 		// log elapsed seconds for shell execution
 		log.Debug().Str("cmd",
 			fmt.Sprintf("adb -s %s shell %s", d.serial, cmd)).
-			Float64("elapsed(s)", time.Since(startTime).Seconds()).
+			Int64("elapsed(ms)", time.Since(startTime).Milliseconds()).
 			Msg("run adb shell in v2")
 	}()
 

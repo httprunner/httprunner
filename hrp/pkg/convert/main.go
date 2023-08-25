@@ -1,7 +1,6 @@
 package convert
 
 import (
-	_ "embed"
 	"path/filepath"
 	"time"
 

@@ -3,7 +3,6 @@ package uixt
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"math/rand"
 	"time"
 
@@ -112,6 +111,12 @@ type ActionOptions struct {
 
 	// set custiom options such as textview, id, description
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
+
+	// screenshot related
+	ScreenShotWithOCR      bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
+	ScreenShotWithUpload   bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
+	ScreenShotWithLiveType bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
+	ScreenShotWithUITypes  []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -186,7 +191,39 @@ func (o *ActionOptions) Options() []ActionOption {
 		}
 	}
 
+	// screenshot options
+	if o.ScreenShotWithOCR {
+		options = append(options, WithScreenShotOCR(true))
+	}
+	if o.ScreenShotWithUpload {
+		options = append(options, WithScreenShotUpload(true))
+	}
+	if o.ScreenShotWithLiveType {
+		options = append(options, WithScreenShotLiveType(true))
+	}
+	if len(o.ScreenShotWithUITypes) > 0 {
+		options = append(options, WithScreenShotUITypes(o.ScreenShotWithUITypes...))
+	}
+
 	return options
+}
+
+func (o *ActionOptions) screenshotActions() []string {
+	actions := []string{}
+	if o.ScreenShotWithOCR {
+		actions = append(actions, "ocr")
+	}
+	if o.ScreenShotWithUpload {
+		actions = append(actions, "upload")
+	}
+	if o.ScreenShotWithLiveType {
+		actions = append(actions, "liveType")
+	}
+	// UI detection
+	if len(o.ScreenShotWithUITypes) > 0 {
+		actions = append(actions, "ui")
+	}
+	return actions
 }
 
 func NewActionOptions(options ...ActionOption) *ActionOptions {
@@ -364,6 +401,30 @@ func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
 	}
 }
 
+func WithScreenShotOCR(ocrOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithOCR = ocrOn
+	}
+}
+
+func WithScreenShotUpload(uploadOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithUpload = uploadOn
+	}
+}
+
+func WithScreenShotLiveType(liveTypeOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithLiveType = liveTypeOn
+	}
+}
+
+func WithScreenShotUITypes(uiTypes ...string) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithUITypes = uiTypes
+	}
+}
+
 func (dExt *DriverExt) ParseActionOptions(options ...ActionOption) []ActionOption {
 	actionOptions := NewActionOptions(options...)
 
@@ -386,7 +447,7 @@ func (dExt *DriverExt) GenAbsScope(x1, y1, x2, y2 float64) AbsScope {
 	return AbsScope{absX1, absY1, absX2, absY2}
 }
 
-func (dExt *DriverExt) DoAction(action MobileAction) error {
+func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 	log.Debug().
 		Str("method", string(action.Method)).
 		Interface("params", action.Params).
@@ -394,11 +455,19 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 	actionStartTime := time.Now()
 
 	defer func() {
-		log.Debug().
-			Str("method", string(action.Method)).
-			Interface("params", action.Params).
-			Float64("elapsed(s)", time.Since(actionStartTime).Seconds()).
-			Msg("uixt action end")
+		if err != nil {
+			log.Error().Err(err).
+				Str("method", string(action.Method)).
+				Interface("params", action.Params).
+				Int64("elapsed(ms)", time.Since(actionStartTime).Milliseconds()).
+				Msg("uixt action end")
+		} else {
+			log.Debug().
+				Str("method", string(action.Method)).
+				Interface("params", action.Params).
+				Int64("elapsed(ms)", time.Since(actionStartTime).Milliseconds()).
+				Msg("uixt action end")
+		}
 	}()
 
 	switch action.Method {
@@ -533,13 +602,14 @@ func (dExt *DriverExt) DoAction(action MobileAction) error {
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
 	case ACTION_SleepRandom:
 		if params, ok := action.Params.([]interface{}); ok {
-			return sleepRandom(time.Now(), params)
+			sleepStrict(time.Now(), getSimulationDuration(params))
+			return nil
 		}
 		return fmt.Errorf("invalid sleep random params: %v(%T)", action.Params, action.Params)
 	case ACTION_ScreenShot:
 		// take screenshot
 		log.Info().Msg("take screenshot for current screen")
-		_, _, err := dExt.takeScreenShot(builtin.GenNameWithTimestamp("%d_screenshot"))
+		_, err := dExt.GetScreenResult(action.GetOptions()...)
 		return err
 	case ACTION_StartCamera:
 		return dExt.Driver.StartCamera()
@@ -575,13 +645,20 @@ func convertToFloat64(val interface{}) (float64, error) {
 	}
 }
 
-// sleepRandom sleeps random time with given params
-// startTime is used to correct sleep duration caused by process time
-func sleepRandom(startTime time.Time, params []interface{}) error {
+// getSimulationDuration returns simulation duration by given params (in seconds)
+func getSimulationDuration(params []interface{}) (milliseconds int64) {
 	if len(params) == 1 {
-		// constant sleep time
-		params = append(params, params[0], 1.0)
-	} else if len(params) == 2 {
+		// given constant duration time
+		seconds, err := convertToFloat64(params[0])
+		if err != nil {
+			log.Error().Err(err).Interface("params", params).Msg("invalid params")
+			return 0
+		}
+		return int64(seconds * 1000)
+	}
+
+	if len(params) == 2 {
+		// given [min, max], missing weight
 		// append default weight 1
 		params = append(params, 1.0)
 	}
@@ -593,15 +670,18 @@ func sleepRandom(startTime time.Time, params []interface{}) error {
 	for i := 0; i+3 <= len(params); i += 3 {
 		min, err := convertToFloat64(params[i])
 		if err != nil {
-			return errors.Wrapf(err, "invalid minimum time: %v", params[i])
+			log.Error().Err(err).Interface("min", params[i]).Msg("invalid minimum time")
+			return 0
 		}
 		max, err := convertToFloat64(params[i+1])
 		if err != nil {
-			return errors.Wrapf(err, "invalid maximum time: %v", params[i+1])
+			log.Error().Err(err).Interface("max", params[i+1]).Msg("invalid maximum time")
+			return 0
 		}
 		weight, err := convertToFloat64(params[i+2])
 		if err != nil {
-			return errors.Wrapf(err, "invalid weight value: %v", params[i+2])
+			log.Error().Err(err).Interface("weight", params[i+2]).Msg("invalid weight value")
+			return 0
 		}
 		totalProb += weight
 		sections = append(sections,
@@ -610,8 +690,8 @@ func sleepRandom(startTime time.Time, params []interface{}) error {
 	}
 
 	if totalProb == 0 {
-		log.Warn().Msg("total weight is 0, skip sleep")
-		return nil
+		log.Warn().Msg("total weight is 0, skip simulation")
+		return 0
 	}
 
 	r := rand.Float64()
@@ -619,22 +699,36 @@ func sleepRandom(startTime time.Time, params []interface{}) error {
 	for _, s := range sections {
 		accProb += s.weight / totalProb
 		if r < accProb {
-			elapsed := time.Since(startTime).Seconds()
-			randomSeconds := s.min + rand.Float64()*(s.max-s.min)
-			dur := randomSeconds - elapsed
-
-			// if elapsed time is greater than random seconds, skip sleep to reduce deviation caused by process time
-			if dur <= 0 {
-				log.Info().Float64("elapsed", elapsed).Float64("randomSeconds", randomSeconds).
-					Interface("strategy_params", params).Msg("elapsed duration >= random seconds, skip sleep")
-			} else {
-				log.Info().Float64("sleepDuration", dur).Float64("elapsed", elapsed).Float64("randomSeconds", randomSeconds).
-					Interface("strategy_params", params).Msg("sleep remaining random seconds")
-				time.Sleep(time.Duration(math.Ceil(dur*1000)) * time.Millisecond)
-			}
-
-			return nil
+			milliseconds := int64((s.min + rand.Float64()*(s.max-s.min)) * 1000)
+			log.Info().Int64("random(ms)", milliseconds).
+				Interface("strategy_params", params).Msg("get simulation duration")
+			return milliseconds
 		}
 	}
-	return nil
+
+	log.Warn().Interface("strategy_params", params).
+		Msg("get simulation duration failed, skip simulation")
+	return 0
+}
+
+// sleepStrict sleeps strict duration with given params
+// startTime is used to correct sleep duration caused by process time
+func sleepStrict(startTime time.Time, strictMilliseconds int64) {
+	elapsed := time.Since(startTime).Milliseconds()
+	dur := strictMilliseconds - elapsed
+
+	// if elapsed time is greater than given duration, skip sleep to reduce deviation caused by process time
+	if dur <= 0 {
+		log.Warn().
+			Int64("elapsed(ms)", elapsed).
+			Int64("strictSleep(ms)", strictMilliseconds).
+			Msg("elapsed >= simulation duration, skip sleep")
+		return
+	}
+
+	log.Info().Int64("sleepDuration(ms)", dur).
+		Int64("elapsed(ms)", elapsed).
+		Int64("strictSleep(ms)", strictMilliseconds).
+		Msg("sleep remaining duration time")
+	time.Sleep(time.Duration(dur) * time.Millisecond)
 }

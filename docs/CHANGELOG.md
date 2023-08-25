@@ -1,15 +1,34 @@
 # Release History
 
-## v4.3.6-beta (2023-08-11)
+## v4.3.6 (2023-08-24)
 
+**go version**
+
+plugin related:
+
+- feat: add hrp executable directory for searching plugin
+- feat: init device driver with plugin options, `WithDriverCapabilities` and `WithDriverPlugin`
+- feat: support printing stderr output in myexec.RunCommand
+- change: upgrade funplugin to 0.5.3
+- refactor: move internal myexec to funplugin/myexec
+- change: create python3 plugin venv with latest funppy/httprunner
+
+UI related:
+
+- feat: get current feed info from app event trackings
+- feat: log feed screenshot take/cv elapsed time
 - feat: support to reset driver (or session only) automatically when UIA2 / WDA crashed or WebDriver request failed
 - feat: `tap_cv` action supports ui type detection and tap
-- compatibility: support indicating options separately in `MobileAction` level
+- feat: support action options for `ScreenShot`, `WithScreenShotOCR`/`WithScreenShotUpload`/`WithScreenShotLiveType`/`WithScreenShotUIType`
+- fix: add compatible support for indicating options separately at the `MobileAction` level
 - fix: use Override size if existed, otherwise use Physical size (android devices)
 - fix: add default options for `swipe_to_tap_app` action
-- refactor: ui validation methods
 - fix: reuse the same request body during `GetImage` retry
-- change: upgrade funplugin to 0.5.2
+
+others:
+
+- change: log elapsed duration in milliseconds
+- change: set log timestamp precise to milliseconds
 
 ## v4.3.5 (2023-07-23)
 

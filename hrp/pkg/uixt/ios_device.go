@@ -290,8 +290,14 @@ func (dev *IOSDevice) LogEnabled() bool {
 	return dev.LogOn
 }
 
-func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
+func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, err error) {
+	driverOptions := &DriverOptions{}
+	for _, option := range options {
+		option(driverOptions)
+	}
+
 	// init WDA driver
+	capabilities := driverOptions.capabilities
 	if capabilities == nil {
 		capabilities = NewCapabilities()
 		capabilities.WithDefaultAlertAction(AlertActionAccept)
@@ -316,15 +322,11 @@ func (dev *IOSDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt
 		}
 	}
 
-	driverExt, err = NewDriverExt(dev, driver)
+	driverExt, err = newDriverExt(dev, driver, driverOptions.plugin)
 	if err != nil {
 		return nil, err
 	}
-	err = driverExt.extendCV()
-	if err != nil {
-		return nil, errors.Wrap(code.MobileUIDriverError,
-			fmt.Sprintf("extend OpenCV failed: %v", err))
-	}
+
 	settings, err := driverExt.Driver.SetAppiumSettings(map[string]interface{}{
 		"snapshotMaxDepth":          dev.SnapshotMaxDepth,
 		"acceptAlertButtonSelector": dev.AcceptAlertButtonSelector,

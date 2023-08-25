@@ -289,11 +289,11 @@ func (s *StepMobile) VideoCrawler(params map[string]interface{}) *StepMobile {
 	return &StepMobile{step: s.step}
 }
 
-func (s *StepMobile) ScreenShot() *StepMobile {
+func (s *StepMobile) ScreenShot(options ...uixt.ActionOption) *StepMobile {
 	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_ScreenShot,
 		Params:  nil,
-		Options: nil,
+		Options: uixt.NewActionOptions(options...),
 	})
 	return &StepMobile{step: s.step}
 }
@@ -513,7 +513,7 @@ func (s *StepMobileUIValidation) Run(r *SessionRunner) (*StepResult, error) {
 	return runStepMobileUI(r, s.step)
 }
 
-func (r *HRPRunner) initUIClient(uuid string, osType string) (client *uixt.DriverExt, err error) {
+func (r *CaseRunner) initUIClient(uuid string, osType string) (client *uixt.DriverExt, err error) {
 	// avoid duplicate init
 	if uuid == "" && len(r.uiClients) > 0 {
 		for _, v := range r.uiClients {
@@ -538,7 +538,7 @@ func (r *HRPRunner) initUIClient(uuid string, osType string) (client *uixt.Drive
 		return nil, errors.Wrapf(err, "init %s device failed", osType)
 	}
 
-	client, err = device.NewDriver(nil)
+	client, err = device.NewDriver(uixt.WithDriverPlugin(r.parser.plugin))
 	if err != nil {
 		return nil, err
 	}
@@ -585,7 +585,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	}
 
 	// init wda/uia driver
-	uiDriver, err := s.caseRunner.hrpRunner.initUIClient(mobileStep.Serial, osType)
+	uiDriver, err := s.caseRunner.initUIClient(mobileStep.Serial, osType)
 	if err != nil {
 		return
 	}
@@ -603,13 +603,9 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 			}
 		}
 
-		// take screenshot and get screen texts by OCR
-		screenTexts, err2 := uiDriver.GetScreenTexts()
-		if err2 != nil {
-			log.Error().Err(err2).Str("step", step.Name).Msg("take screenshot failed on step finished")
-		} else if err3 := uiDriver.AutoPopupHandler(screenTexts); err3 != nil {
-			// automatic handling of pop-up windows on each step finished
-			log.Error().Err(err3).Msg("auto handle popup failed")
+		// automatic handling of pop-up windows on each step finished
+		if err2 := uiDriver.AutoPopupHandler(); err2 != nil {
+			log.Error().Err(err2).Str("step", step.Name).Msg("auto handle popup failed")
 		}
 
 		// save attachments

@@ -19,10 +19,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/httprunner/funplugin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 )
 
@@ -48,35 +50,41 @@ func WithThreshold(threshold float64) CVOption {
 	}
 }
 
-type Popularity struct {
-	Stars     string `json:"stars,omitempty"`      // 点赞数
-	Comments  string `json:"comments,omitempty"`   // 评论数
-	Favorites string `json:"favorites,omitempty"`  // 收藏数
-	Shares    string `json:"shares,omitempty"`     // 分享数
-	LiveUsers string `json:"live_users,omitempty"` // 直播间人数
-}
-
 type ScreenResult struct {
-	Texts      OCRTexts   `json:"texts"`      // dumped OCRTexts
-	Tags       []string   `json:"tags"`       // tags for image, e.g. ["feed", "ad", "live"]
-	Popularity Popularity `json:"popularity"` // video popularity data
+	bufSource *bytes.Buffer // raw image buffer bytes
+	imagePath string        // image file path
+
+	UploadedURL string      `json:"uploaded_url"`         // uploaded image url
+	Texts       OCRTexts    `json:"texts"`                // dumped raw OCRTexts
+	Icons       UIResultMap `json:"icons"`                // CV 识别的图标
+	Tags        []string    `json:"tags"`                 // tags for image, e.g. ["feed", "ad", "live"]
+	VideoType   string      `json:"video_type,omitempty"` // video type: feed, live-preview or live
+	Feed        *FeedVideo  `json:"feed,omitempty"`
+	Live        *LiveRoom   `json:"live,omitempty"`
+
+	SwipeStartTime  int64 `json:"swipe_start_time"`  // 滑动开始时间戳
+	SwipeFinishTime int64 `json:"swipe_finish_time"` // 滑动结束时间戳
+
+	ScreenshotTakeElapsed int64 `json:"screenshot_take_elapsed"` // 设备截图耗时(ms)
+	ScreenshotCVElapsed   int64 `json:"screenshot_cv_elapsed"`   // CV 识别耗时(ms)
+
+	// 当前 Feed/Live 整体耗时
+	TotalElapsed int64 `json:"total_elapsed"` // current_swipe_finish -> next_swipe_start 整体耗时(ms)
 }
 
 type cacheStepData struct {
 	// cache step screenshot paths
-	screenShots     []string
-	screenShotsUrls map[string]string // map screenshot file path to uploaded url
+	screenShots []string
 	// cache step screenshot ocr results, key is image path, value is ScreenResult
 	screenResults map[string]*ScreenResult
 	// cache feed/live video stat
-	videoStat *VideoStat
+	videoCrawler *VideoCrawler
 }
 
 func (d *cacheStepData) reset() {
 	d.screenShots = make([]string, 0)
-	d.screenShotsUrls = make(map[string]string)
 	d.screenResults = make(map[string]*ScreenResult)
-	d.videoStat = nil
+	d.videoCrawler = nil
 }
 
 type DriverExt struct {
@@ -91,15 +99,26 @@ type DriverExt struct {
 
 	// cache step data
 	cacheStepData cacheStepData
+
+	// funplugin
+	plugin funplugin.IPlugin
 }
 
-func NewDriverExt(device Device, driver WebDriver) (dExt *DriverExt, err error) {
+func newDriverExt(device Device, driver WebDriver, plugin funplugin.IPlugin) (dExt *DriverExt, err error) {
 	dExt = &DriverExt{
 		Device:          device,
 		Driver:          driver,
+		plugin:          plugin,
 		cacheStepData:   cacheStepData{},
 		interruptSignal: make(chan os.Signal, 1),
 	}
+
+	err = dExt.extendCV()
+	if err != nil {
+		return nil, errors.Wrap(code.MobileUIDriverError,
+			fmt.Sprintf("extend OpenCV failed: %v", err))
+	}
+
 	dExt.cacheStepData.reset()
 	signal.Notify(dExt.interruptSignal, syscall.SIGTERM, syscall.SIGINT)
 	dExt.doneMjpegStream = make(chan bool, 1)
@@ -201,9 +220,17 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 
 func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData := make(map[string]interface{})
-	cacheData["video_stat"] = dExt.cacheStepData.videoStat
+	cacheData["video_stat"] = dExt.cacheStepData.videoCrawler
 	cacheData["screenshots"] = dExt.cacheStepData.screenShots
-	cacheData["screenshots_urls"] = dExt.cacheStepData.screenShotsUrls
+
+	screenShotsUrls := make(map[string]string)
+	for imagePath, screenResult := range dExt.cacheStepData.screenResults {
+		if screenResult.UploadedURL == "" {
+			continue
+		}
+		screenShotsUrls[imagePath] = screenResult.UploadedURL
+	}
+	cacheData["screenshots_urls"] = screenShotsUrls
 
 	screenSize, err := dExt.Driver.WindowSize()
 	if err != nil {
@@ -214,13 +241,20 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	for imagePath, screenResult := range dExt.cacheStepData.screenResults {
 		o, _ := json.Marshal(screenResult.Texts)
 		data := map[string]interface{}{
-			"tags":       screenResult.Tags,
-			"texts":      string(o),
-			"popularity": screenResult.Popularity,
+			"tags":  screenResult.Tags,
+			"texts": string(o),
 			"resolution": map[string]int{
 				"width":  screenSize.Width,
 				"height": screenSize.Height,
 			},
+			"video_type":              screenResult.VideoType,
+			"feed":                    screenResult.Feed,
+			"live":                    screenResult.Live,
+			"swipe_start_time":        screenResult.SwipeStartTime,
+			"swipe_finish_time":       screenResult.SwipeFinishTime,
+			"screenshot_take_elapsed": screenResult.ScreenshotTakeElapsed,
+			"screenshot_cv_elapsed":   screenResult.ScreenshotCVElapsed,
+			"total_elapsed":           screenResult.TotalElapsed,
 		}
 
 		screenResults[imagePath] = data

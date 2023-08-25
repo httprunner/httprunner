@@ -8,12 +8,12 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
-	"github.com/httprunner/httprunner/v4/hrp/internal/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 )
 
@@ -154,10 +154,15 @@ func (dev *AndroidDevice) LogEnabled() bool {
 	return dev.LogOn
 }
 
-func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *DriverExt, err error) {
+func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, err error) {
+	driverOptions := &DriverOptions{}
+	for _, option := range options {
+		option(driverOptions)
+	}
+
 	var driver WebDriver
 	if dev.UIA2 {
-		driver, err = dev.NewUSBDriver(capabilities)
+		driver, err = dev.NewUSBDriver(driverOptions.capabilities)
 	} else {
 		driver, err = dev.NewAdbDriver()
 	}
@@ -165,14 +170,9 @@ func (dev *AndroidDevice) NewDriver(capabilities Capabilities) (driverExt *Drive
 		return nil, errors.Wrap(err, "failed to init UIA driver")
 	}
 
-	driverExt, err = NewDriverExt(dev, driver)
+	driverExt, err = newDriverExt(dev, driver, driverOptions.plugin)
 	if err != nil {
 		return nil, err
-	}
-	err = driverExt.extendCV()
-	if err != nil {
-		return nil, errors.Wrap(code.MobileUIDriverError,
-			fmt.Sprintf("extend OpenCV failed: %v", err))
 	}
 
 	if dev.LogOn {

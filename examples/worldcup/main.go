@@ -102,7 +102,7 @@ type WorldCupLive struct {
 }
 
 func NewWorldCupLive(device uixt.Device, matchName, bundleID string, duration, interval int) *WorldCupLive {
-	driverExt, err := device.NewDriver(nil)
+	driverExt, err := device.NewDriver()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init driver")
 	}

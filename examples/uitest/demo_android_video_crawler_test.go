@@ -17,11 +17,17 @@ func TestAndroidVideoCrawlerTest(t *testing.T) {
 			}).
 			SetAndroid(uixt.WithSerialNumber("$device")),
 		TestSteps: []hrp.IStep{
+			hrp.NewStep("启动 app").
+				Android().
+				ScreenShot(uixt.WithScreenShotOCR(true), uixt.WithScreenShotUpload(true)).
+				AppLaunch("com.ss.android.ugc.aweme").
+				Sleep(5).
+				Validate().
+				AssertAppInForeground("com.ss.android.ugc.aweme"),
 			hrp.NewStep("滑动消费 feed 至少 10 个，live 至少 3 个；滑动过程中，70% 随机间隔 0-5s，30% 随机间隔 5-10s").
 				Android().
 				VideoCrawler(map[string]interface{}{
-					"app_package_name": "com.ss.android.ugc.aweme",
-					"timeout":          600,
+					"timeout": 600,
 					"feed": map[string]interface{}{
 						"target_count": 5,
 						"target_labels": []map[string]interface{}{
