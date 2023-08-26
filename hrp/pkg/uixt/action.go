@@ -232,6 +232,9 @@ func (o *ActionOptions) screenshotActions() []string {
 	if len(o.ScreenShotWithUITypes) > 0 {
 		actions = append(actions, "ui")
 	}
+	if o.ScreenShotWithClose {
+		actions = append(actions, "close")
+	}
 	return actions
 }
 
@@ -641,7 +644,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		}
 		return dExt.VideoCrawler(configs)
 	case ACTION_ClosePopups:
-		return dExt.ClosePopup(action.GetOptions()...)
+		return dExt.ClosePopups(action.GetOptions()...)
 	}
 	return nil
 }

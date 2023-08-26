@@ -92,7 +92,7 @@ type PopupInfo struct {
 	Point      PointF `json:"point"`
 }
 
-func (dExt *DriverExt) ClosePopup(options ...ActionOption) error {
+func (dExt *DriverExt) ClosePopups(options ...ActionOption) error {
 	actionOptions := NewActionOptions(options...)
 
 	// default to retry 5 times
@@ -103,10 +103,10 @@ func (dExt *DriverExt) ClosePopup(options ...ActionOption) error {
 	if builtin.IsZeroFloat64(actionOptions.Interval) {
 		options = append(options, WithInterval(1))
 	}
-	return dExt.ClosePopupHandler(options...)
+	return dExt.ClosePopupsHandler(options...)
 }
 
-func (dExt *DriverExt) ClosePopupHandler(options ...ActionOption) error {
+func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 	actionOptions := NewActionOptions(options...)
 	maxRetryTimes := actionOptions.MaxRetryTimes
 	interval := actionOptions.Interval
@@ -115,10 +115,12 @@ func (dExt *DriverExt) ClosePopupHandler(options ...ActionOption) error {
 		screenResult, err := dExt.GetScreenResult(
 			WithScreenShotClose(true), WithScreenShotUpload(true))
 		if err != nil {
-			return errors.Wrap(err, "get screen result failed for popup handler")
+			log.Error().Err(err).Msg("get screen result failed for popup handler")
+			continue
 		}
-
-		// not popup, fast return
+		// 1. there are no popups here (fast return normally)
+		// 2. failed to close popup （maybe tap error, return error）
+		// 3. successful to close popup (sleep and wait for next retry if existed)
 		if screenResult.Popup == nil {
 			break
 		}
