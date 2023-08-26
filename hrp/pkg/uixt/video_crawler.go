@@ -385,6 +385,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 type FeedVideo struct {
 	// 视频基础数据
 	VideoID  string `json:"video_id"`  // 视频 video ID
+	URL      string `json:"url"`       // 视频 url
 	UserName string `json:"user_name"` // 视频作者
 	Duration int64  `json:"duration"`  // 视频时长(ms)
 	Caption  string `json:"caption"`   // 视频文案
@@ -411,22 +412,21 @@ type FeedVideo struct {
 
 type LiveRoom struct {
 	// 视频基础数据
-	LiveStreamID string `json:"live_stream_id"` // 直播流 ID
-	UserName     string `json:"user_name"`      // 视频作者
-	Caption      string `json:"caption"`        // 视频文案
-	LiveType     string `json:"live_type"`      // 直播间类型, 基于算法服务获取
+	LiveStreamID  string `json:"live_stream_id"`  // 直播流 ID
+	LiveStreamURL string `json:"live_stream_url"` // 直播流地址
+	UserName      string `json:"user_name"`       // 主播名称（无法获取？）
+	LiveType      string `json:"live_type"`       // 直播类型
 
 	// 视频热度数据
-	AudienceCount string `json:"audience_count"` // 直播间人数
-	LikeCount     int64  `json:"like_count"`     // 点赞数
+	AudienceCount int64 `json:"audience_count"` // 直播间人数
+
+	// 网络数据
+	ThroughputKbps int64 `json:"throughput_kbps"` // 网速
 
 	// 记录仿真决策信息
 	WatchDuration           int64 `json:"watch_duration"`            // 观播时长(ms)，取自 Simulation/Random
 	SimulationWatchDuration int64 `json:"simulation_watch_duration"` // 仿真观播时长(ms)
 	RandomWatchDuration     int64 `json:"random_watch_duration"`     // 随机观播时长(ms)
-
-	// timelines
-	PreloadTimestamp int64 `json:"preload_timestamp"` // feed 预加载时间戳
 }
 
 func (vc *VideoCrawler) getCurrentFeedVideo() (feedVideo *FeedVideo, err error) {
