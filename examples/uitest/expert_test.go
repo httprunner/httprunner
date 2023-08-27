@@ -1,5 +1,3 @@
-//go:build localtest
-
 package uitest
 
 import (
@@ -36,12 +34,9 @@ func TestAndroidExpertTest(t *testing.T) {
 				Home().
 				SwipeToTapApp("$app_name").
 				Sleep(10),
-			hrp.NewStep("处理青少年弹窗 tap ocr 以及 ui_ocr exists 断言").
+			hrp.NewStep("处理弹窗 close_popups 默认配置 以及 ui_ocr exists 断言").
 				Android().
-				TapByOCR(
-					"我知道了",
-					uixt.WithIgnoreNotFoundError(true),
-				).
+				ClosePopups().
 				Validate().
 				AssertOCRExists("推荐", "进入抖音失败"),
 			// 直播赛道
@@ -118,11 +113,11 @@ func TestAndroidExpertTest(t *testing.T) {
 				Home().
 				SwipeToTapApp("$app_name", uixt.WithMaxRetryTimes(5), uixt.WithInterval(1), uixt.WithOffset(0, -50)).
 				Sleep(10),
-			hrp.NewStep("处理青少年弹窗 tap ocr 以及 ui_ocr exists 断言").
+			hrp.NewStep("处理弹窗 close_popups 自定义配置 以及 ui_ocr exists 断言").
 				Android().
-				TapByOCR(
-					"我知道了",
-					uixt.WithIgnoreNotFoundError(true),
+				ClosePopups(
+					uixt.WithMaxRetryTimes(3),
+					uixt.WithInterval(2),
 				).
 				Validate().
 				AssertOCRExists("推荐", "进入抖音失败"),
@@ -194,12 +189,9 @@ func TestIOSExpertTest(t *testing.T) {
 				Home().
 				SwipeToTapApp("$app_name").
 				Sleep(10),
-			hrp.NewStep("处理青少年弹窗 tap ocr 以及 ui_ocr exists 断言").
+			hrp.NewStep("处理弹窗 close_popups 默认配置 以及 ui_ocr exists 断言").
 				IOS().
-				TapByOCR(
-					"我知道了",
-					uixt.WithIgnoreNotFoundError(true),
-				).
+				ClosePopups().
 				Validate().
 				AssertOCRExists("推荐", "进入抖音失败"),
 			// 直播赛道
@@ -275,11 +267,11 @@ func TestIOSExpertTest(t *testing.T) {
 				Home().
 				SwipeToTapApp("$app_name", uixt.WithMaxRetryTimes(5), uixt.WithInterval(1), uixt.WithOffset(0, -50)).
 				Sleep(10),
-			hrp.NewStep("处理青少年弹窗 tap ocr 以及 ui_ocr exists 断言").
+			hrp.NewStep("处理弹窗 close_popups 自定义配置 以及 ui_ocr exists 断言").
 				IOS().
-				TapByOCR(
-					"我知道了",
-					uixt.WithIgnoreNotFoundError(true),
+				ClosePopups(
+					uixt.WithMaxRetryTimes(3),
+					uixt.WithInterval(2),
 				).
 				Validate().
 				AssertOCRExists("推荐", "进入抖音失败"),

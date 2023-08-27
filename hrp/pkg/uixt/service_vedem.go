@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -356,7 +357,8 @@ type IImageService interface {
 // GetScreenResult takes a screenshot, returns the image recognization result
 func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
 	startTime := time.Now()
-	fileName := builtin.GenNameWithTimestamp("%d_screenshot")
+	actionOptions := NewActionOptions(options...)
+	fileName := builtin.GenNameWithTimestamp("%d_" + strings.Join(actionOptions.screenshotActions(), "_"))
 	bufSource, imagePath, err := dExt.takeScreenShot(fileName)
 	if err != nil {
 		return
@@ -386,9 +388,17 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 				LiveType: imageResult.LiveType,
 			}
 		}
-		if !imageResult.CPResult.CloseArea.IsEmpty() && !imageResult.CPResult.CloseArea.Point.IsOriginal() {
-			screenResult.Popup = &imageResult.CPResult
+		if actionOptions.ScreenShotWithClosePopups {
+			screenResult.Popup = &PopupInfo{
+				Type:      imageResult.CPResult.Type,
+				Text:      imageResult.CPResult.Text,
+				PicName:   imagePath,
+				PicURL:    imageResult.URL,
+				PopupArea: imageResult.CPResult.PopupArea,
+				CloseArea: imageResult.CPResult.CloseArea,
+			}
 		}
+
 	}
 
 	dExt.cacheStepData.screenResults[imagePath] = screenResult
