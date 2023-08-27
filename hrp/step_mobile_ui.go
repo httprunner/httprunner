@@ -327,6 +327,15 @@ func (s *StepMobile) StopCamera() *StepMobile {
 	return &StepMobile{step: s.step}
 }
 
+func (s *StepMobile) ClosePopups(options ...uixt.ActionOption) *StepMobile {
+	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+		Method:  uixt.ACTION_ClosePopups,
+		Params:  nil,
+		Options: uixt.NewActionOptions(options...),
+	})
+	return &StepMobile{step: s.step}
+}
+
 // Validate switches to step validation.
 func (s *StepMobile) Validate() *StepMobileUIValidation {
 	return &StepMobileUIValidation{

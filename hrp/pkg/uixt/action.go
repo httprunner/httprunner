@@ -115,11 +115,11 @@ type ActionOptions struct {
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
 
 	// screenshot related
-	ScreenShotWithOCR      bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
-	ScreenShotWithUpload   bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
-	ScreenShotWithLiveType bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
-	ScreenShotWithUITypes  []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
-	ScreenShotWithClose    bool     `json:"screenshot_with_close,omitempty" yaml:"screenshot_with_close,omitempty"`
+	ScreenShotWithOCR         bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
+	ScreenShotWithUpload      bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
+	ScreenShotWithLiveType    bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
+	ScreenShotWithUITypes     []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
+	ScreenShotWithClosePopups bool     `json:"screenshot_with_close_popups,omitempty" yaml:"screenshot_with_close_popups,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -219,11 +219,11 @@ func (o *ActionOptions) Options() []ActionOption {
 
 func (o *ActionOptions) screenshotActions() []string {
 	actions := []string{}
-	if o.ScreenShotWithOCR {
-		actions = append(actions, "ocr")
-	}
 	if o.ScreenShotWithUpload {
 		actions = append(actions, "upload")
+	}
+	if o.ScreenShotWithOCR {
+		actions = append(actions, "ocr")
 	}
 	if o.ScreenShotWithLiveType {
 		actions = append(actions, "liveType")
@@ -232,7 +232,7 @@ func (o *ActionOptions) screenshotActions() []string {
 	if len(o.ScreenShotWithUITypes) > 0 {
 		actions = append(actions, "ui")
 	}
-	if o.ScreenShotWithClose {
+	if o.ScreenShotWithClosePopups {
 		actions = append(actions, "close")
 	}
 	return actions
@@ -443,9 +443,9 @@ func WithScreenShotUITypes(uiTypes ...string) ActionOption {
 	}
 }
 
-func WithScreenShotClose(closeOn bool) ActionOption {
+func WithScreenShotClosePopups(closeOn bool) ActionOption {
 	return func(o *ActionOptions) {
-		o.ScreenShotWithClose = closeOn
+		o.ScreenShotWithClosePopups = closeOn
 	}
 }
 
