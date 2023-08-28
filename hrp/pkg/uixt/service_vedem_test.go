@@ -81,7 +81,7 @@ func TestTapUIWithScreenshot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = driver.TapByUIDetection([]string{"dyhouse", "shoppingbag"})
+	err = driver.TapByUIDetection(WithScreenShotUITypes("dyhouse", "shoppingbag"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,4 +96,26 @@ func TestDriverExtOCR(t *testing.T) {
 
 	t.Logf("point.X: %v, point.Y: %v", point.X, point.Y)
 	driverExt.Driver.TapFloat(point.X, point.Y-20)
+}
+
+func TestClosePopup(t *testing.T) {
+	setupAndroid(t)
+
+	screenResult, err := driverExt.GetScreenResult(
+		WithScreenShotClosePopups(true), WithScreenShotUpload(true))
+	if err != nil {
+		t.Logf("get screen result failed for popup handler: %v", err)
+		return
+	}
+	t.Logf("screen result: %v", screenResult)
+
+	if screenResult.Popup == nil {
+		t.Log("there are no popups here")
+		return
+	}
+	t.Logf("popup info: %v", screenResult.Popup)
+
+	if err = driverExt.tapPopupHandler(screenResult.Popup); err != nil {
+		t.Fatal(err)
+	}
 }

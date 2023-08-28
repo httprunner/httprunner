@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -65,8 +66,9 @@ type ImageResult struct {
 	// Media（媒体）
 	// Chat（语音）
 	// Event（赛事）
-	LiveType string      `json:"liveType"` // 直播间类型
-	UIResult UIResultMap `json:"uiResult"` // 图标检测
+	LiveType string            `json:"liveType"`    // 直播间类型
+	UIResult UIResultMap       `json:"uiResult"`    // 图标检测
+	CPResult ClosePopupsResult `json:"closeResult"` // 弹窗按钮检测
 }
 
 type APIResponseImage struct {
@@ -356,6 +358,11 @@ type IImageService interface {
 func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
 	startTime := time.Now()
 	fileName := builtin.GenNameWithTimestamp("%d_screenshot")
+	actionOptions := NewActionOptions(options...)
+	screenshotActions := actionOptions.screenshotActions()
+	if len(screenshotActions) != 0 {
+		fileName = builtin.GenNameWithTimestamp("%d_" + strings.Join(screenshotActions, "_"))
+	}
 	bufSource, imagePath, err := dExt.takeScreenShot(fileName)
 	if err != nil {
 		return
@@ -385,6 +392,17 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 				LiveType: imageResult.LiveType,
 			}
 		}
+		if actionOptions.ScreenShotWithClosePopups {
+			screenResult.Popup = &PopupInfo{
+				Type:      imageResult.CPResult.Type,
+				Text:      imageResult.CPResult.Text,
+				PicName:   imagePath,
+				PicURL:    imageResult.URL,
+				PopupArea: imageResult.CPResult.PopupArea,
+				CloseArea: imageResult.CPResult.CloseArea,
+			}
+		}
+
 	}
 
 	dExt.cacheStepData.screenResults[imagePath] = screenResult
@@ -435,21 +453,25 @@ func getRectangleCenterPoint(rect image.Rectangle) (point PointF) {
 	return point
 }
 
-func getCenterPoint(point PointF, width, height float64) PointF {
-	return PointF{
-		X: point.X + width*0.5,
-		Y: point.Y + height*0.5,
-	}
-}
-
-type UIResult struct {
+type Box struct {
 	Point  PointF  `json:"point"`
 	Width  float64 `json:"width"`
 	Height float64 `json:"height"`
 }
 
-func (u UIResult) Center() PointF {
-	return getCenterPoint(u.Point, u.Width, u.Height)
+func (box Box) IsEmpty() bool {
+	return builtin.IsZeroFloat64(box.Width) && builtin.IsZeroFloat64(box.Height)
+}
+
+func (box Box) Center() PointF {
+	return PointF{
+		X: box.Point.X + box.Width*0.5,
+		Y: box.Point.Y + box.Height*0.5,
+	}
+}
+
+type UIResult struct {
+	Box
 }
 
 type UIResults []UIResult

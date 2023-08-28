@@ -59,15 +59,12 @@
             }
         },
         {
-            "name": "处理青少年弹窗 tap ocr 以及 ui_ocr exists 断言",
+            "name": "处理弹窗 close_popups 默认配置 以及 ui_ocr exists 断言",
             "android": {
                 "actions": [
                     {
-                        "method": "tap_ocr",
-                        "params": "我知道了",
-                        "options": {
-                            "ignore_NotFoundError": true
-                        }
+                        "method": "close_popups",
+                        "options": {}
                     }
                 ]
             },
@@ -317,14 +314,14 @@
             }
         },
         {
-            "name": "处理青少年弹窗 tap ocr 以及 ui_ocr exists 断言",
+            "name": "处理弹窗 close_popups 自定义配置 以及 ui_ocr exists 断言",
             "android": {
                 "actions": [
                     {
-                        "method": "tap_ocr",
-                        "params": "我知道了",
+                        "method": "close_popups",
                         "options": {
-                            "ignore_NotFoundError": true
+                            "max_retry_times": 3,
+                            "interval": 2
                         }
                     }
                 ]
