@@ -74,8 +74,8 @@ func (dExt *DriverExt) AutoPopupHandler() error {
 	return dExt.handleTextPopup(screenResult.Texts)
 }
 
-// CRResult represents the result of recognized popup to close
-type CPResult struct {
+// ClosePopupsResult represents the result of recognized popup to close
+type ClosePopupsResult struct {
 	Type      string `json:"type"`
 	PopupArea Box    `json:"popupArea"`
 	CloseArea Box    `json:"closeArea"`
@@ -83,14 +83,14 @@ type CPResult struct {
 }
 
 type PopupInfo struct {
-	IsClosed   bool   `json:"is_closed"`
-	Type       string `json:"type"`
-	Text       string `json:"text"`
-	RetryCount int    `json:"retry_count"`
-	PicName    string `json:"pic_name"`
-	PicURL     string `json:"pic_url"`
-	PopupArea  Box    `json:"popup_area"`
-	CloseArea  Box    `json:"close_area"`
+	CloseStatus string `json:"close_status"`
+	Type        string `json:"type"`
+	Text        string `json:"text"`
+	RetryCount  int    `json:"retry_count"`
+	PicName     string `json:"pic_name"`
+	PicURL      string `json:"pic_url"`
+	PopupArea   Box    `json:"popup_area"`
+	CloseArea   Box    `json:"close_area"`
 }
 
 func (dExt *DriverExt) ClosePopups(options ...ActionOption) error {
