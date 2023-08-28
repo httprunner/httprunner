@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -61,6 +62,7 @@ type ScreenResult struct {
 	VideoType   string      `json:"video_type,omitempty"` // video type: feed, live-preview or live
 	Feed        *FeedVideo  `json:"feed,omitempty"`
 	Live        *LiveRoom   `json:"live,omitempty"`
+	Popup       *PopupInfo  `json:"popup,omitempty"`
 
 	SwipeStartTime  int64 `json:"swipe_start_time"`  // 滑动开始时间戳
 	SwipeFinishTime int64 `json:"swipe_finish_time"` // 滑动结束时间戳
@@ -72,11 +74,59 @@ type ScreenResult struct {
 	TotalElapsed int64 `json:"total_elapsed"` // current_swipe_finish -> next_swipe_start 整体耗时(ms)
 }
 
+type ScreenResultMap map[string]*ScreenResult
+
+// getScreenShotUrls returns screenShotsUrls using imagePath as key and uploaded URL as value
+func (screenResults ScreenResultMap) getScreenShotUrls() map[string]string {
+	screenShotsUrls := make(map[string]string)
+	for imagePath, screenResult := range screenResults {
+		if screenResult.UploadedURL == "" {
+			continue
+		}
+		screenShotsUrls[imagePath] = screenResult.UploadedURL
+	}
+	return screenShotsUrls
+}
+
+// updatePopupCloseStatus checks if popup closed normally in every screenResult with close_popups on:
+func (screenResults ScreenResultMap) updatePopupCloseStatus() {
+	var popupScreenResultList []*ScreenResult
+	for _, screenResult := range screenResults {
+		if screenResult.Popup == nil {
+			continue
+		}
+		popupScreenResultList = append(popupScreenResultList, screenResult)
+	}
+	if len(popupScreenResultList) == 0 {
+		return
+	}
+	sort.Slice(popupScreenResultList, func(i, j int) bool {
+		return popupScreenResultList[i].Popup.RetryCount < popupScreenResultList[j].Popup.RetryCount
+	})
+
+	for i := 0; i < len(popupScreenResultList)-1; i++ {
+		curPopup := popupScreenResultList[i].Popup
+		nextPopup := popupScreenResultList[i+1].Popup
+
+		// popup not existed, no need to close
+		if curPopup.CloseArea.IsEmpty() {
+			continue
+		}
+		// popup existed, but identical popups occurs during next retry
+		if curPopup.Text == nextPopup.Text && curPopup.Type == nextPopup.Type {
+			popupScreenResultList[i].Popup.CloseStatus = "fail"
+			continue
+		}
+		// popup existed, but no popup or different popup occurs during next retry (IsClosed=true)
+		popupScreenResultList[i].Popup.CloseStatus = "success"
+	}
+}
+
 type cacheStepData struct {
 	// cache step screenshot paths
 	screenShots []string
 	// cache step screenshot ocr results, key is image path, value is ScreenResult
-	screenResults map[string]*ScreenResult
+	screenResults ScreenResultMap
 	// cache feed/live video stat
 	videoCrawler *VideoCrawler
 }
@@ -223,14 +273,8 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData["video_stat"] = dExt.cacheStepData.videoCrawler
 	cacheData["screenshots"] = dExt.cacheStepData.screenShots
 
-	screenShotsUrls := make(map[string]string)
-	for imagePath, screenResult := range dExt.cacheStepData.screenResults {
-		if screenResult.UploadedURL == "" {
-			continue
-		}
-		screenShotsUrls[imagePath] = screenResult.UploadedURL
-	}
-	cacheData["screenshots_urls"] = screenShotsUrls
+	cacheData["screenshots_urls"] = dExt.cacheStepData.screenResults.getScreenShotUrls()
+	dExt.cacheStepData.screenResults.updatePopupCloseStatus()
 
 	screenSize, err := dExt.Driver.WindowSize()
 	if err != nil {
@@ -255,6 +299,8 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 			"screenshot_take_elapsed": screenResult.ScreenshotTakeElapsed,
 			"screenshot_cv_elapsed":   screenResult.ScreenshotCVElapsed,
 			"total_elapsed":           screenResult.TotalElapsed,
+			"icons":                   screenResult.Icons,
+			"popup":                   screenResult.Popup,
 		}
 
 		screenResults[imagePath] = data

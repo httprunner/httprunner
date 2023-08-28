@@ -15,12 +15,8 @@ func (dExt *DriverExt) TapXY(x, y float64, options ...ActionOption) error {
 		return fmt.Errorf("x, y percentage should be <= 1, got x=%v, y=%v", x, y)
 	}
 
-	scale, err := dExt.Driver.Scale()
-	if err != nil {
-		return fmt.Errorf("failed to get scale: %v", err)
-	}
-	x = x * float64(dExt.windowSize.Width) * scale
-	y = y * float64(dExt.windowSize.Height) * scale
+	x = x * float64(dExt.windowSize.Width)
+	y = y * float64(dExt.windowSize.Height)
 
 	return dExt.TapAbsXY(x, y, options...)
 }

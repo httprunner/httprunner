@@ -58,6 +58,7 @@ const (
 	ACTION_SwipeToTapText  ActionMethod = "swipe_to_tap_text"  // swipe up & down to find text and tap
 	ACTION_SwipeToTapTexts ActionMethod = "swipe_to_tap_texts" // swipe up & down to find text and tap
 	ACTION_VideoCrawler    ActionMethod = "video_crawler"
+	ACTION_ClosePopups     ActionMethod = "close_popups"
 )
 
 type MobileAction struct {
@@ -114,10 +115,11 @@ type ActionOptions struct {
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
 
 	// screenshot related
-	ScreenShotWithOCR      bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
-	ScreenShotWithUpload   bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
-	ScreenShotWithLiveType bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
-	ScreenShotWithUITypes  []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
+	ScreenShotWithOCR         bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
+	ScreenShotWithUpload      bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
+	ScreenShotWithLiveType    bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
+	ScreenShotWithUITypes     []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
+	ScreenShotWithClosePopups bool     `json:"screenshot_with_close_popups,omitempty" yaml:"screenshot_with_close_popups,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -217,11 +219,11 @@ func (o *ActionOptions) Options() []ActionOption {
 
 func (o *ActionOptions) screenshotActions() []string {
 	actions := []string{}
-	if o.ScreenShotWithOCR {
-		actions = append(actions, "ocr")
-	}
 	if o.ScreenShotWithUpload {
 		actions = append(actions, "upload")
+	}
+	if o.ScreenShotWithOCR {
+		actions = append(actions, "ocr")
 	}
 	if o.ScreenShotWithLiveType {
 		actions = append(actions, "liveType")
@@ -229,6 +231,9 @@ func (o *ActionOptions) screenshotActions() []string {
 	// UI detection
 	if len(o.ScreenShotWithUITypes) > 0 {
 		actions = append(actions, "ui")
+	}
+	if o.ScreenShotWithClosePopups {
+		actions = append(actions, "close")
 	}
 	return actions
 }
@@ -438,6 +443,12 @@ func WithScreenShotUITypes(uiTypes ...string) ActionOption {
 	}
 }
 
+func WithScreenShotClosePopups(closeOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithClosePopups = closeOn
+	}
+}
+
 func (dExt *DriverExt) ParseActionOptions(options ...ActionOption) []ActionOption {
 	actionOptions := NewActionOptions(options...)
 
@@ -560,10 +571,11 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
+		actionOptions := NewActionOptions(action.GetOptions()...)
 		if imagePath, ok := action.Params.(string); ok {
 			return dExt.TapByCV(imagePath, action.GetOptions()...)
-		} else if err := dExt.TapByUIDetection(action.GetOptions()...); err == nil {
-			return nil
+		} else if len(actionOptions.ScreenShotWithUITypes) > 0 {
+			return dExt.TapByUIDetection(action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
@@ -632,6 +644,8 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 			return errors.Wrapf(err, "invalid video crawler params: %v(%T)", action.Params, action.Params)
 		}
 		return dExt.VideoCrawler(configs)
+	case ACTION_ClosePopups:
+		return dExt.ClosePopups(action.GetOptions()...)
 	}
 	return nil
 }
