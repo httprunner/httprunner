@@ -178,9 +178,6 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 			}
 			swipeFinishTime := time.Now()
 
-			// wait for live video loading
-			time.Sleep(5 * time.Second)
-
 			liveRoom, err := vc.getCurrentLiveRoom()
 			if err != nil {
 				return errors.Wrap(err, "get current live event trackings failed")
@@ -188,15 +185,14 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 
 			// take screenshot and get screen texts by OCR
 			screenResult, err := vc.driverExt.GetScreenResult(
-				WithScreenShotOCR(true), WithScreenShotUpload(true))
+				WithScreenShotOCR(true), WithScreenShotUpload(true), WithScreenShotLiveType(true))
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				time.Sleep(3 * time.Second)
 				continue
 			}
+			liveRoom.LiveType = screenResult.LiveType
 			screenResult.Live = liveRoom
-
-			// TODO: check live type
 
 			// incr live count
 			screenResult.VideoType = "live"

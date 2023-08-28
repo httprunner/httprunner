@@ -52,9 +52,11 @@ func WithThreshold(threshold float64) CVOption {
 }
 
 type ScreenResult struct {
-	bufSource *bytes.Buffer // raw image buffer bytes
-	imagePath string        // image file path
+	bufSource   *bytes.Buffer // raw image buffer bytes
+	imagePath   string        // image file path
+	imageResult *ImageResult  // image result
 
+	LiveType    string
 	UploadedURL string      `json:"uploaded_url"`         // uploaded image url
 	Texts       OCRTexts    `json:"texts"`                // dumped raw OCRTexts
 	Icons       UIResultMap `json:"icons"`                // CV 识别的图标
@@ -74,16 +76,16 @@ type ScreenResult struct {
 	TotalElapsed int64 `json:"total_elapsed"` // current_swipe_finish -> next_swipe_start 整体耗时(ms)
 }
 
-type ScreenResultMap map[string]*ScreenResult
+type ScreenResultMap map[string]*ScreenResult // key is date time
 
 // getScreenShotUrls returns screenShotsUrls using imagePath as key and uploaded URL as value
 func (screenResults ScreenResultMap) getScreenShotUrls() map[string]string {
 	screenShotsUrls := make(map[string]string)
-	for imagePath, screenResult := range screenResults {
+	for dateTime, screenResult := range screenResults {
 		if screenResult.UploadedURL == "" {
 			continue
 		}
-		screenShotsUrls[imagePath] = screenResult.UploadedURL
+		screenShotsUrls[dateTime] = screenResult.UploadedURL
 	}
 	return screenShotsUrls
 }
@@ -282,7 +284,7 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 		screenSize = Size{}
 	}
 	screenResults := make(map[string]interface{})
-	for imagePath, screenResult := range dExt.cacheStepData.screenResults {
+	for dateTime, screenResult := range dExt.cacheStepData.screenResults {
 		o, _ := json.Marshal(screenResult.Texts)
 		data := map[string]interface{}{
 			"tags":  screenResult.Tags,
@@ -303,7 +305,7 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 			"popup":                   screenResult.Popup,
 		}
 
-		screenResults[imagePath] = data
+		screenResults[dateTime] = data
 	}
 	cacheData["screen_results"] = screenResults
 

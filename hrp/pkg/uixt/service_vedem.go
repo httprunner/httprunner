@@ -388,9 +388,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		screenResult.Icons = imageResult.UIResult
 
 		if imageResult.LiveType != "" && imageResult.LiveType != "NoLive" {
-			screenResult.Live = &LiveRoom{
-				LiveType: imageResult.LiveType,
-			}
+			screenResult.LiveType = imageResult.LiveType
 		}
 		if actionOptions.ScreenShotWithClosePopups {
 			screenResult.Popup = &PopupInfo{
@@ -405,7 +403,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 
 	}
 
-	dExt.cacheStepData.screenResults[imagePath] = screenResult
+	dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 
 	log.Debug().
 		Str("imagePath", imagePath).
