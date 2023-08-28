@@ -113,8 +113,7 @@ func (vc *VideoCrawler) isTargetAchieved() bool {
 }
 
 func (vc *VideoCrawler) checkLiveVideo(feedVideo *FeedVideo) (enterPoint PointF, yes bool) {
-	// TODO: check if preview-live from feedVideo
-	if feedVideo.Type != "live" {
+	if !feedVideo.IsLivePreview {
 		return PointF{}, false
 	}
 
@@ -182,7 +181,6 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 			// wait for live video loading
 			time.Sleep(5 * time.Second)
 
-			// TODO: get app event trackings
 			liveRoom, err := vc.getCurrentLiveRoom()
 			if err != nil {
 				return errors.Wrap(err, "get current live event trackings failed")
@@ -303,7 +301,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// get app event trackings
 			// retry 3 times if get feed failed, abort if fail 3 consecutive times
 			feedVideo, err := crawler.getCurrentFeedVideo()
-			if err != nil || feedVideo.VideoID == "" {
+			if err != nil || feedVideo.Type == "" {
 				if crawler.failedCount >= 3 {
 					// failed 3 consecutive times
 					return errors.New("get current feed video failed 3 consecutive times")
@@ -384,12 +382,13 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 type FeedVideo struct {
 	// 视频基础数据
-	VideoID  string `json:"video_id"`  // 视频 video ID
-	URL      string `json:"url"`       // 视频 url
-	UserName string `json:"user_name"` // 视频作者
-	Duration int64  `json:"duration"`  // 视频时长(ms)
-	Caption  string `json:"caption"`   // 视频文案
-	Type     string `json:"type"`      // 视频类型, feed/live // TODO: 区分视频、图文、广告
+	VideoID       string `json:"video_id"`        // 视频 video ID
+	URL           string `json:"url"`             // 视频 url
+	UserName      string `json:"user_name"`       // 视频作者
+	Duration      int64  `json:"duration"`        // 视频时长(ms)
+	Caption       string `json:"caption"`         // 视频文案
+	Type          string `json:"type"`            // 视频类型
+	IsLivePreview bool   `json:"is_live_preview"` // 是否直播预览流
 
 	// 视频热度数据
 	ViewCount    int64 `json:"view_count"`    // feed 观看数
@@ -460,7 +459,33 @@ func (vc *VideoCrawler) getCurrentFeedVideo() (feedVideo *FeedVideo, err error) 
 	return feedVideo, nil
 }
 
-func (vc *VideoCrawler) getCurrentLiveRoom() (liveVideo *LiveRoom, err error) {
-	// TODO
-	return
+func (vc *VideoCrawler) getCurrentLiveRoom() (liveRoom *LiveRoom, err error) {
+	if !vc.driverExt.plugin.Has("GetCurrentLiveRoom") {
+		return nil, errors.New("plugin missing GetCurrentLiveRoom method")
+	}
+
+	resp, err := vc.driverExt.plugin.Call("GetCurrentLiveRoom")
+	if err != nil {
+		return nil, errors.Wrap(err, "call plugin GetCurrentLiveRoom failed")
+	}
+
+	if resp == nil {
+		return nil, errors.New("live not found")
+	}
+
+	liveBytes, err := json.Marshal(resp)
+	if err != nil {
+		return nil, errors.New("json marshal live room info failed")
+	}
+
+	liveRoom = &LiveRoom{}
+	err = json.Unmarshal(liveBytes, liveRoom)
+	if err != nil {
+		return nil, errors.Wrap(err, "json unmarshal live room info failed")
+	}
+
+	log.Info().
+		Interface("liveRoomUserName", liveRoom.UserName).
+		Msg("get current live room success")
+	return liveRoom, nil
 }
