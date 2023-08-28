@@ -327,6 +327,15 @@ func (s *StepMobile) StopCamera() *StepMobile {
 	return &StepMobile{step: s.step}
 }
 
+func (s *StepMobile) ClosePopups(options ...uixt.ActionOption) *StepMobile {
+	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+		Method:  uixt.ACTION_ClosePopups,
+		Params:  nil,
+		Options: uixt.NewActionOptions(options...),
+	})
+	return &StepMobile{step: s.step}
+}
+
 // Validate switches to step validation.
 func (s *StepMobile) Validate() *StepMobileUIValidation {
 	return &StepMobileUIValidation{
@@ -615,7 +624,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		}
 
 		// automatic handling of pop-up windows on each step finished
-		if err2 := uiDriver.AutoPopupHandler(); err2 != nil {
+		if err2 := uiDriver.ClosePopups(); err2 != nil {
 			log.Error().Err(err2).Str("step", step.Name).Msg("auto handle popup failed")
 		}
 

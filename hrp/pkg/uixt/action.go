@@ -58,6 +58,7 @@ const (
 	ACTION_SwipeToTapText  ActionMethod = "swipe_to_tap_text"  // swipe up & down to find text and tap
 	ACTION_SwipeToTapTexts ActionMethod = "swipe_to_tap_texts" // swipe up & down to find text and tap
 	ACTION_VideoCrawler    ActionMethod = "video_crawler"
+	ACTION_ClosePopups     ActionMethod = "close_popups"
 )
 
 type MobileAction struct {
@@ -105,18 +106,20 @@ type ActionOptions struct {
 	Scope    Scope    `json:"scope,omitempty" yaml:"scope,omitempty"`
 	AbsScope AbsScope `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"`
 
-	Regex  bool  `json:"regex,omitempty" yaml:"regex,omitempty"`   // use regex to match text
-	Offset []int `json:"offset,omitempty" yaml:"offset,omitempty"` // used to tap offset of point
-	Index  int   `json:"index,omitempty" yaml:"index,omitempty"`   // index of the target element
+	Regex    bool  `json:"regex,omitempty" yaml:"regex,omitempty"`         // use regex to match text
+	Offset   []int `json:"offset,omitempty" yaml:"offset,omitempty"`       // used to tap offset of point
+	Index    int   `json:"index,omitempty" yaml:"index,omitempty"`         // index of the target element
+	MatchOne bool  `json:"match_one,omitempty" yaml:"match_one,omitempty"` // match one of the targets if existed
 
 	// set custiom options such as textview, id, description
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
 
 	// screenshot related
-	ScreenShotWithOCR      bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
-	ScreenShotWithUpload   bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
-	ScreenShotWithLiveType bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
-	ScreenShotWithUITypes  []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
+	ScreenShotWithOCR         bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
+	ScreenShotWithUpload      bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
+	ScreenShotWithLiveType    bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
+	ScreenShotWithUITypes     []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
+	ScreenShotWithClosePopups bool     `json:"screenshot_with_close_popups,omitempty" yaml:"screenshot_with_close_popups,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -183,6 +186,12 @@ func (o *ActionOptions) Options() []ActionOption {
 	if o.Regex {
 		options = append(options, WithRegex(true))
 	}
+	if o.Index != 0 {
+		options = append(options, WithIndex(o.Index))
+	}
+	if o.MatchOne {
+		options = append(options, WithMatchOne(true))
+	}
 
 	// custom options
 	if o.Custom != nil {
@@ -210,11 +219,11 @@ func (o *ActionOptions) Options() []ActionOption {
 
 func (o *ActionOptions) screenshotActions() []string {
 	actions := []string{}
-	if o.ScreenShotWithOCR {
-		actions = append(actions, "ocr")
-	}
 	if o.ScreenShotWithUpload {
 		actions = append(actions, "upload")
+	}
+	if o.ScreenShotWithOCR {
+		actions = append(actions, "ocr")
 	}
 	if o.ScreenShotWithLiveType {
 		actions = append(actions, "liveType")
@@ -222,6 +231,9 @@ func (o *ActionOptions) screenshotActions() []string {
 	// UI detection
 	if len(o.ScreenShotWithUITypes) > 0 {
 		actions = append(actions, "ui")
+	}
+	if o.ScreenShotWithClosePopups {
+		actions = append(actions, "close")
 	}
 	return actions
 }
@@ -377,6 +389,12 @@ func WithRegex(regex bool) ActionOption {
 	}
 }
 
+func WithMatchOne(matchOne bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.MatchOne = matchOne
+	}
+}
+
 func WithFrequency(frequency int) ActionOption {
 	return func(o *ActionOptions) {
 		o.Frequency = frequency
@@ -422,6 +440,12 @@ func WithScreenShotLiveType(liveTypeOn bool) ActionOption {
 func WithScreenShotUITypes(uiTypes ...string) ActionOption {
 	return func(o *ActionOptions) {
 		o.ScreenShotWithUITypes = uiTypes
+	}
+}
+
+func WithScreenShotClosePopups(closeOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithClosePopups = closeOn
 	}
 }
 
@@ -496,8 +520,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		if texts, ok := action.Params.([]string); ok {
 			return dExt.swipeToTapTexts(texts, action.GetOptions()...)
 		}
-		return fmt.Errorf("invalid %s params, should be app text([]string), got %v",
-			ACTION_SwipeToTapText, action.Params)
+		if texts, err := convertToStringSlice(action.Params); err == nil {
+			return dExt.swipeToTapTexts(texts, action.GetOptions()...)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_SwipeToTapTexts, action.Params)
 	case ACTION_AppTerminate:
 		if bundleId, ok := action.Params.(string); ok {
 			success, err := dExt.Driver.AppTerminate(bundleId)
@@ -545,10 +571,11 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
+		actionOptions := NewActionOptions(action.GetOptions()...)
 		if imagePath, ok := action.Params.(string); ok {
 			return dExt.TapByCV(imagePath, action.GetOptions()...)
-		} else if err := dExt.TapByUIDetection(action.GetOptions()...); err == nil {
-			return nil
+		} else if len(actionOptions.ScreenShotWithUITypes) > 0 {
+			return dExt.TapByUIDetection(action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
@@ -617,6 +644,8 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 			return errors.Wrapf(err, "invalid video crawler params: %v(%T)", action.Params, action.Params)
 		}
 		return dExt.VideoCrawler(configs)
+	case ACTION_ClosePopups:
+		return dExt.ClosePopups(action.GetOptions()...)
 	}
 	return nil
 }
@@ -634,6 +663,21 @@ func convertToFloat64(val interface{}) (float64, error) {
 	default:
 		return 0, fmt.Errorf("invalid type for conversion to float64: %T, value: %+v", val, val)
 	}
+}
+
+func convertToStringSlice(val interface{}) ([]string, error) {
+	if valSlice, ok := val.([]interface{}); ok {
+		var res []string
+		for _, iVal := range valSlice {
+			valString, ok := iVal.(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid type for converting one of the elements to string: %T, value: %v", iVal, iVal)
+			}
+			res = append(res, valString)
+		}
+		return res, nil
+	}
+	return nil, fmt.Errorf("invalid type for conversion to []string")
 }
 
 // getSimulationDuration returns simulation duration by given params (in seconds)
