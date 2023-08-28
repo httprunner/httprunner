@@ -102,22 +102,17 @@ func TestClosePopup(t *testing.T) {
 	setupAndroid(t)
 
 	screenResult, err := driverExt.GetScreenResult(
-		WithScreenShotClose(true), WithScreenShotUpload(true))
+		WithScreenShotClosePopups(true), WithScreenShotUpload(true))
 	if err != nil {
 		t.Logf("get screen result failed for popup handler: %v", err)
 		return
 	}
-
 	t.Logf("screen result: %v", screenResult)
 
-	// 1. there are no popups here (fast return normally)
-	// 2. failed to close popup （maybe tap error, return error）
-	// 3. successful to close popup (sleep and wait for next retry if existed)
 	if screenResult.Popup == nil {
 		t.Log("there are no popups here")
 		return
 	}
-
 	t.Logf("popup info: %v", screenResult.Popup)
 
 	if err = driverExt.tapPopupHandler(screenResult.Popup); err != nil {

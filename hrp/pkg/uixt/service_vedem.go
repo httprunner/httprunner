@@ -357,8 +357,12 @@ type IImageService interface {
 // GetScreenResult takes a screenshot, returns the image recognization result
 func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
 	startTime := time.Now()
+	fileName := builtin.GenNameWithTimestamp("%d_screenshot")
 	actionOptions := NewActionOptions(options...)
-	fileName := builtin.GenNameWithTimestamp("%d_" + strings.Join(actionOptions.screenshotActions(), "_"))
+	screenshotActions := actionOptions.screenshotActions()
+	if len(screenshotActions) != 0 {
+		fileName = builtin.GenNameWithTimestamp("%d_" + strings.Join(screenshotActions, "_"))
+	}
 	bufSource, imagePath, err := dExt.takeScreenShot(fileName)
 	if err != nil {
 		return

@@ -201,6 +201,12 @@ func (wd *wdaDriver) WindowSize() (size Size, err error) {
 		return Size{}, err
 	}
 	size = reply.Value.Size
+	scale, err := wd.Scale()
+	if err != nil {
+		return Size{}, errors.Wrap(err, "get window size failed when obtaining scale")
+	}
+	size.Height = size.Height * int(scale)
+	size.Width = size.Width * int(scale)
 	return
 }
 
