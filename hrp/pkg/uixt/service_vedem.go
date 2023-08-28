@@ -66,9 +66,9 @@ type ImageResult struct {
 	// Media（媒体）
 	// Chat（语音）
 	// Event（赛事）
-	LiveType string      `json:"liveType"`    // 直播间类型
-	UIResult UIResultMap `json:"uiResult"`    // 图标检测
-	CPResult CPResult    `json:"closeResult"` // 弹窗按钮检测
+	LiveType string            `json:"liveType"`    // 直播间类型
+	UIResult UIResultMap       `json:"uiResult"`    // 图标检测
+	CPResult ClosePopupsResult `json:"closeResult"` // 弹窗按钮检测
 }
 
 type APIResponseImage struct {

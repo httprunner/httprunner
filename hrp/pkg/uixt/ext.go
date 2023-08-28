@@ -88,25 +88,25 @@ func (screenResults ScreenResultMap) getScreenShotUrls() map[string]string {
 	return screenShotsUrls
 }
 
-// checkPopupInfo checks if popup closed normally in every screenResult with close_popups on:
-func (screenResults ScreenResultMap) checkPopupInfo() {
-	var screenResultList []*ScreenResult
+// updatePopupCloseStatus checks if popup closed normally in every screenResult with close_popups on:
+func (screenResults ScreenResultMap) updatePopupCloseStatus() {
+	var popupScreenResultList []*ScreenResult
 	for _, screenResult := range screenResults {
 		if screenResult.Popup == nil {
 			continue
 		}
-		screenResultList = append(screenResultList, screenResult)
+		popupScreenResultList = append(popupScreenResultList, screenResult)
 	}
-	if len(screenResultList) == 0 {
+	if len(popupScreenResultList) == 0 {
 		return
 	}
-	sort.Slice(screenResultList, func(i, j int) bool {
-		return screenResultList[i].Popup.RetryCount < screenResultList[j].Popup.RetryCount
+	sort.Slice(popupScreenResultList, func(i, j int) bool {
+		return popupScreenResultList[i].Popup.RetryCount < popupScreenResultList[j].Popup.RetryCount
 	})
 
-	for i := 0; i < len(screenResultList)-1; i++ {
-		curPopup := screenResultList[i].Popup
-		nextPopup := screenResultList[i+1].Popup
+	for i := 0; i < len(popupScreenResultList)-1; i++ {
+		curPopup := popupScreenResultList[i].Popup
+		nextPopup := popupScreenResultList[i+1].Popup
 
 		// popup not existed, no need to close
 		if curPopup.CloseArea.IsEmpty() {
@@ -114,10 +114,11 @@ func (screenResults ScreenResultMap) checkPopupInfo() {
 		}
 		// popup existed, but identical popups occurs during next retry
 		if curPopup.Text == nextPopup.Text && curPopup.Type == nextPopup.Type {
+			popupScreenResultList[i].Popup.CloseStatus = "fail"
 			continue
 		}
 		// popup existed, but no popup or different popup occurs during next retry (IsClosed=true)
-		screenResultList[i].Popup.IsClosed = true
+		popupScreenResultList[i].Popup.CloseStatus = "success"
 	}
 }
 
@@ -273,7 +274,7 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData["screenshots"] = dExt.cacheStepData.screenShots
 
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenResults.getScreenShotUrls()
-	dExt.cacheStepData.screenResults.checkPopupInfo()
+	dExt.cacheStepData.screenResults.updatePopupCloseStatus()
 
 	screenSize, err := dExt.Driver.WindowSize()
 	if err != nil {
