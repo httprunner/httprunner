@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"io/ioutil"
+	"math"
 	"mime/multipart"
 	"net/http"
 	"regexp"
@@ -461,6 +462,12 @@ type Box struct {
 
 func (box Box) IsEmpty() bool {
 	return builtin.IsZeroFloat64(box.Width) && builtin.IsZeroFloat64(box.Height)
+}
+
+func (box Box) IsIdentical(box2 Box) bool {
+	return box.Point.IsIdentical(box2.Point) &&
+		builtin.IsZeroFloat64(math.Abs(box.Width-box2.Width)) &&
+		builtin.IsZeroFloat64(math.Abs(box.Height-box2.Height))
 }
 
 func (box Box) Center() PointF {
