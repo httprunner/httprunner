@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -176,7 +176,7 @@ func (g *GA4Client) SendEvent(event Event) error {
 		return nil
 	}
 
-	bs, err = ioutil.ReadAll(res.Body)
+	bs, err = io.ReadAll(res.Body)
 	if err != nil {
 		return errors.Wrap(err, "read GA4 response body failed")
 	}

@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -109,7 +108,7 @@ func (c *PcapdClient) GetPacket(buf []byte) ([]byte, error) {
 		}
 	}
 
-	packet, err := ioutil.ReadAll(preader)
+	packet, err := io.ReadAll(preader)
 	if err != nil {
 		return packet, err
 	}

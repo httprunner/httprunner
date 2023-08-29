@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"io/ioutil"
+	"io"
 	"math"
 	"os"
 
@@ -133,7 +133,7 @@ func getBufFromDisk(name string) (*bytes.Buffer, error) {
 		return nil, err
 	}
 	var all []byte
-	if all, err = ioutil.ReadAll(f); err != nil {
+	if all, err = io.ReadAll(f); err != nil {
 		return nil, err
 	}
 	return bytes.NewBuffer(all), nil
@@ -361,7 +361,7 @@ func getMatsFromDisk(nameImage, nameTpl string, flags gocv.IMReadFlag) (matImage
 // 			return nil, e
 // 		}
 // 		var all []byte
-// 		if all, e = ioutil.ReadAll(f); e != nil {
+// 		if all, e = io.ReadAll(f); e != nil {
 // 			return nil, e
 // 		}
 // 		return bytes.NewBuffer(all), nil
