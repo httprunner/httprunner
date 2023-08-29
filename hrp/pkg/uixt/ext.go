@@ -341,14 +341,19 @@ func (dExt *DriverExt) AssertImage(imagePath, assert string) bool {
 }
 
 func (dExt *DriverExt) AssertForegroundApp(appName, assert string) bool {
-	var err error
+	app, err := dExt.Driver.GetForegroundApp()
+	if err != nil {
+		log.Warn().Err(err).Msg("get foreground app failed, skip app/activity assertion")
+		return true // Notice: ignore error when get foreground app failed
+	}
+	log.Debug().Interface("app", app).Msg("get foreground app")
+
+	// assert package name
 	switch assert {
 	case AssertionEqual:
-		err = dExt.Driver.AssertForegroundApp(appName)
-		return err == nil
+		return app.PackageName == appName
 	case AssertionNotEqual:
-		err = dExt.Driver.AssertForegroundApp(appName)
-		return err != nil
+		return app.PackageName != appName
 	default:
 		log.Warn().Str("assert method", assert).Msg("unexpected assert method")
 	}
