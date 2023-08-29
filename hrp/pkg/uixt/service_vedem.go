@@ -373,6 +373,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		bufSource:             bufSource,
 		imagePath:             imagePath,
 		Tags:                  nil,
+		Resolution:            dExt.windowSize,
 		ScreenshotTakeElapsed: screenshotTakeElapsed,
 	}
 
