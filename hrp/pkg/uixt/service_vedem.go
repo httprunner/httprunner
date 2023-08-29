@@ -54,8 +54,8 @@ func (o OCRResults) ToOCRTexts() (ocrTexts OCRTexts) {
 }
 
 type ImageResult struct {
-	URL       string     `json:"url"`       // image uploaded url
-	OCRResult OCRResults `json:"ocrResult"` // OCR texts
+	URL       string     `json:"url,omitempty"`       // image uploaded url
+	OCRResult OCRResults `json:"ocrResult,omitempty"` // OCR texts
 	// NoLive（非直播间）
 	// Shop（电商）
 	// LifeService（生活服务）
@@ -66,9 +66,9 @@ type ImageResult struct {
 	// Media（媒体）
 	// Chat（语音）
 	// Event（赛事）
-	LiveType string            `json:"liveType"`    // 直播间类型
-	UIResult UIResultMap       `json:"uiResult"`    // 图标检测
-	CPResult ClosePopupsResult `json:"closeResult"` // 弹窗按钮检测
+	LiveType string             `json:"liveType,omitempty"`    // 直播间类型
+	UIResult UIResultMap        `json:"uiResult,omitempty"`    // 图标检测
+	CPResult *ClosePopupsResult `json:"closeResult,omitempty"` // 弹窗按钮检测
 }
 
 type APIResponseImage struct {
@@ -382,14 +382,12 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		return nil, err
 	}
 	if imageResult != nil {
+		screenResult.imageResult = imageResult
 		screenResult.ScreenshotCVElapsed = time.Since(startTime).Milliseconds() - screenshotTakeElapsed
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
 
-		if imageResult.LiveType != "" && imageResult.LiveType != "NoLive" {
-			screenResult.LiveType = imageResult.LiveType
-		}
 		if actionOptions.ScreenShotWithClosePopups {
 			screenResult.Popup = &PopupInfo{
 				Type:      imageResult.CPResult.Type,

@@ -185,17 +185,26 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 
 			// take screenshot and get screen texts by OCR
 			screenResult, err := vc.driverExt.GetScreenResult(
-				WithScreenShotOCR(true), WithScreenShotUpload(true), WithScreenShotLiveType(true))
+				WithScreenShotOCR(true),
+				WithScreenShotUpload(true),
+				WithScreenShotLiveType(true),
+			)
 			if err != nil {
 				log.Error().Err(err).Msg("OCR GetTexts failed")
 				time.Sleep(3 * time.Second)
 				continue
 			}
-			liveRoom.LiveType = screenResult.LiveType
-			screenResult.Live = liveRoom
+
+			// add live type
+			if screenResult.imageResult != nil &&
+				screenResult.imageResult.LiveType != "" &&
+				screenResult.imageResult.LiveType != "NoLive" {
+				liveRoom.LiveType = screenResult.imageResult.LiveType
+			}
 
 			// incr live count
 			screenResult.VideoType = "live"
+			screenResult.Live = liveRoom
 			vc.LiveCount++
 			log.Info().Strs("tags", screenResult.Tags).
 				Interface("live", screenResult.Live).

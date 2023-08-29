@@ -56,7 +56,6 @@ type ScreenResult struct {
 	imagePath   string        // image file path
 	imageResult *ImageResult  // image result
 
-	LiveType    string
 	UploadedURL string      `json:"uploaded_url"`         // uploaded image url
 	Texts       OCRTexts    `json:"texts"`                // dumped raw OCRTexts
 	Icons       UIResultMap `json:"icons"`                // CV 识别的图标
