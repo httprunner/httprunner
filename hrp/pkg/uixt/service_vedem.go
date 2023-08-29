@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"io/ioutil"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"regexp"
@@ -261,23 +261,31 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 		start := time.Now()
 		resp, err = client.Do(req)
 		elapsed := time.Since(start)
-		var logID string
-		if resp != nil {
-			logID = getLogID(resp.Header)
+		if err != nil {
+			log.Error().Err(err).
+				Int("imageBufSize", size).
+				Msgf("request veDEM OCR service error, retry %d", i)
+			continue
 		}
-		if err == nil && resp.StatusCode == http.StatusOK {
-			log.Debug().
+
+		logID := getLogID(resp.Header)
+		statusCode := resp.StatusCode
+		if statusCode != http.StatusOK {
+			log.Error().
 				Str("X-TT-LOGID", logID).
-				Int("image_bytes", size).
-				Int64("elapsed(ms)", elapsed.Milliseconds()).
-				Msg("request OCR service success")
-			break
+				Int("imageBufSize", size).
+				Int("statusCode", statusCode).
+				Msgf("request veDEM OCR service failed, retry %d", i)
+			time.Sleep(1 * time.Second)
+			continue
 		}
-		log.Error().Err(err).
+
+		log.Debug().
 			Str("X-TT-LOGID", logID).
-			Int("imageBufSize", size).
-			Msgf("request veDEM OCR service failed, retry %d", i)
-		time.Sleep(1 * time.Second)
+			Int("image_bytes", size).
+			Int64("elapsed(ms)", elapsed.Milliseconds()).
+			Msg("request OCR service success")
+		break
 	}
 	if resp == nil {
 		err = code.CVServiceConnectionError
@@ -286,7 +294,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 
 	defer resp.Body.Close()
 
-	results, err := ioutil.ReadAll(resp.Body)
+	results, err := io.ReadAll(resp.Body)
 	if err != nil {
 		err = errors.Wrap(code.CVResponseError,
 			fmt.Sprintf("read response body error: %v", err))
