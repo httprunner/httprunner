@@ -80,11 +80,11 @@ type ScreenResultMap map[string]*ScreenResult // key is date time
 // getScreenShotUrls returns screenShotsUrls using imagePath as key and uploaded URL as value
 func (screenResults ScreenResultMap) getScreenShotUrls() map[string]string {
 	screenShotsUrls := make(map[string]string)
-	for dateTime, screenResult := range screenResults {
+	for _, screenResult := range screenResults {
 		if screenResult.UploadedURL == "" {
 			continue
 		}
-		screenShotsUrls[dateTime] = screenResult.UploadedURL
+		screenShotsUrls[screenResult.imagePath] = screenResult.UploadedURL
 	}
 	return screenShotsUrls
 }
