@@ -2,7 +2,6 @@ package uixt
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"image"
 	"image/gif"
@@ -56,6 +55,7 @@ type ScreenResult struct {
 	imagePath   string        // image file path
 	imageResult *ImageResult  // image result
 
+	Resolution  Size        `json:"resolution"`
 	UploadedURL string      `json:"uploaded_url"`         // uploaded image url
 	Texts       OCRTexts    `json:"texts"`                // dumped raw OCRTexts
 	Icons       UIResultMap `json:"icons"`                // CV 识别的图标
@@ -177,7 +177,7 @@ func newDriverExt(device Device, driver WebDriver, plugin funplugin.IPlugin) (dE
 	// get device window size
 	dExt.windowSize, err = dExt.Driver.WindowSize()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get screen resolution failed")
 	}
 
 	if dExt.ImageService, err = newVEDEMImageService(); err != nil {
@@ -276,37 +276,7 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenResults.getScreenShotUrls()
 	dExt.cacheStepData.screenResults.updatePopupCloseStatus()
-
-	screenSize, err := dExt.Driver.WindowSize()
-	if err != nil {
-		log.Warn().Err(err).Msg("get screen resolution failed")
-		screenSize = Size{}
-	}
-	screenResults := make(map[string]interface{})
-	for dateTime, screenResult := range dExt.cacheStepData.screenResults {
-		o, _ := json.Marshal(screenResult.Texts)
-		data := map[string]interface{}{
-			"tags":  screenResult.Tags,
-			"texts": string(o),
-			"resolution": map[string]int{
-				"width":  screenSize.Width,
-				"height": screenSize.Height,
-			},
-			"video_type":              screenResult.VideoType,
-			"feed":                    screenResult.Feed,
-			"live":                    screenResult.Live,
-			"swipe_start_time":        screenResult.SwipeStartTime,
-			"swipe_finish_time":       screenResult.SwipeFinishTime,
-			"screenshot_take_elapsed": screenResult.ScreenshotTakeElapsed,
-			"screenshot_cv_elapsed":   screenResult.ScreenshotCVElapsed,
-			"total_elapsed":           screenResult.TotalElapsed,
-			"icons":                   screenResult.Icons,
-			"popup":                   screenResult.Popup,
-		}
-
-		screenResults[dateTime] = data
-	}
-	cacheData["screen_results"] = screenResults
+	cacheData["screen_results"] = dExt.cacheStepData.screenResults
 
 	// clear cache
 	dExt.cacheStepData.reset()
