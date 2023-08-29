@@ -108,6 +108,7 @@ func (dExt *DriverExt) ClosePopups(options ...ActionOption) error {
 }
 
 func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
+	log.Info().Msg("try to find and close popups")
 	actionOptions := NewActionOptions(options...)
 	maxRetryTimes := actionOptions.MaxRetryTimes
 	interval := actionOptions.Interval
