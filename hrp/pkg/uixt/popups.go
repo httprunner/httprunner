@@ -27,6 +27,12 @@ var popups = [][]string{
 	{"管理使用时间", ".*忽略.*"},
 }
 
+const (
+	CloseStatusFound   = "found"
+	CloseStatusSuccess = "success"
+	CloseStatusFail    = "fail"
+)
+
 func findTextPopup(screenTexts OCRTexts) (closePoint *OCRText) {
 	for _, popup := range popups {
 		if len(popup) != 2 {
@@ -126,9 +132,13 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 			break
 		}
 		screenResult.Popup.RetryCount = retryCount
+		if !screenResult.Popup.PopupArea.IsEmpty() {
+			screenResult.Popup.CloseStatus = CloseStatusFound
+		}
 		if screenResult.Popup.CloseArea.IsEmpty() {
 			break
 		}
+		screenResult.Popup.CloseStatus = CloseStatusFound
 
 		if err = dExt.tapPopupHandler(screenResult.Popup); err != nil {
 			return err

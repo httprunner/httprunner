@@ -2,10 +2,13 @@ package uixt
 
 import (
 	"bytes"
+	"math"
 	"strings"
 	"time"
 
 	"github.com/httprunner/funplugin"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 var (
@@ -432,6 +435,11 @@ type Point struct {
 type PointF struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
+}
+
+func (p PointF) IsIdentical(p2 PointF) bool {
+	return builtin.IsZeroFloat64(math.Abs(p.X-p2.X)) &&
+		builtin.IsZeroFloat64(math.Abs(p.Y-p2.Y))
 }
 
 type Rect struct {
