@@ -180,7 +180,14 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 
 			liveRoom, err := vc.getCurrentLiveRoom()
 			if err != nil {
-				return errors.Wrap(err, "get current live event trackings failed")
+				if vc.failedCount >= 3 {
+					// failed 3 consecutive times
+					return errors.New("get current live event trackings failed 3 consecutive times")
+				}
+				// retry
+				vc.failedCount++
+				log.Warn().Int64("failedCount", vc.failedCount).Msg("get current live room failed")
+				continue
 			}
 
 			// take screenshot and get screen texts by OCR
@@ -224,6 +231,9 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 			screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
 			screenResult.SwipeFinishTime = swipeFinishTime.UnixMilli()
 			screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
+
+			// reset failed count
+			vc.failedCount = 0
 		}
 	}
 
@@ -233,23 +243,14 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 }
 
 func (vc *VideoCrawler) exitLiveRoom() error {
-	for i := 0; i < 3; i++ {
+	log.Info().Msg("exit live room")
+	// swipe right twice to exit live room
+	for i := 0; i < 2; i++ {
 		vc.driverExt.SwipeRelative(0.1, 0.5, 0.9, 0.5)
 		time.Sleep(2 * time.Second)
 	}
-
-	// exit live room failed, while video count achieved
-	if vc.isTargetAchieved() {
-		return nil
-	}
-
-	// click X button on upper-right corner
-	if err := vc.driverExt.TapXY(0.95, 0.05); err == nil {
-		log.Info().Msg("tap X button on upper-right corner to exit live room")
-		time.Sleep(2 * time.Second)
-	}
-
-	return errors.New("exit live room failed")
+	// TODO: check exit live room success
+	return nil
 }
 
 func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
@@ -326,7 +327,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			}
 			crawler.lastFeed = feedVideo
 
-			screenResult := &ScreenResult{}
+			screenResult := &ScreenResult{
+				Resolution: dExt.windowSize,
+			}
 			dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 
 			// check if live video && run live crawler
