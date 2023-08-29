@@ -321,6 +321,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			if feedVideo.VideoID == crawler.lastFeed.VideoID {
 				// app event tracking not changed
 				// check and handle popups
+				log.Warn().Msg("feed video event tracking not changed")
 				if err = crawler.driverExt.ClosePopupsHandler(WithMaxRetryTimes(1)); err != nil {
 					return err
 				}
