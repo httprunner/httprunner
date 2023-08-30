@@ -455,3 +455,31 @@ func IsZeroFloat64(f float64) bool {
 	threshold := 1e-3
 	return math.Abs(f) < threshold
 }
+
+func ConvertToFloat64(val interface{}) (float64, error) {
+	switch v := val.(type) {
+	case float64:
+		return v, nil
+	case int:
+		return float64(v), nil
+	case int64:
+		return float64(v), nil
+	default:
+		return 0, fmt.Errorf("invalid type for conversion to float64: %T, value: %+v", val, val)
+	}
+}
+
+func ConvertToStringSlice(val interface{}) ([]string, error) {
+	if valSlice, ok := val.([]interface{}); ok {
+		var res []string
+		for _, iVal := range valSlice {
+			valString, ok := iVal.(string)
+			if !ok {
+				return nil, fmt.Errorf("invalid type for converting one of the elements to string: %T, value: %v", iVal, iVal)
+			}
+			res = append(res, valString)
+		}
+		return res, nil
+	}
+	return nil, fmt.Errorf("invalid type for conversion to []string")
+}
