@@ -364,18 +364,18 @@ func convertCompatMobileStep(mobileStep *MobileStep) {
 	if mobileStep == nil {
 		return
 	}
-	if mobileStep.MobileAction.Method == uixt.ACTION_TapByCV {
-		uiTypes, _ := builtin.ConvertToStringSlice(mobileStep.MobileAction.Params)
-		options := mobileStep.MobileAction.ActionOptions
-		options.ScreenShotWithUITypes = append(options.ScreenShotWithUITypes, uiTypes...)
-	}
 	for i := 0; i < len(mobileStep.Actions); i++ {
 		ma := mobileStep.Actions[i]
-		if ma.Method != uixt.ACTION_TapByCV {
-			continue
+		actionOptions := uixt.NewActionOptions(ma.GetOptions()...)
+		// append tap_cv params to screenshot_with_ui_types option
+		if ma.Method == uixt.ACTION_TapByCV {
+			uiTypes, _ := builtin.ConvertToStringSlice(ma.Params)
+			ma.ActionOptions.ScreenShotWithUITypes = append(ma.ActionOptions.ScreenShotWithUITypes, uiTypes...)
 		}
-		uiTypes, _ := builtin.ConvertToStringSlice(ma.Params)
-		ma.ActionOptions.ScreenShotWithUITypes = append(ma.ActionOptions.ScreenShotWithUITypes, uiTypes...)
+		// set default max_retry_times to 10 for swipe_to_tap_texts
+		if ma.Method == uixt.ACTION_SwipeToTapTexts && actionOptions.MaxRetryTimes == 0 {
+			ma.ActionOptions.MaxRetryTimes = 10
+		}
 		mobileStep.Actions[i] = ma
 	}
 }
