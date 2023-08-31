@@ -376,6 +376,10 @@ func convertCompatMobileStep(mobileStep *MobileStep) {
 		if ma.Method == uixt.ACTION_SwipeToTapTexts && actionOptions.MaxRetryTimes == 0 {
 			ma.ActionOptions.MaxRetryTimes = 10
 		}
+		// set default max_retry_times to 10 for swipe_to_tap_text
+		if ma.Method == uixt.ACTION_SwipeToTapText && actionOptions.MaxRetryTimes == 0 {
+			ma.ActionOptions.MaxRetryTimes = 10
+		}
 		mobileStep.Actions[i] = ma
 	}
 }
