@@ -12,25 +12,57 @@ import (
 func TestBuildURL(t *testing.T) {
 	var preparedURL *url.URL
 
-	preparedURL = buildURL("https://postman-echo.com", "/get", nil)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/") {
-		t.Fatal()
-	}
 	preparedURL = buildURL("https://postman-echo.com", "get", nil)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/") {
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get") {
 		t.Fatal()
 	}
-	preparedURL = buildURL("https://postman-echo.com/", "/get", nil)
+
+	preparedURL = buildURL("https://postman-echo.com", "/get", nil)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get") {
+		t.Fatal()
+	}
+
+	preparedURL = buildURL("https://postman-echo.com", "/get/", nil)
 	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/") {
 		t.Fatal()
 	}
 
+	preparedURL = buildURL("https://postman-echo.com/", "get", nil)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get") {
+		t.Fatal()
+	}
+	preparedURL = buildURL("https://postman-echo.com/", "/get", nil)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get") {
+		t.Fatal()
+	}
+	preparedURL = buildURL("https://postman-echo.com/", "/get/", nil)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/") {
+		t.Fatal()
+	}
+
+	preparedURL = buildURL("https://postman-echo.com/abc/", "get?a=1&b=2", nil)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2") {
+		t.Fatal()
+	}
 	preparedURL = buildURL("https://postman-echo.com/abc/", "/get?a=1&b=2", nil)
 	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2") {
 		t.Fatal()
 	}
+	preparedURL = buildURL("https://postman-echo.com/abc/", "/get/?a=1&b=2", nil)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get/?a=1&b=2") {
+		t.Fatal()
+	}
+
 	preparedURL = buildURL("https://postman-echo.com/abc", "get?a=1&b=2", nil)
 	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2") {
+		t.Fatal()
+	}
+	preparedURL = buildURL("https://postman-echo.com/abc", "get/?a=1&b=2", nil)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get/?a=1&b=2") {
+		t.Fatal()
+	}
+	preparedURL = buildURL("https://postman-echo.com/abc", "/get/?a=1&b=2", nil)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get/?a=1&b=2") {
 		t.Fatal()
 	}
 
@@ -41,28 +73,50 @@ func TestBuildURL(t *testing.T) {
 	}
 
 	preparedURL = buildURL("", "https://postman-echo.com/get", nil)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/") {
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get") {
 		t.Fatal()
 	}
 
 	// notice: step request url > config base url
 	preparedURL = buildURL("https://postman-echo.com", "https://httpbin.org/get", nil)
+	if !assert.Equal(t, preparedURL.String(), "https://httpbin.org/get") {
+		t.Fatal()
+	}
+	// notice: step request url > config base url
+	preparedURL = buildURL("https://postman-echo.com", "https://httpbin.org/get/", nil)
 	if !assert.Equal(t, preparedURL.String(), "https://httpbin.org/get/") {
 		t.Fatal()
 	}
 
 	// websocket url
 	preparedURL = buildURL("wss://ws.postman-echo.com/raw", "", nil)
+	if !assert.Equal(t, preparedURL.String(), "wss://ws.postman-echo.com/raw") {
+		t.Fatal()
+	}
+	// websocket url
+	preparedURL = buildURL("wss://ws.postman-echo.com/raw/", "", nil)
 	if !assert.Equal(t, preparedURL.String(), "wss://ws.postman-echo.com/raw/") {
 		t.Fatal()
 	}
 
+	preparedURL = buildURL("wss://ws.postman-echo.com", "raw", nil)
+	if !assert.Equal(t, preparedURL.String(), "wss://ws.postman-echo.com/raw") {
+		t.Fatal()
+	}
 	preparedURL = buildURL("wss://ws.postman-echo.com", "/raw", nil)
+	if !assert.Equal(t, preparedURL.String(), "wss://ws.postman-echo.com/raw") {
+		t.Fatal()
+	}
+	preparedURL = buildURL("wss://ws.postman-echo.com", "/raw/", nil)
 	if !assert.Equal(t, preparedURL.String(), "wss://ws.postman-echo.com/raw/") {
 		t.Fatal()
 	}
 
 	preparedURL = buildURL("wss://ws.postman-echo.com/raw", "ws://echo.websocket.events", nil)
+	if !assert.Equal(t, preparedURL.String(), "ws://echo.websocket.events") {
+		t.Fatal()
+	}
+	preparedURL = buildURL("wss://ws.postman-echo.com/raw", "ws://echo.websocket.events/", nil)
 	if !assert.Equal(t, preparedURL.String(), "ws://echo.websocket.events/") {
 		t.Fatal()
 	}
@@ -70,12 +124,32 @@ func TestBuildURL(t *testing.T) {
 	queryParams := url.Values{}
 	queryParams.Add("c", "3")
 	queryParams.Add("d", "4")
+	preparedURL = buildURL("https://postman-echo.com/", "/get", queryParams)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get?c=3&d=4") {
+		t.Fatal()
+	}
 	preparedURL = buildURL("https://postman-echo.com/", "/get/", queryParams)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/?c=3&d=4") {
+		t.Fatal()
+	}
+	preparedURL = buildURL("https://postman-echo.com/", "get", queryParams)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get?c=3&d=4") {
+		t.Fatal()
+	}
+	preparedURL = buildURL("https://postman-echo.com", "get", queryParams)
 	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get?c=3&d=4") {
 		t.Fatal()
 	}
 	preparedURL = buildURL("https://postman-echo.com/abc", "get?a=1&b=2", queryParams)
 	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2&c=3&d=4") {
+		t.Fatal()
+	}
+	preparedURL = buildURL("https://postman-echo.com/abc", "/get?a=1&b=2", queryParams)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2&c=3&d=4") {
+		t.Fatal()
+	}
+	preparedURL = buildURL("https://postman-echo.com/abc", "/get/?a=1&b=2", queryParams)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get/?a=1&b=2&c=3&d=4") {
 		t.Fatal()
 	}
 }

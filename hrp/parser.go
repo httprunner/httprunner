@@ -35,6 +35,18 @@ func buildURL(baseURL, stepURL string, queryParams url.Values) (fullUrl *url.URL
 		return nil
 	}
 
+	// step url is relative, based on base url
+	uConfig, err := url.Parse(baseURL)
+	if err != nil {
+		log.Error().Str("baseURL", baseURL).Err(err).Msg("[buildURL] parse url failed")
+		return
+	}
+
+	suffixPathHasSlash := strings.HasSuffix(uStep.Path, "/")
+	if stepURL == "" {
+		suffixPathHasSlash = strings.HasSuffix(uConfig.Path, "/")
+	}
+
 	defer func() {
 		// append query params
 		if paramStr := queryParams.Encode(); paramStr != "" {
@@ -45,9 +57,9 @@ func buildURL(baseURL, stepURL string, queryParams url.Values) (fullUrl *url.URL
 			}
 		}
 
-		// ensure path suffix '/' exists
-		if uStep.RawQuery == "" {
-			uStep.Path = strings.TrimRight(uStep.Path, "/") + "/"
+		// so check uStep.Path
+		if suffixPathHasSlash && !strings.HasSuffix(uStep.Path, "/") {
+			uStep.Path += "/"
 		}
 
 		fullUrl = uStep
@@ -58,16 +70,10 @@ func buildURL(baseURL, stepURL string, queryParams url.Values) (fullUrl *url.URL
 		return uStep
 	}
 
-	// step url is relative, based on base url
-	uConfig, err := url.Parse(baseURL)
-	if err != nil {
-		log.Error().Str("baseURL", baseURL).Err(err).Msg("[buildURL] parse url failed")
-		return
-	}
-
 	// merge url
 	uStep.Scheme = uConfig.Scheme
 	uStep.Host = uConfig.Host
+	// path.Join Method: The returned path ends in a slash only if it is the root "/".
 	uStep.Path = path.Join(uConfig.Path, uStep.Path)
 	return uStep
 }
