@@ -134,6 +134,11 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText
 		}
 
 		results = append(results, ocrText)
+
+		// return the first one matched exactly when index not specified
+		if ocrText.Text == text && actionOptions.Index == 0 {
+			return ocrText, nil
+		}
 	}
 
 	if len(results) == 0 {
