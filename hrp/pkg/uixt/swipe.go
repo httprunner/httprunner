@@ -133,7 +133,7 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		return errors.New("no text to tap")
 	}
 
-	options = append(options, WithMatchOne(true))
+	options = append(options, WithMatchOne(true), WithRegex(true))
 	var point PointF
 	findTexts := func(d *DriverExt) error {
 		var err error
@@ -181,7 +181,6 @@ func (dExt *DriverExt) swipeToTapApp(appName string, options ...ActionOption) er
 	}
 
 	options = append(options, WithDirection("left"))
-	options = append(options, WithRegex(true))
 
 	actionOptions := NewActionOptions(options...)
 	// default to retry 5 times
