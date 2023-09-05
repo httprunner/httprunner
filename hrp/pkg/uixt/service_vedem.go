@@ -413,7 +413,6 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 				CloseArea: imageResult.CPResult.CloseArea,
 			}
 		}
-
 	}
 
 	dExt.cacheStepData.screenResults[time.Now().String()] = screenResult

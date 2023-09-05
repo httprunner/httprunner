@@ -61,8 +61,7 @@ type ScreenResult struct {
 	Icons       UIResultMap `json:"icons"`                // CV 识别的图标
 	Tags        []string    `json:"tags"`                 // tags for image, e.g. ["feed", "ad", "live"]
 	VideoType   string      `json:"video_type,omitempty"` // video type: feed, live-preview or live
-	Feed        *FeedVideo  `json:"feed,omitempty"`
-	Live        *LiveRoom   `json:"live,omitempty"`
+	Video       *Video      `json:"video,omitempty"`
 	Popup       *PopupInfo  `json:"popup,omitempty"`
 
 	SwipeStartTime  int64 `json:"swipe_start_time"`  // 滑动开始时间戳

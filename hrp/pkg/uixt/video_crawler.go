@@ -43,8 +43,7 @@ type VideoCrawler struct {
 
 	// used to help checking if swipe success
 	failedCount int64
-	lastFeed    *FeedVideo
-	lastLive    *LiveRoom
+	lastVideo   *Video
 
 	FeedCount int            `json:"feed_count"`
 	FeedStat  map[string]int `json:"feed_stat"` // 分类统计 feed 数量：视频/图文/广告/特效/模板/购物
@@ -112,8 +111,8 @@ func (vc *VideoCrawler) isTargetAchieved() bool {
 	return vc.isFeedTargetAchieved() && vc.isLiveTargetAchieved()
 }
 
-func (vc *VideoCrawler) checkLiveVideo(feedVideo *FeedVideo) (enterPoint PointF, yes bool) {
-	if !feedVideo.IsLivePreview {
+func (vc *VideoCrawler) checkLiveVideo(video *Video) (enterPoint PointF, yes bool) {
+	if video.Type != "preview-live" {
 		return PointF{}, false
 	}
 
@@ -178,7 +177,7 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 			}
 			swipeFinishTime := time.Now()
 
-			liveRoom, err := vc.getCurrentLiveRoom()
+			liveRoom, err := vc.getCurrentVideo()
 			if err != nil {
 				if vc.failedCount >= 3 {
 					// failed 3 consecutive times
@@ -211,21 +210,21 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 
 			// incr live count
 			screenResult.VideoType = "live"
-			screenResult.Live = liveRoom
+			screenResult.Video = liveRoom
 			vc.LiveCount++
 			log.Info().Strs("tags", screenResult.Tags).
-				Interface("live", screenResult.Live).
+				Interface("live", screenResult.Video).
 				Msg("found live success")
 
 			// get simulation watch duration
-			if screenResult.Live.SimulationWatchDuration != 0 {
-				screenResult.Live.WatchDuration = screenResult.Live.SimulationWatchDuration
+			if screenResult.Video.SimulationPlayDuration != 0 {
+				screenResult.Video.PlayDuration = screenResult.Video.SimulationPlayDuration
 			} else {
-				screenResult.Live.RandomWatchDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
-				screenResult.Live.WatchDuration = screenResult.Live.RandomWatchDuration
+				screenResult.Video.RandomPlayDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
+				screenResult.Video.PlayDuration = screenResult.Video.RandomPlayDuration
 			}
 			// simulation watch live video
-			sleepStrict(swipeFinishTime, screenResult.Live.WatchDuration)
+			sleepStrict(swipeFinishTime, screenResult.Video.PlayDuration)
 
 			// log swipe timelines
 			screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
@@ -271,8 +270,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 		configs:   configs,
 
 		failedCount: 0,
-		lastFeed:    &FeedVideo{},
-		lastLive:    &LiveRoom{},
+		lastVideo:   &Video{},
 
 		FeedCount: 0,
 		FeedStat:  make(map[string]int),
@@ -306,7 +304,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 			// get app event trackings
 			// retry 3 times if get feed failed, abort if fail 3 consecutive times
-			feedVideo, err := crawler.getCurrentFeedVideo()
+			feedVideo, err := crawler.getCurrentVideo()
 			if err != nil || feedVideo.Type == "" {
 				if crawler.failedCount >= 3 {
 					// failed 3 consecutive times
@@ -318,7 +316,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				continue
 			}
 
-			if feedVideo.VideoID == crawler.lastFeed.VideoID {
+			if feedVideo.VideoID == crawler.lastVideo.VideoID {
 				// app event tracking not changed
 				// check and handle popups
 				log.Warn().Msg("feed video event tracking not changed")
@@ -326,7 +324,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					return err
 				}
 			}
-			crawler.lastFeed = feedVideo
+			crawler.lastVideo = feedVideo
 
 			screenResult := &ScreenResult{
 				Resolution: dExt.windowSize,
@@ -353,23 +351,23 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				// 点播
 				// check feed type and incr feed count
 				screenResult.VideoType = "feed"
-				screenResult.Feed = feedVideo
+				screenResult.Video = feedVideo
 				crawler.FeedCount++
 				log.Info().
 					Strs("tags", screenResult.Tags).
-					Interface("feed", screenResult.Feed).
+					Interface("feed", screenResult.Video).
 					Msg("found feed success")
 
 				// get simulation play duration
-				if screenResult.Feed.SimulationPlayDuration != 0 {
-					screenResult.Feed.PlayDuration = screenResult.Feed.SimulationPlayDuration
+				if screenResult.Video.SimulationPlayDuration != 0 {
+					screenResult.Video.PlayDuration = screenResult.Video.SimulationPlayDuration
 				} else {
-					screenResult.Feed.RandomPlayDuration = getSimulationDuration(crawler.configs.Feed.SleepRandom)
-					screenResult.Feed.PlayDuration = screenResult.Feed.RandomPlayDuration
+					screenResult.Video.RandomPlayDuration = getSimulationDuration(crawler.configs.Feed.SleepRandom)
+					screenResult.Video.PlayDuration = screenResult.Video.RandomPlayDuration
 				}
 
 				// simulation watch feed video
-				sleepStrict(swipeFinishTime, screenResult.Feed.PlayDuration)
+				sleepStrict(swipeFinishTime, screenResult.Video.PlayDuration)
 			}
 
 			// check if target count achieved
@@ -387,6 +385,45 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			crawler.failedCount = 0
 		}
 	}
+}
+
+type Video struct {
+	Type          string `json:"type" required:"true"` // 视频类型, feed/preview-live/live
+	IsLivePreview bool   `json:"is_live_preview"`      // 是否直播预览流
+
+	// Feed 视频基础数据
+	CacheKey string `json:"cache_key,omitempty"` // cachekey
+	VideoID  string `json:"video_id,omitempty"`  // 视频 video ID
+	URL      string `json:"feed_url,omitempty"`  // 实际播放的视频 url
+	UserName string `json:"user_name"`           // 视频作者
+	Duration int64  `json:"duration,omitempty"`  // 视频时长(ms)
+	Caption  string `json:"caption,omitempty"`   // 视频文案
+	// 视频热度数据
+	ViewCount    int64 `json:"view_count,omitempty"`    // feed 观看数
+	LikeCount    int64 `json:"like_count,omitempty"`    // feed 点赞数
+	CommentCount int64 `json:"comment_count,omitempty"` // feed 评论数
+	CollectCount int64 `json:"collect_count,omitempty"` // feed 收藏数
+	ForwardCount int64 `json:"forward_count,omitempty"` // feed 转发数
+	ShareCount   int64 `json:"share_count,omitempty"`   // feed 分享数
+
+	// timelines
+	PublishTimestamp int64 `json:"publish_timestamp,omitempty"` // feed 发布时间戳
+	PreloadTimestamp int64 `json:"preload_timestamp,omitempty"` // feed 预加载时间戳
+
+	// Live 视频基础数据
+	LiveStreamID  string `json:"live_stream_id,omitempty"`  // 直播流 ID
+	LiveStreamURL string `json:"live_stream_url,omitempty"` // 直播流地址
+	LiveType      string `json:"live_type,omitempty"`       // 直播间类型
+	// 网络数据
+	ThroughputKbps int64 `json:"throughput_kbps,omitempty"` // 网速
+	// 视频热度数据
+	AudienceCount int64 `json:"audience_count,omitempty"` // 直播间人数
+
+	// 记录仿真决策信息
+	PlayDuration           int64   `json:"play_duration"`            // 播放时长(ms)，取自 Simulation/Random
+	SimulationPlayProgress float64 `json:"simulation_play_progress"` // 仿真播放比例（完播率）
+	SimulationPlayDuration int64   `json:"simulation_play_duration"` // 仿真播放时长(ms)
+	RandomPlayDuration     int64   `json:"random_play_duration"`     // 随机播放时长(ms)
 }
 
 type FeedVideo struct {
@@ -437,64 +474,33 @@ type LiveRoom struct {
 	RandomWatchDuration     int64 `json:"random_watch_duration"`     // 随机观播时长(ms)
 }
 
-func (vc *VideoCrawler) getCurrentFeedVideo() (feedVideo *FeedVideo, err error) {
-	if !vc.driverExt.plugin.Has("GetCurrentFeedVideo") {
-		return nil, errors.New("plugin missing GetCurrentFeedVideo method")
+func (vc *VideoCrawler) getCurrentVideo() (video *Video, err error) {
+	if !vc.driverExt.plugin.Has("GetCurrentVideo") {
+		return nil, errors.New("plugin missing GetCurrentVideo method")
 	}
 
-	resp, err := vc.driverExt.plugin.Call("GetCurrentFeedVideo")
+	resp, err := vc.driverExt.plugin.Call("GetCurrentVideo")
 	if err != nil {
-		return nil, errors.Wrap(err, "call plugin GetCurrentFeedVideo failed")
+		return nil, errors.Wrap(err, "call plugin GetCurrentVideo failed")
 	}
 
 	if resp == nil {
-		return nil, errors.New("feed not found")
+		return nil, errors.New("video not found")
 	}
 
 	feedBytes, err := json.Marshal(resp)
 	if err != nil {
-		return nil, errors.New("json marshal feed video info failed")
+		return nil, errors.New("json marshal video info failed")
 	}
 
-	feedVideo = &FeedVideo{}
-	err = json.Unmarshal(feedBytes, feedVideo)
+	video = &Video{}
+	err = json.Unmarshal(feedBytes, video)
 	if err != nil {
-		return nil, errors.Wrap(err, "json unmarshal feed video info failed")
+		return nil, errors.Wrap(err, "json unmarshal video info failed")
 	}
 
 	log.Info().
-		Interface("feedVideoCaption", feedVideo.Caption).
-		Msg("get current feed video success")
-	return feedVideo, nil
-}
-
-func (vc *VideoCrawler) getCurrentLiveRoom() (liveRoom *LiveRoom, err error) {
-	if !vc.driverExt.plugin.Has("GetCurrentLiveRoom") {
-		return nil, errors.New("plugin missing GetCurrentLiveRoom method")
-	}
-
-	resp, err := vc.driverExt.plugin.Call("GetCurrentLiveRoom")
-	if err != nil {
-		return nil, errors.Wrap(err, "call plugin GetCurrentLiveRoom failed")
-	}
-
-	if resp == nil {
-		return nil, errors.New("live not found")
-	}
-
-	liveBytes, err := json.Marshal(resp)
-	if err != nil {
-		return nil, errors.New("json marshal live room info failed")
-	}
-
-	liveRoom = &LiveRoom{}
-	err = json.Unmarshal(liveBytes, liveRoom)
-	if err != nil {
-		return nil, errors.Wrap(err, "json unmarshal live room info failed")
-	}
-
-	log.Info().
-		Interface("liveRoomUserName", liveRoom.UserName).
-		Msg("get current live room success")
-	return liveRoom, nil
+		Interface("videoCaption", video.Caption).
+		Msg("get current video success")
+	return video, nil
 }
