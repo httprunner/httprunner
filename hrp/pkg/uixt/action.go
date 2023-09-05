@@ -520,7 +520,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		if texts, ok := action.Params.([]string); ok {
 			return dExt.swipeToTapTexts(texts, action.GetOptions()...)
 		}
-		if texts, err := convertToStringSlice(action.Params); err == nil {
+		if texts, err := builtin.ConvertToStringSlice(action.Params); err == nil {
 			return dExt.swipeToTapTexts(texts, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_SwipeToTapTexts, action.Params)
@@ -652,39 +652,11 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 
 var errActionNotImplemented = errors.New("UI action not implemented")
 
-func convertToFloat64(val interface{}) (float64, error) {
-	switch v := val.(type) {
-	case float64:
-		return v, nil
-	case int:
-		return float64(v), nil
-	case int64:
-		return float64(v), nil
-	default:
-		return 0, fmt.Errorf("invalid type for conversion to float64: %T, value: %+v", val, val)
-	}
-}
-
-func convertToStringSlice(val interface{}) ([]string, error) {
-	if valSlice, ok := val.([]interface{}); ok {
-		var res []string
-		for _, iVal := range valSlice {
-			valString, ok := iVal.(string)
-			if !ok {
-				return nil, fmt.Errorf("invalid type for converting one of the elements to string: %T, value: %v", iVal, iVal)
-			}
-			res = append(res, valString)
-		}
-		return res, nil
-	}
-	return nil, fmt.Errorf("invalid type for conversion to []string")
-}
-
 // getSimulationDuration returns simulation duration by given params (in seconds)
 func getSimulationDuration(params []interface{}) (milliseconds int64) {
 	if len(params) == 1 {
 		// given constant duration time
-		seconds, err := convertToFloat64(params[0])
+		seconds, err := builtin.ConvertToFloat64(params[0])
 		if err != nil {
 			log.Error().Err(err).Interface("params", params).Msg("invalid params")
 			return 0
@@ -703,17 +675,17 @@ func getSimulationDuration(params []interface{}) (milliseconds int64) {
 	}
 	totalProb := 0.0
 	for i := 0; i+3 <= len(params); i += 3 {
-		min, err := convertToFloat64(params[i])
+		min, err := builtin.ConvertToFloat64(params[i])
 		if err != nil {
 			log.Error().Err(err).Interface("min", params[i]).Msg("invalid minimum time")
 			return 0
 		}
-		max, err := convertToFloat64(params[i+1])
+		max, err := builtin.ConvertToFloat64(params[i+1])
 		if err != nil {
 			log.Error().Err(err).Interface("max", params[i+1]).Msg("invalid maximum time")
 			return 0
 		}
-		weight, err := convertToFloat64(params[i+2])
+		weight, err := builtin.ConvertToFloat64(params[i+2])
 		if err != nil {
 			log.Error().Err(err).Interface("weight", params[i+2]).Msg("invalid weight value")
 			return 0

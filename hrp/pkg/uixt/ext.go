@@ -114,12 +114,12 @@ func (screenResults ScreenResultMap) updatePopupCloseStatus() {
 			continue
 		}
 		// popup existed, but identical popups occurs during next retry
-		if curPopup.Text == nextPopup.Text && curPopup.Type == nextPopup.Type {
-			popupScreenResultList[i].Popup.CloseStatus = "fail"
+		if nextPopup.CloseArea.IsIdentical(curPopup.CloseArea) {
+			popupScreenResultList[i].Popup.CloseStatus = CloseStatusFail
 			continue
 		}
 		// popup existed, but no popup or different popup occurs during next retry (IsClosed=true)
-		popupScreenResultList[i].Popup.CloseStatus = "success"
+		popupScreenResultList[i].Popup.CloseStatus = CloseStatusSuccess
 	}
 }
 

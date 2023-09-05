@@ -11,6 +11,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 // ITestCase represents interface for testcases,
@@ -112,6 +113,13 @@ func (tc *TCase) MakeCompat() (err error) {
 
 		// 3. deal with extract expr including hyphen
 		convertExtract(step.Extract)
+
+		// 4. deal with mobile step compatibility
+		if step.Android != nil {
+			convertCompatMobileStep(step.Android)
+		} else if step.IOS != nil {
+			convertCompatMobileStep(step.IOS)
+		}
 	}
 	return nil
 }
@@ -349,6 +357,30 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 func convertExtract(extract map[string]string) {
 	for key, value := range extract {
 		extract[key] = convertJmespathExpr(value)
+	}
+}
+
+func convertCompatMobileStep(mobileStep *MobileStep) {
+	if mobileStep == nil {
+		return
+	}
+	for i := 0; i < len(mobileStep.Actions); i++ {
+		ma := mobileStep.Actions[i]
+		actionOptions := uixt.NewActionOptions(ma.GetOptions()...)
+		// append tap_cv params to screenshot_with_ui_types option
+		if ma.Method == uixt.ACTION_TapByCV {
+			uiTypes, _ := builtin.ConvertToStringSlice(ma.Params)
+			ma.ActionOptions.ScreenShotWithUITypes = append(ma.ActionOptions.ScreenShotWithUITypes, uiTypes...)
+		}
+		// set default max_retry_times to 10 for swipe_to_tap_texts
+		if ma.Method == uixt.ACTION_SwipeToTapTexts && actionOptions.MaxRetryTimes == 0 {
+			ma.ActionOptions.MaxRetryTimes = 10
+		}
+		// set default max_retry_times to 10 for swipe_to_tap_text
+		if ma.Method == uixt.ACTION_SwipeToTapText && actionOptions.MaxRetryTimes == 0 {
+			ma.ActionOptions.MaxRetryTimes = 10
+		}
+		mobileStep.Actions[i] = ma
 	}
 }
 
