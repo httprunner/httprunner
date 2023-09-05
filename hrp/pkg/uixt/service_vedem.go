@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"math"
 	"mime/multipart"
 	"net/http"
 	"regexp"
@@ -133,6 +134,11 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText
 		}
 
 		results = append(results, ocrText)
+
+		// return the first one matched exactly when index not specified
+		if ocrText.Text == text && actionOptions.Index == 0 {
+			return ocrText, nil
+		}
 	}
 
 	if len(results) == 0 {
@@ -466,6 +472,12 @@ type Box struct {
 
 func (box Box) IsEmpty() bool {
 	return builtin.IsZeroFloat64(box.Width) && builtin.IsZeroFloat64(box.Height)
+}
+
+func (box Box) IsIdentical(box2 Box) bool {
+	return box.Point.IsIdentical(box2.Point) &&
+		builtin.IsZeroFloat64(math.Abs(box.Width-box2.Width)) &&
+		builtin.IsZeroFloat64(math.Abs(box.Height-box2.Height))
 }
 
 func (box Box) Center() PointF {
