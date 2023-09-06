@@ -239,7 +239,14 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 
 	dev := deviceList[0]
 	udid := dev.Properties().SerialNumber
-	device.UDID = udid
+
+	if device.UDID == "" {
+		device.UDID = udid
+		log.Warn().
+			Str("udid", udid).
+			Msg("ios UDID is not specified, select the first one")
+	}
+
 	device.d = dev
 
 	// run xctest if XCTestBundleID is set
@@ -251,7 +258,7 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 		}
 	}
 
-	log.Info().Str("udid", device.UDID).Msg("select ios device")
+	log.Info().Str("udid", device.UDID).Msg("init ios device")
 	return device, nil
 }
 
