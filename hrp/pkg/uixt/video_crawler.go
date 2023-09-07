@@ -360,8 +360,10 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				crawler.exitLiveRoom()
 
 			case VideoType_Image:
-				// TODO: 图文
-				log.Info().Msg("get image video")
+				// 图文
+				log.Info().
+					Interface("feed", screenResult.Video).
+					Msg("found image success")
 
 			default:
 				// 点播
@@ -440,8 +442,8 @@ type Video struct {
 	// 视频热度数据
 	AudienceCount int64 `json:"audience_count,omitempty"` // 直播间人数
 
-	// Image
-	// ImageURLs []string
+	// 图文数据
+	ImageUrls []string `json:"image_urls,omitempty"` // 图片对应的 url 列表
 
 	// 记录仿真决策信息
 	PlayDuration           int64   `json:"play_duration"`            // 播放时长(ms)，取自 Simulation/Random
