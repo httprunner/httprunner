@@ -26,7 +26,7 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.8.4
 	gocv.io/x/gocv v0.32.1
-	golang.org/x/net v0.13.0
+	golang.org/x/net v0.14.0
 	golang.org/x/oauth2 v0.8.0
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
