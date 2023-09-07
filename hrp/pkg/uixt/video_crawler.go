@@ -138,9 +138,9 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 
 			liveRoom, err := vc.getCurrentVideo()
 			if err != nil || liveRoom.Type != VideoType_Live {
-				if vc.failedCount >= 5 {
-					// failed 5 consecutive times
-					return errors.New("get current live event trackings failed 5 consecutive times")
+				if vc.failedCount >= 3 {
+					// failed 3 consecutive times
+					return errors.New("get current live event trackings failed 3 consecutive times")
 				}
 				// retry
 				vc.failedCount++
@@ -342,9 +342,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 				// simulation watch feed video
 				sleepStrict(swipeFinishTime, screenResult.Video.PlayDuration)
-
-				log.Warn().Interface("video", feedVideo).
-					Msg("get unexpected video type")
 			}
 			screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 
@@ -436,6 +433,7 @@ func (vc *VideoCrawler) getCurrentVideo() (video *Video, err error) {
 	}
 
 	log.Info().
+		Str("type", string(video.Type)).
 		Interface("userName", video.UserName).
 		Msg("get current video success")
 	return video, nil
