@@ -178,14 +178,17 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 			swipeFinishTime := time.Now()
 
 			liveRoom, err := vc.getCurrentVideo()
-			if err != nil {
+			if err != nil || liveRoom.Type != VideoType_Live {
 				if vc.failedCount >= 5 {
 					// failed 5 consecutive times
 					return errors.New("get current live event trackings failed 5 consecutive times")
 				}
 				// retry
 				vc.failedCount++
-				log.Warn().Int64("failedCount", vc.failedCount).Msg("get current live room failed")
+				log.Warn().
+					Int64("failedCount", vc.failedCount).
+					Str("videoType", string(liveRoom.Type)).
+					Msg("get current live room failed")
 				continue
 			}
 
@@ -315,7 +318,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				continue
 			}
 
-			if feedVideo.VideoID == crawler.lastVideo.VideoID {
+			if feedVideo.VideoID == crawler.lastVideo.VideoID &&
+				feedVideo.CacheKey == crawler.lastVideo.CacheKey &&
+				feedVideo.UserName == crawler.lastVideo.UserName {
 				// app event tracking not changed
 				// check and handle popups
 				log.Warn().Msg("feed video event tracking not changed")
@@ -333,8 +338,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// check if live video && run live crawler
 			if enterPoint, isLive := crawler.checkLiveVideo(feedVideo); isLive {
 				// 直播预览流
-				// TODO
-				// screenResult.Live = feedVideo
 				log.Info().Msg("live video found")
 				if !crawler.isLiveTargetAchieved() {
 					if err := crawler.startLiveCrawler(enterPoint); err != nil {
@@ -460,7 +463,7 @@ func (vc *VideoCrawler) getCurrentVideo() (video *Video, err error) {
 	}
 
 	log.Info().
-		Interface("videoCaption", video.Caption).
+		Interface("userName", video.UserName).
 		Msg("get current video success")
 	return video, nil
 }
