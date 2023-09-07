@@ -134,6 +134,9 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 	}
 
 	options = append(options, WithMatchOne(true), WithRegex(true))
+	actionOptions := NewActionOptions(options...)
+	actionOptions.Identifier = ""
+	optionsWithoutIdentifier := actionOptions.Options()
 	var point PointF
 	findTexts := func(d *DriverExt) error {
 		var err error
@@ -145,7 +148,7 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		if err != nil {
 			return err
 		}
-		points, err := screenResult.Texts.FindTexts(texts, dExt.ParseActionOptions(options...)...)
+		points, err := screenResult.Texts.FindTexts(texts, dExt.ParseActionOptions(optionsWithoutIdentifier...)...)
 		if err != nil {
 			log.Error().Err(err).Msg("swipeToTapTexts failed")
 			// target texts not found, try to auto handle popup
@@ -165,8 +168,8 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		return d.TapAbsXY(point.X, point.Y, options...)
 	}
 
-	findAction := dExt.prepareSwipeAction(options...)
-	return dExt.LoopUntil(findAction, findTexts, foundTextAction, options...)
+	findAction := dExt.prepareSwipeAction(optionsWithoutIdentifier...)
+	return dExt.LoopUntil(findAction, findTexts, foundTextAction, optionsWithoutIdentifier...)
 }
 
 func (dExt *DriverExt) swipeToTapApp(appName string, options ...ActionOption) error {
