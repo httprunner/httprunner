@@ -111,43 +111,6 @@ func (vc *VideoCrawler) isTargetAchieved() bool {
 	return vc.isFeedTargetAchieved() && vc.isLiveTargetAchieved()
 }
 
-func (vc *VideoCrawler) getLiveEntryPoint(video *Video) (enterPoint PointF, err error) {
-	// take screenshot and get OCR texts via image service
-	texts, err := vc.driverExt.GetScreenTexts()
-	if err != nil {
-		return PointF{}, err
-	}
-
-	// 预览流入口：DY/KS
-	// 标签文案：点击进入直播间|进入直播间领金币
-	points, err := texts.FindTexts([]string{".*进入直播间.*"}, WithScope(0, 0.3, 1, 0.8), WithRegex(true))
-	if err == nil {
-		return points[0].Center(), nil
-	}
-	// 标签文案：直播中|直播卖货|直播团购
-	points, err = texts.FindTexts([]string{"直播中|直播卖货|直播团购"},
-		WithScope(0, 0.7, 0.5, 1), WithRegex(true))
-	if err == nil {
-		return points[0].Center(), nil
-	}
-
-	// 预览流入口：KS/KSLite
-	// 评论框文案：和主播聊聊天...|聊聊天...
-	points, err = texts.FindTexts([]string{".*聊聊天.*"}, WithRegex(true))
-	if err == nil {
-		point := points[0].Center()
-		enterPoint = PointF{
-			X: point.X,
-			Y: point.Y - 300,
-		}
-		return enterPoint, nil
-	}
-
-	// TODO: 头像入口
-
-	return PointF{}, errors.New("live entry not found")
-}
-
 // run live video crawler
 func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 	log.Info().Msg("enter live room")
@@ -331,20 +294,20 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 
 			switch feedVideo.Type {
-			case VideoType_PreviewLive:
-				// 直播预览流
-				log.Info().Msg("get preview live video")
+			case VideoType_PreviewLive, VideoType_Live:
+				// 直播预览流 || 直播
+				log.Info().Str("type", string(feedVideo.Type)).Msg("get live video")
 				if crawler.isLiveTargetAchieved() {
 					log.Info().Msg("live count achieved, skip")
 				} else {
 					// live target not achieved, enter live
-					enterPoint, err := crawler.getLiveEntryPoint(feedVideo)
-					if err != nil {
-						log.Error().Err(err).Msg("get live entry failed")
-						continue
+					entryPoint := PointF{
+						X: float64(dExt.windowSize.Width / 2),
+						Y: float64(dExt.windowSize.Height / 2),
 					}
+
 					// start live crawler
-					err = crawler.startLiveCrawler(enterPoint)
+					err = crawler.startLiveCrawler(entryPoint)
 					if err != nil {
 						if errors.Is(err, code.TimeoutError) || errors.Is(err, code.InterruptError) {
 							return err
@@ -353,11 +316,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					}
 					continue
 				}
-
-			case VideoType_Live:
-				// 直播
-				log.Warn().Msg("get live video in feed loop")
-				crawler.exitLiveRoom()
 
 			case VideoType_Image:
 				// 图文
