@@ -56,11 +56,10 @@ type ScreenResult struct {
 	imageResult *ImageResult  // image result
 
 	Resolution  Size        `json:"resolution"`
-	UploadedURL string      `json:"uploaded_url"`         // uploaded image url
-	Texts       OCRTexts    `json:"texts"`                // dumped raw OCRTexts
-	Icons       UIResultMap `json:"icons"`                // CV 识别的图标
-	Tags        []string    `json:"tags"`                 // tags for image, e.g. ["feed", "ad", "live"]
-	VideoType   string      `json:"video_type,omitempty"` // video type: feed, live-preview or live
+	UploadedURL string      `json:"uploaded_url"` // uploaded image url
+	Texts       OCRTexts    `json:"texts"`        // dumped raw OCRTexts
+	Icons       UIResultMap `json:"icons"`        // CV 识别的图标
+	Tags        []string    `json:"tags"`         // tags for image, e.g. ["feed", "ad", "live"]
 	Video       *Video      `json:"video,omitempty"`
 	Popup       *PopupInfo  `json:"popup,omitempty"`
 

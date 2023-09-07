@@ -112,7 +112,7 @@ func (vc *VideoCrawler) isTargetAchieved() bool {
 }
 
 func (vc *VideoCrawler) checkLiveVideo(video *Video) (enterPoint PointF, yes bool) {
-	if video.Type != "preview-live" {
+	if video.Type != VideoType_PreviewLive {
 		return PointF{}, false
 	}
 
@@ -179,9 +179,9 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 
 			liveRoom, err := vc.getCurrentVideo()
 			if err != nil {
-				if vc.failedCount >= 3 {
-					// failed 3 consecutive times
-					return errors.New("get current live event trackings failed 3 consecutive times")
+				if vc.failedCount >= 5 {
+					// failed 5 consecutive times
+					return errors.New("get current live event trackings failed 5 consecutive times")
 				}
 				// retry
 				vc.failedCount++
@@ -209,7 +209,6 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 			}
 
 			// incr live count
-			screenResult.VideoType = "live"
 			screenResult.Video = liveRoom
 			vc.LiveCount++
 			log.Info().Strs("tags", screenResult.Tags).
@@ -306,9 +305,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// retry 3 times if get feed failed, abort if fail 3 consecutive times
 			feedVideo, err := crawler.getCurrentVideo()
 			if err != nil || feedVideo.Type == "" {
-				if crawler.failedCount >= 3 {
-					// failed 3 consecutive times
-					return errors.New("get current feed video failed 3 consecutive times")
+				if crawler.failedCount >= 10 {
+					// failed 10 consecutive times
+					return errors.New("get current feed video failed 10 consecutive times")
 				}
 				log.Warn().Interface("feedVideo", feedVideo).Msg("get current feed video failed")
 				// retry
@@ -334,7 +333,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// check if live video && run live crawler
 			if enterPoint, isLive := crawler.checkLiveVideo(feedVideo); isLive {
 				// 直播预览流
-				screenResult.VideoType = "live-preview"
 				// TODO
 				// screenResult.Live = feedVideo
 				log.Info().Msg("live video found")
@@ -350,7 +348,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			} else {
 				// 点播
 				// check feed type and incr feed count
-				screenResult.VideoType = "feed"
 				screenResult.Video = feedVideo
 				crawler.FeedCount++
 				log.Info().
@@ -387,9 +384,17 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	}
 }
 
+type VideoType string
+
+const (
+	VideoType_Feed        VideoType = "FEED"
+	VideoType_PreviewLive VideoType = "PREVIEW-LIVE" // 直播预览流
+	VideoType_Live        VideoType = "LIVE"
+	VideoType_Image       VideoType = "IMAGE"
+)
+
 type Video struct {
-	Type          string `json:"type" required:"true"` // 视频类型, feed/preview-live/live
-	IsLivePreview bool   `json:"is_live_preview"`      // 是否直播预览流
+	Type VideoType `json:"type" required:"true"` // 视频类型, feed/preview-live/live/image
 
 	// Feed 视频基础数据
 	CacheKey string `json:"cache_key,omitempty"` // cachekey
@@ -419,59 +424,14 @@ type Video struct {
 	// 视频热度数据
 	AudienceCount int64 `json:"audience_count,omitempty"` // 直播间人数
 
-	// 记录仿真决策信息
-	PlayDuration           int64   `json:"play_duration"`            // 播放时长(ms)，取自 Simulation/Random
-	SimulationPlayProgress float64 `json:"simulation_play_progress"` // 仿真播放比例（完播率）
-	SimulationPlayDuration int64   `json:"simulation_play_duration"` // 仿真播放时长(ms)
-	RandomPlayDuration     int64   `json:"random_play_duration"`     // 随机播放时长(ms)
-}
-
-type FeedVideo struct {
-	// 视频基础数据
-	VideoID       string `json:"video_id"`        // 视频 video ID
-	URL           string `json:"url"`             // 视频 url
-	UserName      string `json:"user_name"`       // 视频作者
-	Duration      int64  `json:"duration"`        // 视频时长(ms)
-	Caption       string `json:"caption"`         // 视频文案
-	Type          string `json:"type"`            // 视频类型
-	IsLivePreview bool   `json:"is_live_preview"` // 是否直播预览流
-
-	// 视频热度数据
-	ViewCount    int64 `json:"view_count"`    // feed 观看数
-	LikeCount    int64 `json:"like_count"`    // feed 点赞数
-	CommentCount int64 `json:"comment_count"` // feed 评论数
-	CollectCount int64 `json:"collect_count"` // feed 收藏数
-	ForwardCount int64 `json:"forward_count"` // feed 转发数
-	ShareCount   int64 `json:"share_count"`   // feed 分享数
+	// Image
+	// ImageURLs []string
 
 	// 记录仿真决策信息
 	PlayDuration           int64   `json:"play_duration"`            // 播放时长(ms)，取自 Simulation/Random
 	SimulationPlayProgress float64 `json:"simulation_play_progress"` // 仿真播放比例（完播率）
 	SimulationPlayDuration int64   `json:"simulation_play_duration"` // 仿真播放时长(ms)
 	RandomPlayDuration     int64   `json:"random_play_duration"`     // 随机播放时长(ms)
-
-	// timelines
-	PublishTimestamp int64 `json:"publish_timestamp"` // feed 发布时间戳
-	PreloadTimestamp int64 `json:"preload_timestamp"` // feed 预加载时间戳
-}
-
-type LiveRoom struct {
-	// 视频基础数据
-	LiveStreamID  string `json:"live_stream_id"`  // 直播流 ID
-	LiveStreamURL string `json:"live_stream_url"` // 直播流地址
-	UserName      string `json:"user_name"`       // 主播名称（无法获取？）
-	LiveType      string `json:"live_type"`       // 直播类型
-
-	// 视频热度数据
-	AudienceCount int64 `json:"audience_count"` // 直播间人数
-
-	// 网络数据
-	ThroughputKbps int64 `json:"throughput_kbps"` // 网速
-
-	// 记录仿真决策信息
-	WatchDuration           int64 `json:"watch_duration"`            // 观播时长(ms)，取自 Simulation/Random
-	SimulationWatchDuration int64 `json:"simulation_watch_duration"` // 仿真观播时长(ms)
-	RandomWatchDuration     int64 `json:"random_watch_duration"`     // 随机观播时长(ms)
 }
 
 func (vc *VideoCrawler) getCurrentVideo() (video *Video, err error) {
