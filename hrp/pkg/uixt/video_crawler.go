@@ -195,7 +195,7 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 				WithScreenShotLiveType(true),
 			)
 			if err != nil {
-				log.Error().Err(err).Msg("OCR GetTexts failed")
+				log.Error().Err(err).Msg("get screen result failed")
 				time.Sleep(3 * time.Second)
 				continue
 			}
@@ -356,10 +356,11 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 			case VideoType_Live:
 				// 直播
-				log.Info().Msg("get live video")
+				log.Warn().Msg("get live video in feed loop")
+				crawler.exitLiveRoom()
 
 			case VideoType_Image:
-				// 图文
+				// TODO: 图文
 				log.Info().Msg("get image video")
 
 			default:
