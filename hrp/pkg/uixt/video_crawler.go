@@ -111,28 +111,24 @@ func (vc *VideoCrawler) isTargetAchieved() bool {
 	return vc.isFeedTargetAchieved() && vc.isLiveTargetAchieved()
 }
 
-func (vc *VideoCrawler) checkLiveVideo(video *Video) (enterPoint PointF, yes bool) {
-	if video.Type != VideoType_PreviewLive {
-		return PointF{}, false
-	}
-
+func (vc *VideoCrawler) getLiveEntryPoint(video *Video) (enterPoint PointF, err error) {
 	// take screenshot and get OCR texts via image service
 	texts, err := vc.driverExt.GetScreenTexts()
 	if err != nil {
-		return PointF{}, false
+		return PointF{}, err
 	}
 
 	// 预览流入口：DY/KS
 	// 标签文案：点击进入直播间|进入直播间领金币
 	points, err := texts.FindTexts([]string{".*进入直播间.*"}, WithScope(0, 0.3, 1, 0.8), WithRegex(true))
 	if err == nil {
-		return points[0].Center(), true
+		return points[0].Center(), nil
 	}
 	// 标签文案：直播中|直播卖货|直播团购
 	points, err = texts.FindTexts([]string{"直播中|直播卖货|直播团购"},
 		WithScope(0, 0.7, 0.5, 1), WithRegex(true))
 	if err == nil {
-		return points[0].Center(), true
+		return points[0].Center(), nil
 	}
 
 	// 预览流入口：KS/KSLite
@@ -144,12 +140,12 @@ func (vc *VideoCrawler) checkLiveVideo(video *Video) (enterPoint PointF, yes boo
 			X: point.X,
 			Y: point.Y - 300,
 		}
-		return enterPoint, true
+		return enterPoint, nil
 	}
 
 	// TODO: 头像入口
 
-	return PointF{}, false
+	return PointF{}, errors.New("live entry not found")
 }
 
 // run live video crawler
@@ -187,7 +183,7 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 				vc.failedCount++
 				log.Warn().
 					Int64("failedCount", vc.failedCount).
-					Str("videoType", string(liveRoom.Type)).
+					Interface("video", liveRoom).
 					Msg("get current live room failed")
 				continue
 			}
@@ -244,14 +240,8 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 }
 
 func (vc *VideoCrawler) exitLiveRoom() error {
-	log.Info().Msg("exit live room")
-	// swipe right twice to exit live room
-	for i := 0; i < 2; i++ {
-		vc.driverExt.SwipeRelative(0.1, 0.5, 0.9, 0.5)
-		time.Sleep(2 * time.Second)
-	}
-	// TODO: check exit live room success
-	return nil
+	log.Info().Msg("press back to exit live room")
+	return vc.driverExt.Driver.PressBack()
 }
 
 func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
@@ -305,7 +295,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			swipeFinishTime := time.Now()
 
 			// get app event trackings
-			// retry 3 times if get feed failed, abort if fail 3 consecutive times
+			// retry 10 times if get feed failed, abort if fail 10 consecutive times
 			feedVideo, err := crawler.getCurrentVideo()
 			if err != nil || feedVideo.Type == "" {
 				if crawler.failedCount >= 10 {
@@ -332,26 +322,49 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 			screenResult := &ScreenResult{
 				Resolution: dExt.windowSize,
+				Video:      feedVideo,
+
+				// log swipe timelines
+				SwipeStartTime:  swipeStartTime.UnixMilli(),
+				SwipeFinishTime: swipeFinishTime.UnixMilli(),
 			}
 			dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 
-			// check if live video && run live crawler
-			if enterPoint, isLive := crawler.checkLiveVideo(feedVideo); isLive {
+			switch feedVideo.Type {
+			case VideoType_PreviewLive:
 				// 直播预览流
-				log.Info().Msg("live video found")
-				if !crawler.isLiveTargetAchieved() {
-					if err := crawler.startLiveCrawler(enterPoint); err != nil {
+				log.Info().Msg("get preview live video")
+				if crawler.isLiveTargetAchieved() {
+					log.Info().Msg("live count achieved, skip")
+				} else {
+					// live target not achieved, enter live
+					enterPoint, err := crawler.getLiveEntryPoint(feedVideo)
+					if err != nil {
+						log.Error().Err(err).Msg("get live entry failed")
+						continue
+					}
+					// start live crawler
+					err = crawler.startLiveCrawler(enterPoint)
+					if err != nil {
 						if errors.Is(err, code.TimeoutError) || errors.Is(err, code.InterruptError) {
 							return err
 						}
 						log.Error().Err(err).Msg("run live crawler failed, continue")
-						continue
 					}
+					continue
 				}
-			} else {
+
+			case VideoType_Live:
+				// 直播
+				log.Info().Msg("get live video")
+
+			case VideoType_Image:
+				// 图文
+				log.Info().Msg("get image video")
+
+			default:
 				// 点播
 				// check feed type and incr feed count
-				screenResult.Video = feedVideo
 				crawler.FeedCount++
 				log.Info().
 					Strs("tags", screenResult.Tags).
@@ -368,18 +381,17 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 				// simulation watch feed video
 				sleepStrict(swipeFinishTime, screenResult.Video.PlayDuration)
+
+				log.Warn().Interface("video", feedVideo).
+					Msg("get unexpected video type")
 			}
+			screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 
 			// check if target count achieved
 			if crawler.isTargetAchieved() {
 				log.Info().Msg("target count achieved, exit crawler")
 				return nil
 			}
-
-			// log swipe timelines
-			screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
-			screenResult.SwipeFinishTime = swipeFinishTime.UnixMilli()
-			screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 
 			// reset failed count
 			crawler.failedCount = 0
