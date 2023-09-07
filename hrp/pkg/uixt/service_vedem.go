@@ -257,6 +257,10 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 			return
 		}
 
+		// ppe env
+		req.Header.Add("x-tt-env", "ppe_vedem_algorithm")
+		req.Header.Add("x-use-ppe", "1")
+
 		signToken := "UNSIGNED-PAYLOAD"
 		token := builtin.Sign("auth-v2", env.VEDEM_IMAGE_AK, env.VEDEM_IMAGE_SK, []byte(signToken))
 
