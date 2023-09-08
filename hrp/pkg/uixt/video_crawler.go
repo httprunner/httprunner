@@ -151,7 +151,6 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 				vc.failedCount++
 				log.Warn().
 					Int64("failedCount", vc.failedCount).
-					Interface("video", liveRoom).
 					Msg("get current live room failed")
 				continue
 			}
@@ -175,15 +174,11 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 				liveRoom.LiveType = screenResult.imageResult.LiveType
 			}
 
-			// get simulation watch duration
-			liveRoom.PlayDuration = getPlayDuration(
-				liveRoom, vc.configs.Live.SleepRandom)
-
 			// incr live count
 			screenResult.Video = liveRoom
 			vc.LiveCount++
 			log.Info().Strs("tags", screenResult.Tags).
-				Interface("live", screenResult.Video).
+				Interface("video", screenResult.Video).
 				Msg("found live success")
 
 			// simulation watch live video
@@ -267,7 +262,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					// failed 10 consecutive times
 					return errors.New("get current feed video failed 10 consecutive times")
 				}
-				log.Warn().Interface("feedVideo", feedVideo).Msg("get current feed video failed")
+				log.Warn().Msg("get current feed video failed")
 				// retry
 				crawler.failedCount++
 				continue
@@ -304,12 +299,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						Msg("live count achieved, skip")
 				} else {
 					// simulation
-					// get simulation play duration
-					screenResult.Video.PlayDuration = getPlayDuration(
-						screenResult.Video, crawler.configs.Live.SleepRandom)
-
 					log.Info().Interface("feed", screenResult.Video).
 						Strs("tags", screenResult.Tags).
+						Interface("video", feedVideo).
 						Msg("found live success")
 
 					// simulation watch feed video
@@ -335,11 +327,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			default:
 				// 点播 || 图文 || 广告 || etc.
 				crawler.FeedCount++
-
-				screenResult.Video.PlayDuration = getPlayDuration(
-					screenResult.Video, crawler.configs.Feed.SleepRandom)
 				log.Info().Interface("feed", screenResult.Video).
 					Strs("tags", screenResult.Tags).
+					Interface("video", feedVideo).
 					Msg("found feed success")
 
 				// simulation watch feed video
@@ -357,17 +347,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			crawler.failedCount = 0
 		}
 	}
-}
-
-func getPlayDuration(video *Video, params []interface{}) int64 {
-	// get simulation play duration
-	if video.SimulationPlayDuration != 0 {
-		video.PlayDuration = video.SimulationPlayDuration
-	} else {
-		video.RandomPlayDuration = getSimulationDuration(params)
-		video.PlayDuration = video.RandomPlayDuration
-	}
-	return video.PlayDuration
 }
 
 type VideoType string
@@ -446,9 +425,21 @@ func (vc *VideoCrawler) getCurrentVideo() (video *Video, err error) {
 		return nil, errors.Wrap(err, "json unmarshal video info failed")
 	}
 
+	// get simulation play duration
+	if video.SimulationPlayDuration != 0 {
+		video.PlayDuration = video.SimulationPlayDuration
+	} else {
+		if video.Type == VideoType_Live || video.Type == VideoType_PreviewLive {
+			video.RandomPlayDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
+		} else {
+			video.RandomPlayDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
+		}
+		video.PlayDuration = video.RandomPlayDuration
+	}
+
 	log.Info().
 		Str("type", string(video.Type)).
-		Interface("userName", video.UserName).
+		Str("dataType", video.DataType).
 		Msg("get current video success")
 	return video, nil
 }
