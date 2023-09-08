@@ -296,7 +296,10 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			switch feedVideo.Type {
 			case VideoType_PreviewLive, VideoType_Live:
 				// 直播预览流 || 直播
-				log.Info().Str("type", string(feedVideo.Type)).Msg("get live video")
+				log.Info().
+					Interface("live", screenResult.Video).
+					Msg("found live success")
+
 				if crawler.isLiveTargetAchieved() {
 					log.Info().Msg("live count achieved, skip")
 				} else {
@@ -318,7 +321,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				}
 
 			default:
-				// 点播 || 图文
+				// 点播 || 图文 || 广告 || etc.
 				// check feed type and incr feed count
 				crawler.FeedCount++
 				log.Info().
@@ -361,7 +364,8 @@ const (
 )
 
 type Video struct {
-	Type VideoType `json:"type" required:"true"` // 视频类型, feed/preview-live/live/image
+	Type     VideoType `json:"type" required:"true"` // 视频类型, feed/preview-live/live/image
+	DataType string    `json:"data_type"`            // 数据源对应的事件名称
 
 	// Feed 视频基础数据
 	CacheKey string `json:"cache_key,omitempty"` // cachekey
