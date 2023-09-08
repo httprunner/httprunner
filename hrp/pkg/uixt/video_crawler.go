@@ -113,12 +113,17 @@ func (vc *VideoCrawler) isTargetAchieved() bool {
 
 // run live video crawler
 func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
-	log.Info().Msg("enter live room")
+	log.Info().Msg("tap screen center to enter live room")
 	if err := vc.driverExt.TapAbsXY(enterPoint.X, enterPoint.Y); err != nil {
 		log.Error().Err(err).Msg("tap live video failed")
 		return err
 	}
-	time.Sleep(5 * time.Second)
+	liveRoom, err := vc.getCurrentVideo()
+	if err != nil || (liveRoom.Type != VideoType_Live || liveRoom.Type != VideoType_PreviewLive) {
+		return errors.New("enter live room failed")
+	}
+	log.Info().Interface("liveRoom", liveRoom).Msg("enter live room success")
+
 	for !vc.isLiveTargetAchieved() {
 		select {
 		case <-vc.timer.C:
@@ -170,6 +175,10 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 				liveRoom.LiveType = screenResult.imageResult.LiveType
 			}
 
+			// get simulation watch duration
+			liveRoom.PlayDuration = getPlayDuration(
+				liveRoom, vc.configs.Live.SleepRandom)
+
 			// incr live count
 			screenResult.Video = liveRoom
 			vc.LiveCount++
@@ -177,13 +186,6 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 				Interface("live", screenResult.Video).
 				Msg("found live success")
 
-			// get simulation watch duration
-			if screenResult.Video.SimulationPlayDuration != 0 {
-				screenResult.Video.PlayDuration = screenResult.Video.SimulationPlayDuration
-			} else {
-				screenResult.Video.RandomPlayDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
-				screenResult.Video.PlayDuration = screenResult.Video.RandomPlayDuration
-			}
 			// simulation watch live video
 			sleepStrict(swipeFinishTime, screenResult.Video.PlayDuration)
 
@@ -296,13 +298,23 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			switch feedVideo.Type {
 			case VideoType_PreviewLive, VideoType_Live:
 				// 直播预览流 || 直播
-				log.Info().
-					Interface("live", screenResult.Video).
-					Msg("found live success")
-
+				crawler.LiveCount++
 				if crawler.isLiveTargetAchieved() {
-					log.Info().Msg("live count achieved, skip")
+					log.Info().Interface("live", screenResult.Video).
+						Msg("live count achieved, skip")
 				} else {
+					// simulation
+					// get simulation play duration
+					screenResult.Video.PlayDuration = getPlayDuration(
+						screenResult.Video, crawler.configs.Live.SleepRandom)
+
+					log.Info().Interface("feed", screenResult.Video).
+						Strs("tags", screenResult.Tags).
+						Msg("found live success")
+
+					// simulation watch feed video
+					sleepStrict(swipeFinishTime, screenResult.Video.PlayDuration)
+
 					// live target not achieved, enter live
 					entryPoint := PointF{
 						X: float64(dExt.windowSize.Width / 2),
@@ -322,15 +334,10 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 			default:
 				// 点播 || 图文 || 广告 || etc.
-				// get simulation play duration
-				if screenResult.Video.SimulationPlayDuration != 0 {
-					screenResult.Video.PlayDuration = screenResult.Video.SimulationPlayDuration
-				} else {
-					screenResult.Video.RandomPlayDuration = getSimulationDuration(crawler.configs.Feed.SleepRandom)
-					screenResult.Video.PlayDuration = screenResult.Video.RandomPlayDuration
-				}
-
 				crawler.FeedCount++
+
+				screenResult.Video.PlayDuration = getPlayDuration(
+					screenResult.Video, crawler.configs.Feed.SleepRandom)
 				log.Info().Interface("feed", screenResult.Video).
 					Strs("tags", screenResult.Tags).
 					Msg("found feed success")
@@ -350,6 +357,17 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			crawler.failedCount = 0
 		}
 	}
+}
+
+func getPlayDuration(video *Video, params []interface{}) int64 {
+	// get simulation play duration
+	if video.SimulationPlayDuration != 0 {
+		video.PlayDuration = video.SimulationPlayDuration
+	} else {
+		video.RandomPlayDuration = getSimulationDuration(params)
+		video.PlayDuration = video.RandomPlayDuration
+	}
+	return video.PlayDuration
 }
 
 type VideoType string
