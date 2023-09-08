@@ -317,14 +317,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					continue
 				}
 
-			case VideoType_Image:
-				// 图文
-				log.Info().
-					Interface("feed", screenResult.Video).
-					Msg("found image success")
-
 			default:
-				// 点播
+				// 点播 || 图文
 				// check feed type and incr feed count
 				crawler.FeedCount++
 				log.Info().
