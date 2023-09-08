@@ -322,13 +322,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 			default:
 				// 点播 || 图文 || 广告 || etc.
-				// check feed type and incr feed count
-				crawler.FeedCount++
-				log.Info().
-					Strs("tags", screenResult.Tags).
-					Interface("feed", screenResult.Video).
-					Msg("found feed success")
-
 				// get simulation play duration
 				if screenResult.Video.SimulationPlayDuration != 0 {
 					screenResult.Video.PlayDuration = screenResult.Video.SimulationPlayDuration
@@ -336,6 +329,11 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					screenResult.Video.RandomPlayDuration = getSimulationDuration(crawler.configs.Feed.SleepRandom)
 					screenResult.Video.PlayDuration = screenResult.Video.RandomPlayDuration
 				}
+
+				crawler.FeedCount++
+				log.Info().Interface("feed", screenResult.Video).
+					Strs("tags", screenResult.Tags).
+					Msg("found feed success")
 
 				// simulation watch feed video
 				sleepStrict(swipeFinishTime, screenResult.Video.PlayDuration)
