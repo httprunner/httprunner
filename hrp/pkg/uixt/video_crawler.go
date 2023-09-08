@@ -119,7 +119,7 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 		return err
 	}
 	liveRoom, err := vc.getCurrentVideo()
-	if err != nil || (liveRoom.Type != VideoType_Live || liveRoom.Type != VideoType_PreviewLive) {
+	if err != nil || (liveRoom.Type != VideoType_Live && liveRoom.Type != VideoType_PreviewLive) {
 		return errors.New("enter live room failed")
 	}
 	log.Info().Interface("liveRoom", liveRoom).Msg("enter live room success")
