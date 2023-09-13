@@ -141,6 +141,23 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 			}
 			swipeFinishTime := time.Now()
 
+			// take screenshot and get screen texts by OCR
+			screenResult, err := vc.driverExt.GetScreenResult(
+				WithScreenShotOCR(true),
+				WithScreenShotUpload(true),
+				WithScreenShotLiveType(true),
+				WithScreenShotClosePopups(true),
+			)
+			if err != nil {
+				log.Error().Err(err).Msg("get screen result failed")
+				time.Sleep(3 * time.Second)
+				continue
+			}
+			if e := vc.driverExt.tapPopupHandler(screenResult.Popup); e != nil {
+				log.Error().Err(e).Msg("auto handle popup failed")
+				return e
+			}
+
 			liveRoom, err := vc.getCurrentVideo()
 			if err != nil || liveRoom.Type != VideoType_Live {
 				if vc.failedCount >= 3 {
@@ -150,25 +167,8 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 				log.Warn().Int64("failedCount", vc.failedCount).
 					Msg("get current live room failed")
 
-				// check and handle popups
-				if err := vc.driverExt.ClosePopupsHandler(WithMaxRetryTimes(3)); err != nil {
-					return err
-				}
-
 				// retry
 				vc.failedCount++
-				continue
-			}
-
-			// take screenshot and get screen texts by OCR
-			screenResult, err := vc.driverExt.GetScreenResult(
-				WithScreenShotOCR(true),
-				WithScreenShotUpload(true),
-				WithScreenShotLiveType(true),
-			)
-			if err != nil {
-				log.Error().Err(err).Msg("get screen result failed")
-				time.Sleep(3 * time.Second)
 				continue
 			}
 
