@@ -147,11 +147,16 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 					// failed 3 consecutive times
 					return errors.New("get current live event trackings failed 3 consecutive times")
 				}
+				log.Warn().Int64("failedCount", vc.failedCount).
+					Msg("get current live room failed")
+
+				// check and handle popups
+				if err := vc.driverExt.ClosePopupsHandler(WithMaxRetryTimes(3)); err != nil {
+					return err
+				}
+
 				// retry
 				vc.failedCount++
-				log.Warn().
-					Int64("failedCount", vc.failedCount).
-					Msg("get current live room failed")
 				continue
 			}
 
@@ -263,20 +268,15 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					return errors.New("get current feed video failed 10 consecutive times")
 				}
 				log.Warn().Msg("get current feed video failed")
+
+				// check and handle popups
+				if err := crawler.driverExt.ClosePopupsHandler(WithMaxRetryTimes(3)); err != nil {
+					return err
+				}
+
 				// retry
 				crawler.failedCount++
 				continue
-			}
-
-			if feedVideo.VideoID == crawler.lastVideo.VideoID &&
-				feedVideo.CacheKey == crawler.lastVideo.CacheKey &&
-				feedVideo.UserName == crawler.lastVideo.UserName {
-				// app event tracking not changed
-				// check and handle popups
-				log.Warn().Msg("feed video event tracking not changed")
-				if err = crawler.driverExt.ClosePopupsHandler(WithMaxRetryTimes(1)); err != nil {
-					return err
-				}
 			}
 			crawler.lastVideo = feedVideo
 
