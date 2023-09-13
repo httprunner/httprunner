@@ -162,7 +162,8 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 			if err != nil || liveRoom.Type != VideoType_Live {
 				if vc.failedCount >= 3 {
 					// failed 3 consecutive times
-					return errors.New("get current live event trackings failed 3 consecutive times")
+					return errors.Wrap(code.TrackingGetError,
+						"get current live event trackings failed 3 consecutive times")
 				}
 				log.Warn().Int64("failedCount", vc.failedCount).
 					Msg("get current live room failed")
@@ -265,7 +266,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			if err != nil || feedVideo.Type == "" {
 				if crawler.failedCount >= 10 {
 					// failed 10 consecutive times
-					return errors.New("get current feed video failed 10 consecutive times")
+					return errors.Wrap(code.TrackingGetError,
+						"get current feed video failed 10 consecutive times")
 				}
 				log.Warn().Msg("get current feed video failed")
 
