@@ -135,7 +135,7 @@ func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
 		default:
 			// swipe to next live video
 			swipeStartTime := time.Now()
-			if err := vc.driverExt.SwipeUp(); err != nil {
+			if err := vc.driverExt.SwipeRelative(0.9, 0.8, 0.9, 0.1); err != nil {
 				log.Error().Err(err).Msg("live swipe up failed")
 				return err
 			}
@@ -254,7 +254,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// swipe to next feed video
 			log.Info().Msg("swipe to next feed video")
 			swipeStartTime := time.Now()
-			if err = dExt.SwipeUp(); err != nil {
+			if err = dExt.SwipeRelative(0.9, 0.8, 0.9, 0.1); err != nil {
 				log.Error().Err(err).Msg("feed swipe up failed")
 				return err
 			}
