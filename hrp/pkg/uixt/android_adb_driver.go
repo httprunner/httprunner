@@ -272,6 +272,15 @@ func (ad *adbDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) 
 }
 
 func (ad *adbDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
+	actionOptions := NewActionOptions(options...)
+
+	if len(actionOptions.Offset) == 4 {
+		fromX += float64(actionOptions.Offset[0])
+		fromY += float64(actionOptions.Offset[1])
+		toX += float64(actionOptions.Offset[2])
+		toY += float64(actionOptions.Offset[3])
+	}
+
 	// adb shell input swipe fromX fromY toX toY
 	_, err := ad.adbClient.RunShellCommand(
 		"input", "swipe",
