@@ -106,11 +106,11 @@ type ActionOptions struct {
 	Scope    Scope    `json:"scope,omitempty" yaml:"scope,omitempty"`
 	AbsScope AbsScope `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"`
 
-	Regex             bool    `json:"regex,omitempty" yaml:"regex,omitempty"`                             // use regex to match text
-	Offset            []int   `json:"offset,omitempty" yaml:"offset,omitempty"`                           // used to tap offset of point
-	OffsetRandomScale float64 `json:"offset_random_scale,omitempty" yaml:"offset_random_scale,omitempty"` // used with Offset, set random scale for point
-	Index             int     `json:"index,omitempty" yaml:"index,omitempty"`                             // index of the target element
-	MatchOne          bool    `json:"match_one,omitempty" yaml:"match_one,omitempty"`                     // match one of the targets if existed
+	Regex             bool  `json:"regex,omitempty" yaml:"regex,omitempty"`                             // use regex to match text
+	Offset            []int `json:"offset,omitempty" yaml:"offset,omitempty"`                           // used to tap offset of point
+	OffsetRandomRange []int `json:"offset_random_range,omitempty" yaml:"offset_random_range,omitempty"` // set random range [min, max] for tap/swipe points
+	Index             int   `json:"index,omitempty" yaml:"index,omitempty"`                             // index of the target element
+	MatchOne          bool  `json:"match_one,omitempty" yaml:"match_one,omitempty"`                     // match one of the targets if existed
 
 	// set custiom options such as textview, id, description
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
@@ -189,6 +189,11 @@ func (o *ActionOptions) Options() []ActionOption {
 		options = append(options, WithSwipeOffset(
 			o.Offset[0], o.Offset[1], o.Offset[2], o.Offset[3]))
 	}
+	if len(o.OffsetRandomRange) == 2 {
+		options = append(options, WithOffsetRandomRange(
+			o.OffsetRandomRange[0], o.OffsetRandomRange[1]))
+	}
+
 	if o.Regex {
 		options = append(options, WithRegex(true))
 	}
@@ -244,6 +249,17 @@ func (o *ActionOptions) screenshotActions() []string {
 	return actions
 }
 
+func (o *ActionOptions) getRandomOffset() int {
+	if len(o.OffsetRandomRange) != 2 {
+		// invalid offset random range, should be [min, max]
+		return 0
+	}
+
+	minOffset := o.OffsetRandomRange[0]
+	maxOffset := o.OffsetRandomRange[1]
+	return builtin.GetRandomNumber(minOffset, maxOffset)
+}
+
 func NewActionOptions(options ...ActionOption) *ActionOptions {
 	actionOptions := &ActionOptions{}
 	for _, option := range options {
@@ -266,47 +282,47 @@ func mergeDataWithOptions(data map[string]interface{}, options ...ActionOption) 
 	if len(actionOptions.Offset) == 2 {
 		if x, ok := data["x"]; ok {
 			xf, _ := builtin.Interface2Float64(x)
-			data["x"] = xf + float64(actionOptions.Offset[0])
+			data["x"] = xf + float64(actionOptions.Offset[0]+actionOptions.getRandomOffset())
 		}
 		if y, ok := data["y"]; ok {
 			yf, _ := builtin.Interface2Float64(y)
-			data["y"] = yf + float64(actionOptions.Offset[1])
+			data["y"] = yf + float64(actionOptions.Offset[1]+actionOptions.getRandomOffset())
 		}
 	} else if len(actionOptions.Offset) == 4 {
 		// Android uia2: [startX, startY, endX, endY]
 		if startX, ok := data["startX"]; ok {
 			vf, _ := builtin.Interface2Float64(startX)
-			data["startX"] = vf + float64(actionOptions.Offset[0])
+			data["startX"] = vf + float64(actionOptions.Offset[0]+actionOptions.getRandomOffset())
 		}
 		if startY, ok := data["startY"]; ok {
 			vf, _ := builtin.Interface2Float64(startY)
-			data["startY"] = vf + float64(actionOptions.Offset[1])
+			data["startY"] = vf + float64(actionOptions.Offset[1]+actionOptions.getRandomOffset())
 		}
 		if endX, ok := data["endX"]; ok {
 			vf, _ := builtin.Interface2Float64(endX)
-			data["endX"] = vf + float64(actionOptions.Offset[2])
+			data["endX"] = vf + float64(actionOptions.Offset[2]+actionOptions.getRandomOffset())
 		}
 		if endY, ok := data["endY"]; ok {
 			vf, _ := builtin.Interface2Float64(endY)
-			data["endY"] = vf + float64(actionOptions.Offset[3])
+			data["endY"] = vf + float64(actionOptions.Offset[3]+actionOptions.getRandomOffset())
 		}
 
 		// iOS WDA: [fromX, fromY, toX, toY]
 		if fromX, ok := data["fromX"]; ok {
 			vf, _ := builtin.Interface2Float64(fromX)
-			data["fromX"] = vf + float64(actionOptions.Offset[0])
+			data["fromX"] = vf + float64(actionOptions.Offset[0]+actionOptions.getRandomOffset())
 		}
 		if fromY, ok := data["fromY"]; ok {
 			vf, _ := builtin.Interface2Float64(fromY)
-			data["fromY"] = vf + float64(actionOptions.Offset[1])
+			data["fromY"] = vf + float64(actionOptions.Offset[1]+actionOptions.getRandomOffset())
 		}
 		if toX, ok := data["toX"]; ok {
 			vf, _ := builtin.Interface2Float64(toX)
-			data["toX"] = vf + float64(actionOptions.Offset[2])
+			data["toX"] = vf + float64(actionOptions.Offset[2]+actionOptions.getRandomOffset())
 		}
 		if toY, ok := data["toY"]; ok {
 			vf, _ := builtin.Interface2Float64(toY)
-			data["toY"] = vf + float64(actionOptions.Offset[3])
+			data["toY"] = vf + float64(actionOptions.Offset[3]+actionOptions.getRandomOffset())
 		}
 	}
 
@@ -433,6 +449,12 @@ var WithTapOffset = WithOffset
 func WithSwipeOffset(offsetFromX, offsetFromY, offsetToX, offsetToY int) ActionOption {
 	return func(o *ActionOptions) {
 		o.Offset = []int{offsetFromX, offsetFromY, offsetToX, offsetToY}
+	}
+}
+
+func WithOffsetRandomRange(min, max int) ActionOption {
+	return func(o *ActionOptions) {
+		o.OffsetRandomRange = []int{min, max}
 	}
 }
 
