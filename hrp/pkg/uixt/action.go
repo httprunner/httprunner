@@ -106,10 +106,11 @@ type ActionOptions struct {
 	Scope    Scope    `json:"scope,omitempty" yaml:"scope,omitempty"`
 	AbsScope AbsScope `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"`
 
-	Regex    bool  `json:"regex,omitempty" yaml:"regex,omitempty"`         // use regex to match text
-	Offset   []int `json:"offset,omitempty" yaml:"offset,omitempty"`       // used to tap offset of point
-	Index    int   `json:"index,omitempty" yaml:"index,omitempty"`         // index of the target element
-	MatchOne bool  `json:"match_one,omitempty" yaml:"match_one,omitempty"` // match one of the targets if existed
+	Regex             bool    `json:"regex,omitempty" yaml:"regex,omitempty"`                             // use regex to match text
+	Offset            []int   `json:"offset,omitempty" yaml:"offset,omitempty"`                           // used to tap offset of point
+	OffsetRandomScale float64 `json:"offset_random_scale,omitempty" yaml:"offset_random_scale,omitempty"` // used with Offset, set random scale for point
+	Index             int     `json:"index,omitempty" yaml:"index,omitempty"`                             // index of the target element
+	MatchOne          bool    `json:"match_one,omitempty" yaml:"match_one,omitempty"`                     // match one of the targets if existed
 
 	// set custiom options such as textview, id, description
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
@@ -181,7 +182,12 @@ func (o *ActionOptions) Options() []ActionOption {
 			o.AbsScope[0], o.AbsScope[1], o.AbsScope[2], o.AbsScope[3]))
 	}
 	if len(o.Offset) == 2 {
-		options = append(options, WithOffset(o.Offset[0], o.Offset[1]))
+		// for tap [x,y] offset
+		options = append(options, WithTapOffset(o.Offset[0], o.Offset[1]))
+	} else if len(o.Offset) == 4 {
+		// for swipe [fromX, fromY, toX, toY] offset
+		options = append(options, WithSwipeOffset(
+			o.Offset[0], o.Offset[1], o.Offset[2], o.Offset[3]))
 	}
 	if o.Regex {
 		options = append(options, WithRegex(true))
@@ -265,6 +271,42 @@ func mergeDataWithOptions(data map[string]interface{}, options ...ActionOption) 
 		if y, ok := data["y"]; ok {
 			yf, _ := builtin.Interface2Float64(y)
 			data["y"] = yf + float64(actionOptions.Offset[1])
+		}
+	} else if len(actionOptions.Offset) == 4 {
+		// Android uia2: [startX, startY, endX, endY]
+		if startX, ok := data["startX"]; ok {
+			vf, _ := builtin.Interface2Float64(startX)
+			data["startX"] = vf + float64(actionOptions.Offset[0])
+		}
+		if startY, ok := data["startY"]; ok {
+			vf, _ := builtin.Interface2Float64(startY)
+			data["startY"] = vf + float64(actionOptions.Offset[1])
+		}
+		if endX, ok := data["endX"]; ok {
+			vf, _ := builtin.Interface2Float64(endX)
+			data["endX"] = vf + float64(actionOptions.Offset[2])
+		}
+		if endY, ok := data["endY"]; ok {
+			vf, _ := builtin.Interface2Float64(endY)
+			data["endY"] = vf + float64(actionOptions.Offset[3])
+		}
+
+		// iOS WDA: [fromX, fromY, toX, toY]
+		if fromX, ok := data["fromX"]; ok {
+			vf, _ := builtin.Interface2Float64(fromX)
+			data["fromX"] = vf + float64(actionOptions.Offset[0])
+		}
+		if fromY, ok := data["fromY"]; ok {
+			vf, _ := builtin.Interface2Float64(fromY)
+			data["fromY"] = vf + float64(actionOptions.Offset[1])
+		}
+		if toX, ok := data["toX"]; ok {
+			vf, _ := builtin.Interface2Float64(toX)
+			data["toX"] = vf + float64(actionOptions.Offset[2])
+		}
+		if toY, ok := data["toY"]; ok {
+			vf, _ := builtin.Interface2Float64(toY)
+			data["toY"] = vf + float64(actionOptions.Offset[3])
 		}
 	}
 
@@ -377,9 +419,20 @@ func WithAbsScope(x1, y1, x2, y2 int) ActionOption {
 	}
 }
 
+// Deprecated: use WithTapOffset instead
 func WithOffset(offsetX, offsetY int) ActionOption {
 	return func(o *ActionOptions) {
 		o.Offset = []int{offsetX, offsetY}
+	}
+}
+
+// tap [x, y] with offset [offsetX, offsetY]
+var WithTapOffset = WithOffset
+
+// swipe [fromX, fromY, toX, toY] with offset [offsetFromX, offsetFromY, offsetToX, offsetToY]
+func WithSwipeOffset(offsetFromX, offsetFromY, offsetToX, offsetToY int) ActionOption {
+	return func(o *ActionOptions) {
+		o.Offset = []int{offsetFromX, offsetFromY, offsetToX, offsetToY}
 	}
 }
 
