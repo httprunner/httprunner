@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -112,15 +113,10 @@ func (vc *VideoCrawler) isTargetAchieved() bool {
 }
 
 // run live video crawler
-func (vc *VideoCrawler) startLiveCrawler(enterPoint PointF) error {
-	log.Info().Msg("tap screen center to enter live room")
-	if err := vc.driverExt.TapAbsXY(enterPoint.X, enterPoint.Y); err != nil {
-		log.Error().Err(err).Msg("tap live video failed")
-		return err
-	}
+func (vc *VideoCrawler) startLiveCrawler() error {
 	liveRoom, err := vc.getCurrentVideo()
-	if err != nil || (liveRoom.Type != VideoType_Live && liveRoom.Type != VideoType_PreviewLive) {
-		return errors.New("enter live room failed")
+	if err != nil || (liveRoom.Type != VideoType_Live) {
+		return errors.New(fmt.Sprintf("enter live room failed, err: %v", err))
 	}
 	log.Info().Interface("liveRoom", liveRoom).Msg("enter live room success")
 
@@ -290,15 +286,36 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				SwipeStartTime:  swipeStartTime.UnixMilli(),
 				SwipeFinishTime: swipeFinishTime.UnixMilli(),
 			}
-			dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 
 			switch feedVideo.Type {
-			case VideoType_PreviewLive, VideoType_Live:
-				// 直播预览流 || 直播
-				crawler.LiveCount++
+			case VideoType_PreviewLive:
+				// 直播预览流
 				if crawler.isLiveTargetAchieved() {
 					log.Info().Interface("live", screenResult.Video).
 						Msg("live count achieved, skip")
+					continue
+				} else {
+					time.Sleep(1 * time.Second)
+					// live target not achieved, enter live
+					entryPoint := PointF{
+						X: float64(dExt.windowSize.Width / 2),
+						Y: float64(dExt.windowSize.Height / 2),
+					}
+
+					log.Info().Msg("tap screen center to enter live room")
+					if err := crawler.driverExt.TapAbsXY(entryPoint.X, entryPoint.Y); err != nil {
+						log.Error().Err(err).Msg("tap live video failed")
+						continue
+					}
+				}
+				fallthrough
+			case VideoType_Live:
+				// 直播
+				crawler.LiveCount++
+				if crawler.isLiveTargetAchieved() {
+					log.Info().Interface("live", screenResult.Video).
+						Msg("live count achieved, exit live house")
+					err = crawler.exitLiveRoom()
 				} else {
 					// simulation
 					log.Info().
@@ -306,29 +323,53 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						Interface("video", feedVideo).
 						Msg("found live success")
 
+					// take screenshot and get screen texts by OCR
+					screenResultFromOCR, err := crawler.driverExt.GetScreenResult(
+						WithScreenShotOCR(true),
+						WithScreenShotUpload(true),
+						WithScreenShotLiveType(true),
+						WithScreenShotClosePopups(true),
+					)
+					if err != nil {
+						log.Error().Err(err).Msg("get screen result failed")
+						time.Sleep(3 * time.Second)
+						continue
+					}
+					if e := crawler.driverExt.tapPopupHandler(screenResultFromOCR.Popup); e != nil {
+						log.Error().Err(e).Msg("auto handle popup failed")
+						continue
+					}
+
+					// add live type
+					if screenResultFromOCR.imageResult != nil &&
+						screenResultFromOCR.imageResult.LiveType != "" &&
+						screenResultFromOCR.imageResult.LiveType != "NoLive" {
+						screenResult.Video.LiveType = screenResultFromOCR.imageResult.LiveType
+					}
+
+					screenResultFromOCR.Video = screenResult.Video
+					screenResultFromOCR.Resolution = screenResult.Resolution
+					screenResultFromOCR.SwipeStartTime = screenResult.SwipeStartTime
+					screenResultFromOCR.SwipeFinishTime = screenResult.SwipeFinishTime
+
 					// simulation watch feed video
 					sleepStrict(swipeFinishTime, screenResult.Video.PlayDuration)
 
-					// live target not achieved, enter live
-					entryPoint := PointF{
-						X: float64(dExt.windowSize.Width / 2),
-						Y: float64(dExt.windowSize.Height / 2),
-					}
-
 					// start live crawler
-					err = crawler.startLiveCrawler(entryPoint)
-					if err != nil {
-						if errors.Is(err, code.TimeoutError) || errors.Is(err, code.InterruptError) {
-							return err
-						}
-						log.Error().Err(err).Msg("run live crawler failed, continue")
-					}
-					continue
+					err = crawler.startLiveCrawler()
 				}
+				if err != nil {
+					if errors.Is(err, code.TimeoutError) || errors.Is(err, code.InterruptError) {
+						return err
+					}
+					log.Error().Err(err).Msg("run live crawler failed, continue")
+				}
+				continue
 
 			default:
 				// 点播 || 图文 || 广告 || etc.
 				crawler.FeedCount++
+				dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 				log.Info().
 					Strs("tags", screenResult.Tags).
 					Interface("video", feedVideo).
