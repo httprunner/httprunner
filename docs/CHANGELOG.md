@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.6 (2023-08-24)
+## v4.3.6 (2023-09-07)
 
 **go version**
 
@@ -27,6 +27,7 @@ UI related:
 - fix: reuse the same request body during `GetImage` retry
 - fix: iOS `tap_xy` scale adaption error
 - feat: support new action: `close_popups`
+- fix: swipeToTapTexts with identifiers/regex
 
 others:
 
