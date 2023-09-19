@@ -301,7 +301,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						Msg("live count achieved, skip")
 				} else {
 					// simulation
-					log.Info().Interface("feed", screenResult.Video).
+					log.Info().
 						Strs("tags", screenResult.Tags).
 						Interface("video", feedVideo).
 						Msg("found live success")
@@ -329,7 +329,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			default:
 				// 点播 || 图文 || 广告 || etc.
 				crawler.FeedCount++
-				log.Info().Interface("feed", screenResult.Video).
+				log.Info().
 					Strs("tags", screenResult.Tags).
 					Interface("video", feedVideo).
 					Msg("found feed success")
