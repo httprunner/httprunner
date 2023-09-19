@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"math"
 	"time"
 
 	"github.com/pkg/errors"
@@ -201,9 +202,19 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			case VideoType_PreviewLive:
 				// 直播预览流
 				if crawler.isLiveTargetAchieved() {
-					log.Info().Interface("live", screenResult.Video).
-						Msg("live count achieved, skip")
-					continue
+					// 达标后不再进入直播间
+					crawler.LiveCount++
+					dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
+					// 观播时长取随机时长与仿真时长的最小值
+					sleepTime := math.Min(float64(feedVideo.SimulationPlayDuration), float64(feedVideo.RandomPlayDuration))
+					feedVideo.PlayDuration = int64(sleepTime)
+					log.Info().
+						Strs("tags", screenResult.Tags).
+						Interface("video", feedVideo).
+						Msg("found live success")
+					// simulation watch feed video
+					sleepStrict(swipeFinishTime, feedVideo.PlayDuration)
+					break
 				} else {
 					time.Sleep(1 * time.Second)
 					// live target not achieved, enter live
@@ -375,15 +386,16 @@ func (vc *VideoCrawler) getCurrentVideo() (video *Video, err error) {
 		return nil, errors.Wrap(err, "json unmarshal video info failed")
 	}
 
+	if video.Type == VideoType_Live || video.Type == VideoType_PreviewLive {
+		video.RandomPlayDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
+	} else {
+		video.RandomPlayDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
+	}
+
 	// get simulation play duration
 	if video.SimulationPlayDuration != 0 {
 		video.PlayDuration = video.SimulationPlayDuration
 	} else {
-		if video.Type == VideoType_Live || video.Type == VideoType_PreviewLive {
-			video.RandomPlayDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
-		} else {
-			video.RandomPlayDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
-		}
 		video.PlayDuration = video.RandomPlayDuration
 	}
 
