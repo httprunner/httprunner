@@ -1,5 +1,12 @@
 # Release History
 
+## v4.3.7 (2023-09-19)
+
+**go version**
+
+- feat: add `WithSwipeOffset` to set offset for swipe start/end point
+- change: set `WithOffset` deprecated, replace with `WithTapOffset`
+
 ## v4.3.6 (2023-09-07)
 
 **go version**
@@ -9,8 +16,6 @@ plugin related:
 - feat: add hrp executable directory for searching plugin
 - feat: init device driver with plugin options, `WithDriverCapabilities` and `WithDriverPlugin`
 - feat: support printing stderr output in myexec.RunCommand
-- feat: add `WithSwipeOffset` to set offset for swipe start/end point
-- change: set `WithOffset` deprecated, replace with `WithTapOffset`
 - change: upgrade funplugin to 0.5.3
 - refactor: move internal myexec to funplugin/myexec
 - change: create python3 plugin venv with latest funppy/httprunner
