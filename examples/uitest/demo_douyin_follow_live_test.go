@@ -39,8 +39,8 @@ func TestIOSDouyinFollowLive(t *testing.T) {
 				TapByOCR("关注", uixt.WithIndex(1)).Sleep(10),
 			hrp.NewStep("向上滑动 2 次").
 				IOS().SwipeToTapTexts([]string{"理肤泉", "婉宝"}, uixt.WithCustomDirection(0.6, 0.2, 0.2, 0.2), uixt.WithIdentifier("click_live")).Sleep(10).
-				Swipe(0.9, 0.7, 0.9, 0.3, uixt.WithIdentifier("slide_in_live")).Sleep(10).ScreenShot(). // 上划 1 次，等待 10s，截图保存
-				Swipe(0.9, 0.7, 0.9, 0.3, uixt.WithIdentifier("slide_in_live")).Sleep(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
+				Swipe(0.9, 0.7, 0.9, 0.3, uixt.WithIdentifier("slide_in_live"), uixt.WithOffsetRandomRange(-10, 10)).Sleep(10).ScreenShot(). // 上划 1 次，等待 10s，截图保存
+				Swipe(0.9, 0.7, 0.9, 0.3, uixt.WithIdentifier("slide_in_live"), uixt.WithOffsetRandomRange(-10, 10)).Sleep(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
 		},
 	}
 

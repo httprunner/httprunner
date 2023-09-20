@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"io/ioutil"
+	"io"
 	"math"
 	"mime/multipart"
 	"net/http"
@@ -55,8 +55,8 @@ func (o OCRResults) ToOCRTexts() (ocrTexts OCRTexts) {
 }
 
 type ImageResult struct {
-	URL       string     `json:"url"`       // image uploaded url
-	OCRResult OCRResults `json:"ocrResult"` // OCR texts
+	URL       string     `json:"url,omitempty"`       // image uploaded url
+	OCRResult OCRResults `json:"ocrResult,omitempty"` // OCR texts
 	// NoLive（非直播间）
 	// Shop（电商）
 	// LifeService（生活服务）
@@ -67,9 +67,9 @@ type ImageResult struct {
 	// Media（媒体）
 	// Chat（语音）
 	// Event（赛事）
-	LiveType string            `json:"liveType"`    // 直播间类型
-	UIResult UIResultMap       `json:"uiResult"`    // 图标检测
-	CPResult ClosePopupsResult `json:"closeResult"` // 弹窗按钮检测
+	LiveType string             `json:"liveType,omitempty"`    // 直播间类型
+	UIResult UIResultMap        `json:"uiResult,omitempty"`    // 图标检测
+	CPResult *ClosePopupsResult `json:"closeResult,omitempty"` // 弹窗按钮检测
 }
 
 type APIResponseImage struct {
@@ -257,6 +257,10 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 			return
 		}
 
+		// ppe env
+		// req.Header.Add("x-tt-env", "ppe_vedem_algorithm")
+		// req.Header.Add("x-use-ppe", "1")
+
 		signToken := "UNSIGNED-PAYLOAD"
 		token := builtin.Sign("auth-v2", env.VEDEM_IMAGE_AK, env.VEDEM_IMAGE_SK, []byte(signToken))
 
@@ -267,23 +271,31 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 		start := time.Now()
 		resp, err = client.Do(req)
 		elapsed := time.Since(start)
-		var logID string
-		if resp != nil {
-			logID = getLogID(resp.Header)
+		if err != nil {
+			log.Error().Err(err).
+				Int("imageBufSize", size).
+				Msgf("request veDEM OCR service error, retry %d", i)
+			continue
 		}
-		if err == nil && resp.StatusCode == http.StatusOK {
-			log.Debug().
+
+		logID := getLogID(resp.Header)
+		statusCode := resp.StatusCode
+		if statusCode != http.StatusOK {
+			log.Error().
 				Str("X-TT-LOGID", logID).
-				Int("image_bytes", size).
-				Int64("elapsed(ms)", elapsed.Milliseconds()).
-				Msg("request OCR service success")
-			break
+				Int("imageBufSize", size).
+				Int("statusCode", statusCode).
+				Msgf("request veDEM OCR service failed, retry %d", i)
+			time.Sleep(1 * time.Second)
+			continue
 		}
-		log.Error().Err(err).
+
+		log.Debug().
 			Str("X-TT-LOGID", logID).
-			Int("imageBufSize", size).
-			Msgf("request veDEM OCR service failed, retry %d", i)
-		time.Sleep(1 * time.Second)
+			Int("image_bytes", size).
+			Int64("elapsed(ms)", elapsed.Milliseconds()).
+			Msg("request OCR service success")
+		break
 	}
 	if resp == nil {
 		err = code.CVServiceConnectionError
@@ -292,7 +304,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 
 	defer resp.Body.Close()
 
-	results, err := ioutil.ReadAll(resp.Body)
+	results, err := io.ReadAll(resp.Body)
 	if err != nil {
 		err = errors.Wrap(code.CVResponseError,
 			fmt.Sprintf("read response body error: %v", err))
@@ -379,6 +391,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		bufSource:             bufSource,
 		imagePath:             imagePath,
 		Tags:                  nil,
+		Resolution:            dExt.windowSize,
 		ScreenshotTakeElapsed: screenshotTakeElapsed,
 	}
 
@@ -388,16 +401,12 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		return nil, err
 	}
 	if imageResult != nil {
+		screenResult.imageResult = imageResult
 		screenResult.ScreenshotCVElapsed = time.Since(startTime).Milliseconds() - screenshotTakeElapsed
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
 
-		if imageResult.LiveType != "" && imageResult.LiveType != "NoLive" {
-			screenResult.Live = &LiveRoom{
-				LiveType: imageResult.LiveType,
-			}
-		}
 		if actionOptions.ScreenShotWithClosePopups {
 			screenResult.Popup = &PopupInfo{
 				Type:      imageResult.CPResult.Type,
@@ -408,10 +417,9 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 				CloseArea: imageResult.CPResult.CloseArea,
 			}
 		}
-
 	}
 
-	dExt.cacheStepData.screenResults[imagePath] = screenResult
+	dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 
 	log.Debug().
 		Str("imagePath", imagePath).

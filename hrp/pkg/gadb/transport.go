@@ -3,7 +3,6 @@ package gadb
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"regexp"
 	"strconv"
@@ -97,7 +96,7 @@ func (t transport) ReadStringAll() (s string, err error) {
 }
 
 func (t transport) ReadBytesAll() (raw []byte, err error) {
-	raw, err = ioutil.ReadAll(t.sock)
+	raw, err = io.ReadAll(t.sock)
 	return
 }
 

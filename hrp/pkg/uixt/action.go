@@ -106,10 +106,11 @@ type ActionOptions struct {
 	Scope    Scope    `json:"scope,omitempty" yaml:"scope,omitempty"`
 	AbsScope AbsScope `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"`
 
-	Regex    bool  `json:"regex,omitempty" yaml:"regex,omitempty"`         // use regex to match text
-	Offset   []int `json:"offset,omitempty" yaml:"offset,omitempty"`       // used to tap offset of point
-	Index    int   `json:"index,omitempty" yaml:"index,omitempty"`         // index of the target element
-	MatchOne bool  `json:"match_one,omitempty" yaml:"match_one,omitempty"` // match one of the targets if existed
+	Regex             bool  `json:"regex,omitempty" yaml:"regex,omitempty"`                             // use regex to match text
+	Offset            []int `json:"offset,omitempty" yaml:"offset,omitempty"`                           // used to tap offset of point
+	OffsetRandomRange []int `json:"offset_random_range,omitempty" yaml:"offset_random_range,omitempty"` // set random range [min, max] for tap/swipe points
+	Index             int   `json:"index,omitempty" yaml:"index,omitempty"`                             // index of the target element
+	MatchOne          bool  `json:"match_one,omitempty" yaml:"match_one,omitempty"`                     // match one of the targets if existed
 
 	// set custiom options such as textview, id, description
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
@@ -181,8 +182,18 @@ func (o *ActionOptions) Options() []ActionOption {
 			o.AbsScope[0], o.AbsScope[1], o.AbsScope[2], o.AbsScope[3]))
 	}
 	if len(o.Offset) == 2 {
-		options = append(options, WithOffset(o.Offset[0], o.Offset[1]))
+		// for tap [x,y] offset
+		options = append(options, WithTapOffset(o.Offset[0], o.Offset[1]))
+	} else if len(o.Offset) == 4 {
+		// for swipe [fromX, fromY, toX, toY] offset
+		options = append(options, WithSwipeOffset(
+			o.Offset[0], o.Offset[1], o.Offset[2], o.Offset[3]))
 	}
+	if len(o.OffsetRandomRange) == 2 {
+		options = append(options, WithOffsetRandomRange(
+			o.OffsetRandomRange[0], o.OffsetRandomRange[1]))
+	}
+
 	if o.Regex {
 		options = append(options, WithRegex(true))
 	}
@@ -238,52 +249,41 @@ func (o *ActionOptions) screenshotActions() []string {
 	return actions
 }
 
-func NewActionOptions(options ...ActionOption) *ActionOptions {
-	actionOptions := &ActionOptions{}
-	for _, option := range options {
-		option(actionOptions)
+func (o *ActionOptions) getRandomOffset() float64 {
+	if len(o.OffsetRandomRange) != 2 {
+		// invalid offset random range, should be [min, max]
+		return 0
 	}
-	return actionOptions
+
+	minOffset := o.OffsetRandomRange[0]
+	maxOffset := o.OffsetRandomRange[1]
+	return float64(builtin.GetRandomNumber(minOffset, maxOffset)) + rand.Float64()
 }
 
-func mergeDataWithOptions(data map[string]interface{}, options ...ActionOption) map[string]interface{} {
-	actionOptions := NewActionOptions(options...)
-
-	if actionOptions.Identifier != "" {
+func (o *ActionOptions) updateData(data map[string]interface{}) {
+	if o.Identifier != "" {
 		data["log"] = map[string]interface{}{
 			"enable": true,
-			"data":   actionOptions.Identifier,
+			"data":   o.Identifier,
 		}
 	}
 
-	// handle point offset
-	if len(actionOptions.Offset) == 2 {
-		if x, ok := data["x"]; ok {
-			xf, _ := builtin.Interface2Float64(x)
-			data["x"] = xf + float64(actionOptions.Offset[0])
-		}
-		if y, ok := data["y"]; ok {
-			yf, _ := builtin.Interface2Float64(y)
-			data["y"] = yf + float64(actionOptions.Offset[1])
-		}
-	}
-
-	if actionOptions.Steps > 0 {
-		data["steps"] = actionOptions.Steps
+	if o.Steps > 0 {
+		data["steps"] = o.Steps
 	}
 	if _, ok := data["steps"]; !ok {
 		data["steps"] = 12 // default steps
 	}
 
-	if actionOptions.PressDuration > 0 {
-		data["duration"] = actionOptions.PressDuration
+	if o.PressDuration > 0 {
+		data["duration"] = o.PressDuration
 	}
 	if _, ok := data["duration"]; !ok {
 		data["duration"] = 0 // default duration
 	}
 
-	if actionOptions.Frequency > 0 {
-		data["frequency"] = actionOptions.Frequency
+	if o.Frequency > 0 {
+		data["frequency"] = o.Frequency
 	}
 	if _, ok := data["frequency"]; !ok {
 		data["frequency"] = 60 // default frequency
@@ -294,13 +294,19 @@ func mergeDataWithOptions(data map[string]interface{}, options ...ActionOption) 
 	}
 
 	// custom options
-	if actionOptions.Custom != nil {
-		for k, v := range actionOptions.Custom {
+	if o.Custom != nil {
+		for k, v := range o.Custom {
 			data[k] = v
 		}
 	}
+}
 
-	return data
+func NewActionOptions(options ...ActionOption) *ActionOptions {
+	actionOptions := &ActionOptions{}
+	for _, option := range options {
+		option(actionOptions)
+	}
+	return actionOptions
 }
 
 type ActionOption func(o *ActionOptions)
@@ -377,9 +383,26 @@ func WithAbsScope(x1, y1, x2, y2 int) ActionOption {
 	}
 }
 
+// Deprecated: use WithTapOffset instead
 func WithOffset(offsetX, offsetY int) ActionOption {
 	return func(o *ActionOptions) {
 		o.Offset = []int{offsetX, offsetY}
+	}
+}
+
+// tap [x, y] with offset [offsetX, offsetY]
+var WithTapOffset = WithOffset
+
+// swipe [fromX, fromY, toX, toY] with offset [offsetFromX, offsetFromY, offsetToX, offsetToY]
+func WithSwipeOffset(offsetFromX, offsetFromY, offsetToX, offsetToY int) ActionOption {
+	return func(o *ActionOptions) {
+		o.Offset = []int{offsetFromX, offsetFromY, offsetToX, offsetToY}
+	}
+}
+
+func WithOffsetRandomRange(min, max int) ActionOption {
+	return func(o *ActionOptions) {
+		o.OffsetRandomRange = []int{min, max}
 	}
 }
 
