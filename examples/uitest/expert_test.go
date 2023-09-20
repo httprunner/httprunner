@@ -111,7 +111,7 @@ func TestAndroidExpertTest(t *testing.T) {
 			hrp.NewStep("home 以及 swipe_to_tap_app 自定义配置").
 				Android().
 				Home().
-				SwipeToTapApp("$app_name", uixt.WithMaxRetryTimes(5), uixt.WithInterval(1), uixt.WithOffset(0, -50)).
+				SwipeToTapApp("$app_name", uixt.WithMaxRetryTimes(5), uixt.WithInterval(1), uixt.WithTapOffset(0, -50)).
 				Sleep(10),
 			hrp.NewStep("处理弹窗 close_popups 自定义配置 以及 ui_ocr exists 断言").
 				Android().
@@ -265,7 +265,7 @@ func TestIOSExpertTest(t *testing.T) {
 			hrp.NewStep("home 以及 swipe_to_tap_app 自定义配置").
 				IOS().
 				Home().
-				SwipeToTapApp("$app_name", uixt.WithMaxRetryTimes(5), uixt.WithInterval(1), uixt.WithOffset(0, -50)).
+				SwipeToTapApp("$app_name", uixt.WithMaxRetryTimes(5), uixt.WithInterval(1), uixt.WithTapOffset(0, -50)).
 				Sleep(10),
 			hrp.NewStep("处理弹窗 close_popups 自定义配置 以及 ui_ocr exists 断言").
 				IOS().

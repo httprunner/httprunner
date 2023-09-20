@@ -452,7 +452,7 @@ func GenNameWithTimestamp(tmpl string) string {
 }
 
 func IsZeroFloat64(f float64) bool {
-	threshold := 1e-3
+	threshold := 1e-9
 	return math.Abs(f) < threshold
 }
 

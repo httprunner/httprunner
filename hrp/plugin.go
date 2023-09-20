@@ -77,7 +77,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 	// found plugin file
 	plugin, err = funplugin.Init(pluginPath, pluginOptions...)
 	if err != nil {
-		log.Error().Err(err).Msgf("init plugin failed: %s", pluginPath)
+		log.Error().Str("path", pluginPath).Msg("init plugin failed")
 		err = errors.Wrap(code.InitPluginFailed, err.Error())
 		return
 	}

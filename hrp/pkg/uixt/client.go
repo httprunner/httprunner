@@ -72,7 +72,7 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 		_ = resp.Body.Close()
 	}()
 
-	rawResp, err = ioutil.ReadAll(resp.Body)
+	rawResp, err = io.ReadAll(resp.Body)
 	logger := log.Debug().Int("statusCode", resp.StatusCode).Str("duration", time.Since(start).String())
 	if !strings.HasSuffix(rawURL, "screenshot") {
 		// avoid printing screenshot data

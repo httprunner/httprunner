@@ -81,7 +81,8 @@ func TestTapUIWithScreenshot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = driver.TapByUIDetection(WithScreenShotUITypes("dyhouse", "shoppingbag"))
+	err = driver.TapByUIDetection(
+		WithScreenShotUITypes("dyhouse", "shoppingbag"))
 	if err != nil {
 		t.Fatal(err)
 	}

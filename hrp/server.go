@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -42,7 +42,7 @@ func parseBody(r *http.Request) (data map[string]interface{}, err error) {
 
 	// Always set resp.Data to the incoming request body, in case we don't know
 	// how to handle the content type
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		r.Body.Close()
 		return nil, err

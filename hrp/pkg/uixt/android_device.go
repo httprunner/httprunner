@@ -95,11 +95,19 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 	}
 
 	dev := deviceList[0]
-	device.SerialNumber = dev.Serial()
+
+	if device.SerialNumber == "" {
+		selectSerial := dev.Serial()
+		device.SerialNumber = selectSerial
+		log.Warn().
+			Str("serial", device.SerialNumber).
+			Msg("android SerialNumber is not specified, select the first one")
+	}
+
 	device.d = dev
 	device.logcat = NewAdbLogcat(device.SerialNumber)
 
-	log.Info().Str("serial", device.SerialNumber).Msg("select android device")
+	log.Info().Str("serial", device.SerialNumber).Msg("init android device")
 	return device, nil
 }
 

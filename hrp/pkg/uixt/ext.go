@@ -2,7 +2,6 @@ package uixt
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"image"
 	"image/gif"
@@ -52,16 +51,16 @@ func WithThreshold(threshold float64) CVOption {
 }
 
 type ScreenResult struct {
-	bufSource *bytes.Buffer // raw image buffer bytes
-	imagePath string        // image file path
+	bufSource   *bytes.Buffer // raw image buffer bytes
+	imagePath   string        // image file path
+	imageResult *ImageResult  // image result
 
-	UploadedURL string      `json:"uploaded_url"`         // uploaded image url
-	Texts       OCRTexts    `json:"texts"`                // dumped raw OCRTexts
-	Icons       UIResultMap `json:"icons"`                // CV 识别的图标
-	Tags        []string    `json:"tags"`                 // tags for image, e.g. ["feed", "ad", "live"]
-	VideoType   string      `json:"video_type,omitempty"` // video type: feed, live-preview or live
-	Feed        *FeedVideo  `json:"feed,omitempty"`
-	Live        *LiveRoom   `json:"live,omitempty"`
+	Resolution  Size        `json:"resolution"`
+	UploadedURL string      `json:"uploaded_url"` // uploaded image url
+	Texts       OCRTexts    `json:"texts"`        // dumped raw OCRTexts
+	Icons       UIResultMap `json:"icons"`        // CV 识别的图标
+	Tags        []string    `json:"tags"`         // tags for image, e.g. ["feed", "ad", "live"]
+	Video       *Video      `json:"video,omitempty"`
 	Popup       *PopupInfo  `json:"popup,omitempty"`
 
 	SwipeStartTime  int64 `json:"swipe_start_time"`  // 滑动开始时间戳
@@ -74,16 +73,16 @@ type ScreenResult struct {
 	TotalElapsed int64 `json:"total_elapsed"` // current_swipe_finish -> next_swipe_start 整体耗时(ms)
 }
 
-type ScreenResultMap map[string]*ScreenResult
+type ScreenResultMap map[string]*ScreenResult // key is date time
 
 // getScreenShotUrls returns screenShotsUrls using imagePath as key and uploaded URL as value
 func (screenResults ScreenResultMap) getScreenShotUrls() map[string]string {
 	screenShotsUrls := make(map[string]string)
-	for imagePath, screenResult := range screenResults {
+	for _, screenResult := range screenResults {
 		if screenResult.UploadedURL == "" {
 			continue
 		}
-		screenShotsUrls[imagePath] = screenResult.UploadedURL
+		screenShotsUrls[screenResult.imagePath] = screenResult.UploadedURL
 	}
 	return screenShotsUrls
 }
@@ -176,7 +175,7 @@ func newDriverExt(device Device, driver WebDriver, plugin funplugin.IPlugin) (dE
 	// get device window size
 	dExt.windowSize, err = dExt.Driver.WindowSize()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get screen resolution failed")
 	}
 
 	if dExt.ImageService, err = newVEDEMImageService(); err != nil {
@@ -275,37 +274,7 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenResults.getScreenShotUrls()
 	dExt.cacheStepData.screenResults.updatePopupCloseStatus()
-
-	screenSize, err := dExt.Driver.WindowSize()
-	if err != nil {
-		log.Warn().Err(err).Msg("get screen resolution failed")
-		screenSize = Size{}
-	}
-	screenResults := make(map[string]interface{})
-	for imagePath, screenResult := range dExt.cacheStepData.screenResults {
-		o, _ := json.Marshal(screenResult.Texts)
-		data := map[string]interface{}{
-			"tags":  screenResult.Tags,
-			"texts": string(o),
-			"resolution": map[string]int{
-				"width":  screenSize.Width,
-				"height": screenSize.Height,
-			},
-			"video_type":              screenResult.VideoType,
-			"feed":                    screenResult.Feed,
-			"live":                    screenResult.Live,
-			"swipe_start_time":        screenResult.SwipeStartTime,
-			"swipe_finish_time":       screenResult.SwipeFinishTime,
-			"screenshot_take_elapsed": screenResult.ScreenshotTakeElapsed,
-			"screenshot_cv_elapsed":   screenResult.ScreenshotCVElapsed,
-			"total_elapsed":           screenResult.TotalElapsed,
-			"icons":                   screenResult.Icons,
-			"popup":                   screenResult.Popup,
-		}
-
-		screenResults[imagePath] = data
-	}
-	cacheData["screen_results"] = screenResults
+	cacheData["screen_results"] = dExt.cacheStepData.screenResults
 
 	// clear cache
 	dExt.cacheStepData.reset()
@@ -370,14 +339,19 @@ func (dExt *DriverExt) AssertImage(imagePath, assert string) bool {
 }
 
 func (dExt *DriverExt) AssertForegroundApp(appName, assert string) bool {
-	var err error
+	app, err := dExt.Driver.GetForegroundApp()
+	if err != nil {
+		log.Warn().Err(err).Msg("get foreground app failed, skip app/activity assertion")
+		return true // Notice: ignore error when get foreground app failed
+	}
+	log.Debug().Interface("app", app).Msg("get foreground app")
+
+	// assert package name
 	switch assert {
 	case AssertionEqual:
-		err = dExt.Driver.AssertForegroundApp(appName)
-		return err == nil
+		return app.PackageName == appName
 	case AssertionNotEqual:
-		err = dExt.Driver.AssertForegroundApp(appName)
-		return err != nil
+		return app.PackageName != appName
 	default:
 		log.Warn().Str("assert method", assert).Msg("unexpected assert method")
 	}

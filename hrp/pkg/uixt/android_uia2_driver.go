@@ -259,14 +259,23 @@ func (ud *uiaDriver) Tap(x, y int, options ...ActionOption) error {
 
 func (ud *uiaDriver) TapFloat(x, y float64, options ...ActionOption) (err error) {
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
+	actionOptions := NewActionOptions(options...)
+
+	if len(actionOptions.Offset) == 2 {
+		x += float64(actionOptions.Offset[0])
+		y += float64(actionOptions.Offset[1])
+	}
+	x += actionOptions.getRandomOffset()
+	y += actionOptions.getRandomOffset()
+
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
 	}
-	// new data options in post data for extra uiautomator configurations
-	newData := mergeDataWithOptions(data, options...)
+	// update data options in post data for extra uiautomator configurations
+	actionOptions.updateData(data)
 
-	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "appium/tap")
+	_, err = ud.httpPOST(data, "/session", ud.sessionId, "appium/tap")
 	return
 }
 
@@ -299,6 +308,18 @@ func (ud *uiaDriver) Drag(fromX, fromY, toX, toY int, options ...ActionOption) e
 }
 
 func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
+	actionOptions := NewActionOptions(options...)
+	if len(actionOptions.Offset) == 4 {
+		fromX += float64(actionOptions.Offset[0])
+		fromY += float64(actionOptions.Offset[1])
+		toX += float64(actionOptions.Offset[2])
+		toY += float64(actionOptions.Offset[3])
+	}
+	fromX += actionOptions.getRandomOffset()
+	fromY += actionOptions.getRandomOffset()
+	toX += actionOptions.getRandomOffset()
+	toY += actionOptions.getRandomOffset()
+
 	data := map[string]interface{}{
 		"startX": fromX,
 		"startY": fromY,
@@ -306,11 +327,11 @@ func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...Action
 		"endY":   toY,
 	}
 
-	// new data options in post data for extra uiautomator configurations
-	newData := mergeDataWithOptions(data, options...)
+	// update data options in post data for extra uiautomator configurations
+	actionOptions.updateData(data)
 
 	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
-	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "touch/drag")
+	_, err = ud.httpPOST(data, "/session", ud.sessionId, "touch/drag")
 	return
 }
 
@@ -325,6 +346,18 @@ func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) 
 
 func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
+	actionOptions := NewActionOptions(options...)
+	if len(actionOptions.Offset) == 4 {
+		fromX += float64(actionOptions.Offset[0])
+		fromY += float64(actionOptions.Offset[1])
+		toX += float64(actionOptions.Offset[2])
+		toY += float64(actionOptions.Offset[3])
+	}
+	fromX += actionOptions.getRandomOffset()
+	fromY += actionOptions.getRandomOffset()
+	toX += actionOptions.getRandomOffset()
+	toY += actionOptions.getRandomOffset()
+
 	data := map[string]interface{}{
 		"startX": fromX,
 		"startY": fromY,
@@ -332,10 +365,10 @@ func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...Actio
 		"endY":   toY,
 	}
 
-	// new data options in post data for extra uiautomator configurations
-	newData := mergeDataWithOptions(data, options...)
+	// update data options in post data for extra uiautomator configurations
+	actionOptions.updateData(data)
 
-	_, err := ud.httpPOST(newData, "/session", ud.sessionId, "touch/perform")
+	_, err := ud.httpPOST(data, "/session", ud.sessionId, "touch/perform")
 	return err
 }
 
@@ -385,13 +418,14 @@ func (ud *uiaDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 func (ud *uiaDriver) SendKeys(text string, options ...ActionOption) (err error) {
 	// register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/keys"))
 	// https://github.com/appium/appium-uiautomator2-server/blob/master/app/src/main/java/io/appium/uiautomator2/handler/SendKeysToElement.java#L76-L85
+	actionOptions := NewActionOptions(options...)
 	data := map[string]interface{}{
 		"text": text,
 	}
 	// new data options in post data for extra uiautomator configurations
-	newData := mergeDataWithOptions(data, options...)
+	actionOptions.updateData(data)
 
-	_, err = ud.httpPOST(newData, "/session", ud.sessionId, "keys")
+	_, err = ud.httpPOST(data, "/session", ud.sessionId, "keys")
 	return
 }
 
