@@ -44,7 +44,6 @@ type VideoCrawler struct {
 
 	// used to help checking if swipe success
 	failedCount int64
-	lastVideo   *Video
 
 	FeedCount int            `json:"feed_count"`
 	FeedStat  map[string]int `json:"feed_stat"` // 分类统计 feed 数量：视频/图文/广告/特效/模板/购物
@@ -117,6 +116,11 @@ func (vc *VideoCrawler) exitLiveRoom() error {
 	return vc.driverExt.Driver.PressBack()
 }
 
+const (
+	FOUND_FEED_SUCCESS = "found feed success"
+	FOUND_LIVE_SUCCESS = "found live success"
+)
+
 func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 	if dExt.plugin == nil {
 		return errors.New("miss plugin for video crawler")
@@ -135,12 +139,10 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 		configs:   configs,
 
 		failedCount: 0,
-		lastVideo:   &Video{},
-
-		FeedCount: 0,
-		FeedStat:  make(map[string]int),
-		LiveCount: 0,
-		LiveStat:  make(map[string]int),
+		FeedCount:   0,
+		FeedStat:    make(map[string]int),
+		LiveCount:   0,
+		LiveStat:    make(map[string]int),
 	}
 	defer func() {
 		dExt.cacheStepData.videoCrawler = crawler
@@ -187,7 +189,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				crawler.failedCount++
 				continue
 			}
-			crawler.lastVideo = feedVideo
 
 			screenResult := &ScreenResult{
 				Resolution: dExt.windowSize,
@@ -211,7 +212,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Info().
 						Strs("tags", screenResult.Tags).
 						Interface("video", feedVideo).
-						Msg("found live success")
+						Msg(FOUND_LIVE_SUCCESS)
 					// simulation watch feed video
 					sleepStrict(swipeFinishTime, feedVideo.PlayDuration)
 					break
@@ -224,7 +225,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					}
 
 					log.Info().Msg("tap screen center to enter live room")
-					if err := crawler.driverExt.TapAbsXY(entryPoint.X, entryPoint.Y); err != nil {
+					if err := crawler.driverExt.TapAbsXY(entryPoint.X, entryPoint.Y,
+						WithOffsetRandomRange(-20, 20)); err != nil {
 						log.Error().Err(err).Msg("tap live video failed")
 						continue
 					}
@@ -236,7 +238,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				log.Info().
 					Strs("tags", screenResult.Tags).
 					Interface("video", feedVideo).
-					Msg("found live success")
+					Msg(FOUND_LIVE_SUCCESS)
 
 				// take screenshot and get screen texts by OCR
 				screenResultFromOCR, err := crawler.driverExt.GetScreenResult(
@@ -291,7 +293,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				log.Info().
 					Strs("tags", screenResult.Tags).
 					Interface("video", feedVideo).
-					Msg("found feed success")
+					Msg(FOUND_FEED_SUCCESS)
 
 				// simulation watch feed video
 				sleepStrict(swipeFinishTime, screenResult.Video.PlayDuration)
