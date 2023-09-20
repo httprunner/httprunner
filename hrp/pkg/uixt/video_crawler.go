@@ -207,7 +207,18 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			switch feedVideo.Type {
 			case VideoType_PreviewLive:
 				// 直播预览流
+				var skipEnterLive bool
 				if crawler.isLiveTargetAchieved() {
+					log.Info().Interface("live", screenResult.Video).
+						Msg("live count achieved, skip entering live room")
+					skipEnterLive = true
+				} else if rand.Float64() <= 0.25 {
+					// 25% chance skip entering live room
+					log.Info().Msg("skip entering preview live by 25% chance")
+					skipEnterLive = true
+				}
+
+				if skipEnterLive {
 					// 达标后不再进入直播间
 					crawler.LiveCount++
 					dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
@@ -223,13 +234,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					break
 				} else {
 					time.Sleep(1 * time.Second)
-
-					if rand.Float64() >= 0.75 {
-						// 75% chance enter live room
-						log.Info().Msg("skip enter live room by 25% chance")
-						break
-					}
-
 					// live target not achieved, enter live
 					entryPoint := PointF{
 						X: float64(dExt.windowSize.Width / 2),
@@ -289,7 +293,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				var exitLive bool
 				if crawler.isLiveTargetAchieved() {
 					log.Info().Interface("live", screenResult.Video).
-						Msg("live count achieved, exit live house")
+						Msg("live count achieved, exit live room")
 					exitLive = true
 				} else if rand.Float64() <= 0.25 {
 					// 25% chance exit live room
