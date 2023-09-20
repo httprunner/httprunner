@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"math"
+	"math/rand"
 	"time"
 
 	"github.com/pkg/errors"
@@ -222,6 +223,13 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					break
 				} else {
 					time.Sleep(1 * time.Second)
+
+					if rand.Float64() >= 0.75 {
+						// 75% chance enter live room
+						log.Info().Msg("skip enter live room by 25% chance")
+						break
+					}
+
 					// live target not achieved, enter live
 					entryPoint := PointF{
 						X: float64(dExt.windowSize.Width / 2),
@@ -278,9 +286,17 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				screenResultFromOCR.SwipeFinishTime = screenResult.SwipeFinishTime
 				screenResultFromOCR.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 
+				var exitLive bool
 				if crawler.isLiveTargetAchieved() {
 					log.Info().Interface("live", screenResult.Video).
 						Msg("live count achieved, exit live house")
+					exitLive = true
+				} else if rand.Float64() <= 0.25 {
+					// 25% chance exit live room
+					log.Info().Msg("exit live room by 25% chance")
+					exitLive = true
+				}
+				if exitLive {
 					err = crawler.exitLiveRoom()
 					if err != nil {
 						if errors.Is(err, code.TimeoutError) || errors.Is(err, code.InterruptError) {
