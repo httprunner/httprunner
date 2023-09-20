@@ -192,7 +192,7 @@ func (dExt *DriverExt) swipeToTapApp(appName string, options ...ActionOption) er
 	}
 	// tap app icon above the text
 	if len(actionOptions.Offset) == 0 {
-		options = append(options, WithOffset(0, -25))
+		options = append(options, WithTapOffset(0, -25))
 	}
 	// set default swipe interval to 1 second
 	if builtin.IsZeroFloat64(actionOptions.Interval) {

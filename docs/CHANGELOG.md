@@ -1,5 +1,13 @@
 # Release History
 
+## v4.3.7 (2023-09-19)
+
+**go version**
+
+- feat: add `WithSwipeOffset` to set offset for swipe start/end point
+- feat: set random offset for tap/swipe points with `WithOffsetRandomRange`
+- change: set `WithOffset` deprecated, replace with `WithTapOffset`
+
 ## v4.3.6 (2023-09-07)
 
 **go version**

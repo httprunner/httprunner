@@ -225,8 +225,8 @@ func (ad *adbDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 	actionOptions := NewActionOptions(options...)
 
 	if len(actionOptions.Offset) == 2 {
-		x += float64(actionOptions.Offset[0])
-		y += float64(actionOptions.Offset[1])
+		x += float64(actionOptions.Offset[0] + actionOptions.getRandomOffset())
+		y += float64(actionOptions.Offset[1] + actionOptions.getRandomOffset())
 	}
 
 	// adb shell input tap x y
@@ -272,6 +272,15 @@ func (ad *adbDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) 
 }
 
 func (ad *adbDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
+	actionOptions := NewActionOptions(options...)
+
+	if len(actionOptions.Offset) == 4 {
+		fromX += float64(actionOptions.Offset[0] + actionOptions.getRandomOffset())
+		fromY += float64(actionOptions.Offset[1] + actionOptions.getRandomOffset())
+		toX += float64(actionOptions.Offset[2] + actionOptions.getRandomOffset())
+		toY += float64(actionOptions.Offset[3] + actionOptions.getRandomOffset())
+	}
+
 	// adb shell input swipe fromX fromY toX toY
 	_, err := ad.adbClient.RunShellCommand(
 		"input", "swipe",
