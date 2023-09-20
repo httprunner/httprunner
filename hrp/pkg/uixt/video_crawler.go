@@ -160,6 +160,10 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			log.Warn().Msg("interrupted in feed crawler")
 			return errors.Wrap(code.InterruptError, "feed crawler interrupted")
 		default:
+			if err = crawler.clearCurrentVideo(); err != nil {
+				log.Error().Err(err).Msg("clear cache failed")
+			}
+
 			// swipe to next feed video
 			log.Info().Msg("swipe to next feed video")
 			swipeStartTime := time.Now()
@@ -361,6 +365,19 @@ type Video struct {
 	SimulationPlayProgress float64 `json:"simulation_play_progress"` // 仿真播放比例（完播率）
 	SimulationPlayDuration int64   `json:"simulation_play_duration"` // 仿真播放时长(ms)
 	RandomPlayDuration     int64   `json:"random_play_duration"`     // 随机播放时长(ms)
+}
+
+func (vc *VideoCrawler) clearCurrentVideo() error {
+	if !vc.driverExt.plugin.Has("ClearCurrentVideo") {
+		return errors.New("plugin missing ClearCurrentVideo method")
+	}
+
+	_, err := vc.driverExt.plugin.Call("ClearCurrentVideo")
+	if err != nil {
+		return errors.Wrap(err, "call plugin ClearCurrentVideo failed")
+	}
+
+	return nil
 }
 
 func (vc *VideoCrawler) getCurrentVideo() (video *Video, err error) {
