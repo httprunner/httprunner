@@ -389,7 +389,7 @@ func (vc *VideoCrawler) getCurrentVideo() (video *Video, err error) {
 	if video.Type == VideoType_Live || video.Type == VideoType_PreviewLive {
 		video.RandomPlayDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
 	} else {
-		video.RandomPlayDuration = getSimulationDuration(vc.configs.Live.SleepRandom)
+		video.RandomPlayDuration = getSimulationDuration(vc.configs.Feed.SleepRandom)
 	}
 
 	// get simulation play duration
