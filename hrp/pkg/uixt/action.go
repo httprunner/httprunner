@@ -249,7 +249,7 @@ func (o *ActionOptions) screenshotActions() []string {
 	return actions
 }
 
-func (o *ActionOptions) getRandomOffset() int {
+func (o *ActionOptions) getRandomOffset() float64 {
 	if len(o.OffsetRandomRange) != 2 {
 		// invalid offset random range, should be [min, max]
 		return 0
@@ -257,91 +257,33 @@ func (o *ActionOptions) getRandomOffset() int {
 
 	minOffset := o.OffsetRandomRange[0]
 	maxOffset := o.OffsetRandomRange[1]
-	return builtin.GetRandomNumber(minOffset, maxOffset)
+	return float64(builtin.GetRandomNumber(minOffset, maxOffset)) + rand.Float64()
 }
 
-func NewActionOptions(options ...ActionOption) *ActionOptions {
-	actionOptions := &ActionOptions{}
-	for _, option := range options {
-		option(actionOptions)
-	}
-	return actionOptions
-}
-
-func mergeDataWithOptions(data map[string]interface{}, options ...ActionOption) map[string]interface{} {
-	actionOptions := NewActionOptions(options...)
-
-	if actionOptions.Identifier != "" {
+func (o *ActionOptions) updateData(data map[string]interface{}) {
+	if o.Identifier != "" {
 		data["log"] = map[string]interface{}{
 			"enable": true,
-			"data":   actionOptions.Identifier,
+			"data":   o.Identifier,
 		}
 	}
 
-	// handle point offset
-	if len(actionOptions.Offset) == 2 {
-		if x, ok := data["x"]; ok {
-			xf, _ := builtin.Interface2Float64(x)
-			data["x"] = xf + float64(actionOptions.Offset[0]+actionOptions.getRandomOffset())
-		}
-		if y, ok := data["y"]; ok {
-			yf, _ := builtin.Interface2Float64(y)
-			data["y"] = yf + float64(actionOptions.Offset[1]+actionOptions.getRandomOffset())
-		}
-	} else if len(actionOptions.Offset) == 4 {
-		// Android uia2: [startX, startY, endX, endY]
-		if startX, ok := data["startX"]; ok {
-			vf, _ := builtin.Interface2Float64(startX)
-			data["startX"] = vf + float64(actionOptions.Offset[0]+actionOptions.getRandomOffset())
-		}
-		if startY, ok := data["startY"]; ok {
-			vf, _ := builtin.Interface2Float64(startY)
-			data["startY"] = vf + float64(actionOptions.Offset[1]+actionOptions.getRandomOffset())
-		}
-		if endX, ok := data["endX"]; ok {
-			vf, _ := builtin.Interface2Float64(endX)
-			data["endX"] = vf + float64(actionOptions.Offset[2]+actionOptions.getRandomOffset())
-		}
-		if endY, ok := data["endY"]; ok {
-			vf, _ := builtin.Interface2Float64(endY)
-			data["endY"] = vf + float64(actionOptions.Offset[3]+actionOptions.getRandomOffset())
-		}
-
-		// iOS WDA: [fromX, fromY, toX, toY]
-		if fromX, ok := data["fromX"]; ok {
-			vf, _ := builtin.Interface2Float64(fromX)
-			data["fromX"] = vf + float64(actionOptions.Offset[0]+actionOptions.getRandomOffset())
-		}
-		if fromY, ok := data["fromY"]; ok {
-			vf, _ := builtin.Interface2Float64(fromY)
-			data["fromY"] = vf + float64(actionOptions.Offset[1]+actionOptions.getRandomOffset())
-		}
-		if toX, ok := data["toX"]; ok {
-			vf, _ := builtin.Interface2Float64(toX)
-			data["toX"] = vf + float64(actionOptions.Offset[2]+actionOptions.getRandomOffset())
-		}
-		if toY, ok := data["toY"]; ok {
-			vf, _ := builtin.Interface2Float64(toY)
-			data["toY"] = vf + float64(actionOptions.Offset[3]+actionOptions.getRandomOffset())
-		}
-	}
-
-	if actionOptions.Steps > 0 {
-		data["steps"] = actionOptions.Steps
+	if o.Steps > 0 {
+		data["steps"] = o.Steps
 	}
 	if _, ok := data["steps"]; !ok {
 		data["steps"] = 12 // default steps
 	}
 
-	if actionOptions.PressDuration > 0 {
-		data["duration"] = actionOptions.PressDuration
+	if o.PressDuration > 0 {
+		data["duration"] = o.PressDuration
 	}
 	if _, ok := data["duration"]; !ok {
 		data["duration"] = 0 // default duration
 	}
 
-	if actionOptions.Frequency > 0 {
-		data["frequency"] = actionOptions.Frequency
+	if o.Frequency > 0 {
+		data["frequency"] = o.Frequency
 	}
 	if _, ok := data["frequency"]; !ok {
 		data["frequency"] = 60 // default frequency
@@ -352,13 +294,19 @@ func mergeDataWithOptions(data map[string]interface{}, options ...ActionOption) 
 	}
 
 	// custom options
-	if actionOptions.Custom != nil {
-		for k, v := range actionOptions.Custom {
+	if o.Custom != nil {
+		for k, v := range o.Custom {
 			data[k] = v
 		}
 	}
+}
 
-	return data
+func NewActionOptions(options ...ActionOption) *ActionOptions {
+	actionOptions := &ActionOptions{}
+	for _, option := range options {
+		option(actionOptions)
+	}
+	return actionOptions
 }
 
 type ActionOption func(o *ActionOptions)
