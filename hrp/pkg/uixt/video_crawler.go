@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"math"
+	"math/rand"
 	"time"
 
 	"github.com/pkg/errors"
@@ -206,7 +207,18 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			switch feedVideo.Type {
 			case VideoType_PreviewLive:
 				// 直播预览流
+				var skipEnterLive bool
 				if crawler.isLiveTargetAchieved() {
+					log.Info().Interface("live", screenResult.Video).
+						Msg("live count achieved, skip entering live room")
+					skipEnterLive = true
+				} else if rand.Float64() <= 0.25 {
+					// 25% chance skip entering live room
+					log.Info().Msg("skip entering preview live by 25% chance")
+					skipEnterLive = true
+				}
+
+				if skipEnterLive {
 					// 达标后不再进入直播间
 					crawler.LiveCount++
 					dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
@@ -278,9 +290,17 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				screenResultFromOCR.SwipeFinishTime = screenResult.SwipeFinishTime
 				screenResultFromOCR.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 
+				var exitLive bool
 				if crawler.isLiveTargetAchieved() {
 					log.Info().Interface("live", screenResult.Video).
-						Msg("live count achieved, exit live house")
+						Msg("live count achieved, exit live room")
+					exitLive = true
+				} else if rand.Float64() <= 0.25 {
+					// 25% chance exit live room
+					log.Info().Msg("exit live room by 25% chance")
+					exitLive = true
+				}
+				if exitLive {
 					err = crawler.exitLiveRoom()
 					if err != nil {
 						if errors.Is(err, code.TimeoutError) || errors.Is(err, code.InterruptError) {
