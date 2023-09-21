@@ -148,7 +148,8 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		if err != nil {
 			return err
 		}
-		points, err := screenResult.Texts.FindTexts(texts, dExt.ParseActionOptions(optionsWithoutIdentifier...)...)
+		points, err := screenResult.Texts.FindTexts(texts,
+			dExt.ParseActionOptions(optionsWithoutIdentifier...)...)
 		if err != nil {
 			log.Error().Err(err).Strs("texts", texts).Msg("find texts failed")
 			// target texts not found, try to auto handle popup

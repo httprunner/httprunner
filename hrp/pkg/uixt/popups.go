@@ -62,31 +62,18 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 			log.Error().Err(err).Msg("get screen result failed for popup handler")
 			continue
 		}
-		screenResult.Popup.RetryCount = retryCount
 
-		// 1. there are no popups here (fast return normally)
-		// 2. failed to close popup （maybe tap error, return error）
-		// 3. successful to close popup (sleep and wait for next retry if existed)
-		if screenResult.Popup == nil {
+		popup := screenResult.Popup
+		if popup == nil {
 			log.Debug().Msg("no popup found")
 			break
 		}
+		popup.RetryCount = retryCount
 
-		// popup found
-		if !screenResult.Popup.PopupArea.IsEmpty() {
-			screenResult.Popup.CloseStatus = CloseStatusFound
-		}
-		if screenResult.Popup.CloseArea.IsEmpty() {
-			log.Warn().Msg("popup close area not found")
-			break
-		}
-		screenResult.Popup.CloseStatus = CloseStatusFound
-
-		if err = dExt.tapPopupHandler(screenResult.Popup); err != nil {
+		if err = dExt.tapPopupHandler(popup); err != nil {
 			return err
 		}
 
-		log.Info().Interface("popup", screenResult.Popup).Msg("close popup success")
 		// sleep for another popup (if existed) to pop
 		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
 	}
@@ -97,12 +84,17 @@ func (dExt *DriverExt) tapPopupHandler(popup *PopupInfo) error {
 	if popup == nil {
 		return nil
 	}
-	if popup.CloseArea.IsEmpty() {
-		log.Warn().Msg("popup close area not found")
-		return nil
+	popup.CloseStatus = CloseStatusFound
+
+	popupClose := popup.CloseArea
+	if popupClose.IsEmpty() {
+		log.Error().
+			Interface("popup", popup).
+			Msg("popup close area not found")
+		return errors.New("popup close area not found")
 	}
 
-	closePoint := popup.CloseArea.Center()
+	closePoint := popupClose.Center()
 	log.Info().
 		Interface("popup", popup).
 		Interface("closePoint", closePoint).
@@ -111,6 +103,7 @@ func (dExt *DriverExt) tapPopupHandler(popup *PopupInfo) error {
 		log.Error().Err(err).Msg("tap popup failed")
 		return errors.Wrap(code.MobileUIPopupError, err.Error())
 	}
+
 	// tap popup success
 	return nil
 }
