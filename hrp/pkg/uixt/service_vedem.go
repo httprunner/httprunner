@@ -407,7 +407,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
 
-		if actionOptions.ScreenShotWithClosePopups {
+		if actionOptions.ScreenShotWithClosePopups && imageResult.CPResult != nil {
 			screenResult.Popup = &PopupInfo{
 				Type:      imageResult.CPResult.Type,
 				Text:      imageResult.CPResult.Text,
