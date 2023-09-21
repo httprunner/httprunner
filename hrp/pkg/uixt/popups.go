@@ -89,22 +89,20 @@ type ClosePopupsResult struct {
 }
 
 type PopupInfo struct {
-	CloseStatus string `json:"close_status"` // found/success/fail
-	Type        string `json:"type"`
-	Text        string `json:"text"`
-	RetryCount  int    `json:"retry_count"`
-	PicName     string `json:"pic_name"`
-	PicURL      string `json:"pic_url"`
-	PopupArea   Box    `json:"popup_area"`
-	CloseArea   Box    `json:"close_area"`
+	CloseStatus string   `json:"close_status"` // found/success/fail
+	RetryCount  int      `json:"retry_count"`
+	CloseBox    Box      `json:"close_box"`              // CV 识别的弹窗关闭按钮（弹窗存在 && 关闭按钮存在）
+	ClosePoints []PointF `json:"close_points,omitempty"` // CV 识别的所有关闭按钮（仅关闭按钮，可能存在多个）
 }
 
 func (p *PopupInfo) isIdentical(lastPopup *PopupInfo) bool {
-	if lastPopup == nil || lastPopup.PopupArea.IsEmpty() {
+	if lastPopup == nil {
 		return false
 	}
-
-	if !p.CloseArea.IsIdentical(lastPopup.CloseArea) {
+	if lastPopup.CloseBox.IsEmpty() {
+		return false
+	}
+	if !p.CloseBox.IsIdentical(lastPopup.CloseBox) {
 		lastPopup.CloseStatus = CloseStatusSuccess
 		return false
 	}
@@ -115,10 +113,7 @@ func (p *PopupInfo) isIdentical(lastPopup *PopupInfo) bool {
 }
 
 func (p *PopupInfo) exists() bool {
-	if p.PopupArea.IsEmpty() || p.CloseArea.IsEmpty() {
-		return false
-	}
-	return true
+	return !p.CloseBox.IsEmpty()
 }
 
 func (dExt *DriverExt) ClosePopups(options ...ActionOption) error {
@@ -144,7 +139,10 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 	var lastPopup *PopupInfo
 	for retryCount := 0; retryCount < maxRetryTimes; retryCount++ {
 		screenResult, err := dExt.GetScreenResult(
-			WithScreenShotClosePopups(true), WithScreenShotUpload(true))
+			WithScreenShotUpload(true),
+			WithScreenShotClosePopups(true),
+			WithScreenShotUITypes("close"), // get all close buttons
+		)
 		if err != nil {
 			log.Error().Err(err).Msg("get screen result failed for popup handler")
 			continue
@@ -181,7 +179,7 @@ func (dExt *DriverExt) tapPopupHandler(popup *PopupInfo) error {
 	}
 	popup.CloseStatus = CloseStatusFound
 
-	popupClose := popup.CloseArea
+	popupClose := popup.CloseBox
 	if popupClose.IsEmpty() {
 		log.Error().
 			Interface("popup", popup).
