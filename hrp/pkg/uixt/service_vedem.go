@@ -67,9 +67,9 @@ type ImageResult struct {
 	// Media（媒体）
 	// Chat（语音）
 	// Event（赛事）
-	LiveType string             `json:"liveType,omitempty"`    // 直播间类型
-	UIResult UIResultMap        `json:"uiResult,omitempty"`    // 图标检测
-	CPResult *ClosePopupsResult `json:"closeResult,omitempty"` // 弹窗按钮检测
+	LiveType          string             `json:"liveType,omitempty"`    // 直播间类型
+	UIResult          UIResultMap        `json:"uiResult,omitempty"`    // 图标检测
+	ClosePopupsResult *ClosePopupsResult `json:"closeResult,omitempty"` // 弹窗按钮检测
 }
 
 type APIResponseImage struct {
@@ -407,15 +407,20 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
 
-		if actionOptions.ScreenShotWithClosePopups && imageResult.CPResult != nil {
-			screenResult.Popup = &PopupInfo{
-				Type:      imageResult.CPResult.Type,
-				Text:      imageResult.CPResult.Text,
-				PicName:   imagePath,
-				PicURL:    imageResult.URL,
-				PopupArea: imageResult.CPResult.PopupArea,
-				CloseArea: imageResult.CPResult.CloseArea,
+		if actionOptions.ScreenShotWithClosePopups {
+			popup := &PopupInfo{}
+
+			closeResult := imageResult.ClosePopupsResult
+			if closeResult != nil && !closeResult.PopupArea.IsEmpty() && !closeResult.CloseArea.IsEmpty() {
+				popup.CloseBox = closeResult.CloseArea
 			}
+
+			closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
+			for _, closeArea := range closeAreas {
+				popup.ClosePoints = append(popup.ClosePoints, closeArea.Center())
+			}
+
+			screenResult.Popup = popup
 		}
 	}
 
