@@ -27,12 +27,6 @@ var popups = [][]string{
 	{"管理使用时间", ".*忽略.*"},
 }
 
-const (
-	CloseStatusFound   = "found"
-	CloseStatusSuccess = "success"
-	CloseStatusFail    = "fail"
-)
-
 func findTextPopup(screenTexts OCRTexts) (closePoint *OCRText) {
 	for _, popup := range popups {
 		if len(popup) != 2 {
@@ -80,6 +74,12 @@ func (dExt *DriverExt) AutoPopupHandler() error {
 	return dExt.handleTextPopup(screenResult.Texts)
 }
 
+const (
+	CloseStatusFound   = "found"
+	CloseStatusSuccess = "success"
+	CloseStatusFail    = "fail"
+)
+
 // ClosePopupsResult represents the result of recognized popup to close
 type ClosePopupsResult struct {
 	Type      string `json:"type"`
@@ -89,7 +89,7 @@ type ClosePopupsResult struct {
 }
 
 type PopupInfo struct {
-	CloseStatus string `json:"close_status"`
+	CloseStatus string `json:"close_status"` // found/success/fail
 	Type        string `json:"type"`
 	Text        string `json:"text"`
 	RetryCount  int    `json:"retry_count"`
@@ -97,6 +97,25 @@ type PopupInfo struct {
 	PicURL      string `json:"pic_url"`
 	PopupArea   Box    `json:"popup_area"`
 	CloseArea   Box    `json:"close_area"`
+}
+
+func (p *PopupInfo) isIdentical(lastPopup *PopupInfo) bool {
+	if lastPopup == nil || lastPopup.PopupArea.IsEmpty() {
+		return false
+	}
+
+	if !p.CloseArea.IsIdentical(lastPopup.CloseArea) {
+		lastPopup.CloseStatus = CloseStatusSuccess
+		return false
+	}
+
+	p.CloseStatus = CloseStatusFail
+	lastPopup.CloseStatus = CloseStatusFail
+	return true
+}
+
+func (p *PopupInfo) exists() bool {
+	return p.PopupArea.IsEmpty() || p.CloseArea.IsEmpty()
 }
 
 func (dExt *DriverExt) ClosePopups(options ...ActionOption) error {
@@ -114,11 +133,12 @@ func (dExt *DriverExt) ClosePopups(options ...ActionOption) error {
 }
 
 func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
-	log.Info().Msg("try to find and close popups")
 	actionOptions := NewActionOptions(options...)
+	log.Info().Interface("actionOptions", actionOptions).Msg("try to find and close popups")
 	maxRetryTimes := actionOptions.MaxRetryTimes
 	interval := actionOptions.Interval
 
+	var lastPopup *PopupInfo
 	for retryCount := 0; retryCount < maxRetryTimes; retryCount++ {
 		screenResult, err := dExt.GetScreenResult(
 			WithScreenShotClosePopups(true), WithScreenShotUpload(true))
@@ -126,43 +146,57 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 			log.Error().Err(err).Msg("get screen result failed for popup handler")
 			continue
 		}
-		// 1. there are no popups here (fast return normally)
-		// 2. failed to close popup （maybe tap error, return error）
-		// 3. successful to close popup (sleep and wait for next retry if existed)
-		if screenResult.Popup == nil {
-			break
-		}
-		screenResult.Popup.RetryCount = retryCount
-		if !screenResult.Popup.PopupArea.IsEmpty() {
-			screenResult.Popup.CloseStatus = CloseStatusFound
-		}
-		if screenResult.Popup.CloseArea.IsEmpty() {
-			break
-		}
-		screenResult.Popup.CloseStatus = CloseStatusFound
 
-		if err = dExt.tapPopupHandler(screenResult.Popup); err != nil {
+		popup := screenResult.Popup
+		if popup == nil || !popup.exists() {
+			log.Debug().Msg("no popup found")
+			break
+		}
+		popup.CloseStatus = CloseStatusFound
+		popup.RetryCount = retryCount
+
+		// check if the current popup equals to the last popup
+		if popup.isIdentical(lastPopup) {
+			return errors.Wrap(code.MobileUIPopupError, "handle popup failed")
+		}
+
+		if err = dExt.tapPopupHandler(popup); err != nil {
 			return err
 		}
+
 		// sleep for another popup (if existed) to pop
 		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
+		lastPopup = popup
 	}
 	return nil
 }
 
 func (dExt *DriverExt) tapPopupHandler(popup *PopupInfo) error {
-	if popup == nil {
+	if popup == nil || !popup.exists() {
+		log.Debug().Msg("no popup found")
 		return nil
 	}
-	if popup.CloseArea.IsEmpty() {
-		return nil
+	popup.CloseStatus = CloseStatusFound
+
+	popupClose := popup.CloseArea
+	if popupClose.IsEmpty() {
+		log.Error().
+			Interface("popup", popup).
+			Msg("popup close area not found")
+		return errors.Wrap(code.MobileUIPopupError,
+			"popup close area not found")
 	}
-	log.Info().Str("type", popup.Type).Str("text", popup.Text).Msg("close popup")
-	popupCenter := popup.CloseArea.Center()
-	if err := dExt.TapAbsXY(popupCenter.X, popupCenter.Y); err != nil {
+
+	closePoint := popupClose.Center()
+	log.Info().
+		Interface("popup", popup).
+		Interface("closePoint", closePoint).
+		Msg("tap to close popup")
+	if err := dExt.TapAbsXY(closePoint.X, closePoint.Y); err != nil {
 		log.Error().Err(err).Msg("tap popup failed")
 		return errors.Wrap(code.MobileUIPopupError, err.Error())
 	}
+
 	// tap popup success
 	return nil
 }
