@@ -115,7 +115,10 @@ func (p *PopupInfo) isIdentical(lastPopup *PopupInfo) bool {
 }
 
 func (p *PopupInfo) exists() bool {
-	return p.PopupArea.IsEmpty() || p.CloseArea.IsEmpty()
+	if p.PopupArea.IsEmpty() || p.CloseArea.IsEmpty() {
+		return false
+	}
+	return true
 }
 
 func (dExt *DriverExt) ClosePopups(options ...ActionOption) error {
@@ -149,7 +152,7 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 
 		popup := screenResult.Popup
 		if popup == nil || !popup.exists() {
-			log.Debug().Msg("no popup found")
+			log.Debug().Interface("popup", popup).Msg("no popup found")
 			break
 		}
 		popup.CloseStatus = CloseStatusFound
