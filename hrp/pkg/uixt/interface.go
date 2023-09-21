@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/httprunner/funplugin"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 var (
@@ -438,8 +436,8 @@ type PointF struct {
 }
 
 func (p PointF) IsIdentical(p2 PointF) bool {
-	return builtin.IsZeroFloat64(math.Abs(p.X-p2.X)) &&
-		builtin.IsZeroFloat64(math.Abs(p.Y-p2.Y))
+	// set the coordinate precision to 1 pixel
+	return math.Abs(p.X-p2.X) < 1 && math.Abs(p.Y-p2.Y) < 1
 }
 
 type Rect struct {

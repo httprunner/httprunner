@@ -483,9 +483,10 @@ func (box Box) IsEmpty() bool {
 }
 
 func (box Box) IsIdentical(box2 Box) bool {
+	// set the coordinate precision to 1 pixel
 	return box.Point.IsIdentical(box2.Point) &&
-		builtin.IsZeroFloat64(math.Abs(box.Width-box2.Width)) &&
-		builtin.IsZeroFloat64(math.Abs(box.Height-box2.Height))
+		math.Abs(box.Width-box2.Width) < 1 &&
+		math.Abs(box.Height-box2.Height) < 1
 }
 
 func (box Box) Center() PointF {
