@@ -186,7 +186,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				log.Warn().Msg("get current feed video failed")
 
 				// check and handle popups
-				if err := crawler.driverExt.ClosePopupsHandler(WithMaxRetryTimes(1)); err != nil {
+				if err := crawler.driverExt.ClosePopupsHandler(WithMaxRetryTimes(3)); err != nil {
 					return err
 				}
 
@@ -234,9 +234,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 			case VideoType_Live:
 				// 直播
-				log.Info().
-					Interface("video", currentVideo).
-					Msg(FOUND_LIVE_SUCCESS)
+				crawler.LiveCount++
+				log.Info().Interface("video", currentVideo).Msg(FOUND_LIVE_SUCCESS)
 
 				// take screenshot and get screen texts by OCR
 				screenResult, err := crawler.driverExt.GetScreenResult(
@@ -262,7 +261,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					currentVideo.LiveType = screenResult.imageResult.LiveType
 				}
 
-				crawler.LiveCount++
 				// simulation watch feed video
 				sleepStrict(swipeFinishTime, currentVideo.PlayDuration)
 
@@ -295,6 +293,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			default:
 				// 点播 || 图文 || 广告 || etc.
 				crawler.FeedCount++
+				log.Info().Interface("video", currentVideo).Msg(FOUND_FEED_SUCCESS)
 
 				screenResult := &ScreenResult{
 					Resolution: dExt.windowSize,
@@ -304,11 +303,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					SwipeStartTime:  swipeStartTime.UnixMilli(),
 					SwipeFinishTime: swipeFinishTime.UnixMilli(),
 				}
-
 				dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
-				log.Info().
-					Interface("video", currentVideo).
-					Msg(FOUND_FEED_SUCCESS)
 
 				// simulation watch feed video
 				sleepStrict(swipeFinishTime, currentVideo.PlayDuration)
