@@ -119,6 +119,7 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 	maxRetryTimes := actionOptions.MaxRetryTimes
 	interval := actionOptions.Interval
 
+	var lastPopup *PopupInfo
 	for retryCount := 0; retryCount < maxRetryTimes; retryCount++ {
 		screenResult, err := dExt.GetScreenResult(
 			WithScreenShotClosePopups(true), WithScreenShotUpload(true))
@@ -132,7 +133,13 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 			log.Debug().Msg("no popup found")
 			break
 		}
+		popup.CloseStatus = CloseStatusFound
 		popup.RetryCount = retryCount
+
+		// check if the current popup equals to the last popup
+		if isPopupIdentical(popup, lastPopup) {
+			return errors.Wrap(code.MobileUIPopupError, "handle popup failed")
+		}
 
 		if err = dExt.tapPopupHandler(popup); err != nil {
 			return err
@@ -140,8 +147,24 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 
 		// sleep for another popup (if existed) to pop
 		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
+		lastPopup = popup
 	}
 	return nil
+}
+
+func isPopupIdentical(popup, lastPopup *PopupInfo) bool {
+	if lastPopup == nil || lastPopup.PopupArea.IsEmpty() {
+		return false
+	}
+
+	if !popup.CloseArea.IsIdentical(lastPopup.CloseArea) {
+		lastPopup.CloseStatus = CloseStatusSuccess
+		return false
+	}
+
+	popup.CloseStatus = CloseStatusFail
+	lastPopup.CloseStatus = CloseStatusFail
+	return true
 }
 
 func (dExt *DriverExt) tapPopupHandler(popup *PopupInfo) error {
