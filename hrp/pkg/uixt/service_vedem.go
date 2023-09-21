@@ -67,9 +67,9 @@ type ImageResult struct {
 	// Media（媒体）
 	// Chat（语音）
 	// Event（赛事）
-	LiveType string             `json:"liveType,omitempty"`    // 直播间类型
-	UIResult UIResultMap        `json:"uiResult,omitempty"`    // 图标检测
-	CPResult *ClosePopupsResult `json:"closeResult,omitempty"` // 弹窗按钮检测
+	LiveType          string             `json:"liveType,omitempty"`    // 直播间类型
+	UIResult          UIResultMap        `json:"uiResult,omitempty"`    // 图标检测
+	ClosePopupsResult *ClosePopupsResult `json:"closeResult,omitempty"` // 弹窗按钮检测
 }
 
 type APIResponseImage struct {
@@ -407,15 +407,20 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
 
-		if actionOptions.ScreenShotWithClosePopups && imageResult.CPResult != nil {
-			screenResult.Popup = &PopupInfo{
-				Type:      imageResult.CPResult.Type,
-				Text:      imageResult.CPResult.Text,
-				PicName:   imagePath,
-				PicURL:    imageResult.URL,
-				PopupArea: imageResult.CPResult.PopupArea,
-				CloseArea: imageResult.CPResult.CloseArea,
+		if actionOptions.ScreenShotWithClosePopups {
+			popup := &PopupInfo{}
+
+			closeResult := imageResult.ClosePopupsResult
+			if closeResult != nil && !closeResult.PopupArea.IsEmpty() && !closeResult.CloseArea.IsEmpty() {
+				popup.CloseBox = closeResult.CloseArea
 			}
+
+			closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
+			for _, closeArea := range closeAreas {
+				popup.ClosePoints = append(popup.ClosePoints, closeArea.Center())
+			}
+
+			screenResult.Popup = popup
 		}
 	}
 
@@ -478,9 +483,10 @@ func (box Box) IsEmpty() bool {
 }
 
 func (box Box) IsIdentical(box2 Box) bool {
+	// set the coordinate precision to 1 pixel
 	return box.Point.IsIdentical(box2.Point) &&
-		builtin.IsZeroFloat64(math.Abs(box.Width-box2.Width)) &&
-		builtin.IsZeroFloat64(math.Abs(box.Height-box2.Height))
+		math.Abs(box.Width-box2.Width) < 1 &&
+		math.Abs(box.Height-box2.Height) < 1
 }
 
 func (box Box) Center() PointF {
