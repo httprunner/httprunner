@@ -99,6 +99,25 @@ type PopupInfo struct {
 	CloseArea   Box    `json:"close_area"`
 }
 
+func (p *PopupInfo) isIdentical(lastPopup *PopupInfo) bool {
+	if lastPopup == nil || lastPopup.PopupArea.IsEmpty() {
+		return false
+	}
+
+	if !p.CloseArea.IsIdentical(lastPopup.CloseArea) {
+		lastPopup.CloseStatus = CloseStatusSuccess
+		return false
+	}
+
+	p.CloseStatus = CloseStatusFail
+	lastPopup.CloseStatus = CloseStatusFail
+	return true
+}
+
+func (p *PopupInfo) exists() bool {
+	return p.PopupArea.IsEmpty() || p.CloseArea.IsEmpty()
+}
+
 func (dExt *DriverExt) ClosePopups(options ...ActionOption) error {
 	actionOptions := NewActionOptions(options...)
 
@@ -129,7 +148,7 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 		}
 
 		popup := screenResult.Popup
-		if popup == nil || popup.PopupArea.IsEmpty() {
+		if popup == nil || !popup.exists() {
 			log.Debug().Msg("no popup found")
 			break
 		}
@@ -137,7 +156,7 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 		popup.RetryCount = retryCount
 
 		// check if the current popup equals to the last popup
-		if isPopupIdentical(popup, lastPopup) {
+		if popup.isIdentical(lastPopup) {
 			return errors.Wrap(code.MobileUIPopupError, "handle popup failed")
 		}
 
@@ -152,23 +171,8 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 	return nil
 }
 
-func isPopupIdentical(popup, lastPopup *PopupInfo) bool {
-	if lastPopup == nil || lastPopup.PopupArea.IsEmpty() {
-		return false
-	}
-
-	if !popup.CloseArea.IsIdentical(lastPopup.CloseArea) {
-		lastPopup.CloseStatus = CloseStatusSuccess
-		return false
-	}
-
-	popup.CloseStatus = CloseStatusFail
-	lastPopup.CloseStatus = CloseStatusFail
-	return true
-}
-
 func (dExt *DriverExt) tapPopupHandler(popup *PopupInfo) error {
-	if popup == nil || popup.PopupArea.IsEmpty() {
+	if popup == nil || !popup.exists() {
 		log.Debug().Msg("no popup found")
 		return nil
 	}
