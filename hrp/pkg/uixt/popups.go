@@ -128,7 +128,7 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 		}
 
 		popup := screenResult.Popup
-		if popup == nil {
+		if popup == nil || popup.PopupArea.IsEmpty() {
 			log.Debug().Msg("no popup found")
 			break
 		}
@@ -145,7 +145,8 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 }
 
 func (dExt *DriverExt) tapPopupHandler(popup *PopupInfo) error {
-	if popup == nil {
+	if popup == nil || popup.PopupArea.IsEmpty() {
+		log.Debug().Msg("no popup found")
 		return nil
 	}
 	popup.CloseStatus = CloseStatusFound
@@ -155,7 +156,8 @@ func (dExt *DriverExt) tapPopupHandler(popup *PopupInfo) error {
 		log.Error().
 			Interface("popup", popup).
 			Msg("popup close area not found")
-		return errors.New("popup close area not found")
+		return errors.Wrap(code.MobileUIPopupError,
+			"popup close area not found")
 	}
 
 	closePoint := popupClose.Center()
