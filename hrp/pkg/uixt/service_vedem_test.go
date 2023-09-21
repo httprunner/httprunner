@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 )
 
@@ -48,6 +49,27 @@ func TestOCRWithLocalFile(t *testing.T) {
 
 	if err := checkOCR(buf); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func matchPopup(text string) bool {
+	for _, popup := range popups {
+		if regexp.MustCompile(popup[1]).MatchString(text) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestMatchRegex(t *testing.T) {
+	testData := []string{
+		"以后再说", "我知道了", "同意", "拒绝", "稍后",
+		"始终允许", "继续使用", "仅在使用中允许",
+	}
+	for _, text := range testData {
+		if !matchPopup(text) {
+			t.Fatal(text)
+		}
 	}
 }
 
