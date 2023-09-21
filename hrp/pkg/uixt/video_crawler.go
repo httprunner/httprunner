@@ -251,7 +251,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					continue
 				}
 				if e := crawler.driverExt.tapPopupHandler(screenResult.Popup); e != nil {
-					log.Error().Err(e).Msg("auto handle popup failed")
+					log.Error().Err(e).Msg("close live popup failed")
 					continue
 				}
 
