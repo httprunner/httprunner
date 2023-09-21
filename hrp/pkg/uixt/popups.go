@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
@@ -112,24 +111,6 @@ func (p *PopupInfo) isIdentical(lastPopup *PopupInfo) bool {
 	return true
 }
 
-func (p *PopupInfo) exists() bool {
-	return !p.CloseBox.IsEmpty()
-}
-
-func (dExt *DriverExt) ClosePopups(options ...ActionOption) error {
-	actionOptions := NewActionOptions(options...)
-
-	// default to retry 5 times
-	if actionOptions.MaxRetryTimes == 0 {
-		options = append(options, WithMaxRetryTimes(5))
-	}
-	// set default swipe interval to 1 second
-	if builtin.IsZeroFloat64(actionOptions.Interval) {
-		options = append(options, WithInterval(1))
-	}
-	return dExt.ClosePopupsHandler(options...)
-}
-
 func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 	actionOptions := NewActionOptions(options...)
 	log.Info().Interface("actionOptions", actionOptions).Msg("try to find and close popups")
@@ -149,7 +130,7 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 		}
 
 		popup := screenResult.Popup
-		if popup == nil || !popup.exists() {
+		if popup == nil || popup.CloseBox.IsEmpty() {
 			log.Debug().Interface("popup", popup).Msg("no popup found")
 			break
 		}
@@ -173,8 +154,8 @@ func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
 }
 
 func (dExt *DriverExt) tapPopupHandler(popup *PopupInfo) error {
-	if popup == nil || !popup.exists() {
-		log.Debug().Msg("no popup found")
+	if popup == nil || popup.CloseBox.IsEmpty() {
+		log.Debug().Interface("popup", popup).Msg("no popup found")
 		return nil
 	}
 	popup.CloseStatus = CloseStatusFound

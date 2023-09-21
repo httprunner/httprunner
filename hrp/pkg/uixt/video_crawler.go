@@ -186,7 +186,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				log.Warn().Msg("get current feed video failed")
 
 				// check and handle popups
-				if err := crawler.driverExt.ClosePopupsHandler(WithMaxRetryTimes(3)); err != nil {
+				if err := crawler.driverExt.ClosePopupsHandler(WithMaxRetryTimes(1)); err != nil {
 					return err
 				}
 

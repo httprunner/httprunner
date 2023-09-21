@@ -668,7 +668,19 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		}
 		return dExt.VideoCrawler(configs)
 	case ACTION_ClosePopups:
-		return dExt.ClosePopups(action.GetOptions()...)
+		options := action.GetOptions()
+		actionOptions := NewActionOptions(options...)
+
+		// default to retry 3 times
+		if actionOptions.MaxRetryTimes == 0 {
+			options = append(options, WithMaxRetryTimes(3))
+		}
+		// set default swipe interval to 1 second
+		if builtin.IsZeroFloat64(actionOptions.Interval) {
+			options = append(options, WithInterval(1))
+		}
+
+		return dExt.ClosePopupsHandler(options...)
 	}
 	return nil
 }
