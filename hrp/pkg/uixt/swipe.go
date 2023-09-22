@@ -143,7 +143,6 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		screenResult, err := d.GetScreenResult(
 			WithScreenShotOCR(true),
 			WithScreenShotUpload(true),
-			WithScreenShotClosePopups(true),
 		)
 		if err != nil {
 			return err
@@ -153,8 +152,8 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		if err != nil {
 			log.Error().Err(err).Strs("texts", texts).Msg("find texts failed")
 			// target texts not found, try to auto handle popup
-			if e := dExt.tapPopupHandler(screenResult.Popup); e != nil {
-				log.Error().Err(e).Msg("tap popup handler failed")
+			if e := dExt.ClosePopupsHandler(); e != nil {
+				log.Error().Err(e).Msg("run popup handler failed")
 			}
 			return err
 		}
