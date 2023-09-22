@@ -205,9 +205,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Info().Interface("video", currentVideo).
 						Msg("live count achieved, skip entering live room")
 					skipEnterLive = true
-				} else if rand.Float64() <= 0.25 {
-					// 25% chance skip entering live room
-					log.Info().Msg("skip entering preview live by 25% chance")
+				} else if rand.Float64() <= 0.10 {
+					// 10% chance skip entering live room
+					log.Info().Msg("skip entering preview live by 10% chance")
 					skipEnterLive = true
 				}
 
@@ -272,9 +272,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Info().Interface("live", currentVideo).
 						Msg("live count achieved, exit live room")
 					exitLive = true
-				} else if rand.Float64() <= 0.25 {
-					// 25% chance exit live room
-					log.Info().Msg("exit live room by 25% chance")
+				} else if rand.Float64() <= 0.10 {
+					// 10% chance exit live room
+					log.Info().Msg("exit live room by 10% chance")
 					exitLive = true
 				}
 				if exitLive && currentVideo.Type == VideoType_Live {
