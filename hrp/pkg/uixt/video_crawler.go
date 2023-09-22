@@ -239,6 +239,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				crawler.LiveCount++
 				log.Info().Interface("video", currentVideo).Msg(FOUND_LIVE_SUCCESS)
 
+				// wait 3s for live loading
+				time.Sleep(3 * time.Second)
 				// take screenshot and get screen texts by OCR
 				screenResult, err := crawler.driverExt.GetScreenResult(
 					WithScreenShotOCR(true),
