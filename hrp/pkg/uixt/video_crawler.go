@@ -178,20 +178,22 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// retry 10 times if get feed failed, abort if fail 10 consecutive times
 			currentVideo, err := crawler.getCurrentVideo()
 			if err != nil || currentVideo.Type == "" {
+				crawler.failedCount++
 				if crawler.failedCount >= 10 {
 					// failed 10 consecutive times
 					return errors.Wrap(code.TrackingGetError,
 						"get current feed video failed 10 consecutive times")
 				}
-				log.Warn().Msg("get current feed video failed")
+				log.Warn().
+					Int64("failedCount", crawler.failedCount).
+					Msg("get current feed video failed")
 
 				// check and handle popups
-				if err := crawler.driverExt.ClosePopupsHandler(WithMaxRetryTimes(1)); err != nil {
+				if err := crawler.driverExt.ClosePopupsHandler(); err != nil {
 					return err
 				}
 
 				// retry
-				crawler.failedCount++
 				continue
 			}
 
@@ -242,15 +244,10 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					WithScreenShotOCR(true),
 					WithScreenShotUpload(true),
 					WithScreenShotLiveType(true),
-					WithScreenShotClosePopups(true),
 				)
 				if err != nil {
 					log.Error().Err(err).Msg("get screen result failed")
 					time.Sleep(3 * time.Second)
-					continue
-				}
-				if e := crawler.driverExt.tapPopupHandler(screenResult.Popup); e != nil {
-					log.Error().Err(e).Msg("close live popup failed")
 					continue
 				}
 

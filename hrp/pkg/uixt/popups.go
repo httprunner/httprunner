@@ -88,97 +88,114 @@ type ClosePopupsResult struct {
 }
 
 type PopupInfo struct {
-	CloseStatus string   `json:"close_status"` // found/success/fail
-	RetryCount  int      `json:"retry_count"`
-	CloseBox    Box      `json:"close_box"`              // CV 识别的弹窗关闭按钮（弹窗存在 && 关闭按钮存在）
+	*ClosePopupsResult
+	CloseStatus string   `json:"close_status"`           // found/success/fail
 	ClosePoints []PointF `json:"close_points,omitempty"` // CV 识别的所有关闭按钮（仅关闭按钮，可能存在多个）
 }
 
-func (p *PopupInfo) isIdentical(lastPopup *PopupInfo) bool {
-	if lastPopup == nil {
-		return false
-	}
-	if lastPopup.CloseBox.IsEmpty() {
-		return false
-	}
-	if !p.CloseBox.IsIdentical(lastPopup.CloseBox) {
-		lastPopup.CloseStatus = CloseStatusSuccess
-		return false
+func (p *PopupInfo) getClosePoint(lastPopup *PopupInfo) (*PointF, error) {
+	closeResult := p.ClosePopupsResult
+	if closeResult == nil {
+		return nil, nil
 	}
 
-	p.CloseStatus = CloseStatusFail
-	lastPopup.CloseStatus = CloseStatusFail
-	return true
+	// 弹框不存在 & 关闭按钮不存在
+	if closeResult.PopupArea.IsEmpty() && closeResult.CloseArea.IsEmpty() {
+		if p.ClosePoints == nil {
+			// 关闭图标不存在 => 100% 确定不存在弹窗
+			return nil, nil
+		}
+
+		// 存在关闭按钮，结合上一次的 popup 进行判断
+		if lastPopup == nil || lastPopup.ClosePoints == nil {
+			// 当前关闭图标为首次出现，确定是弹窗关闭按钮的概率较小
+			log.Debug().Interface("closePoints", p.ClosePoints).
+				Msg("skip close points for the first time")
+			return nil, nil
+		}
+
+		// 连续两次都存在关闭图标
+		if p.ClosePoints[0].IsIdentical(lastPopup.ClosePoints[0]) {
+			// 连续两次图标位置相同 => 存在弹窗 => 点击关闭
+			log.Warn().
+				Interface("closePoint", p.ClosePoints[0]).
+				Interface("lastClosePoints", lastPopup.ClosePoints).
+				Msg("popup close point detected")
+			return &p.ClosePoints[0], nil
+		}
+
+		// 连续两次图标位置不同 => 可能不是弹窗 => skip
+		log.Debug().Interface("closePoints", p.ClosePoints).
+			Interface("lastClosePoints", lastPopup.ClosePoints).
+			Msg("skip close points for not sure")
+		return nil, nil
+	}
+
+	// 弹窗存在 & 关闭按钮不存在
+	if !closeResult.PopupArea.IsEmpty() && closeResult.CloseArea.IsEmpty() {
+		if p.ClosePoints == nil {
+			// 关闭图标不存在 => 无法处理，抛异常
+			log.Error().Interface("popup", p).Msg("popup close area not found")
+			return nil, errors.New("popup close area not found")
+		}
+
+		// 使用关闭图标作为关闭按钮
+		return &p.ClosePoints[0], nil
+	}
+
+	closePoint := closeResult.CloseArea.Center()
+
+	// 弹窗不存在 & 关闭按钮存在 => 可能是文字弹窗 => 基于关闭按钮关闭弹窗
+	if closeResult.PopupArea.IsEmpty() && !closeResult.CloseArea.IsEmpty() {
+		return &closePoint, nil
+	}
+
+	// 弹窗存在 & 关闭按钮存在 => 检测到弹窗存在 => 基于关闭按钮关闭弹窗
+	return &closePoint, nil
 }
 
-func (dExt *DriverExt) ClosePopupsHandler(options ...ActionOption) error {
-	actionOptions := NewActionOptions(options...)
-	log.Info().Interface("actionOptions", actionOptions).Msg("try to find and close popups")
-	maxRetryTimes := actionOptions.MaxRetryTimes
-	interval := actionOptions.Interval
+func (dExt *DriverExt) ClosePopupsHandler() (err error) {
+	log.Info().Msg("try to find and close popups")
 
-	var lastPopup *PopupInfo
-	for retryCount := 0; retryCount < maxRetryTimes; retryCount++ {
-		screenResult, err := dExt.GetScreenResult(
-			WithScreenShotUpload(true),
-			WithScreenShotClosePopups(true),
-			WithScreenShotUITypes("close"), // get all close buttons
-		)
-		if err != nil {
-			log.Error().Err(err).Msg("get screen result failed for popup handler")
-			continue
-		}
-
-		popup := screenResult.Popup
-		if popup == nil || popup.CloseBox.IsEmpty() {
-			log.Debug().Interface("popup", popup).Msg("no popup found")
-			break
-		}
-		popup.CloseStatus = CloseStatusFound
-		popup.RetryCount = retryCount
-
-		// check if the current popup equals to the last popup
-		if popup.isIdentical(lastPopup) {
-			return errors.Wrap(code.MobileUIPopupError, "handle popup failed")
-		}
-
-		if err = dExt.tapPopupHandler(popup); err != nil {
-			return err
-		}
-
-		// sleep for another popup (if existed) to pop
-		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
-		lastPopup = popup
+	screenResult, err := dExt.GetScreenResult(
+		WithScreenShotUpload(true),
+		WithScreenShotClosePopups(true), // get popup area and close area
+		WithScreenShotUITypes("close"),  // get all close buttons
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("get screen result failed for popup handler")
+		return err
 	}
-	return nil
-}
 
-func (dExt *DriverExt) tapPopupHandler(popup *PopupInfo) error {
-	if popup == nil || popup.CloseBox.IsEmpty() {
-		log.Debug().Interface("popup", popup).Msg("no popup found")
+	popup := screenResult.Popup
+
+	defer func() {
+		dExt.lastPopup = popup
+	}()
+
+	closePoint, err := popup.getClosePoint(dExt.lastPopup)
+	if err != nil {
+		return err
+	}
+
+	if closePoint == nil {
+		// close point not found
+		log.Debug().Msg("close point not found")
 		return nil
 	}
+
 	popup.CloseStatus = CloseStatusFound
-
-	popupClose := popup.CloseBox
-	if popupClose.IsEmpty() {
-		log.Error().
-			Interface("popup", popup).
-			Msg("popup close area not found")
-		return errors.Wrap(code.MobileUIPopupError,
-			"popup close area not found")
-	}
-
-	closePoint := popupClose.Center()
 	log.Info().
-		Interface("popup", popup).
 		Interface("closePoint", closePoint).
+		Interface("popup", popup).
 		Msg("tap to close popup")
 	if err := dExt.TapAbsXY(closePoint.X, closePoint.Y); err != nil {
 		log.Error().Err(err).Msg("tap popup failed")
 		return errors.Wrap(code.MobileUIPopupError, err.Error())
 	}
 
-	// tap popup success
-	return nil
+	// wait 1s and check if popup still exists
+	log.Info().Msg("tap close point success, check if popup still exists")
+	time.Sleep(1 * time.Second)
+	return dExt.ClosePopupsHandler()
 }
