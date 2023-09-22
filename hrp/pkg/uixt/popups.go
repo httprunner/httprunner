@@ -1,6 +1,8 @@
 package uixt
 
 import (
+	"math/rand"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -97,7 +99,7 @@ func (p *PopupInfo) getClosePoint(lastPopup *PopupInfo) (*PointF, error) {
 		return nil, nil
 	}
 
-	// 弹框不存在 & 关闭按钮不存在
+	// 弹框不存在 && 关闭按钮不存在
 	if closeResult.PopupArea.IsEmpty() && closeResult.CloseArea.IsEmpty() {
 		if p.ClosePoints == nil {
 			// 关闭图标不存在 => 100% 确定不存在弹窗
@@ -119,7 +121,7 @@ func (p *PopupInfo) getClosePoint(lastPopup *PopupInfo) (*PointF, error) {
 				Interface("closePoint", p.ClosePoints[0]).
 				Interface("lastClosePoints", lastPopup.ClosePoints).
 				Msg("popup close point detected")
-			return &p.ClosePoints[0], nil
+			return getRandomClosePoint(p.ClosePoints), nil
 		}
 
 		// 连续两次图标位置不同 => 可能不是弹窗 => skip
@@ -129,7 +131,7 @@ func (p *PopupInfo) getClosePoint(lastPopup *PopupInfo) (*PointF, error) {
 		return nil, nil
 	}
 
-	// 弹窗存在 & 关闭按钮不存在
+	// 弹窗存在 && 关闭按钮不存在
 	if !closeResult.PopupArea.IsEmpty() && closeResult.CloseArea.IsEmpty() {
 		if p.ClosePoints == nil {
 			// 关闭图标不存在 => 无法处理，抛异常
@@ -137,19 +139,26 @@ func (p *PopupInfo) getClosePoint(lastPopup *PopupInfo) (*PointF, error) {
 			return nil, errors.Wrap(code.MobileUIPopupError, "popup close area not found")
 		}
 
-		// 使用关闭图标作为关闭按钮
-		return &p.ClosePoints[0], nil
+		// 使用关闭图标作为关闭按钮（随机选择一个）
+		return getRandomClosePoint(p.ClosePoints), nil
 	}
 
-	closePoint := closeResult.CloseArea.Center()
-
-	// 弹窗不存在 & 关闭按钮存在 => 可能是文字弹窗 => 基于关闭按钮关闭弹窗
-	if closeResult.PopupArea.IsEmpty() && !closeResult.CloseArea.IsEmpty() {
+	// 关闭按钮存在 && (弹框存在 || 不存在)
+	if closeResult.Type != "" || p.ClosePoints == nil {
+		// 弹窗类型存在 || 关闭图标不存在 => 基于关闭按钮关闭弹窗
+		closePoint := closeResult.CloseArea.Center()
 		return &closePoint, nil
+	} else {
+		// 弹窗类型不存在 && 关闭图标存在，使用关闭图标作为关闭按钮（随机选择一个）
+		return getRandomClosePoint(p.ClosePoints), nil
 	}
+}
 
-	// 弹窗存在 & 关闭按钮存在 => 检测到弹窗存在 => 基于关闭按钮关闭弹窗
-	return &closePoint, nil
+func getRandomClosePoint(closePoints []PointF) *PointF {
+	if len(closePoints) == 1 {
+		return &closePoints[0]
+	}
+	return &closePoints[rand.Intn(len(closePoints))]
 }
 
 func (dExt *DriverExt) ClosePopupsHandler() (err error) {
