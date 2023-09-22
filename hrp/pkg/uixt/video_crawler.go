@@ -242,15 +242,10 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					WithScreenShotOCR(true),
 					WithScreenShotUpload(true),
 					WithScreenShotLiveType(true),
-					WithScreenShotClosePopups(true),
 				)
 				if err != nil {
 					log.Error().Err(err).Msg("get screen result failed")
 					time.Sleep(3 * time.Second)
-					continue
-				}
-				if e := crawler.driverExt.tapPopupHandler(screenResult.Popup); e != nil {
-					log.Error().Err(e).Msg("close live popup failed")
 					continue
 				}
 
