@@ -1,8 +1,6 @@
 package uixt
 
 import (
-	"time"
-
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -136,7 +134,7 @@ func (p *PopupInfo) getClosePoint(lastPopup *PopupInfo) (*PointF, error) {
 		if p.ClosePoints == nil {
 			// 关闭图标不存在 => 无法处理，抛异常
 			log.Error().Interface("popup", p).Msg("popup close area not found")
-			return nil, errors.New("popup close area not found")
+			return nil, errors.Wrap(code.MobileUIPopupError, "popup close area not found")
 		}
 
 		// 使用关闭图标作为关闭按钮
@@ -196,6 +194,5 @@ func (dExt *DriverExt) ClosePopupsHandler() (err error) {
 
 	// wait 1s and check if popup still exists
 	log.Info().Msg("tap close point success, check if popup still exists")
-	time.Sleep(1 * time.Second)
-	return dExt.ClosePopupsHandler()
+	return nil
 }
