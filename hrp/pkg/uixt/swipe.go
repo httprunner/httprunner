@@ -114,7 +114,7 @@ func (dExt *DriverExt) prepareSwipeAction(options ...ActionOption) func(d *Drive
 				log.Error().Err(err).Msgf("swipe %s failed", d)
 				return err
 			}
-		} else if d, ok := swipeDirection.([]float64); ok {
+		} else if d, ok := swipeDirection.([]float64); ok && len(d) == 4 {
 			// custom direction: [fromX, fromY, toX, toY]
 			if err := dExt.SwipeRelative(d[0], d[1], d[2], d[3], options...); err != nil {
 				log.Error().Err(err).Msgf("swipe from (%v, %v) to (%v, %v) failed",
