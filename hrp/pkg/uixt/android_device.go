@@ -88,10 +88,13 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 	for _, option := range options {
 		option(device)
 	}
-
 	deviceList, err := GetAndroidDevices(device.SerialNumber)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
+	}
+
+	if device.SerialNumber == "" && len(deviceList) > 1 {
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError, "more than one device connected, please specify the serial")
 	}
 
 	dev := deviceList[0]
