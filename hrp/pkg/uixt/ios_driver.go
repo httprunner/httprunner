@@ -55,8 +55,8 @@ func (wd *wdaDriver) httpRequest(method string, rawURL string, rawBody []byte, d
 		// TODO: polling WDA to check if resumed automatically
 		time.Sleep(5 * time.Second)
 		oldSessionID := wd.sessionId
-		if err = wd.resetSession(); err != nil {
-			log.Err(err).Msgf("failed to reset wda driver, retry count: %v", retryCount)
+		if err2 := wd.resetSession(); err2 != nil {
+			log.Err(err2).Msgf("failed to reset wda driver, retry count: %v", retryCount)
 			continue
 		}
 		log.Debug().Str("new session", wd.sessionId).Str("old session", oldSessionID).Msgf("successful to reset wda driver, retry count: %v", retryCount)
