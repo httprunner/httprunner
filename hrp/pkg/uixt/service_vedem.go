@@ -218,7 +218,9 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 		bodyWriter.WriteField("uiTypes", uiType)
 	}
 
-	bodyWriter.WriteField("ocrCluster", "highPrecision")
+	if actionOptions.Timeout > 0 {
+		bodyWriter.WriteField("timeout", fmt.Sprintf("%v", actionOptions.Timeout))
+	}
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {
