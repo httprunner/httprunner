@@ -178,6 +178,11 @@ func (dExt *DriverExt) swipeToTapApp(appName string, options ...ActionOption) er
 		return errors.Wrap(err, "go to home screen failed")
 	}
 
+	// automatic handling popups before swipe
+	if err := dExt.ClosePopups(); err != nil {
+		log.Error().Err(err).Msg("auto handle popup failed")
+	}
+
 	// swipe to first screen
 	for i := 0; i < 5; i++ {
 		dExt.SwipeRight()
