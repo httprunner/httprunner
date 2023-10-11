@@ -294,7 +294,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Info().Interface("livePreviewProb", livePreviewProb).Msg("exit live room by preview live chance")
 					exitLive = true
 				}
-				// isFeed：通过预览流进入内流失败的情况下，防止使用退出直播间逻辑，影响：首次进入内流，至少会消费两个直播间才能退出
+
 				if (!isFeed) && exitLive && currentVideo.Type == VideoType_Live {
 					err = crawler.exitLiveRoom()
 					if err != nil {
