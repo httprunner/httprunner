@@ -149,6 +149,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 		dExt.cacheStepData.videoCrawler = crawler
 	}()
 
+	// flag，仅当 flag 为 false 时，并处于内流时，才执行退出直播间逻辑
+	isFeed := true
+
 	// loop until target count achieved or timeout
 	// the main loop is feed crawler
 	crawler.timer = time.NewTimer(time.Duration(configs.Timeout) * time.Second)
@@ -231,7 +234,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					sleepTime := math.Min(float64(currentVideo.SimulationPlayDuration), float64(currentVideo.RandomPlayDuration))
 					currentVideo.PlayDuration = int64(sleepTime)
 				}
-
+				isFeed = false
 				fallthrough
 
 			case VideoType_Live:
@@ -279,7 +282,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Info().Msg("exit live room by 10% chance")
 					exitLive = true
 				}
-				if exitLive && currentVideo.Type == VideoType_Live {
+				if (!isFeed) && exitLive && currentVideo.Type == VideoType_Live {
 					err = crawler.exitLiveRoom()
 					if err != nil {
 						if errors.Is(err, code.TimeoutError) || errors.Is(err, code.InterruptError) {
@@ -287,9 +290,12 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						}
 						log.Error().Err(err).Msg("run live crawler failed, continue")
 					}
+				} else {
+					isFeed = false
 				}
 
 			default:
+				isFeed = true
 				// 点播 || 图文 || 广告 || etc.
 				crawler.FeedCount++
 				log.Info().Interface("video", currentVideo).Msg(FOUND_FEED_SUCCESS)
