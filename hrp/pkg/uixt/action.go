@@ -59,6 +59,7 @@ const (
 	ACTION_SwipeToTapTexts ActionMethod = "swipe_to_tap_texts" // swipe up & down to find text and tap
 	ACTION_VideoCrawler    ActionMethod = "video_crawler"
 	ACTION_ClosePopups     ActionMethod = "close_popups"
+	ACTION_EndToEndDelay   ActionMethod = "live_e2e"
 )
 
 type MobileAction struct {
@@ -685,6 +686,9 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		return dExt.VideoCrawler(configs)
 	case ACTION_ClosePopups:
 		return dExt.ClosePopups(action.GetOptions()...)
+	case ACTION_EndToEndDelay:
+		dExt.CollectEndToEndDelay(action.GetOptions()...)
+		return nil
 	}
 	return nil
 }
