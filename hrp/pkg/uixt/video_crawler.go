@@ -208,9 +208,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Info().Interface("video", currentVideo).
 						Msg("live count achieved, skip entering live room")
 					skipEnterLive = true
-				} else if rand.Float64() <= 0.10 {
-					// 10% chance skip entering live room
-					log.Info().Msg("skip entering preview live by 10% chance")
+				} else if rand.Float64() <= 0.50 {
+					// 50% chance skip entering live room
+					log.Info().Msg("skip entering preview live by 50% chance")
 					skipEnterLive = true
 				}
 
