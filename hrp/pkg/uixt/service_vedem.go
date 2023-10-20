@@ -537,7 +537,7 @@ func (u UIResultMap) FilterUIResults(uiTypes []string) (uiResults UIResults, err
 			return
 		}
 	}
-	err = errors.Errorf("UI types %v not detected", uiTypes)
+	err = errors.Wrap(code.CVResultNotFoundError, fmt.Sprintf("UI types %v not detected", uiTypes))
 	return
 }
 

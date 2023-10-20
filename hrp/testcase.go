@@ -371,6 +371,7 @@ func convertCompatMobileStep(mobileStep *MobileStep) {
 		if ma.Method == uixt.ACTION_TapByCV {
 			uiTypes, _ := builtin.ConvertToStringSlice(ma.Params)
 			ma.ActionOptions.ScreenShotWithUITypes = append(ma.ActionOptions.ScreenShotWithUITypes, uiTypes...)
+			ma.ActionOptions.ScreenShotWithUpload = true
 		}
 		// set default max_retry_times to 10 for swipe_to_tap_texts
 		if ma.Method == uixt.ACTION_SwipeToTapTexts && actionOptions.MaxRetryTimes == 0 {
