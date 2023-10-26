@@ -217,6 +217,9 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 	for _, uiType := range actionOptions.ScreenShotWithUITypes {
 		bodyWriter.WriteField("uiTypes", uiType)
 	}
+	if actionOptions.ScreenShotWithOCRCluster != "" {
+		bodyWriter.WriteField("ocrCluster", actionOptions.ScreenShotWithOCRCluster)
+	}
 
 	if actionOptions.Timeout > 0 {
 		bodyWriter.WriteField("timeout", fmt.Sprintf("%v", actionOptions.Timeout))
