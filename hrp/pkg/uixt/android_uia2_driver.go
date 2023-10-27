@@ -103,8 +103,8 @@ func (ud *uiaDriver) httpRequest(method string, rawURL string, rawBody []byte, d
 		// wait for UIA2 server to resume automatically
 		time.Sleep(3 * time.Second)
 		oldSessionID := ud.sessionId
-		if err = ud.resetDriver(); err != nil {
-			log.Err(err).Msgf("failed to reset uia2 driver, retry count: %v", retryCount)
+		if err2 := ud.resetDriver(); err2 != nil {
+			log.Err(err2).Msgf("failed to reset uia2 driver, retry count: %v", retryCount)
 			continue
 		}
 		log.Debug().Str("new session", ud.sessionId).Str("old session", oldSessionID).Msgf("successful to reset uia2 driver, retry count: %v", retryCount)
@@ -426,6 +426,14 @@ func (ud *uiaDriver) SendKeys(text string, options ...ActionOption) (err error) 
 	actionOptions.updateData(data)
 
 	_, err = ud.httpPOST(data, "/session", ud.sessionId, "keys")
+	if err != nil {
+		// use com.android.adbkeyboard if existed
+		if ud.IsAdbKeyBoardInstalled() {
+			err = ud.SendKeysByAdbKeyBoard(text)
+		} else {
+			_, err = ud.adbClient.RunShellCommand("input", "text", text)
+		}
+	}
 	return
 }
 

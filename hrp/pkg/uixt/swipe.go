@@ -114,7 +114,7 @@ func (dExt *DriverExt) prepareSwipeAction(options ...ActionOption) func(d *Drive
 				log.Error().Err(err).Msgf("swipe %s failed", d)
 				return err
 			}
-		} else if d, ok := swipeDirection.([]float64); ok {
+		} else if d, ok := swipeDirection.([]float64); ok && len(d) == 4 {
 			// custom direction: [fromX, fromY, toX, toY]
 			if err := dExt.SwipeRelative(d[0], d[1], d[2], d[3], options...); err != nil {
 				log.Error().Err(err).Msgf("swipe from (%v, %v) to (%v, %v) failed",
@@ -176,6 +176,11 @@ func (dExt *DriverExt) swipeToTapApp(appName string, options ...ActionOption) er
 	// go to home screen
 	if err := dExt.Driver.Homescreen(); err != nil {
 		return errors.Wrap(err, "go to home screen failed")
+	}
+
+	// automatic handling popups before swipe
+	if err := dExt.ClosePopups(); err != nil {
+		log.Error().Err(err).Msg("auto handle popup failed")
 	}
 
 	// swipe to first screen

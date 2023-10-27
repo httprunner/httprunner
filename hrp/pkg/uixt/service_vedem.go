@@ -217,8 +217,13 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 	for _, uiType := range actionOptions.ScreenShotWithUITypes {
 		bodyWriter.WriteField("uiTypes", uiType)
 	}
+	if actionOptions.ScreenShotWithOCRCluster != "" {
+		bodyWriter.WriteField("ocrCluster", actionOptions.ScreenShotWithOCRCluster)
+	}
 
-	bodyWriter.WriteField("ocrCluster", "highPrecision")
+	if actionOptions.Timeout > 0 {
+		bodyWriter.WriteField("timeout", fmt.Sprintf("%v", actionOptions.Timeout))
+	}
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {
@@ -407,7 +412,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
 
-		if actionOptions.ScreenShotWithClosePopups {
+		if actionOptions.ScreenShotWithClosePopups && imageResult.CPResult != nil {
 			screenResult.Popup = &PopupInfo{
 				Type:      imageResult.CPResult.Type,
 				Text:      imageResult.CPResult.Text,
@@ -535,7 +540,7 @@ func (u UIResultMap) FilterUIResults(uiTypes []string) (uiResults UIResults, err
 			return
 		}
 	}
-	err = errors.Errorf("UI types %v not detected", uiTypes)
+	err = errors.Wrap(code.CVResultNotFoundError, fmt.Sprintf("UI types %v not detected", uiTypes))
 	return
 }
 

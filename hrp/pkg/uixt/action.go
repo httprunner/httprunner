@@ -121,6 +121,7 @@ type ActionOptions struct {
 	ScreenShotWithLiveType    bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
 	ScreenShotWithUITypes     []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
 	ScreenShotWithClosePopups bool     `json:"screenshot_with_close_popups,omitempty" yaml:"screenshot_with_close_popups,omitempty"`
+	ScreenShotWithOCRCluster  string   `json:"screenshot_with_ocr_cluster,omitempty" yaml:"screenshot_with_ocr_cluster,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -180,6 +181,9 @@ func (o *ActionOptions) Options() []ActionOption {
 	if len(o.AbsScope) == 4 {
 		options = append(options, WithAbsScope(
 			o.AbsScope[0], o.AbsScope[1], o.AbsScope[2], o.AbsScope[3]))
+	} else if len(o.Scope) == 4 {
+		options = append(options, WithScope(
+			o.Scope[0], o.Scope[1], o.Scope[2], o.Scope[3]))
 	}
 	if len(o.Offset) == 2 {
 		// for tap [x,y] offset
@@ -223,6 +227,12 @@ func (o *ActionOptions) Options() []ActionOption {
 	}
 	if len(o.ScreenShotWithUITypes) > 0 {
 		options = append(options, WithScreenShotUITypes(o.ScreenShotWithUITypes...))
+	}
+	if o.ScreenShotWithClosePopups {
+		options = append(options, WithScreenShotClosePopups(true))
+	}
+	if o.ScreenShotWithOCRCluster != "" {
+		options = append(options, WithScreenOCRCluster(o.ScreenShotWithOCRCluster))
 	}
 
 	return options
@@ -469,6 +479,12 @@ func WithScreenShotUITypes(uiTypes ...string) ActionOption {
 func WithScreenShotClosePopups(closeOn bool) ActionOption {
 	return func(o *ActionOptions) {
 		o.ScreenShotWithClosePopups = closeOn
+	}
+}
+
+func WithScreenOCRCluster(ocrCluster string) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithOCRCluster = ocrCluster
 	}
 }
 

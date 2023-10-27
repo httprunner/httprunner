@@ -14,6 +14,8 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 )
 
+const AdbKeyBoardPackageName = "com.android.adbkeyboard/.AdbIME"
+
 type adbDriver struct {
 	Driver
 
@@ -325,6 +327,38 @@ func (ad *adbDriver) SendKeys(text string, options ...ActionOption) (err error) 
 		return errors.Wrap(err, "send keys failed")
 	}
 	return nil
+}
+
+func (ad *adbDriver) IsAdbKeyBoardInstalled() bool {
+	output, err := ad.adbClient.RunShellCommand("ime", "list", "-a")
+	if err != nil {
+		return false
+	}
+	return strings.Contains(output, AdbKeyBoardPackageName)
+}
+
+func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
+	defer func() {
+		// Reset to default, don't care which keyboard was chosen before switch:
+		_, err = ad.adbClient.RunShellCommand("ime", "reset")
+	}()
+
+	// Enable ADBKeyBoard from adb
+	if _, err = ad.adbClient.RunShellCommand("ime", "enable", AdbKeyBoardPackageName); err != nil {
+		return
+	}
+	// Switch to ADBKeyBoard from adb
+	if _, err = ad.adbClient.RunShellCommand("ime", "set", AdbKeyBoardPackageName); err != nil {
+		return
+	}
+	time.Sleep(time.Second)
+	// input Quoted text
+	text = strings.ReplaceAll(text, " ", "\\ ")
+	if _, err = ad.adbClient.RunShellCommand("am", "broadcast", "-a", "ADB_INPUT_TEXT", "--es", "msg", text); err != nil {
+		return
+	}
+	time.Sleep(time.Second)
+	return
 }
 
 func (ad *adbDriver) Input(text string, options ...ActionOption) (err error) {

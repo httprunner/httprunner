@@ -237,6 +237,10 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 		return nil, errors.Wrap(code.IOSDeviceConnectionError, err.Error())
 	}
 
+	if device.UDID == "" && len(deviceList) > 1 {
+		return nil, errors.Wrap(code.IOSDeviceConnectionError, "more than one device connected, please specify the udid")
+	}
+
 	dev := deviceList[0]
 	udid := dev.Properties().SerialNumber
 
