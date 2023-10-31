@@ -26,6 +26,10 @@ type StepResult struct {
 	ExportVars  map[string]interface{} `json:"export_vars,omitempty" yaml:"export_vars,omitempty"` // extract variables
 	Attachments interface{}            `json:"attachments,omitempty" yaml:"attachments,omitempty"` // store extra step information, such as error message or screenshots
 }
+type Retry struct {
+	Interval int `json:"interval,omitempty" yaml:"interval,omitempty"`
+	Times    int `json:"times,omitempty" yaml:"times,omitempty"`
+}
 
 // TStep represents teststep data structure.
 // Each step maybe three different types: make one request or reference another api/testcase.
@@ -47,6 +51,7 @@ type TStep struct {
 	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
 	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Loops         int                    `json:"loops,omitempty" yaml:"loops,omitempty"`
+	Retry         *Retry                 `json:"retry,omitempty" yaml:"retry,omitempty"`
 }
 
 // IStep represents interface for all types for teststeps, includes:

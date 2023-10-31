@@ -11,11 +11,12 @@ config:
         pick_order: "sequential"
       username-password:
         name: "user-info"
-    limit: 6
+    limit: 1
   variables:
     app_version: v1
     user_agent: iOS/10.3
     file: examples/hrp/account.csv
+    baseurl1: ${ENV_VAL(HOST)}
   base_url: "https://postman-echo.com"
   verify: False
 

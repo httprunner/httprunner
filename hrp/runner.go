@@ -25,7 +25,6 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
-	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
@@ -194,14 +193,14 @@ func (r *HRPRunner) GenHTMLReport() *HRPRunner {
 func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	log.Info().Str("hrp_version", version.VERSION).Msg("start running")
 
-	startTime := time.Now()
+	/* startTime := time.Now()
 	defer func() {
 		// report run event
 		sdk.SendGA4Event("hrp_run", map[string]interface{}{
 			"success":              err == nil,
 			"engagement_time_msec": time.Since(startTime).Milliseconds(),
 		})
-	}()
+	}() */
 
 	// record execution data to summary
 	s := newOutSummary()
@@ -518,7 +517,7 @@ func (r *SessionRunner) inheritConnection(src *SessionRunner) {
 // givenVars is used for data driven
 func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	// report GA event
-	sdk.SendGA4Event("hrp_session_runner_start", nil)
+	// sdk.SendGA4Event("hrp_session_runner_start", nil)
 
 	config := r.caseRunner.testCase.Config
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
@@ -531,16 +530,11 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 		r.releaseResources()
 	}()
 
-	// run step in sequential order
-	for _, step := range r.caseRunner.testCase.TestSteps {
-		select {
-		case <-r.caseRunner.hrpRunner.caseTimeoutTimer.C:
-			log.Warn().Msg("timeout in session runner")
-			return errors.Wrap(code.TimeoutError, "session runner timeout")
-		case <-r.caseRunner.hrpRunner.interruptSignal:
-			log.Warn().Msg("interrupted in session runner")
-			return errors.Wrap(code.InterruptError, "session runner interrupted")
-		default:
+	stepsErrchan := make(chan error, 1)
+
+	go func() {
+		// run step in sequential order
+		for _, step := range r.caseRunner.testCase.TestSteps {
 			// TODO: parse step struct
 			// parse step name
 			parsedName, err := r.caseRunner.parser.ParseString(step.Name(), r.sessionVariables)
@@ -571,14 +565,30 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 					log.Info().Int("index", i).Msg("start running step in loop")
 					loopIndex = fmt.Sprintf("_loop_%d", i)
 				}
+				runStep := func(indexSuffix string) {
+					// run step
+					startTime := time.Now().Unix()
+					stepResult, err = step.Run(r)
+					stepResult.Name = stepName + indexSuffix
+					stepResult.StartTime = startTime
+					r.updateSummary(stepResult)
+				}
 
-				// run step
-				startTime := time.Now().Unix()
-				stepResult, err = step.Run(r)
-				stepResult.Name = stepName + loopIndex
-				stepResult.StartTime = startTime
+				runStep(loopIndex)
 
-				r.updateSummary(stepResult)
+				if err != nil && step.Struct().Retry != nil {
+					retryTime := step.Struct().Retry.Times
+					retryInterval := step.Struct().Retry.Interval
+					for retry := 1; retry <= retryInterval; retry++ {
+						retryIndex := fmt.Sprintf("_retry_%d", retry)
+						// run step
+						runStep(loopIndex + retryIndex)
+						if err == nil {
+							break
+						}
+						time.Sleep(time.Duration(retryTime) * time.Second)
+					}
+				}
 			}
 
 			// update extracted variables
@@ -606,13 +616,28 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 
 			// interrupted or timeout, abort running
 			if errors.Is(err, code.InterruptError) || errors.Is(err, code.TimeoutError) {
-				return err
+				stepsErrchan <- err
+				break
 			}
 
 			// check if failfast
 			if r.caseRunner.hrpRunner.failfast {
-				return errors.Wrap(err, "abort running due to failfast setting")
+				stepsErrchan <- errors.Wrap(err, "abort running due to failfast setting")
+				break
 			}
+		}
+		close(stepsErrchan)
+	}()
+	select {
+	case <-r.caseRunner.hrpRunner.caseTimeoutTimer.C:
+		log.Warn().Msg("timeout in session runner")
+		return errors.Wrap(code.TimeoutError, "session runner timeout")
+	case <-r.caseRunner.hrpRunner.interruptSignal:
+		log.Warn().Msg("interrupted in session runner")
+		return errors.Wrap(code.InterruptError, "session runner interrupted")
+	case err := <-stepsErrchan:
+		if err != nil {
+			return err
 		}
 	}
 

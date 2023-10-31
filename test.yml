@@ -1,0 +1,21 @@
+config:
+  name: "request methods testcase: validate with parameters"
+  base_url: "https://postman-echo.com"
+  verify: False
+teststeps:
+  - name: "post"
+    retry:
+      times: 3
+      interval: 3
+    request:
+      method: POST
+      url: /post
+      body:
+        {"foo1":"sHCdy","foo2":12.3}
+      headers:
+        User-Agent: application/json; charset=utf-8
+    validate:
+      - check: status_code
+        assert: equals
+        expect: 100
+        msg: check status code

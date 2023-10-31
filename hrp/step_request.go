@@ -919,6 +919,7 @@ func (s *StepRequestExtraction) Struct() *TStep {
 
 func (s *StepRequestExtraction) Run(r *SessionRunner) (*StepResult, error) {
 	if s.step.Request != nil {
+		log.Error().Str("path", "test").Msg("StepRequestExtraction 933")
 		return runStepRequest(r, s.step)
 	}
 	if s.step.WebSocket != nil {
@@ -955,6 +956,7 @@ func (s *StepRequestValidation) Struct() *TStep {
 
 func (s *StepRequestValidation) Run(r *SessionRunner) (*StepResult, error) {
 	if s.step.Request != nil {
+		log.Error().Str("path", "test").Msg("StepRequestValidation 970")
 		return runStepRequest(r, s.step)
 	}
 	if s.step.WebSocket != nil {

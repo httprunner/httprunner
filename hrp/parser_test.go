@@ -17,6 +17,16 @@ func TestBuildURL(t *testing.T) {
 		t.Fatal()
 	}
 
+	preparedURL = buildURL("https://postman-echo.com", "/get?foo1=sHCdy&foo2=34.5", nil)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get?foo1=sHCdy&foo2=34.5") {
+		t.Fatal()
+	}
+
+	preparedURL = buildURL("https://postman-echo.com", "/get?foo1=sHCdy&foo2=34.5", nil)
+	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get?foo1=sHCdy&foo2=34.5") {
+		t.Fatal()
+	}
+
 	preparedURL = buildURL("https://postman-echo.com", "/get", nil)
 	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get") {
 		t.Fatal()

@@ -13,7 +13,6 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
-	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
 const (
@@ -93,7 +92,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 	if err != nil {
 		params["result"] = "failed"
 	}
-	go sdk.SendGA4Event("init_plugin", params)
+	// go sdk.SendGA4Event("init_plugin", params)
 
 	return
 }
