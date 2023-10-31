@@ -217,6 +217,10 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 	for _, uiType := range actionOptions.ScreenShotWithUITypes {
 		bodyWriter.WriteField("uiTypes", uiType)
 	}
+
+	// 临时支持直播使用高精度集群
+	bodyWriter.WriteField("ocrCluster", "default_1600")
+
 	if actionOptions.ScreenShotWithOCRCluster != "" {
 		bodyWriter.WriteField("ocrCluster", actionOptions.ScreenShotWithOCRCluster)
 	}
