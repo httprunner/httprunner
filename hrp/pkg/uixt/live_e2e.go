@@ -62,11 +62,15 @@ func (ete *EndToEndDelay) getCurrentLiveTime(utcTime time.Time) error {
 	// filter ocr texts with time format
 	var liveTimeTexts []string
 	for _, ocrText := range ocrTexts {
-		if strings.HasPrefix(ocrText.Text, "16") &&
-			len(ocrText.Text) > 8 &&
-			!strings.Contains(ocrText.Text, ":") {
-			liveTimeTexts = append(liveTimeTexts, ocrText.Text)
+		if len(ocrText.Text) < 10 || strings.Contains(ocrText.Text, ":") {
+			continue
 		}
+		// exclude digit(s) recognized as letter(s)
+		_, errParseInt := strconv.ParseInt(ocrText.Text[:10], 10, 64)
+		if errParseInt != nil {
+			continue
+		}
+		liveTimeTexts = append(liveTimeTexts, ocrText.Text)
 	}
 
 	var liveTimeText string
