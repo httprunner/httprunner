@@ -277,7 +277,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Info().Interface("live", currentVideo).
 						Msg("live count achieved, exit live room")
 					exitLive = true
-				} else if rand.Float64() <= 0.10 {
+				} else if rand.Float64() <= 0.40 {
 					// 10% chance exit live room
 					log.Info().Msg("exit live room by 10% chance")
 					exitLive = true
