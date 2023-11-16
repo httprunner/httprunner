@@ -128,12 +128,14 @@ type cacheStepData struct {
 	screenResults ScreenResultMap
 	// cache feed/live video stat
 	videoCrawler *VideoCrawler
+	e2eDelay     []timeLog
 }
 
 func (d *cacheStepData) reset() {
 	d.screenShots = make([]string, 0)
 	d.screenResults = make(map[string]*ScreenResult)
 	d.videoCrawler = nil
+	d.e2eDelay = nil
 }
 
 type DriverExt struct {
@@ -281,6 +283,7 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenResults.getScreenShotUrls()
 	dExt.cacheStepData.screenResults.updatePopupCloseStatus()
 	cacheData["screen_results"] = dExt.cacheStepData.screenResults
+	cacheData["e2e_results"] = dExt.cacheStepData.e2eDelay
 
 	// clear cache
 	dExt.cacheStepData.reset()
