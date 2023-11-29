@@ -25,22 +25,6 @@
           {
             "method": "app_launch",
             "params": "com.ss.android.ugc.aweme"
-          },
-          {
-            "method": "home"
-          },
-          {
-            "method": "swipe_to_tap_app",
-            "params": "抖音",
-            "max_retry_times": 5,
-            "offset": [
-              0,
-              -50
-            ]
-          },
-          {
-            "method": "sleep",
-            "params": 20
           }
         ]
       }
@@ -72,121 +56,11 @@
           {
             "method": "tap_ocr",
             "params": "关注",
-            "index": -1
-          },
-          {
-            "method": "sleep",
-            "params": 10
+            "index": -1,
+            "identifier": "click_live_new"
           }
         ]
       }
-    },
-    {
-      "name": "点击直播标签,进入直播间",
-      "android": {
-        "actions": [
-          {
-            "method": "swipe_to_tap_texts",
-            "params": "${split_by_comma($ups)}",
-            "identifier": "click_live",
-            "wait_time": 1,
-            "direction": [
-              0.6,
-              0.2,
-              0.4,
-              0.2
-            ],
-            "offset": [
-              0,
-              -50
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "name": "等待1分钟",
-      "android": {
-        "actions": [
-          {
-            "method": "sleep",
-            "params": 30
-          }
-        ]
-      }
-    },
-    {
-      "name": "上滑进入下一个直播间",
-      "android": {
-        "actions": [
-          {
-            "method": "swipe",
-            "params": [
-              0.9,
-              0.9,
-              0.9,
-              0.1
-            ],
-            "identifier": "slide_in_live"
-          },
-          {
-            "method": "sleep",
-            "params": 30
-          }
-        ]
-      }
-    },
-    {
-      "name": "再上滑进入下一个直播间",
-      "android": {
-        "actions": [
-          {
-            "method": "swipe",
-            "params": [
-              0.9,
-              0.9,
-              0.9,
-              0.1
-            ],
-            "identifier": "slide_in_live"
-          },
-          {
-            "method": "sleep",
-            "params": 30
-          }
-        ]
-      }
-    },
-    {
-      "name": "返回主界面，并打开本地时间戳",
-      "android": {
-        "actions": [
-          {
-            "method": "home"
-          },
-          {
-            "method": "swipe_to_tap_app",
-            "params": "local",
-            "max_retry_times": 5,
-            "offset": [
-              0,
-              -50
-            ]
-          },
-          {
-            "method": "sleep",
-            "params": 10
-          }
-        ]
-      },
-      "validate": [
-        {
-          "check": "ui_ocr",
-          "assert": "exists",
-          "expect": "16",
-          "msg": "打开本地时间戳失败"
-        }
-      ]
     }
   ]
 }
