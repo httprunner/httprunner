@@ -340,21 +340,30 @@ func (ad *adbDriver) IsAdbKeyBoardInstalled() bool {
 func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 	defer func() {
 		// Reset to default, don't care which keyboard was chosen before switch:
-		_, err = ad.adbClient.RunShellCommand("ime", "reset")
+		if _, resetErr := ad.adbClient.RunShellCommand("ime", "reset"); resetErr != nil {
+			log.Error().Err(err).Msg("failed to reset ime")
+		}
 	}()
 
 	// Enable ADBKeyBoard from adb
 	if _, err = ad.adbClient.RunShellCommand("ime", "enable", AdbKeyBoardPackageName); err != nil {
+		log.Error().Err(err).Msg("failed to enable adbKeyBoard")
 		return
 	}
 	// Switch to ADBKeyBoard from adb
 	if _, err = ad.adbClient.RunShellCommand("ime", "set", AdbKeyBoardPackageName); err != nil {
+		log.Error().Err(err).Msg("failed to set adbKeyBoard")
 		return
 	}
 	time.Sleep(time.Second)
 	// input Quoted text
 	text = strings.ReplaceAll(text, " ", "\\ ")
 	if _, err = ad.adbClient.RunShellCommand("am", "broadcast", "-a", "ADB_INPUT_TEXT", "--es", "msg", text); err != nil {
+		log.Error().Err(err).Msg("failed to input by adbKeyBoard")
+		return
+	}
+	if _, err = ad.adbClient.RunShellCommand("input", "keyevent", fmt.Sprintf("%d", KCEnter)); err != nil {
+		log.Error().Err(err).Msg("failed to input keyevent enter")
 		return
 	}
 	time.Sleep(time.Second)

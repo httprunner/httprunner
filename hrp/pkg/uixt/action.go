@@ -300,8 +300,8 @@ func (o *ActionOptions) updateData(data map[string]interface{}) {
 		data["frequency"] = 60 // default frequency
 	}
 
-	if _, ok := data["isReplace"]; !ok {
-		data["isReplace"] = true // default true
+	if _, ok := data["replace"]; !ok {
+		data["replace"] = true // default true
 	}
 
 	// custom options
