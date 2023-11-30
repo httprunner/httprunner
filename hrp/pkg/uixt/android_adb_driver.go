@@ -459,7 +459,7 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 		log.Info().Msg("action log is null, use action file >>>")
 		logFilePathPrefix := fmt.Sprintf("%v/data", env.ActionLogFilePath)
 		files := []string{}
-		myexec.RunCommand("adb", "pull", env.DeviceActionLogFilePath, env.ActionLogFilePath)
+		myexec.RunCommand("adb", "-s", ad.adbClient.Serial(), "pull", env.DeviceActionLogFilePath, env.ActionLogFilePath)
 		err = filepath.Walk(env.ActionLogFilePath, func(path string, info fs.FileInfo, err error) error {
 			// 只是需要日志文件
 			if ok := strings.Contains(path, logFilePathPrefix); ok {
