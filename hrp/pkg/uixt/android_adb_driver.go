@@ -456,6 +456,7 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 	pointRes := ConvertPoints(content)
 	// 没有解析到打点日志，走兜底逻辑
 	if len(pointRes) == 0 {
+		log.Info().Msg("action log is null, use action file >>>")
 		logFilePathPrefix := fmt.Sprintf("%v/data", env.ActionLogFilePath)
 		files := []string{}
 		myexec.RunCommand("adb", "pull", env.DeviceActionLogFilePath, env.ActionLogFilePath)
