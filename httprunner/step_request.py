@@ -119,7 +119,10 @@ def run_step_request(runner: HttpRunner, step: TStep) -> StepResult:
     url_path = parsed_request_dict.pop("url")
     url = build_url(config.base_url, url_path)
     parsed_request_dict["verify"] = config.verify
-    parsed_request_dict["json"] = parsed_request_dict.pop("req_json", {})
+    json_data = parsed_request_dict.pop("req_json", {})
+    if json_data and not (isinstance(json_data, dict) or isinstance(json_data, list)):
+        json_data = json.loads(json_data)
+    parsed_request_dict["json"] = json_data
 
     # log request
     request_print = "====== request details ======\n"
