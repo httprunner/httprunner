@@ -348,6 +348,9 @@ type Video struct {
 	UserName string `json:"user_name"`           // 视频作者
 	Duration int64  `json:"duration,omitempty"`  // 视频时长(ms)
 	Caption  string `json:"caption,omitempty"`   // 视频文案
+	// 作者信息
+	UserID        string `json:"user_id"`        // 作者用户名
+	FollowerCount int64  `json:"follower_count"` // 作者粉丝数
 	// 视频热度数据
 	ViewCount    int64 `json:"view_count,omitempty"`    // feed 观看数
 	LikeCount    int64 `json:"like_count,omitempty"`    // feed 点赞数
