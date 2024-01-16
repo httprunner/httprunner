@@ -4,7 +4,6 @@ package gadb
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
@@ -244,7 +243,7 @@ func TestDevice_Pull(t *testing.T) {
 		}
 
 		userHomeDir, _ := os.UserHomeDir()
-		if err = ioutil.WriteFile(userHomeDir+"/Desktop/hello.txt", buffer.Bytes(), DefaultFileMode); err != nil {
+		if err = os.WriteFile(userHomeDir+"/Desktop/hello.txt", buffer.Bytes(), DefaultFileMode); err != nil {
 			t.Fatal(err)
 		}
 	}
