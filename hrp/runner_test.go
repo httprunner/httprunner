@@ -1,7 +1,6 @@
 package hrp
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,8 +30,8 @@ func removeHashicorpGoPlugin() {
 
 func buildHashicorpPyPlugin() {
 	log.Info().Msg("[init] prepare hashicorp python plugin")
-	src, _ := ioutil.ReadFile(tmpl("plugin/debugtalk.py"))
-	err := ioutil.WriteFile(tmpl("debugtalk.py"), src, 0o644)
+	src, _ := os.ReadFile(tmpl("plugin/debugtalk.py"))
+	err := os.WriteFile(tmpl("debugtalk.py"), src, 0o644)
 	if err != nil {
 		log.Error().Err(err).Msg("copy hashicorp python plugin failed")
 		os.Exit(code.GetErrorCode(err))
