@@ -1,5 +1,9 @@
 # Release History
 
+## v4.3.8 (2024-01-18)
+
+- feat: add Shell step type
+
 ## v4.3.7 (2023-09-19)
 
 **go version**

@@ -769,6 +769,17 @@ func (s *StepRequest) IOS() *StepMobile {
 	}
 }
 
+// Shell creates a new shell action
+func (s *StepRequest) Shell(content string) *StepShell {
+	s.step.Shell = &Shell{
+		String: content,
+	}
+
+	return &StepShell{
+		step: s.step,
+	}
+}
+
 // StepRequestWithOptionalArgs implements IStep interface.
 type StepRequestWithOptionalArgs struct {
 	step *TStep
