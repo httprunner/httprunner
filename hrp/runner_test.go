@@ -155,6 +155,45 @@ func TestRunCaseWithThinkTime(t *testing.T) {
 	}
 }
 
+func TestRunCaseWithShell(t *testing.T) {
+	testcase1 := &TestCase{
+		Config: NewConfig("complex shell with multiple commands"),
+		TestSteps: []IStep{
+			NewStep("shell21").Shell("A=123; echo $A"),
+			NewStep("shell22").Shell("A=123 && echo $A"),
+			NewStep("shell23").Shell("export A=123 && echo $A"),
+			NewStep("shell24").Shell("for i in {1..5}; do echo $i; sleep 1; done"),
+		},
+	}
+
+	testcase2 := &TestCase{
+		Config: NewConfig("complex shell with environment variables"),
+		TestSteps: []IStep{
+			NewStep("shell3").Shell("A=123; echo $A"),
+		},
+	}
+
+	testcase3 := &TestCase{
+		Config: NewConfig("check shell exit code"),
+		TestSteps: []IStep{
+			NewStep("shell21").
+				Shell("ls -a; exit 3; exit 5").
+				Validate().
+				AssertExitCode(3),
+			NewStep("shell22").
+				Shell("ls -a; exit 3 && exit 5").
+				Validate().
+				AssertExitCode(3),
+		},
+	}
+
+	r := NewRunner(t)
+	err := r.Run(testcase1, testcase2, testcase3)
+	if err != nil {
+		t.Fatal()
+	}
+}
+
 func TestRunCaseWithPluginJSON(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
