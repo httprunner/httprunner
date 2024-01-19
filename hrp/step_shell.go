@@ -96,6 +96,9 @@ func runStepShell(r *SessionRunner, step *TStep) (stepResult *StepResult, err er
 	if err != nil {
 		if exitCode == shell.ExpectExitCode {
 			// get expected error
+			log.Warn().Err(err).
+				Int("exitCode", exitCode).
+				Msg("get expected error, ignore")
 			stepResult.Success = true
 			return stepResult, nil
 		}
