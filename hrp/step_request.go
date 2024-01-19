@@ -772,7 +772,8 @@ func (s *StepRequest) IOS() *StepMobile {
 // Shell creates a new shell action
 func (s *StepRequest) Shell(content string) *StepShell {
 	s.step.Shell = &Shell{
-		String: content,
+		String:         content,
+		ExpectExitCode: 0,
 	}
 
 	return &StepShell{
@@ -915,13 +916,13 @@ func (s *StepRequestExtraction) Name() string {
 }
 
 func (s *StepRequestExtraction) Type() StepType {
-	if s.step.Request != nil {
-		return StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
-	}
+	var stepType StepType
 	if s.step.WebSocket != nil {
-		return StepType(fmt.Sprintf("websocket-%v", s.step.WebSocket.Type))
+		stepType = StepType(fmt.Sprintf("websocket-%v", s.step.WebSocket.Type))
+	} else {
+		stepType = StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
 	}
-	return "extraction"
+	return stepType + stepTypeSuffixExtraction
 }
 
 func (s *StepRequestExtraction) Struct() *TStep {
@@ -951,13 +952,13 @@ func (s *StepRequestValidation) Name() string {
 }
 
 func (s *StepRequestValidation) Type() StepType {
-	if s.step.Request != nil {
-		return StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
-	}
+	var stepType StepType
 	if s.step.WebSocket != nil {
-		return StepType(fmt.Sprintf("websocket-%v", s.step.WebSocket.Type))
+		stepType = StepType(fmt.Sprintf("websocket-%v", s.step.WebSocket.Type))
+	} else {
+		stepType = StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
 	}
-	return "validation"
+	return stepType + stepTypeSuffixValidation
 }
 
 func (s *StepRequestValidation) Struct() *TStep {

@@ -48,20 +48,11 @@ type StepShellValidation struct {
 }
 
 func (s *StepShellValidation) Name() string {
-	if s.step.Name != "" {
-		return s.step.Name
-	}
-	return fmt.Sprintf("%s %s", s.step.Request.Method, s.step.Request.URL)
+	return s.step.Name
 }
 
 func (s *StepShellValidation) Type() StepType {
-	if s.step.Request != nil {
-		return StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
-	}
-	if s.step.WebSocket != nil {
-		return StepType(fmt.Sprintf("websocket-%v", s.step.WebSocket.Type))
-	}
-	return "validation"
+	return stepTypeShell + stepTypeSuffixValidation
 }
 
 func (s *StepShellValidation) Struct() *TStep {

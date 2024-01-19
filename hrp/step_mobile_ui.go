@@ -522,7 +522,10 @@ func (s *StepMobileUIValidation) Name() string {
 }
 
 func (s *StepMobileUIValidation) Type() StepType {
-	return stepTypeIOS
+	if s.step.Android != nil {
+		return stepTypeAndroid + stepTypeSuffixValidation
+	}
+	return stepTypeIOS + stepTypeSuffixValidation
 }
 
 func (s *StepMobileUIValidation) Struct() *TStep {
