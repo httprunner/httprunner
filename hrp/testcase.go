@@ -282,6 +282,10 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
 				step: step,
 			})
+		} else if step.Shell != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepShell{
+				step: step,
+			})
 		} else {
 			log.Warn().Interface("step", step).Msg("[convertTestCase] unexpected step")
 		}
