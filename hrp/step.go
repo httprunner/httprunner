@@ -13,6 +13,9 @@ const (
 	stepTypeAndroid     StepType = "android"
 	stepTypeIOS         StepType = "ios"
 	stepTypeShell       StepType = "shell"
+
+	stepTypeSuffixExtraction StepType = "_extraction"
+	stepTypeSuffixValidation StepType = "_validation"
 )
 
 type StepResult struct {
