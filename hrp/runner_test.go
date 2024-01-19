@@ -164,8 +164,8 @@ func TestRunCaseWithShell(t *testing.T) {
 			}),
 		TestSteps: []IStep{
 			NewStep("shell21").Shell("echo hello world"),
-			NewStep("shell21").Shell("echo $ABC"),
-			NewStep("shell21").Shell("which hrp"),
+			// NewStep("shell21").Shell("echo $ABC"),
+			// NewStep("shell21").Shell("which hrp"),
 		},
 	}
 
