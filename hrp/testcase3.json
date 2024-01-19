@@ -1,0 +1,21 @@
+{
+    "config": {
+        "name": "check shell exit code"
+    },
+    "teststeps": [
+        {
+            "name": "shell21",
+            "shell": {
+                "string": "ls -a; exit 3; exit 5",
+                "expect_exit_code": 3
+            }
+        },
+        {
+            "name": "shell22",
+            "shell": {
+                "string": "ls -a; exit 3 && exit 5",
+                "expect_exit_code": 3
+            }
+        }
+    ]
+}

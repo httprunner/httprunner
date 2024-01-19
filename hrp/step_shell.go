@@ -2,6 +2,7 @@ package hrp
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/httprunner/funplugin/myexec"
@@ -82,6 +83,11 @@ func runStepShell(r *SessionRunner, step *TStep) (stepResult *StepResult, err er
 		Success:     false,
 		Elapsed:     0,
 		ContentSize: 0,
+	}
+
+	vars := r.caseRunner.parsedConfig.Variables
+	for key, value := range vars {
+		os.Setenv(key, fmt.Sprintf("%v", value))
 	}
 
 	start := time.Now()
