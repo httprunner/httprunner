@@ -15,7 +15,7 @@ var (
 )
 
 func init() {
-	serial := os.Getenv("SerialNumber")
+	serial = os.Getenv("SerialNumber")
 	numStr := os.Getenv("RunTimes")
 	defaultNum := 20
 
@@ -35,6 +35,11 @@ func launchAppDriver(pkgName string) (driver *uixt.DriverExt, err error) {
 	}
 
 	_, err = driver.Driver.AppTerminate(pkgName)
+	if err != nil {
+		return nil, err
+	}
+
+	err = driver.Driver.Homescreen()
 	if err != nil {
 		return nil, err
 	}
