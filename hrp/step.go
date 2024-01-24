@@ -12,6 +12,10 @@ const (
 	stepTypeWebSocket   StepType = "websocket"
 	stepTypeAndroid     StepType = "android"
 	stepTypeIOS         StepType = "ios"
+	stepTypeShell       StepType = "shell"
+
+	stepTypeSuffixExtraction StepType = "_extraction"
+	stepTypeSuffixValidation StepType = "_validation"
 )
 
 type StepResult struct {
@@ -40,6 +44,7 @@ type TStep struct {
 	WebSocket     *WebSocketAction       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
 	Android       *MobileStep            `json:"android,omitempty" yaml:"android,omitempty"`
 	IOS           *MobileStep            `json:"ios,omitempty" yaml:"ios,omitempty"`
+	Shell         *Shell                 `json:"shell,omitempty" yaml:"shell,omitempty"`
 	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
 	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
 	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`

@@ -1,7 +1,6 @@
 package hrp
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,8 +30,8 @@ func removeHashicorpGoPlugin() {
 
 func buildHashicorpPyPlugin() {
 	log.Info().Msg("[init] prepare hashicorp python plugin")
-	src, _ := ioutil.ReadFile(tmpl("plugin/debugtalk.py"))
-	err := ioutil.WriteFile(tmpl("debugtalk.py"), src, 0o644)
+	src, _ := os.ReadFile(tmpl("plugin/debugtalk.py"))
+	err := os.WriteFile(tmpl("debugtalk.py"), src, 0o644)
 	if err != nil {
 		log.Error().Err(err).Msg("copy hashicorp python plugin failed")
 		os.Exit(code.GetErrorCode(err))
@@ -153,6 +152,27 @@ func TestRunCaseWithThinkTime(t *testing.T) {
 		if duration < minValue || duration > maxValue {
 			t.Fatalf("failed to test think time, expect value: [%v, %v], actual value: %v", minValue, maxValue, duration)
 		}
+	}
+}
+
+func TestRunCaseWithShell(t *testing.T) {
+	testcase1 := &TestCase{
+		Config: NewConfig("complex shell with env variables").
+			WithVariables(map[string]interface{}{
+				"SS":  "12345",
+				"ABC": "$SS",
+			}),
+		TestSteps: []IStep{
+			NewStep("shell21").Shell("echo hello world"),
+			// NewStep("shell21").Shell("echo $ABC"),
+			// NewStep("shell21").Shell("which hrp"),
+		},
+	}
+
+	r := NewRunner(t)
+	err := r.Run(testcase1)
+	if err != nil {
+		t.Fatal()
 	}
 }
 

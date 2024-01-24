@@ -298,7 +298,7 @@ func Test_remoteWD_GetPasteboard(t *testing.T) {
 	// 	t.Fatal(err)
 	// }
 	// userHomeDir, _ := os.UserHomeDir()
-	// if err = ioutil.WriteFile(userHomeDir+"/Desktop/p1.png", buffer.Bytes(), 0600); err != nil {
+	// if err = os.WriteFile(userHomeDir+"/Desktop/p1.png", buffer.Bytes(), 0600); err != nil {
 	// 	t.Error(err)
 	// }
 }

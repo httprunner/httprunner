@@ -1,0 +1,18 @@
+{
+    "config": {
+        "name": "run ui test on bili android",
+        "variables": {
+            "RunTimes": 3,
+            "SerialNumber": "${ENV(SerialNumber)}"
+        }
+    },
+    "teststeps": [
+        {
+            "name": "run bili android",
+            "shell": {
+                "string": "bili_android",
+                "expect_exit_code": 0
+            }
+        }
+    ]
+}
