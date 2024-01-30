@@ -2,6 +2,7 @@ import os
 import string
 import subprocess
 import sys
+import time
 from typing import Dict, List, Set, Text, Tuple
 
 import jinja2
@@ -56,13 +57,13 @@ from httprunner import RunTestCase
 class {{ class_name }}(HttpRunner):
 
     {% if parameters and skip %}
-    @pytest.mark.parametrize("param", Parameters({{ parameters }}))
+    @pytest.mark.parametrize("param", Parameters({{ parameters }}){%- if ids %}, ids={{ ids }}{%- endif %})
     @pytest.mark.skip(reason={{ skip }})
     def test_start(self, param):
         super().test_start(param)
 
     {% elif parameters %}
-    @pytest.mark.parametrize("param", Parameters({{ parameters }}))
+    @pytest.mark.parametrize("param", Parameters({{ parameters }}){%- if ids %}, ids={{ ids }}{%- endif %})
     def test_start(self, param):
         super().test_start(param)
 
@@ -340,13 +341,24 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
                 check = f'"{check}"'
             expect = validator["expect"]
             if isinstance(expect, Text):
-                expect = f'"{expect}"'
+                if '"' in expect:
+                    expect = f"'{expect}'"
+                else:
+                    expect = f'"{expect}"'
 
             message = validator["message"]
-            if message:
-                step_info += f".assert_{assert_method}({check}, {expect}, '{message}')"
+
+            if assert_method.startswith("custom"):
+                assert_method, custom_method = assert_method.split("_", 1)
+                if message:
+                    step_info += f".assert_{assert_method}('{custom_method}', {check}, {expect}, '{message}')"
+                else:
+                    step_info += f".assert_{assert_method}('{custom_method}', {check}, {expect})"
             else:
-                step_info += f".assert_{assert_method}({check}, {expect})"
+                if message:
+                    step_info += f".assert_{assert_method}({check}, {expect}, '{message}')"
+                else:
+                    step_info += f".assert_{assert_method}({check}, {expect})"
 
     return f"Step({step_info})"
 
@@ -444,6 +456,7 @@ sys.path.insert(0, str(Path(__file__){parent}))
         "config_chain_style": make_config_chain_style(config),
         "skip": make_config_skip(config),
         "parameters": config.get("parameters"),
+        "ids": config.get("ids"),
         "reference_testcase": any(step.get("testcase") for step in teststeps),
         "teststeps_chain_style": [
             make_teststep_chain_style(step) for step in teststeps
