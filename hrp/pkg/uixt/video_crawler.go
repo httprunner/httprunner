@@ -196,6 +196,19 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					return err
 				}
 
+				if crawler.failedCount > 1 && !isFeed {
+					// enter live room
+					entryPoint := PointF{
+						X: float64(dExt.windowSize.Width / 2),
+						Y: float64(dExt.windowSize.Height / 2),
+					}
+
+					log.Info().Msg("tap screen center to close edge popup")
+					if err := crawler.driverExt.TapAbsXY(entryPoint.X, entryPoint.Y,
+						WithOffsetRandomRange(-20, 20)); err != nil {
+					}
+				}
+
 				// retry
 				continue
 			}
@@ -209,8 +222,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Info().Interface("video", currentVideo).
 						Msg("live count achieved, skip entering live room")
 					skipEnterLive = true
-				} else if rand.Float64() <= 0.70 {
-					// 70% chance skip entering live room
+				} else if rand.Float64() <= 0.50 {
+					// 50% chance skip entering live room
 					log.Info().Msg("skip entering preview live by 50% chance")
 					skipEnterLive = true
 				}
