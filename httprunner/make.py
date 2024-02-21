@@ -352,6 +352,7 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
 
         for v in teststep["validate"]:
             validator = uniform_validator(v)
+            logger.info(f"august make validator: {validator}")
             assert_method = validator["assert"]
             check = validator["check"]
             if '"' in check:
@@ -364,10 +365,19 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
                 expect = f'"{expect}"'
 
             message = validator["message"]
-            if message:
-                step_info += f".assert_{assert_method}({check}, {expect}, '{message}')"
+
+            if assert_method == "custom":
+                custom_comparator = validator['custom_comparator']
+                if message:
+                    step_info += f".assert_{assert_method}('{custom_comparator}',{check}, {expect}, '{message}')"
+                else:
+                    step_info += f".assert_{assert_method}('{custom_comparator}',{check}, {expect})"
             else:
-                step_info += f".assert_{assert_method}({check}, {expect})"
+                if message:
+                    step_info += f".assert_{assert_method}({check}, {expect}, '{message}')"
+                else:
+                    step_info += f".assert_{assert_method}({check}, {expect})"
+    logger.info(f"august make step_info: {step_info}")
 
     return f"Step({step_info})"
 
