@@ -352,7 +352,6 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
 
         for v in teststep["validate"]:
             validator = uniform_validator(v)
-            logger.info(f"august make validator: {validator}")
             assert_method = validator["assert"]
             check = validator["check"]
             if '"' in check:
@@ -377,7 +376,6 @@ def make_teststep_chain_style(teststep: Dict) -> Text:
                     step_info += f".assert_{assert_method}({check}, {expect}, '{message}')"
                 else:
                     step_info += f".assert_{assert_method}({check}, {expect})"
-    logger.info(f"august make step_info: {step_info}")
 
     return f"Step({step_info})"
 
@@ -386,6 +384,7 @@ def make_testcase(testcase: Dict, dir_path: Text = None) -> Text:
     """convert valid testcase dict to pytest file path"""
     # ensure compatibility with testcase format v2
     testcase = ensure_testcase_v3(testcase)
+    
     pytest_files_meta_cases_list.append(testcase['meta'])
     # validate testcase format
     load_testcase(testcase)
