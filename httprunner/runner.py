@@ -456,5 +456,6 @@ class HttpRunner(object):
                 TestCase(config=self.__config, teststeps=self.__teststeps)
             )
         finally:
+            allure.attach.file(self.__log_path, name="log", attachment_type=allure.attachment_type.TEXT)
             logger.remove(log_handler)
             logger.info(f"generate testcase log: {self.__log_path}")
