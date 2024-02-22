@@ -145,9 +145,16 @@ class HttpRunner(object):
         parsed_request_dict = parse_data(
             request_dict, step.variables, self.__project_meta.functions
         )
+        case_id = f"HRUN-{self.__case_id}-{str(int(time.time() * 1000))[-6:]}"
+        # 增加x-trace-id
+        parsed_request_dict["headers"].setdefault(
+            "x-trace-id",
+            case_id,
+        )
+
         parsed_request_dict["headers"].setdefault(
             "HRUN-Request-ID",
-            f"HRUN-{self.__case_id}-{str(int(time.time() * 1000))[-6:]}",
+            case_id,
         )
         step.variables["request"] = parsed_request_dict
 
