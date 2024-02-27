@@ -243,7 +243,6 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 
 	// The default format uses jpeg for compression
 	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, "jpeg"))
-	// screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, "jpeg"))
 	file, err := os.Create(screenshotPath)
 	if err != nil {
 		return "", errors.Wrap(err, "create screenshot image file failed")
