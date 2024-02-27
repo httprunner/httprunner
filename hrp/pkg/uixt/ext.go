@@ -259,8 +259,6 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 		err = jpeg.Encode(file, img, jpegOptions)
 	case "png_import":
 		err = png.Encode(file, img)
-	// case "jpeg":
-	// 	err = jpeg.Encode(file, img, nil)
 	case "gif_import":
 		err = gif.Encode(file, img, nil)
 	default:
