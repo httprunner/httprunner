@@ -218,7 +218,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 		bodyWriter.WriteField("uiTypes", uiType)
 	}
 
-	// 临时支持直播使用高精度集群
+	// 使用高精度集群
 	bodyWriter.WriteField("ocrCluster", "default_1600")
 
 	if actionOptions.ScreenShotWithOCRCluster != "" {
