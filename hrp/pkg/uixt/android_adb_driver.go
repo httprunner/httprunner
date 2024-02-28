@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -353,7 +354,7 @@ func (ad *adbDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 
 func (ad *adbDriver) SendKeys(text string, options ...ActionOption) (err error) {
 	// adb shell input text <text>
-	_, err = ad.adbClient.RunShellCommand("input", "text", text)
+	_, err = ad.adbClient.RunShellCommand("input", "text", encodeUnicodeText(text))
 	if err != nil {
 		return errors.Wrap(err, "send keys failed")
 	}
@@ -618,6 +619,34 @@ func (ad *adbDriver) AssertForegroundApp(packageName string, activityType ...str
 		Msg("assert activity failed")
 	return errors.Wrap(code.MobileUIAssertForegroundActivityError,
 		"assert foreground activity failed")
+}
+
+func encodeUnicode(c int32) string {
+	var buffer bytes.Buffer
+	// Convert each rune (character) into two bytes
+	buffer.WriteByte(byte(c >> 8))
+	buffer.WriteByte(byte(c & 0xFF))
+	// Convert buffer bytes to base64 encoding
+	encoded := base64.StdEncoding.EncodeToString(buffer.Bytes())
+	// Replace "/" with "," and remove trailing "="
+	encoded = strings.ReplaceAll(encoded, "/", ",")
+	return strings.TrimRight(encoded, "=")
+}
+
+func encodeUnicodeText(text string) string {
+	text = strings.ReplaceAll(text, "&", "&-")
+	var sb strings.Builder
+	sb.WriteRune('"')
+	for _, c := range text {
+		if c <= 127 {
+			sb.WriteRune(c)
+		} else {
+			// Encode non-ASCII character and append it
+			sb.WriteString("&" + encodeUnicode(c) + "-")
+		}
+	}
+	sb.WriteRune('"')
+	return sb.String()
 }
 
 var androidActivities = map[string]map[string][]string{

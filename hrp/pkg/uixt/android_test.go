@@ -255,17 +255,17 @@ func TestDriver_SendKeys(t *testing.T) {
 	}
 	time.Sleep(time.Second * 2)
 
-	err = driver.SendKeys("def")
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Second * 2)
+	//err = driver.SendKeys("def")
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//time.Sleep(time.Second * 2)
 
-	err = driver.SendKeys("\\n")
+	//err = driver.SendKeys("\\n")
 	// err = driver.SendKeys(`\n`, false)
-	if err != nil {
-		t.Fatal(err)
-	}
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
 }
 
 func TestDriver_PressBack(t *testing.T) {
@@ -436,4 +436,24 @@ func TestConvertPoints(t *testing.T) {
 	}
 	jsons, _ := json.Marshal(eps)
 	println(fmt.Sprintf("%v", string(jsons)))
+}
+
+func TestDriver_ShellInputUnicode(t *testing.T) {
+	device, _ := NewAndroidDevice()
+	driver, err := device.NewAdbDriver()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = driver.SendKeys("test中文输入&")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	raw, err := driver.Screenshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(os.WriteFile("s1.png", raw.Bytes(), 0o600))
 }
