@@ -67,6 +67,7 @@ func launchAppDriver(pkgName string) (driver *uixt.DriverExt, err error) {
 }
 
 func watchVideo(driver *uixt.DriverExt) (err error) {
+	time.Sleep(3 * time.Second)
 	err = driver.SwipeUp()
 	if err != nil {
 		return err
@@ -107,12 +108,13 @@ func watchVideo(driver *uixt.DriverExt) (err error) {
 		return err
 	}
 
+	time.Sleep(1 * time.Second)
+
 	// 返回推荐页
 	err = driver.Driver.PressBack()
 	if err != nil {
 		return err
 	}
-	time.Sleep(1 * time.Second)
 
 	return nil
 }
