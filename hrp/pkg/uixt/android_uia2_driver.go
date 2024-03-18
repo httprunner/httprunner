@@ -283,14 +283,26 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 	y += actionOptions.getRandomOffset()
 
 	data := map[string]interface{}{
-		"x": x,
-		"y": y,
+		"actions": []interface{}{
+			map[string]interface{}{
+				"type":       "pointer",
+				"parameters": map[string]string{"pointerType": "touch"},
+				"id":         "touch",
+				"actions": []interface{}{
+					map[string]interface{}{"type": "pointerMove", "duration": 0, "x": x, "y": y, "origin": "viewport"},
+					map[string]interface{}{"type": "pointerDown", "duration": 0, "button": 0},
+					map[string]interface{}{"type": "pause", "duration": 100},
+					map[string]interface{}{"type": "pointerUp", "duration": 0, "button": 0},
+				},
+			},
+		},
 	}
+
 	// update data options in post data for extra uiautomator configurations
 	actionOptions.updateData(data)
 
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "appium/tap")
-	return
+	_, err = ud.httpPOST(data, "/session", ud.sessionId, "actions/tap")
+	return err
 }
 
 func (ud *uiaDriver) TouchAndHold(x, y int, second ...float64) (err error) {
@@ -361,28 +373,27 @@ func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) 
 func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
 	actionOptions := NewActionOptions(options...)
-	if len(actionOptions.Offset) == 4 {
-		fromX += float64(actionOptions.Offset[0])
-		fromY += float64(actionOptions.Offset[1])
-		toX += float64(actionOptions.Offset[2])
-		toY += float64(actionOptions.Offset[3])
-	}
-	fromX += actionOptions.getRandomOffset()
-	fromY += actionOptions.getRandomOffset()
-	toX += actionOptions.getRandomOffset()
-	toY += actionOptions.getRandomOffset()
 
 	data := map[string]interface{}{
-		"startX": fromX,
-		"startY": fromY,
-		"endX":   toX,
-		"endY":   toY,
+		"actions": []interface{}{
+			map[string]interface{}{
+				"type":       "pointer",
+				"parameters": map[string]string{"pointerType": "touch"},
+				"id":         "touch",
+				"actions": []interface{}{
+					map[string]interface{}{"type": "pointerMove", "duration": 0, "x": fromX, "y": fromY, "origin": "viewport"},
+					map[string]interface{}{"type": "pointerDown", "duration": 0, "button": 0},
+					map[string]interface{}{"type": "pointerMove", "duration": 200, "x": toX, "y": toY, "origin": "viewport"},
+					map[string]interface{}{"type": "pointerUp", "duration": 0, "button": 0},
+				},
+			},
+		},
 	}
 
 	// update data options in post data for extra uiautomator configurations
 	actionOptions.updateData(data)
 
-	_, err := ud.httpPOST(data, "/session", ud.sessionId, "touch/perform")
+	_, err := ud.httpPOST(data, "/session", ud.sessionId, "actions/swipe")
 	return err
 }
 
