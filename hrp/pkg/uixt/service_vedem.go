@@ -219,7 +219,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 	}
 
 	// 使用高精度集群
-	bodyWriter.WriteField("ocrCluster", "default_1600")
+	bodyWriter.WriteField("ocrCluster", "highPrecision")
 
 	if actionOptions.ScreenShotWithOCRCluster != "" {
 		bodyWriter.WriteField("ocrCluster", actionOptions.ScreenShotWithOCRCluster)

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/gif"
+	_ "image/gif"
 	"image/jpeg"
-	"image/png"
+	_ "image/png"
 	"math/rand"
 	"mime"
 	"mime/multipart"
@@ -256,10 +256,6 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 	case "jpeg", "png":
 		jpegOptions := &jpeg.Options{Quality: 95}
 		err = jpeg.Encode(file, img, jpegOptions)
-	case "png_import":
-		err = png.Encode(file, img)
-	case "gif_import":
-		err = gif.Encode(file, img, nil)
 	default:
 		return "", fmt.Errorf("unsupported image format: %s", format)
 	}
