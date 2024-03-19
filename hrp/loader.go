@@ -53,6 +53,7 @@ func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 			testCasePath := TestCasePath(path)
 			tc, err := testCasePath.ToTestCase()
 			if err != nil {
+				log.Error().Err(err).Msg("fail to parse test:")
 				return nil
 			}
 			testCases = append(testCases, tc)
@@ -61,6 +62,10 @@ func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "read dir failed")
 		}
+	}
+
+	if len(testCases) < 1 {
+		return nil, errors.New("test case count less than 1 or parse error")
 	}
 
 	log.Info().Int("count", len(testCases)).Msg("load testcases successfully")

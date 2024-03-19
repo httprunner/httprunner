@@ -217,12 +217,18 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 	for _, uiType := range actionOptions.ScreenShotWithUITypes {
 		bodyWriter.WriteField("uiTypes", uiType)
 	}
+
+	// 使用高精度集群
+	bodyWriter.WriteField("ocrCluster", "highPrecision")
+
 	if actionOptions.ScreenShotWithOCRCluster != "" {
 		bodyWriter.WriteField("ocrCluster", actionOptions.ScreenShotWithOCRCluster)
 	}
 
 	if actionOptions.Timeout > 0 {
 		bodyWriter.WriteField("timeout", fmt.Sprintf("%v", actionOptions.Timeout))
+	} else {
+		bodyWriter.WriteField("timeout", fmt.Sprintf("%v", 10))
 	}
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/gif"
+	_ "image/gif"
 	"image/jpeg"
-	"image/png"
+	_ "image/png"
 	"math/rand"
 	"mime"
 	"mime/multipart"
@@ -241,7 +241,8 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 		return "", errors.Wrap(err, "decode screenshot image failed")
 	}
 
-	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, format))
+	// The default format uses jpeg for compression
+	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, "jpeg"))
 	file, err := os.Create(screenshotPath)
 	if err != nil {
 		return "", errors.Wrap(err, "create screenshot image file failed")
@@ -251,12 +252,10 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 	}()
 
 	switch format {
-	case "png":
-		err = png.Encode(file, img)
-	case "jpeg":
-		err = jpeg.Encode(file, img, nil)
-	case "gif":
-		err = gif.Encode(file, img, nil)
+	// Convert to jpeg uniformly and compress with a compression rate of 95
+	case "jpeg", "png":
+		jpegOptions := &jpeg.Options{Quality: 95}
+		err = jpeg.Encode(file, img, jpegOptions)
 	default:
 		return "", fmt.Errorf("unsupported image format: %s", format)
 	}

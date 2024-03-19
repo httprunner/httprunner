@@ -1,18 +1,20 @@
 {
     "config": {
-        "name": "点播_抖音_滑动场景_随机间隔_android",
+        "name": "直播_抖极_feed卡片_android",
         "variables": {
             "device": "${ENV(SerialNumber)}"
         },
         "android": [
             {
-                "serial": "$device"
+                "serial": "$device",
+                "log_on": true,
+                "close_popup": true
             }
         ]
     },
     "teststeps": [
         {
-            "name": "启动抖音",
+            "name": "清理android无关进程",
             "android": {
                 "actions": [
                     {
@@ -20,8 +22,202 @@
                         "params": "com.ss.android.ugc.aweme"
                     },
                     {
+                        "method": "app_terminate",
+                        "params": "com.ss.android.ugc.aweme.lite"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "com.smile.gifmaker"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "com.kuaishou.nebula"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "com.tencent.mm"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "com.duowan.kiwi"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "air.tv.douyu.android"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "com.xingin.xhs"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "com.taobao.taobao"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "tv.danmaku.bili"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "com.cmcc.cmvideo"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "com.xunmeng.pinduoduo"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "com.cctv.yangshipin.app.androidp"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "启动抖音极速版",
+            "android": {
+                "actions": [
+                    {
+                        "method": "app_terminate",
+                        "params": "com.ss.android.ugc.aweme.lite"
+                    },
+                    {
                         "method": "app_launch",
-                        "params": "com.ss.android.ugc.aweme"
+                        "params": "com.ss.android.ugc.aweme.lite"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 10
+                    },
+                    {
+                        "method": "close_popups",
+                        "options": {
+                            "max_retry_times": 2
+                        }
+                    }
+                ]
+            },
+            "validate": [
+                {
+                    "check": "ui_foreground_app",
+                    "assert": "equal",
+                    "expect": "com.ss.android.ugc.aweme.lite",
+                    "msg": "app [com.ss.android.ugc.aweme.lite] should be in foreground"
+                }
+            ]
+        },
+        {
+            "name": "处理通讯录弹窗",
+            "android": {
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "拒绝",
+                        "ignore_NotFoundError": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "处理青少年弹窗",
+            "android": {
+                "actions": [
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    },
+                    {
+                        "method": "tap_ocr",
+                        "params": "我知道了",
+                        "ignore_NotFoundError": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "点击直播标签,进入直播间",
+            "android": {
+                "actions": [
+                    {
+                        "method": "swipe_to_tap_texts",
+                        "params": [
+                            "看直播开宝箱",
+                            "最高领",
+                            "点击进入直播间"
+                        ],
+                        "identifier": "click_live_new",
+                        "max_retry_times": 40,
+                        "wait_time": 2,
+                        "direction": [
+                            0.5,
+                            0.8,
+                            0.5,
+                            0.2
+                        ],
+                        "scope": [
+                            0.1,
+                            0.5,
+                            0.9,
+                            0.9
+                        ],
+                        "offset": [
+                            0,
+                            -100
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "等待30s",
+            "android": {
+                "actions": [
+                    {
+                        "method": "sleep",
+                        "params": 30
+                    }
+                ]
+            }
+        },
+        {
+            "name": "下滑进入下一个直播间",
+            "android": {
+                "actions": [
+                    {
+                        "method": "swipe",
+                        "params": [
+                            0.5,
+                            0.7,
+                            0.5,
+                            0.1
+                        ],
+                        "identifier": "slide_in_live_new"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 30
+                    }
+                ]
+            }
+        },
+        {
+            "name": "返回主界面，并打开本地时间戳",
+            "android": {
+                "actions": [
+                    {
+                        "method": "app_terminate",
+                        "params": "com.ss.android.ugc.aweme.lite"
+                    },
+                    {
+                        "method": "home"
+                    },
+                    {
+                        "method": "swipe_to_tap_app",
+                        "params": "local",
+                        "max_retry_times": 5,
+                        "offset": [
+                            0,
+                            -50
+                        ]
                     },
                     {
                         "method": "sleep",
@@ -31,107 +227,10 @@
             },
             "validate": [
                 {
-                    "check": "ui_foreground_app",
-                    "assert": "equal",
-                    "expect": "com.ss.android.ugc.aweme",
-                    "msg": "app [com.ss.android.ugc.aweme] should be in foreground"
-                }
-            ]
-        },
-        {
-            "name": "处理青少年弹窗",
-            "android": {
-                "actions": [
-                    {
-                        "method": "tap_ocr",
-                        "params": "我知道了",
-                        "options": {
-                            "ignore_NotFoundError": true
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "name": "滑动 Feed 3 次，随机间隔 0-5s",
-            "android": {
-                "actions": [
-                    {
-                        "method": "swipe",
-                        "params": "up",
-                        "options": {}
-                    },
-                    {
-                        "method": "sleep_random",
-                        "params": [
-                            0,
-                            5
-                        ]
-                    }
-                ]
-            },
-            "loops": 3
-        },
-        {
-            "name": "滑动 Feed 1 次，随机间隔 5-10s",
-            "android": {
-                "actions": [
-                    {
-                        "method": "swipe",
-                        "params": "up",
-                        "options": {}
-                    },
-                    {
-                        "method": "sleep_random",
-                        "params": [
-                            5,
-                            10
-                        ]
-                    }
-                ]
-            },
-            "loops": 1
-        },
-        {
-            "name": "滑动 Feed 10 次，70% 随机间隔 0-5s，30% 随机间隔 5-10s",
-            "android": {
-                "actions": [
-                    {
-                        "method": "swipe",
-                        "params": "up",
-                        "options": {}
-                    },
-                    {
-                        "method": "sleep_random",
-                        "params": [
-                            0,
-                            5,
-                            0.7,
-                            5,
-                            10,
-                            0.3
-                        ]
-                    }
-                ]
-            },
-            "loops": 10
-        },
-        {
-            "name": "exit",
-            "android": {
-                "actions": [
-                    {
-                        "method": "app_terminate",
-                        "params": "com.ss.android.ugc.aweme"
-                    }
-                ]
-            },
-            "validate": [
-                {
-                    "check": "ui_foreground_app",
-                    "assert": "not_equal",
-                    "expect": "com.ss.android.ugc.aweme",
-                    "msg": "app [com.ss.android.ugc.aweme] should not be in foreground"
+                    "check": "ui_ocr",
+                    "assert": "exists",
+                    "expect": "17",
+                    "msg": "打开本地时间戳失败"
                 }
             ]
         }

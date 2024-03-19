@@ -3,6 +3,9 @@ package uixt
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
+	"io/ioutil"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -10,7 +13,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 )
 
@@ -457,7 +462,41 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 	}
 	content := ad.logcat.logBuffer.String()
 	log.Info().Str("logcat content", content).Msg("display logcat content")
-	return ConvertPoints(content), nil
+	pointRes := ConvertPoints(content)
+	// 没有解析到打点日志，走兜底逻辑
+	if len(pointRes) == 0 {
+		log.Info().Msg("action log is null, use action file >>>")
+		logFilePathPrefix := fmt.Sprintf("%v/data", env.ActionLogFilePath)
+		files := []string{}
+		myexec.RunCommand("adb", "-s", ad.adbClient.Serial(), "pull", env.DeviceActionLogFilePath, env.ActionLogFilePath)
+		err = filepath.Walk(env.ActionLogFilePath, func(path string, info fs.FileInfo, err error) error {
+			// 只是需要日志文件
+			if ok := strings.Contains(path, logFilePathPrefix); ok {
+				files = append(files, path)
+			}
+			return nil
+		})
+
+		// 先保持原有状态码不变，这里不return error
+		if err != nil {
+			log.Error().Err(err).Msg("read log file fail")
+			return pointRes, nil
+		}
+
+		if len(files) != 1 {
+			log.Error().Err(err).Msg("log file count error")
+			return pointRes, nil
+		}
+
+		data, err := ioutil.ReadFile(files[0])
+		if err != nil {
+			log.Info().Msg("read File error")
+			return pointRes, nil
+		}
+
+		pointRes = ConvertPoints(string(data))
+	}
+	return pointRes, nil
 }
 
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {

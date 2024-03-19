@@ -18,6 +18,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/httprunner/funplugin"
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
@@ -522,6 +524,11 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 
 	config := r.caseRunner.testCase.Config
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
+
+	// 安卓系统删除打点日志文件
+	if r.caseRunner.testCase.Config.Android != nil {
+		myexec.RunCommand("adb", "-s", r.caseRunner.testCase.Config.Android[0].SerialNumber, "shell", "rm", "-r", env.DeviceActionLogFilePath)
+	}
 
 	// update config variables with given variables
 	r.InitWithParameters(givenVars)

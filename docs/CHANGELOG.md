@@ -1,5 +1,15 @@
 # Release History
 
+## v4.3.8 (2023-09-19)
+- feat: OCR calls use the high-precision cluster interface, and the default timeout is changed from 3s to 10s
+- feat: use jpeg to compress screenshots
+- feat: increase live broadcast end-to-end collection capabilities
+- fix: add file reading and writing methods as a log management logic
+- fix: throws an error when the number of use cases is 0
+- fix: fixed the problem that the new version of adb format fails to parse 
+
+**go version**
+
 ## v4.3.7 (2023-09-19)
 
 **go version**

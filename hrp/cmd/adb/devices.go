@@ -41,7 +41,11 @@ var listAndroidDevicesCmd = &cobra.Command{
 			if isDetail {
 				fmt.Println(format(d.DeviceInfo()))
 			} else {
-				fmt.Println(d.Serial(), d.Usb())
+				if usb, err := d.Usb(); err != nil {
+					fmt.Println(d.Serial())
+				} else {
+					fmt.Println(d.Serial(), usb)
+				}
 			}
 		}
 		return nil
