@@ -11,13 +11,14 @@ import (
 )
 
 var (
-	uiaServerURL = "http://localhost:6790/wd/hub"
+	uiaServerURL = "http://forward-to-6790:6790/wd/hub"
 	driverExt    *DriverExt
 )
 
 func setupAndroid(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
+	device.UIA2 = true
 	driverExt, err = device.NewDriver()
 	checkErr(t, err)
 }
@@ -210,6 +211,14 @@ func TestDriver_Swipe(t *testing.T) {
 	}
 
 	err = driver.SwipeFloat(400, 555.5, 400, 1255.5)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDriver_Swipe_Relative(t *testing.T) {
+	setupAndroid(t)
+	err := driverExt.SwipeRelative(0.5, 0.7, 0.5, 0.5)
 	if err != nil {
 		t.Fatal(err)
 	}

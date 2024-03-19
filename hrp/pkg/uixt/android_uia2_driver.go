@@ -253,6 +253,20 @@ func (ud *uiaDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...K
 	return
 }
 
+func (ud *uiaDriver) Orientation() (orientation Orientation, err error) {
+	// [[FBRoute GET:@"/orientation"] respondWithTarget:self action:@selector(handleGetOrientation:)]
+	var rawResp rawResponse
+	if rawResp, err = ud.httpGET("/session", ud.sessionId, "/orientation"); err != nil {
+		return "", err
+	}
+	reply := new(struct{ Value Orientation })
+	if err = json.Unmarshal(rawResp, reply); err != nil {
+		return "", err
+	}
+	orientation = reply.Value
+	return
+}
+
 func (ud *uiaDriver) Tap(x, y int, options ...ActionOption) error {
 	return ud.TapFloat(float64(x), float64(y), options...)
 }

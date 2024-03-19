@@ -185,6 +185,11 @@ func (ad *adbDriver) StopCamera() (err error) {
 	return
 }
 
+func (ad *adbDriver) Orientation() (orientation Orientation, err error) {
+	err = errDriverNotImplemented
+	return
+}
+
 func (ad *adbDriver) Homescreen() (err error) {
 	return ad.PressKeyCode(KCHome, KMEmpty)
 }

@@ -537,6 +537,8 @@ type WebDriver interface {
 	// StopCamera Stops the camera for recording
 	StopCamera() error
 
+	Orientation() (orientation Orientation, err error)
+
 	// Tap Sends a tap event at the coordinate.
 	Tap(x, y int, options ...ActionOption) error
 	TapFloat(x, y float64, options ...ActionOption) error
