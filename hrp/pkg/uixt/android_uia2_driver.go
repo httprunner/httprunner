@@ -224,6 +224,14 @@ func (ud *uiaDriver) WindowSize() (size Size, err error) {
 		return Size{}, err
 	}
 	size = reply.Value.Size
+	orientation, err := ud.Orientation()
+	if err != nil {
+		log.Warn().Err(err).Msgf("window size get orientation failed, use default orientation")
+		orientation = OrientationPortrait
+	}
+	if orientation != OrientationPortrait {
+		size.Width, size.Height = size.Height, size.Width
+	}
 	return
 }
 

@@ -511,6 +511,10 @@ type WebDriver interface {
 	// since the location service needs some time to update the location data.
 	Location() (Location, error)
 	BatteryInfo() (BatteryInfo, error)
+
+	// WindowSize Return the width and height in portrait mode.
+	// when getting the window size in wda/ui2/adb, if the device is in landscape mode,
+	// the width and height will be reversed.
 	WindowSize() (Size, error)
 	Screen() (Screen, error)
 	Scale() (float64, error)

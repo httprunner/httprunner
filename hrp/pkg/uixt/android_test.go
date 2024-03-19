@@ -18,7 +18,7 @@ var (
 func setupAndroid(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
-	device.UIA2 = true
+	//device.UIA2 = true
 	driverExt, err = device.NewDriver()
 	checkErr(t, err)
 }

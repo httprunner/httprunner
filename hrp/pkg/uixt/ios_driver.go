@@ -207,6 +207,14 @@ func (wd *wdaDriver) WindowSize() (size Size, err error) {
 	}
 	size.Height = size.Height * int(scale)
 	size.Width = size.Width * int(scale)
+	orientation, err := wd.Orientation()
+	if err != nil {
+		log.Warn().Err(err).Msgf("window size get orientation failed, use default orientation")
+		orientation = OrientationPortrait
+	}
+	if orientation != OrientationPortrait {
+		size.Width, size.Height = size.Height, size.Width
+	}
 	return
 }
 

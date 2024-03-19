@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -91,7 +92,14 @@ func (ad *adbDriver) WindowSize() (size Size, err error) {
 			return Size{Width: width, Height: height}, nil
 		}
 	}
-
+	orientation, err := ad.Orientation()
+	if err != nil {
+		log.Warn().Err(err).Msgf("window size get orientation failed, use default orientation")
+		orientation = OrientationPortrait
+	}
+	if orientation != OrientationPortrait {
+		size.Width, size.Height = size.Height, size.Width
+	}
 	err = errors.New("physical window size not found by adb")
 	return
 }
@@ -186,7 +194,20 @@ func (ad *adbDriver) StopCamera() (err error) {
 }
 
 func (ad *adbDriver) Orientation() (orientation Orientation, err error) {
-	err = errDriverNotImplemented
+	output, err := ad.adbClient.RunShellCommand("dumpsys", "input", "|", "grep", "'SurfaceOrientation'")
+	if err != nil {
+		return
+	}
+	re := regexp.MustCompile(`SurfaceOrientation: (\d)`)
+	matches := re.FindStringSubmatch(output)
+	if len(matches) > 1 { // 确保找到了匹配项
+		if matches[1] == "0" || matches[1] == "2" {
+			return OrientationPortrait, nil
+		} else if matches[1] == "1" || matches[1] == "3" {
+			return OrientationLandscapeLeft, nil
+		}
+	}
+	err = fmt.Errorf("not found SurfaceOrientation value")
 	return
 }
 
