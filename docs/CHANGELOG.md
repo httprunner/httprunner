@@ -1,6 +1,6 @@
 # Release History
 
-## v4.3.8 (2023-09-19)
+## v4.3.9 (2023-09-19)
 - feat: OCR calls use the high-precision cluster interface, and the default timeout is changed from 3s to 10s
 - feat: use jpeg to compress screenshots
 - feat: increase live broadcast end-to-end collection capabilities
