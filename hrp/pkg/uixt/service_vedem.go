@@ -218,6 +218,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 		bodyWriter.WriteField("uiTypes", uiType)
 	}
 
+	// 使用高精度集群
 	bodyWriter.WriteField("ocrCluster", "highPrecision")
 
 	if actionOptions.Timeout > 0 {
@@ -488,8 +489,8 @@ func (box Box) IsEmpty() bool {
 func (box Box) IsIdentical(box2 Box) bool {
 	// set the coordinate precision to 1 pixel
 	return box.Point.IsIdentical(box2.Point) &&
-		math.Abs(box.Width-box2.Width) < 1 &&
-		math.Abs(box.Height-box2.Height) < 1
+		builtin.IsZeroFloat64(math.Abs(box.Width-box2.Width)) &&
+		builtin.IsZeroFloat64(math.Abs(box.Height-box2.Height))
 }
 
 func (box Box) Center() PointF {
@@ -544,7 +545,7 @@ func (u UIResultMap) FilterUIResults(uiTypes []string) (uiResults UIResults, err
 			return
 		}
 	}
-	err = errors.Errorf("UI types %v not detected", uiTypes)
+	err = errors.Wrap(code.CVResultNotFoundError, fmt.Sprintf("UI types %v not detected", uiTypes))
 	return
 }
 

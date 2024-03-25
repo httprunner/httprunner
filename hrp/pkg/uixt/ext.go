@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/gif"
+	_ "image/gif"
 	"image/jpeg"
-	"image/png"
+	_ "image/png"
 	"math/rand"
 	"mime"
 	"mime/multipart"
@@ -190,8 +190,26 @@ func (dExt *DriverExt) takeScreenShot(fileName string) (raw *bytes.Buffer, path 
 }
 
 func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error) {
-	// TODO: compress image data
-	return raw, nil
+	// 解码原始图像数据
+	img, format, err := image.Decode(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建一个用来保存压缩后数据的buffer
+	var buf bytes.Buffer
+
+	switch format {
+	// Convert to jpeg uniformly and compress with a compression rate of 95
+	case "jpeg", "png":
+		jpegOptions := &jpeg.Options{Quality: 95}
+		err = jpeg.Encode(&buf, img, jpegOptions)
+	default:
+		return nil, fmt.Errorf("unsupported image format: %s", format)
+	}
+
+	// 返回压缩后的图像数据
+	return &buf, nil
 }
 
 // saveScreenShot saves image file with file name
@@ -207,7 +225,8 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 		return "", errors.Wrap(err, "decode screenshot image failed")
 	}
 
-	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, format))
+	// The default format uses jpeg for compression
+	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, "jpeg"))
 	file, err := os.Create(screenshotPath)
 	if err != nil {
 		return "", errors.Wrap(err, "create screenshot image file failed")
@@ -217,12 +236,9 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 	}()
 
 	switch format {
-	case "png":
-		err = png.Encode(file, img)
-	case "jpeg":
-		err = jpeg.Encode(file, img, nil)
-	case "gif":
-		err = gif.Encode(file, img, nil)
+	case "jpeg", "png":
+		jpegOptions := &jpeg.Options{}
+		err = jpeg.Encode(file, img, jpegOptions)
 	default:
 		return "", fmt.Errorf("unsupported image format: %s", format)
 	}
