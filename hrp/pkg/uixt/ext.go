@@ -238,6 +238,9 @@ func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error
 	case "jpeg", "png":
 		jpegOptions := &jpeg.Options{Quality: 95}
 		err = jpeg.Encode(&buf, img, jpegOptions)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		return nil, fmt.Errorf("unsupported image format: %s", format)
 	}
