@@ -276,7 +276,7 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 	switch format {
 	// Convert to jpeg uniformly and compress with a compression rate of 95
 	case "jpeg", "png":
-		jpegOptions := &jpeg.Options{Quality: 95}
+		jpegOptions := &jpeg.Options{}
 		err = jpeg.Encode(file, img, jpegOptions)
 	default:
 		return "", fmt.Errorf("unsupported image format: %s", format)
