@@ -265,8 +265,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				)
 				if err != nil {
 					log.Error().Err(err).Msg("get screen result failed")
-					time.Sleep(3 * time.Second)
-					continue
 				}
 
 				// add live type
