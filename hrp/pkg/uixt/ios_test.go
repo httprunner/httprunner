@@ -10,17 +10,23 @@ import (
 )
 
 var (
-	bundleId = "com.apple.Preferences"
-	driver   WebDriver
+	bundleId     = "com.apple.Preferences"
+	driver       WebDriver
+	iOSDriverExt *DriverExt
 )
 
 func setup(t *testing.T) {
-	device, err := NewIOSDevice()
+	device, err := NewIOSDevice(WithWDAPort(8700), WithWDAMjpegPort(8800))
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	driver, err = device.NewUSBDriver(nil)
+	capabilities := NewCapabilities()
+	capabilities.WithDefaultAlertAction(AlertActionAccept)
+	driver, err = device.NewUSBDriver(capabilities)
+	if err != nil {
+		t.Fatal(err)
+	}
+	iOSDriverExt, err = newDriverExt(device, driver, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -262,6 +268,16 @@ func Test_remoteWD_Drag(t *testing.T) {
 
 	// err := driver.Drag(200, 300, 200, 500, WithDataPressDuration(0.5))
 	err := driver.Swipe(200, 300, 200, 500)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_Relative_Drag(t *testing.T) {
+	setup(t)
+
+	// err := driver.Drag(200, 300, 200, 500, WithDataPressDuration(0.5))
+	err := iOSDriverExt.SwipeRelative(0.5, 0.7, 0.5, 0.5)
 	if err != nil {
 		t.Fatal(err)
 	}

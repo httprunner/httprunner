@@ -3,17 +3,18 @@ package uixt
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
+	"github.com/httprunner/funplugin/myexec"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"net"
 	"os/exec"
 	"strings"
 
-	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
-	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 )
 
@@ -145,6 +146,18 @@ func GetAndroidDevices(serial ...string) (devices []*gadb.Device, err error) {
 		return nil, err
 	}
 	return deviceList, nil
+}
+
+func encodeUnicode(c int32) string {
+	var buffer bytes.Buffer
+	// Convert each rune (character) into two bytes
+	buffer.WriteByte(byte(c >> 8))
+	buffer.WriteByte(byte(c & 0xFF))
+	// Convert buffer bytes to base64 encoding
+	encoded := base64.StdEncoding.EncodeToString(buffer.Bytes())
+	// Replace "/" with "," and remove trailing "="
+	encoded = strings.ReplaceAll(encoded, "/", ",")
+	return strings.TrimRight(encoded, "=")
 }
 
 type AndroidDevice struct {
@@ -562,7 +575,7 @@ func (s UiSelectorHelper) Index(index int) UiSelectorHelper {
 //
 // For example, to simulate a user click on
 // the third image that is enabled in a UI screen, you
-// could specify a a search criteria where the instance is
+// could specify a search criteria where the instance is
 // 2, the `className(String)` matches the image
 // widget class, and `enabled(boolean)` is true.
 // The code would look like this:

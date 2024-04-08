@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 )
@@ -18,7 +19,7 @@ var (
 func setupAndroid(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
-	//device.UIA2 = true
+	device.UIA2 = false
 	driverExt, err = device.NewDriver()
 	checkErr(t, err)
 }
@@ -244,15 +245,13 @@ func TestDriver_Drag(t *testing.T) {
 }
 
 func TestDriver_SendKeys(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
+	setupAndroid(t)
+
+	err := driverExt.Driver.SendKeys("Android\"输入速度测试", WithIdentifier("test"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = driver.SendKeys("abc")
-	if err != nil {
-		t.Fatal(err)
-	}
 	time.Sleep(time.Second * 2)
 
 	//err = driver.SendKeys("def")

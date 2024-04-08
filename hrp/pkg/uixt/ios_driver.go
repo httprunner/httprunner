@@ -555,8 +555,8 @@ func (wd *wdaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...Action
 
 	// update data options in post data for extra WDA configurations
 	actionOptions.updateData(data)
-
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/dragfromtoforduration")
+	// wda 43 version
+	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/drag")
 	return
 }
 

@@ -2,8 +2,8 @@ package uixt
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
@@ -22,6 +22,7 @@ import (
 )
 
 const AdbKeyBoardPackageName = "com.android.adbkeyboard/.AdbIME"
+const UnicodeImePackageName = "io.appium.settings/.UnicodeIME"
 
 type adbDriver struct {
 	Driver
@@ -353,12 +354,51 @@ func (ad *adbDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 }
 
 func (ad *adbDriver) SendKeys(text string, options ...ActionOption) (err error) {
+	err = ad.SendUnicodeKeys(text, options...)
+	if err == nil {
+		return
+	}
+	err = ad.InputText(text, options...)
+	return
+}
+
+func (ad *adbDriver) InputText(text string, options ...ActionOption) (err error) {
 	// adb shell input text <text>
-	_, err = ad.adbClient.RunShellCommand("input", "text", encodeUnicodeText(text))
+	_, err = ad.adbClient.RunShellCommand("input", "text", text)
 	if err != nil {
 		return errors.Wrap(err, "send keys failed")
 	}
 	return nil
+}
+
+func (ad *adbDriver) SendUnicodeKeys(text string, options ...ActionOption) (err error) {
+	// If the Unicode IME is not installed, fall back to the old interface.
+	// There might be differences in the tracking schemes across different phones, and it is pending further verification.
+	// In release version: without the Unicode IME installed, the test cannot execute.
+	if !ad.IsUnicodeIMEInstalled() {
+		return fmt.Errorf("appium unicode ime not installed")
+	}
+	currentIme, err := ad.GetIme()
+	if err != nil {
+		return
+	}
+	if currentIme != UnicodeImePackageName {
+		defer func() {
+			_ = ad.SetIme(currentIme)
+		}()
+		err = ad.SetIme(UnicodeImePackageName)
+		if err != nil {
+			log.Warn().Err(err).Msgf("set Unicode Ime failed")
+			return
+		}
+	}
+	encodedStr, err := utf7.Encoding.NewEncoder().String(text)
+	if err != nil {
+		log.Warn().Err(err).Msgf("encode text with modified utf7 failed")
+		return
+	}
+	err = ad.InputText("\""+strings.ReplaceAll(encodedStr, "\"", "\\\"")+"\"", options...)
+	return
 }
 
 func (ad *adbDriver) IsAdbKeyBoardInstalled() bool {
@@ -367,6 +407,14 @@ func (ad *adbDriver) IsAdbKeyBoardInstalled() bool {
 		return false
 	}
 	return strings.Contains(output, AdbKeyBoardPackageName)
+}
+
+func (ad *adbDriver) IsUnicodeIMEInstalled() bool {
+	output, err := ad.adbClient.RunShellCommand("ime", "list", "-s")
+	if err != nil {
+		return false
+	}
+	return strings.Contains(output, UnicodeImePackageName)
 }
 
 func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
@@ -561,6 +609,30 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	return AppInfo{}, errors.Wrap(code.MobileUIAssertForegroundAppError, "get foreground app failed")
 }
 
+func (ad *adbDriver) SetIme(ime string) error {
+	_, err := ad.adbClient.RunShellCommand("ime", "set", ime)
+	if err != nil {
+		return err
+	}
+	// even if the shell command has returned,
+	// as there might be a situation where the input method has not been completely switched yet
+	// Listen to the following message.
+	// InputMethodManagerService: onServiceConnected, name:ComponentInfo{io.appium.settings/io.appium.settings.UnicodeIME}, token:android.os.Binder@44f825
+	// But there is no such log on Vivo.
+	time.Sleep(3 * time.Second)
+	return nil
+}
+
+func (ad *adbDriver) GetIme() (ime string, err error) {
+	currentIme, err := ad.adbClient.RunShellCommand("settings", "get", "secure", "default_input_method")
+	if err != nil {
+		log.Warn().Err(err).Msgf("get default ime failed")
+		return
+	}
+	currentIme = strings.TrimSpace(currentIme)
+	return currentIme, nil
+}
+
 func (ad *adbDriver) AssertForegroundApp(packageName string, activityType ...string) error {
 	log.Debug().Str("package_name", packageName).
 		Strs("activity_type", activityType).
@@ -619,34 +691,6 @@ func (ad *adbDriver) AssertForegroundApp(packageName string, activityType ...str
 		Msg("assert activity failed")
 	return errors.Wrap(code.MobileUIAssertForegroundActivityError,
 		"assert foreground activity failed")
-}
-
-func encodeUnicode(c int32) string {
-	var buffer bytes.Buffer
-	// Convert each rune (character) into two bytes
-	buffer.WriteByte(byte(c >> 8))
-	buffer.WriteByte(byte(c & 0xFF))
-	// Convert buffer bytes to base64 encoding
-	encoded := base64.StdEncoding.EncodeToString(buffer.Bytes())
-	// Replace "/" with "," and remove trailing "="
-	encoded = strings.ReplaceAll(encoded, "/", ",")
-	return strings.TrimRight(encoded, "=")
-}
-
-func encodeUnicodeText(text string) string {
-	text = strings.ReplaceAll(text, "&", "&-")
-	var sb strings.Builder
-	sb.WriteRune('"')
-	for _, c := range text {
-		if c <= 127 {
-			sb.WriteRune(c)
-		} else {
-			// Encode non-ASCII character and append it
-			sb.WriteString("&" + encodeUnicode(c) + "-")
-		}
-	}
-	sb.WriteRune('"')
-	return sb.String()
 }
 
 var androidActivities = map[string]map[string][]string{

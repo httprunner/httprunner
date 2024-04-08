@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
 	"net"
 	"net/http"
 	"net/url"
@@ -452,21 +453,74 @@ func (ud *uiaDriver) SendKeys(text string, options ...ActionOption) (err error) 
 	// register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/keys"))
 	// https://github.com/appium/appium-uiautomator2-server/blob/master/app/src/main/java/io/appium/uiautomator2/handler/SendKeysToElement.java#L76-L85
 	actionOptions := NewActionOptions(options...)
-	data := map[string]interface{}{
-		"text": text,
-	}
-	// new data options in post data for extra uiautomator configurations
-	actionOptions.updateData(data)
-
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "keys")
+	err = ud.SendUnicodeKeys(text, options...)
 	if err != nil {
-		// use com.android.adbkeyboard if existed
-		if ud.IsAdbKeyBoardInstalled() {
-			err = ud.SendKeysByAdbKeyBoard(text)
-		} else {
-			_, err = ud.adbClient.RunShellCommand("input", "text", text)
+		data := map[string]interface{}{
+			"text": text,
+		}
+
+		// new data options in post data for extra uiautomator configurations
+		actionOptions.updateData(data)
+
+		_, err = ud.httpPOST(data, "/session", ud.sessionId, "/keys")
+	}
+	return
+}
+
+func (ud *uiaDriver) SendUnicodeKeys(text string, options ...ActionOption) (err error) {
+	// If the Unicode IME is not installed, fall back to the old interface.
+	// There might be differences in the tracking schemes across different phones, and it is pending further verification.
+	// In release version: without the Unicode IME installed, the test cannot execute.
+	if !ud.IsUnicodeIMEInstalled() {
+		return fmt.Errorf("appium unicode ime not installed")
+	}
+	currentIme, err := ud.adbDriver.GetIme()
+	if err != nil {
+		return
+	}
+	if currentIme != UnicodeImePackageName {
+		defer func() {
+			_ = ud.adbDriver.SetIme(currentIme)
+		}()
+		err = ud.adbDriver.SetIme(UnicodeImePackageName)
+		if err != nil {
+			log.Warn().Err(err).Msgf("set Unicode Ime failed")
+			return
 		}
 	}
+	encodedStr, err := utf7.Encoding.NewEncoder().String(text)
+	if err != nil {
+		log.Warn().Err(err).Msgf("encode text with modified utf7 failed")
+		return
+	}
+	err = ud.SendActionKey(encodedStr, options...)
+	return
+}
+
+func (ud *uiaDriver) SendActionKey(text string, options ...ActionOption) (err error) {
+	actionOptions := NewActionOptions(options...)
+	var actions []interface{}
+	for i, c := range text {
+		actions = append(actions, map[string]interface{}{"type": "keyDown", "value": string(c)},
+			map[string]interface{}{"type": "keyUp", "value": string(c)})
+		if i != len(text)-1 {
+			actions = append(actions, map[string]interface{}{"type": "pause", "duration": 40})
+		}
+	}
+
+	data := map[string]interface{}{
+		"actions": []interface{}{
+			map[string]interface{}{
+				"type":    "key",
+				"id":      "key",
+				"actions": actions,
+			},
+		},
+	}
+
+	// new data options in post data for extra uiautomator configurations
+	actionOptions.updateData(data)
+	_, err = ud.httpPOST(data, "/session", ud.sessionId, "/actions/keys")
 	return
 }
 
