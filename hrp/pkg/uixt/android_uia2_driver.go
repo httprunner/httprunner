@@ -291,6 +291,10 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 	x += actionOptions.getRandomOffset()
 	y += actionOptions.getRandomOffset()
 
+	duration := 100.0
+	if actionOptions.PressDuration > 0 {
+		duration = actionOptions.PressDuration
+	}
 	data := map[string]interface{}{
 		"actions": []interface{}{
 			map[string]interface{}{
@@ -300,7 +304,7 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 				"actions": []interface{}{
 					map[string]interface{}{"type": "pointerMove", "duration": 0, "x": x, "y": y, "origin": "viewport"},
 					map[string]interface{}{"type": "pointerDown", "duration": 0, "button": 0},
-					map[string]interface{}{"type": "pause", "duration": 100},
+					map[string]interface{}{"type": "pause", "duration": duration},
 					map[string]interface{}{"type": "pointerUp", "duration": 0, "button": 0},
 				},
 			},
@@ -382,7 +386,21 @@ func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) 
 func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
 	actionOptions := NewActionOptions(options...)
+	if len(actionOptions.Offset) == 4 {
+		fromX += float64(actionOptions.Offset[0])
+		fromY += float64(actionOptions.Offset[1])
+		toX += float64(actionOptions.Offset[2])
+		toY += float64(actionOptions.Offset[3])
+	}
+	fromX += actionOptions.getRandomOffset()
+	fromY += actionOptions.getRandomOffset()
+	toX += actionOptions.getRandomOffset()
+	toY += actionOptions.getRandomOffset()
 
+	duration := 200.0
+	if actionOptions.PressDuration > 0 {
+		duration = actionOptions.PressDuration
+	}
 	data := map[string]interface{}{
 		"actions": []interface{}{
 			map[string]interface{}{
@@ -392,7 +410,7 @@ func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...Actio
 				"actions": []interface{}{
 					map[string]interface{}{"type": "pointerMove", "duration": 0, "x": fromX, "y": fromY, "origin": "viewport"},
 					map[string]interface{}{"type": "pointerDown", "duration": 0, "button": 0},
-					map[string]interface{}{"type": "pointerMove", "duration": 200, "x": toX, "y": toY, "origin": "viewport"},
+					map[string]interface{}{"type": "pointerMove", "duration": duration, "x": toX, "y": toY, "origin": "viewport"},
 					map[string]interface{}{"type": "pointerUp", "duration": 0, "button": 0},
 				},
 			},
@@ -449,6 +467,7 @@ func (ud *uiaDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 	return
 }
 
+// SendKeys Android input does not support setting frequency.
 func (ud *uiaDriver) SendKeys(text string, options ...ActionOption) (err error) {
 	// register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/keys"))
 	// https://github.com/appium/appium-uiautomator2-server/blob/master/app/src/main/java/io/appium/uiautomator2/handler/SendKeysToElement.java#L76-L85

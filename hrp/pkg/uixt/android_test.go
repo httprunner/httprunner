@@ -206,7 +206,7 @@ func TestDriver_Swipe(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = driver.Swipe(400, 1000, 400, 500)
+	err = driver.Swipe(400, 1000, 400, 500, WithPressDuration(2000))
 	if err != nil {
 		t.Fatal(err)
 	}
