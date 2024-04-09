@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
 )
 
 var errDriverNotImplemented = errors.New("driver method not implemented")
