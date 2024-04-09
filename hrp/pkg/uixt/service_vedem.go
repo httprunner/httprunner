@@ -398,7 +398,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	imageResult, err := dExt.ImageService.GetImage(bufSource, options...)
 	if err != nil {
 		log.Error().Err(err).Msg("GetImage from ImageService failed")
-		return nil, err
+		return screenResult, err
 	}
 	if imageResult != nil {
 		screenResult.imageResult = imageResult
