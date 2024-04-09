@@ -3,7 +3,6 @@ package uixt
 import (
 	"bytes"
 	"fmt"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
@@ -19,6 +18,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
 )
 
 const AdbKeyBoardPackageName = "com.android.adbkeyboard/.AdbIME"
