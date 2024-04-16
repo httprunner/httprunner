@@ -213,6 +213,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				continue
 			}
 
+			// 直播预览流线上概率
+			livePreviewProb := crawler.getLivePreviewProb()
+
 			switch currentVideo.Type {
 			case VideoType_PreviewLive:
 				isFeed = true
@@ -222,9 +225,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Info().Interface("video", currentVideo).
 						Msg("live count achieved, skip entering live room")
 					skipEnterLive = true
-				} else if rand.Float64() <= 0.50 {
-					// 50% chance skip entering live room
-					log.Info().Msg("skip entering preview live by 50% chance")
+				} else if rand.Float64() <= livePreviewProb {
+					log.Info().Interface("livePreviewProb", livePreviewProb).Msg("skip entering preview")
 					skipEnterLive = true
 				}
 
@@ -288,9 +290,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Info().Interface("live", currentVideo).
 						Msg("live count achieved, exit live room")
 					exitLive = true
-				} else if rand.Float64() <= 0.50 {
-					// 50% chance exit live room
-					log.Info().Msg("exit live room by 10% chance")
+				} else if rand.Float64() <= livePreviewProb {
+					log.Info().Interface("livePreviewProb", livePreviewProb).Msg("exit live room by preview live chance")
 					exitLive = true
 				}
 				// isFeed：通过预览流进入内流失败的情况下，防止使用退出直播间逻辑，影响：首次进入内流，至少会消费两个直播间才能退出
@@ -449,4 +450,13 @@ func (vc *VideoCrawler) getCurrentVideo() (video *Video, err error) {
 		Str("dataType", video.DataType).
 		Msg("get current video success")
 	return video, nil
+}
+
+func (vc *VideoCrawler) getLivePreviewProb() float64 {
+	if vc.driverExt.Device.System() == "ios" {
+		return 0.5326
+	} else if vc.driverExt.Device.System() == "android" {
+		return 0.3414
+	}
+	return -1
 }

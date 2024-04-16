@@ -289,6 +289,10 @@ type IOSDevice struct {
 	pcapFile string        // saved pcap file path
 }
 
+func (dev *IOSDevice) System() string {
+	return "ios"
+}
+
 func (dev *IOSDevice) UUID() string {
 	return dev.UDID
 }

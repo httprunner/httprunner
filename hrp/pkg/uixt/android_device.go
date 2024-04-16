@@ -154,6 +154,10 @@ type AndroidDevice struct {
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
+func (dev *AndroidDevice) System() string {
+	return "android"
+}
+
 func (dev *AndroidDevice) UUID() string {
 	return dev.SerialNumber
 }
