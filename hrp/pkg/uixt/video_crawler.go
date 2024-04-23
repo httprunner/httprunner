@@ -171,14 +171,14 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// swipe to next feed video
 			log.Info().Msg("swipe to next feed video")
 			swipeStartTime := time.Now()
-			if err = dExt.SwipeRelative(0.85, 0.83-(float64(crawler.failedCount)*0.01), 0.85, 0.1, WithOffsetRandomRange(-10, 10)); err != nil {
+			if err = dExt.SwipeUpUtil(crawler.failedCount, WithOffsetRandomRange(-10, 10)); err != nil {
 				log.Error().Err(err).Msg("feed swipe up failed")
 				return err
 			}
 			swipeFinishTime := time.Now()
 
 			// get app event trackings
-			// retry 10 times if get feed failed, abort if fail 10 consecutive times
+			// retry 3 times if get feed failed, abort if fail 3 consecutive times
 			currentVideo, err := crawler.getCurrentVideo()
 			if err != nil || currentVideo.Type == "" {
 				crawler.failedCount++
@@ -194,19 +194,6 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				// check and handle popups
 				if err := crawler.driverExt.ClosePopupsHandler(); err != nil {
 					return err
-				}
-
-				if crawler.failedCount > 1 && !isFeed {
-					// enter live room
-					entryPoint := PointF{
-						X: float64(dExt.windowSize.Width / 2),
-						Y: float64(dExt.windowSize.Height / 2),
-					}
-
-					log.Info().Msg("tap screen center to close edge popup")
-					if err := crawler.driverExt.TapAbsXY(entryPoint.X, entryPoint.Y,
-						WithOffsetRandomRange(-20, 20)); err != nil {
-					}
 				}
 
 				// retry
