@@ -34,56 +34,6 @@ type adbDriver struct {
 	logcat    *AdbLogcat
 }
 
-type Hierarchy struct {
-	XMLName xml.Name `xml:"hierarchy"`
-	Nodes   []Node   `xml:"node"`
-}
-
-type Node struct {
-	Index         string  `xml:"index,attr"`
-	Text          string  `xml:"text,attr"`
-	ResourceID    string  `xml:"resource-id,attr"`
-	Class         string  `xml:"class,attr"`
-	Package       string  `xml:"package,attr"`
-	ContentDesc   string  `xml:"content-desc,attr"`
-	Checkable     string  `xml:"checkable,attr"`
-	Checked       string  `xml:"checked,attr"`
-	Clickable     string  `xml:"clickable,attr"`
-	Enabled       string  `xml:"enabled,attr"`
-	Focusable     string  `xml:"focusable,attr"`
-	Focused       string  `xml:"focused,attr"`
-	Scrollable    string  `xml:"scrollable,attr"`
-	LongClickable string  `xml:"long-clickable,attr"`
-	Password      string  `xml:"password,attr"`
-	Selected      string  `xml:"selected,attr"`
-	Bounds        *Bounds `xml:"bounds,attr"`
-	Children      []Node  `xml:"node"`
-}
-
-type Bounds struct {
-	X1, Y1, X2, Y2 int
-}
-
-func (b *Bounds) UnmarshalXMLAttr(attr xml.Attr) error {
-	// 正则表达式用于解析格式为"[x1,y1][x2,y2]"
-	re := regexp.MustCompile(`\[(\d+),(\d+)]\[(\d+),(\d+)]`)
-	matches := re.FindStringSubmatch(attr.Value)
-	if matches == nil {
-		return fmt.Errorf("bounds format is incorrect")
-	}
-	// 转换字符串为整数
-	b.X1, _ = strconv.Atoi(matches[1])
-	b.Y1, _ = strconv.Atoi(matches[2])
-	b.X2, _ = strconv.Atoi(matches[3])
-	b.Y2, _ = strconv.Atoi(matches[4])
-	return nil
-}
-
-// Center 方法计算并返回 Bounds 中心点的坐标
-func (b *Bounds) Center() (float64, float64) {
-	return float64(b.X1+b.X2) / 2, float64(b.Y1+b.Y2) / 2
-}
-
 func NewAdbDriver() *adbDriver {
 	log.Info().Msg("init adb driver")
 	return &adbDriver{}
@@ -532,6 +482,11 @@ func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
 }
 
 func (ad *adbDriver) Source(srcOpt ...SourceOption) (source string, err error) {
+	_, err = ad.adbClient.RunShellCommand("rm", "-rf", "/sdcard/window_dump.xml")
+	if err != nil {
+		return
+	}
+	// 高版本报错 ERROR: null root node returned by UiTestAutomationBridge.
 	_, err = ad.adbClient.RunShellCommand("uiautomator", "dump")
 	if err != nil {
 		return
@@ -562,7 +517,7 @@ func (ad *adbDriver) TapByText(text string, options ...ActionOption) error {
 }
 
 func (ad *adbDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, options ...ActionOption) error {
-	bounds := ad.searchNodes(hierarchy.Nodes, text, options...)
+	bounds := ad.searchNodes(hierarchy.Layout, text, options...)
 	actionOptions := NewActionOptions(options...)
 	if len(bounds) == 0 {
 		if actionOptions.IgnoreNotFoundError {
@@ -596,11 +551,11 @@ func (ad *adbDriver) TapByTexts(actions ...TapTextAction) error {
 	return nil
 }
 
-func (ad *adbDriver) searchNodes(nodes []Node, text string, options ...ActionOption) []Bounds {
+func (ad *adbDriver) searchNodes(nodes []Layout, text string, options ...ActionOption) []Bounds {
 	actionOptions := NewActionOptions(options...)
 	var results []Bounds
 	for _, node := range nodes {
-		result := ad.searchNodes(node.Children, text, options...)
+		result := ad.searchNodes(node.Layout, text, options...)
 		results = append(results, result...)
 		if actionOptions.Regex {
 			// regex on, check if match regex
@@ -610,7 +565,7 @@ func (ad *adbDriver) searchNodes(nodes []Node, text string, options ...ActionOpt
 		} else {
 			// regex off, check if match exactly
 			if node.Text != text {
-				ad.searchNodes(node.Children, text, options...)
+				ad.searchNodes(node.Layout, text, options...)
 				continue
 			}
 		}

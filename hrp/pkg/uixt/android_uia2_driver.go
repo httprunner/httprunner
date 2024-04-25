@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"net"
 	"net/http"
@@ -599,10 +600,35 @@ func (ud *uiaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 	return
 }
 
+func (ud *uiaDriver) sourceTree(srcOpt ...SourceOption) (sourceTree *Hierarchy, err error) {
+	source, err := ud.Source()
+	sourceTree = new(Hierarchy)
+	err = xml.Unmarshal([]byte(source), sourceTree)
+	if err != nil {
+		return
+	}
+	return
+}
+
 func (ud *uiaDriver) TapByText(text string, options ...ActionOption) error {
-	return ud.adbDriver.TapByText(text, options...)
+	sourceTree, err := ud.sourceTree()
+	if err != nil {
+		return err
+	}
+	return ud.tapByTextUsingHierarchy(sourceTree, text, options...)
 }
 
 func (ud *uiaDriver) TapByTexts(actions ...TapTextAction) error {
-	return ud.adbDriver.TapByTexts(actions...)
+	sourceTree, err := ud.sourceTree()
+	if err != nil {
+		return err
+	}
+
+	for _, action := range actions {
+		err := ud.tapByTextUsingHierarchy(sourceTree, action.Text, action.Options...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

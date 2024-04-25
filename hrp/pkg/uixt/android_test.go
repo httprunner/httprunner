@@ -132,6 +132,18 @@ func TestDriver_Source(t *testing.T) {
 	t.Log(source)
 }
 
+func TestDriver_TapByText(t *testing.T) {
+	driver, err := NewUIADriver(nil, uiaServerURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = driver.TapByText("安装")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestDriver_BatteryInfo(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
 	if err != nil {
