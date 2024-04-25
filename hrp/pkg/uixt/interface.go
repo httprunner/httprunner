@@ -589,6 +589,11 @@ type WebDriver interface {
 
 	// Source Return application elements tree
 	Source(srcOpt ...SourceOption) (string, error)
+
+	TapByText(text string, options ...ActionOption) error
+
+	TapByTexts(actions ...TapTextAction) error
+
 	// AccessibleSource Return application elements accessibility tree
 	AccessibleSource() (string, error)
 

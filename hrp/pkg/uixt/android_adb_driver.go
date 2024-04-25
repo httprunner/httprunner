@@ -2,33 +2,86 @@ package uixt
 
 import (
 	"bytes"
+	"encoding/xml"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
 )
 
-const AdbKeyBoardPackageName = "com.android.adbkeyboard/.AdbIME"
-const UnicodeImePackageName = "io.appium.settings/.UnicodeIME"
+const (
+	AdbKeyBoardPackageName = "com.android.adbkeyboard/.AdbIME"
+	UnicodeImePackageName  = "io.appium.settings/.UnicodeIME"
+)
 
 type adbDriver struct {
 	Driver
 
 	adbClient *gadb.Device
 	logcat    *AdbLogcat
+}
+
+type Hierarchy struct {
+	XMLName xml.Name `xml:"hierarchy"`
+	Nodes   []Node   `xml:"node"`
+}
+
+type Node struct {
+	Index         string  `xml:"index,attr"`
+	Text          string  `xml:"text,attr"`
+	ResourceID    string  `xml:"resource-id,attr"`
+	Class         string  `xml:"class,attr"`
+	Package       string  `xml:"package,attr"`
+	ContentDesc   string  `xml:"content-desc,attr"`
+	Checkable     string  `xml:"checkable,attr"`
+	Checked       string  `xml:"checked,attr"`
+	Clickable     string  `xml:"clickable,attr"`
+	Enabled       string  `xml:"enabled,attr"`
+	Focusable     string  `xml:"focusable,attr"`
+	Focused       string  `xml:"focused,attr"`
+	Scrollable    string  `xml:"scrollable,attr"`
+	LongClickable string  `xml:"long-clickable,attr"`
+	Password      string  `xml:"password,attr"`
+	Selected      string  `xml:"selected,attr"`
+	Bounds        *Bounds `xml:"bounds,attr"`
+	Children      []Node  `xml:"node"`
+}
+
+type Bounds struct {
+	X1, Y1, X2, Y2 int
+}
+
+func (b *Bounds) UnmarshalXMLAttr(attr xml.Attr) error {
+	// 正则表达式用于解析格式为"[x1,y1][x2,y2]"
+	re := regexp.MustCompile(`\[(\d+),(\d+)]\[(\d+),(\d+)]`)
+	matches := re.FindStringSubmatch(attr.Value)
+	if matches == nil {
+		return fmt.Errorf("bounds format is incorrect")
+	}
+	// 转换字符串为整数
+	b.X1, _ = strconv.Atoi(matches[1])
+	b.Y1, _ = strconv.Atoi(matches[2])
+	b.X2, _ = strconv.Atoi(matches[3])
+	b.Y2, _ = strconv.Atoi(matches[4])
+	return nil
+}
+
+// Center 方法计算并返回 Bounds 中心点的坐标
+func (b *Bounds) Center() (float64, float64) {
+	return float64(b.X1+b.X2) / 2, float64(b.Y1+b.Y2) / 2
 }
 
 func NewAdbDriver() *adbDriver {
@@ -479,8 +532,93 @@ func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
 }
 
 func (ad *adbDriver) Source(srcOpt ...SourceOption) (source string, err error) {
-	err = errDriverNotImplemented
+	_, err = ad.adbClient.RunShellCommand("uiautomator", "dump")
+	if err != nil {
+		return
+	}
+	source, err = ad.adbClient.RunShellCommand("cat", "/sdcard/window_dump.xml")
+	if err != nil {
+		return
+	}
 	return
+}
+
+func (ad *adbDriver) sourceTree(srcOpt ...SourceOption) (sourceTree *Hierarchy, err error) {
+	source, err := ad.Source()
+	sourceTree = new(Hierarchy)
+	err = xml.Unmarshal([]byte(source), sourceTree)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (ad *adbDriver) TapByText(text string, options ...ActionOption) error {
+	sourceTree, err := ad.sourceTree()
+	if err != nil {
+		return err
+	}
+	return ad.tapByTextUsingHierarchy(sourceTree, text, options...)
+}
+
+func (ad *adbDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, options ...ActionOption) error {
+	bounds := ad.searchNodes(hierarchy.Nodes, text, options...)
+	actionOptions := NewActionOptions(options...)
+	if len(bounds) == 0 {
+		if actionOptions.IgnoreNotFoundError {
+			log.Info().Msg("not found element by text " + text)
+			return nil
+		}
+		return errors.New("not found element by text " + text)
+	}
+	for _, bound := range bounds {
+		width, height := bound.Center()
+		err := ad.TapFloat(width, height, options...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (ad *adbDriver) TapByTexts(actions ...TapTextAction) error {
+	sourceTree, err := ad.sourceTree()
+	if err != nil {
+		return err
+	}
+
+	for _, action := range actions {
+		err := ad.tapByTextUsingHierarchy(sourceTree, action.Text, action.Options...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (ad *adbDriver) searchNodes(nodes []Node, text string, options ...ActionOption) []Bounds {
+	actionOptions := NewActionOptions(options...)
+	var results []Bounds
+	for _, node := range nodes {
+		result := ad.searchNodes(node.Children, text, options...)
+		results = append(results, result...)
+		if actionOptions.Regex {
+			// regex on, check if match regex
+			if !regexp.MustCompile(text).MatchString(node.Text) {
+				continue
+			}
+		} else {
+			// regex off, check if match exactly
+			if node.Text != text {
+				ad.searchNodes(node.Children, text, options...)
+				continue
+			}
+		}
+		if node.Bounds != nil {
+			results = append(results, *node.Bounds)
+		}
+	}
+	return results
 }
 
 func (ad *adbDriver) AccessibleSource() (source string, err error) {
@@ -517,7 +655,7 @@ func (ad *adbDriver) StartCaptureLog(identifier ...string) (err error) {
 	}
 
 	// start logcat
-	err = ad.logcat.CatchLogcat()
+	err = ad.logcat.CatchLogcat("iesqaMonitor:V")
 	if err != nil {
 		err = errors.Wrap(code.AndroidCaptureLogError,
 			fmt.Sprintf("start adb log recording failed: %v", err))
@@ -527,17 +665,15 @@ func (ad *adbDriver) StartCaptureLog(identifier ...string) (err error) {
 }
 
 func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
-	log.Info().Msg("stop adb log recording")
-	err = ad.logcat.Stop()
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get adb log recording")
-		err = errors.Wrap(code.AndroidCaptureLogError,
-			fmt.Sprintf("get adb log recording failed: %v", err))
-		return "", err
-	}
-	content := ad.logcat.logBuffer.String()
-	log.Info().Str("logcat content", content).Msg("display logcat content")
-	pointRes := ConvertPoints(content)
+	defer func() {
+		log.Info().Msg("stop adb log recording")
+		err = ad.logcat.Stop()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get adb log recording")
+		}
+	}()
+	pointRes := ConvertPoints(ad.logcat.reader)
+
 	// 没有解析到打点日志，走兜底逻辑
 	if len(pointRes) == 0 {
 		log.Info().Msg("action log is null, use action file >>>")
@@ -551,7 +687,6 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 			}
 			return nil
 		})
-
 		// 先保持原有状态码不变，这里不return error
 		if err != nil {
 			log.Error().Err(err).Msg("read log file fail")
@@ -563,13 +698,13 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 			return pointRes, nil
 		}
 
-		data, err := ioutil.ReadFile(files[0])
+		reader, err := os.Open(files[0])
 		if err != nil {
-			log.Info().Msg("read File error")
+			log.Info().Msg("open File error")
 			return pointRes, nil
 		}
 
-		pointRes = ConvertPoints(string(data))
+		pointRes = ConvertPoints(reader)
 	}
 	return pointRes, nil
 }

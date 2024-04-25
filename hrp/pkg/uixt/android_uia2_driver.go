@@ -598,3 +598,11 @@ func (ud *uiaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 	source = reply.Value
 	return
 }
+
+func (ud *uiaDriver) TapByText(text string, options ...ActionOption) error {
+	return ud.adbDriver.TapByText(text, options...)
+}
+
+func (ud *uiaDriver) TapByTexts(actions ...TapTextAction) error {
+	return ud.adbDriver.TapByTexts(actions...)
+}

@@ -1,18 +1,19 @@
 package uixt
 
 import (
+	"bufio"
 	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
+	"io"
 	"net"
 	"os/exec"
 	"strings"
 
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin/myexec"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
@@ -23,7 +24,6 @@ var (
 	AdbServerPort  = gadb.AdbServerPort // 5037
 	UIA2ServerHost = "localhost"
 	UIA2ServerPort = 6790
-	DeviceTempPath = "/data/local/tmp"
 )
 
 const forwardToPrefix = "forward-to-"
@@ -146,18 +146,6 @@ func GetAndroidDevices(serial ...string) (devices []*gadb.Device, err error) {
 		return nil, err
 	}
 	return deviceList, nil
-}
-
-func encodeUnicode(c int32) string {
-	var buffer bytes.Buffer
-	// Convert each rune (character) into two bytes
-	buffer.WriteByte(byte(c >> 8))
-	buffer.WriteByte(byte(c & 0xFF))
-	// Convert buffer bytes to base64 encoding
-	encoded := base64.StdEncoding.EncodeToString(buffer.Bytes())
-	// Replace "/" with "," and remove trailing "="
-	encoded = strings.ReplaceAll(encoded, "/", ",")
-	return strings.TrimRight(encoded, "=")
 }
 
 type AndroidDevice struct {
@@ -290,26 +278,27 @@ func getFreePort() (int, error) {
 }
 
 type AdbLogcat struct {
-	serial    string
-	logBuffer *bytes.Buffer
-	errs      []error
-	stopping  chan struct{}
-	done      chan struct{}
-	cmd       *exec.Cmd
+	serial string
+	// logBuffer *bytes.Buffer
+	errs     []error
+	stopping chan struct{}
+	done     chan struct{}
+	cmd      *exec.Cmd
+	reader   io.Reader
 }
 
 func NewAdbLogcat(serial string) *AdbLogcat {
 	return &AdbLogcat{
-		serial:    serial,
-		logBuffer: new(bytes.Buffer),
-		stopping:  make(chan struct{}),
-		done:      make(chan struct{}),
+		serial: serial,
+		// logBuffer: new(bytes.Buffer),
+		stopping: make(chan struct{}),
+		done:     make(chan struct{}),
 	}
 }
 
 // CatchLogcatContext starts logcat with timeout context
 func (l *AdbLogcat) CatchLogcatContext(timeoutCtx context.Context) (err error) {
-	if err = l.CatchLogcat(); err != nil {
+	if err = l.CatchLogcat(""); err != nil {
 		return
 	}
 	go func() {
@@ -344,7 +333,7 @@ func (l *AdbLogcat) Errors() (err error) {
 	return
 }
 
-func (l *AdbLogcat) CatchLogcat() (err error) {
+func (l *AdbLogcat) CatchLogcat(filter string) (err error) {
 	if l.cmd != nil {
 		log.Warn().Msg("logcat already start")
 		return nil
@@ -354,12 +343,19 @@ func (l *AdbLogcat) CatchLogcat() (err error) {
 	if err = myexec.RunCommand("adb", "-s", l.serial, "shell", "logcat", "-c"); err != nil {
 		return
 	}
-
+	args := []string{"-s", l.serial, "logcat", "--format", "time"}
+	if filter != "" {
+		args = append(args, "-s", filter)
+	}
 	// start logcat
-	l.cmd = myexec.Command("adb", "-s", l.serial,
-		"logcat", "--format", "time", "-s", "iesqaMonitor:V")
-	l.cmd.Stderr = l.logBuffer
-	l.cmd.Stdout = l.logBuffer
+	l.cmd = myexec.Command("adb", args...)
+	// l.cmd.Stderr = l.logBuffer
+	// l.cmd.Stdout = l.logBuffer
+	reader, err := l.cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	l.reader = reader
 	if err = l.cmd.Start(); err != nil {
 		return
 	}
@@ -370,17 +366,7 @@ func (l *AdbLogcat) CatchLogcat() (err error) {
 		}
 		l.done <- struct{}{}
 	}()
-	return
-}
 
-func (l *AdbLogcat) BufferedLogcat() (err error) {
-	// -d: dump the current buffered logcat result and exits
-	cmd := myexec.Command("adb", "-s", l.serial, "logcat", "-d")
-	cmd.Stdout = l.logBuffer
-	cmd.Stderr = l.logBuffer
-	if err = cmd.Run(); err != nil {
-		return
-	}
 	return
 }
 
@@ -394,9 +380,11 @@ type ExportPoint struct {
 	RunTime   int         `json:"run_time,omitempty" yaml:"run_time,omitempty"`
 }
 
-func ConvertPoints(data string) (eps []ExportPoint) {
-	lines := strings.Split(data, "\n")
-	for _, line := range lines {
+func ConvertPoints(reader io.Reader) (eps []ExportPoint) {
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		line := scanner.Text()
+		log.Info().Str("logcat content", line)
 		if strings.Contains(line, "ext") {
 			idx := strings.Index(line, "{")
 			if idx == -1 {

@@ -60,7 +60,10 @@ func TestDevice_Product(t *testing.T) {
 
 	for i := range devices {
 		dev := devices[i]
-		product := dev.Product()
+		product, err := dev.Product()
+		if err != nil {
+			t.Fatal(err)
+		}
 		t.Log(dev.Serial(), product)
 	}
 }
@@ -70,7 +73,24 @@ func TestDevice_Model(t *testing.T) {
 
 	for i := range devices {
 		dev := devices[i]
-		t.Log(dev.Serial(), dev.Model())
+		model, err := dev.Model()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(dev.Serial(), model)
+	}
+}
+
+func TestDevice_Brand(t *testing.T) {
+	setupDevices(t)
+
+	for i := range devices {
+		dev := devices[i]
+		brand, err := dev.Brand()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(dev.Serial(), brand)
 	}
 }
 
@@ -79,7 +99,15 @@ func TestDevice_Usb(t *testing.T) {
 
 	for i := range devices {
 		dev := devices[i]
-		t.Log(dev.Serial(), dev.Usb(), dev.IsUsb())
+		usb, err := dev.Usb()
+		if err != nil {
+			t.Fatal(err)
+		}
+		isUsb, err := dev.IsUsb()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(dev.Serial(), usb, isUsb)
 	}
 }
 
@@ -312,6 +340,22 @@ func TestDevice_InstallAPK(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Log(res)
+	}
+}
+
+func TestDevice_ListPackages(t *testing.T) {
+	setupDevices(t)
+	for _, dev := range devices {
+		res, err := dev.ListPackages()
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(res)
+		installed, err := dev.IsPackagesInstalled("io.appium.uiautomator2.server")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(installed)
 	}
 }
 

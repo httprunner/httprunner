@@ -320,6 +320,11 @@ func NewActionOptions(options ...ActionOption) *ActionOptions {
 	return actionOptions
 }
 
+type TapTextAction struct {
+	Text    string
+	Options []ActionOption
+}
+
 type ActionOption func(o *ActionOptions)
 
 func WithCustomOption(key string, value interface{}) ActionOption {
