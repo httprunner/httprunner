@@ -4,26 +4,36 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 )
 
 var (
-	AdbServerHost  = "localhost"
-	AdbServerPort  = gadb.AdbServerPort // 5037
-	UIA2ServerHost = "localhost"
-	UIA2ServerPort = 6790
+	AdbServerHost              = "localhost"
+	AdbServerPort              = gadb.AdbServerPort // 5037
+	UIA2ServerHost             = "localhost"
+	UIA2ServerPort             = 6790
+	DeviceTempPath             = "/data/local/tmp"
+	EvalInstallerPackageName   = "sogou.mobile.explorer"
+	InstallViaInstallerCommand = "am start -S -n sogou.mobile.explorer/.PackageInstallerActivity -d"
 )
 
 const forwardToPrefix = "forward-to-"
@@ -261,6 +271,118 @@ func (dev *AndroidDevice) StartPcap() error {
 func (dev *AndroidDevice) StopPcap() string {
 	// TODO
 	return ""
+}
+
+func (dev *AndroidDevice) Install(app io.ReadSeeker, opts InstallOptions) error {
+	brand, err := dev.d.Brand()
+	if err != nil {
+		return err
+	}
+	args := []string{}
+	if opts.Reinstall {
+		args = append(args, "-r")
+	}
+	if opts.GrantPermission {
+		args = append(args, "-g")
+	}
+	if opts.Downgrade {
+		args = append(args, "-d")
+	}
+	switch strings.ToLower(brand) {
+	case "vivo":
+		return dev.installVivoSilent(app, args...)
+	case "oppo", "realme", "oneplus":
+		if dev.d.IsPackagesInstalled(EvalInstallerPackageName) {
+			return dev.installViaInstaller(app, args...)
+		}
+		log.Warn().Msg("oppo not install eval installer")
+		return dev.installCommon(app, args...)
+	default:
+		return dev.installCommon(app, args...)
+	}
+}
+
+func (dev *AndroidDevice) installVivoSilent(app io.ReadSeeker, args ...string) error {
+	currentTime := builtin.GetCurrentDay()
+	md5HashInBytes := md5.Sum([]byte(currentTime))
+	verifyCode := hex.EncodeToString(md5HashInBytes[:])
+	verifyCode = base64.StdEncoding.EncodeToString([]byte(verifyCode))
+	verifyCode = verifyCode[:8]
+	verifyCode = "-V" + verifyCode
+	args = append([]string{verifyCode}, args...)
+	_, err := dev.d.InstallAPK(app, args...)
+	return err
+}
+
+func (dev *AndroidDevice) installViaInstaller(app io.ReadSeeker, args ...string) error {
+	appRemotePath := "/data/local/tmp/" + strconv.FormatInt(time.Now().UnixMilli(), 10) + ".apk"
+	err := dev.d.Push(app, appRemotePath, time.Now())
+	if err != nil {
+		return err
+	}
+	quit := make(chan struct{})
+	done := make(chan error)
+	defer func() { close(quit) }()
+	// 需要监听是否完成安装
+	go func() {
+		logcat := NewAdbLogcat(dev.d.Serial())
+		err = logcat.CatchLogcat("PackageInstallerCallback")
+		if err != nil {
+			done <- err
+			return
+		}
+		scanner := bufio.NewScanner(logcat.reader)
+		defer func() {
+			close(done)
+			_ = logcat.Stop()
+		}()
+		for scanner.Scan() {
+			select {
+			case <-quit:
+				break
+			default:
+				line := scanner.Text()
+				re := regexp.MustCompile(`\{.*?}`)
+				match := re.FindString(line)
+				if match == "" {
+					continue
+				}
+				var result InstallResult
+				err := json.Unmarshal([]byte(match), &result)
+				if err != nil {
+					log.Warn().Msg("parse Install msg line error: " + match)
+					continue
+				}
+				if result.Result == 0 {
+					// 安装成功
+					done <- nil
+					return
+				} else {
+					done <- errors.New(match)
+				}
+			}
+		}
+		done <- errors.New("install failed by installer")
+	}()
+	args = strings.Split(InstallViaInstallerCommand, " ")
+	args = append(args, appRemotePath)
+	_, err = dev.d.RunShellCommand("am", args[1:]...)
+	if err != nil {
+		return err
+	}
+	// 等待安装完成或超时
+	timeout := 1 * time.Minute
+	select {
+	case err := <-done:
+		return err // 返回安装结果或错误
+	case <-time.After(timeout):
+		return fmt.Errorf("installation timed out after %v", timeout)
+	}
+}
+
+func (dev *AndroidDevice) installCommon(app io.ReadSeeker, args ...string) error {
+	_, err := dev.d.InstallAPK(app, args...)
+	return err
 }
 
 func getFreePort() (int, error) {
