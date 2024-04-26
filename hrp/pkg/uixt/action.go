@@ -668,7 +668,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		}
 		return dExt.VideoCrawler(configs)
 	case ACTION_ClosePopups:
-		return dExt.ClosePopups(action.GetOptions()...)
+		return dExt.ClosePopupsHandler()
 	}
 	return nil
 }

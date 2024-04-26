@@ -3,7 +3,7 @@
 package gadb
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -116,6 +116,6 @@ func TestScreenCap(t *testing.T) {
 			t.Error(err)
 		}
 		t.Log(len(res))
-		ioutil.WriteFile("/tmp/1.png", res, 0o644)
+		os.WriteFile("/tmp/1.png", res, 0o644)
 	}
 }

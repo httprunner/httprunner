@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"math"
+	"math/rand"
 	"time"
 
 	"github.com/pkg/errors"
@@ -160,6 +161,10 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			log.Warn().Msg("interrupted in feed crawler")
 			return errors.Wrap(code.InterruptError, "feed crawler interrupted")
 		default:
+			if err = crawler.clearCurrentVideo(); err != nil {
+				log.Error().Err(err).Msg("clear cache failed")
+			}
+
 			// swipe to next feed video
 			log.Info().Msg("swipe to next feed video")
 			swipeStartTime := time.Now()
@@ -171,54 +176,44 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 			// get app event trackings
 			// retry 10 times if get feed failed, abort if fail 10 consecutive times
-			feedVideo, err := crawler.getCurrentVideo()
-			if err != nil || feedVideo.Type == "" {
+			currentVideo, err := crawler.getCurrentVideo()
+			if err != nil || currentVideo.Type == "" {
+				crawler.failedCount++
 				if crawler.failedCount >= 10 {
 					// failed 10 consecutive times
 					return errors.Wrap(code.TrackingGetError,
 						"get current feed video failed 10 consecutive times")
 				}
-				log.Warn().Msg("get current feed video failed")
+				log.Warn().
+					Int64("failedCount", crawler.failedCount).
+					Msg("get current feed video failed")
 
 				// check and handle popups
-				if err := crawler.driverExt.ClosePopupsHandler(WithMaxRetryTimes(3)); err != nil {
+				if err := crawler.driverExt.ClosePopupsHandler(); err != nil {
 					return err
 				}
 
 				// retry
-				crawler.failedCount++
 				continue
 			}
 
-			screenResult := &ScreenResult{
-				Resolution: dExt.windowSize,
-				Video:      feedVideo,
-
-				// log swipe timelines
-				SwipeStartTime:  swipeStartTime.UnixMilli(),
-				SwipeFinishTime: swipeFinishTime.UnixMilli(),
-			}
-
-			switch feedVideo.Type {
+			switch currentVideo.Type {
 			case VideoType_PreviewLive:
 				// 直播预览流
+				var skipEnterLive bool
 				if crawler.isLiveTargetAchieved() {
-					// 达标后不再进入直播间
-					crawler.LiveCount++
-					dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
-					// 观播时长取随机时长与仿真时长的最小值
-					sleepTime := math.Min(float64(feedVideo.SimulationPlayDuration), float64(feedVideo.RandomPlayDuration))
-					feedVideo.PlayDuration = int64(sleepTime)
-					log.Info().
-						Strs("tags", screenResult.Tags).
-						Interface("video", feedVideo).
-						Msg(FOUND_LIVE_SUCCESS)
-					// simulation watch feed video
-					sleepStrict(swipeFinishTime, feedVideo.PlayDuration)
-					break
-				} else {
+					log.Info().Interface("video", currentVideo).
+						Msg("live count achieved, skip entering live room")
+					skipEnterLive = true
+				} else if rand.Float64() <= 0.10 {
+					// 10% chance skip entering live room
+					log.Info().Msg("skip entering preview live by 10% chance")
+					skipEnterLive = true
+				}
+
+				if !skipEnterLive {
 					time.Sleep(1 * time.Second)
-					// live target not achieved, enter live
+					// enter live room
 					entryPoint := PointF{
 						X: float64(dExt.windowSize.Width / 2),
 						Y: float64(dExt.windowSize.Height / 2),
@@ -230,53 +225,61 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						log.Error().Err(err).Msg("tap live video failed")
 						continue
 					}
+				} else {
+					// skip entering live room
+					// only mock simulation play duration
+					sleepTime := math.Min(float64(currentVideo.SimulationPlayDuration), float64(currentVideo.RandomPlayDuration))
+					currentVideo.PlayDuration = int64(sleepTime)
 				}
+
 				fallthrough
 
 			case VideoType_Live:
 				// 直播
-				log.Info().
-					Strs("tags", screenResult.Tags).
-					Interface("video", feedVideo).
-					Msg(FOUND_LIVE_SUCCESS)
+				crawler.LiveCount++
+				log.Info().Interface("video", currentVideo).Msg(FOUND_LIVE_SUCCESS)
 
+				// wait 3s for live loading
+				time.Sleep(3 * time.Second)
 				// take screenshot and get screen texts by OCR
-				screenResultFromOCR, err := crawler.driverExt.GetScreenResult(
+				screenResult, err := crawler.driverExt.GetScreenResult(
 					WithScreenShotOCR(true),
 					WithScreenShotUpload(true),
 					WithScreenShotLiveType(true),
-					WithScreenShotClosePopups(true),
 				)
 				if err != nil {
 					log.Error().Err(err).Msg("get screen result failed")
 					time.Sleep(3 * time.Second)
 					continue
 				}
-				if e := crawler.driverExt.tapPopupHandler(screenResultFromOCR.Popup); e != nil {
-					log.Error().Err(e).Msg("auto handle popup failed")
-					continue
-				}
 
 				// add live type
-				if screenResultFromOCR.imageResult != nil &&
-					screenResultFromOCR.imageResult.LiveType != "" &&
-					screenResultFromOCR.imageResult.LiveType != "NoLive" {
-					screenResult.Video.LiveType = screenResultFromOCR.imageResult.LiveType
+				if screenResult.imageResult != nil &&
+					screenResult.imageResult.LiveType != "" &&
+					screenResult.imageResult.LiveType != "NoLive" {
+					currentVideo.LiveType = screenResult.imageResult.LiveType
 				}
 
-				crawler.LiveCount++
 				// simulation watch feed video
-				sleepStrict(swipeFinishTime, screenResult.Video.PlayDuration)
+				sleepStrict(swipeFinishTime, currentVideo.PlayDuration)
 
-				screenResultFromOCR.Video = screenResult.Video
-				screenResultFromOCR.Resolution = screenResult.Resolution
-				screenResultFromOCR.SwipeStartTime = screenResult.SwipeStartTime
-				screenResultFromOCR.SwipeFinishTime = screenResult.SwipeFinishTime
-				screenResultFromOCR.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
+				screenResult.Video = currentVideo
+				screenResult.Resolution = dExt.windowSize
+				screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
+				screenResult.SwipeFinishTime = swipeFinishTime.UnixMilli()
+				screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 
+				var exitLive bool
 				if crawler.isLiveTargetAchieved() {
-					log.Info().Interface("live", screenResult.Video).
-						Msg("live count achieved, exit live house")
+					log.Info().Interface("live", currentVideo).
+						Msg("live count achieved, exit live room")
+					exitLive = true
+				} else if rand.Float64() <= 0.10 {
+					// 10% chance exit live room
+					log.Info().Msg("exit live room by 10% chance")
+					exitLive = true
+				}
+				if exitLive && currentVideo.Type == VideoType_Live {
 					err = crawler.exitLiveRoom()
 					if err != nil {
 						if errors.Is(err, code.TimeoutError) || errors.Is(err, code.InterruptError) {
@@ -289,16 +292,22 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			default:
 				// 点播 || 图文 || 广告 || etc.
 				crawler.FeedCount++
+				log.Info().Interface("video", currentVideo).Msg(FOUND_FEED_SUCCESS)
+
+				screenResult := &ScreenResult{
+					Resolution: dExt.windowSize,
+					Video:      currentVideo,
+
+					// log swipe timelines
+					SwipeStartTime:  swipeStartTime.UnixMilli(),
+					SwipeFinishTime: swipeFinishTime.UnixMilli(),
+				}
 				dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
-				log.Info().
-					Strs("tags", screenResult.Tags).
-					Interface("video", feedVideo).
-					Msg(FOUND_FEED_SUCCESS)
 
 				// simulation watch feed video
-				sleepStrict(swipeFinishTime, screenResult.Video.PlayDuration)
+				sleepStrict(swipeFinishTime, currentVideo.PlayDuration)
+				screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 			}
-			screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 
 			// check if target count achieved
 			if crawler.isTargetAchieved() {
@@ -361,6 +370,19 @@ type Video struct {
 	SimulationPlayProgress float64 `json:"simulation_play_progress"` // 仿真播放比例（完播率）
 	SimulationPlayDuration int64   `json:"simulation_play_duration"` // 仿真播放时长(ms)
 	RandomPlayDuration     int64   `json:"random_play_duration"`     // 随机播放时长(ms)
+}
+
+func (vc *VideoCrawler) clearCurrentVideo() error {
+	if !vc.driverExt.plugin.Has("ClearCurrentVideo") {
+		return errors.New("plugin missing ClearCurrentVideo method")
+	}
+
+	_, err := vc.driverExt.plugin.Call("ClearCurrentVideo")
+	if err != nil {
+		return errors.Wrap(err, "call plugin ClearCurrentVideo failed")
+	}
+
+	return nil
 }
 
 func (vc *VideoCrawler) getCurrentVideo() (video *Video, err error) {

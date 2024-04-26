@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -87,40 +86,6 @@ func (screenResults ScreenResultMap) getScreenShotUrls() map[string]string {
 	return screenShotsUrls
 }
 
-// updatePopupCloseStatus checks if popup closed normally in every screenResult with close_popups on:
-func (screenResults ScreenResultMap) updatePopupCloseStatus() {
-	var popupScreenResultList []*ScreenResult
-	for _, screenResult := range screenResults {
-		if screenResult.Popup == nil {
-			continue
-		}
-		popupScreenResultList = append(popupScreenResultList, screenResult)
-	}
-	if len(popupScreenResultList) == 0 {
-		return
-	}
-	sort.Slice(popupScreenResultList, func(i, j int) bool {
-		return popupScreenResultList[i].Popup.RetryCount < popupScreenResultList[j].Popup.RetryCount
-	})
-
-	for i := 0; i < len(popupScreenResultList)-1; i++ {
-		curPopup := popupScreenResultList[i].Popup
-		nextPopup := popupScreenResultList[i+1].Popup
-
-		// popup not existed, no need to close
-		if curPopup.CloseArea.IsEmpty() {
-			continue
-		}
-		// popup existed, but identical popups occurs during next retry
-		if nextPopup.CloseArea.IsIdentical(curPopup.CloseArea) {
-			popupScreenResultList[i].Popup.CloseStatus = CloseStatusFail
-			continue
-		}
-		// popup existed, but no popup or different popup occurs during next retry (IsClosed=true)
-		popupScreenResultList[i].Popup.CloseStatus = CloseStatusSuccess
-	}
-}
-
 type cacheStepData struct {
 	// cache step screenshot paths
 	screenShots []string
@@ -151,6 +116,9 @@ type DriverExt struct {
 
 	// funplugin
 	plugin funplugin.IPlugin
+
+	// cache last popup to check if popup handle result
+	lastPopup *PopupInfo
 }
 
 func newDriverExt(device Device, driver WebDriver, plugin funplugin.IPlugin) (dExt *DriverExt, err error) {
@@ -273,7 +241,6 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData["screenshots"] = dExt.cacheStepData.screenShots
 
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenResults.getScreenShotUrls()
-	dExt.cacheStepData.screenResults.updatePopupCloseStatus()
 	cacheData["screen_results"] = dExt.cacheStepData.screenResults
 
 	// clear cache
