@@ -55,6 +55,9 @@ from httprunner import RunTestCase
 {%- endfor %}
 
 class {{ class_name }}(HttpRunner):
+    {% if case_name %}
+    '''{{case_name}}'''
+    {% endif %}
 
     {% if parameters and skip %}
     @pytest.mark.parametrize("param", Parameters({{ parameters }}){%- if ids %}, ids={{ ids }}{%- endif %})
@@ -142,7 +145,7 @@ def ensure_file_abs_path_valid(file_abs_path: Text) -> Text:
             pass
         else:
             # handle cases when directory name includes dot/hyphen/space
-            name = name.replace(" ", "_").replace(".", "_").replace("-", "_")
+            name = name.replace(" ", "_").replace(".", "_").replace("-", "_").replace("（", "_").replace("）", "_")
 
         path_names.append(name)
 
@@ -452,6 +455,7 @@ sys.path.insert(0, str(Path(__file__){parent}))
         "version": __version__,
         "testcase_path": testcase_path,
         "class_name": f"TestCase{testcase_cls_name}",
+        "case_name": f'{config["name"]}',
         "imports_list": imports_list,
         "config_chain_style": make_config_chain_style(config),
         "skip": make_config_skip(config),
