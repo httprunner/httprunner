@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/xml"
 	"fmt"
@@ -603,12 +604,6 @@ func (ad *adbDriver) IsHealthy() (healthy bool, err error) {
 
 func (ad *adbDriver) StartCaptureLog(identifier ...string) (err error) {
 	log.Info().Msg("start adb log recording")
-
-	// clear logcat
-	if _, err = ad.adbClient.RunShellCommand("logcat", "-c"); err != nil {
-		return err
-	}
-
 	// start logcat
 	err = ad.logcat.CatchLogcat("iesqaMonitor:V")
 	if err != nil {
@@ -627,7 +622,10 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 			log.Error().Err(err).Msg("failed to get adb log recording")
 		}
 	}()
-	pointRes := ConvertPoints(ad.logcat.reader)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to close adb log writer")
+	}
+	pointRes := ConvertPoints(ad.logcat.logs)
 
 	// 没有解析到打点日志，走兜底逻辑
 	if len(pointRes) == 0 {
@@ -659,7 +657,19 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 			return pointRes, nil
 		}
 
-		pointRes = ConvertPoints(reader)
+		var lines []string // 创建一个空的字符串数组来存储文件的每一行
+
+		// 使用 bufio.NewScanner 读取文件
+		scanner := bufio.NewScanner(reader)
+		for scanner.Scan() {
+			lines = append(lines, scanner.Text()) // 将每行文本添加到字符串数组
+		}
+
+		if err := scanner.Err(); err != nil {
+			return pointRes, nil
+		}
+
+		pointRes = ConvertPoints(lines)
 	}
 	return pointRes, nil
 }

@@ -351,7 +351,7 @@ func TestDevice_ListPackages(t *testing.T) {
 			t.Fatal(err)
 		}
 		t.Log(res)
-		installed, err := dev.IsPackagesInstalled("io.appium.uiautomator2.server")
+		installed := dev.IsPackagesInstalled("io.appium.uiautomator2.server")
 		if err != nil {
 			t.Fatal(err)
 		}

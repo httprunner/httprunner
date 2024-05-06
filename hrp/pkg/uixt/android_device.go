@@ -399,6 +399,8 @@ func getFreePort() (int, error) {
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
+type LineCallback func(string)
+
 type AdbLogcat struct {
 	serial string
 	// logBuffer *bytes.Buffer
@@ -406,7 +408,19 @@ type AdbLogcat struct {
 	stopping chan struct{}
 	done     chan struct{}
 	cmd      *exec.Cmd
-	reader   io.Reader
+	callback LineCallback
+	logs     []string
+}
+
+func NewAdbLogcatWithCallback(serial string, callback LineCallback) *AdbLogcat {
+	return &AdbLogcat{
+		serial: serial,
+		// logBuffer: new(bytes.Buffer),
+		stopping: make(chan struct{}),
+		done:     make(chan struct{}),
+		callback: callback,
+		logs:     make([]string, 0),
+	}
 }
 
 func NewAdbLogcat(serial string) *AdbLogcat {
@@ -415,6 +429,7 @@ func NewAdbLogcat(serial string) *AdbLogcat {
 		// logBuffer: new(bytes.Buffer),
 		stopping: make(chan struct{}),
 		done:     make(chan struct{}),
+		logs:     make([]string, 0),
 	}
 }
 
@@ -477,10 +492,20 @@ func (l *AdbLogcat) CatchLogcat(filter string) (err error) {
 	if err != nil {
 		return err
 	}
-	l.reader = reader
 	if err = l.cmd.Start(); err != nil {
 		return
 	}
+	go func() {
+		scanner := bufio.NewScanner(reader)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if l.callback != nil {
+				l.callback(line) // Process each line with callback
+			} else {
+				l.logs = append(l.logs, line) // Store line if no callback
+			}
+		}
+	}()
 	go func() {
 		<-l.stopping
 		if e := myexec.KillProcessesByGpid(l.cmd); e != nil {
@@ -502,11 +527,9 @@ type ExportPoint struct {
 	RunTime   int         `json:"run_time,omitempty" yaml:"run_time,omitempty"`
 }
 
-func ConvertPoints(reader io.Reader) (eps []ExportPoint) {
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line := scanner.Text()
-		log.Info().Str("logcat content", line)
+func ConvertPoints(lines []string) (eps []ExportPoint) {
+	log.Info().Msg("ConvertPoints")
+	for _, line := range lines {
 		if strings.Contains(line, "ext") {
 			idx := strings.Index(line, "{")
 			if idx == -1 {
@@ -519,6 +542,7 @@ func ConvertPoints(reader io.Reader) (eps []ExportPoint) {
 				log.Error().Msg("failed to parse point data")
 				continue
 			}
+			log.Info().Msg(line)
 			eps = append(eps, p)
 		}
 	}
