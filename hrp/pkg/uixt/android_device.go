@@ -320,50 +320,38 @@ func (dev *AndroidDevice) installViaInstaller(app io.ReadSeeker, args ...string)
 	if err != nil {
 		return err
 	}
-	quit := make(chan struct{})
 	done := make(chan error)
-	defer func() { close(quit) }()
-	// 需要监听是否完成安装
-	go func() {
-		logcat := NewAdbLogcat(dev.d.Serial())
-		err = logcat.CatchLogcat("PackageInstallerCallback")
-		if err != nil {
-			done <- err
+	defer func() {
+		close(done)
+	}()
+	logcat := NewAdbLogcatWithCallback(dev.d.Serial(), func(line string) {
+		re := regexp.MustCompile(`\{.*?}`)
+		match := re.FindString(line)
+		if match == "" {
 			return
 		}
-		scanner := bufio.NewScanner(logcat.reader)
-		defer func() {
-			close(done)
-			_ = logcat.Stop()
-		}()
-		for scanner.Scan() {
-			select {
-			case <-quit:
-				break
-			default:
-				line := scanner.Text()
-				re := regexp.MustCompile(`\{.*?}`)
-				match := re.FindString(line)
-				if match == "" {
-					continue
-				}
-				var result InstallResult
-				err := json.Unmarshal([]byte(match), &result)
-				if err != nil {
-					log.Warn().Msg("parse Install msg line error: " + match)
-					continue
-				}
-				if result.Result == 0 {
-					// 安装成功
-					done <- nil
-					return
-				} else {
-					done <- errors.New(match)
-				}
-			}
+		var result InstallResult
+		err := json.Unmarshal([]byte(match), &result)
+		if err != nil {
+			log.Warn().Msg("parse Install msg line error: " + match)
+			return
 		}
-		done <- errors.New("install failed by installer")
+		if result.Result == 0 {
+			// 安装成功
+			done <- nil
+		} else {
+			done <- errors.New(match)
+		}
+	})
+	err = logcat.CatchLogcat("PackageInstallerCallback")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = logcat.Stop()
 	}()
+
+	// 需要监听是否完成安装
 	args = strings.Split(InstallViaInstallerCommand, " ")
 	args = append(args, appRemotePath)
 	_, err = dev.d.RunShellCommand("am", args[1:]...)
@@ -374,7 +362,7 @@ func (dev *AndroidDevice) installViaInstaller(app io.ReadSeeker, args ...string)
 	timeout := 1 * time.Minute
 	select {
 	case err := <-done:
-		return err // 返回安装结果或错误
+		return err
 	case <-time.After(timeout):
 		return fmt.Errorf("installation timed out after %v", timeout)
 	}
