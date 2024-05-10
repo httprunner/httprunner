@@ -483,3 +483,10 @@ func ConvertToStringSlice(val interface{}) ([]string, error) {
 	}
 	return nil, fmt.Errorf("invalid type for conversion to []string")
 }
+
+func GetCurrentDay() string {
+	now := time.Now()
+	// 格式化日期为 yyyyMMdd
+	formattedDate := now.Format("20060102")
+	return formattedDate
+}
