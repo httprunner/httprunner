@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -22,7 +23,6 @@ var (
 	AdbServerPort  = gadb.AdbServerPort // 5037
 	UIA2ServerHost = "localhost"
 	UIA2ServerPort = 6790
-	DeviceTempPath = "/data/local/tmp"
 )
 
 const forwardToPrefix = "forward-to-"
@@ -276,27 +276,43 @@ func getFreePort() (int, error) {
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
+type LineCallback func(string)
+
 type AdbLogcat struct {
-	serial    string
-	logBuffer *bytes.Buffer
-	errs      []error
-	stopping  chan struct{}
-	done      chan struct{}
-	cmd       *exec.Cmd
+	serial string
+	// logBuffer *bytes.Buffer
+	errs     []error
+	stopping chan struct{}
+	done     chan struct{}
+	cmd      *exec.Cmd
+	callback LineCallback
+	logs     []string
+}
+
+func NewAdbLogcatWithCallback(serial string, callback LineCallback) *AdbLogcat {
+	return &AdbLogcat{
+		serial: serial,
+		// logBuffer: new(bytes.Buffer),
+		stopping: make(chan struct{}),
+		done:     make(chan struct{}),
+		callback: callback,
+		logs:     make([]string, 0),
+	}
 }
 
 func NewAdbLogcat(serial string) *AdbLogcat {
 	return &AdbLogcat{
-		serial:    serial,
-		logBuffer: new(bytes.Buffer),
-		stopping:  make(chan struct{}),
-		done:      make(chan struct{}),
+		serial: serial,
+		// logBuffer: new(bytes.Buffer),
+		stopping: make(chan struct{}),
+		done:     make(chan struct{}),
+		logs:     make([]string, 0),
 	}
 }
 
 // CatchLogcatContext starts logcat with timeout context
 func (l *AdbLogcat) CatchLogcatContext(timeoutCtx context.Context) (err error) {
-	if err = l.CatchLogcat(); err != nil {
+	if err = l.CatchLogcat(""); err != nil {
 		return
 	}
 	go func() {
@@ -331,7 +347,7 @@ func (l *AdbLogcat) Errors() (err error) {
 	return
 }
 
-func (l *AdbLogcat) CatchLogcat() (err error) {
+func (l *AdbLogcat) CatchLogcat(filter string) (err error) {
 	if l.cmd != nil {
 		log.Warn().Msg("logcat already start")
 		return nil
@@ -341,33 +357,43 @@ func (l *AdbLogcat) CatchLogcat() (err error) {
 	if err = myexec.RunCommand("adb", "-s", l.serial, "shell", "logcat", "-c"); err != nil {
 		return
 	}
-
+	args := []string{"-s", l.serial, "logcat", "--format", "time"}
+	if filter != "" {
+		args = append(args, "-s", filter)
+	}
 	// start logcat
-	l.cmd = myexec.Command("adb", "-s", l.serial,
-		"logcat", "--format", "time", "-s", "iesqaMonitor:V")
-	l.cmd.Stderr = l.logBuffer
-	l.cmd.Stdout = l.logBuffer
+	l.cmd = myexec.Command("adb", args...)
+	// l.cmd.Stderr = l.logBuffer
+	// l.cmd.Stdout = l.logBuffer
+	reader, err := l.cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
 	if err = l.cmd.Start(); err != nil {
 		return
 	}
 	go func() {
+		scanner := bufio.NewScanner(reader)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if l.callback != nil {
+				l.callback(line) // Process each line with callback
+			} else {
+				l.logs = append(l.logs, line) // Store line if no callback
+			}
+		}
+	}()
+	go func() {
 		<-l.stopping
+		if e := reader.Close(); e != nil {
+			log.Error().Err(e).Msg("close logcat reader failed")
+		}
 		if e := myexec.KillProcessesByGpid(l.cmd); e != nil {
 			log.Error().Err(e).Msg("kill logcat process failed")
 		}
 		l.done <- struct{}{}
 	}()
-	return
-}
 
-func (l *AdbLogcat) BufferedLogcat() (err error) {
-	// -d: dump the current buffered logcat result and exits
-	cmd := myexec.Command("adb", "-s", l.serial, "logcat", "-d")
-	cmd.Stdout = l.logBuffer
-	cmd.Stderr = l.logBuffer
-	if err = cmd.Run(); err != nil {
-		return
-	}
 	return
 }
 
@@ -381,8 +407,8 @@ type ExportPoint struct {
 	RunTime   int         `json:"run_time,omitempty" yaml:"run_time,omitempty"`
 }
 
-func ConvertPoints(data string) (eps []ExportPoint) {
-	lines := strings.Split(data, "\n")
+func ConvertPoints(lines []string) (eps []ExportPoint) {
+	log.Info().Msg("ConvertPoints")
 	for _, line := range lines {
 		if strings.Contains(line, "ext") {
 			idx := strings.Index(line, "{")
@@ -396,6 +422,7 @@ func ConvertPoints(data string) (eps []ExportPoint) {
 				log.Error().Msg("failed to parse point data")
 				continue
 			}
+			log.Info().Msg(line)
 			eps = append(eps, p)
 		}
 	}
@@ -562,7 +589,7 @@ func (s UiSelectorHelper) Index(index int) UiSelectorHelper {
 //
 // For example, to simulate a user click on
 // the third image that is enabled in a UI screen, you
-// could specify a a search criteria where the instance is
+// could specify a search criteria where the instance is
 // 2, the `className(String)` matches the image
 // widget class, and `enabled(boolean)` is true.
 // The code would look like this:

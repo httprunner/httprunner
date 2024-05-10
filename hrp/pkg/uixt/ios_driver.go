@@ -207,6 +207,14 @@ func (wd *wdaDriver) WindowSize() (size Size, err error) {
 	}
 	size.Height = size.Height * int(scale)
 	size.Width = size.Width * int(scale)
+	orientation, err := wd.Orientation()
+	if err != nil {
+		log.Warn().Err(err).Msgf("window size get orientation failed, use default orientation")
+		orientation = OrientationPortrait
+	}
+	if orientation != OrientationPortrait {
+		size.Width, size.Height = size.Height, size.Width
+	}
 	return
 }
 
@@ -547,8 +555,8 @@ func (wd *wdaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...Action
 
 	// update data options in post data for extra WDA configurations
 	actionOptions.updateData(data)
-
-	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/dragfromtoforduration")
+	// wda 43 version
+	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/drag")
 	return
 }
 
@@ -749,6 +757,14 @@ func (wd *wdaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 		return "", err
 	}
 	return
+}
+
+func (wd *wdaDriver) TapByText(text string, options ...ActionOption) error {
+	return errDriverNotImplemented
+}
+
+func (wd *wdaDriver) TapByTexts(actions ...TapTextAction) error {
+	return errDriverNotImplemented
 }
 
 func (wd *wdaDriver) AccessibleSource() (source string, err error) {

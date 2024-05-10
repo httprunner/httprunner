@@ -6,18 +6,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"strings"
 	"testing"
 	"time"
 )
 
 var (
-	uiaServerURL = "http://localhost:6790/wd/hub"
+	uiaServerURL = "http://forward-to-6790:6790/wd/hub"
 	driverExt    *DriverExt
 )
 
 func setupAndroid(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
+	device.UIA2 = false
 	driverExt, err = device.NewDriver()
 	checkErr(t, err)
 }
@@ -132,6 +135,18 @@ func TestDriver_Source(t *testing.T) {
 	t.Log(source)
 }
 
+func TestDriver_TapByText(t *testing.T) {
+	driver, err := NewUIADriver(nil, uiaServerURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = driver.TapByText("安装")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestDriver_BatteryInfo(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
 	if err != nil {
@@ -204,12 +219,20 @@ func TestDriver_Swipe(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = driver.Swipe(400, 1000, 400, 500)
+	err = driver.Swipe(400, 1000, 400, 500, WithPressDuration(2000))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	err = driver.SwipeFloat(400, 555.5, 400, 1255.5)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDriver_Swipe_Relative(t *testing.T) {
+	setupAndroid(t)
+	err := driverExt.SwipeRelative(0.5, 0.7, 0.5, 0.5)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -235,28 +258,26 @@ func TestDriver_Drag(t *testing.T) {
 }
 
 func TestDriver_SendKeys(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
+	setupAndroid(t)
+
+	err := driverExt.Driver.SendKeys("Android\"输入速度测试", WithIdentifier("test"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = driver.SendKeys("abc")
-	if err != nil {
-		t.Fatal(err)
-	}
 	time.Sleep(time.Second * 2)
 
-	err = driver.SendKeys("def")
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Second * 2)
+	//err = driver.SendKeys("def")
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//time.Sleep(time.Second * 2)
 
-	err = driver.SendKeys("\\n")
+	//err = driver.SendKeys("\\n")
 	// err = driver.SendKeys(`\n`, false)
-	if err != nil {
-		t.Fatal(err)
-	}
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
 }
 
 func TestDriver_PressBack(t *testing.T) {
@@ -421,10 +442,44 @@ func TestDriver_AppTerminate(t *testing.T) {
 
 func TestConvertPoints(t *testing.T) {
 	data := "10-09 20:16:48.216 I/iesqaMonitor(17845): {\"duration\":0,\"end\":1665317808206,\"ext\":\"输入\",\"from\":{\"x\":0.0,\"y\":0.0},\"operation\":\"Gtf-SendKeys\",\"run_time\":627,\"start\":1665317807579,\"start_first\":0,\"start_last\":0,\"to\":{\"x\":0.0,\"y\":0.0}}\n10-09 20:18:22.899 I/iesqaMonitor(17845): {\"duration\":0,\"end\":1665317902898,\"ext\":\"进入直播间\",\"from\":{\"x\":717.0,\"y\":2117.5},\"operation\":\"Gtf-Tap\",\"run_time\":121,\"start\":1665317902777,\"start_first\":0,\"start_last\":0,\"to\":{\"x\":717.0,\"y\":2117.5}}\n10-09 20:18:32.063 I/iesqaMonitor(17845): {\"duration\":0,\"end\":1665317912062,\"ext\":\"第一次上划\",\"from\":{\"x\":1437.0,\"y\":2409.9},\"operation\":\"Gtf-Swipe\",\"run_time\":32,\"start\":1665317912030,\"start_first\":0,\"start_last\":0,\"to\":{\"x\":1437.0,\"y\":2409.9}}"
-	eps := ConvertPoints(data)
+
+	eps := ConvertPoints(strings.Split(data, "\n"))
 	if len(eps) != 3 {
 		t.Fatal()
 	}
 	jsons, _ := json.Marshal(eps)
 	println(fmt.Sprintf("%v", string(jsons)))
+}
+
+func TestDriver_ShellInputUnicode(t *testing.T) {
+	device, _ := NewAndroidDevice()
+	driver, err := device.NewAdbDriver()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = driver.SendKeys("test中文输入&")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	raw, err := driver.Screenshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(os.WriteFile("s1.png", raw.Bytes(), 0o600))
+}
+
+func TestTapTexts(t *testing.T) {
+	setupAndroid(t)
+	actions := []TapTextAction{
+		{Text: "^.*无视风险安装$", Options: []ActionOption{WithTapOffset(100, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
+		{Text: "已了解此应用未经检测.*", Options: []ActionOption{WithTapOffset(-450, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
+		{Text: "^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|安装|授权本次安装|继续安装|重新安装)$", Options: []ActionOption{WithRegex(true), WithIgnoreNotFoundError(true)}},
+	}
+	err := driverExt.Driver.TapByTexts(actions...)
+	if err != nil {
+		t.Fatal(err)
+	}
 }

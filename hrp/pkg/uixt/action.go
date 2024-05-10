@@ -297,7 +297,7 @@ func (o *ActionOptions) updateData(data map[string]interface{}) {
 		data["frequency"] = o.Frequency
 	}
 	if _, ok := data["frequency"]; !ok {
-		data["frequency"] = 60 // default frequency
+		data["frequency"] = 10 // default frequency
 	}
 
 	if _, ok := data["replace"]; !ok {
@@ -318,6 +318,11 @@ func NewActionOptions(options ...ActionOption) *ActionOptions {
 		option(actionOptions)
 	}
 	return actionOptions
+}
+
+type TapTextAction struct {
+	Text    string
+	Options []ActionOption
 }
 
 type ActionOption func(o *ActionOptions)

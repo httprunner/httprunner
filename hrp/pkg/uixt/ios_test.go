@@ -10,17 +10,23 @@ import (
 )
 
 var (
-	bundleId = "com.apple.Preferences"
-	driver   WebDriver
+	bundleId     = "com.apple.Preferences"
+	driver       WebDriver
+	iOSDriverExt *DriverExt
 )
 
 func setup(t *testing.T) {
-	device, err := NewIOSDevice()
+	device, err := NewIOSDevice(WithWDAPort(8700), WithWDAMjpegPort(8800), WithWDALogOn(true))
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	driver, err = device.NewUSBDriver(nil)
+	capabilities := NewCapabilities()
+	capabilities.WithDefaultAlertAction(AlertActionAccept)
+	driver, err = device.NewUSBDriver(capabilities)
+	if err != nil {
+		t.Fatal(err)
+	}
+	iOSDriverExt, err = newDriverExt(device, driver, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -267,6 +273,16 @@ func Test_remoteWD_Drag(t *testing.T) {
 	}
 }
 
+func Test_Relative_Drag(t *testing.T) {
+	setup(t)
+
+	// err := driver.Drag(200, 300, 200, 500, WithDataPressDuration(0.5))
+	err := iOSDriverExt.SwipeRelative(0.5, 0.7, 0.5, 0.5)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func Test_remoteWD_SetPasteboard(t *testing.T) {
 	setup(t)
 
@@ -305,12 +321,14 @@ func Test_remoteWD_GetPasteboard(t *testing.T) {
 
 func Test_remoteWD_SendKeys(t *testing.T) {
 	setup(t)
-
-	err := driver.SendKeys("App Store")
+	driver.StartCaptureLog("hrp_wda_log")
+	err := driver.SendKeys("", WithIdentifier("test"))
+	result, _ := driver.StopCaptureLog()
 	// err := driver.SendKeys("App Store", WithFrequency(3))
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(result)
 }
 
 func Test_remoteWD_PressButton(t *testing.T) {
@@ -374,7 +392,7 @@ func Test_remoteWD_Source(t *testing.T) {
 	// 	t.Fatal(err)
 	// }
 
-	source, err = driver.Source(NewSourceOption().WithScope("AppiumAUT"))
+	source, err = driver.Source()
 	if err != nil {
 		t.Fatal(err)
 	}
