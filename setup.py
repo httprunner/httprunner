@@ -15,11 +15,22 @@ setuptools.setup(
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
     ],
     # 依赖模块
     install_requires=[
-        'pillow',
+        "black >=22.3.0,<23.0.0",
+        "Brotli >=1.0.9,<2.0.0",
+        "Jinja2 >=3.0.3,<4.0.0",
+        "jmespath >=0.9.5,<0.10.0",
+        "loguru >=0.4.1,<0.5.0",
+        "pydantic >=1.8,<1.9",
+        "pytest >=7.1.1,<8.0.0",
+        "pytest-html >=3.1.1,<4.0.0",
+        "PyYAML >=6.0.1,<7.0.0",
+        "requests >=2.31.0,<3.0.0",
+        "sentry-sdk >=0.14.4,<0.15.0",
+        "toml >=0.10.2,<0.11.0",
+        "urllib3 >=1.26,<2.0",
     ],
     python_requires='>=3.7',
 )
