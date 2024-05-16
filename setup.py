@@ -15,7 +15,7 @@ setuptools.setup(
     packages=["httprunner"],  # 自动找到项目中导入的模块
     # 模块相关的元数据
     classifiers=[
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.11",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
