@@ -15,9 +15,20 @@ setuptools.setup(
     packages=["httprunner"],  # 自动找到项目中导入的模块
     # 模块相关的元数据
     classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: MacOS",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: POSIX :: Linux",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Software Development :: Quality Assurance",
+        "Topic :: Software Development :: Testing",
     ],
     # 依赖模块
     install_requires=[
@@ -35,5 +46,5 @@ setuptools.setup(
         "toml",
         "urllib3",
     ],
-    python_requires='>=3.7',
+    python_requires='>=3.7,<4.0',
 )
