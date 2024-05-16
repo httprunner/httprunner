@@ -12,7 +12,7 @@ setuptools.setup(
     # 模块详细介绍
     long_description_content_type="text",  # 模块详细介绍格式
     url="https://github.com/diaodeng/httprunner/tree/master-diaodeng",  # 模块github地址
-    packages=setuptools.find_packages(),  # 自动找到项目中导入的模块
+    packages=["httprunner"],  # 自动找到项目中导入的模块
     # 模块相关的元数据
     classifiers=[
         "Programming Language :: Python :: 3.7",
