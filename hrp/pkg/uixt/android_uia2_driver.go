@@ -16,7 +16,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
 )
 
@@ -564,25 +563,9 @@ func (ud *uiaDriver) Rotation() (rotation Rotation, err error) {
 }
 
 func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {
-	// register(getHandler, new CaptureScreenshot("/wd/hub/session/:sessionId/screenshot"))
-	var rawResp rawResponse
-	if rawResp, err = ud.httpGET("/session", ud.sessionId, "screenshot"); err != nil {
-		return nil, errors.Wrap(code.AndroidScreenShotError,
-			fmt.Sprintf("get UIA screenshot data failed: %v", err))
-	}
-	reply := new(struct{ Value string })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return nil, err
-	}
-
-	var decodeStr []byte
-	if decodeStr, err = base64.StdEncoding.DecodeString(reply.Value); err != nil {
-		return nil, errors.Wrap(code.AndroidScreenShotError,
-			fmt.Sprintf("decode UIA screenshot data failed: %v", err))
-	}
-
-	raw = bytes.NewBuffer(decodeStr)
-	return
+	// https://bytedance.larkoffice.com/docx/C8qEdmSHnoRvMaxZauocMiYpnLh
+	// ui2截图受内存影响，改为adb截图
+	return ud.adbDriver.Screenshot()
 }
 
 func (ud *uiaDriver) Source(srcOpt ...SourceOption) (source string, err error) {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -181,10 +182,8 @@ func (d *Device) DevicePath() (string, error) {
 	return resp, err
 }
 
-func (d *Device) Forward(localPort int, remoteInterface interface{}, noRebind ...bool) (err error) {
-	command := ""
+func (d *Device) Forward(remoteInterface interface{}, noRebind ...bool) (port int, err error) {
 	var remote string
-	local := fmt.Sprintf("tcp:%d", localPort)
 	switch r := remoteInterface.(type) {
 	// for unix sockets
 	case string:
@@ -193,6 +192,24 @@ func (d *Device) Forward(localPort int, remoteInterface interface{}, noRebind ..
 		remote = fmt.Sprintf("tcp:%d", r)
 	}
 
+	forwardList, err := d.ForwardList()
+	if err != nil {
+		return
+	}
+	for _, forwardItem := range forwardList {
+		if forwardItem.Remote == remote {
+			return strconv.Atoi(forwardItem.Local[4:])
+		}
+	}
+	localPort, err := builtin.GetFreePort()
+	if err != nil {
+		return
+	}
+
+	command := ""
+
+	local := fmt.Sprintf("tcp:%d", localPort)
+
 	if len(noRebind) != 0 && noRebind[0] {
 		command = fmt.Sprintf("host-serial:%s:forward:norebind:%s;%s", d.serial, local, remote)
 	} else {
@@ -200,7 +217,7 @@ func (d *Device) Forward(localPort int, remoteInterface interface{}, noRebind ..
 	}
 
 	_, err = d.adbClient.executeCommand(command, true)
-	return
+	return localPort, nil
 }
 
 func (d *Device) ForwardList() (deviceForwardList []DeviceForward, err error) {

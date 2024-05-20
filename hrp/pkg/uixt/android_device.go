@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net"
 	"os/exec"
 	"strings"
 
@@ -198,12 +197,8 @@ func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverE
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
 func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver, err error) {
-	var localPort int
-	if localPort, err = getFreePort(); err != nil {
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
-			fmt.Sprintf("get free port failed: %v", err))
-	}
-	if err = dev.d.Forward(localPort, UIA2ServerPort); err != nil {
+	localPort, err := dev.d.Forward(UIA2ServerPort)
+	if err != nil {
 		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
 			fmt.Sprintf("forward port %d->%d failed: %v",
 				localPort, UIA2ServerPort, err))
@@ -260,20 +255,6 @@ func (dev *AndroidDevice) StartPcap() error {
 func (dev *AndroidDevice) StopPcap() string {
 	// TODO
 	return ""
-}
-
-func getFreePort() (int, error) {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		return 0, errors.Wrap(err, "resolve tcp addr failed")
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return 0, errors.Wrap(err, "listen tcp addr failed")
-	}
-	defer func() { _ = l.Close() }()
-	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
 type LineCallback func(string)
