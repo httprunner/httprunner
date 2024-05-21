@@ -359,7 +359,7 @@ func (dev *AndroidDevice) installViaInstaller(app io.ReadSeeker, args ...string)
 		return err
 	}
 	// 等待安装完成或超时
-	timeout := 1 * time.Minute
+	timeout := 3 * time.Minute
 	select {
 	case err := <-done:
 		return err
