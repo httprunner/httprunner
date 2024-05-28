@@ -67,9 +67,10 @@ type ImageResult struct {
 	// Media（媒体）
 	// Chat（语音）
 	// Event（赛事）
-	LiveType string             `json:"liveType,omitempty"`    // 直播间类型
-	UIResult UIResultMap        `json:"uiResult,omitempty"`    // 图标检测
-	CPResult *ClosePopupsResult `json:"closeResult,omitempty"` // 弹窗按钮检测
+	LiveType       string             `json:"liveType,omitempty"`       // 直播间类型
+	LivePopularity int64              `json:"livePopularity,omitempty"` // 直播间热度
+	UIResult       UIResultMap        `json:"uiResult,omitempty"`       // 图标检测
+	CPResult       *ClosePopupsResult `json:"closeResult,omitempty"`    // 弹窗按钮检测
 }
 
 type APIResponseImage struct {
@@ -417,7 +418,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
-		screenResult.Video = &Video{LiveType: imageResult.LiveType}
+		screenResult.Video = &Video{LiveType: imageResult.LiveType, ViewCount: imageResult.LivePopularity}
 
 		if actionOptions.ScreenShotWithClosePopups && imageResult.CPResult != nil {
 			screenResult.Popup = &PopupInfo{
