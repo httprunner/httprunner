@@ -117,12 +117,13 @@ type ActionOptions struct {
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
 
 	// screenshot related
-	ScreenShotWithOCR         bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
-	ScreenShotWithUpload      bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
-	ScreenShotWithLiveType    bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
-	ScreenShotWithUITypes     []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
-	ScreenShotWithClosePopups bool     `json:"screenshot_with_close_popups,omitempty" yaml:"screenshot_with_close_popups,omitempty"`
-	ScreenShotWithOCRCluster  string   `json:"screenshot_with_ocr_cluster,omitempty" yaml:"screenshot_with_ocr_cluster,omitempty"`
+	ScreenShotWithOCR            bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
+	ScreenShotWithUpload         bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
+	ScreenShotWithLiveType       bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
+	ScreenShotWithLivePopularity bool     `json:"screenshot_with_live_popularity,omitempty" yaml:"screenshot_with_live_popularity,omitempty"`
+	ScreenShotWithUITypes        []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
+	ScreenShotWithClosePopups    bool     `json:"screenshot_with_close_popups,omitempty" yaml:"screenshot_with_close_popups,omitempty"`
+	ScreenShotWithOCRCluster     string   `json:"screenshot_with_ocr_cluster,omitempty" yaml:"screenshot_with_ocr_cluster,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -226,6 +227,9 @@ func (o *ActionOptions) Options() []ActionOption {
 	if o.ScreenShotWithLiveType {
 		options = append(options, WithScreenShotLiveType(true))
 	}
+	if o.ScreenShotWithLivePopularity {
+		options = append(options, WithScreenShotLivePopularity(true))
+	}
 	if len(o.ScreenShotWithUITypes) > 0 {
 		options = append(options, WithScreenShotUITypes(o.ScreenShotWithUITypes...))
 	}
@@ -249,6 +253,9 @@ func (o *ActionOptions) screenshotActions() []string {
 	}
 	if o.ScreenShotWithLiveType {
 		actions = append(actions, "liveType")
+	}
+	if o.ScreenShotWithLivePopularity {
+		actions = append(actions, "livePopularity")
 	}
 	// UI detection
 	if len(o.ScreenShotWithUITypes) > 0 {
@@ -473,6 +480,12 @@ func WithScreenShotUpload(uploadOn bool) ActionOption {
 func WithScreenShotLiveType(liveTypeOn bool) ActionOption {
 	return func(o *ActionOptions) {
 		o.ScreenShotWithLiveType = liveTypeOn
+	}
+}
+
+func WithScreenShotLivePopularity(livePopularityOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithLivePopularity = livePopularityOn
 	}
 }
 
