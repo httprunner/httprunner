@@ -495,7 +495,11 @@ func GetFreePort() (int, error) {
 	if err != nil {
 		return 0, errors.Wrap(err, "listen tcp addr failed")
 	}
-	defer func() { _ = l.Close() }()
+	defer func() {
+		if err = l.Close(); err != nil {
+			log.Error().Err(err).Msg(fmt.Sprintf("close addr %s error", l.Addr().String()))
+		}
+	}()
 	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
