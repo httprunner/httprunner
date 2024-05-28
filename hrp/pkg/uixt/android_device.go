@@ -390,6 +390,7 @@ type ExportPoint struct {
 
 func ConvertPoints(lines []string) (eps []ExportPoint) {
 	log.Info().Msg("ConvertPoints")
+	log.Info().Msg(strings.Join(lines, "\n"))
 	for _, line := range lines {
 		if strings.Contains(line, "ext") {
 			idx := strings.Index(line, "{")
