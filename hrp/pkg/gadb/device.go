@@ -205,15 +205,11 @@ func (d *Device) Forward(remoteInterface interface{}, noRebind ...bool) (port in
 	if err != nil {
 		return
 	}
-
-	command := ""
-
 	local := fmt.Sprintf("tcp:%d", localPort)
 
+	command := fmt.Sprintf("host-serial:%s:forward:%s;%s", d.serial, local, remote)
 	if len(noRebind) != 0 && noRebind[0] {
 		command = fmt.Sprintf("host-serial:%s:forward:norebind:%s;%s", d.serial, local, remote)
-	} else {
-		command = fmt.Sprintf("host-serial:%s:forward:%s;%s", d.serial, local, remote)
 	}
 
 	_, err = d.adbClient.executeCommand(command, true)
