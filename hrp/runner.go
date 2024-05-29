@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	_ "embed"
 	"fmt"
+	"github.com/httprunner/funplugin"
 	"net"
 	"net/http"
 	"net/http/cookiejar"
@@ -17,7 +18,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/httprunner/funplugin"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -239,6 +239,13 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 				client.Driver.DeleteSession()
 			}
 		}()
+
+		if caseRunner.parsedConfig.PluginSetting != nil {
+			if p, ok := pluginMap.Load(caseRunner.parsedConfig.PluginSetting.Path); ok {
+				log.Info().Msg(fmt.Sprintf("starting to keep live, path: %v, address: %v", caseRunner.parsedConfig.PluginSetting.Path, p))
+				go p.(funplugin.IPlugin).StartHeartbeat()
+			}
+		}
 
 		for it := caseRunner.parametersIterator; it.HasNext(); {
 			// case runner can run multiple times with different parameters

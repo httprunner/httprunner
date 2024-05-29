@@ -114,7 +114,12 @@ func (vc *VideoCrawler) isTargetAchieved() bool {
 
 func (vc *VideoCrawler) exitLiveRoom() error {
 	log.Info().Msg("press back to exit live room")
-	return vc.driverExt.Driver.PressBack()
+	err := vc.driverExt.Driver.PressBack()
+	time.Sleep(time.Duration(3) * time.Second)
+	if vc.driverExt.TapByOCR("退出直播间") == nil {
+		log.Info().Msg("clicked the button to exit the live room successfully")
+	}
+	return err
 }
 
 const (
@@ -231,6 +236,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						log.Error().Err(err).Msg("tap live video failed")
 						continue
 					}
+					currentVideo.Type = VideoType_Live
 				} else {
 					// skip entering live room
 					// only mock simulation play duration
@@ -282,7 +288,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					exitLive = true
 				}
 
-				if (!isFeed) && exitLive && currentVideo.Type == VideoType_Live {
+				// isFeed：通过预览流进入内流失败的情况下，防止使用退出直播间逻辑，影响：首次进入内流，至少会消费两个直播间才能退出
+				if !isFeed && exitLive && currentVideo.Type == VideoType_Live {
 					err = crawler.exitLiveRoom()
 					if err != nil {
 						if errors.Is(err, code.TimeoutError) || errors.Is(err, code.InterruptError) {

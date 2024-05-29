@@ -80,4 +80,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-// replace github.com/httprunner/funplugin => ../funplugin
+replace github.com/httprunner/funplugin v0.5.4 => /Users/bytedance/go/src/github.com/httprunner/funplugin

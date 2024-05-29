@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
+
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
@@ -13,7 +15,6 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
-	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
 const (
