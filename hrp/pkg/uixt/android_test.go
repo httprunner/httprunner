@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 var (
@@ -21,6 +23,7 @@ func setupAndroid(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
 	device.UIA2 = false
+	device.LogOn = true
 	driverExt, err = device.NewDriver()
 	checkErr(t, err)
 }
@@ -195,22 +198,21 @@ func TestDriver_DeviceInfo(t *testing.T) {
 }
 
 func TestDriver_Tap(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.Tap(150, 340)
+	setupAndroid(t)
+	driverExt.Driver.StartCaptureLog("")
+	err := driverExt.Driver.Tap(150, 340, WithIdentifier("test"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Second)
 
-	err = driver.TapFloat(60.5, 125.5)
+	err = driverExt.Driver.TapFloat(60.5, 125.5, WithIdentifier("test"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Second)
+	result, _ := driverExt.Driver.StopCaptureLog()
+	t.Log(result)
 }
 
 func TestDriver_Swipe(t *testing.T) {
@@ -333,7 +335,7 @@ func TestUiSelectorHelper_NewUiSelectorHelper(t *testing.T) {
 }
 
 func Test_getFreePort(t *testing.T) {
-	freePort, err := getFreePort()
+	freePort, err := builtin.GetFreePort()
 	if err != nil {
 		t.Fatal(err)
 	}

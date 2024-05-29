@@ -124,8 +124,7 @@ func TestDevice_Forward(t *testing.T) {
 	setupDevices(t)
 
 	for _, device := range devices {
-		localPort := 61000
-		err := device.Forward(localPort, 6790)
+		localPort, err := device.Forward(6790)
 		if err != nil {
 			t.Fatal(err)
 		}

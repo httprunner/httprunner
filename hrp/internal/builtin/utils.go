@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"net"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -482,6 +483,24 @@ func ConvertToStringSlice(val interface{}) ([]string, error) {
 		return res, nil
 	}
 	return nil, fmt.Errorf("invalid type for conversion to []string")
+}
+
+func GetFreePort() (int, error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return 0, errors.Wrap(err, "resolve tcp addr failed")
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return 0, errors.Wrap(err, "listen tcp addr failed")
+	}
+	defer func() {
+		if err = l.Close(); err != nil {
+			log.Error().Err(err).Msg(fmt.Sprintf("close addr %s error", l.Addr().String()))
+		}
+	}()
+	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
 func GetCurrentDay() string {
