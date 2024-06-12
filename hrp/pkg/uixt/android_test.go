@@ -216,17 +216,8 @@ func TestDriver_Tap(t *testing.T) {
 }
 
 func TestDriver_Swipe(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.Swipe(400, 1000, 400, 500, WithPressDuration(2000))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.SwipeFloat(400, 555.5, 400, 1255.5)
+	setupAndroid(t)
+	err := driverExt.Driver.Swipe(400, 1000, 400, 500, WithPressDuration(0.5))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -305,6 +296,14 @@ func TestDriver_SetRotation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestDriver_GetOrientation(t *testing.T) {
+	setupAndroid(t)
+	_, _ = driverExt.Driver.AppTerminate("com.quark.browser")
+	_ = driverExt.Driver.AppLaunch("com.quark.browser")
+	time.Sleep(2 * time.Second)
+	_ = driverExt.Driver.Homescreen()
 }
 
 func TestUiSelectorHelper_NewUiSelectorHelper(t *testing.T) {

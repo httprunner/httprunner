@@ -29,6 +29,7 @@ func NewUIADriver(capabilities Capabilities, urlPrefix string) (driver *uiaDrive
 	log.Info().Msg("init uiautomator2 driver")
 	if capabilities == nil {
 		capabilities = NewCapabilities()
+		capabilities.WithWaitForIdleTimeout(0)
 	}
 	driver = new(uiaDriver)
 	if driver.urlPrefix, err = url.Parse(urlPrefix); err != nil {
@@ -141,7 +142,12 @@ func (ud *uiaDriver) httpDELETE(pathElem ...string) (rawResp rawResponse, err er
 func (ud *uiaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
 	// register(postHandler, new NewSession("/wd/hub/session"))
 	var rawResp rawResponse
-	data := map[string]interface{}{"capabilities": capabilities}
+	data := make(map[string]interface{})
+	if len(capabilities) == 0 {
+		data["capabilities"] = make(map[string]interface{})
+	} else {
+		data["capabilities"] = map[string]interface{}{"alwaysMatch": capabilities}
+	}
 	if rawResp, err = ud.Driver.httpPOST(data, "/session"); err != nil {
 		return SessionInfo{SessionId: ""}, err
 	}
@@ -293,7 +299,7 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 
 	duration := 100.0
 	if actionOptions.PressDuration > 0 {
-		duration = actionOptions.PressDuration
+		duration = actionOptions.PressDuration * 1000
 	}
 	data := map[string]interface{}{
 		"actions": []interface{}{
@@ -399,7 +405,7 @@ func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...Actio
 
 	duration := 200.0
 	if actionOptions.PressDuration > 0 {
-		duration = actionOptions.PressDuration
+		duration = actionOptions.PressDuration * 1000
 	}
 	data := map[string]interface{}{
 		"actions": []interface{}{
