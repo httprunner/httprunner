@@ -711,6 +711,16 @@ func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 	return caseSummary, nil
 }
 
+func (r *SessionRunner) IgnorePopup() bool {
+	if r.caseRunner.testCase.Config.Android != nil {
+		return r.caseRunner.testCase.Config.Android[0].IgnorePopup
+	}
+	if r.caseRunner.testCase.Config.IOS != nil {
+		return r.caseRunner.testCase.Config.IOS[0].IgnorePopup
+	}
+	return false
+}
+
 // updateSummary updates summary of StepResult.
 func (r *SessionRunner) updateSummary(stepResult *StepResult) {
 	switch stepResult.StepType {

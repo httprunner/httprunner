@@ -276,6 +276,7 @@ type IOSDevice struct {
 	MjpegPort      int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
 	LogOn          bool                  `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 	XCTestBundleID string                `json:"xctest_bundle_id,omitempty" yaml:"xctest_bundle_id,omitempty"`
+	IgnorePopup    bool                  `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
 
 	// switch to iOS springboard before init WDA session
 	ResetHomeOnStartup bool `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
@@ -631,7 +632,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 	wd := new(wdaDriver)
 	wd.client = http.DefaultClient
 
-	host := "127.0.0.1"
+	host := "localhost"
 	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError, err.Error())
 	}

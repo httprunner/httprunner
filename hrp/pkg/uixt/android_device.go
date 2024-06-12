@@ -154,6 +154,7 @@ type AndroidDevice struct {
 	UIA2IP       string `json:"uia2_ip,omitempty" yaml:"uia2_ip,omitempty"`     // uiautomator2 server ip
 	UIA2Port     int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	IgnorePopup  bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
 }
 
 func (dev *AndroidDevice) UUID() string {

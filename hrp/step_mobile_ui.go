@@ -647,8 +647,10 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		}
 
 		// automatic handling of pop-up windows on each step finished
-		if err2 := uiDriver.ClosePopups(); err2 != nil {
-			log.Error().Err(err2).Str("step", step.Name).Msg("auto handle popup failed")
+		if !step.IgnorePopup && !s.IgnorePopup() {
+			if err2 := uiDriver.ClosePopups(); err2 != nil {
+				log.Error().Err(err2).Str("step", step.Name).Msg("auto handle popup failed")
+			}
 		}
 
 		// save attachments
