@@ -26,6 +26,8 @@ const (
 	ACTION_SleepRandom  ActionMethod = "sleep_random"
 	ACTION_StartCamera  ActionMethod = "camera_start" // alias for app_launch camera
 	ACTION_StopCamera   ActionMethod = "camera_stop"  // alias for app_terminate camera
+	ACTION_SetClipboard ActionMethod = "set_clipboard"
+	ACTION_GetClipboard ActionMethod = "get_clipboard"
 
 	// UI validation
 	// selectors
@@ -594,6 +596,15 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 			return nil
 		}
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
+	case ACTION_SetClipboard:
+		if text, ok := action.Params.(string); ok {
+			err := dExt.Driver.SetPasteboard(PasteboardTypePlaintext, text)
+			if err != nil {
+				return errors.Wrap(err, "failed to set clipboard")
+			}
+			return nil
+		}
+		return fmt.Errorf("set_clioboard params should be text(string), got %v", action.Params)
 	case ACTION_Home:
 		return dExt.Driver.Homescreen()
 	case ACTION_TapXY:
