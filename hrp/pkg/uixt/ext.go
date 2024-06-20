@@ -247,7 +247,6 @@ func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error
 
 	// 返回压缩后的图像数据
 	return &buf, nil
-
 }
 
 // saveScreenShot saves image file with file name
@@ -298,7 +297,7 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	dExt.cacheStepData.screenResults.updatePopupCloseStatus()
 	cacheData["screen_results"] = dExt.cacheStepData.screenResults
 	cacheData["e2e_results"] = dExt.cacheStepData.e2eDelay
-
+	cacheData["driver_request_results"] = dExt.Driver.GetDriverResults()
 	// clear cache
 	dExt.cacheStepData.reset()
 	return cacheData

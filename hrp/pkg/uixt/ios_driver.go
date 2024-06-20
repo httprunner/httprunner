@@ -877,6 +877,13 @@ func (wd *wdaDriver) StopCaptureLog() (result interface{}, err error) {
 	return reply.Value, nil
 }
 
+func (wd *wdaDriver) GetDriverResults() []*DriverResult {
+	defer func() {
+		wd.Driver.driverResults = nil
+	}()
+	return wd.Driver.driverResults
+}
+
 type rawResponse []byte
 
 func (r rawResponse) checkErr() (err error) {

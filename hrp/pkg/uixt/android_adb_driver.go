@@ -680,6 +680,10 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 	return pointRes, nil
 }
 
+func (ad *adbDriver) GetDriverResults() []*DriverResult {
+	return nil
+}
+
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	// adb shell dumpsys activity activities
 	output, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities")

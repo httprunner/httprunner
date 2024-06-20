@@ -618,3 +618,10 @@ func (ud *uiaDriver) TapByTexts(actions ...TapTextAction) error {
 	}
 	return nil
 }
+
+func (ud *uiaDriver) GetDriverResults() []*DriverResult {
+	defer func() {
+		ud.Driver.driverResults = nil
+	}()
+	return ud.Driver.driverResults
+}

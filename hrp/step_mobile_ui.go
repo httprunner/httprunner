@@ -599,14 +599,14 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		"osType": osType,
 	})
 
-	identifer := mobileStep.Identifier
-	if mobileStep.Options != nil && identifer == "" {
-		identifer = mobileStep.Options.Identifier
+	identifier := mobileStep.Identifier
+	if mobileStep.Options != nil && identifier == "" {
+		identifier = mobileStep.Options.Identifier
 	}
-	if len(mobileStep.Actions) != 0 && identifer == "" {
+	if len(mobileStep.Actions) != 0 && identifier == "" {
 		for _, action := range mobileStep.Actions {
 			if action.Identifier != "" {
-				identifer = action.Identifier
+				identifier = action.Identifier
 				break
 			}
 		}
@@ -614,7 +614,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 
 	stepResult = &StepResult{
 		Name:        step.Name,
-		Identifier:  identifer,
+		Identifier:  identifier,
 		StepType:    StepType(osType),
 		Success:     false,
 		ContentSize: 0,
