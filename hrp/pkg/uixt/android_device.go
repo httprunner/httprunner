@@ -163,7 +163,7 @@ func (dev *AndroidDevice) Init() error {
 	if err != nil {
 		return fmt.Errorf("failed to init android device. brand is null %v", err)
 	}
-	if strings.ToLower(brand) == "huawei" {
+	if strings.ToLower(brand) == "oppo" {
 		// 启动一次io.appium.settings。防止oppo设备上切换输入法失败
 		myexec.RunCommand("adb", "-s", dev.SerialNumber, "shell",
 			"monkey", "-p", "io.appium.settings", "-c", "android.intent.category.LAUNCHER", "1")
