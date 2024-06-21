@@ -295,6 +295,10 @@ type IOSDevice struct {
 	pcapFile string        // saved pcap file path
 }
 
+func (dev *IOSDevice) Init() error {
+	return nil
+}
+
 func (dev *IOSDevice) UUID() string {
 	return dev.UDID
 }

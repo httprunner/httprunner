@@ -468,6 +468,7 @@ func WithDriverPlugin(plugin funplugin.IPlugin) DriverOption {
 
 // current implemeted device: IOSDevice, AndroidDevice
 type Device interface {
+	Init() error  // init android device
 	UUID() string // ios udid or android serial
 	LogEnabled() bool
 	NewDriver(...DriverOption) (driverExt *DriverExt, err error)

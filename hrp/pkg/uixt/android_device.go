@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 )
@@ -155,6 +156,20 @@ type AndroidDevice struct {
 	UIA2Port     int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 	IgnorePopup  bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
+}
+
+func (dev *AndroidDevice) Init() error {
+	brand, err := dev.d.Brand()
+	if err != nil {
+		return fmt.Errorf("failed to init android device. brand is null %v", err)
+	}
+	if strings.ToLower(brand) == "huawei" {
+		// 启动一次io.appium.settings。防止oppo设备上切换输入法失败
+		myexec.RunCommand("adb", "-s", dev.SerialNumber, "shell",
+			"monkey", "-p", "io.appium.settings", "-c", "android.intent.category.LAUNCHER", "1")
+	}
+	myexec.RunCommand("adb", "-s", dev.SerialNumber, "shell", "rm", "-r", env.DeviceActionLogFilePath)
+	return nil
 }
 
 func (dev *AndroidDevice) UUID() string {
