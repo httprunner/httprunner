@@ -591,6 +591,10 @@ func (wd *wdaDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 	return
 }
 
+func (wd *wdaDriver) SetIme(ime string) error {
+	return errDriverNotImplemented
+}
+
 func (wd *wdaDriver) SendKeys(text string, options ...ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
 	actionOptions := NewActionOptions(options...)

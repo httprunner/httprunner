@@ -28,6 +28,7 @@ const (
 	ACTION_StopCamera   ActionMethod = "camera_stop"  // alias for app_terminate camera
 	ACTION_SetClipboard ActionMethod = "set_clipboard"
 	ACTION_GetClipboard ActionMethod = "get_clipboard"
+	ACTION_SetIme       ActionMethod = "set_ime"
 
 	// UI validation
 	// selectors
@@ -607,6 +608,14 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		return fmt.Errorf("set_clioboard params should be text(string), got %v", action.Params)
 	case ACTION_Home:
 		return dExt.Driver.Homescreen()
+	case ACTION_SetIme:
+		if ime, ok := action.Params.(string); ok {
+			err = dExt.Driver.SetIme(ime)
+			if err != nil {
+				return errors.Wrap(err, "failed to set ime")
+			}
+			return nil
+		}
 	case ACTION_TapXY:
 		if location, ok := action.Params.([]interface{}); ok {
 			// relative x,y of window size: [0.5, 0.5]

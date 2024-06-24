@@ -572,6 +572,8 @@ type WebDriver interface {
 	//  It worked when `WDA` was foreground. https://github.com/appium/WebDriverAgent/issues/330
 	GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error)
 
+	SetIme(ime string) error
+
 	// SendKeys Types a string into active element. There must be element with keyboard focus,
 	// otherwise an error is raised.
 	// WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
