@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 )
@@ -154,6 +155,14 @@ type AndroidDevice struct {
 	UIA2IP       string `json:"uia2_ip,omitempty" yaml:"uia2_ip,omitempty"`     // uiautomator2 server ip
 	UIA2Port     int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	IgnorePopup  bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
+}
+
+func (dev *AndroidDevice) Init() error {
+	myexec.RunCommand("adb", "-s", dev.SerialNumber, "shell",
+		"ime", "enable", "io.appium.settings/.UnicodeIME")
+	myexec.RunCommand("adb", "-s", dev.SerialNumber, "shell", "rm", "-r", env.DeviceActionLogFilePath)
+	return nil
 }
 
 func (dev *AndroidDevice) UUID() string {

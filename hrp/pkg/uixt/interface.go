@@ -468,6 +468,7 @@ func WithDriverPlugin(plugin funplugin.IPlugin) DriverOption {
 
 // current implemeted device: IOSDevice, AndroidDevice
 type Device interface {
+	Init() error  // init android device
 	UUID() string // ios udid or android serial
 	LogEnabled() bool
 	NewDriver(...DriverOption) (driverExt *DriverExt, err error)
@@ -570,6 +571,8 @@ type WebDriver interface {
 	// GetPasteboard Gets the data contained in the general pasteboard.
 	//  It worked when `WDA` was foreground. https://github.com/appium/WebDriverAgent/issues/330
 	GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error)
+
+	SetIme(ime string) error
 
 	// SendKeys Types a string into active element. There must be element with keyboard focus,
 	// otherwise an error is raised.

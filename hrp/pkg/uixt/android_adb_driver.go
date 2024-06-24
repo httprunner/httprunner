@@ -421,6 +421,14 @@ func (ad *adbDriver) IsUnicodeIMEInstalled() bool {
 	return strings.Contains(output, UnicodeImePackageName)
 }
 
+func (ad *adbDriver) ListIme() []string {
+	output, err := ad.adbClient.RunShellCommand("ime", "list", "-s")
+	if err != nil {
+		return []string{}
+	}
+	return strings.Split(output, "\n")
+}
+
 func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 	defer func() {
 		// Reset to default, don't care which keyboard was chosen before switch:
@@ -719,10 +727,60 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	return AppInfo{}, errors.Wrap(code.MobileUIAssertForegroundAppError, "get foreground app failed")
 }
 
-func (ad *adbDriver) SetIme(ime string) error {
-	_, err := ad.adbClient.RunShellCommand("ime", "set", ime)
+func (ad *adbDriver) GetFocusedPackage() (packageName string, err error) {
+	res, err := ad.adbClient.RunShellCommand("dumpsys", "window", "windows", "|", "grep", "-E", "'mCurrentFocus|mFocusedApp'")
+	if err != nil {
+		return "", err
+	}
+	match := regexp.MustCompile("mCurrentFocus.+\\s([^\\s/}]+)/[^\\s/}]+(\\.[^\\s/}]+)}").FindStringSubmatch(res)
+	if len(match) > 1 {
+		packageName = match[1]
+		return
+	}
+	match = regexp.MustCompile("mFocusedApp.+Record\\{.*\\s([^\\s/}]+)/([^\\s/}]+)(\\s[^\\s/}]+)*}").FindStringSubmatch(res)
+	if len(match) > 1 {
+		packageName = match[1]
+		return
+	}
+	log.Error().Str("dumpsys", res).Msg("failed to get focused package")
+	return "", fmt.Errorf("failed to get focused package")
+}
+
+func (ad *adbDriver) SetIme(imeRegx string) error {
+	imeList := ad.ListIme()
+	ime := ""
+	for _, imeName := range imeList {
+		if regexp.MustCompile(imeRegx).MatchString(imeName) {
+			ime = imeName
+			break
+		}
+	}
+	if ime == "" {
+		return fmt.Errorf("failed to set ime by %s, ime list: %v", imeRegx, imeList)
+	}
+	brand, _ := ad.adbClient.Brand()
+	packageName := strings.Split(ime, "/")[0]
+	res, err := ad.adbClient.RunShellCommand("ime", "set", ime)
+	log.Info().Str("funcName", "SetIme").Interface("ime", ime).
+		Interface("output", res).Msg("set ime")
 	if err != nil {
 		return err
+	}
+
+	if strings.ToLower(brand) == "oppo" {
+		pid, _ := ad.adbClient.RunShellCommand("pidof", packageName)
+		if strings.TrimSpace(pid) == "" {
+			focusedPackage, err := ad.GetFocusedPackage()
+			_ = ad.AppLaunch(packageName)
+			if err == nil && packageName != UnicodeImePackageName {
+				time.Sleep(10 * time.Second)
+				currentPackage, err := ad.GetFocusedPackage()
+				log.Info().Str("beforeFocusedPackage", focusedPackage).Str("afterFocusedPackage", currentPackage).Msg("")
+				if err == nil && currentPackage != focusedPackage {
+					_ = ad.PressKeyCode(KCBack, KMEmpty)
+				}
+			}
+		}
 	}
 	// even if the shell command has returned,
 	// as there might be a situation where the input method has not been completely switched yet
