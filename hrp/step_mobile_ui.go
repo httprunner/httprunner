@@ -595,7 +595,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	}
 
 	// report GA event
-	sdk.SendGA4Event("hrp_run_ui", map[string]interface{}{
+	go sdk.SendGA4Event("hrp_run_ui", map[string]interface{}{
 		"osType": osType,
 	})
 
