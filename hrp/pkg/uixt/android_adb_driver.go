@@ -768,6 +768,7 @@ func (ad *adbDriver) SetIme(imeRegx string) error {
 	}
 
 	if strings.ToLower(brand) == "oppo" {
+		time.Sleep(1 * time.Second)
 		pid, _ := ad.adbClient.RunShellCommand("pidof", packageName)
 		if strings.TrimSpace(pid) == "" {
 			focusedPackage, err := ad.GetFocusedPackage()
