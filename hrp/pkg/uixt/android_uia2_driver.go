@@ -250,10 +250,14 @@ func (ud *uiaDriver) PressBack(options ...ActionOption) (err error) {
 }
 
 func (ud *uiaDriver) Homescreen() (err error) {
-	return ud.PressKeyCode(KCHome, KMEmpty)
+	return ud.PressKeyCodes(KCHome, KMEmpty)
 }
 
-func (ud *uiaDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
+func (ud *uiaDriver) PressKeyCode(keyCode KeyCode) (err error) {
+	return ud.PressKeyCodes(keyCode, KMEmpty)
+}
+
+func (ud *uiaDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
 	// register(postHandler, new PressKeyCodeAsync("/wd/hub/session/:sessionId/appium/device/press_keycode"))
 	data := map[string]interface{}{
 		"keycode": keyCode,

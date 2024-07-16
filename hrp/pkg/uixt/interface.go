@@ -252,11 +252,7 @@ type Screen struct {
 }
 
 type AppInfo struct {
-	ProcessArguments struct {
-		Env  interface{}   `json:"env"`
-		Args []interface{} `json:"args"`
-	} `json:"processArguments"`
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 	AppBaseInfo
 }
 
@@ -266,6 +262,10 @@ type AppBaseInfo struct {
 	ViewController string `json:"viewController,omitempty"` // ios view controller
 	PackageName    string `json:"packageName,omitempty"`    // android package name
 	Activity       string `json:"activity,omitempty"`       // android activity
+	VersionName    string `json:"versionName,omitempty"`
+	VersionCode    int    `json:"versionCode,omitempty"`
+	AppName        string `json:"appName,omitempty"`
+	// AppIcon        string `json:"appIcon,omitempty"`
 }
 
 type AppState int
@@ -376,6 +376,11 @@ func (opt SourceOption) WithFormatAsJson() SourceOption {
 	return opt
 }
 
+func (opt SourceOption) WithProcessName(processName string) SourceOption {
+	opt["processName"] = processName
+	return opt
+}
+
 // WithFormatAsXml Application elements tree in form of xml string
 func (opt SourceOption) WithFormatAsXml() SourceOption {
 	opt["format"] = "xml"
@@ -448,8 +453,17 @@ type Rect struct {
 }
 
 type DriverOptions struct {
-	capabilities Capabilities
-	plugin       funplugin.IPlugin
+	capabilities     Capabilities
+	plugin           funplugin.IPlugin
+	withImageService bool
+	withResultFolder bool
+}
+
+func NewDriverOptions() *DriverOptions {
+	return &DriverOptions{
+		withImageService: true,
+		withResultFolder: true,
+	}
 }
 
 type DriverOption func(*DriverOptions)
@@ -457,6 +471,18 @@ type DriverOption func(*DriverOptions)
 func WithDriverCapabilities(capabilities Capabilities) DriverOption {
 	return func(options *DriverOptions) {
 		options.capabilities = capabilities
+	}
+}
+
+func WithDriverImageService(withImageService bool) DriverOption {
+	return func(options *DriverOptions) {
+		options.withImageService = withImageService
+	}
+}
+
+func WithDriverResultFolder(withResultFolder bool) DriverOption {
+	return func(options *DriverOptions) {
+		options.withResultFolder = withResultFolder
 	}
 }
 
@@ -526,6 +552,8 @@ type WebDriver interface {
 	// Homescreen Forces the device under test to switch to the home screen
 	Homescreen() error
 
+	Unlock() (err error)
+
 	// AppLaunch Launch an application with given bundle identifier in scope of current session.
 	// !This method is only available since Xcode9 SDK
 	AppLaunch(packageName string) error
@@ -588,10 +616,14 @@ type WebDriver interface {
 	// PressBack Presses the back button
 	PressBack(options ...ActionOption) error
 
+	PressKeyCode(keyCode KeyCode) (err error)
+
 	Screenshot() (*bytes.Buffer, error)
 
 	// Source Return application elements tree
 	Source(srcOpt ...SourceOption) (string, error)
+
+	LoginNoneUI(packageName, phoneNumber string, captcha string) error
 
 	TapByText(text string, options ...ActionOption) error
 

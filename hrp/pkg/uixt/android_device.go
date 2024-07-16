@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"embed"
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
@@ -25,6 +27,9 @@ var (
 	UIA2ServerPort = 6790
 )
 
+//go:embed eval_tool
+var evalTool embed.FS
+
 const forwardToPrefix = "forward-to-"
 
 type AndroidDeviceOption func(*AndroidDevice)
@@ -38,6 +43,12 @@ func WithSerialNumber(serial string) AndroidDeviceOption {
 func WithUIA2(uia2On bool) AndroidDeviceOption {
 	return func(device *AndroidDevice) {
 		device.UIA2 = uia2On
+	}
+}
+
+func WithShoots(shootsOn bool) AndroidDeviceOption {
+	return func(device *AndroidDevice) {
+		device.SHOOTS = shootsOn
 	}
 }
 
@@ -109,7 +120,14 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 
 	device.d = dev
 	device.logcat = NewAdbLogcat(device.SerialNumber)
-
+	evalToolRaw, err := evalTool.ReadFile("eval_tool")
+	if err != nil {
+		return nil, errors.Wrap(code.LoadFileError, err.Error())
+	}
+	err = dev.Push(bytes.NewReader(evalToolRaw), "/data/local/tmp/eval_tool", time.Now())
+	if err != nil {
+		return nil, errors.Wrap(code.AndroidShellExecError, err.Error())
+	}
 	log.Info().Str("serial", device.SerialNumber).Msg("init android device")
 	return device, nil
 }
@@ -152,6 +170,7 @@ type AndroidDevice struct {
 	logcat       *AdbLogcat
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
 	UIA2         bool   `json:"uia2,omitempty" yaml:"uia2,omitempty"`           // use uiautomator2
+	SHOOTS       bool   `json:"shoots,omitempty" yaml:"uia2,omitempty"`         // use uiautomator2
 	UIA2IP       string `json:"uia2_ip,omitempty" yaml:"uia2_ip,omitempty"`     // uiautomator2 server ip
 	UIA2Port     int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
@@ -174,7 +193,7 @@ func (dev *AndroidDevice) LogEnabled() bool {
 }
 
 func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, err error) {
-	driverOptions := &DriverOptions{}
+	driverOptions := NewDriverOptions()
 	for _, option := range options {
 		option(driverOptions)
 	}
@@ -182,6 +201,8 @@ func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverE
 	var driver WebDriver
 	if dev.UIA2 || dev.LogOn {
 		driver, err = dev.NewUSBDriver(driverOptions.capabilities)
+	} else if dev.SHOOTS {
+		driver, err = dev.NewShootsDriver(driverOptions.capabilities)
 	} else {
 		driver, err = dev.NewAdbDriver()
 	}
@@ -189,7 +210,7 @@ func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverE
 		return nil, errors.Wrap(err, "failed to init UIA driver")
 	}
 
-	driverExt, err = newDriverExt(dev, driver, driverOptions.plugin)
+	driverExt, err = newDriverExt(dev, driver, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -224,6 +245,25 @@ func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver WebDri
 	uiaDriver.logcat = dev.logcat
 
 	return uiaDriver, nil
+}
+
+func (dev *AndroidDevice) NewShootsDriver(capabilities Capabilities) (driver *ShootsAndroidDriver, err error) {
+	localPort, err := dev.d.Forward(ShootsSocketName)
+	if err != nil {
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
+			fmt.Sprintf("forward port %d->%s failed: %v",
+				localPort, ShootsSocketName, err))
+	}
+
+	shootsDriver, err := newShootsAndroidDriver(fmt.Sprintf("127.0.0.1:%d", localPort))
+	if err != nil {
+		_ = dev.d.ForwardKill(localPort)
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
+	}
+	shootsDriver.adbClient = dev.d
+	shootsDriver.logcat = dev.logcat
+
+	return shootsDriver, nil
 }
 
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.

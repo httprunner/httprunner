@@ -292,6 +292,33 @@ func (d *Device) ReverseForwardKill(remoteInterface interface{}) error {
 	return err
 }
 
+func (d *Device) RunShootsCommand(command []byte, processName string) (res string, err error) {
+	var tp transport
+	if tp, err = d.createDeviceTransport(); err != nil {
+		return "", err
+	}
+	defer func() { _ = tp.Close() }()
+
+	if err = tp.SendWithCheck(fmt.Sprintf("localabstract:%s", processName)); err != nil {
+		return "", err
+	}
+
+	if err = tp.SendBytes(command); err != nil {
+		return "", err
+	}
+
+	lenBuf, err := tp.ReadBytesN(4)
+	if err != nil {
+		return "", err
+	}
+	length := binary.LittleEndian.Uint32(lenBuf)
+	result, err := tp.ReadBytesN(int(length) - 4)
+	if err != nil {
+		return "", err
+	}
+	return string(result), nil
+}
+
 func (d *Device) ReverseForwardKillAll() error {
 	_, err := d.executeCommand("reverse:killforward-all")
 	return err

@@ -308,7 +308,7 @@ func (dev *IOSDevice) LogEnabled() bool {
 }
 
 func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, err error) {
-	driverOptions := &DriverOptions{}
+	driverOptions := NewDriverOptions()
 	for _, option := range options {
 		option(driverOptions)
 	}
@@ -339,7 +339,7 @@ func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, 
 		}
 	}
 
-	driverExt, err = newDriverExt(dev, driver, driverOptions.plugin)
+	driverExt, err = newDriverExt(dev, driver, options...)
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,7 @@ package uixt
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/fs"
@@ -218,10 +219,18 @@ func (ad *adbDriver) Orientation() (orientation Orientation, err error) {
 }
 
 func (ad *adbDriver) Homescreen() (err error) {
-	return ad.PressKeyCode(KCHome, KMEmpty)
+	return ad.PressKeyCodes(KCHome, KMEmpty)
 }
 
-func (ad *adbDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta) (err error) {
+func (ad *adbDriver) Unlock() (err error) {
+	return ad.PressKeyCodes(KCMenu, KMEmpty)
+}
+
+func (ad *adbDriver) PressKeyCode(keyCode KeyCode) (err error) {
+	return ad.PressKeyCodes(keyCode, KMEmpty)
+}
+
+func (ad *adbDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta) (err error) {
 	// adb shell input keyevent <keyCode>
 	_, err = ad.adbClient.RunShellCommand(
 		"input", "keyevent", fmt.Sprintf("%d", keyCode))
@@ -507,6 +516,10 @@ func (ad *adbDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 	return
 }
 
+func (ad *adbDriver) LoginNoneUI(packageName, phoneNumber string, captcha string) error {
+	return errDriverNotImplemented
+}
+
 func (ad *adbDriver) sourceTree(srcOpt ...SourceOption) (sourceTree *Hierarchy, err error) {
 	source, err := ad.Source()
 	if err != nil {
@@ -693,51 +706,21 @@ func (ad *adbDriver) GetDriverResults() []*DriverResult {
 }
 
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
-	// adb shell dumpsys activity activities
-	output, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities")
+	packageInfo, err := ad.adbClient.RunShellCommand("CLASSPATH=/data/local/tmp/eval_tool", "app_process", "/", "com.bytedance.iesqa.eval_process.PackageService")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to dumpsys activities")
-		return AppInfo{}, errors.Wrap(err, "dumpsys activities failed")
+		return app, err
 	}
-
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		trimmedLine := strings.TrimSpace(line)
-		// grep mResumedActivity|ResumedActivity
-		if strings.HasPrefix(trimmedLine, "mResumedActivity:") || strings.HasPrefix(trimmedLine, "ResumedActivity:") {
-			// mResumedActivity: ActivityRecord{9656d74 u0 com.android.settings/.Settings t407}
-			// ResumedActivity: ActivityRecord{8265c25 u0 com.android.settings/.Settings t73}
-			strs := strings.Split(trimmedLine, " ")
-			for _, str := range strs {
-				if strings.Contains(str, "/") {
-					// com.android.settings/.Settings
-					s := strings.Split(str, "/")
-					app := AppInfo{
-						AppBaseInfo: AppBaseInfo{
-							PackageName: s[0],
-							Activity:    s[1],
-						},
-					}
-					return app, nil
-				}
-			}
-		}
-	}
-
-	return AppInfo{}, errors.Wrap(code.MobileUIAssertForegroundAppError, "get foreground app failed")
+	log.Info().Msg(packageInfo)
+	err = json.Unmarshal([]byte(strings.TrimSpace(packageInfo)), &app)
+	return
 }
 
 func (ad *adbDriver) GetFocusedPackage() (packageName string, err error) {
-	res, err := ad.adbClient.RunShellCommand("dumpsys", "window", "windows", "|", "grep", "-E", "'mCurrentFocus|mFocusedApp'")
+	res, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities", "|", "grep", "-E", "'mResumedActivity'")
 	if err != nil {
 		return "", err
 	}
-	match := regexp.MustCompile("mCurrentFocus.+\\s([^\\s/}]+)/[^\\s/}]+(\\.[^\\s/}]+)}").FindStringSubmatch(res)
-	if len(match) > 1 {
-		packageName = match[1]
-		return
-	}
-	match = regexp.MustCompile("mFocusedApp.+Record\\{.*\\s([^\\s/}]+)/([^\\s/}]+)(\\s[^\\s/}]+)*}").FindStringSubmatch(res)
+	match := regexp.MustCompile(`mResumedActivity:.*? (\S+)/`).FindStringSubmatch(res)
 	if len(match) > 1 {
 		packageName = match[1]
 		return
@@ -778,7 +761,7 @@ func (ad *adbDriver) SetIme(imeRegx string) error {
 				currentPackage, err := ad.GetFocusedPackage()
 				log.Info().Str("beforeFocusedPackage", focusedPackage).Str("afterFocusedPackage", currentPackage).Msg("")
 				if err == nil && currentPackage != focusedPackage {
-					_ = ad.PressKeyCode(KCBack, KMEmpty)
+					_ = ad.PressKeyCodes(KCBack, KMEmpty)
 				}
 			}
 		}

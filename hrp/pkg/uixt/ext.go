@@ -155,11 +155,16 @@ type DriverExt struct {
 	plugin funplugin.IPlugin
 }
 
-func newDriverExt(device Device, driver WebDriver, plugin funplugin.IPlugin) (dExt *DriverExt, err error) {
+func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dExt *DriverExt, err error) {
+	driverOptions := &DriverOptions{}
+	for _, option := range options {
+		option(driverOptions)
+	}
+
 	dExt = &DriverExt{
 		Device:          device,
 		Driver:          driver,
-		plugin:          plugin,
+		plugin:          driverOptions.plugin,
 		cacheStepData:   cacheStepData{},
 		interruptSignal: make(chan os.Signal, 1),
 	}
@@ -179,17 +184,19 @@ func newDriverExt(device Device, driver WebDriver, plugin funplugin.IPlugin) (dE
 	if err != nil {
 		return nil, errors.Wrap(err, "get screen resolution failed")
 	}
-
-	if dExt.ImageService, err = newVEDEMImageService(); err != nil {
-		return nil, err
+	if driverOptions.withImageService {
+		if dExt.ImageService, err = newVEDEMImageService(); err != nil {
+			return nil, err
+		}
 	}
-
-	// create results directory
-	if err = builtin.EnsureFolderExists(env.ResultsPath); err != nil {
-		return nil, errors.Wrap(err, "create results directory failed")
-	}
-	if err = builtin.EnsureFolderExists(env.ScreenShotsPath); err != nil {
-		return nil, errors.Wrap(err, "create screenshots directory failed")
+	if driverOptions.withResultFolder {
+		// create results directory
+		if err = builtin.EnsureFolderExists(env.ResultsPath); err != nil {
+			return nil, errors.Wrap(err, "create results directory failed")
+		}
+		if err = builtin.EnsureFolderExists(env.ScreenShotsPath); err != nil {
+			return nil, errors.Wrap(err, "create screenshots directory failed")
+		}
 	}
 	return dExt, nil
 }

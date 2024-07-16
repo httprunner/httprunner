@@ -29,6 +29,7 @@ const (
 	ACTION_SetClipboard ActionMethod = "set_clipboard"
 	ACTION_GetClipboard ActionMethod = "get_clipboard"
 	ACTION_SetIme       ActionMethod = "set_ime"
+	ACTION_GetSource    ActionMethod = "get_source"
 
 	// UI validation
 	// selectors
@@ -611,6 +612,15 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 	case ACTION_SetIme:
 		if ime, ok := action.Params.(string); ok {
 			err = dExt.Driver.SetIme(ime)
+			if err != nil {
+				return errors.Wrap(err, "failed to set ime")
+			}
+			return nil
+		}
+	case ACTION_GetSource:
+		if packageName, ok := action.Params.(string); ok {
+			source := NewSourceOption().WithProcessName(packageName)
+			_, err = dExt.Driver.Source(source)
 			if err != nil {
 				return errors.Wrap(err, "failed to set ime")
 			}

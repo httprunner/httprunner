@@ -595,6 +595,10 @@ func (wd *wdaDriver) SetIme(ime string) error {
 	return errDriverNotImplemented
 }
 
+func (wd *wdaDriver) PressKeyCode(keyCode KeyCode) (err error) {
+	return errDriverNotImplemented
+}
+
 func (wd *wdaDriver) SendKeys(text string, options ...ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
 	actionOptions := NewActionOptions(options...)
@@ -653,6 +657,10 @@ func (wd *wdaDriver) PressButton(devBtn DeviceButton) (err error) {
 	data := map[string]interface{}{"name": devBtn}
 	_, err = wd.httpPOST(data, "/session", wd.sessionId, "/wda/pressButton")
 	return
+}
+
+func (wd *wdaDriver) LoginNoneUI(packageName, phoneNumber string, captcha string) error {
+	return errDriverNotImplemented
 }
 
 func (wd *wdaDriver) StartCamera() (err error) {
