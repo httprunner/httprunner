@@ -67,9 +67,10 @@ type ImageResult struct {
 	// Media（媒体）
 	// Chat（语音）
 	// Event（赛事）
-	LiveType          string             `json:"liveType,omitempty"`    // 直播间类型
-	UIResult          UIResultMap        `json:"uiResult,omitempty"`    // 图标检测
-	ClosePopupsResult *ClosePopupsResult `json:"closeResult,omitempty"` // 弹窗按钮检测
+	LiveType          string             `json:"liveType,omitempty"`       // 直播间类型
+	LivePopularity    int64              `json:"livePopularity,omitempty"` // 直播间热度
+	UIResult          UIResultMap        `json:"uiResult,omitempty"`       // 图标检测
+	ClosePopupsResult *ClosePopupsResult `json:"closeResult,omitempty"`    // 弹窗按钮检测
 }
 
 type APIResponseImage struct {
@@ -220,6 +221,10 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 
 	// 使用高精度集群
 	bodyWriter.WriteField("ocrCluster", "highPrecision")
+
+	if actionOptions.ScreenShotWithOCRCluster != "" {
+		bodyWriter.WriteField("ocrCluster", actionOptions.ScreenShotWithOCRCluster)
+	}
 
 	if actionOptions.Timeout > 0 {
 		bodyWriter.WriteField("timeout", fmt.Sprintf("%v", actionOptions.Timeout))
@@ -413,18 +418,19 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
+		screenResult.Video = &Video{LiveType: imageResult.LiveType, ViewCount: imageResult.LivePopularity}
 
-		if actionOptions.ScreenShotWithClosePopups {
-			popup := &PopupInfo{
+		if actionOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
+			screenResult.Popup = &PopupInfo{
 				ClosePopupsResult: imageResult.ClosePopupsResult,
+				PicName:           imagePath,
+				PicURL:            imageResult.URL,
 			}
 
 			closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
 			for _, closeArea := range closeAreas {
-				popup.ClosePoints = append(popup.ClosePoints, closeArea.Center())
+				screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
 			}
-
-			screenResult.Popup = popup
 		}
 	}
 

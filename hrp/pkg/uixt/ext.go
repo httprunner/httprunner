@@ -93,12 +93,14 @@ type cacheStepData struct {
 	screenResults ScreenResultMap
 	// cache feed/live video stat
 	videoCrawler *VideoCrawler
+	e2eDelay     []timeLog
 }
 
 func (d *cacheStepData) reset() {
 	d.screenShots = make([]string, 0)
 	d.screenResults = make(map[string]*ScreenResult)
 	d.videoCrawler = nil
+	d.e2eDelay = nil
 }
 
 type DriverExt struct {
@@ -204,6 +206,9 @@ func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error
 	case "jpeg", "png":
 		jpegOptions := &jpeg.Options{Quality: 95}
 		err = jpeg.Encode(&buf, img, jpegOptions)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		return nil, fmt.Errorf("unsupported image format: %s", format)
 	}
@@ -258,6 +263,7 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenResults.getScreenShotUrls()
 	cacheData["screen_results"] = dExt.cacheStepData.screenResults
+	cacheData["e2e_results"] = dExt.cacheStepData.e2eDelay
 
 	// clear cache
 	dExt.cacheStepData.reset()
