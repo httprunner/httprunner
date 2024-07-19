@@ -188,7 +188,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			if err != nil || currentVideo.Type == "" {
 				crawler.failedCount++
 				if crawler.failedCount >= 3 {
-					// failed 10 consecutive times
+					// failed 3 consecutive times
 					return errors.Wrap(code.TrackingGetError,
 						"get current feed video failed 3 consecutive times")
 				}
@@ -270,7 +270,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				}
 
 				// simulation watch feed video
-				sleepStrict(swipeFinishTime, currentVideo.PlayDuration)
+				simulationPlayDuration := math.Min(float64(currentVideo.PlayDuration), 7200000)
+				sleepStrict(swipeFinishTime, int64(simulationPlayDuration))
 
 				screenResult.Video = currentVideo
 				screenResult.Resolution = dExt.windowSize
@@ -318,7 +319,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 
 				// simulation watch feed video
-				sleepStrict(swipeFinishTime, currentVideo.PlayDuration)
+				simulationPlayDuration := math.Min(float64(currentVideo.PlayDuration), 7200000)
+				sleepStrict(swipeFinishTime, int64(simulationPlayDuration))
 				screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 			}
 
