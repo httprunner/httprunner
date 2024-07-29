@@ -7,6 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -25,7 +29,7 @@ const ShootsSocketName = "com.bytest.device"
 
 // newShootsAndroidDriver
 // 创建shoots Driver address为forward后的端口格式127.0.0.1:${port}
-func newShootsAndroidDriver(address string, readTimeout ...time.Duration) (*ShootsAndroidDriver, error) {
+func newShootsAndroidDriver(address string, urlPrefix string, readTimeout ...time.Duration) (*ShootsAndroidDriver, error) {
 	timeout := 10 * time.Second
 	if len(readTimeout) > 0 {
 		timeout = readTimeout[0]
@@ -37,10 +41,59 @@ func newShootsAndroidDriver(address string, readTimeout ...time.Duration) (*Shoo
 		return nil, err
 	}
 
-	return &ShootsAndroidDriver{
+	driver := &ShootsAndroidDriver{
 		socket:  conn,
 		timeout: timeout,
-	}, nil
+	}
+
+	if driver.urlPrefix, err = url.Parse(urlPrefix); err != nil {
+		return nil, err
+	}
+
+	return driver, nil
+}
+
+func (sad *ShootsAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
+	var localPort int
+	{
+		tmpURL, _ := url.Parse(sad.urlPrefix.String())
+		hostname := tmpURL.Hostname()
+		if strings.HasPrefix(hostname, forwardToPrefix) {
+			localPort, _ = strconv.Atoi(strings.TrimPrefix(hostname, forwardToPrefix))
+		}
+	}
+
+	conn, err := net.Dial("tcp", fmt.Sprintf(":%d", localPort))
+	if err != nil {
+		return nil, fmt.Errorf("adb forward: %w", err)
+	}
+	sad.client = convertToHTTPClient(conn)
+	return sad.httpRequest(http.MethodGet, sad.concatURL(nil, pathElem...), nil)
+}
+
+func (sad *ShootsAndroidDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+	var localPort int
+	{
+		tmpURL, _ := url.Parse(sad.urlPrefix.String())
+		hostname := tmpURL.Hostname()
+		if strings.HasPrefix(hostname, forwardToPrefix) {
+			localPort, _ = strconv.Atoi(strings.TrimPrefix(hostname, forwardToPrefix))
+		}
+	}
+
+	conn, err := net.Dial("tcp", fmt.Sprintf(":%d", localPort))
+	if err != nil {
+		return nil, fmt.Errorf("adb forward: %w", err)
+	}
+	sad.client = convertToHTTPClient(conn)
+
+	var bsJSON []byte = nil
+	if data != nil {
+		if bsJSON, err = json.Marshal(data); err != nil {
+			return nil, err
+		}
+	}
+	return sad.httpRequest(http.MethodPost, sad.concatURL(nil, pathElem...), bsJSON)
 }
 
 func (sad *ShootsAndroidDriver) NewSession(capabilities Capabilities) (SessionInfo, error) {
@@ -197,9 +250,9 @@ func (sad *ShootsAndroidDriver) Source(srcOpt ...SourceOption) (source string, e
 	return res.(string), nil
 }
 
-func (sad *ShootsAndroidDriver) LoginNoneUI(packageName, phoneNumber string, captcha string) error {
+func (sad *ShootsAndroidDriver) LoginNoneUIBak(packageName, phoneNumber, captcha string) error {
 	_, err := sad.adbClient.RunShellCommand("am", "broadcast", "-a", fmt.Sprintf("%s.util.crony.action_login", packageName), "-e", "phone", phoneNumber, "-e", "code", captcha)
-	time.Sleep(5 * time.Second)
+	time.Sleep(10 * time.Second)
 	login, err := sad.isLogin(packageName)
 	if err != nil || !login {
 		log.Err(err).Msg("failed to login")
@@ -208,7 +261,87 @@ func (sad *ShootsAndroidDriver) LoginNoneUI(packageName, phoneNumber string, cap
 	return err
 }
 
+func (sad *ShootsAndroidDriver) LoginNoneUI(packageName, phoneNumber, captcha string) error {
+	params := map[string]interface{}{
+		"phone": phoneNumber,
+		"code":  captcha,
+	}
+	resp, err := sad.httpPOST(params, "/host", "/login", "account")
+	res, err := resp.valueConvertToJsonObject()
+	if err != nil {
+		return err
+	}
+	log.Info().Msgf("%v", res)
+	if res["isSuccess"] != true {
+		err = fmt.Errorf("falied to logout %s", res["data"])
+		log.Err(err).Msgf("%v", res)
+		return err
+	}
+	time.Sleep(10 * time.Second)
+	login, err := sad.isLogin(packageName)
+	if err != nil {
+		return err
+	}
+	if !login {
+		return fmt.Errorf("failed to login")
+	}
+	return nil
+}
+
+func (sad *ShootsAndroidDriver) LogoutNoneUI(packageName string) error {
+	resp, err := sad.httpGET("/host", "/logout")
+	res, err := resp.valueConvertToJsonObject()
+	if err != nil {
+		return err
+	}
+	log.Info().Msgf("%v", res)
+	if res["isSuccess"] != true {
+		err = fmt.Errorf("falied to logout %s", res["data"])
+		log.Err(err).Msgf("%v", res)
+		return err
+	}
+	fmt.Printf("%v", resp)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (sad *ShootsAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber string, captcha string) error {
+	params := map[string]interface{}{
+		"ClassName": "qe.python.test.LoginUtil",
+		"Method":    "loginSync",
+		"RetType":   "",
+		"Args":      []string{phoneNumber, captcha},
+	}
+	res, err := sad.sendCommand(packageName, "CallStaticMethod", params)
+	if err != nil {
+		return err
+	}
+	log.Info().Msg(res.(string))
+	return nil
+}
+
 func (sad *ShootsAndroidDriver) isLogin(packageName string) (login bool, err error) {
+	resp, err := sad.httpGET("/host", "/login", "/check")
+	res, err := resp.valueConvertToJsonObject()
+	if err != nil {
+		return false, err
+	}
+	log.Info().Msgf("%v", res)
+	if res["isSuccess"] != true {
+		err = fmt.Errorf("falied to get is login %s", res["data"])
+		log.Err(err).Msgf("%v", res)
+		return false, err
+	}
+	fmt.Printf("%v", resp)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (sad *ShootsAndroidDriver) isLoginBak(packageName string) (login bool, err error) {
 	params := map[string]interface{}{
 		"ClassName":   "com.ss.android.ugc.aweme.account.AccountProxyService",
 		"Method":      "userService",
@@ -222,14 +355,27 @@ func (sad *ShootsAndroidDriver) isLogin(packageName string) (login bool, err err
 	}
 
 	params = map[string]interface{}{
-		"Method":   "isLogin",
-		"RetType":  "",
-		"Args":     []string{},
-		"ObjectId": int(id.(float64)),
+		"ClassName": "com.ss.android.ugc.aweme.account.service.IAccountUserService",
+		"Method":    "isLogin",
+		"RetType":   "",
+		"Args":      []string{},
+		"ObjectId":  int(id.(float64)),
 	}
 	loginObj, err := sad.sendCommand(packageName, "CallMethod", params)
 	if err != nil {
 		return false, err
 	}
 	return loginObj.(bool), nil
+}
+
+func calculatePortNumber(packageName string) int {
+	asciiSum := 0
+	for _, char := range packageName {
+		asciiSum += int(char)
+	}
+
+	portRange := 65536 - 30000
+	calculatedPortNumber := (asciiSum % portRange) + 30000
+
+	return calculatedPortNumber
 }

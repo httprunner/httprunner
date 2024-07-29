@@ -125,12 +125,9 @@ func TestDriver_DeviceSize(t *testing.T) {
 }
 
 func TestDriver_Source(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupAndroid(t)
 
-	source, err := driver.Source()
+	source, err := driverExt.Driver.Source()
 	if err != nil {
 		t.Fatal(err)
 	}

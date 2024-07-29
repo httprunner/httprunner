@@ -24,12 +24,14 @@ func NewServer(port int) error {
 	router.POST("/api/v1/:platform/:serial/key/home", parseDeviceInfo(), homeHandler)
 	router.POST("/api/v1/:platform/:serial/key", parseDeviceInfo(), keycodeHandler)
 	router.GET("/api/v1/:platform/:serial/app/foreground", parseDeviceInfo(), foregroundAppHandler)
+	router.POST("/api/v1/:platform/:serial/app/clear", parseDeviceInfo(), clearAppHandler)
 	router.POST("/api/v1/:platform/:serial/app/launch", parseDeviceInfo(), launchAppHandler)
 	router.POST("/api/v1/:platform/:serial/app/terminal", parseDeviceInfo(), terminalAppHandler)
 	router.GET("/api/v1/:platform/:serial/screenshot", parseDeviceInfo(), screenshotHandler)
 	router.GET("/api/v1/:platform/:serial/shoots/source", parseDeviceInfo(), sourceHandler)
 	router.GET("/api/v1/:platform/:serial/adb/source", parseDeviceInfo(), adbSourceHandler)
 	router.POST("/api/v1/:platform/:serial/shoots/login", parseDeviceInfo(), loginHandler)
+	router.POST("/api/v1/:platform/:serial/shoots/logout", parseDeviceInfo(), logoutHandler)
 
 	err := router.Run(fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
@@ -301,6 +303,35 @@ func foregroundAppHandler(c *gin.Context) {
 	return
 }
 
+func clearAppHandler(c *gin.Context) {
+	var appClearReq AppClearRequest
+	if err := c.ShouldBindJSON(&appClearReq); err != nil {
+		log.Err(err).Msg(fmt.Sprintf("[%s]: Invalid Request", c.HandlerName()))
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "request")})
+		c.Abort()
+		return
+	}
+
+	driverObj, exists := c.Get("driver")
+	if !exists {
+		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.Abort()
+		return
+	}
+
+	dExt := driverObj.(*uixt.DriverExt)
+	err := dExt.Driver.Clear(appClearReq.PackageName)
+	if err != nil {
+		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
+		c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.Abort()
+		return
+	}
+	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	return
+}
+
 func launchAppHandler(c *gin.Context) {
 	var appLaunchReq AppLaunchRequest
 	if err := c.ShouldBindJSON(&appLaunchReq); err != nil {
@@ -455,7 +486,36 @@ func loginHandler(c *gin.Context) {
 	dExt := driverObj.(*uixt.DriverExt)
 	err := dExt.Driver.LoginNoneUI(loginReq.PackageName, loginReq.PhoneNumber, loginReq.Captcha)
 	if err != nil {
-		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get foreground app", c.HandlerName()))
+		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to login", c.HandlerName()))
+		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.Abort()
+		return
+	}
+	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	return
+}
+
+func logoutHandler(c *gin.Context) {
+	var logoutReq LogoutRequest
+	if err := c.ShouldBindJSON(&logoutReq); err != nil {
+		log.Err(err).Msg(fmt.Sprintf("[%s]: Invalid Request", c.HandlerName()))
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "request")})
+		c.Abort()
+		return
+	}
+
+	driverObj, exists := c.Get("driver")
+	if !exists {
+		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.Abort()
+		return
+	}
+
+	dExt := driverObj.(*uixt.DriverExt)
+	err := dExt.Driver.LogoutNoneUI(logoutReq.PackageName)
+	if err != nil {
+		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to login", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
 		c.Abort()
 		return

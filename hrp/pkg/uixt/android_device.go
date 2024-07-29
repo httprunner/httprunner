@@ -21,10 +21,11 @@ import (
 )
 
 var (
-	AdbServerHost  = "localhost"
-	AdbServerPort  = gadb.AdbServerPort // 5037
-	UIA2ServerHost = "localhost"
-	UIA2ServerPort = 6790
+	AdbServerHost    = "localhost"
+	AdbServerPort    = gadb.AdbServerPort // 5037
+	UIA2ServerHost   = "localhost"
+	UIA2ServerPort   = 6790
+	DouyinServerPort = 32316
 )
 
 //go:embed eval_tool
@@ -248,16 +249,27 @@ func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver WebDri
 }
 
 func (dev *AndroidDevice) NewShootsDriver(capabilities Capabilities) (driver *ShootsAndroidDriver, err error) {
-	localPort, err := dev.d.Forward(ShootsSocketName)
+	socketLocalPort, err := dev.d.Forward(ShootsSocketName)
 	if err != nil {
 		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
 			fmt.Sprintf("forward port %d->%s failed: %v",
-				localPort, ShootsSocketName, err))
+				socketLocalPort, ShootsSocketName, err))
 	}
 
-	shootsDriver, err := newShootsAndroidDriver(fmt.Sprintf("127.0.0.1:%d", localPort))
+	serverLocalPort, err := dev.d.Forward(DouyinServerPort)
 	if err != nil {
-		_ = dev.d.ForwardKill(localPort)
+		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
+			fmt.Sprintf("forward port %d->%d failed: %v",
+				serverLocalPort, DouyinServerPort, err))
+	}
+
+	rawURL := fmt.Sprintf("http://%s%d:%d",
+		forwardToPrefix, serverLocalPort, DouyinServerPort)
+
+	shootsDriver, err := newShootsAndroidDriver(fmt.Sprintf("127.0.0.1:%d", socketLocalPort), rawURL)
+	if err != nil {
+		_ = dev.d.ForwardKill(socketLocalPort)
+		_ = dev.d.ForwardKill(serverLocalPort)
 		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
 	}
 	shootsDriver.adbClient = dev.d

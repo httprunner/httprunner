@@ -3,7 +3,7 @@ package server
 // 常见的错误代码和消息
 const (
 	InternalServerErrorCode = 100001
-	InternalServerErrorMsg  = "Invalid Server Error"
+	InternalServerErrorMsg  = "Internal Server Error"
 
 	InvalidParamErrorCode = 100002
 	InvalidParamErrorMsg  = "Invalid %s Param"

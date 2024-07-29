@@ -610,6 +610,8 @@ type WebDriver interface {
 	// Input works like SendKeys
 	Input(text string, options ...ActionOption) error
 
+	Clear(packageName string) error
+
 	// PressButton Presses the corresponding hardware button on the device
 	PressButton(devBtn DeviceButton) error
 
@@ -624,6 +626,8 @@ type WebDriver interface {
 	Source(srcOpt ...SourceOption) (string, error)
 
 	LoginNoneUI(packageName, phoneNumber string, captcha string) error
+
+	LogoutNoneUI(packageName string) error
 
 	TapByText(text string, options ...ActionOption) error
 

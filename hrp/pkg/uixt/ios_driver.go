@@ -615,6 +615,10 @@ func (wd *wdaDriver) Input(text string, options ...ActionOption) (err error) {
 	return wd.SendKeys(text, options...)
 }
 
+func (wd *wdaDriver) Clear(packageName string) error {
+	return errDriverNotImplemented
+}
+
 // PressBack simulates a short press on the BACK button.
 func (wd *wdaDriver) PressBack(options ...ActionOption) (err error) {
 	actionOptions := NewActionOptions(options...)
@@ -660,6 +664,10 @@ func (wd *wdaDriver) PressButton(devBtn DeviceButton) (err error) {
 }
 
 func (wd *wdaDriver) LoginNoneUI(packageName, phoneNumber string, captcha string) error {
+	return errDriverNotImplemented
+}
+
+func (wd *wdaDriver) LogoutNoneUI(packageName string) error {
 	return errDriverNotImplemented
 }
 
@@ -955,6 +963,13 @@ func (r rawResponse) valueConvertToJsonRawMessage() (raw builtinJSON.RawMessage,
 		return nil, err
 	}
 	raw = reply.Value
+	return
+}
+
+func (r rawResponse) valueConvertToJsonObject() (obj map[string]interface{}, err error) {
+	if err = json.Unmarshal(r, &obj); err != nil {
+		return nil, err
+	}
 	return
 }
 

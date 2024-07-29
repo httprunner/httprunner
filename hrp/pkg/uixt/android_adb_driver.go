@@ -475,6 +475,15 @@ func (ad *adbDriver) Input(text string, options ...ActionOption) (err error) {
 	return ad.SendKeys(text, options...)
 }
 
+func (ad *adbDriver) Clear(packageName string) error {
+	if _, err := ad.adbClient.RunShellCommand("pm", "clear", packageName); err != nil {
+		log.Error().Str("packageName", packageName).Err(err).Msg("failed to clear package cache")
+		return err
+	}
+
+	return nil
+}
+
 func (ad *adbDriver) PressButton(devBtn DeviceButton) (err error) {
 	err = errDriverNotImplemented
 	return
@@ -517,6 +526,10 @@ func (ad *adbDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 }
 
 func (ad *adbDriver) LoginNoneUI(packageName, phoneNumber string, captcha string) error {
+	return errDriverNotImplemented
+}
+
+func (ad *adbDriver) LogoutNoneUI(packageName string) error {
 	return errDriverNotImplemented
 }
 
@@ -715,20 +728,6 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	return
 }
 
-func (ad *adbDriver) GetFocusedPackage() (packageName string, err error) {
-	res, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities", "|", "grep", "-E", "'mResumedActivity'")
-	if err != nil {
-		return "", err
-	}
-	match := regexp.MustCompile(`mResumedActivity:.*? (\S+)/`).FindStringSubmatch(res)
-	if len(match) > 1 {
-		packageName = match[1]
-		return
-	}
-	log.Error().Str("dumpsys", res).Msg("failed to get focused package")
-	return "", fmt.Errorf("failed to get focused package")
-}
-
 func (ad *adbDriver) SetIme(imeRegx string) error {
 	imeList := ad.ListIme()
 	ime := ""
@@ -754,13 +753,13 @@ func (ad *adbDriver) SetIme(imeRegx string) error {
 		time.Sleep(1 * time.Second)
 		pid, _ := ad.adbClient.RunShellCommand("pidof", packageName)
 		if strings.TrimSpace(pid) == "" {
-			focusedPackage, err := ad.GetFocusedPackage()
+			appInfo, err := ad.GetForegroundApp()
 			_ = ad.AppLaunch(packageName)
 			if err == nil && packageName != UnicodeImePackageName {
 				time.Sleep(10 * time.Second)
-				currentPackage, err := ad.GetFocusedPackage()
-				log.Info().Str("beforeFocusedPackage", focusedPackage).Str("afterFocusedPackage", currentPackage).Msg("")
-				if err == nil && currentPackage != focusedPackage {
+				nextAppInfo, err := ad.GetForegroundApp()
+				log.Info().Str("beforeFocusedPackage", appInfo.PackageName).Str("afterFocusedPackage", nextAppInfo.PackageName).Msg("")
+				if err == nil && nextAppInfo.PackageName != appInfo.PackageName {
 					_ = ad.PressKeyCodes(KCBack, KMEmpty)
 				}
 			}

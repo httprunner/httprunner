@@ -29,6 +29,10 @@ type KeycodeRequest struct {
 	Keycode int `json:"keycode"`
 }
 
+type AppClearRequest struct {
+	PackageName string `json:"packageName"`
+}
+
 type AppLaunchRequest struct {
 	PackageName string `json:"packageName"`
 }
@@ -41,4 +45,8 @@ type LoginRequest struct {
 	PackageName string `json:"packageName"`
 	PhoneNumber string `json:"phoneNumber"`
 	Captcha     string `json:"captcha"`
+}
+
+type LogoutRequest struct {
+	PackageName string `json:"packageName"`
 }
