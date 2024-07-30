@@ -43,7 +43,6 @@ func NewServer(port int) error {
 
 func pingHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func listDeviceHandler(c *gin.Context) {
@@ -143,7 +142,6 @@ func tapHandler(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func dragHandler(c *gin.Context) {
@@ -181,7 +179,6 @@ func dragHandler(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func inputHandler(c *gin.Context) {
@@ -209,7 +206,6 @@ func inputHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func unlockHandler(c *gin.Context) {
@@ -230,7 +226,6 @@ func unlockHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func homeHandler(c *gin.Context) {
@@ -251,7 +246,6 @@ func homeHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func keycodeHandler(c *gin.Context) {
@@ -279,7 +273,6 @@ func keycodeHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func foregroundAppHandler(c *gin.Context) {
@@ -300,7 +293,6 @@ func foregroundAppHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: appInfo})
-	return
 }
 
 func clearAppHandler(c *gin.Context) {
@@ -329,7 +321,6 @@ func clearAppHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func launchAppHandler(c *gin.Context) {
@@ -357,7 +348,6 @@ func launchAppHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func terminalAppHandler(c *gin.Context) {
@@ -385,7 +375,6 @@ func terminalAppHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func screenshotHandler(c *gin.Context) {
@@ -407,7 +396,6 @@ func screenshotHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, HttpResponse{Result: base64.StdEncoding.EncodeToString(raw.Bytes())})
-	return
 }
 
 func sourceHandler(c *gin.Context) {
@@ -436,7 +424,6 @@ func sourceHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, HttpResponse{Result: source})
-	return
 }
 
 func adbSourceHandler(c *gin.Context) {
@@ -463,7 +450,6 @@ func adbSourceHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: source})
-	return
 }
 
 func loginHandler(c *gin.Context) {
@@ -492,7 +478,6 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func logoutHandler(c *gin.Context) {
@@ -521,7 +506,6 @@ func logoutHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
-	return
 }
 
 func parseDeviceInfo() gin.HandlerFunc {

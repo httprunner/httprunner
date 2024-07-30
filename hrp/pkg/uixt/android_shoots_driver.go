@@ -1,11 +1,8 @@
 package uixt
 
 import (
-	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -133,87 +130,6 @@ func (sad *ShootsAndroidDriver) sendCommand(packageName string, cmdType string, 
 	return resultMap["Result"], nil
 }
 
-func (sad *ShootsAndroidDriver) send(data []byte, readTimeout ...time.Duration) (map[string]interface{}, error) {
-	timeout := sad.timeout
-	if len(readTimeout) > 0 {
-		timeout = readTimeout[0]
-	}
-	_ = sad.socket.SetReadDeadline(time.Now().Add(timeout))
-
-	err := _send(sad.socket, append(data, '\n'))
-	if err != nil {
-		sad.close()
-		return nil, err
-	}
-	raw, err := _readAll(sad.socket)
-	if err != nil {
-		return nil, err
-	}
-	var result map[string]interface{}
-	if err := json.Unmarshal(raw, &result); err != nil {
-		log.Printf("error when parse json response: %s\n", raw)
-		return nil, err
-	}
-	return result, nil
-}
-
-func _send(writer io.Writer, msg []byte) (err error) {
-	for totalSent := 0; totalSent < len(msg); {
-		var sent int
-		if sent, err = writer.Write(msg[totalSent:]); err != nil {
-			return err
-		}
-		if sent == 0 {
-			return errors.New("socket connection broken")
-		}
-		totalSent += sent
-	}
-	return
-}
-
-func _readN(reader io.Reader, size int) (raw []byte, err error) {
-	raw = make([]byte, 0, size)
-	for len(raw) < size {
-		buf := make([]byte, size-len(raw))
-		var n int
-		if n, err = io.ReadFull(reader, buf); err != nil {
-			return nil, err
-		}
-		if n == 0 {
-			return nil, errors.New("socket connection broken")
-		}
-		raw = append(raw, buf...)
-	}
-	return
-}
-
-func _readAll(reader io.Reader) (raw []byte, err error) {
-	buffer := new(bytes.Buffer)
-	for true {
-		lengthBuf := make([]byte, 4)
-		_, err := io.ReadFull(reader, lengthBuf)
-		if err != nil {
-			if err == io.EOF {
-				return buffer.Bytes(), nil
-			} else if errors.Is(err, io.ErrUnexpectedEOF) {
-				err = fmt.Errorf("reached unexpected EOF, read partial data: %s %v", string(buffer.Bytes()), err)
-				return nil, err
-			} else {
-				return nil, err
-			}
-		}
-		length := binary.BigEndian.Uint32(lengthBuf)
-
-		data, err := _readN(reader, int(length)-4)
-		if err != nil {
-			return nil, err
-		}
-		buffer.Write(data)
-
-	}
-	return buffer.Bytes(), nil
-}
-
 func (sad *ShootsAndroidDriver) DeleteSession() error {
 	return sad.close()
 }
@@ -339,43 +255,4 @@ func (sad *ShootsAndroidDriver) isLogin(packageName string) (login bool, err err
 		return false, err
 	}
 	return true, nil
-}
-
-func (sad *ShootsAndroidDriver) isLoginBak(packageName string) (login bool, err error) {
-	params := map[string]interface{}{
-		"ClassName":   "com.ss.android.ugc.aweme.account.AccountProxyService",
-		"Method":      "userService",
-		"RetType":     "",
-		"Args":        []string{},
-		"CacheObject": true,
-	}
-	id, err := sad.sendCommand(packageName, "CallStaticMethod", params)
-	if err != nil {
-		return false, err
-	}
-
-	params = map[string]interface{}{
-		"ClassName": "com.ss.android.ugc.aweme.account.service.IAccountUserService",
-		"Method":    "isLogin",
-		"RetType":   "",
-		"Args":      []string{},
-		"ObjectId":  int(id.(float64)),
-	}
-	loginObj, err := sad.sendCommand(packageName, "CallMethod", params)
-	if err != nil {
-		return false, err
-	}
-	return loginObj.(bool), nil
-}
-
-func calculatePortNumber(packageName string) int {
-	asciiSum := 0
-	for _, char := range packageName {
-		asciiSum += int(char)
-	}
-
-	portRange := 65536 - 30000
-	calculatedPortNumber := (asciiSum % portRange) + 30000
-
-	return calculatedPortNumber
 }
