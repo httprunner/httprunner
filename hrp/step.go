@@ -47,6 +47,7 @@ type TStep struct {
 	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
 	Export        []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Loops         int                    `json:"loops,omitempty" yaml:"loops,omitempty"`
+	SkipIf        string                 `json:"skip_if,omitempty" yaml:"skip_if,omitempty"`
 }
 
 // IStep represents interface for all types for teststeps, includes:

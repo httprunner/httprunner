@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	_ "embed"
 	"fmt"
+	"github.com/spf13/cast"
 	"net"
 	"net/http"
 	"net/http/cookiejar"
@@ -538,6 +539,22 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 			if err != nil {
 				parsedName = step.Name()
 			}
+			skipIf := step.Struct().SkipIf
+			if len(skipIf) > 0 {
+				variables, err := r.caseRunner.parser.ParseString(skipIf, mergeVariables(r.caseRunner.parsedConfig.Variables, r.sessionVariables))
+				if err != nil {
+					log.Error().Str("step", step.Name()).
+						Str("type", string(step.Type())).Msg("run step error")
+					return err
+				}
+				if SkipN := cast.ToInt64(variables); SkipN > 0 {
+					log.Info().Str("step", step.Name()).
+						Str("type", string(step.Type())).Msg("run step skip")
+
+					continue
+				}
+			}
+
 			stepName := convertString(parsedName)
 			stepType := string(step.Type())
 			log.Info().Str("step", stepName).Str("type", stepType).Msg("run step start")
