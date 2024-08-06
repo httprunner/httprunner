@@ -446,8 +446,8 @@ func (d *Device) EnableAdbOverTCP(port ...int) (err error) {
 	return
 }
 
-func (d *Device) createDeviceTransport() (tp transport, err error) {
-	if tp, err = newTransport(fmt.Sprintf("%s:%d", d.adbClient.host, d.adbClient.port)); err != nil {
+func (d *Device) createDeviceTransport(readTimeout ...time.Duration) (tp transport, err error) {
+	if tp, err = newTransport(fmt.Sprintf("%s:%d", d.adbClient.host, d.adbClient.port), readTimeout...); err != nil {
 		return transport{}, err
 	}
 
@@ -586,7 +586,7 @@ func (d *Device) installViaABBExec(apk io.ReadSeeker, args ...string) (raw []byt
 	if err != nil {
 		return nil, err
 	}
-	if tp, err = d.createDeviceTransport(); err != nil {
+	if tp, err = d.createDeviceTransport(5 * time.Minute); err != nil {
 		return nil, err
 	}
 	defer func() { _ = tp.Close() }()

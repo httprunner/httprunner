@@ -3,8 +3,6 @@
 package uixt
 
 import (
-	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -445,8 +443,6 @@ func TestConvertPoints(t *testing.T) {
 	if len(eps) != 3 {
 		t.Fatal()
 	}
-	jsons, _ := json.Marshal(eps)
-	println(fmt.Sprintf("%v", string(jsons)))
 }
 
 func TestDriver_ShellInputUnicode(t *testing.T) {

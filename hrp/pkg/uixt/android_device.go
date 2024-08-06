@@ -4,9 +4,16 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/md5"
 	"embed"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"io"
+	"net"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
@@ -21,11 +29,13 @@ import (
 )
 
 var (
-	AdbServerHost    = "localhost"
-	AdbServerPort    = gadb.AdbServerPort // 5037
-	UIA2ServerHost   = "localhost"
-	UIA2ServerPort   = 6790
-	DouyinServerPort = 32316
+	DouyinServerPort           = 32316
+	AdbServerHost              = "localhost"
+	AdbServerPort              = gadb.AdbServerPort // 5037
+	UIA2ServerHost             = "localhost"
+	UIA2ServerPort             = 6790
+	EvalInstallerPackageName   = "sogou.mobile.explorer"
+	InstallViaInstallerCommand = "am start -S -n sogou.mobile.explorer/.PackageInstallerActivity -d"
 )
 
 //go:embed eval_tool
@@ -316,6 +326,120 @@ func (dev *AndroidDevice) StartPcap() error {
 func (dev *AndroidDevice) StopPcap() string {
 	// TODO
 	return ""
+}
+
+func (dev *AndroidDevice) Install(app io.ReadSeeker, opts InstallOptions) error {
+	brand, err := dev.d.Brand()
+	if err != nil {
+		return err
+	}
+	args := []string{}
+	if opts.Reinstall {
+		args = append(args, "-r")
+	}
+	if opts.GrantPermission {
+		args = append(args, "-g")
+	}
+	if opts.Downgrade {
+		args = append(args, "-d")
+	}
+	switch strings.ToLower(brand) {
+	case "vivo":
+		return dev.installVivoSilent(app, args...)
+	case "oppo", "realme", "oneplus":
+		if dev.d.IsPackagesInstalled(EvalInstallerPackageName) {
+			return dev.installViaInstaller(app, args...)
+		}
+		log.Warn().Msg("oppo not install eval installer")
+		return dev.installCommon(app, args...)
+	default:
+		return dev.installCommon(app, args...)
+	}
+}
+
+func (dev *AndroidDevice) installVivoSilent(app io.ReadSeeker, args ...string) error {
+	currentTime := builtin.GetCurrentDay()
+	md5HashInBytes := md5.Sum([]byte(currentTime))
+	verifyCode := hex.EncodeToString(md5HashInBytes[:])
+	verifyCode = base64.StdEncoding.EncodeToString([]byte(verifyCode))
+	verifyCode = verifyCode[:8]
+	verifyCode = "-V" + verifyCode
+	args = append([]string{verifyCode}, args...)
+	_, err := dev.d.InstallAPK(app, args...)
+	return err
+}
+
+func (dev *AndroidDevice) installViaInstaller(app io.ReadSeeker, args ...string) error {
+	appRemotePath := "/data/local/tmp/" + strconv.FormatInt(time.Now().UnixMilli(), 10) + ".apk"
+	err := dev.d.Push(app, appRemotePath, time.Now())
+	if err != nil {
+		return err
+	}
+	done := make(chan error)
+	defer func() {
+		close(done)
+	}()
+	logcat := NewAdbLogcatWithCallback(dev.d.Serial(), func(line string) {
+		re := regexp.MustCompile(`\{.*?}`)
+		match := re.FindString(line)
+		if match == "" {
+			return
+		}
+		var result InstallResult
+		err := json.Unmarshal([]byte(match), &result)
+		if err != nil {
+			log.Warn().Msg("parse Install msg line error: " + match)
+			return
+		}
+		if result.Result == 0 {
+			// 安装成功
+			done <- nil
+		} else {
+			done <- errors.New(match)
+		}
+	})
+	err = logcat.CatchLogcat("PackageInstallerCallback")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = logcat.Stop()
+	}()
+
+	// 需要监听是否完成安装
+	args = strings.Split(InstallViaInstallerCommand, " ")
+	args = append(args, appRemotePath)
+	_, err = dev.d.RunShellCommand("am", args[1:]...)
+	if err != nil {
+		return err
+	}
+	// 等待安装完成或超时
+	timeout := 3 * time.Minute
+	select {
+	case err := <-done:
+		return err
+	case <-time.After(timeout):
+		return fmt.Errorf("installation timed out after %v", timeout)
+	}
+}
+
+func (dev *AndroidDevice) installCommon(app io.ReadSeeker, args ...string) error {
+	_, err := dev.d.InstallAPK(app, args...)
+	return err
+}
+
+func getFreePort() (int, error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return 0, errors.Wrap(err, "resolve tcp addr failed")
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return 0, errors.Wrap(err, "listen tcp addr failed")
+	}
+	defer func() { _ = l.Close() }()
+	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
 type LineCallback func(string)

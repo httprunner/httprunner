@@ -472,6 +472,10 @@ func (dev *IOSDevice) StopPcap() string {
 	return dev.pcapFile
 }
 
+func (dev *IOSDevice) Install(app io.ReadSeeker, opts InstallOptions) error {
+	return errors.New("install method not implemented")
+}
+
 func (dev *IOSDevice) forward(localPort, remotePort int) error {
 	log.Info().Int("localPort", localPort).Int("remotePort", remotePort).
 		Str("udid", dev.UDID).Msg("forward tcp port")

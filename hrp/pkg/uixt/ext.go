@@ -50,6 +50,18 @@ func WithThreshold(threshold float64) CVOption {
 	}
 }
 
+type InstallOptions struct {
+	Reinstall       bool
+	GrantPermission bool
+	Downgrade       bool
+}
+
+type InstallResult struct {
+	Result    int    `json:"result"`
+	ErrorCode int    `json:"errorCode"`
+	ErrorMsg  string `json:"errorMsg"`
+}
+
 type ScreenResult struct {
 	bufSource   *bytes.Buffer // raw image buffer bytes
 	imagePath   string        // image file path
@@ -199,6 +211,37 @@ func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dEx
 		}
 	}
 	return dExt, nil
+}
+
+func (dExt *DriverExt) Install(filePath string, opts InstallOptions) error {
+	app, err := os.Open(filePath)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("install %s open file failed", filePath))
+	}
+	stopChan := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				actions := []TapTextAction{
+					{Text: "^.*无视风险安装$", Options: []ActionOption{WithTapOffset(100, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
+					{Text: "^已了解此应用未经检测.*", Options: []ActionOption{WithTapOffset(-450, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
+				}
+				_ = dExt.Driver.TapByTexts(actions...)
+				_ = dExt.TapByOCR("^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|安装|授权本次安装|继续安装|重新安装)$", WithRegex(true), WithIgnoreNotFoundError(true))
+			case <-stopChan:
+				fmt.Println("Ticker stopped")
+				return
+			}
+		}
+	}()
+	defer func() {
+		close(stopChan)
+	}()
+	return dExt.Device.Install(app, opts)
 }
 
 // takeScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
