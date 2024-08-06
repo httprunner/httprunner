@@ -22,8 +22,8 @@ var (
 func setupAndroid(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
-	device.UIA2 = false
-	device.LogOn = true
+	device.UIA2 = true
+	device.LogOn = false
 	driverExt, err = device.NewDriver()
 	checkErr(t, err)
 }
@@ -197,19 +197,19 @@ func TestDriver_DeviceInfo(t *testing.T) {
 func TestDriver_Tap(t *testing.T) {
 	setupAndroid(t)
 	driverExt.Driver.StartCaptureLog("")
-	err := driverExt.Driver.Tap(150, 340, WithIdentifier("test"))
+	err := driverExt.TapXY(0.5, 0.5, WithIdentifier("test"), WithPressDuration(4))
 	if err != nil {
 		t.Fatal(err)
 	}
-	time.Sleep(time.Second)
-
-	err = driverExt.Driver.TapFloat(60.5, 125.5, WithIdentifier("test"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Second)
-	result, _ := driverExt.Driver.StopCaptureLog()
-	t.Log(result)
+	//time.Sleep(time.Second)
+	//
+	//err = driverExt.Driver.TapFloat(60.5, 125.5, WithIdentifier("test"))
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//time.Sleep(time.Second)
+	//result, _ := driverExt.Driver.StopCaptureLog()
+	//t.Log(result)
 }
 
 func TestDriver_Swipe(t *testing.T) {
@@ -250,7 +250,7 @@ func TestDriver_Drag(t *testing.T) {
 func TestDriver_SendKeys(t *testing.T) {
 	setupAndroid(t)
 
-	err := driverExt.Driver.SendKeys("Android\"输入速度测试", WithIdentifier("test"))
+	err := driverExt.Driver.SendKeys("辽宁省沈阳市新民市民族街36-4", WithIdentifier("test"))
 	if err != nil {
 		t.Fatal(err)
 	}

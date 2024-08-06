@@ -156,7 +156,7 @@ type DriverExt struct {
 }
 
 func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dExt *DriverExt, err error) {
-	driverOptions := &DriverOptions{}
+	driverOptions := NewDriverOptions()
 	for _, option := range options {
 		option(driverOptions)
 	}
