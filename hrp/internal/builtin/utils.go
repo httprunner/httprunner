@@ -8,9 +8,11 @@ import (
 	"encoding/csv"
 	builtinJSON "encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"math/rand"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -508,4 +510,30 @@ func GetCurrentDay() string {
 	// 格式化日期为 yyyyMMdd
 	formattedDate := now.Format("20060102")
 	return formattedDate
+}
+
+func DownloadFile(filePath string, url string) error {
+	log.Info().Str("filePath", filePath).Str("url", url).Msg("download file")
+	out, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s, download failed", resp.Status)
+	}
+
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

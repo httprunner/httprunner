@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -328,7 +329,16 @@ func (dev *AndroidDevice) StopPcap() string {
 	return ""
 }
 
-func (dev *AndroidDevice) Install(app io.ReadSeeker, opts InstallOptions) error {
+func (dev *AndroidDevice) Uninstall(packageName string) error {
+	return myexec.RunCommand("adb", "-s", dev.SerialNumber, "uninstall", packageName)
+}
+
+func (dev *AndroidDevice) Install(appPath string, opts *InstallOptions) error {
+	app, err := os.Open(appPath)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("install %s open file failed", appPath))
+	}
+
 	brand, err := dev.d.Brand()
 	if err != nil {
 		return err

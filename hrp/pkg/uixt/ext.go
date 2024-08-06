@@ -50,18 +50,6 @@ func WithThreshold(threshold float64) CVOption {
 	}
 }
 
-type InstallOptions struct {
-	Reinstall       bool
-	GrantPermission bool
-	Downgrade       bool
-}
-
-type InstallResult struct {
-	Result    int    `json:"result"`
-	ErrorCode int    `json:"errorCode"`
-	ErrorMsg  string `json:"errorMsg"`
-}
-
 type ScreenResult struct {
 	bufSource   *bytes.Buffer // raw image buffer bytes
 	imagePath   string        // image file path
@@ -213,35 +201,59 @@ func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dEx
 	return dExt, nil
 }
 
-func (dExt *DriverExt) Install(filePath string, opts InstallOptions) error {
-	app, err := os.Open(filePath)
+func (dExt *DriverExt) InstallByUrl(url string, opts *InstallOptions) error {
+	// 获取当前目录
+	cwd, err := os.Getwd()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("install %s open file failed", filePath))
+		return err
 	}
-	stopChan := make(chan struct{})
-	go func() {
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
 
-		for {
-			select {
-			case <-ticker.C:
-				actions := []TapTextAction{
-					{Text: "^.*无视风险安装$", Options: []ActionOption{WithTapOffset(100, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
-					{Text: "^已了解此应用未经检测.*", Options: []ActionOption{WithTapOffset(-450, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
+	// 将文件保存到当前目录
+	appPath := filepath.Join(cwd, fmt.Sprint(time.Now().UnixNano())) // 替换为你想保存的文件名
+	err = builtin.DownloadFile(appPath, url)
+	if err != nil {
+		return err
+	}
+
+	err = dExt.Install(appPath, opts)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (dExt *DriverExt) Uninstall(packageName string) error {
+	return dExt.Device.Uninstall(packageName)
+}
+
+func (dExt *DriverExt) Install(filePath string, opts *InstallOptions) error {
+	if _, ok := dExt.Device.(*AndroidDevice); ok {
+		stopChan := make(chan struct{})
+		go func() {
+			ticker := time.NewTicker(5 * time.Second)
+			defer ticker.Stop()
+
+			for {
+				select {
+				case <-ticker.C:
+					actions := []TapTextAction{
+						{Text: "^.*无视风险安装$", Options: []ActionOption{WithTapOffset(100, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
+						{Text: "^已了解此应用未经检测.*", Options: []ActionOption{WithTapOffset(-450, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
+					}
+					_ = dExt.Driver.TapByTexts(actions...)
+					_ = dExt.TapByOCR("^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|安装|授权本次安装|继续安装|重新安装)$", WithRegex(true), WithIgnoreNotFoundError(true))
+				case <-stopChan:
+					fmt.Println("Ticker stopped")
+					return
 				}
-				_ = dExt.Driver.TapByTexts(actions...)
-				_ = dExt.TapByOCR("^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|安装|授权本次安装|继续安装|重新安装)$", WithRegex(true), WithIgnoreNotFoundError(true))
-			case <-stopChan:
-				fmt.Println("Ticker stopped")
-				return
 			}
-		}
-	}()
-	defer func() {
-		close(stopChan)
-	}()
-	return dExt.Device.Install(app, opts)
+		}()
+		defer func() {
+			close(stopChan)
+		}()
+	}
+
+	return dExt.Device.Install(filePath, opts)
 }
 
 // takeScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder

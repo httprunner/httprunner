@@ -17,6 +17,7 @@ type ActionMethod string
 const (
 	ACTION_AppInstall   ActionMethod = "install"
 	ACTION_AppUninstall ActionMethod = "uninstall"
+	ACTION_AppClear     ActionMethod = "app_clear"
 	ACTION_AppStart     ActionMethod = "app_start"
 	ACTION_AppLaunch    ActionMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
 	ACTION_AppTerminate ActionMethod = "app_terminate"
@@ -64,6 +65,9 @@ const (
 	ACTION_VideoCrawler    ActionMethod = "video_crawler"
 	ACTION_ClosePopups     ActionMethod = "close_popups"
 	ACTION_EndToEndDelay   ActionMethod = "live_e2e"
+	ACTION_InstallApp      ActionMethod = "install_app"
+	ACTION_UninstallApp    ActionMethod = "uninstall_app"
+	ACTION_DownloadApp     ActionMethod = "download_app"
 )
 
 type MobileAction struct {
@@ -558,8 +562,23 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 
 	switch action.Method {
 	case ACTION_AppInstall:
-		// TODO
-		return errActionNotImplemented
+		if appUrl, ok := action.Params.(string); ok {
+			if err = dExt.InstallByUrl(appUrl, NewInstallOptions(WithRetryTime(action.MaxRetryTimes))); err != nil {
+				return errors.Wrap(err, "failed to install app")
+			}
+		}
+	case ACTION_AppUninstall:
+		if packageName, ok := action.Params.(string); ok {
+			if err = dExt.Uninstall(packageName); err != nil {
+				return errors.Wrap(err, "failed to uninstall app")
+			}
+		}
+	case ACTION_AppClear:
+		if packageName, ok := action.Params.(string); ok {
+			if err = dExt.Driver.Clear(packageName); err != nil {
+				return errors.Wrap(err, "failed to clear app")
+			}
+		}
 	case ACTION_AppLaunch:
 		if bundleId, ok := action.Params.(string); ok {
 			return dExt.Driver.AppLaunch(bundleId)

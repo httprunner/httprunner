@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -472,8 +473,18 @@ func (dev *IOSDevice) StopPcap() string {
 	return dev.pcapFile
 }
 
-func (dev *IOSDevice) Install(app io.ReadSeeker, opts InstallOptions) error {
-	return errors.New("install method not implemented")
+func (dev *IOSDevice) Install(appPath string, opts *InstallOptions) (err error) {
+	for i := 0; i < opts.RetryTime; i++ {
+		err = myexec.RunCommand("ideviceinstaller", "-u", dev.UDID, "-i", appPath)
+		if err == nil {
+			return nil
+		}
+	}
+	return err
+}
+
+func (dev *IOSDevice) Uninstall(bundleId string) error {
+	return myexec.RunCommand("ideviceinstaller", "-u", dev.UDID, "-U", bundleId)
 }
 
 func (dev *IOSDevice) forward(localPort, remotePort int) error {

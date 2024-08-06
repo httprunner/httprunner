@@ -26,7 +26,7 @@ func setup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	iOSDriverExt, err = newDriverExt(device, driver, nil)
+	iOSDriverExt, err = newDriverExt(device, driver)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,6 +35,14 @@ func setup(t *testing.T) {
 func TestViaUSB(t *testing.T) {
 	setup(t)
 	t.Log(driver.Status())
+}
+
+func TestInstall(t *testing.T) {
+	setup(t)
+	err := iOSDriverExt.Install("/Users/bytedance/workcode/httprunner/hrp/pkg/uixt/1722942152176906000", NewInstallOptions(WithRetryTime(5)))
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestNewIOSDevice(t *testing.T) {

@@ -2,7 +2,6 @@ package uixt
 
 import (
 	"bytes"
-	"io"
 	"math"
 	"strings"
 	"time"
@@ -506,7 +505,9 @@ type Device interface {
 	StartPcap() error
 	StopPcap() string
 
-	Install(app io.ReadSeeker, opts InstallOptions) error
+	Uninstall(packageName string) error
+
+	Install(appPath string, opts *InstallOptions) error
 }
 
 type ForegroundApp struct {

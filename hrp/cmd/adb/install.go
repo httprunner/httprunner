@@ -42,8 +42,8 @@ var installCmd = &cobra.Command{
 		replace, _ := cmd.Flags().GetBool("replace")
 		downgrade, _ := cmd.Flags().GetBool("downgrade")
 		grant, _ := cmd.Flags().GetBool("grant")
-		option := uixt.InstallOptions{Reinstall: replace, GrantPermission: grant, Downgrade: downgrade}
-		err = driverExt.Install(args[0], option)
+
+		err = driverExt.Install(args[0], uixt.NewInstallOptions(uixt.WithReinstall(replace), uixt.WithDowngrade(downgrade), uixt.WithGrantPermission(grant)))
 		if err != nil {
 			fmt.Println(err)
 			return err
