@@ -2,6 +2,7 @@ package boomer
 
 import (
 	"fmt"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"math/rand"
 	"os"
 	"runtime/debug"
@@ -337,6 +338,7 @@ func (r *runner) reportStats() {
 	data := r.stats.collectReportData()
 	data["user_count"] = r.controller.getCurrentClientsNum()
 	data["state"] = atomic.LoadInt32(&r.state)
+	r.stats.messageToRunnerChan <- data
 	r.outputOnEvent(data)
 }
 
@@ -955,6 +957,27 @@ func (r *workerRunner) start() {
 
 	r.outputOnStart()
 
+	// report to master
+	go func() {
+		for {
+			select {
+			case data := <-r.stats.messageToRunnerChan:
+				if r.state == StateInit || r.state == StateStopped {
+					continue
+				}
+				var d map[string][]byte
+				var err error
+				for k, v := range data {
+					d[k], err = json.Marshal(v)
+					if err != nil {
+						log.Error().Err(err).Msg("convert to bytes failed")
+					}
+				}
+				r.client.sendChannel() <- newGenericMessage("stats", d, r.nodeID)
+			}
+		}
+	}()
+
 	go r.runTimeCheck(r.getRunTime())
 
 	go r.spawnWorkers(r.getSpawnCount(), r.getSpawnRate(), r.stoppingChan, r.spawnComplete)
@@ -1021,6 +1044,7 @@ type masterRunner struct {
 	parseTestCasesChan chan bool
 	testCaseBytesChan  chan []byte
 	testCasesBytes     []byte
+	dataOutput         *dataOutput
 }
 
 func newMasterRunner(masterBindHost string, masterBindPort int) *masterRunner {
@@ -1032,6 +1056,7 @@ func newMasterRunner(masterBindHost string, masterBindPort int) *masterRunner {
 			closeChan:    make(chan bool),
 			wg:           sync.WaitGroup{},
 			wgMu:         sync.RWMutex{},
+			stats:        newRequestStats(),
 		},
 		masterBindHost:     masterBindHost,
 		masterBindPort:     masterBindPort,
@@ -1127,6 +1152,8 @@ func (r *masterRunner) clientListener() {
 					workerInfo.setState(StateSpawning)
 				case typeSpawningComplete:
 					workerInfo.setState(StateRunning)
+				case typeStats:
+					r.handleStat(msg.Data)
 				case typeQuit:
 					if workerInfo.getState() == StateQuitting {
 						break
@@ -1370,6 +1397,7 @@ func (r *masterRunner) stop() error {
 	if r.isStarting() {
 		r.updateState(StateStopping)
 		r.server.sendBroadcasts(&genericMessage{Type: "stop"})
+		r.stats.clearAll()
 		return nil
 	} else {
 		return errors.New("already stopped")
@@ -1414,4 +1442,67 @@ func (r *masterRunner) reportStats() {
 	}
 	table.Render()
 	println()
+}
+
+func (r *masterRunner) handleStat(data map[string][]byte) {
+	var result map[string]interface{}
+	for k, v := range data {
+		var i interface{}
+		err := json.Unmarshal(v, i)
+		if err != nil {
+			log.Error().Err(err).Msgf("Unmarshal error %s", k)
+			continue
+		}
+		result[k] = i
+	}
+	stats, ok := result["stats"].([]interface{})
+	if !ok {
+	}
+	for _, stat := range stats {
+		statBytes, err := json.Marshal(stat)
+		if err != nil {
+			continue
+		}
+		entry := statsEntry{}
+		if err = json.Unmarshal(statBytes, &entry); err != nil {
+		}
+		r.stats.get(entry.Name, entry.Method).extend(&entry)
+	}
+
+	errs := result["errors"].(map[string]map[string]interface{})
+
+	for k, v := range errs {
+		eBytes, err := json.Marshal(v)
+		if err != nil {
+			continue
+		}
+		erro := statsError{}
+		if err = json.Unmarshal(eBytes, &erro); err != nil {
+		}
+		if _, ok := r.stats.errors[k]; ok {
+			r.stats.errors[k].occurrences += erro.occurrences
+		} else {
+			r.stats.errors[k] = &erro
+		}
+	}
+
+	transactions, ok := result["transactions"].(map[string]int64)
+	if !ok {
+	}
+	transactionsPassed := transactions["passed"]
+	transactionsFailed := transactions["failed"]
+	r.stats.transactionFailed += transactionsFailed
+	r.stats.transactionPassed += transactionsPassed
+
+	// convert stats in total
+	statsTotal, ok := result["stats_total"].(interface{})
+	if !ok {
+	}
+	statBytes, err := json.Marshal(statsTotal)
+	if err != nil {
+	}
+	entry := statsEntry{}
+	if err = json.Unmarshal(statBytes, &entry); err != nil {
+	}
+	r.stats.total.extend(&entry)
 }

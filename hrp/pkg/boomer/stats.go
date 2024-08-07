@@ -1,6 +1,7 @@
 package boomer
 
 import (
+	"math"
 	"sync/atomic"
 	"time"
 
@@ -40,6 +41,8 @@ type requestStats struct {
 
 	requestSuccessChan chan *requestSuccess
 	requestFailureChan chan *requestFailure
+
+	messageToRunnerChan chan map[string]interface{}
 }
 
 func newRequestStats() (stats *requestStats) {
@@ -53,6 +56,7 @@ func newRequestStats() (stats *requestStats) {
 	stats.transactionChan = make(chan *transaction, 100)
 	stats.requestSuccessChan = make(chan *requestSuccess, 100)
 	stats.requestFailureChan = make(chan *requestFailure, 100)
+	stats.messageToRunnerChan = make(chan map[string]interface{})
 
 	stats.total = &statsEntry{
 		Name:   "Total",
@@ -279,6 +283,26 @@ func (s *statsEntry) getStrippedReport() map[string]interface{} {
 	report := s.serialize()
 	s.reset()
 	return report
+}
+
+func (s *statsEntry) extend(one *statsEntry) {
+	s.NumRequests += one.NumRequests
+	s.NumFailures += one.NumFailures
+	s.TotalResponseTime += one.TotalResponseTime
+	s.MinResponseTime = int64(math.Min(float64(s.MinResponseTime), float64(one.MinResponseTime)))
+	s.MaxResponseTime = int64(math.Max(float64(s.MaxResponseTime), float64(one.MaxResponseTime)))
+
+	for key, val := range one.ResponseTimes {
+		if _, ok := s.ResponseTimes[key]; ok {
+			s.ResponseTimes[key] += val
+		} else {
+			s.ResponseTimes[key] = val
+		}
+	}
+
+	s.TotalContentLength += one.TotalContentLength
+	s.StartTime = int64(math.Min(float64(s.StartTime), float64(one.StartTime)))
+	s.LastRequestTimestamp = int64(math.Max(float64(s.LastRequestTimestamp), float64(one.LastRequestTimestamp)))
 }
 
 type statsError struct {
