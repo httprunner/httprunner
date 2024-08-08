@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/olekukonko/tablewriter"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
 	"github.com/rs/zerolog/log"
@@ -248,20 +247,23 @@ func deserializeStatsEntry(stat interface{}) (entryOutput *statsEntryOutput, err
 	if err = json.Unmarshal(statBytes, &entry); err != nil {
 		return nil, err
 	}
+	return convert2StatsEntryOutput(&entry), nil
+}
 
+func convert2StatsEntryOutput(entry *statsEntry) *statsEntryOutput {
 	var duration float64
 	if entry.Name == "Total" {
 		duration = float64(entry.LastRequestTimestamp-entry.StartTime) / 1e3
 		if duration == 0 {
-			return nil, errors.New("no step specified")
+
 		}
 	} else {
 		duration = float64(reportStatsInterval / time.Second)
 	}
 
 	numRequests := entry.NumRequests
-	entryOutput = &statsEntryOutput{
-		statsEntry:         entry,
+	entryOutput := &statsEntryOutput{
+		statsEntry:         *entry,
 		duration:           duration,
 		medianResponseTime: getMedianResponseTime(numRequests, entry.ResponseTimes),
 		avgResponseTime:    getAvgResponseTime(numRequests, entry.TotalResponseTime),
@@ -269,7 +271,7 @@ func deserializeStatsEntry(stat interface{}) (entryOutput *statsEntryOutput, err
 		currentRps:         getCurrentRps(numRequests, duration),
 		currentFailPerSec:  getCurrentFailPerSec(entry.NumFailures, duration),
 	}
-	return
+	return entryOutput
 }
 
 // gauge vectors for requests
@@ -468,16 +470,7 @@ func NewPrometheusPusherOutput(gatewayURL, jobName string, mode string) *Prometh
 	}
 }
 
-// PrometheusPusherOutput pushes boomer stats to Prometheus Pushgateway.
-type PrometheusPusherOutput struct {
-	pusher *push.Pusher // Prometheus Pushgateway Pusher
-}
-
-// OnStart will register all prometheus metric collectors
-func (o *PrometheusPusherOutput) OnStart() {
-	// reset all prometheus metrics
-	resetPrometheusMetrics()
-	log.Info().Msg("register prometheus metric collectors")
+func GetRegistry() *prometheus.Registry {
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(
 		// gauge vectors for requests
@@ -509,7 +502,20 @@ func (o *PrometheusPusherOutput) OnStart() {
 		gaugeTransactionsPassed,
 		gaugeTransactionsFailed,
 	)
-	o.pusher = o.pusher.Gatherer(registry)
+	return registry
+}
+
+// PrometheusPusherOutput pushes boomer stats to Prometheus Pushgateway.
+type PrometheusPusherOutput struct {
+	pusher *push.Pusher // Prometheus Pushgateway Pusher
+}
+
+// OnStart will register all prometheus metric collectors
+func (o *PrometheusPusherOutput) OnStart() {
+	// reset all prometheus metrics
+	resetPrometheusMetrics()
+	log.Info().Msg("register prometheus metric collectors")
+	o.pusher = o.pusher.Gatherer(GetRegistry())
 }
 
 // OnStop of PrometheusPusherOutput has nothing to do.
@@ -529,6 +535,14 @@ func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 		return
 	}
 
+	setPrometheus(output)
+
+	if err := o.pusher.Push(); err != nil {
+		log.Error().Err(err).Msg("push to Pushgateway failed")
+	}
+}
+
+func setPrometheus(output *dataOutput) {
 	// user count
 	gaugeUsers.Set(float64(output.UserCount))
 
@@ -602,10 +616,6 @@ func (o *PrometheusPusherOutput) OnEvent(data map[string]interface{}) {
 			requestError["name"].(string),
 			requestError["error"].(string),
 		).Add(float64(requestError["occurrences"].(int64)))
-	}
-
-	if err := o.pusher.Push(); err != nil {
-		log.Error().Err(err).Msg("push to Pushgateway failed")
 	}
 }
 

@@ -338,7 +338,7 @@ func (r *runner) reportStats() {
 	data := r.stats.collectReportData()
 	data["user_count"] = r.controller.getCurrentClientsNum()
 	data["state"] = atomic.LoadInt32(&r.state)
-	r.stats.messageToRunnerChan <- data
+	r.stats.statsToMasterChan <- data
 	r.outputOnEvent(data)
 }
 
@@ -715,6 +715,8 @@ type workerRunner struct {
 
 	mutex      sync.Mutex
 	ignoreQuit bool
+	// whether you use prometheus exporter
+	exporterMode bool
 }
 
 func newWorkerRunner(masterHost string, masterPort int) (r *workerRunner) {
@@ -957,26 +959,28 @@ func (r *workerRunner) start() {
 
 	r.outputOnStart()
 
-	// report to master
-	go func() {
-		for {
-			select {
-			case data := <-r.stats.messageToRunnerChan:
-				if r.state == StateInit || r.state == StateStopped {
-					continue
-				}
-				var d map[string][]byte
-				var err error
-				for k, v := range data {
-					d[k], err = json.Marshal(v)
-					if err != nil {
-						log.Error().Err(err).Msg("convert to bytes failed")
+	// stats to master
+	if r.exporterMode {
+		go func() {
+			for {
+				select {
+				case data := <-r.stats.statsToMasterChan:
+					if r.state == StateInit || r.state == StateStopped {
+						continue
 					}
+					var d map[string][]byte
+					var err error
+					for k, v := range data {
+						d[k], err = json.Marshal(v)
+						if err != nil {
+							log.Error().Err(err).Msg("convert to bytes failed")
+						}
+					}
+					r.client.sendChannel() <- newGenericMessage("stats", d, r.nodeID)
 				}
-				r.client.sendChannel() <- newGenericMessage("stats", d, r.nodeID)
 			}
-		}
-	}()
+		}()
+	}
 
 	go r.runTimeCheck(r.getRunTime())
 
@@ -1044,7 +1048,6 @@ type masterRunner struct {
 	parseTestCasesChan chan bool
 	testCaseBytesChan  chan []byte
 	testCasesBytes     []byte
-	dataOutput         *dataOutput
 }
 
 func newMasterRunner(masterBindHost string, masterBindPort int) *masterRunner {
@@ -1505,4 +1508,35 @@ func (r *masterRunner) handleStat(data map[string][]byte) {
 	if err = json.Unmarshal(statBytes, &entry); err != nil {
 	}
 	r.stats.total.extend(&entry)
+}
+
+func (r *masterRunner) getDataOutput() *dataOutput {
+	entryTotalOutput := convert2StatsEntryOutput(r.stats.total)
+	entryStatsOutput := make([]*statsEntryOutput, len(r.stats.entries))
+	for _, stat := range r.stats.entries {
+		entryStatsOutput = append(entryStatsOutput, convert2StatsEntryOutput(stat))
+	}
+
+	errs := make(map[string]map[string]interface{})
+
+	for k, v := range r.stats.errors {
+		errs[k] = v.toMap()
+	}
+	output := &dataOutput{
+		UserCount:            0,
+		State:                r.getState(),
+		Duration:             entryTotalOutput.duration,
+		TotalStats:           entryTotalOutput,
+		TransactionsPassed:   r.stats.transactionPassed,
+		TransactionsFailed:   r.stats.transactionFailed,
+		TotalAvgResponseTime: entryTotalOutput.avgResponseTime,
+		TotalMaxResponseTime: float64(entryTotalOutput.MaxResponseTime),
+		TotalMinResponseTime: float64(entryTotalOutput.MinResponseTime),
+		TotalRPS:             entryTotalOutput.currentRps,
+		TotalFailRatio:       getTotalFailRatio(entryTotalOutput.NumRequests, entryTotalOutput.NumFailures),
+		TotalFailPerSec:      entryTotalOutput.currentFailPerSec,
+		Stats:                entryStatsOutput,
+		Errors:               errs,
+	}
+	return output
 }

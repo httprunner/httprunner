@@ -42,7 +42,7 @@ type requestStats struct {
 	requestSuccessChan chan *requestSuccess
 	requestFailureChan chan *requestFailure
 
-	messageToRunnerChan chan map[string]interface{}
+	statsToMasterChan chan map[string]interface{}
 }
 
 func newRequestStats() (stats *requestStats) {
@@ -56,7 +56,7 @@ func newRequestStats() (stats *requestStats) {
 	stats.transactionChan = make(chan *transaction, 100)
 	stats.requestSuccessChan = make(chan *requestSuccess, 100)
 	stats.requestFailureChan = make(chan *requestFailure, 100)
-	stats.messageToRunnerChan = make(chan map[string]interface{})
+	stats.statsToMasterChan = make(chan map[string]interface{})
 
 	stats.total = &statsEntry{
 		Name:   "Total",
