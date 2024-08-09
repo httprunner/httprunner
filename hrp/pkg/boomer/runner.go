@@ -344,7 +344,7 @@ func (r *runner) reportStats() {
 
 func (r *runner) reportTestResult() {
 	// convert stats in total
-	var statsTotal interface{} = r.stats.total.serialize()
+	var statsTotal interface{} = r.stats.totalForTestResult.serialize()
 	entryTotalOutput, err := deserializeStatsEntry(statsTotal)
 	if err != nil {
 		return
@@ -965,10 +965,7 @@ func (r *workerRunner) start() {
 			for {
 				select {
 				case data := <-r.stats.statsToMasterChan:
-					if r.state == StateInit || r.state == StateStopped {
-						continue
-					}
-					var d map[string][]byte
+					var d = make(map[string][]byte)
 					var err error
 					for k, v := range data {
 						d[k], err = json.Marshal(v)
@@ -1001,9 +998,7 @@ func (r *workerRunner) start() {
 		if r.loop != nil {
 			r.loop = nil
 		}
-
 		close(r.doneChan)
-
 		// wait until all stats are reported successfully
 		<-r.reportedChan
 		// report test result
@@ -1261,6 +1256,9 @@ func (r *masterRunner) run() {
 }
 
 func (r *masterRunner) start() error {
+	// reset all prometheus metrics
+	resetPrometheusMetrics()
+	r.stats.clearAll()
 	numWorkers := r.server.getAvailableClientsLength()
 	if numWorkers == 0 {
 		return errors.New("current available workers: 0")
@@ -1400,7 +1398,6 @@ func (r *masterRunner) stop() error {
 	if r.isStarting() {
 		r.updateState(StateStopping)
 		r.server.sendBroadcasts(&genericMessage{Type: "stop"})
-		r.stats.clearAll()
 		return nil
 	} else {
 		return errors.New("already stopped")
@@ -1448,71 +1445,57 @@ func (r *masterRunner) reportStats() {
 }
 
 func (r *masterRunner) handleStat(data map[string][]byte) {
-	var result map[string]interface{}
+	var stats []statsEntry
+	var statsTotal statsEntry
+	var transactions map[string]int64
+	var sErrors map[string]map[string]interface{}
+	var err error
 	for k, v := range data {
-		var i interface{}
-		err := json.Unmarshal(v, i)
+		switch k {
+		case "stats":
+			err = json.Unmarshal(v, &stats)
+		case "errors":
+			err = json.Unmarshal(v, &sErrors)
+		case "transactions":
+			err = json.Unmarshal(v, &transactions)
+		case "stats_total":
+			err = json.Unmarshal(v, &statsTotal)
+		}
 		if err != nil {
 			log.Error().Err(err).Msgf("Unmarshal error %s", k)
-			continue
 		}
-		result[k] = i
-	}
-	stats, ok := result["stats"].([]interface{})
-	if !ok {
 	}
 	for _, stat := range stats {
-		statBytes, err := json.Marshal(stat)
-		if err != nil {
-			continue
-		}
-		entry := statsEntry{}
-		if err = json.Unmarshal(statBytes, &entry); err != nil {
-		}
-		r.stats.get(entry.Name, entry.Method).extend(&entry)
+		r.mutex.Lock()
+		r.stats.get(stat.Name, stat.Method).extend(&stat)
+		r.mutex.Unlock()
 	}
 
-	errs := result["errors"].(map[string]map[string]interface{})
-
-	for k, v := range errs {
-		eBytes, err := json.Marshal(v)
-		if err != nil {
-			continue
-		}
-		erro := statsError{}
-		if err = json.Unmarshal(eBytes, &erro); err != nil {
-		}
+	for k, v := range sErrors {
+		sError := statsError{}
+		sError.deserialize(v)
 		if _, ok := r.stats.errors[k]; ok {
-			r.stats.errors[k].occurrences += erro.occurrences
+			r.stats.errors[k].occurrences += sError.occurrences
 		} else {
-			r.stats.errors[k] = &erro
+			r.stats.errors[k] = &sError
 		}
 	}
 
-	transactions, ok := result["transactions"].(map[string]int64)
-	if !ok {
-	}
 	transactionsPassed := transactions["passed"]
 	transactionsFailed := transactions["failed"]
 	r.stats.transactionFailed += transactionsFailed
 	r.stats.transactionPassed += transactionsPassed
 
 	// convert stats in total
-	statsTotal, ok := result["stats_total"].(interface{})
-	if !ok {
-	}
-	statBytes, err := json.Marshal(statsTotal)
-	if err != nil {
-	}
-	entry := statsEntry{}
-	if err = json.Unmarshal(statBytes, &entry); err != nil {
-	}
-	r.stats.total.extend(&entry)
+
+	r.mutex.Lock()
+	r.stats.total.extend(&statsTotal)
+	r.mutex.Unlock()
 }
 
 func (r *masterRunner) getDataOutput() *dataOutput {
 	entryTotalOutput := convert2StatsEntryOutput(r.stats.total)
-	entryStatsOutput := make([]*statsEntryOutput, len(r.stats.entries))
+	entryStatsOutput := make([]*statsEntryOutput, 0)
 	for _, stat := range r.stats.entries {
 		entryStatsOutput = append(entryStatsOutput, convert2StatsEntryOutput(stat))
 	}

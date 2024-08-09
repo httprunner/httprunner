@@ -336,7 +336,7 @@ func (api *apiHandler) GetMasterInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (api *apiHandler) Metrics() http.HandlerFunc {
-	registry := boomer.GetRegistry()
+	registry := boomer.GetRegistry(true)
 	h := promhttp.InstrumentMetricHandler(
 		registry, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}),
 	)

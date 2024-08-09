@@ -538,7 +538,6 @@ func (b *Boomer) ReBalance(Args *Profile) error {
 
 // Stop stops to load test
 func (b *Boomer) Stop() error {
-	resetPrometheusMetrics()
 	return b.masterRunner.stop()
 }
 
@@ -634,6 +633,6 @@ func (b *Boomer) SetPrometheusMetrics() {
 		userCount += count
 	}
 	output.UserCount = userCount
-	setPrometheus(output)
+	setPrometheus(output, true)
 
 }
