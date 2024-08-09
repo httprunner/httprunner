@@ -353,7 +353,7 @@ func (r *runner) reportTestResult() {
 	currentTime := time.Now()
 	println(fmt.Sprint("=========================================== Statistics Summary =========================================="))
 	println(fmt.Sprintf("Current time: %s, Users: %v, Duration: %v, Accumulated Transactions: %d Passed, %d Failed",
-		currentTime.Format("2006/01/02 15:04:05"), r.controller.getCurrentClientsNum(), duration, r.stats.transactionPassed, r.stats.transactionFailed))
+		currentTime.Format("2006/01/02 15:04:05"), r.controller.getCurrentClientsNum(), duration, r.stats.transactionPassedForTestResult, r.stats.transactionFailedForTestResult))
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Name", "# requests", "# fails", "Median", "Average", "Min", "Max", "Content Size", "# reqs/sec", "# fails/sec"})
 	row := make([]string, 10)

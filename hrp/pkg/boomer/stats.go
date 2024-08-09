@@ -36,9 +36,11 @@ type requestStats struct {
 	totalForTestResult *statsEntry
 	startTime          int64
 
-	transactionChan   chan *transaction
-	transactionPassed int64 // accumulated number of passed transactions
-	transactionFailed int64 // accumulated number of failed transactions
+	transactionChan                chan *transaction
+	transactionPassed              int64 // accumulated number of passed transactions
+	transactionFailed              int64 // accumulated number of failed transactions
+	transactionPassedForTestResult int64 // accumulated number of passed transactions
+	transactionFailedForTestResult int64 // accumulated number of failed transactions
 
 	requestSuccessChan chan *requestSuccess
 	requestFailureChan chan *requestFailure
@@ -137,6 +139,7 @@ func (s *requestStats) clearAll() {
 	s.totalForTestResult.reset()
 	s.transactionPassed = 0
 	s.transactionFailed = 0
+	s.transactionPassedForTestResult, s.transactionFailedForTestResult = 0, 0
 	s.entries = make(map[string]*statsEntry)
 	s.errors = make(map[string]*statsError)
 	s.startTime = time.Now().Unix()
@@ -166,6 +169,8 @@ func (s *requestStats) collectReportData() map[string]interface{} {
 		"passed": s.transactionPassed,
 		"failed": s.transactionFailed,
 	}
+	s.transactionPassedForTestResult += s.transactionPassed
+	s.transactionFailedForTestResult += s.transactionFailed
 	data["stats"] = s.serializeStats()
 	s.totalForTestResult.extend(s.total)
 	data["stats_total"] = s.total.getStrippedReport()
