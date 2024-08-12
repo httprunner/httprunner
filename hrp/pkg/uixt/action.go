@@ -569,7 +569,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		}
 	case ACTION_AppUninstall:
 		if packageName, ok := action.Params.(string); ok {
-			if err = dExt.Uninstall(packageName); err != nil {
+			if err = dExt.Uninstall(packageName, action.GetOptions()...); err != nil {
 				return errors.Wrap(err, "failed to uninstall app")
 			}
 		}

@@ -222,8 +222,16 @@ func (dExt *DriverExt) InstallByUrl(url string, opts *InstallOptions) error {
 	return nil
 }
 
-func (dExt *DriverExt) Uninstall(packageName string) error {
-	return dExt.Device.Uninstall(packageName)
+func (dExt *DriverExt) Uninstall(packageName string, options ...ActionOption) error {
+	actionOptions := NewActionOptions(options...)
+	err := dExt.Device.Uninstall(packageName)
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to uninstall")
+	}
+	if actionOptions.IgnoreNotFoundError {
+		return nil
+	}
+	return err
 }
 
 func (dExt *DriverExt) Install(filePath string, opts *InstallOptions) error {
