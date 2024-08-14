@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -512,8 +513,17 @@ func GetCurrentDay() string {
 	return formattedDate
 }
 
-func DownloadFile(filePath string, url string) error {
-	log.Info().Str("filePath", filePath).Str("url", url).Msg("download file")
+func DownloadFile(filePath string, fileUrl string) error {
+	log.Info().Str("filePath", filePath).Str("url", fileUrl).Msg("download file")
+	parsedURL, err := url.Parse(fileUrl)
+	if err != nil {
+		return err
+	}
+
+	if parsedURL.Host != "gtf-eapi-cn.bytedance.com" {
+		return errors.New("invalid domain: must be gtf-eapi-cn.bytedance.com")
+	}
+
 	out, err := os.Create(filePath)
 	if err != nil {
 		return err
@@ -521,7 +531,7 @@ func DownloadFile(filePath string, url string) error {
 	defer out.Close()
 
 	// 创建一个新的 HTTP 请求
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", fileUrl, nil)
 	if err != nil {
 		return err
 	}
