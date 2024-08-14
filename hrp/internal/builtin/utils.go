@@ -520,7 +520,19 @@ func DownloadFile(filePath string, url string) error {
 	}
 	defer out.Close()
 
-	resp, err := http.Get(url)
+	// 创建一个新的 HTTP 请求
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	// 添加自定义头部
+	req.Header.Add("accessKey", "ies.vedem.video")
+	req.Header.Add("token", "***REMOVED***")
+
+	// 创建一个 HTTP 客户端并发送请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -530,6 +542,7 @@ func DownloadFile(filePath string, url string) error {
 		return fmt.Errorf("bad status: %s, download failed", resp.Status)
 	}
 
+	// 将响应主体写入文件
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
 		return err
