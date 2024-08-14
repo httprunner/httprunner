@@ -210,6 +210,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// 直播预览流线上概率
 			livePreviewProb := crawler.getLivePreviewProb()
 
+			// 直播预览流线上概率
+			livePreviewProb := crawler.getLivePreviewProb()
+
 			switch currentVideo.Type {
 			case VideoType_PreviewLive:
 				isFeed = true
