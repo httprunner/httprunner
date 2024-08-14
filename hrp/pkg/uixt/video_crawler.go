@@ -184,6 +184,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 
 			// get app event trackings
 			// retry 3 times if get feed failed, abort if fail 3 consecutive times
+			fetchVideoStartTime := time.Now()
 			currentVideo, err := crawler.getCurrentVideo()
 			if err != nil || currentVideo.Type == "" {
 				crawler.failedCount++
@@ -204,6 +205,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				// retry
 				continue
 			}
+			fetchVideoFinishTime := time.Now()
 
 			// 直播预览流线上概率
 			livePreviewProb := crawler.getLivePreviewProb()
@@ -278,6 +280,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
 				screenResult.SwipeFinishTime = swipeFinishTime.UnixMilli()
 				screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
+				screenResult.FetchVideoStartTime = fetchVideoStartTime.UnixMilli()
+				screenResult.FetchVideoFinishTime = fetchVideoFinishTime.UnixMilli()
+				screenResult.FetchVideoElapsed = fetchVideoFinishTime.Sub(fetchVideoStartTime).Milliseconds()
 
 				var exitLive bool
 				if crawler.isLiveTargetAchieved() {
@@ -313,8 +318,11 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					Video:      currentVideo,
 
 					// log swipe timelines
-					SwipeStartTime:  swipeStartTime.UnixMilli(),
-					SwipeFinishTime: swipeFinishTime.UnixMilli(),
+					SwipeStartTime:       swipeStartTime.UnixMilli(),
+					SwipeFinishTime:      swipeFinishTime.UnixMilli(),
+					FetchVideoStartTime:  fetchVideoStartTime.UnixMilli(),
+					FetchVideoFinishTime: fetchVideoFinishTime.UnixMilli(),
+					FetchVideoElapsed:    fetchVideoFinishTime.Sub(fetchVideoStartTime).Milliseconds(),
 				}
 				dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 

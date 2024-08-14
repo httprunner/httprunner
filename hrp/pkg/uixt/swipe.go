@@ -212,7 +212,7 @@ func (dExt *DriverExt) swipeToTapApp(appName string, options ...ActionOption) er
 	}
 
 	// automatic handling popups before swipe
-	if err := dExt.ClosePopups(); err != nil {
+	if err := dExt.ClosePopupsHandler(); err != nil {
 		log.Error().Err(err).Msg("auto handle popup failed")
 	}
 

@@ -1,11 +1,8 @@
 # Release History
 
-<<<<<<< HEAD
-## v4.3.8 (2024-01-18)
+## v4.3.9 (2024-01-18)
 
 - feat: add Shell step type
-=======
-## v4.3.9 (2023-09-19)
 - fix:  OCR calls use compressed image
 
 ## v4.3.8 (2023-09-19)
@@ -17,7 +14,6 @@
 - fix: fixed the problem that the new version of adb format fails to parse 
 
 **go version**
->>>>>>> video-release
 
 ## v4.3.7 (2023-09-19)
 

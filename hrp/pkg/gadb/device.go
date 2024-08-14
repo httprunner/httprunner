@@ -108,39 +108,25 @@ func (d *Device) features() (features Features, err error) {
 	return features, nil
 }
 
-<<<<<<< HEAD
-func (d Device) HasAttribute(key string) bool {
-=======
 func (d *Device) HasAttribute(key string) bool {
->>>>>>> video-release
 	_, ok := d.attrs[key]
 	return ok
 }
 
-<<<<<<< HEAD
-func (d Device) Product() (string, error) {
-=======
 func (d *Device) Product() (string, error) {
->>>>>>> video-release
 	if d.HasAttribute("product") {
 		return d.attrs["product"], nil
 	}
 	return "", errors.New("does not have attribute: product")
 }
 
-<<<<<<< HEAD
-func (d Device) Model() (string, error) {
-=======
 func (d *Device) Model() (string, error) {
->>>>>>> video-release
 	if d.HasAttribute("model") {
 		return d.attrs["model"], nil
 	}
 	return "", errors.New("does not have attribute: model")
 }
 
-<<<<<<< HEAD
-=======
 func (d *Device) Brand() (string, error) {
 	if d.HasAttribute("brand") {
 		return d.attrs["brand"], nil
@@ -154,7 +140,6 @@ func (d *Device) Brand() (string, error) {
 	return brand, nil
 }
 
->>>>>>> video-release
 func (d *Device) Usb() (string, error) {
 	if d.HasAttribute("usb") {
 		return d.attrs["usb"], nil
@@ -162,11 +147,7 @@ func (d *Device) Usb() (string, error) {
 	return "", errors.New("does not have attribute: usb")
 }
 
-<<<<<<< HEAD
-func (d Device) transportId() (string, error) {
-=======
 func (d *Device) transportId() (string, error) {
->>>>>>> video-release
 	if d.HasAttribute("transport_id") {
 		return d.attrs["transport_id"], nil
 	}
