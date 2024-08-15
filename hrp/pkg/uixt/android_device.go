@@ -10,7 +10,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"os/exec"
 	"regexp"
@@ -335,6 +334,7 @@ func (dev *AndroidDevice) Uninstall(packageName string) error {
 
 func (dev *AndroidDevice) Install(appPath string, opts *InstallOptions) error {
 	app, err := os.Open(appPath)
+	defer app.Close()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("install %s open file failed", appPath))
 	}
@@ -436,20 +436,6 @@ func (dev *AndroidDevice) installViaInstaller(app io.ReadSeeker, args ...string)
 func (dev *AndroidDevice) installCommon(app io.ReadSeeker, args ...string) error {
 	_, err := dev.d.InstallAPK(app, args...)
 	return err
-}
-
-func getFreePort() (int, error) {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		return 0, errors.Wrap(err, "resolve tcp addr failed")
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return 0, errors.Wrap(err, "listen tcp addr failed")
-	}
-	defer func() { _ = l.Close() }()
-	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
 type LineCallback func(string)

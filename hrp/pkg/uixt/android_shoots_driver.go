@@ -143,6 +143,9 @@ func (sad *ShootsAndroidDriver) close() error {
 
 func (sad *ShootsAndroidDriver) Status() (DeviceStatus, error) {
 	app, err := sad.GetForegroundApp()
+	if err != nil {
+		return DeviceStatus{}, err
+	}
 	res, err := sad.sendCommand(app.PackageName, "Hello", nil)
 	if err != nil {
 		return DeviceStatus{}, err
@@ -153,6 +156,9 @@ func (sad *ShootsAndroidDriver) Status() (DeviceStatus, error) {
 
 func (sad *ShootsAndroidDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 	app, err := sad.GetForegroundApp()
+	if err != nil {
+		return "", err
+	}
 	params := map[string]interface{}{
 		"ClassName": "com.bytedance.byteinsight.MockOperator",
 		"Method":    "getLayout",
@@ -183,6 +189,9 @@ func (sad *ShootsAndroidDriver) LoginNoneUI(packageName, phoneNumber, captcha st
 		"code":  captcha,
 	}
 	resp, err := sad.httpPOST(params, "/host", "/login", "account")
+	if err != nil {
+		return err
+	}
 	res, err := resp.valueConvertToJsonObject()
 	if err != nil {
 		return err
@@ -206,6 +215,9 @@ func (sad *ShootsAndroidDriver) LoginNoneUI(packageName, phoneNumber, captcha st
 
 func (sad *ShootsAndroidDriver) LogoutNoneUI(packageName string) error {
 	resp, err := sad.httpGET("/host", "/logout")
+	if err != nil {
+		return err
+	}
 	res, err := resp.valueConvertToJsonObject()
 	if err != nil {
 		return err
@@ -240,6 +252,9 @@ func (sad *ShootsAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber stri
 
 func (sad *ShootsAndroidDriver) isLogin(packageName string) (login bool, err error) {
 	resp, err := sad.httpGET("/host", "/login", "/check")
+	if err != nil {
+		return false, err
+	}
 	res, err := resp.valueConvertToJsonObject()
 	if err != nil {
 		return false, err
