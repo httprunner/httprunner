@@ -474,7 +474,7 @@ func (dev *IOSDevice) StopPcap() string {
 }
 
 func (dev *IOSDevice) Install(appPath string, opts *InstallOptions) (err error) {
-	for i := 0; i < opts.RetryTime; i++ {
+	for i := 0; i <= opts.RetryTime; i++ {
 		err = myexec.RunCommand("ideviceinstaller", "-u", dev.UDID, "-i", appPath)
 		if err == nil {
 			return nil
