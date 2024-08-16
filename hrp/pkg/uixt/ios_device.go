@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -475,7 +474,7 @@ func (dev *IOSDevice) StopPcap() string {
 
 func (dev *IOSDevice) Install(appPath string, opts *InstallOptions) (err error) {
 	for i := 0; i <= opts.RetryTime; i++ {
-		err = myexec.RunCommand("ideviceinstaller", "-u", dev.UDID, "-i", appPath)
+		err = builtin.RunCommand("ideviceinstaller", "-u", dev.UDID, "-i", appPath)
 		if err == nil {
 			return nil
 		}
@@ -484,7 +483,7 @@ func (dev *IOSDevice) Install(appPath string, opts *InstallOptions) (err error) 
 }
 
 func (dev *IOSDevice) Uninstall(bundleId string) error {
-	return myexec.RunCommand("ideviceinstaller", "-u", dev.UDID, "-U", bundleId)
+	return builtin.RunCommand("ideviceinstaller", "-u", dev.UDID, "-U", bundleId)
 }
 
 func (dev *IOSDevice) forward(localPort, remotePort int) error {

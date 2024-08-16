@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -26,6 +27,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -520,10 +522,6 @@ func DownloadFile(filePath string, fileUrl string) error {
 		return err
 	}
 
-	if parsedURL.Host != "gtf-eapi-cn.bytedance.com" {
-		return errors.New("invalid domain: must be gtf-eapi-cn.bytedance.com")
-	}
-
 	out, err := os.Create(filePath)
 	if err != nil {
 		return err
@@ -536,9 +534,14 @@ func DownloadFile(filePath string, fileUrl string) error {
 		return err
 	}
 
-	// 添加自定义头部
-	req.Header.Add("accessKey", "ies.vedem.video")
-	req.Header.Add("token", "***REMOVED***")
+	if env.EAPI_TOKEN != "" {
+		if parsedURL.Host != "gtf-eapi-cn.bytedance.com" && parsedURL.Host != "gtf-eapi-cn.bytedance.net" {
+			return errors.New("invalid domain: must be gtf-eapi-cn.bytedance.com")
+		}
+		// 添加自定义头部
+		req.Header.Add("accessKey", "ies.vedem.video")
+		req.Header.Add("token", env.EAPI_TOKEN)
+	}
 
 	// 创建一个 HTTP 客户端并发送请求
 	client := &http.Client{}
@@ -558,5 +561,29 @@ func DownloadFile(filePath string, fileUrl string) error {
 		return err
 	}
 
+	return nil
+}
+
+func RunCommand(cmdName string, args ...string) error {
+	cmd := exec.Command(cmdName, args...)
+	log.Info().Str("command", cmd.String()).Msg("exec command")
+
+	// print stderr output
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+
+	if err := cmd.Run(); err != nil {
+		stderrStr := stderr.String()
+		log.Error().Err(err).Msg("failed to exec command. msg: " + stderrStr)
+		if stderrStr != "" {
+			err = errors.Wrap(err, stderrStr)
+		}
+		return err
+	}
+
+	log.Info().Msg("exec command output: " + stdout.String())
 	return nil
 }
