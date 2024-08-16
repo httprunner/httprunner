@@ -334,11 +334,11 @@ func (dev *AndroidDevice) Uninstall(packageName string) error {
 
 func (dev *AndroidDevice) Install(appPath string, opts *InstallOptions) error {
 	app, err := os.Open(appPath)
-	defer app.Close()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("install %s open file failed", appPath))
 	}
 
+	defer app.Close()
 	brand, err := dev.d.Brand()
 	if err != nil {
 		return err
