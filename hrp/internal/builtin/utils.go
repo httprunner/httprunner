@@ -1,7 +1,9 @@
 package builtin
 
 import (
+	"bufio"
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/binary"
@@ -583,7 +585,69 @@ func RunCommand(cmdName string, args ...string) error {
 		}
 		return err
 	}
-
+	stderrStr := stderr.String()
+	log.Error().Msg("failed to exec command. msg: " + stderrStr)
 	log.Info().Msg("exec command output: " + stdout.String())
 	return nil
+}
+
+type LineCallback func(line string) bool
+
+// RunCommandWithCallback 运行命令并根据回调判断是否成功
+func RunCommandWithCallback(cmdName string, args []string, callback LineCallback) error {
+	cmd := exec.Command(cmdName, args...)
+	log.Info().Str("command", cmd.String()).Msg("exec command")
+
+	// 使用管道获取标准输出
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get stdout pipe")
+		return err
+	}
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Start(); err != nil {
+		log.Error().Err(err).Msg("failed to start command")
+		return err
+	}
+
+	// 创建一个用于标识成功的通道
+	done := make(chan struct{})
+	defer close(done)
+
+	// 逐行读取 stdout
+	go func() {
+		stdoutScanner := bufio.NewScanner(stdoutPipe)
+		for stdoutScanner.Scan() {
+			line := stdoutScanner.Text()
+			log.Info().Msg("stdout: " + line)
+			if callback(line) {
+				done <- struct{}{}
+				return
+			}
+		}
+	}()
+
+	// 等待命令执行完成
+	err = cmd.Wait()
+	if err != nil {
+		log.Error().Msg("failed to exec command. msg: " + stderr.String())
+		return err
+	}
+
+	// 设置一个1秒的超时上下文
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		// 超时，判断失败
+		log.Error().Msg("failed to exec command. msg: " + stderr.String())
+		err = errors.New("command execution failed: callback failed while exec command")
+		log.Error().Err(err).Msg("failed to find keyword in time")
+		return err
+	}
 }

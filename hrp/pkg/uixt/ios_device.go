@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -474,7 +475,15 @@ func (dev *IOSDevice) StopPcap() string {
 
 func (dev *IOSDevice) Install(appPath string, opts *InstallOptions) (err error) {
 	for i := 0; i <= opts.RetryTime; i++ {
-		err = builtin.RunCommand("ideviceinstaller", "-u", dev.UDID, "-i", appPath)
+		err = builtin.RunCommandWithCallback("ideviceinstaller", []string{"-u", dev.UDID, "-i", appPath}, func(line string) bool {
+			if strings.Contains(line, "Complete") {
+				return true
+			}
+			if strings.Contains(line, "90%") {
+				return true
+			}
+			return false
+		})
 		if err == nil {
 			return nil
 		}
@@ -483,7 +492,15 @@ func (dev *IOSDevice) Install(appPath string, opts *InstallOptions) (err error) 
 }
 
 func (dev *IOSDevice) Uninstall(bundleId string) error {
-	return builtin.RunCommand("ideviceinstaller", "-u", dev.UDID, "-U", bundleId)
+	return builtin.RunCommandWithCallback("ideviceinstaller", []string{"-u", dev.UDID, "-U", bundleId}, func(line string) bool {
+		if strings.Contains(line, "Complete") {
+			return true
+		}
+		if strings.Contains(line, "90%") {
+			return true
+		}
+		return false
+	})
 }
 
 func (dev *IOSDevice) forward(localPort, remotePort int) error {

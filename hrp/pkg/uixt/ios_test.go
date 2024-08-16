@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -39,7 +41,8 @@ func TestViaUSB(t *testing.T) {
 
 func TestInstall(t *testing.T) {
 	setup(t)
-	err := iOSDriverExt.Install("/Users/bytedance/workcode/httprunner/hrp/pkg/uixt/1722942152176906000", NewInstallOptions(WithRetryTime(5)))
+	err := iOSDriverExt.Install("/Users/bytedance/Downloads/com.yueyou.cyreader_1387717110_7.54.20.ipa", NewInstallOptions(WithRetryTime(5)))
+	log.Error().Err(err)
 	if err != nil {
 		t.Fatal(err)
 	}
