@@ -24,8 +24,9 @@ type ITestCase interface {
 // TestCase is a container for one testcase, which is used for testcase runner.
 // TestCase implements ITestCase interface.
 type TestCase struct {
-	Config    *TConfig
-	TestSteps []IStep
+	Config    *TConfig `json:"config" yaml:"config"`
+	TSteps    []*TStep `json:"teststeps" yaml:"teststeps"`
+	TestSteps []IStep  `json:"-" yaml:"-"`
 }
 
 func (tc *TestCase) GetPath() string {
@@ -36,24 +37,21 @@ func (tc *TestCase) ToTestCase() (*TestCase, error) {
 	return tc, nil
 }
 
-func (tc *TestCase) ToTCase() *TCase {
-	tCase := &TCase{
-		Config: tc.Config,
-	}
+func (tc *TestCase) loadStruct() {
+	tc.TSteps = make([]*TStep, 0)
 	for _, step := range tc.TestSteps {
 		if step.Type() == stepTypeTestCase {
 			if testcase, ok := step.Struct().TestCase.(*TestCase); ok {
-				step.Struct().TestCase = testcase.ToTCase()
+				step.Struct().TestCase = testcase
 			}
 		}
-		tCase.TestSteps = append(tCase.TestSteps, step.Struct())
+		tc.TSteps = append(tc.TSteps, step.Struct())
 	}
-	return tCase
 }
 
 func (tc *TestCase) Dump2JSON(targetPath string) error {
-	tCase := tc.ToTCase()
-	err := builtin.Dump2JSON(tCase, targetPath)
+	tc.loadStruct()
+	err := builtin.Dump2JSON(tc, targetPath)
 	if err != nil {
 		return errors.Wrap(err, "dump testcase to json failed")
 	}
@@ -61,8 +59,8 @@ func (tc *TestCase) Dump2JSON(targetPath string) error {
 }
 
 func (tc *TestCase) Dump2YAML(targetPath string) error {
-	tCase := tc.ToTCase()
-	err := builtin.Dump2YAML(tCase, targetPath)
+	tc.loadStruct()
+	err := builtin.Dump2YAML(tc, targetPath)
 	if err != nil {
 		return errors.Wrap(err, "dump testcase to yaml failed")
 	}

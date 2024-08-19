@@ -156,30 +156,28 @@ var demoTestCaseWithoutPlugin = &TestCase{
 }
 
 func TestGenDemoTestCase(t *testing.T) {
-	tCase := demoTestCaseWithPlugin.ToTCase()
-	err := builtin.Dump2JSON(tCase, demoTestCaseWithPluginJSONPath)
+	err := demoTestCaseWithPlugin.Dump2JSON(demoTestCaseWithPluginJSONPath)
 	if err != nil {
 		t.Fatal()
 	}
-	err = builtin.Dump2YAML(tCase, demoTestCaseWithPluginYAMLPath)
+	err = demoTestCaseWithPlugin.Dump2YAML(demoTestCaseWithPluginYAMLPath)
 	if err != nil {
 		t.Fatal()
 	}
 
-	tCase = demoTestCaseWithoutPlugin.ToTCase()
-	err = builtin.Dump2JSON(tCase, demoTestCaseWithoutPluginJSONPath)
+	err = demoTestCaseWithoutPlugin.Dump2JSON(demoTestCaseWithoutPluginJSONPath)
 	if err != nil {
 		t.Fatal()
 	}
-	err = builtin.Dump2YAML(tCase, demoTestCaseWithoutPluginYAMLPath)
+	err = demoTestCaseWithoutPlugin.Dump2YAML(demoTestCaseWithoutPluginYAMLPath)
 	if err != nil {
 		t.Fatal()
 	}
 }
 
 func TestLoadCase(t *testing.T) {
-	tcJSON := &TCase{}
-	tcYAML := &TCase{}
+	tcJSON := &TestCase{}
+	tcYAML := &TestCase{}
 	err := builtin.LoadFile(demoTestCaseWithPluginJSONPath, tcJSON)
 	if !assert.NoError(t, err) {
 		t.Fatal()
@@ -195,10 +193,10 @@ func TestLoadCase(t *testing.T) {
 	if !assert.Equal(t, tcJSON.Config.BaseURL, tcYAML.Config.BaseURL) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, tcJSON.TestSteps[1].Name, tcYAML.TestSteps[1].Name) {
+	if !assert.Equal(t, tcJSON.TSteps[1].Name, tcYAML.TSteps[1].Name) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, tcJSON.TestSteps[1].Request, tcYAML.TestSteps[1].Request) {
+	if !assert.Equal(t, tcJSON.TSteps[1].Request, tcYAML.TSteps[1].Request) {
 		t.Fatal()
 	}
 }
