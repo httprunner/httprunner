@@ -16,7 +16,7 @@ func LoadJSONCase(path string) (*hrp.TestCase, error) {
 		return nil, errors.Wrap(err, "load json file failed")
 	}
 
-	if caseJSON.TSteps == nil {
+	if caseJSON.Steps == nil {
 		return nil, errors.New("invalid json case file, missing teststeps")
 	}
 

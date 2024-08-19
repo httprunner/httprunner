@@ -10,10 +10,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
+// LoadTestCases load testcases from TestCasePath or TestCase
+func LoadTestCases(tests ...ITestCase) ([]*TestCase, error) {
 	testCases := make([]*TestCase, 0)
 
-	for _, iTestCase := range iTestCases {
+	for _, iTestCase := range tests {
 		if testcase, ok := iTestCase.(*TestCase); ok {
 			testCases = append(testCases, testcase)
 			continue

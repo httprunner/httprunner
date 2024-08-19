@@ -193,10 +193,10 @@ func TestLoadCase(t *testing.T) {
 	if !assert.Equal(t, tcJSON.Config.BaseURL, tcYAML.Config.BaseURL) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, tcJSON.TSteps[1].Name, tcYAML.TSteps[1].Name) {
+	if !assert.Equal(t, tcJSON.Steps[1].Name, tcYAML.Steps[1].Name) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, tcJSON.TSteps[1].Request, tcYAML.TSteps[1].Request) {
+	if !assert.Equal(t, tcJSON.Steps[1].Request, tcYAML.Steps[1].Request) {
 		t.Fatal()
 	}
 }

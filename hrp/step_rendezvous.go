@@ -70,7 +70,7 @@ func (s *StepRendezvous) Run(r *SessionRunner) (*StepResult, error) {
 }
 
 func isPreRendezvousAllReleased(rendezvous *Rendezvous, testCase *TestCase) bool {
-	for _, step := range testCase.TSteps {
+	for _, step := range testCase.Steps {
 		preRendezvous := step.Rendezvous
 		if preRendezvous == nil {
 			continue

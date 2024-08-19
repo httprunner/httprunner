@@ -206,7 +206,7 @@ func (c *TCaseConverter) overrideWithProfile(path string) error {
 	}
 
 	log.Info().Interface("profile", profile).Msg("override with profile")
-	for _, step := range c.tCase.TSteps {
+	for _, step := range c.tCase.Steps {
 		// override original headers and cookies
 		if profile.Override {
 			step.Request.Headers = make(map[string]string)

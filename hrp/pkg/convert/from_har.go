@@ -390,7 +390,7 @@ func (c *CaseHar) ToTestCase() (*hrp.TestCase, error) {
 
 	tCase := &hrp.TestCase{
 		Config: c.prepareConfig(),
-		TSteps: teststeps,
+		Steps:  teststeps,
 	}
 	err = tCase.MakeCompat()
 	if err != nil {

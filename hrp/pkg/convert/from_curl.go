@@ -109,7 +109,7 @@ func LoadCurlCase(path string) (*hrp.TestCase, error) {
 		if err != nil {
 			return nil, err
 		}
-		tCase.TSteps = append(tCase.TSteps, tSteps...)
+		tCase.Steps = append(tCase.Steps, tSteps...)
 	}
 	err = tCase.MakeCompat()
 	if err != nil {

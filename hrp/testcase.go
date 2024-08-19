@@ -31,7 +31,7 @@ func (path *TestCasePath) GetTestCase() (*TestCase, error) {
 	if err != nil {
 		return nil, err
 	}
-	if tc.TSteps == nil {
+	if tc.Steps == nil {
 		return nil, errors.Wrap(code.InvalidCaseFormat,
 			"invalid testcase format, missing teststeps!")
 	}
@@ -47,7 +47,7 @@ func (path *TestCasePath) GetTestCase() (*TestCase, error) {
 // TestCase implements ITestCase interface.
 type TestCase struct {
 	Config    *TConfig `json:"config" yaml:"config"`
-	TSteps    []*TStep `json:"teststeps" yaml:"teststeps"`
+	Steps     []*TStep `json:"teststeps" yaml:"teststeps"`
 	TestSteps []IStep  `json:"-" yaml:"-"`
 }
 
@@ -62,7 +62,7 @@ func (tc *TestCase) MakeCompat() (err error) {
 			err = fmt.Errorf("[MakeCompat] convert compat testcase error: %v", p)
 		}
 	}()
-	for _, step := range tc.TSteps {
+	for _, step := range tc.Steps {
 		// 1. deal with request body compatibility
 		convertCompatRequestBody(step.Request)
 
@@ -105,14 +105,14 @@ func (tc *TestCase) Dump2YAML(targetPath string) error {
 
 // loadTSteps loads TSteps structs from TestSteps([]IStep)
 func (tc *TestCase) loadTSteps() {
-	tc.TSteps = make([]*TStep, 0)
+	tc.Steps = make([]*TStep, 0)
 	for _, step := range tc.TestSteps {
 		if step.Type() == stepTypeTestCase {
 			if testcase, ok := step.Struct().TestCase.(*TestCase); ok {
 				step.Struct().TestCase = testcase
 			}
 		}
-		tc.TSteps = append(tc.TSteps, step.Struct())
+		tc.Steps = append(tc.Steps, step.Struct())
 	}
 }
 
@@ -152,7 +152,7 @@ func (tc *TestCase) loadISteps() (*TestCase, error) {
 		}
 	}
 
-	for _, step := range tc.TSteps {
+	for _, step := range tc.Steps {
 		if step.API != nil {
 			apiPath, ok := step.API.(string)
 			if ok {
