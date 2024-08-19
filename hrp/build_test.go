@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 func TestRun(t *testing.T) {
@@ -22,7 +20,7 @@ func TestRun(t *testing.T) {
 		t.Fatal()
 	}
 
-	contentBytes, err := builtin.ReadFile(genDebugTalkPyPath)
+	contentBytes, err := readFile(genDebugTalkPyPath)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}

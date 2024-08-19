@@ -237,7 +237,7 @@ func InterfaceType(raw interface{}) string {
 
 func loadFromCSV(path string) []map[string]interface{} {
 	log.Info().Str("path", path).Msg("load csv file")
-	file, err := ReadFile(path)
+	file, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read csv file failed")
 		os.Exit(code.GetErrorCode(err))
@@ -263,28 +263,12 @@ func loadFromCSV(path string) []map[string]interface{} {
 
 func loadMessage(path string) []byte {
 	log.Info().Str("path", path).Msg("load message file")
-	file, err := ReadFile(path)
+	file, err := os.ReadFile(path)
 	if err != nil {
 		log.Error().Err(err).Msg("read message file failed")
 		os.Exit(code.GetErrorCode(err))
 	}
 	return file
-}
-
-func ReadFile(path string) ([]byte, error) {
-	var err error
-	path, err = filepath.Abs(path)
-	if err != nil {
-		log.Error().Err(err).Str("path", path).Msg("convert absolute path failed")
-		return nil, errors.Wrap(code.LoadFileError, err.Error())
-	}
-
-	file, err := os.ReadFile(path)
-	if err != nil {
-		log.Error().Err(err).Msg("read file failed")
-		return nil, errors.Wrap(code.LoadFileError, err.Error())
-	}
-	return file, nil
 }
 
 func GetFileNameWithoutExtension(path string) string {
