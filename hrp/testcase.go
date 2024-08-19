@@ -21,6 +21,33 @@ type ITestCase interface {
 	ToTestCase() (*TestCase, error)
 }
 
+// TestCasePath implements ITestCase interface.
+type TestCasePath string
+
+func (path *TestCasePath) GetPath() string {
+	return fmt.Sprintf("%v", *path)
+}
+
+// ToTestCase loads testcase path and convert to *TestCase
+func (path *TestCasePath) ToTestCase() (*TestCase, error) {
+	tc := &TestCase{}
+	casePath := path.GetPath()
+	err := builtin.LoadFile(casePath, tc)
+	if err != nil {
+		return nil, err
+	}
+	if tc.TSteps == nil {
+		return nil, errors.Wrap(code.InvalidCaseFormat,
+			"invalid testcase format, missing teststeps!")
+	}
+
+	if tc.Config == nil {
+		tc.Config = &TConfig{Name: "please input testcase name"}
+	}
+	tc.Config.Path = casePath
+	return tc.loadISteps()
+}
+
 // TestCase is a container for one testcase, which is used for testcase runner.
 // TestCase implements ITestCase interface.
 type TestCase struct {
@@ -35,18 +62,6 @@ func (tc *TestCase) GetPath() string {
 
 func (tc *TestCase) ToTestCase() (*TestCase, error) {
 	return tc, nil
-}
-
-func (tc *TestCase) loadStruct() {
-	tc.TSteps = make([]*TStep, 0)
-	for _, step := range tc.TestSteps {
-		if step.Type() == stepTypeTestCase {
-			if testcase, ok := step.Struct().TestCase.(*TestCase); ok {
-				step.Struct().TestCase = testcase
-			}
-		}
-		tc.TSteps = append(tc.TSteps, step.Struct())
-	}
 }
 
 // MakeCompat converts TestCase compatible with Golang engine style
@@ -80,7 +95,7 @@ func (tc *TestCase) MakeCompat() (err error) {
 }
 
 func (tc *TestCase) Dump2JSON(targetPath string) error {
-	tc.loadStruct()
+	tc.loadTSteps()
 	err := builtin.Dump2JSON(tc, targetPath)
 	if err != nil {
 		return errors.Wrap(err, "dump testcase to json failed")
@@ -89,7 +104,7 @@ func (tc *TestCase) Dump2JSON(targetPath string) error {
 }
 
 func (tc *TestCase) Dump2YAML(targetPath string) error {
-	tc.loadStruct()
+	tc.loadTSteps()
 	err := builtin.Dump2YAML(tc, targetPath)
 	if err != nil {
 		return errors.Wrap(err, "dump testcase to yaml failed")
@@ -97,76 +112,21 @@ func (tc *TestCase) Dump2YAML(targetPath string) error {
 	return nil
 }
 
-// TestCasePath implements ITestCase interface.
-type TestCasePath string
-
-func (path *TestCasePath) GetPath() string {
-	return fmt.Sprintf("%v", *path)
-}
-
-// ToTestCase loads testcase path and convert to *TestCase
-func (path *TestCasePath) ToTestCase() (*TestCase, error) {
-	tc := &TCase{}
-	casePath := path.GetPath()
-	err := builtin.LoadFile(casePath, tc)
-	if err != nil {
-		return nil, err
-	}
-	return tc.ToTestCase(casePath)
-}
-
-// TCase represents testcase data structure.
-// Each testcase includes one public config and several sequential teststeps.
-type TCase struct {
-	Config    *TConfig `json:"config" yaml:"config"`
-	TestSteps []*TStep `json:"teststeps" yaml:"teststeps"`
-}
-
-// MakeCompat converts TCase compatible with Golang engine style
-func (tc *TCase) MakeCompat() (err error) {
-	defer func() {
-		if p := recover(); p != nil {
-			err = fmt.Errorf("[MakeCompat] convert compat testcase error: %v", p)
-		}
-	}()
+// loadTSteps loads TSteps structs from TestSteps([]IStep)
+func (tc *TestCase) loadTSteps() {
+	tc.TSteps = make([]*TStep, 0)
 	for _, step := range tc.TestSteps {
-		// 1. deal with request body compatibility
-		convertCompatRequestBody(step.Request)
-
-		// 2. deal with validators compatibility
-		err = convertCompatValidator(step.Validators)
-		if err != nil {
-			return err
+		if step.Type() == stepTypeTestCase {
+			if testcase, ok := step.Struct().TestCase.(*TestCase); ok {
+				step.Struct().TestCase = testcase
+			}
 		}
-
-		// 3. deal with extract expr including hyphen
-		convertExtract(step.Extract)
-
-		// 4. deal with mobile step compatibility
-		if step.Android != nil {
-			convertCompatMobileStep(step.Android)
-		} else if step.IOS != nil {
-			convertCompatMobileStep(step.IOS)
-		}
+		tc.TSteps = append(tc.TSteps, step.Struct())
 	}
-	return nil
 }
 
-func (tc *TCase) ToTestCase(casePath string) (*TestCase, error) {
-	if tc.TestSteps == nil {
-		return nil, errors.Wrap(code.InvalidCaseFormat,
-			"invalid testcase format, missing teststeps!")
-	}
-
-	if tc.Config == nil {
-		tc.Config = &TConfig{Name: "please input testcase name"}
-	}
-	tc.Config.Path = casePath
-	return tc.toTestCase()
-}
-
-// toTestCase converts *TCase to *TestCase
-func (tc *TCase) toTestCase() (*TestCase, error) {
+// loadTSteps loads TestSteps([]IStep) from TSteps structs
+func (tc *TestCase) loadISteps() (*TestCase, error) {
 	testCase := &TestCase{
 		Config: tc.Config,
 	}
@@ -201,7 +161,7 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 		}
 	}
 
-	for _, step := range tc.TestSteps {
+	for _, step := range tc.TSteps {
 		if step.API != nil {
 			apiPath, ok := step.API.(string)
 			if ok {
@@ -259,12 +219,12 @@ func (tc *TCase) toTestCase() (*TestCase, error) {
 					return nil, errors.Wrap(code.InvalidCaseFormat,
 						fmt.Sprintf("referenced testcase should be map or path(string), got %v", step.TestCase))
 				}
-				tCase := &TCase{}
+				tCase := &TestCase{}
 				err = mapstructure.Decode(testCaseMap, tCase)
 				if err != nil {
 					return nil, err
 				}
-				tc, err := tCase.toTestCase()
+				tc, err := tCase.loadISteps()
 				if err != nil {
 					return nil, err
 				}
