@@ -10,7 +10,7 @@ import (
 func LoadSwaggerCase(path string) (*hrp.TestCase, error) {
 	// load swagger file
 	caseSwagger := new(spec.Swagger)
-	err := hrp.LoadFile(path, caseSwagger)
+	err := hrp.LoadFileObject(path, caseSwagger)
 	if err != nil {
 		return nil, errors.Wrap(err, "load swagger file failed")
 	}

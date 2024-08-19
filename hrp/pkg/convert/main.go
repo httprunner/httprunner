@@ -198,7 +198,7 @@ func (c *TCaseConverter) genOutputPath(suffix string) string {
 func (c *TCaseConverter) overrideWithProfile(path string) error {
 	log.Info().Str("path", path).Msg("load profile")
 	profile := new(Profile)
-	err := hrp.LoadFile(path, profile)
+	err := hrp.LoadFileObject(path, profile)
 	if err != nil {
 		log.Warn().Str("path", path).
 			Msg("failed to load profile, ignore!")

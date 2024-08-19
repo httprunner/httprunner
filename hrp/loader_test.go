@@ -53,11 +53,11 @@ func TestLoadTestCases(t *testing.T) {
 func TestLoadCase(t *testing.T) {
 	tcJSON := &TestCase{}
 	tcYAML := &TestCase{}
-	err := LoadFile(demoTestCaseWithPluginJSONPath, tcJSON)
+	err := LoadFileObject(demoTestCaseWithPluginJSONPath, tcJSON)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
-	err = LoadFile(demoTestCaseWithPluginYAMLPath, tcYAML)
+	err = LoadFileObject(demoTestCaseWithPluginYAMLPath, tcYAML)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}

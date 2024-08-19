@@ -370,7 +370,7 @@ func LoadHARCase(path string) (*hrp.TestCase, error) {
 
 func loadCaseHAR(path string) (*CaseHar, error) {
 	caseHAR := new(CaseHar)
-	err := hrp.LoadFile(path, caseHAR)
+	err := hrp.LoadFileObject(path, caseHAR)
 	if err != nil {
 		return nil, errors.Wrap(err, "load har file failed")
 	}

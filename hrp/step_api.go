@@ -44,7 +44,7 @@ func (path *APIPath) GetPath() string {
 func (path *APIPath) ToAPI() (*API, error) {
 	api := &API{}
 	apiPath := path.GetPath()
-	err := LoadFile(apiPath, api)
+	err := LoadFileObject(apiPath, api)
 	if err != nil {
 		return nil, err
 	}

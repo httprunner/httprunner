@@ -124,7 +124,7 @@ func LoadPostmanCase(path string) (*hrp.TestCase, error) {
 
 func loadCasePostman(path string) (*CasePostman, error) {
 	casePostman := new(CasePostman)
-	err := hrp.LoadFile(path, casePostman)
+	err := hrp.LoadFileObject(path, casePostman)
 	if err != nil {
 		return nil, errors.Wrap(err, "load postman file failed")
 	}

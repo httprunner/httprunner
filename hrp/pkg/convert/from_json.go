@@ -10,7 +10,7 @@ import (
 func LoadJSONCase(path string) (*hrp.TestCase, error) {
 	log.Info().Str("path", path).Msg("load json case file")
 	caseJSON := new(hrp.TestCase)
-	err := hrp.LoadFile(path, caseJSON)
+	err := hrp.LoadFileObject(path, caseJSON)
 	if err != nil {
 		return nil, errors.Wrap(err, "load json file failed")
 	}

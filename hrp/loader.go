@@ -70,8 +70,8 @@ func LoadTestCases(tests ...ITestCase) ([]*TestCase, error) {
 	return testCases, nil
 }
 
-// LoadFile loads file content with file extension and assigns to structObj
-func LoadFile(path string, structObj interface{}) (err error) {
+// LoadFileObject loads file content with file extension and assigns to structObj
+func LoadFileObject(path string, structObj interface{}) (err error) {
 	log.Info().Str("path", path).Msg("load file")
 	file, err := builtin.ReadFile(path)
 	if err != nil {

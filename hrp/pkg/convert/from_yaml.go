@@ -11,7 +11,7 @@ import (
 func LoadYAMLCase(path string) (*hrp.TestCase, error) {
 	// load yaml case file
 	caseJSON := new(hrp.TestCase)
-	err := hrp.LoadFile(path, caseJSON)
+	err := hrp.LoadFileObject(path, caseJSON)
 	if err != nil {
 		return nil, errors.Wrap(err, "load yaml file failed")
 	}
