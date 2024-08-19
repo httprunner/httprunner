@@ -680,7 +680,7 @@ func (s *StepRequest) PATCH(url string) *StepRequestWithOptionalArgs {
 // CallRefCase calls a referenced testcase.
 func (s *StepRequest) CallRefCase(tc ITestCase) *StepTestCaseWithOptionalArgs {
 	var err error
-	s.step.TestCase, err = tc.ToTestCase()
+	s.step.TestCase, err = tc.GetTestCase()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcase")
 		os.Exit(code.GetErrorCode(err))

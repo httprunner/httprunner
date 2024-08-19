@@ -25,7 +25,7 @@ func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 			return nil, errors.New("invalid iTestCase type")
 		}
 
-		casePath := tcPath.GetPath()
+		casePath := string(*tcPath)
 		err := fs.WalkDir(os.DirFS(casePath), ".", func(path string, dir fs.DirEntry, e error) error {
 			if dir == nil {
 				// casePath is a file other than a dir
@@ -46,7 +46,7 @@ func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 
 			// filtered testcases
 			testCasePath := TestCasePath(path)
-			tc, err := testCasePath.ToTestCase()
+			tc, err := testCasePath.GetTestCase()
 			if err != nil {
 				log.Warn().Err(err).Str("path", path).Msg("load testcase failed")
 				return nil

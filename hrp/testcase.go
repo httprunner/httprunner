@@ -17,21 +17,16 @@ import (
 // ITestCase represents interface for testcases,
 // includes TestCase and TestCasePath.
 type ITestCase interface {
-	GetPath() string
-	ToTestCase() (*TestCase, error)
+	GetTestCase() (*TestCase, error)
 }
 
 // TestCasePath implements ITestCase interface.
 type TestCasePath string
 
-func (path *TestCasePath) GetPath() string {
-	return fmt.Sprintf("%v", *path)
-}
-
-// ToTestCase loads testcase path and convert to *TestCase
-func (path *TestCasePath) ToTestCase() (*TestCase, error) {
+// GetTestCase loads testcase path and convert to *TestCase
+func (path *TestCasePath) GetTestCase() (*TestCase, error) {
 	tc := &TestCase{}
-	casePath := path.GetPath()
+	casePath := string(*path)
 	err := builtin.LoadFile(casePath, tc)
 	if err != nil {
 		return nil, err
@@ -56,11 +51,7 @@ type TestCase struct {
 	TestSteps []IStep  `json:"-" yaml:"-"`
 }
 
-func (tc *TestCase) GetPath() string {
-	return tc.Config.Path
-}
-
-func (tc *TestCase) ToTestCase() (*TestCase, error) {
+func (tc *TestCase) GetTestCase() (*TestCase, error) {
 	return tc, nil
 }
 
@@ -208,7 +199,7 @@ func (tc *TestCase) loadISteps() (*TestCase, error) {
 				}
 
 				refTestCase := TestCasePath(path)
-				tc, err := refTestCase.ToTestCase()
+				tc, err := refTestCase.GetTestCase()
 				if err != nil {
 					return nil, err
 				}
