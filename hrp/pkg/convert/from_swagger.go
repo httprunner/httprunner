@@ -5,13 +5,12 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 func LoadSwaggerCase(path string) (*hrp.TestCase, error) {
 	// load swagger file
 	caseSwagger := new(spec.Swagger)
-	err := builtin.LoadFile(path, caseSwagger)
+	err := hrp.LoadFile(path, caseSwagger)
 	if err != nil {
 		return nil, errors.Wrap(err, "load swagger file failed")
 	}

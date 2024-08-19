@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 const (
@@ -171,32 +169,6 @@ func TestGenDemoTestCase(t *testing.T) {
 	}
 	err = demoTestCaseWithoutPlugin.Dump2YAML(demoTestCaseWithoutPluginYAMLPath)
 	if err != nil {
-		t.Fatal()
-	}
-}
-
-func TestLoadCase(t *testing.T) {
-	tcJSON := &TestCase{}
-	tcYAML := &TestCase{}
-	err := builtin.LoadFile(demoTestCaseWithPluginJSONPath, tcJSON)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	err = builtin.LoadFile(demoTestCaseWithPluginYAMLPath, tcYAML)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-
-	if !assert.Equal(t, tcJSON.Config.Name, tcYAML.Config.Name) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, tcJSON.Config.BaseURL, tcYAML.Config.BaseURL) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, tcJSON.Steps[1].Name, tcYAML.Steps[1].Name) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, tcJSON.Steps[1].Request, tcYAML.Steps[1].Request) {
 		t.Fatal()
 	}
 }

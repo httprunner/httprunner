@@ -27,7 +27,7 @@ type TestCasePath string
 func (path *TestCasePath) GetTestCase() (*TestCase, error) {
 	tc := &TestCase{}
 	casePath := string(*path)
-	err := builtin.LoadFile(casePath, tc)
+	err := LoadFile(casePath, tc)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (tc *TestCase) loadISteps() (*TestCase, error) {
 	dotEnvPath := filepath.Join(projectRootDir, ".env")
 	if builtin.IsFilePathExists(dotEnvPath) {
 		envVars := make(map[string]string)
-		err = builtin.LoadFile(dotEnvPath, envVars)
+		err = LoadFile(dotEnvPath, envVars)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to load .env file")
 		}

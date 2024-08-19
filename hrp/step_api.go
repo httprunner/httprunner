@@ -5,8 +5,6 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/rs/zerolog/log"
-
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 // IAPI represents interface for api,
@@ -46,7 +44,7 @@ func (path *APIPath) GetPath() string {
 func (path *APIPath) ToAPI() (*API, error) {
 	api := &API{}
 	apiPath := path.GetPath()
-	err := builtin.LoadFile(apiPath, api)
+	err := LoadFile(apiPath, api)
 	if err != nil {
 		return nil, err
 	}

@@ -6,13 +6,12 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
 func LoadYAMLCase(path string) (*hrp.TestCase, error) {
 	// load yaml case file
 	caseJSON := new(hrp.TestCase)
-	err := builtin.LoadFile(path, caseJSON)
+	err := hrp.LoadFile(path, caseJSON)
 	if err != nil {
 		return nil, errors.Wrap(err, "load yaml file failed")
 	}

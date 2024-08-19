@@ -13,7 +13,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -371,7 +370,7 @@ func LoadHARCase(path string) (*hrp.TestCase, error) {
 
 func loadCaseHAR(path string) (*CaseHar, error) {
 	caseHAR := new(CaseHar)
-	err := builtin.LoadFile(path, caseHAR)
+	err := hrp.LoadFile(path, caseHAR)
 	if err != nil {
 		return nil, errors.Wrap(err, "load har file failed")
 	}

@@ -10,7 +10,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -125,7 +124,7 @@ func LoadPostmanCase(path string) (*hrp.TestCase, error) {
 
 func loadCasePostman(path string) (*CasePostman, error) {
 	casePostman := new(CasePostman)
-	err := builtin.LoadFile(path, casePostman)
+	err := hrp.LoadFile(path, casePostman)
 	if err != nil {
 		return nil, errors.Wrap(err, "load postman file failed")
 	}
