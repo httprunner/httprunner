@@ -175,7 +175,7 @@ func GetProjectRootDirPath(path string) (rootDir string, err error) {
 		rootDir = filepath.Dir(pluginPath)
 		return
 	}
-	// fix: no debugtalk file in project but having proj.json created by startpeoject
+	// fix: no debugtalk file in project but having proj.json created by startproject
 	projPath, err := locateFile(path, projectInfoFile)
 	if err == nil {
 		rootDir = filepath.Dir(projPath)

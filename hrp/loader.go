@@ -14,12 +14,7 @@ func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 	testCases := make([]*TestCase, 0)
 
 	for _, iTestCase := range iTestCases {
-		if _, ok := iTestCase.(*TestCase); ok {
-			testcase, err := iTestCase.ToTestCase()
-			if err != nil {
-				log.Error().Err(err).Msg("failed to convert ITestCase interface to TestCase struct")
-				return nil, err
-			}
+		if testcase, ok := iTestCase.(*TestCase); ok {
 			testCases = append(testCases, testcase)
 			continue
 		}
@@ -53,6 +48,7 @@ func LoadTestCases(iTestCases ...ITestCase) ([]*TestCase, error) {
 			testCasePath := TestCasePath(path)
 			tc, err := testCasePath.ToTestCase()
 			if err != nil {
+				log.Warn().Err(err).Str("path", path).Msg("load testcase failed")
 				return nil
 			}
 			testCases = append(testCases, tc)
