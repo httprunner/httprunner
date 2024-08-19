@@ -49,6 +49,36 @@ func (tc *TestCase) loadStruct() {
 	}
 }
 
+// MakeCompat converts TestCase compatible with Golang engine style
+func (tc *TestCase) MakeCompat() (err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf("[MakeCompat] convert compat testcase error: %v", p)
+		}
+	}()
+	for _, step := range tc.TSteps {
+		// 1. deal with request body compatibility
+		convertCompatRequestBody(step.Request)
+
+		// 2. deal with validators compatibility
+		err = convertCompatValidator(step.Validators)
+		if err != nil {
+			return err
+		}
+
+		// 3. deal with extract expr including hyphen
+		convertExtract(step.Extract)
+
+		// 4. deal with mobile step compatibility
+		if step.Android != nil {
+			convertCompatMobileStep(step.Android)
+		} else if step.IOS != nil {
+			convertCompatMobileStep(step.IOS)
+		}
+	}
+	return nil
+}
+
 func (tc *TestCase) Dump2JSON(targetPath string) error {
 	tc.loadStruct()
 	err := builtin.Dump2JSON(tc, targetPath)

@@ -94,12 +94,12 @@ func init() {
 }
 
 // LoadCurlCase loads testcase from one or more curl commands in .txt file
-func LoadCurlCase(path string) (*hrp.TCase, error) {
+func LoadCurlCase(path string) (*hrp.TestCase, error) {
 	cmds, err := readFileLines(path)
 	if err != nil {
 		return nil, err
 	}
-	tCase := &hrp.TCase{
+	tCase := &hrp.TestCase{
 		Config: &hrp.TConfig{
 			Name: "testcase converted from curl command",
 		},
@@ -109,7 +109,7 @@ func LoadCurlCase(path string) (*hrp.TCase, error) {
 		if err != nil {
 			return nil, err
 		}
-		tCase.TestSteps = append(tCase.TestSteps, tSteps...)
+		tCase.TSteps = append(tCase.TSteps, tSteps...)
 	}
 	err = tCase.MakeCompat()
 	if err != nil {

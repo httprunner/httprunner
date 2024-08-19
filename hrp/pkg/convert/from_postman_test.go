@@ -28,51 +28,51 @@ func TestMakeTestCaseFromCollection(t *testing.T) {
 		t.Fatal()
 	}
 	// check method
-	if !assert.EqualValues(t, "GET", tCase.TestSteps[0].Request.Method) {
+	if !assert.EqualValues(t, "GET", tCase.TSteps[0].Request.Method) {
 		t.Fatal()
 	}
-	if !assert.EqualValues(t, "POST", tCase.TestSteps[1].Request.Method) {
+	if !assert.EqualValues(t, "POST", tCase.TSteps[1].Request.Method) {
 		t.Fatal()
 	}
 	// check url
-	if !assert.Equal(t, "https://postman-echo.com/get", tCase.TestSteps[0].Request.URL) {
+	if !assert.Equal(t, "https://postman-echo.com/get", tCase.TSteps[0].Request.URL) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, "https://postman-echo.com/post", tCase.TestSteps[1].Request.URL) {
+	if !assert.Equal(t, "https://postman-echo.com/post", tCase.TSteps[1].Request.URL) {
 		t.Fatal()
 	}
 	// check params
-	if !assert.Equal(t, "v1", tCase.TestSteps[0].Request.Params["k1"]) {
+	if !assert.Equal(t, "v1", tCase.TSteps[0].Request.Params["k1"]) {
 		t.Fatal()
 	}
 	// check cookies (pass, postman collection doesn't contain cookies)
 	// check headers
-	if !assert.Equal(t, "application/x-www-form-urlencoded", tCase.TestSteps[2].Request.Headers["Content-Type"]) {
+	if !assert.Equal(t, "application/x-www-form-urlencoded", tCase.TSteps[2].Request.Headers["Content-Type"]) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, "application/json", tCase.TestSteps[3].Request.Headers["Content-Type"]) {
+	if !assert.Equal(t, "application/json", tCase.TSteps[3].Request.Headers["Content-Type"]) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, "text/plain", tCase.TestSteps[4].Request.Headers["Content-Type"]) {
+	if !assert.Equal(t, "text/plain", tCase.TSteps[4].Request.Headers["Content-Type"]) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, "HttpRunner", tCase.TestSteps[5].Request.Headers["User-Agent"]) {
+	if !assert.Equal(t, "HttpRunner", tCase.TSteps[5].Request.Headers["User-Agent"]) {
 		t.Fatal()
 	}
 	// check body
-	if !assert.Equal(t, nil, tCase.TestSteps[0].Request.Body) {
+	if !assert.Equal(t, nil, tCase.TSteps[0].Request.Body) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, map[string]string{"k1": "v1", "k2": "v2"}, tCase.TestSteps[2].Request.Body) {
+	if !assert.Equal(t, map[string]string{"k1": "v1", "k2": "v2"}, tCase.TSteps[2].Request.Body) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, map[string]interface{}{"k1": "v1", "k2": "v2"}, tCase.TestSteps[3].Request.Body) {
+	if !assert.Equal(t, map[string]interface{}{"k1": "v1", "k2": "v2"}, tCase.TSteps[3].Request.Body) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, "have a nice day", tCase.TestSteps[4].Request.Body) {
+	if !assert.Equal(t, "have a nice day", tCase.TSteps[4].Request.Body) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, nil, tCase.TestSteps[5].Request.Body) {
+	if !assert.Equal(t, nil, tCase.TSteps[5].Request.Body) {
 		t.Fatal()
 	}
 }

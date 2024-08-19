@@ -8,15 +8,15 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
-func LoadJSONCase(path string) (*hrp.TCase, error) {
+func LoadJSONCase(path string) (*hrp.TestCase, error) {
 	log.Info().Str("path", path).Msg("load json case file")
-	caseJSON := new(hrp.TCase)
+	caseJSON := new(hrp.TestCase)
 	err := builtin.LoadFile(path, caseJSON)
 	if err != nil {
 		return nil, errors.Wrap(err, "load json file failed")
 	}
 
-	if caseJSON.TestSteps == nil {
+	if caseJSON.TSteps == nil {
 		return nil, errors.New("invalid json case file, missing teststeps")
 	}
 

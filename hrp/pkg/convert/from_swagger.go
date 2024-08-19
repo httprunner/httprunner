@@ -8,7 +8,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
-func LoadSwaggerCase(path string) (*hrp.TCase, error) {
+func LoadSwaggerCase(path string) (*hrp.TestCase, error) {
 	// load swagger file
 	caseSwagger := new(spec.Swagger)
 	err := builtin.LoadFile(path, caseSwagger)

@@ -36,60 +36,60 @@ func TestLoadTCaseFromHAR(t *testing.T) {
 	}
 
 	// make request method
-	if !assert.EqualValues(t, "GET", tCase.TestSteps[0].Request.Method) {
+	if !assert.EqualValues(t, "GET", tCase.TSteps[0].Request.Method) {
 		t.Fatal()
 	}
-	if !assert.EqualValues(t, "POST", tCase.TestSteps[1].Request.Method) {
+	if !assert.EqualValues(t, "POST", tCase.TSteps[1].Request.Method) {
 		t.Fatal()
 	}
 
 	// make request url
-	if !assert.Equal(t, "https://postman-echo.com/get", tCase.TestSteps[0].Request.URL) {
+	if !assert.Equal(t, "https://postman-echo.com/get", tCase.TSteps[0].Request.URL) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, "https://postman-echo.com/post", tCase.TestSteps[1].Request.URL) {
+	if !assert.Equal(t, "https://postman-echo.com/post", tCase.TSteps[1].Request.URL) {
 		t.Fatal()
 	}
 
 	// make request params
-	if !assert.Equal(t, "HDnY8", tCase.TestSteps[0].Request.Params["foo1"]) {
+	if !assert.Equal(t, "HDnY8", tCase.TSteps[0].Request.Params["foo1"]) {
 		t.Fatal()
 	}
 
 	// make request cookies
-	if !assert.NotEmpty(t, tCase.TestSteps[1].Request.Cookies["sails.sid"]) {
+	if !assert.NotEmpty(t, tCase.TSteps[1].Request.Cookies["sails.sid"]) {
 		t.Fatal()
 	}
 
 	// make request headers
-	if !assert.Equal(t, "HttpRunnerPlus", tCase.TestSteps[0].Request.Headers["User-Agent"]) {
+	if !assert.Equal(t, "HttpRunnerPlus", tCase.TSteps[0].Request.Headers["User-Agent"]) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, "postman-echo.com", tCase.TestSteps[0].Request.Headers["Host"]) {
+	if !assert.Equal(t, "postman-echo.com", tCase.TSteps[0].Request.Headers["Host"]) {
 		t.Fatal()
 	}
 
 	// make request data
-	if !assert.Equal(t, nil, tCase.TestSteps[0].Request.Body) {
+	if !assert.Equal(t, nil, tCase.TSteps[0].Request.Body) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, map[string]interface{}{"foo1": "HDnY8", "foo2": 12.3}, tCase.TestSteps[1].Request.Body) {
+	if !assert.Equal(t, map[string]interface{}{"foo1": "HDnY8", "foo2": 12.3}, tCase.TSteps[1].Request.Body) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, map[string]string{"foo1": "HDnY8", "foo2": "12.3"}, tCase.TestSteps[2].Request.Body) {
+	if !assert.Equal(t, map[string]string{"foo1": "HDnY8", "foo2": "12.3"}, tCase.TSteps[2].Request.Body) {
 		t.Fatal()
 	}
 
 	// make validators
-	validator, ok := tCase.TestSteps[0].Validators[0].(hrp.Validator)
+	validator, ok := tCase.TSteps[0].Validators[0].(hrp.Validator)
 	if !ok || !assert.Equal(t, "status_code", validator.Check) {
 		t.Fatal()
 	}
-	validator, ok = tCase.TestSteps[0].Validators[1].(hrp.Validator)
+	validator, ok = tCase.TSteps[0].Validators[1].(hrp.Validator)
 	if !ok || !assert.Equal(t, "headers.\"Content-Type\"", validator.Check) {
 		t.Fatal()
 	}
-	validator, ok = tCase.TestSteps[0].Validators[2].(hrp.Validator)
+	validator, ok = tCase.TSteps[0].Validators[2].(hrp.Validator)
 	if !ok || !assert.Equal(t, "body.url", validator.Check) {
 		t.Fatal()
 	}

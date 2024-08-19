@@ -358,15 +358,15 @@ type TestResult struct {
 
 // ==================== model definition ends here ====================
 
-func LoadHARCase(path string) (*hrp.TCase, error) {
+func LoadHARCase(path string) (*hrp.TestCase, error) {
 	// load har file
 	caseHAR, err := loadCaseHAR(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// convert to TCase format
-	return caseHAR.ToTCase()
+	// convert to TestCase format
+	return caseHAR.ToTestCase()
 }
 
 func loadCaseHAR(path string) (*CaseHar, error) {
@@ -381,16 +381,16 @@ func loadCaseHAR(path string) (*CaseHar, error) {
 	return caseHAR, nil
 }
 
-// convert CaseHar to TCase format
-func (c *CaseHar) ToTCase() (*hrp.TCase, error) {
+// convert CaseHar to TestCase format
+func (c *CaseHar) ToTestCase() (*hrp.TestCase, error) {
 	teststeps, err := c.prepareTestSteps()
 	if err != nil {
 		return nil, err
 	}
 
-	tCase := &hrp.TCase{
-		Config:    c.prepareConfig(),
-		TestSteps: teststeps,
+	tCase := &hrp.TestCase{
+		Config: c.prepareConfig(),
+		TSteps: teststeps,
 	}
 	err = tCase.MakeCompat()
 	if err != nil {

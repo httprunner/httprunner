@@ -9,9 +9,9 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
-func LoadYAMLCase(path string) (*hrp.TCase, error) {
+func LoadYAMLCase(path string) (*hrp.TestCase, error) {
 	// load yaml case file
-	caseJSON := new(hrp.TCase)
+	caseJSON := new(hrp.TestCase)
 	err := builtin.LoadFile(path, caseJSON)
 	if err != nil {
 		return nil, errors.Wrap(err, "load yaml file failed")

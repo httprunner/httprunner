@@ -47,12 +47,12 @@ func TestLoadHARWithProfileOverride(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		if !assert.Equal(t,
 			map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
-			converter.tCase.TestSteps[i].Request.Headers) {
+			converter.tCase.TSteps[i].Request.Headers) {
 			t.FailNow()
 		}
 		if !assert.Equal(t,
 			map[string]string{"UserName": "debugtalk"},
-			converter.tCase.TestSteps[i].Request.Cookies) {
+			converter.tCase.TSteps[i].Request.Cookies) {
 			t.FailNow()
 		}
 	}
@@ -60,8 +60,8 @@ func TestLoadHARWithProfileOverride(t *testing.T) {
 
 func TestMakeRequestWithProfile(t *testing.T) {
 	caseConverter := &TCaseConverter{
-		tCase: &hrp.TCase{
-			TestSteps: []*hrp.TStep{
+		tCase: &hrp.TestCase{
+			TSteps: []*hrp.TStep{
 				{
 					Request: &hrp.Request{
 						Method: hrp.HTTPMethod("POST"),
@@ -89,20 +89,20 @@ func TestMakeRequestWithProfile(t *testing.T) {
 
 	if !assert.Equal(t, map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded", "User-Agent": "hrp",
-	}, caseConverter.tCase.TestSteps[0].Request.Headers) {
+	}, caseConverter.tCase.TSteps[0].Request.Headers) {
 		t.Fatal()
 	}
 	if !assert.Equal(t, map[string]string{
 		"UserName": "debugtalk", "abc": "123",
-	}, caseConverter.tCase.TestSteps[0].Request.Cookies) {
+	}, caseConverter.tCase.TSteps[0].Request.Cookies) {
 		t.Fatal()
 	}
 }
 
 func TestMakeRequestWithProfileOverride(t *testing.T) {
 	caseConverter := &TCaseConverter{
-		tCase: &hrp.TCase{
-			TestSteps: []*hrp.TStep{
+		tCase: &hrp.TestCase{
+			TSteps: []*hrp.TStep{
 				{
 					Request: &hrp.Request{
 						Method: hrp.HTTPMethod("POST"),
@@ -131,12 +131,12 @@ func TestMakeRequestWithProfileOverride(t *testing.T) {
 
 	if !assert.Equal(t, map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded",
-	}, caseConverter.tCase.TestSteps[0].Request.Headers) {
+	}, caseConverter.tCase.TSteps[0].Request.Headers) {
 		t.Fatal()
 	}
 	if !assert.Equal(t, map[string]string{
 		"UserName": "debugtalk",
-	}, caseConverter.tCase.TestSteps[0].Request.Cookies) {
+	}, caseConverter.tCase.TSteps[0].Request.Cookies) {
 		t.Fatal()
 	}
 }

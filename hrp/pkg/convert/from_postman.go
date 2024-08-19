@@ -112,15 +112,15 @@ var contentTypeMap = map[string]string{
 	"xml":        "application/xml",
 }
 
-func LoadPostmanCase(path string) (*hrp.TCase, error) {
+func LoadPostmanCase(path string) (*hrp.TestCase, error) {
 	log.Info().Str("path", path).Msg("load postman case file")
 	casePostman, err := loadCasePostman(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// convert to TCase format
-	return casePostman.ToTCase()
+	// convert to TestCase format
+	return casePostman.ToTestCase()
 }
 
 func loadCasePostman(path string) (*CasePostman, error) {
@@ -136,14 +136,14 @@ func loadCasePostman(path string) (*CasePostman, error) {
 	return casePostman, nil
 }
 
-func (c *CasePostman) ToTCase() (*hrp.TCase, error) {
+func (c *CasePostman) ToTestCase() (*hrp.TestCase, error) {
 	teststeps, err := c.prepareTestSteps()
 	if err != nil {
 		return nil, err
 	}
-	tCase := &hrp.TCase{
-		Config:    c.prepareConfig(),
-		TestSteps: teststeps,
+	tCase := &hrp.TestCase{
+		Config: c.prepareConfig(),
+		TSteps: teststeps,
 	}
 	err = tCase.MakeCompat()
 	if err != nil {

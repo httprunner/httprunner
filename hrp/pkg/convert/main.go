@@ -114,7 +114,7 @@ type TCaseConverter struct {
 	fromFile    string
 	profilePath string
 	outputDir   string
-	tCase       *hrp.TCase
+	tCase       *hrp.TestCase
 }
 
 // LoadCase loads source file and convert to TCase type
@@ -206,7 +206,7 @@ func (c *TCaseConverter) overrideWithProfile(path string) error {
 	}
 
 	log.Info().Interface("profile", profile).Msg("override with profile")
-	for _, step := range c.tCase.TestSteps {
+	for _, step := range c.tCase.TSteps {
 		// override original headers and cookies
 		if profile.Override {
 			step.Request.Headers = make(map[string]string)
