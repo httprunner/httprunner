@@ -755,7 +755,7 @@ func (s *StepRequest) WebSocket() *StepWebSocket {
 
 // Android creates a new android action
 func (s *StepRequest) Android() *StepMobile {
-	s.step.Android = &MobileStep{}
+	s.step.Android = &MobileUI{}
 	return &StepMobile{
 		step: s.step,
 	}
@@ -763,7 +763,7 @@ func (s *StepRequest) Android() *StepMobile {
 
 // IOS creates a new ios action
 func (s *StepRequest) IOS() *StepMobile {
-	s.step.IOS = &MobileStep{}
+	s.step.IOS = &MobileUI{}
 	return &StepMobile{
 		step: s.step,
 	}

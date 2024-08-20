@@ -343,12 +343,12 @@ func convertExtract(extract map[string]string) {
 	}
 }
 
-func convertCompatMobileStep(mobileStep *MobileStep) {
-	if mobileStep == nil {
+func convertCompatMobileStep(mobileUI *MobileUI) {
+	if mobileUI == nil {
 		return
 	}
-	for i := 0; i < len(mobileStep.Actions); i++ {
-		ma := mobileStep.Actions[i]
+	for i := 0; i < len(mobileUI.Actions); i++ {
+		ma := mobileUI.Actions[i]
 		actionOptions := uixt.NewActionOptions(ma.GetOptions()...)
 		// append tap_cv params to screenshot_with_ui_types option
 		if ma.Method == uixt.ACTION_TapByCV {
@@ -363,7 +363,7 @@ func convertCompatMobileStep(mobileStep *MobileStep) {
 		if ma.Method == uixt.ACTION_SwipeToTapText && actionOptions.MaxRetryTimes == 0 {
 			ma.ActionOptions.MaxRetryTimes = 10
 		}
-		mobileStep.Actions[i] = ma
+		mobileUI.Actions[i] = ma
 	}
 }
 

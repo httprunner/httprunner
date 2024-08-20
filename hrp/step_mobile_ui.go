@@ -11,7 +11,52 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
-type MobileStep struct {
+var uiClients map[string]*uixt.DriverExt // UI automation clients for iOS and Android, key is udid/serial
+
+func initUIClient(serial, osType string) (client *uixt.DriverExt, err error) {
+	if uiClients == nil {
+		uiClients = make(map[string]*uixt.DriverExt)
+	}
+
+	// avoid duplicate init
+	if serial == "" && len(uiClients) > 0 {
+		for _, v := range uiClients {
+			return v, nil
+		}
+	}
+
+	// avoid duplicate init
+	if serial != "" {
+		if client, ok := uiClients[serial]; ok {
+			return client, nil
+		}
+	}
+
+	var device uixt.Device
+	if osType == "ios" {
+		device, err = uixt.NewIOSDevice(uixt.WithUDID(serial))
+	} else {
+		device, err = uixt.NewAndroidDevice(uixt.WithSerialNumber(serial))
+	}
+	if err != nil {
+		return nil, errors.Wrapf(err, "init %s device failed", osType)
+	}
+
+	client, err = device.NewDriver()
+	if err != nil {
+		return nil, err
+	}
+
+	// cache wda client
+	if uiClients == nil {
+		uiClients = make(map[string]*uixt.DriverExt)
+	}
+	uiClients[client.Device.UUID()] = client
+
+	return client, nil
+}
+
+type MobileUI struct {
 	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"` // android serial or ios udid
 	uixt.MobileAction `yaml:",inline"`
 	Actions           []uixt.MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
@@ -22,7 +67,8 @@ type StepMobile struct {
 	step *TStep
 }
 
-func (s *StepMobile) mobileStep() *MobileStep {
+// uniform interface for all types of mobile systems
+func (s *StepMobile) obj() *MobileUI {
 	if s.step.IOS != nil {
 		return s.step.IOS
 	}
@@ -30,12 +76,12 @@ func (s *StepMobile) mobileStep() *MobileStep {
 }
 
 func (s *StepMobile) Serial(serial string) *StepMobile {
-	s.mobileStep().Serial = serial
+	s.obj().Serial = serial
 	return &StepMobile{step: s.step}
 }
 
 func (s *StepMobile) InstallApp(path string) *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method: uixt.ACTION_AppInstall,
 		Params: path,
 	})
@@ -43,7 +89,7 @@ func (s *StepMobile) InstallApp(path string) *StepMobile {
 }
 
 func (s *StepMobile) AppLaunch(bundleId string) *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method: uixt.ACTION_AppLaunch,
 		Params: bundleId,
 	})
@@ -51,7 +97,7 @@ func (s *StepMobile) AppLaunch(bundleId string) *StepMobile {
 }
 
 func (s *StepMobile) AppTerminate(bundleId string) *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method: uixt.ACTION_AppTerminate,
 		Params: bundleId,
 	})
@@ -59,7 +105,7 @@ func (s *StepMobile) AppTerminate(bundleId string) *StepMobile {
 }
 
 func (s *StepMobile) Home() *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method: uixt.ACTION_Home,
 		Params: nil,
 	})
@@ -74,7 +120,7 @@ func (s *StepMobile) TapXY(x, y float64, options ...uixt.ActionOption) *StepMobi
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -86,7 +132,7 @@ func (s *StepMobile) TapAbsXY(x, y float64, options ...uixt.ActionOption) *StepM
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -98,7 +144,7 @@ func (s *StepMobile) Tap(params string, options ...uixt.ActionOption) *StepMobil
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -110,7 +156,7 @@ func (s *StepMobile) TapByOCR(ocrText string, options ...uixt.ActionOption) *Ste
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -122,7 +168,7 @@ func (s *StepMobile) TapByCV(imagePath string, options ...uixt.ActionOption) *St
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -133,13 +179,13 @@ func (s *StepMobile) TapByUITypes(options ...uixt.ActionOption) *StepMobile {
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 // DoubleTapXY double taps the point {X,Y}, X & Y is percentage of coordinates
 func (s *StepMobile) DoubleTapXY(x, y float64, options ...uixt.ActionOption) *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_DoubleTapXY,
 		Params:  []float64{x, y},
 		Options: uixt.NewActionOptions(options...),
@@ -154,7 +200,7 @@ func (s *StepMobile) DoubleTap(params string, options ...uixt.ActionOption) *Ste
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -165,7 +211,7 @@ func (s *StepMobile) Back(options ...uixt.ActionOption) *StepMobile {
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -176,7 +222,7 @@ func (s *StepMobile) Swipe(sx, sy, ex, ey float64, options ...uixt.ActionOption)
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -187,7 +233,7 @@ func (s *StepMobile) SwipeUp(options ...uixt.ActionOption) *StepMobile {
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -198,7 +244,7 @@ func (s *StepMobile) SwipeDown(options ...uixt.ActionOption) *StepMobile {
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -209,7 +255,7 @@ func (s *StepMobile) SwipeLeft(options ...uixt.ActionOption) *StepMobile {
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -220,7 +266,7 @@ func (s *StepMobile) SwipeRight(options ...uixt.ActionOption) *StepMobile {
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -231,7 +277,7 @@ func (s *StepMobile) SwipeToTapApp(appName string, options ...uixt.ActionOption)
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -242,7 +288,7 @@ func (s *StepMobile) SwipeToTapText(text string, options ...uixt.ActionOption) *
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -253,7 +299,7 @@ func (s *StepMobile) SwipeToTapTexts(texts interface{}, options ...uixt.ActionOp
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
@@ -264,13 +310,13 @@ func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobil
 		Options: uixt.NewActionOptions(options...),
 	}
 
-	s.mobileStep().Actions = append(s.mobileStep().Actions, action)
+	s.obj().Actions = append(s.obj().Actions, action)
 	return &StepMobile{step: s.step}
 }
 
 // Sleep specify sleep seconds after last action
 func (s *StepMobile) Sleep(n float64) *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_Sleep,
 		Params:  n,
 		Options: nil,
@@ -283,7 +329,7 @@ func (s *StepMobile) Sleep(n float64) *StepMobile {
 // 1. [min, max] : min and max are float64 time range boudaries
 // 2. [min1, max1, weight1, min2, max2, weight2, ...] : weight is the probability of the time range
 func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_SleepRandom,
 		Params:  params,
 		Options: nil,
@@ -292,7 +338,7 @@ func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 }
 
 func (s *StepMobile) VideoCrawler(params map[string]interface{}) *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_VideoCrawler,
 		Params:  params,
 		Options: nil,
@@ -301,7 +347,7 @@ func (s *StepMobile) VideoCrawler(params map[string]interface{}) *StepMobile {
 }
 
 func (s *StepMobile) ScreenShot(options ...uixt.ActionOption) *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_ScreenShot,
 		Params:  nil,
 		Options: uixt.NewActionOptions(options...),
@@ -310,7 +356,7 @@ func (s *StepMobile) ScreenShot(options ...uixt.ActionOption) *StepMobile {
 }
 
 func (s *StepMobile) StartCamera() *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_StartCamera,
 		Params:  nil,
 		Options: nil,
@@ -319,7 +365,7 @@ func (s *StepMobile) StartCamera() *StepMobile {
 }
 
 func (s *StepMobile) StopCamera() *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_StopCamera,
 		Params:  nil,
 		Options: nil,
@@ -328,7 +374,7 @@ func (s *StepMobile) StopCamera() *StepMobile {
 }
 
 func (s *StepMobile) ClosePopups(options ...uixt.ActionOption) *StepMobile {
-	s.mobileStep().Actions = append(s.mobileStep().Actions, uixt.MobileAction{
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_ClosePopups,
 		Params:  nil,
 		Options: uixt.NewActionOptions(options...),
@@ -536,48 +582,9 @@ func (s *StepMobileUIValidation) Run(r *SessionRunner) (*StepResult, error) {
 	return runStepMobileUI(r, s.step)
 }
 
-func (r *CaseRunner) initUIClient(uuid string, osType string) (client *uixt.DriverExt, err error) {
-	// avoid duplicate init
-	if uuid == "" && len(r.uiClients) > 0 {
-		for _, v := range r.uiClients {
-			return v, nil
-		}
-	}
-
-	// avoid duplicate init
-	if uuid != "" {
-		if client, ok := r.uiClients[uuid]; ok {
-			return client, nil
-		}
-	}
-
-	var device uixt.Device
-	if osType == "ios" {
-		device, err = uixt.NewIOSDevice(uixt.WithUDID(uuid))
-	} else {
-		device, err = uixt.NewAndroidDevice(uixt.WithSerialNumber(uuid))
-	}
-	if err != nil {
-		return nil, errors.Wrapf(err, "init %s device failed", osType)
-	}
-
-	client, err = device.NewDriver(uixt.WithDriverPlugin(r.parser.plugin))
-	if err != nil {
-		return nil, err
-	}
-
-	// cache wda client
-	if r.uiClients == nil {
-		r.uiClients = make(map[string]*uixt.DriverExt)
-	}
-	r.uiClients[client.Device.UUID()] = client
-
-	return client, nil
-}
-
 func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
 	var osType string
-	var mobileStep *MobileStep
+	var mobileStep *MobileUI
 	if step.IOS != nil {
 		// ios step
 		osType = "ios"
@@ -608,7 +615,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	}
 
 	// init wda/uia driver
-	uiDriver, err := s.caseRunner.initUIClient(mobileStep.Serial, osType)
+	uiDriver, err := initUIClient(mobileStep.Serial, osType)
 	if err != nil {
 		return
 	}
