@@ -346,7 +346,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 
 			mutex.Lock()
 			if parametersIterator.HasNext() {
-				sessionRunner.InitWithParameters(parametersIterator.Next())
+				sessionRunner.initWithParameters(parametersIterator.Next())
 			}
 			mutex.Unlock()
 

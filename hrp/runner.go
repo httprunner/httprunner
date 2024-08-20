@@ -437,7 +437,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
 	// update config variables with given variables
-	r.InitWithParameters(givenVars)
+	r.initWithParameters(givenVars)
 
 	defer func() {
 		summary = r.summary
@@ -598,9 +598,9 @@ func (r *SessionRunner) ParseStepValidators(iValidators []interface{}, stepVaria
 	return parsedValidators, nil
 }
 
-// InitWithParameters updates session variables with given parameters.
+// initWithParameters updates session variables with given parameters.
 // this is used for data driven
-func (r *SessionRunner) InitWithParameters(parameters map[string]interface{}) {
+func (r *SessionRunner) initWithParameters(parameters map[string]interface{}) {
 	if len(parameters) == 0 {
 		return
 	}
