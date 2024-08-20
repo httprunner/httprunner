@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
@@ -23,11 +22,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 // Run starts to run testcase with default configs.
@@ -227,18 +224,11 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	// run testcase one by one
 	for _, testcase := range testCases {
 		// each testcase has its own case runner
-		caseRunner, err := r.NewCaseRunner(testcase)
+		caseRunner, err := r.NewCaseRunner(*testcase)
 		if err != nil {
 			log.Error().Err(err).Msg("[Run] init case runner failed")
 			return err
 		}
-
-		// release UI driver session
-		defer func() {
-			for _, client := range caseRunner.uiClients {
-				client.Driver.DeleteSession()
-			}
-		}()
 
 		for it := caseRunner.parametersIterator; it.HasNext(); {
 			// case runner can run multiple times with different parameters
@@ -286,9 +276,9 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 
 // NewCaseRunner creates a new case runner for testcase.
 // each testcase has its own case runner
-func (r *HRPRunner) NewCaseRunner(testcase *TestCase) (*CaseRunner, error) {
+func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 	caseRunner := &CaseRunner{
-		testCase:  testcase,
+		TestCase:  testcase,
 		hrpRunner: r,
 		parser:    newParser(),
 	}
@@ -300,13 +290,14 @@ func (r *HRPRunner) NewCaseRunner(testcase *TestCase) (*CaseRunner, error) {
 	}
 	if plugin != nil {
 		caseRunner.parser.plugin = plugin
-		caseRunner.rootDir = filepath.Dir(plugin.Path())
 	}
 
 	// parse testcase config
-	if err := caseRunner.parseConfig(); err != nil {
+	parsedConfig, err := caseRunner.parseConfig()
+	if err != nil {
 		return nil, errors.Wrap(err, "parse testcase config failed")
 	}
+	caseRunner.TestCase.Config = parsedConfig
 
 	// set request timeout in seconds
 	if testcase.Config.RequestTimeout != 0 {
@@ -320,13 +311,13 @@ func (r *HRPRunner) NewCaseRunner(testcase *TestCase) (*CaseRunner, error) {
 	// load plugin info to testcase config
 	if plugin != nil {
 		pluginPath, _ := locatePlugin(testcase.Config.Path)
-		if caseRunner.parsedConfig.PluginSetting == nil {
-			pluginContent, err := builtin.ReadFile(pluginPath)
+		if caseRunner.Config.PluginSetting == nil {
+			pluginContent, err := readFile(pluginPath)
 			if err != nil {
 				return nil, err
 			}
 			tp := strings.Split(plugin.Path(), ".")
-			caseRunner.parsedConfig.PluginSetting = &PluginConfig{
+			caseRunner.Config.PluginSetting = &PluginConfig{
 				Path:    pluginPath,
 				Content: pluginContent,
 				Type:    tp[len(tp)-1],
@@ -338,130 +329,84 @@ func (r *HRPRunner) NewCaseRunner(testcase *TestCase) (*CaseRunner, error) {
 }
 
 type CaseRunner struct {
+	TestCase // each testcase init its own CaseRunner
+
 	hrpRunner *HRPRunner // all case runners share one HRPRunner
+	parser    *Parser    // each CaseRunner init its own Parser
 
-	testCase *TestCase // each testcase init its own CaseRunner
-	parser   *Parser   // each CaseRunner init its own Parser
-
-	parsedConfig       *TConfig
 	parametersIterator *ParametersIterator
-	rootDir            string                     // project root dir
-	uiClients          map[string]*uixt.DriverExt // UI automation clients for iOS and Android, key is udid/serial
 }
 
 // parseConfig parses testcase config, stores to parsedConfig.
-func (r *CaseRunner) parseConfig() error {
-	cfg := r.testCase.Config
+func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
+	cfg := r.TestCase.Config
 
-	r.parsedConfig = &TConfig{}
+	parsedConfig = &TConfig{}
 	// deep copy config to avoid data racing
-	if err := copier.Copy(r.parsedConfig, cfg); err != nil {
+	if err := copier.Copy(parsedConfig, cfg); err != nil {
 		log.Error().Err(err).Msg("copy testcase config failed")
-		return err
+		return nil, err
 	}
 
 	// parse config variables
 	parsedVariables, err := r.parser.ParseVariables(cfg.Variables)
 	if err != nil {
 		log.Error().Interface("variables", cfg.Variables).Err(err).Msg("parse config variables failed")
-		return err
+		return nil, err
 	}
-	r.parsedConfig.Variables = parsedVariables
+	parsedConfig.Variables = parsedVariables
 
 	// parse config name
 	parsedName, err := r.parser.ParseString(cfg.Name, parsedVariables)
 	if err != nil {
-		return errors.Wrap(err, "parse config name failed")
+		return nil, errors.Wrap(err, "parse config name failed")
 	}
-	r.parsedConfig.Name = convertString(parsedName)
+	parsedConfig.Name = convertString(parsedName)
 
 	// parse config base url
 	parsedBaseURL, err := r.parser.ParseString(cfg.BaseURL, parsedVariables)
 	if err != nil {
-		return errors.Wrap(err, "parse config base url failed")
+		return nil, errors.Wrap(err, "parse config base url failed")
 	}
-	r.parsedConfig.BaseURL = convertString(parsedBaseURL)
+	parsedConfig.BaseURL = convertString(parsedBaseURL)
 
 	// merge config environment variables with base_url
 	// priority: env base_url > base_url
 	if cfg.Environs != nil {
-		r.parsedConfig.Environs = cfg.Environs
+		parsedConfig.Environs = cfg.Environs
 	} else {
-		r.parsedConfig.Environs = make(map[string]string)
+		parsedConfig.Environs = make(map[string]string)
 	}
-	if value, ok := r.parsedConfig.Environs["base_url"]; !ok || value == "" {
-		if r.parsedConfig.BaseURL != "" {
-			r.parsedConfig.Environs["base_url"] = r.parsedConfig.BaseURL
+	if value, ok := parsedConfig.Environs["base_url"]; !ok || value == "" {
+		if parsedConfig.BaseURL != "" {
+			parsedConfig.Environs["base_url"] = parsedConfig.BaseURL
 		}
 	}
 
 	// merge config variables with environment variables
 	// priority: env > config variables
-	for k, v := range r.parsedConfig.Environs {
-		r.parsedConfig.Variables[k] = v
+	for k, v := range parsedConfig.Environs {
+		parsedConfig.Variables[k] = v
 	}
 
 	// ensure correction of think time config
-	r.parsedConfig.ThinkTimeSetting.checkThinkTime()
+	parsedConfig.ThinkTimeSetting.checkThinkTime()
 
 	// ensure correction of websocket config
-	r.parsedConfig.WebSocketSetting.checkWebSocket()
+	parsedConfig.WebSocketSetting.checkWebSocket()
 
 	// parse testcase config parameters
-	parametersIterator, err := r.parser.initParametersIterator(r.parsedConfig)
+	parametersIterator, err := r.parser.initParametersIterator(parsedConfig)
 	if err != nil {
 		log.Error().Err(err).
-			Interface("parameters", r.parsedConfig.Parameters).
-			Interface("parametersSetting", r.parsedConfig.ParametersSetting).
+			Interface("parameters", parsedConfig.Parameters).
+			Interface("parametersSetting", parsedConfig.ParametersSetting).
 			Msg("parse config parameters failed")
-		return errors.Wrap(err, "parse testcase config parameters failed")
+		return nil, errors.Wrap(err, "parse testcase config parameters failed")
 	}
 	r.parametersIterator = parametersIterator
 
-	// init iOS/Android clients
-	if r.uiClients == nil {
-		r.uiClients = make(map[string]*uixt.DriverExt)
-	}
-	for _, iosDeviceConfig := range r.parsedConfig.IOS {
-		if iosDeviceConfig.UDID != "" {
-			udid, err := r.parser.ParseString(iosDeviceConfig.UDID, parsedVariables)
-			if err != nil {
-				return errors.Wrap(err, "failed to parse ios device udid")
-			}
-			iosDeviceConfig.UDID = udid.(string)
-		}
-
-		device, err := uixt.NewIOSDevice(uixt.GetIOSDeviceOptions(iosDeviceConfig)...)
-		if err != nil {
-			return errors.Wrap(err, "init iOS device failed")
-		}
-		client, err := device.NewDriver(uixt.WithDriverPlugin(r.parser.plugin))
-		if err != nil {
-			return errors.Wrap(err, "init iOS WDA client failed")
-		}
-		r.uiClients[device.UDID] = client
-	}
-	for _, androidDeviceConfig := range r.parsedConfig.Android {
-		if androidDeviceConfig.SerialNumber != "" {
-			sn, err := r.parser.ParseString(androidDeviceConfig.SerialNumber, parsedVariables)
-			if err != nil {
-				return errors.Wrap(err, "failed to parse android device serial")
-			}
-			androidDeviceConfig.SerialNumber = sn.(string)
-		}
-
-		device, err := uixt.NewAndroidDevice(uixt.GetAndroidDeviceOptions(androidDeviceConfig)...)
-		if err != nil {
-			return errors.Wrap(err, "init Android device failed")
-		}
-		client, err := device.NewDriver(uixt.WithDriverPlugin(r.parser.plugin))
-		if err != nil {
-			return errors.Wrap(err, "init Android client failed")
-		}
-		r.uiClients[device.SerialNumber] = client
-	}
-
-	return nil
+	return parsedConfig, nil
 }
 
 // each boomer task initiates a new session
@@ -520,7 +465,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	// report GA event
 	sdk.SendGA4Event("hrp_session_runner_start", nil)
 
-	config := r.caseRunner.testCase.Config
+	config := r.caseRunner.Config
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
 	// update config variables with given variables
@@ -532,7 +477,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	}()
 
 	// run step in sequential order
-	for _, step := range r.caseRunner.testCase.TestSteps {
+	for _, step := range r.caseRunner.TestSteps {
 		select {
 		case <-r.caseRunner.hrpRunner.caseTimeoutTimer.C:
 			log.Warn().Msg("timeout in session runner")
@@ -626,12 +571,12 @@ func (r *SessionRunner) ParseStepVariables(stepVariables map[string]interface{})
 	// step variables > session variables (extracted variables from previous steps)
 	overrideVars := mergeVariables(stepVariables, r.sessionVariables)
 	// step variables > testcase config variables
-	overrideVars = mergeVariables(overrideVars, r.caseRunner.parsedConfig.Variables)
+	overrideVars = mergeVariables(overrideVars, r.caseRunner.Config.Variables)
 
 	// parse step variables
 	parsedVariables, err := r.caseRunner.parser.ParseVariables(overrideVars)
 	if err != nil {
-		log.Error().Interface("variables", r.caseRunner.parsedConfig.Variables).
+		log.Error().Interface("variables", r.caseRunner.Config.Variables).
 			Err(err).Msg("parse step variables failed")
 		return nil, errors.Wrap(err, "parse step variables failed")
 	}
@@ -670,36 +615,37 @@ func (r *SessionRunner) InitWithParameters(parameters map[string]interface{}) {
 
 func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 	caseSummary := r.summary
-	caseSummary.Name = r.caseRunner.parsedConfig.Name
+	caseSummary.Name = r.caseRunner.Config.Name
 	caseSummary.Time.StartAt = r.startTime
 	caseSummary.Time.Duration = time.Since(r.startTime).Seconds()
 	exportVars := make(map[string]interface{})
-	for _, value := range r.caseRunner.parsedConfig.Export {
+	for _, value := range r.caseRunner.Config.Export {
 		exportVars[value] = r.sessionVariables[value]
 	}
 	caseSummary.InOut.ExportVars = exportVars
-	caseSummary.InOut.ConfigVars = r.caseRunner.parsedConfig.Variables
+	caseSummary.InOut.ConfigVars = r.caseRunner.Config.Variables
 
-	for uuid, client := range r.caseRunner.uiClients {
-		// add WDA/UIA logs to summary
-		logs := map[string]interface{}{
-			"uuid": uuid,
-		}
+	// TODO: move to mobile ui step
+	// for uuid, client := range r.caseRunner.uiClients {
+	// 	// add WDA/UIA logs to summary
+	// 	logs := map[string]interface{}{
+	// 		"uuid": uuid,
+	// 	}
 
-		if client.Device.LogEnabled() {
-			log, err := client.Driver.StopCaptureLog()
-			if err != nil {
-				return caseSummary, err
-			}
-			logs["content"] = log
-		}
+	// 	if client.Device.LogEnabled() {
+	// 		log, err := client.Driver.StopCaptureLog()
+	// 		if err != nil {
+	// 			return caseSummary, err
+	// 		}
+	// 		logs["content"] = log
+	// 	}
 
-		// stop performance monitor
-		logs["performance"] = client.Device.StopPerf()
-		logs["pcap"] = client.Device.StopPcap()
+	// 	// stop performance monitor
+	// 	logs["performance"] = client.Device.StopPerf()
+	// 	logs["pcap"] = client.Device.StopPcap()
 
-		caseSummary.Logs = append(caseSummary.Logs, logs)
-	}
+	// 	caseSummary.Logs = append(caseSummary.Logs, logs)
+	// }
 
 	return caseSummary, nil
 }
@@ -739,7 +685,7 @@ func (r *SessionRunner) releaseResources() {
 	// close websocket connections
 	for _, wsConn := range r.wsConnMap {
 		if wsConn != nil {
-			log.Info().Str("testcase", r.caseRunner.testCase.Config.Name).Msg("websocket disconnected")
+			log.Info().Str("testcase", r.caseRunner.Config.Name).Msg("websocket disconnected")
 			err := wsConn.Close()
 			if err != nil {
 				log.Error().Err(err).Msg("websocket disconnection failed")

@@ -44,7 +44,7 @@ func (s *StepRendezvous) Run(r *SessionRunner) (*StepResult, error) {
 	}
 
 	// pass current rendezvous if already released, activate rendezvous sequentially after spawn done
-	if rendezvous.isReleased() || !isPreRendezvousAllReleased(rendezvous, r.caseRunner.testCase) || !rendezvous.isSpawnDone() {
+	if rendezvous.isReleased() || !isPreRendezvousAllReleased(rendezvous, &r.caseRunner.TestCase) || !rendezvous.isSpawnDone() {
 		return stepResult, nil
 	}
 

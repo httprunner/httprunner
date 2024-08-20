@@ -85,7 +85,7 @@ func runStepShell(r *SessionRunner, step *TStep) (stepResult *StepResult, err er
 		ContentSize: 0,
 	}
 
-	vars := r.caseRunner.parsedConfig.Variables
+	vars := r.caseRunner.Config.Variables
 	for key, value := range vars {
 		os.Setenv(key, fmt.Sprintf("%v", value))
 	}

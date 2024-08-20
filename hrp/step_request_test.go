@@ -78,7 +78,7 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 }
 
 func TestRunRequestStatOn(t *testing.T) {
-	testcase := &TestCase{
+	testcase := TestCase{
 		Config:    NewConfig("test").SetBaseURL("https://postman-echo.com"),
 		TestSteps: []IStep{stepGET, stepPOSTData},
 	}

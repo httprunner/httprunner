@@ -305,7 +305,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 
 	sessionData := newSessionData()
 	parser := r.caseRunner.parser
-	config := r.caseRunner.parsedConfig
+	config := r.caseRunner.Config
 
 	rb := newRequestBuilder(parser, config, step.Request)
 	rb.req.Method = strings.ToUpper(string(step.Request.Method))

@@ -39,7 +39,7 @@ func (s *StepThinkTime) Run(r *SessionRunner) (*StepResult, error) {
 		Success:  true,
 	}
 
-	cfg := r.caseRunner.parsedConfig.ThinkTimeSetting
+	cfg := r.caseRunner.Config.ThinkTimeSetting
 	if cfg == nil {
 		cfg = &ThinkTimeConfig{thinkTimeDefault, nil, 0}
 	}

@@ -270,7 +270,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 
 	sessionData := newSessionData()
 	parser := r.caseRunner.parser
-	config := r.caseRunner.parsedConfig
+	config := r.caseRunner.Config
 
 	dummyReq := &Request{
 		URL:     step.WebSocket.URL,
