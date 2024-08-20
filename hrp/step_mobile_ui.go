@@ -607,13 +607,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		ContentSize: 0,
 	}
 
-	// merge step variables with session variables
-	stepVariables, err := s.ParseStepVariables(step.Variables)
-	if err != nil {
-		err = errors.Wrap(err, "parse step variables failed")
-		return
-	}
-
 	// init wda/uia driver
 	uiDriver, err := initUIClient(mobileStep.Serial, osType)
 	if err != nil {
@@ -669,7 +662,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 			log.Warn().Msg("interrupted in mobile UI runner")
 			return stepResult, errors.Wrap(code.InterruptError, "mobile UI runner interrupted")
 		default:
-			if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
+			if action.Params, err = s.caseRunner.parser.Parse(action.Params, step.Variables); err != nil {
 				if !code.IsErrorPredefined(err) {
 					err = errors.Wrap(code.ParseError,
 						fmt.Sprintf("parse action params failed: %v", err))
@@ -686,11 +679,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	}
 
 	// validate
-	stepValidators, err := s.ParseStepValidators(step.Validators, stepVariables)
-	if err != nil {
-		return
-	}
-	validateResults, err := validateUI(uiDriver, stepValidators)
+	validateResults, err := validateUI(uiDriver, step.Validators)
 	if err != nil {
 		if !code.IsErrorPredefined(err) {
 			err = errors.Wrap(code.MobileUIValidationError, err.Error())

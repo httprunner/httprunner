@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/jinzhu/copier"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -52,13 +51,6 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 		Success:  false,
 	}
 
-	// merge step variables with session variables
-	stepVariables, err := r.ParseStepVariables(s.step.Variables)
-	if err != nil {
-		err = errors.Wrap(err, "parse step variables failed")
-		return
-	}
-
 	defer func() {
 		// update testcase summary
 		if err != nil {
@@ -93,7 +85,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	start := time.Now()
 	var summary *TestCaseSummary
 	// run referenced testcase with step variables
-	summary, err = sessionRunner.Start(stepVariables)
+	summary, err = sessionRunner.Start(s.step.Variables)
 	stepResult.Elapsed = time.Since(start).Milliseconds()
 
 	// update step names

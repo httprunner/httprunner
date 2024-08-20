@@ -458,9 +458,9 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 			}
 
 			if client.Device.LogEnabled() {
-				log, err := client.Driver.StopCaptureLog()
+				log, err1 := client.Driver.StopCaptureLog()
 				if err != nil {
-					err = errors.Wrap(err, "get summary failed")
+					err = errors.Wrap(err1, "get summary failed")
 					return
 				}
 				logs["content"] = log
@@ -484,13 +484,13 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 			log.Warn().Msg("interrupted in session runner")
 			return summary, errors.Wrap(code.InterruptError, "session runner interrupted")
 		default:
-			// TODO: parse step struct
-			// parse step name
-			parsedName, err := r.caseRunner.parser.ParseString(step.Name(), r.sessionVariables)
-			if err != nil {
-				parsedName = step.Name()
+			// parse step struct
+			err = r.parseStepStruct(step)
+			if err != nil && r.caseRunner.hrpRunner.failfast {
+				return summary, errors.Wrap(err, "parse step struct failed")
 			}
-			stepName := convertString(parsedName)
+
+			stepName := step.Name()
 			stepType := string(step.Type())
 			log.Info().Str("step", stepName).Str("type", stepType).Msg("run step start")
 			stepStartTime := time.Now()
@@ -563,11 +563,12 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 	return summary, nil
 }
 
-// ParseStepVariables merges step variables with config variables and session variables
-func (r *SessionRunner) ParseStepVariables(stepVariables map[string]interface{}) (map[string]interface{}, error) {
-	// override variables
-	// step variables > session variables (extracted variables from previous steps)
-	overrideVars := mergeVariables(stepVariables, r.sessionVariables)
+func (r *SessionRunner) parseStepStruct(step IStep) error {
+	stepStruct := step.Struct()
+
+	// parse step variables: merges step variables with config variables and session variables
+	// override variables, step variables > session variables (extracted variables from previous steps)
+	overrideVars := mergeVariables(stepStruct.Variables, r.sessionVariables)
 	// step variables > testcase config variables
 	overrideVars = mergeVariables(overrideVars, r.caseRunner.Config.Variables)
 
@@ -576,26 +577,35 @@ func (r *SessionRunner) ParseStepVariables(stepVariables map[string]interface{})
 	if err != nil {
 		log.Error().Interface("variables", r.caseRunner.Config.Variables).
 			Err(err).Msg("parse step variables failed")
-		return nil, errors.Wrap(err, "parse step variables failed")
+		return errors.Wrap(err, "parse step variables failed")
 	}
-	return parsedVariables, nil
-}
+	stepStruct.Variables = parsedVariables
 
-func (r *SessionRunner) ParseStepValidators(iValidators []interface{}, stepVariables map[string]interface{}) ([]interface{}, error) {
+	// parse step name
+	parsedName, err := r.caseRunner.parser.ParseString(
+		stepStruct.Name, stepStruct.Variables)
+	if err != nil {
+		parsedName = step.Name()
+	}
+	stepStruct.Name = convertString(parsedName)
+
+	// parse step validators
 	var parsedValidators []interface{}
-	var err error
-	for _, iValidator := range iValidators {
+	for _, iValidator := range stepStruct.Validators {
 		validator, ok := iValidator.(Validator)
 		if !ok {
-			return nil, errors.New("validator type error")
+			return errors.New("validator type error")
 		}
-		validator.Expect, err = r.caseRunner.parser.Parse(validator.Expect, stepVariables)
+		validator.Expect, err = r.caseRunner.parser.Parse(
+			validator.Expect, stepStruct.Variables)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to parse validator expect")
+			return errors.Wrap(err, "failed to parse validator expect")
 		}
 		parsedValidators = append(parsedValidators, validator)
 	}
-	return parsedValidators, nil
+	stepStruct.Validators = parsedValidators
+
+	return nil
 }
 
 // initWithParameters updates session variables with given parameters.

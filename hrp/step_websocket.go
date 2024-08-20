@@ -260,13 +260,6 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 		ContentSize: 0,
 	}
 
-	// merge step variables with session variables
-	stepVariables, err := r.ParseStepVariables(step.Variables)
-	if err != nil {
-		err = errors.Wrap(err, "parse step variables failed")
-		return
-	}
-
 	defer func() {
 		// update testcase summary
 		if err != nil {
@@ -285,12 +278,12 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 	}
 	rb := newRequestBuilder(parser, config, dummyReq)
 
-	err = rb.prepareUrlParams(stepVariables)
+	err = rb.prepareUrlParams(step.Variables)
 	if err != nil {
 		return
 	}
 
-	err = rb.prepareHeaders(stepVariables)
+	err = rb.prepareHeaders(step.Variables)
 	if err != nil {
 		return
 	}
@@ -298,12 +291,12 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 	parsedHeader := rb.req.Header
 
 	// add request object to step variables, could be used in setup hooks
-	stepVariables["hrp_step_name"] = step.Name
-	stepVariables["hrp_step_request"] = rb.requestMap
+	step.Variables["hrp_step_name"] = step.Name
+	step.Variables["hrp_step_request"] = rb.requestMap
 
 	// deal with setup hooks
 	for _, setupHook := range step.SetupHooks {
-		_, err = parser.Parse(setupHook, stepVariables)
+		_, err = parser.Parse(setupHook, step.Variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run setup hooks failed")
 		}
@@ -329,7 +322,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 		}
 	case wsPing:
 		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("send ping and expect pong")
-		err = writeWebSocket(parsedURL, r, step, stepVariables)
+		err = writeWebSocket(parsedURL, r, step, step.Variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "send ping message failed")
 		}
@@ -347,7 +340,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 		}()
 	case wsWriteAndRead:
 		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("write a message and read response")
-		err = writeWebSocket(parsedURL, r, step, stepVariables)
+		err = writeWebSocket(parsedURL, r, step, step.Variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "write message failed")
 		}
@@ -363,13 +356,13 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 		}
 	case wsWrite:
 		log.Info().Str("url", parsedURL).Msg("write only")
-		err = writeWebSocket(parsedURL, r, step, stepVariables)
+		err = writeWebSocket(parsedURL, r, step, step.Variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "write message failed")
 		}
 	case wsClose:
 		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("close webSocket connection")
-		resp, err = closeWithTimeout(parsedURL, r, step, stepVariables)
+		resp, err = closeWithTimeout(parsedURL, r, step, step.Variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "close connection failed")
 		}
@@ -392,12 +385,12 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 
 	if respObj != nil {
 		// add response object to step variables, could be used in teardown hooks
-		stepVariables["hrp_step_response"] = respObj.respObjMeta
+		step.Variables["hrp_step_response"] = respObj.respObjMeta
 	}
 
 	// deal with teardown hooks
 	for _, teardownHook := range step.TeardownHooks {
-		_, err = parser.Parse(teardownHook, stepVariables)
+		_, err = parser.Parse(teardownHook, step.Variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run teardown hooks failed")
 		}
@@ -409,14 +402,14 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 
 		// extract variables from response
 		extractors := step.Extract
-		extractMapping := respObj.Extract(extractors, stepVariables)
+		extractMapping := respObj.Extract(extractors, step.Variables)
 		stepResult.ExportVars = extractMapping
 
 		// override step variables with extracted variables
-		stepVariables = mergeVariables(stepVariables, extractMapping)
+		step.Variables = mergeVariables(step.Variables, extractMapping)
 
 		// validate response
-		err = respObj.Validate(step.Validators, stepVariables)
+		err = respObj.Validate(step.Validators, step.Variables)
 		sessionData.Validators = respObj.validationResults
 		if err == nil {
 			sessionData.Success = true
