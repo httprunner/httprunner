@@ -418,11 +418,7 @@ func (r *CaseRunner) NewSession() *SessionRunner {
 		sessionVariables: make(map[string]interface{}),
 		summary:          newSummary(),
 
-		transactions:      make(map[string]map[transactionType]time.Time),
-		wsConnMap:         make(map[string]*websocket.Conn),
-		inheritWsConnMap:  make(map[string]*websocket.Conn),
-		pongResponseChan:  make(chan string, 1),
-		closeResponseChan: make(chan *wsCloseRespObject, 1),
+		transactions: make(map[string]map[transactionType]time.Time),
 	}
 	return sessionRunner
 }
@@ -438,22 +434,6 @@ type SessionRunner struct {
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
 	transactions map[string]map[transactionType]time.Time
-
-	wsConnMap         map[string]*websocket.Conn // save all websocket connections
-	inheritWsConnMap  map[string]*websocket.Conn // inherit all websocket connections
-	pongResponseChan  chan string                // channel used to receive pong response message
-	closeResponseChan chan *wsCloseRespObject    // channel used to receive close response message
-}
-
-func (r *SessionRunner) inheritConnection(src *SessionRunner) {
-	log.Info().Msg("inherit session runner")
-	r.inheritWsConnMap = make(map[string]*websocket.Conn, len(src.wsConnMap)+len(src.inheritWsConnMap))
-	for k, v := range src.wsConnMap {
-		r.inheritWsConnMap[k] = v
-	}
-	for k, v := range src.inheritWsConnMap {
-		r.inheritWsConnMap[k] = v
-	}
 }
 
 // Start runs the test steps in sequential order.
@@ -467,11 +447,6 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 
 	// update config variables with given variables
 	r.InitWithParameters(givenVars)
-
-	defer func() {
-		// close session resource after all steps done or fast fail
-		r.releaseResources()
-	}()
 
 	// run step in sequential order
 	for _, step := range r.caseRunner.TestSteps {
@@ -674,30 +649,4 @@ func (r *SessionRunner) addSingleStepResult(stepResult *StepResult) {
 		// update summary result to failed
 		r.summary.Success = false
 	}
-}
-
-// releaseResources releases resources used by session runner
-func (r *SessionRunner) releaseResources() {
-	// close websocket connections
-	for _, wsConn := range r.wsConnMap {
-		if wsConn != nil {
-			log.Info().Str("testcase", r.caseRunner.Config.Name).Msg("websocket disconnected")
-			err := wsConn.Close()
-			if err != nil {
-				log.Error().Err(err).Msg("websocket disconnection failed")
-			}
-		}
-	}
-}
-
-func (r *SessionRunner) getWsClient(url string) *websocket.Conn {
-	if client, ok := r.wsConnMap[url]; ok {
-		return client
-	}
-
-	if client, ok := r.inheritWsConnMap[url]; ok {
-		return client
-	}
-
-	return nil
 }

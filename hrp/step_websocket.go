@@ -16,6 +16,12 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
+var (
+	wsConnMap         map[string]*websocket.Conn // save all websocket connections
+	pongResponseChan  chan string                // channel used to receive pong response message
+	closeResponseChan chan *wsCloseRespObject    // channel used to receive close response message
+)
+
 const (
 	wsOpen         ActionType = "open"
 	wsPing         ActionType = "ping"
@@ -314,7 +320,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 	case wsOpen:
 		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("open websocket connection")
 		// use the current websocket connection if existed
-		if r.getWsClient(parsedURL) != nil {
+		if getWsClient(parsedURL) != nil {
 			break
 		}
 		resp, err = openWithTimeout(parsedURL, parsedHeader, r, step)
@@ -334,7 +340,7 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 			case <-timer.C:
 				timer.Stop()
 				log.Warn().Msg("pong timeout")
-			case pongResponse := <-r.pongResponseChan:
+			case pongResponse := <-pongResponseChan:
 				resp = pongResponse
 				log.Info().Msg("pong message arrives")
 			}
@@ -426,6 +432,20 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 	return stepResult, nil
 }
 
+func getWsClient(url string) *websocket.Conn {
+	if wsConnMap == nil {
+		wsConnMap = make(map[string]*websocket.Conn)
+		pongResponseChan = make(chan string, 1)
+		closeResponseChan = make(chan *wsCloseRespObject, 1)
+	}
+
+	if client, ok := wsConnMap[url]; ok {
+		return client
+	}
+
+	return nil
+}
+
 func printWebSocketResponse(resp interface{}) error {
 	if resp == nil {
 		fmt.Println("(response body is empty in this step)")
@@ -470,14 +490,14 @@ func openWithTimeout(urlStr string, requestHeader http.Header, r *SessionRunner,
 
 		// the following handlers handle and transport control message from server
 		conn.SetPongHandler(func(appData string) error {
-			r.pongResponseChan <- appData
+			pongResponseChan <- appData
 			return nil
 		})
 		conn.SetCloseHandler(func(code int, text string) error {
 			message := websocket.FormatCloseMessage(code, "")
 			conn.WriteControl(websocket.CloseMessage, message, time.Now().Add(defaultWriteWait))
 			select {
-			case r.closeResponseChan <- &wsCloseRespObject{
+			case closeResponseChan <- &wsCloseRespObject{
 				StatusCode: code,
 				Text:       text,
 			}:
@@ -487,7 +507,7 @@ func openWithTimeout(urlStr string, requestHeader http.Header, r *SessionRunner,
 
 			return nil
 		})
-		r.wsConnMap[urlStr] = conn
+		wsConnMap[urlStr] = conn
 		openResponseChan <- resp
 	}()
 
@@ -504,7 +524,7 @@ func openWithTimeout(urlStr string, requestHeader http.Header, r *SessionRunner,
 }
 
 func readMessageWithTimeout(urlString string, r *SessionRunner, step *TStep) (*wsReadRespObject, error) {
-	wsConn := r.getWsClient(urlString)
+	wsConn := getWsClient(urlString)
 	if wsConn == nil {
 		return nil, errors.New("try to use existing connection, but there is no connection")
 	}
@@ -534,7 +554,7 @@ func readMessageWithTimeout(urlString string, r *SessionRunner, step *TStep) (*w
 }
 
 func writeWebSocket(urlString string, r *SessionRunner, step *TStep, stepVariables map[string]interface{}) error {
-	wsConn := r.getWsClient(urlString)
+	wsConn := getWsClient(urlString)
 	if wsConn == nil {
 		return errors.New("try to use existing connection, but there is no connection")
 	}
@@ -600,7 +620,7 @@ func writeWithAction(c *websocket.Conn, step *TStep, messageType int, message []
 }
 
 func closeWithTimeout(urlString string, r *SessionRunner, step *TStep, stepVariables map[string]interface{}) (*wsCloseRespObject, error) {
-	wsConn := r.getWsClient(urlString)
+	wsConn := getWsClient(urlString)
 	if wsConn == nil {
 		return nil, errors.New("no connection needs to be closed")
 	}
@@ -639,7 +659,7 @@ func closeWithTimeout(urlString string, r *SessionRunner, step *TStep, stepVaria
 		return nil, errors.New("close timeout")
 	case err := <-errorChan:
 		return nil, err
-	case closeResult := <-r.closeResponseChan:
+	case closeResult := <-closeResponseChan:
 		return closeResult, nil
 	}
 }
@@ -671,5 +691,19 @@ func getContentSize(resp interface{}) int64 {
 		return int64(unsafe.Sizeof(r.Text))
 	default:
 		return -1
+	}
+}
+
+// releaseResources releases resources used by session runner
+func (r *SessionRunner) releaseResources() {
+	// close websocket connections
+	for _, wsConn := range wsConnMap {
+		if wsConn != nil {
+			log.Info().Str("testcase", r.caseRunner.Config.Name).Msg("websocket disconnected")
+			err := wsConn.Close()
+			if err != nil {
+				log.Error().Err(err).Msg("websocket disconnection failed")
+			}
+		}
 	}
 }

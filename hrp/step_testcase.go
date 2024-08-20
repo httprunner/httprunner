@@ -89,8 +89,6 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 		return stepResult, err
 	}
 	sessionRunner := caseRunner.NewSession()
-	// need to inherit some information from current session
-	sessionRunner.inheritConnection(r)
 
 	start := time.Now()
 	// run referenced testcase with step variables
