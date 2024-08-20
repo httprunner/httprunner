@@ -234,20 +234,11 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			// case runner can run multiple times with different parameters
 			// each run has its own session runner
 			sessionRunner := caseRunner.NewSession()
-			err1 := sessionRunner.Start(it.Next())
-			if err1 != nil {
-				log.Error().Err(err1).Msg("[Run] run testcase failed")
-				runErr = err1
-			}
-			caseSummary, err2 := sessionRunner.GetSummary()
+			caseSummary, err := sessionRunner.Start(it.Next())
 			s.appendCaseSummary(caseSummary)
-			if err2 != nil {
-				log.Error().Err(err2).Msg("[Run] get summary failed")
-				if err1 != nil {
-					runErr = errors.Wrap(err1, err2.Error())
-				} else {
-					runErr = err2
-				}
+			if err != nil {
+				log.Error().Err(err).Msg("[Run] run testcase failed")
+				runErr = err
 			}
 
 			if runErr != nil && r.failfast {
@@ -438,7 +429,7 @@ type SessionRunner struct {
 
 // Start runs the test steps in sequential order.
 // givenVars is used for data driven
-func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
+func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCaseSummary, err error) {
 	// report GA event
 	sdk.SendGA4Event("hrp_session_runner_start", nil)
 
@@ -448,15 +439,50 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 	// update config variables with given variables
 	r.InitWithParameters(givenVars)
 
+	defer func() {
+		summary = r.summary
+		summary.Name = r.caseRunner.Config.Name
+		summary.Time.Duration = time.Since(summary.Time.StartAt).Seconds()
+		exportVars := make(map[string]interface{})
+		for _, value := range r.caseRunner.Config.Export {
+			exportVars[value] = r.sessionVariables[value]
+		}
+		summary.InOut.ExportVars = exportVars
+		summary.InOut.ConfigVars = r.caseRunner.Config.Variables
+
+		// TODO: move to mobile ui step
+		for uuid, client := range uiClients {
+			// add WDA/UIA logs to summary
+			logs := map[string]interface{}{
+				"uuid": uuid,
+			}
+
+			if client.Device.LogEnabled() {
+				log, err := client.Driver.StopCaptureLog()
+				if err != nil {
+					err = errors.Wrap(err, "get summary failed")
+					return
+				}
+				logs["content"] = log
+			}
+
+			// stop performance monitor
+			logs["performance"] = client.Device.StopPerf()
+			logs["pcap"] = client.Device.StopPcap()
+
+			summary.Logs = append(summary.Logs, logs)
+		}
+	}()
+
 	// run step in sequential order
 	for _, step := range r.caseRunner.TestSteps {
 		select {
 		case <-r.caseRunner.hrpRunner.caseTimeoutTimer.C:
 			log.Warn().Msg("timeout in session runner")
-			return errors.Wrap(code.TimeoutError, "session runner timeout")
+			return summary, errors.Wrap(code.TimeoutError, "session runner timeout")
 		case <-r.caseRunner.hrpRunner.interruptSignal:
 			log.Warn().Msg("interrupted in session runner")
-			return errors.Wrap(code.InterruptError, "session runner interrupted")
+			return summary, errors.Wrap(code.InterruptError, "session runner interrupted")
 		default:
 			// TODO: parse step struct
 			// parse step name
@@ -523,18 +549,18 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
 
 			// interrupted or timeout, abort running
 			if errors.Is(err, code.InterruptError) || errors.Is(err, code.TimeoutError) {
-				return err
+				return summary, err
 			}
 
 			// check if failfast
 			if r.caseRunner.hrpRunner.failfast {
-				return errors.Wrap(err, "abort running due to failfast setting")
+				return summary, errors.Wrap(err, "abort running due to failfast setting")
 			}
 		}
 	}
 
 	log.Info().Str("testcase", config.Name).Msg("run testcase end")
-	return nil
+	return summary, nil
 }
 
 // ParseStepVariables merges step variables with config variables and session variables
@@ -583,42 +609,6 @@ func (r *SessionRunner) InitWithParameters(parameters map[string]interface{}) {
 	for k, v := range parameters {
 		r.sessionVariables[k] = v
 	}
-}
-
-func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
-	caseSummary := r.summary
-	caseSummary.Name = r.caseRunner.Config.Name
-	caseSummary.Time.Duration = time.Since(caseSummary.Time.StartAt).Seconds()
-	exportVars := make(map[string]interface{})
-	for _, value := range r.caseRunner.Config.Export {
-		exportVars[value] = r.sessionVariables[value]
-	}
-	caseSummary.InOut.ExportVars = exportVars
-	caseSummary.InOut.ConfigVars = r.caseRunner.Config.Variables
-
-	// TODO: move to mobile ui step
-	// for uuid, client := range r.caseRunner.uiClients {
-	// 	// add WDA/UIA logs to summary
-	// 	logs := map[string]interface{}{
-	// 		"uuid": uuid,
-	// 	}
-
-	// 	if client.Device.LogEnabled() {
-	// 		log, err := client.Driver.StopCaptureLog()
-	// 		if err != nil {
-	// 			return caseSummary, err
-	// 		}
-	// 		logs["content"] = log
-	// 	}
-
-	// 	// stop performance monitor
-	// 	logs["performance"] = client.Device.StopPerf()
-	// 	logs["pcap"] = client.Device.StopPcap()
-
-	// 	caseSummary.Logs = append(caseSummary.Logs, logs)
-	// }
-
-	return caseSummary, nil
 }
 
 // updateSummary updates summary of StepResult.

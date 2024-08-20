@@ -84,10 +84,10 @@ func TestRunRequestStatOn(t *testing.T) {
 	}
 	caseRunner, _ := NewRunner(t).SetHTTPStatOn().NewCaseRunner(testcase)
 	sessionRunner := caseRunner.NewSession()
-	if err := sessionRunner.Start(nil); err != nil {
+	summary, err := sessionRunner.Start(nil)
+	if err != nil {
 		t.Fatal()
 	}
-	summary, _ := sessionRunner.GetSummary()
 
 	stat := summary.Records[0].HttpStat
 	if !assert.GreaterOrEqual(t, stat["DNSLookup"], int64(0)) {

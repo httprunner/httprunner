@@ -91,19 +91,11 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	sessionRunner := caseRunner.NewSession()
 
 	start := time.Now()
+	var summary *TestCaseSummary
 	// run referenced testcase with step variables
-	err = sessionRunner.Start(stepVariables)
+	summary, err = sessionRunner.Start(stepVariables)
 	stepResult.Elapsed = time.Since(start).Milliseconds()
 
-	summary, err2 := sessionRunner.GetSummary()
-	if err2 != nil {
-		log.Error().Err(err2).Msg("get summary failed")
-		if err != nil {
-			err = errors.Wrap(err, err2.Error())
-		} else {
-			err = err2
-		}
-	}
 	// update step names
 	for _, record := range summary.Records {
 		record.Name = fmt.Sprintf("%s - %s", stepResult.Name, record.Name)
