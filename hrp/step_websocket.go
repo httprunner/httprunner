@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 	"unsafe"
@@ -17,10 +18,17 @@ import (
 )
 
 var (
+	wsMutex           sync.Mutex
 	wsConnMap         map[string]*websocket.Conn // save all websocket connections
 	pongResponseChan  chan string                // channel used to receive pong response message
 	closeResponseChan chan *wsCloseRespObject    // channel used to receive close response message
 )
+
+func init() {
+	wsConnMap = make(map[string]*websocket.Conn)
+	pongResponseChan = make(chan string, 1)
+	closeResponseChan = make(chan *wsCloseRespObject, 1)
+}
 
 const (
 	wsOpen         ActionType = "open"
@@ -426,12 +434,6 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 }
 
 func getWsClient(url string) *websocket.Conn {
-	if wsConnMap == nil {
-		wsConnMap = make(map[string]*websocket.Conn)
-		pongResponseChan = make(chan string, 1)
-		closeResponseChan = make(chan *wsCloseRespObject, 1)
-	}
-
 	if client, ok := wsConnMap[url]; ok {
 		return client
 	}
@@ -500,7 +502,10 @@ func openWithTimeout(urlStr string, requestHeader http.Header, r *SessionRunner,
 
 			return nil
 		})
+		wsMutex.Lock()
 		wsConnMap[urlStr] = conn
+		wsMutex.Unlock()
+
 		openResponseChan <- resp
 	}()
 
