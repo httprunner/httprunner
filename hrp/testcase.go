@@ -293,7 +293,22 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 		if _, ok := iValidator.(Validator); ok {
 			continue
 		}
-		validatorMap := iValidator.(map[string]interface{})
+
+		var validatorMap map[string]interface{}
+		if v, ok := iValidator.(map[string]interface{}); ok {
+			validatorMap = v
+		} else if v, ok := iValidator.(map[interface{}]interface{}); ok {
+			// convert map[interface{}]interface{} to map[string]interface{}
+			validatorMap = make(map[string]interface{})
+			for key, value := range v {
+				strKey := fmt.Sprintf("%v", key)
+				validatorMap[strKey] = value
+			}
+		} else {
+			return errors.Wrap(code.InvalidCaseFormat,
+				fmt.Sprintf("unexpected validator format: %v", iValidator))
+		}
+
 		validator := Validator{}
 		iCheck, checkExisted := validatorMap["check"]
 		iAssert, assertExisted := validatorMap["assert"]
