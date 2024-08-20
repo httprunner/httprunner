@@ -6,8 +6,9 @@ HttpRunner 以 `TestCase` 为核心，将任意测试场景抽象为有序步骤
 
 ```go
 type TestCase struct {
-	Config    *TConfig
-	TestSteps []IStep
+	Config    *TConfig `json:"config" yaml:"config"`
+	Steps     []*TStep `json:"teststeps" yaml:"teststeps"`
+	TestSteps []IStep  `json:"-" yaml:"-"`
 }
 ```
 
@@ -30,6 +31,7 @@ type IStep interface {
 - [thinktime](step_thinktime.go)：思考时间，按照配置的逻辑进行等待
 - [transaction](step_transaction.go)：事务机制，用于压测
 - [rendezvous](step_rendezvous.go)：集合点机制，用于压测
+- [mobile_UI](step_mobile_ui.go)：移动端 UI 自动化
 
 基于该机制，我们可以扩展支持新的协议类型，例如 HTTP2/WebSocket/RPC 等；同时也可以支持新的测试类型，例如 UI 自动化。甚至我们还可以在一个测试用例中混合调用多种不同的 Step 类型，例如实现 HTTP/RPC/UI 混合场景。
 
@@ -51,7 +53,7 @@ type HRPRunner struct {
 }
 
 func (r *HRPRunner) Run(testcases ...ITestCase) error
-func (r *HRPRunner) NewCaseRunner(testcase *TestCase) (*CaseRunner, error)
+func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 ```
 
 重点关注两个方法：
@@ -65,13 +67,12 @@ func (r *HRPRunner) NewCaseRunner(testcase *TestCase) (*CaseRunner, error)
 
 ```go
 type CaseRunner struct {
-	testCase  *TestCase
-	hrpRunner *HRPRunner
-	parser    *Parser
+	TestCase // each testcase init its own CaseRunner
 
-	parsedConfig       *TConfig
+	hrpRunner *HRPRunner // all case runners share one HRPRunner
+	parser    *Parser    // each CaseRunner init its own Parser
+
 	parametersIterator *ParametersIterator
-	rootDir            string // project root dir
 }
 
 func (r *CaseRunner) NewSession() *SessionRunner {
@@ -87,14 +88,13 @@ func (r *CaseRunner) NewSession() *SessionRunner {
 
 ```go
 type SessionRunner struct {
-	caseRunner       *CaseRunner
-	sessionVariables map[string]interface{}
-	transactions      map[string]map[transactionType]time.Time
-	startTime         time.Time                  // record start time of the testcase
-	summary           *TestCaseSummary           // record test case summary
+	caseRunner *CaseRunner // all session runners share one CaseRunner
+
+	sessionVariables map[string]interface{} // testcase execution session variables
+	summary          *TestCaseSummary       // record test case summary
 }
 
-func (r *SessionRunner) Start(givenVars map[string]interface{}) error
+func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCaseSummary, err error)
 ```
 
 重点关注一个方法：
@@ -102,15 +102,20 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) error
 - Start：启动执行用例，依次执行所有测试步骤
 
 ```go
-func (r *SessionRunner) Start(givenVars map[string]interface{}) error {
+func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCaseSummary, err error) {
 	...
 	r.resetSession()
 
 	r.InitWithParameters(givenVars)
 
+	defer func() {
+		summary = r.summary
+	}
+
 	// run step in sequential order
 	for _, step := range r.testCase.TestSteps {
 		// parse step
+		err = r.parseStepStruct(step)
 
 		// run step
 		stepResult, err := step.Run(r)
