@@ -410,6 +410,7 @@ func (r *CaseRunner) NewSession() *SessionRunner {
 		summary:          newSummary(),
 
 		transactions: make(map[string]map[transactionType]time.Time),
+		ws:           newWSSession(),
 	}
 	return sessionRunner
 }
@@ -425,6 +426,9 @@ type SessionRunner struct {
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
 	transactions map[string]map[transactionType]time.Time
+
+	// websocket session
+	ws *wsSession
 }
 
 // Start runs the test steps in sequential order.
