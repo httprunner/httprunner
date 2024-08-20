@@ -61,7 +61,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	stepTestCase := s.step.TestCase.(*TestCase)
 
 	// copy testcase to avoid data racing
-	copiedTestCase := TestCase{}
+	copiedTestCase := &TestCase{}
 	if err := copier.Copy(copiedTestCase, stepTestCase); err != nil {
 		log.Error().Err(err).Msg("copy step testcase failed")
 		return stepResult, err
@@ -75,7 +75,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	// merge & override extractors
 	copiedTestCase.Config.Export = mergeSlices(s.step.Export, copiedTestCase.Config.Export)
 
-	caseRunner, err := r.caseRunner.hrpRunner.NewCaseRunner(copiedTestCase)
+	caseRunner, err := r.caseRunner.hrpRunner.NewCaseRunner(*copiedTestCase)
 	if err != nil {
 		log.Error().Err(err).Msg("create case runner failed")
 		return stepResult, err
