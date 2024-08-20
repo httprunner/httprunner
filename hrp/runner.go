@@ -412,10 +412,18 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 // each boomer task initiates a new session
 // in order to avoid data racing
 func (r *CaseRunner) NewSession() *SessionRunner {
+	log.Info().Msg("create new session runner")
 	sessionRunner := &SessionRunner{
-		caseRunner: r,
+		caseRunner:       r,
+		sessionVariables: make(map[string]interface{}),
+		summary:          newSummary(),
+
+		transactions:      make(map[string]map[transactionType]time.Time),
+		wsConnMap:         make(map[string]*websocket.Conn),
+		inheritWsConnMap:  make(map[string]*websocket.Conn),
+		pongResponseChan:  make(chan string, 1),
+		closeResponseChan: make(chan *wsCloseRespObject, 1),
 	}
-	sessionRunner.resetSession()
 	return sessionRunner
 }
 
@@ -435,18 +443,6 @@ type SessionRunner struct {
 	inheritWsConnMap  map[string]*websocket.Conn // inherit all websocket connections
 	pongResponseChan  chan string                // channel used to receive pong response message
 	closeResponseChan chan *wsCloseRespObject    // channel used to receive close response message
-}
-
-func (r *SessionRunner) resetSession() {
-	log.Info().Msg("reset session runner")
-	r.sessionVariables = make(map[string]interface{})
-	r.summary = newSummary()
-
-	r.transactions = make(map[string]map[transactionType]time.Time)
-	r.wsConnMap = make(map[string]*websocket.Conn)
-	r.inheritWsConnMap = make(map[string]*websocket.Conn)
-	r.pongResponseChan = make(chan string, 1)
-	r.closeResponseChan = make(chan *wsCloseRespObject, 1)
 }
 
 func (r *SessionRunner) inheritConnection(src *SessionRunner) {
