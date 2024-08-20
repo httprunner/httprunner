@@ -2,7 +2,6 @@ package hrp
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -131,18 +130,18 @@ func (b *HRPBoomer) ConvertTestCasesToBoomerTasks(testcases ...ITestCase) (taskS
 	return taskSlice
 }
 
-func (b *HRPBoomer) ParseTestCases(testCases []*TestCase) []*TCase {
-	var parsedTestCases []*TCase
+func (b *HRPBoomer) ParseTestCases(testCases []*TestCase) []*TestCase {
+	var parsedTestCases []*TestCase
 	for _, tc := range testCases {
-		caseRunner, err := b.hrpRunner.NewCaseRunner(tc)
+		caseRunner, err := b.hrpRunner.NewCaseRunner(*tc)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create runner")
 			os.Exit(code.GetErrorCode(err))
 		}
-		caseRunner.parsedConfig.Parameters = caseRunner.parametersIterator.outParameters()
-		parsedTestCases = append(parsedTestCases, &TCase{
-			Config:    caseRunner.parsedConfig,
-			TestSteps: caseRunner.testCase.ToTCase().TestSteps,
+		caseRunner.Config.Parameters = caseRunner.parametersIterator.outParameters()
+		parsedTestCases = append(parsedTestCases, &TestCase{
+			Config:    caseRunner.Config,
+			TestSteps: caseRunner.TestSteps,
 		})
 	}
 	return parsedTestCases
@@ -155,8 +154,7 @@ func (b *HRPBoomer) TestCasesToBytes(testcases ...ITestCase) []byte {
 		log.Error().Err(err).Msg("failed to load testcases")
 		os.Exit(code.GetErrorCode(err))
 	}
-	tcs := b.ParseTestCases(testCases)
-	testCasesBytes, err := json.Marshal(tcs)
+	testCasesBytes, err := json.Marshal(testCases)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to marshal testcases")
 		return nil
@@ -164,8 +162,8 @@ func (b *HRPBoomer) TestCasesToBytes(testcases ...ITestCase) []byte {
 	return testCasesBytes
 }
 
-func (b *HRPBoomer) BytesToTCases(testCasesBytes []byte) []*TCase {
-	var testcase []*TCase
+func (b *HRPBoomer) BytesToTCases(testCasesBytes []byte) []*TestCase {
+	var testcase []*TestCase
 	err := json.Unmarshal(testCasesBytes, &testcase)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to unmarshal testcases")
@@ -177,10 +175,10 @@ func (b *HRPBoomer) Quit() {
 	b.Boomer.Quit()
 }
 
-func (b *HRPBoomer) parseTCases(testCases []*TCase) (testcases []ITestCase) {
+func (b *HRPBoomer) parseTCases(testCases []*TestCase) (testcases []ITestCase) {
 	for _, tc := range testCases {
 		// create temp dir to save testcase
-		tempDir, err := ioutil.TempDir("", "hrp_testcases")
+		tempDir, err := os.MkdirTemp("", "hrp_testcases")
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create hrp testcases directory")
 			return
@@ -215,13 +213,7 @@ func (b *HRPBoomer) parseTCases(testCases []*TCase) (testcases []ITestCase) {
 			return
 		}
 
-		tesecase, err := tc.toTestCase()
-		if err != nil {
-			log.Error().Err(err).Msg("failed to load testcases")
-			return
-		}
-
-		testcases = append(testcases, tesecase)
+		testcases = append(testcases, tc)
 	}
 	return testcases
 }
@@ -313,7 +305,7 @@ func (b *HRPBoomer) PollTestCases(ctx context.Context) {
 func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rendezvous) *boomer.Task {
 	// init case runner for testcase
 	// this runner is shared by multiple session runners
-	caseRunner, err := b.hrpRunner.NewCaseRunner(testcase)
+	caseRunner, err := b.hrpRunner.NewCaseRunner(*testcase)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create runner")
 		os.Exit(code.GetErrorCode(err))

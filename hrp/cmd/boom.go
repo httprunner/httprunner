@@ -10,7 +10,6 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer"
 )
@@ -50,7 +49,7 @@ var boomCmd = &cobra.Command{
 
 		// if set profile, the priority is higher than the other commands
 		if boomArgs.profile != "" {
-			err := builtin.LoadFile(boomArgs.profile, &boomArgs.Profile)
+			err := hrp.LoadFileObject(boomArgs.profile, &boomArgs.Profile)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to load profile")
 				return err
@@ -156,7 +155,7 @@ func init() {
 func makeHRPBoomer() (*hrp.HRPBoomer, error) {
 	// if set profile, the priority is higher than the other commands
 	if boomArgs.profile != "" {
-		err := builtin.LoadFile(boomArgs.profile, &boomArgs)
+		err := hrp.LoadFileObject(boomArgs.profile, &boomArgs)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to load profile")
 			return nil, err
