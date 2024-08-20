@@ -424,12 +424,13 @@ func (r *CaseRunner) NewSession() *SessionRunner {
 type SessionRunner struct {
 	caseRunner *CaseRunner // all session runners share one CaseRunner
 
-	sessionVariables map[string]interface{}
+	sessionVariables map[string]interface{} // testcase execution session variables
+	summary          *TestCaseSummary       // record test case summary
+
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
-	transactions      map[string]map[transactionType]time.Time
-	startTime         time.Time                  // record start time of the testcase
-	summary           *TestCaseSummary           // record test case summary
+	transactions map[string]map[transactionType]time.Time
+
 	wsConnMap         map[string]*websocket.Conn // save all websocket connections
 	inheritWsConnMap  map[string]*websocket.Conn // inherit all websocket connections
 	pongResponseChan  chan string                // channel used to receive pong response message
@@ -439,9 +440,9 @@ type SessionRunner struct {
 func (r *SessionRunner) resetSession() {
 	log.Info().Msg("reset session runner")
 	r.sessionVariables = make(map[string]interface{})
-	r.transactions = make(map[string]map[transactionType]time.Time)
-	r.startTime = time.Now()
 	r.summary = newSummary()
+
+	r.transactions = make(map[string]map[transactionType]time.Time)
 	r.wsConnMap = make(map[string]*websocket.Conn)
 	r.inheritWsConnMap = make(map[string]*websocket.Conn)
 	r.pongResponseChan = make(chan string, 1)
@@ -616,8 +617,7 @@ func (r *SessionRunner) InitWithParameters(parameters map[string]interface{}) {
 func (r *SessionRunner) GetSummary() (*TestCaseSummary, error) {
 	caseSummary := r.summary
 	caseSummary.Name = r.caseRunner.Config.Name
-	caseSummary.Time.StartAt = r.startTime
-	caseSummary.Time.Duration = time.Since(r.startTime).Seconds()
+	caseSummary.Time.Duration = time.Since(caseSummary.Time.StartAt).Seconds()
 	exportVars := make(map[string]interface{})
 	for _, value := range r.caseRunner.Config.Export {
 		exportVars[value] = r.sessionVariables[value]

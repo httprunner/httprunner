@@ -69,7 +69,7 @@ func (s *StepTransaction) Run(r *SessionRunner) (*StepResult, error) {
 
 		// if transaction start time not exists, use testcase start time instead
 		if _, ok := r.transactions[transaction.Name][transactionStart]; !ok {
-			r.transactions[transaction.Name][transactionStart] = r.startTime
+			r.transactions[transaction.Name][transactionStart] = r.summary.Time.StartAt
 		}
 
 		// calculate transaction duration

@@ -196,7 +196,9 @@ func newSummary() *TestCaseSummary {
 	return &TestCaseSummary{
 		Success: true,
 		Stat:    &TestStepStat{},
-		Time:    &TestCaseTime{},
+		Time: &TestCaseTime{
+			StartAt: time.Now(),
+		},
 		InOut:   &TestCaseInOut{},
 		Records: []*StepResult{},
 	}
