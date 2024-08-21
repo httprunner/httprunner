@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"net"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
 )
 
 var errDriverNotImplemented = errors.New("driver method not implemented")
@@ -103,8 +104,8 @@ func (ud *uiaDriver) httpRequest(method string, rawURL string, rawBody []byte, d
 		// wait for UIA2 server to resume automatically
 		time.Sleep(3 * time.Second)
 		oldSessionID := ud.sessionId
-		if err = ud.resetDriver(); err != nil {
-			log.Err(err).Msgf("failed to reset uia2 driver, retry count: %v", retryCount)
+		if err2 := ud.resetDriver(); err2 != nil {
+			log.Err(err2).Msgf("failed to reset uia2 driver, retry count: %v", retryCount)
 			continue
 		}
 		log.Debug().Str("new session", ud.sessionId).Str("old session", oldSessionID).Msgf("successful to reset uia2 driver, retry count: %v", retryCount)
@@ -224,6 +225,14 @@ func (ud *uiaDriver) WindowSize() (size Size, err error) {
 		return Size{}, err
 	}
 	size = reply.Value.Size
+	orientation, err := ud.Orientation()
+	if err != nil {
+		log.Warn().Err(err).Msgf("window size get orientation failed, use default orientation")
+		orientation = OrientationPortrait
+	}
+	if orientation != OrientationPortrait {
+		size.Width, size.Height = size.Height, size.Width
+	}
 	return
 }
 
@@ -253,6 +262,20 @@ func (ud *uiaDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta, flags ...K
 	return
 }
 
+func (ud *uiaDriver) Orientation() (orientation Orientation, err error) {
+	// [[FBRoute GET:@"/orientation"] respondWithTarget:self action:@selector(handleGetOrientation:)]
+	var rawResp rawResponse
+	if rawResp, err = ud.httpGET("/session", ud.sessionId, "/orientation"); err != nil {
+		return "", err
+	}
+	reply := new(struct{ Value Orientation })
+	if err = json.Unmarshal(rawResp, reply); err != nil {
+		return "", err
+	}
+	orientation = reply.Value
+	return
+}
+
 func (ud *uiaDriver) Tap(x, y int, options ...ActionOption) error {
 	return ud.TapFloat(float64(x), float64(y), options...)
 }
@@ -268,15 +291,31 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 	x += actionOptions.getRandomOffset()
 	y += actionOptions.getRandomOffset()
 
-	data := map[string]interface{}{
-		"x": x,
-		"y": y,
+	duration := 100.0
+	if actionOptions.PressDuration > 0 {
+		duration = actionOptions.PressDuration
 	}
+	data := map[string]interface{}{
+		"actions": []interface{}{
+			map[string]interface{}{
+				"type":       "pointer",
+				"parameters": map[string]string{"pointerType": "touch"},
+				"id":         "touch",
+				"actions": []interface{}{
+					map[string]interface{}{"type": "pointerMove", "duration": 0, "x": x, "y": y, "origin": "viewport"},
+					map[string]interface{}{"type": "pointerDown", "duration": 0, "button": 0},
+					map[string]interface{}{"type": "pause", "duration": duration},
+					map[string]interface{}{"type": "pointerUp", "duration": 0, "button": 0},
+				},
+			},
+		},
+	}
+
 	// update data options in post data for extra uiautomator configurations
 	actionOptions.updateData(data)
 
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "appium/tap")
-	return
+	_, err = ud.httpPOST(data, "/session", ud.sessionId, "actions/tap")
+	return err
 }
 
 func (ud *uiaDriver) TouchAndHold(x, y int, second ...float64) (err error) {
@@ -358,17 +397,30 @@ func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...Actio
 	toX += actionOptions.getRandomOffset()
 	toY += actionOptions.getRandomOffset()
 
+	duration := 200.0
+	if actionOptions.PressDuration > 0 {
+		duration = actionOptions.PressDuration
+	}
 	data := map[string]interface{}{
-		"startX": fromX,
-		"startY": fromY,
-		"endX":   toX,
-		"endY":   toY,
+		"actions": []interface{}{
+			map[string]interface{}{
+				"type":       "pointer",
+				"parameters": map[string]string{"pointerType": "touch"},
+				"id":         "touch",
+				"actions": []interface{}{
+					map[string]interface{}{"type": "pointerMove", "duration": 0, "x": fromX, "y": fromY, "origin": "viewport"},
+					map[string]interface{}{"type": "pointerDown", "duration": 0, "button": 0},
+					map[string]interface{}{"type": "pointerMove", "duration": duration, "x": toX, "y": toY, "origin": "viewport"},
+					map[string]interface{}{"type": "pointerUp", "duration": 0, "button": 0},
+				},
+			},
+		},
 	}
 
 	// update data options in post data for extra uiautomator configurations
 	actionOptions.updateData(data)
 
-	_, err := ud.httpPOST(data, "/session", ud.sessionId, "touch/perform")
+	_, err := ud.httpPOST(data, "/session", ud.sessionId, "actions/swipe")
 	return err
 }
 
@@ -415,17 +467,79 @@ func (ud *uiaDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 	return
 }
 
+// SendKeys Android input does not support setting frequency.
 func (ud *uiaDriver) SendKeys(text string, options ...ActionOption) (err error) {
 	// register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/keys"))
 	// https://github.com/appium/appium-uiautomator2-server/blob/master/app/src/main/java/io/appium/uiautomator2/handler/SendKeysToElement.java#L76-L85
 	actionOptions := NewActionOptions(options...)
-	data := map[string]interface{}{
-		"text": text,
+	err = ud.SendUnicodeKeys(text, options...)
+	if err != nil {
+		data := map[string]interface{}{
+			"text": text,
+		}
+
+		// new data options in post data for extra uiautomator configurations
+		actionOptions.updateData(data)
+
+		_, err = ud.httpPOST(data, "/session", ud.sessionId, "/keys")
 	}
+	return
+}
+
+func (ud *uiaDriver) SendUnicodeKeys(text string, options ...ActionOption) (err error) {
+	// If the Unicode IME is not installed, fall back to the old interface.
+	// There might be differences in the tracking schemes across different phones, and it is pending further verification.
+	// In release version: without the Unicode IME installed, the test cannot execute.
+	if !ud.IsUnicodeIMEInstalled() {
+		return fmt.Errorf("appium unicode ime not installed")
+	}
+	currentIme, err := ud.adbDriver.GetIme()
+	if err != nil {
+		return
+	}
+	if currentIme != UnicodeImePackageName {
+		defer func() {
+			_ = ud.adbDriver.SetIme(currentIme)
+		}()
+		err = ud.adbDriver.SetIme(UnicodeImePackageName)
+		if err != nil {
+			log.Warn().Err(err).Msgf("set Unicode Ime failed")
+			return
+		}
+	}
+	encodedStr, err := utf7.Encoding.NewEncoder().String(text)
+	if err != nil {
+		log.Warn().Err(err).Msgf("encode text with modified utf7 failed")
+		return
+	}
+	err = ud.SendActionKey(encodedStr, options...)
+	return
+}
+
+func (ud *uiaDriver) SendActionKey(text string, options ...ActionOption) (err error) {
+	actionOptions := NewActionOptions(options...)
+	var actions []interface{}
+	for i, c := range text {
+		actions = append(actions, map[string]interface{}{"type": "keyDown", "value": string(c)},
+			map[string]interface{}{"type": "keyUp", "value": string(c)})
+		if i != len(text)-1 {
+			actions = append(actions, map[string]interface{}{"type": "pause", "duration": 40})
+		}
+	}
+
+	data := map[string]interface{}{
+		"actions": []interface{}{
+			map[string]interface{}{
+				"type":    "key",
+				"id":      "key",
+				"actions": actions,
+			},
+		},
+	}
+
 	// new data options in post data for extra uiautomator configurations
 	actionOptions.updateData(data)
-
-	_, err = ud.httpPOST(data, "/session", ud.sessionId, "keys")
+	_, err = ud.httpPOST(data, "/session", ud.sessionId, "/actions/keys")
 	return
 }
 
@@ -449,25 +563,9 @@ func (ud *uiaDriver) Rotation() (rotation Rotation, err error) {
 }
 
 func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {
-	// register(getHandler, new CaptureScreenshot("/wd/hub/session/:sessionId/screenshot"))
-	var rawResp rawResponse
-	if rawResp, err = ud.httpGET("/session", ud.sessionId, "screenshot"); err != nil {
-		return nil, errors.Wrap(code.AndroidScreenShotError,
-			fmt.Sprintf("get UIA screenshot data failed: %v", err))
-	}
-	reply := new(struct{ Value string })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return nil, err
-	}
-
-	var decodeStr []byte
-	if decodeStr, err = base64.StdEncoding.DecodeString(reply.Value); err != nil {
-		return nil, errors.Wrap(code.AndroidScreenShotError,
-			fmt.Sprintf("decode UIA screenshot data failed: %v", err))
-	}
-
-	raw = bytes.NewBuffer(decodeStr)
-	return
+	// https://bytedance.larkoffice.com/docx/C8qEdmSHnoRvMaxZauocMiYpnLh
+	// ui2截图受内存影响，改为adb截图
+	return ud.adbDriver.Screenshot()
 }
 
 func (ud *uiaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
@@ -483,4 +581,40 @@ func (ud *uiaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 
 	source = reply.Value
 	return
+}
+
+func (ud *uiaDriver) sourceTree(srcOpt ...SourceOption) (sourceTree *Hierarchy, err error) {
+	source, err := ud.Source()
+	if err != nil {
+		return
+	}
+	sourceTree = new(Hierarchy)
+	err = xml.Unmarshal([]byte(source), sourceTree)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (ud *uiaDriver) TapByText(text string, options ...ActionOption) error {
+	sourceTree, err := ud.sourceTree()
+	if err != nil {
+		return err
+	}
+	return ud.tapByTextUsingHierarchy(sourceTree, text, options...)
+}
+
+func (ud *uiaDriver) TapByTexts(actions ...TapTextAction) error {
+	sourceTree, err := ud.sourceTree()
+	if err != nil {
+		return err
+	}
+
+	for _, action := range actions {
+		err := ud.tapByTextUsingHierarchy(sourceTree, action.Text, action.Options...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

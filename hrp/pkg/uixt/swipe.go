@@ -11,25 +11,58 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
+var (
+	directionSlice = [][]float64{
+		{0.85, 0.83, 0.85, 0.1},
+		{0.9, 0.75, 0.9, 0.1},
+		{0.6, 0.5, 0.6, 0.1},
+	}
+)
+
 func assertRelative(p float64) bool {
 	return p >= 0 && p <= 1
+}
+
+func (dExt *DriverExt) SwipeUpUtil(count int64, options ...ActionOption) error {
+	width := dExt.windowSize.Width
+	height := dExt.windowSize.Height
+
+	fromX := float64(width) * directionSlice[count%3][0]
+	fromY := float64(height) * directionSlice[count%3][1]
+	toX := float64(width) * directionSlice[count%3][2]
+	toY := float64(height) * directionSlice[count%3][3]
+
+	return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, options...)
 }
 
 // SwipeRelative swipe from relative position [fromX, fromY] to relative position [toX, toY]
 func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	width := dExt.windowSize.Width
 	height := dExt.windowSize.Height
+	orientation, err := dExt.Driver.Orientation()
+	if err != nil {
+		log.Warn().Err(err).Msgf("swipe from (%v, %v) to (%v, %v) get orientation failed, use default orientation",
+			fromX, fromY, toX, toY)
+		orientation = OrientationPortrait
+	}
 
 	if !assertRelative(fromX) || !assertRelative(fromY) ||
 		!assertRelative(toX) || !assertRelative(toY) {
 		return fmt.Errorf("fromX(%f), fromY(%f), toX(%f), toY(%f) must be less than 1",
 			fromX, fromY, toX, toY)
 	}
-
-	fromX = float64(width) * fromX
-	fromY = float64(height) * fromY
-	toX = float64(width) * toX
-	toY = float64(height) * toY
+	// 左转和右转都是"LANDSCAPE"
+	if orientation == OrientationPortrait {
+		fromX = float64(width) * fromX
+		fromY = float64(height) * fromY
+		toX = float64(width) * toX
+		toY = float64(height) * toY
+	} else {
+		fromX = float64(height) * fromX
+		fromY = float64(width) * fromY
+		toX = float64(height) * toX
+		toY = float64(width) * toY
+	}
 
 	return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, options...)
 }
@@ -114,7 +147,7 @@ func (dExt *DriverExt) prepareSwipeAction(options ...ActionOption) func(d *Drive
 				log.Error().Err(err).Msgf("swipe %s failed", d)
 				return err
 			}
-		} else if d, ok := swipeDirection.([]float64); ok {
+		} else if d, ok := swipeDirection.([]float64); ok && len(d) == 4 {
 			// custom direction: [fromX, fromY, toX, toY]
 			if err := dExt.SwipeRelative(d[0], d[1], d[2], d[3], options...); err != nil {
 				log.Error().Err(err).Msgf("swipe from (%v, %v) to (%v, %v) failed",
@@ -176,6 +209,11 @@ func (dExt *DriverExt) swipeToTapApp(appName string, options ...ActionOption) er
 	// go to home screen
 	if err := dExt.Driver.Homescreen(); err != nil {
 		return errors.Wrap(err, "go to home screen failed")
+	}
+
+	// automatic handling popups before swipe
+	if err := dExt.ClosePopupsHandler(); err != nil {
+		log.Error().Err(err).Msg("auto handle popup failed")
 	}
 
 	// swipe to first screen

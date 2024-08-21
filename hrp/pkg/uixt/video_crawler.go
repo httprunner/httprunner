@@ -114,7 +114,12 @@ func (vc *VideoCrawler) isTargetAchieved() bool {
 
 func (vc *VideoCrawler) exitLiveRoom() error {
 	log.Info().Msg("press back to exit live room")
-	return vc.driverExt.Driver.PressBack()
+	err := vc.driverExt.Driver.PressBack()
+	time.Sleep(time.Duration(3) * time.Second)
+	if vc.driverExt.TapByOCR("退出直播间") == nil {
+		log.Info().Msg("clicked the button to exit the live room successfully")
+	}
+	return err
 }
 
 const (
@@ -149,6 +154,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 		dExt.cacheStepData.videoCrawler = crawler
 	}()
 
+	// flag，仅当 flag 为 false 时，并处于内流时，才执行退出直播间逻辑
+	isFeed := true
+
 	// loop until target count achieved or timeout
 	// the main loop is feed crawler
 	crawler.timer = time.NewTimer(time.Duration(configs.Timeout) * time.Second)
@@ -168,21 +176,22 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 			// swipe to next feed video
 			log.Info().Msg("swipe to next feed video")
 			swipeStartTime := time.Now()
-			if err = dExt.SwipeRelative(0.9, 0.8, 0.9, 0.1, WithOffsetRandomRange(-10, 10)); err != nil {
+			if err = dExt.SwipeUpUtil(crawler.failedCount, WithOffsetRandomRange(-10, 10)); err != nil {
 				log.Error().Err(err).Msg("feed swipe up failed")
 				return err
 			}
 			swipeFinishTime := time.Now()
 
 			// get app event trackings
-			// retry 10 times if get feed failed, abort if fail 10 consecutive times
+			// retry 3 times if get feed failed, abort if fail 3 consecutive times
+			fetchVideoStartTime := time.Now()
 			currentVideo, err := crawler.getCurrentVideo()
 			if err != nil || currentVideo.Type == "" {
 				crawler.failedCount++
-				if crawler.failedCount >= 10 {
-					// failed 10 consecutive times
+				if crawler.failedCount >= 3 {
+					// failed 3 consecutive times
 					return errors.Wrap(code.TrackingGetError,
-						"get current feed video failed 10 consecutive times")
+						"get current feed video failed 3 consecutive times")
 				}
 				log.Warn().
 					Int64("failedCount", crawler.failedCount).
@@ -196,12 +205,14 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				// retry
 				continue
 			}
+			fetchVideoFinishTime := time.Now()
 
 			// 直播预览流线上概率
 			livePreviewProb := crawler.getLivePreviewProb()
 
 			switch currentVideo.Type {
 			case VideoType_PreviewLive:
+				isFeed = true
 				// 直播预览流
 				var skipEnterLive bool
 				if crawler.isLiveTargetAchieved() {
@@ -227,13 +238,13 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						log.Error().Err(err).Msg("tap live video failed")
 						continue
 					}
+					currentVideo.Type = VideoType_Live
 				} else {
 					// skip entering live room
 					// only mock simulation play duration
 					sleepTime := math.Min(float64(currentVideo.SimulationPlayDuration), float64(currentVideo.RandomPlayDuration))
 					currentVideo.PlayDuration = int64(sleepTime)
 				}
-
 				fallthrough
 
 			case VideoType_Live:
@@ -260,14 +271,18 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					currentVideo.LiveType = screenResult.imageResult.LiveType
 				}
 
-				// simulation watch feed video
-				sleepStrict(swipeFinishTime, currentVideo.PlayDuration)
+				// simulation watch live video
+				simulationPlayDuration := math.Min(float64(currentVideo.PlayDuration), 300000)
+				sleepStrict(swipeFinishTime, int64(simulationPlayDuration))
 
 				screenResult.Video = currentVideo
 				screenResult.Resolution = dExt.windowSize
 				screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
 				screenResult.SwipeFinishTime = swipeFinishTime.UnixMilli()
 				screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
+				screenResult.FetchVideoStartTime = fetchVideoStartTime.UnixMilli()
+				screenResult.FetchVideoFinishTime = fetchVideoFinishTime.UnixMilli()
+				screenResult.FetchVideoElapsed = fetchVideoFinishTime.Sub(fetchVideoStartTime).Milliseconds()
 
 				var exitLive bool
 				if crawler.isLiveTargetAchieved() {
@@ -278,7 +293,9 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					log.Info().Interface("livePreviewProb", livePreviewProb).Msg("exit live room by preview live chance")
 					exitLive = true
 				}
-				if exitLive && currentVideo.Type == VideoType_Live {
+
+				// isFeed：通过预览流进入内流失败的情况下，防止使用退出直播间逻辑，影响：首次进入内流，至少会消费两个直播间才能退出
+				if !isFeed && exitLive && currentVideo.Type == VideoType_Live {
 					err = crawler.exitLiveRoom()
 					if err != nil {
 						if errors.Is(err, code.TimeoutError) || errors.Is(err, code.InterruptError) {
@@ -286,9 +303,12 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 						}
 						log.Error().Err(err).Msg("run live crawler failed, continue")
 					}
+				} else {
+					isFeed = false
 				}
 
 			default:
+				isFeed = true
 				// 点播 || 图文 || 广告 || etc.
 				crawler.FeedCount++
 				log.Info().Interface("video", currentVideo).Msg(FOUND_FEED_SUCCESS)
@@ -298,13 +318,17 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					Video:      currentVideo,
 
 					// log swipe timelines
-					SwipeStartTime:  swipeStartTime.UnixMilli(),
-					SwipeFinishTime: swipeFinishTime.UnixMilli(),
+					SwipeStartTime:       swipeStartTime.UnixMilli(),
+					SwipeFinishTime:      swipeFinishTime.UnixMilli(),
+					FetchVideoStartTime:  fetchVideoStartTime.UnixMilli(),
+					FetchVideoFinishTime: fetchVideoFinishTime.UnixMilli(),
+					FetchVideoElapsed:    fetchVideoFinishTime.Sub(fetchVideoStartTime).Milliseconds(),
 				}
 				dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 
 				// simulation watch feed video
-				sleepStrict(swipeFinishTime, currentVideo.PlayDuration)
+				simulationPlayDuration := math.Min(float64(currentVideo.PlayDuration), 600000)
+				sleepStrict(swipeFinishTime, int64(simulationPlayDuration))
 				screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 			}
 
@@ -340,6 +364,9 @@ type Video struct {
 	UserName string `json:"user_name"`           // 视频作者
 	Duration int64  `json:"duration,omitempty"`  // 视频时长(ms)
 	Caption  string `json:"caption,omitempty"`   // 视频文案
+	// 作者信息
+	UserID        string `json:"user_id"`        // 作者用户名
+	FollowerCount int64  `json:"follower_count"` // 作者粉丝数
 	// 视频热度数据
 	ViewCount    int64 `json:"view_count,omitempty"`    // feed 观看数
 	LikeCount    int64 `json:"like_count,omitempty"`    // feed 点赞数

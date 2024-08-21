@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -107,20 +108,50 @@ func (d *Device) features() (features Features, err error) {
 	return features, nil
 }
 
-func (d *Device) Product() string {
-	return d.attrs["product"]
+func (d *Device) HasAttribute(key string) bool {
+	_, ok := d.attrs[key]
+	return ok
 }
 
-func (d *Device) Model() string {
-	return d.attrs["model"]
+func (d *Device) Product() (string, error) {
+	if d.HasAttribute("product") {
+		return d.attrs["product"], nil
+	}
+	return "", errors.New("does not have attribute: product")
 }
 
-func (d *Device) Usb() string {
-	return d.attrs["usb"]
+func (d *Device) Model() (string, error) {
+	if d.HasAttribute("model") {
+		return d.attrs["model"], nil
+	}
+	return "", errors.New("does not have attribute: model")
 }
 
-func (d *Device) transportId() string {
-	return d.attrs["transport_id"]
+func (d *Device) Brand() (string, error) {
+	if d.HasAttribute("brand") {
+		return d.attrs["brand"], nil
+	}
+	brand, err := d.RunShellCommand("getprop", "ro.product.brand")
+	brand = strings.TrimSpace(brand)
+	if err != nil {
+		return "", errors.New("does not have attribute: brand")
+	}
+	d.attrs["brand"] = brand
+	return brand, nil
+}
+
+func (d *Device) Usb() (string, error) {
+	if d.HasAttribute("usb") {
+		return d.attrs["usb"], nil
+	}
+	return "", errors.New("does not have attribute: usb")
+}
+
+func (d *Device) transportId() (string, error) {
+	if d.HasAttribute("transport_id") {
+		return d.attrs["transport_id"], nil
+	}
+	return "", errors.New("does not have attribute: transport_id")
 }
 
 func (d *Device) DeviceInfo() map[string]string {
@@ -132,8 +163,13 @@ func (d *Device) Serial() string {
 	return d.serial
 }
 
-func (d *Device) IsUsb() bool {
-	return d.Usb() != ""
+func (d *Device) IsUsb() (bool, error) {
+	usb, err := d.Usb()
+	if err != nil {
+		return false, err
+	}
+
+	return usb != "", nil
 }
 
 func (d *Device) State() (DeviceState, error) {
@@ -146,10 +182,8 @@ func (d *Device) DevicePath() (string, error) {
 	return resp, err
 }
 
-func (d *Device) Forward(localPort int, remoteInterface interface{}, noRebind ...bool) (err error) {
-	command := ""
+func (d *Device) Forward(remoteInterface interface{}, noRebind ...bool) (port int, err error) {
 	var remote string
-	local := fmt.Sprintf("tcp:%d", localPort)
 	switch r := remoteInterface.(type) {
 	// for unix sockets
 	case string:
@@ -158,14 +192,28 @@ func (d *Device) Forward(localPort int, remoteInterface interface{}, noRebind ..
 		remote = fmt.Sprintf("tcp:%d", r)
 	}
 
+	forwardList, err := d.ForwardList()
+	if err != nil {
+		return
+	}
+	for _, forwardItem := range forwardList {
+		if forwardItem.Remote == remote {
+			return strconv.Atoi(forwardItem.Local[4:])
+		}
+	}
+	localPort, err := builtin.GetFreePort()
+	if err != nil {
+		return
+	}
+	local := fmt.Sprintf("tcp:%d", localPort)
+
+	command := fmt.Sprintf("host-serial:%s:forward:%s;%s", d.serial, local, remote)
 	if len(noRebind) != 0 && noRebind[0] {
 		command = fmt.Sprintf("host-serial:%s:forward:norebind:%s;%s", d.serial, local, remote)
-	} else {
-		command = fmt.Sprintf("host-serial:%s:forward:%s;%s", d.serial, local, remote)
 	}
 
 	_, err = d.adbClient.executeCommand(command, true)
-	return
+	return localPort, nil
 }
 
 func (d *Device) ForwardList() (deviceForwardList []DeviceForward, err error) {
@@ -502,7 +550,7 @@ func (d *Device) Pull(remotePath string, dest io.Writer) (err error) {
 	return
 }
 
-func (d *Device) installViaABBExec(apk io.ReadSeeker) (raw []byte, err error) {
+func (d *Device) installViaABBExec(apk io.ReadSeeker, args ...string) (raw []byte, err error) {
 	var (
 		tp       transport
 		filesize int64
@@ -515,8 +563,11 @@ func (d *Device) installViaABBExec(apk io.ReadSeeker) (raw []byte, err error) {
 		return nil, err
 	}
 	defer func() { _ = tp.Close() }()
-
-	cmd := fmt.Sprintf("abb_exec:package\x00install\x00-t\x00-S\x00%d", filesize)
+	cmd := "abb_exec:package\x00install\x00-t"
+	for _, arg := range args {
+		cmd += "\x00" + arg
+	}
+	cmd += fmt.Sprintf("\x00-S\x00%d", filesize)
 	if err = tp.SendWithCheck(cmd); err != nil {
 		return nil, err
 	}
@@ -533,7 +584,7 @@ func (d *Device) installViaABBExec(apk io.ReadSeeker) (raw []byte, err error) {
 	return
 }
 
-func (d *Device) InstallAPK(apk io.ReadSeeker) (string, error) {
+func (d *Device) InstallAPK(apk io.ReadSeeker, args ...string) (string, error) {
 	haserr := func(ret string) bool {
 		return strings.Contains(ret, "Failure")
 	}
@@ -553,8 +604,9 @@ func (d *Device) InstallAPK(apk io.ReadSeeker) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error pushing: %v", err)
 	}
-
-	res, err := d.RunShellCommand("pm", "install", "-f", remote)
+	args = append([]string{"install"}, args...)
+	args = append(args, "-f", remote)
+	res, err := d.RunShellCommand("pm", args...)
 	if err != nil {
 		return "", errors.Wrap(err, "install apk failed")
 	}
@@ -569,7 +621,7 @@ func (d *Device) Uninstall(packageName string, keepData ...bool) (string, error)
 	if len(keepData) == 0 {
 		keepData = []bool{false}
 	}
-	packageName = strings.ReplaceAll(packageName, " ", "")
+	packageName = strings.TrimSpace(packageName)
 	if len(packageName) == 0 {
 		return "", fmt.Errorf("invalid package name")
 	}
@@ -579,6 +631,33 @@ func (d *Device) Uninstall(packageName string, keepData ...bool) (string, error)
 	}
 	args = append(args, packageName)
 	return d.RunShellCommand("pm", args...)
+}
+
+func (d *Device) ListPackages() ([]string, error) {
+	args := []string{"list", "packages"}
+	resRaw, err := d.RunShellCommand("pm", args...)
+	if err != nil {
+		return []string{}, err
+	}
+	lines := strings.Split(resRaw, "\n")
+	var packages []string
+	for _, line := range lines {
+		packageName := strings.TrimPrefix(line, "package:")
+		packages = append(packages, packageName)
+	}
+	return packages, nil
+}
+
+func (d *Device) IsPackagesInstalled(packageName string) bool {
+	packages, err := d.ListPackages()
+	if err != nil {
+		return false
+	}
+	packageName = strings.TrimSpace(packageName)
+	if len(packageName) == 0 {
+		return false
+	}
+	return builtin.Contains(packages, packageName)
 }
 
 func (d *Device) ScreenCap() ([]byte, error) {

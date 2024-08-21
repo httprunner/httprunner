@@ -1,17 +1,31 @@
 package uixt
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/xml"
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
+)
+
+const (
+	AdbKeyBoardPackageName = "com.android.adbkeyboard/.AdbIME"
+	UnicodeImePackageName  = "io.appium.settings/.UnicodeIME"
 )
 
 type adbDriver struct {
@@ -84,7 +98,14 @@ func (ad *adbDriver) WindowSize() (size Size, err error) {
 			return Size{Width: width, Height: height}, nil
 		}
 	}
-
+	orientation, err := ad.Orientation()
+	if err != nil {
+		log.Warn().Err(err).Msgf("window size get orientation failed, use default orientation")
+		orientation = OrientationPortrait
+	}
+	if orientation != OrientationPortrait {
+		size.Width, size.Height = size.Height, size.Width
+	}
 	err = errors.New("physical window size not found by adb")
 	return
 }
@@ -175,6 +196,24 @@ func (ad *adbDriver) StopCamera() (err error) {
 	if _, err = ad.AppTerminate("com.android.camera2"); err != nil {
 		return err
 	}
+	return
+}
+
+func (ad *adbDriver) Orientation() (orientation Orientation, err error) {
+	output, err := ad.adbClient.RunShellCommand("dumpsys", "input", "|", "grep", "'SurfaceOrientation'")
+	if err != nil {
+		return
+	}
+	re := regexp.MustCompile(`SurfaceOrientation: (\d)`)
+	matches := re.FindStringSubmatch(output)
+	if len(matches) > 1 { // 确保找到了匹配项
+		if matches[1] == "0" || matches[1] == "2" {
+			return OrientationPortrait, nil
+		} else if matches[1] == "1" || matches[1] == "3" {
+			return OrientationLandscapeLeft, nil
+		}
+	}
+	err = fmt.Errorf("not found SurfaceOrientation value")
 	return
 }
 
@@ -319,12 +358,100 @@ func (ad *adbDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 }
 
 func (ad *adbDriver) SendKeys(text string, options ...ActionOption) (err error) {
+	err = ad.SendUnicodeKeys(text, options...)
+	if err == nil {
+		return
+	}
+	err = ad.InputText(text, options...)
+	return
+}
+
+func (ad *adbDriver) InputText(text string, options ...ActionOption) (err error) {
 	// adb shell input text <text>
 	_, err = ad.adbClient.RunShellCommand("input", "text", text)
 	if err != nil {
 		return errors.Wrap(err, "send keys failed")
 	}
 	return nil
+}
+
+func (ad *adbDriver) SendUnicodeKeys(text string, options ...ActionOption) (err error) {
+	// If the Unicode IME is not installed, fall back to the old interface.
+	// There might be differences in the tracking schemes across different phones, and it is pending further verification.
+	// In release version: without the Unicode IME installed, the test cannot execute.
+	if !ad.IsUnicodeIMEInstalled() {
+		return fmt.Errorf("appium unicode ime not installed")
+	}
+	currentIme, err := ad.GetIme()
+	if err != nil {
+		return
+	}
+	if currentIme != UnicodeImePackageName {
+		defer func() {
+			_ = ad.SetIme(currentIme)
+		}()
+		err = ad.SetIme(UnicodeImePackageName)
+		if err != nil {
+			log.Warn().Err(err).Msgf("set Unicode Ime failed")
+			return
+		}
+	}
+	encodedStr, err := utf7.Encoding.NewEncoder().String(text)
+	if err != nil {
+		log.Warn().Err(err).Msgf("encode text with modified utf7 failed")
+		return
+	}
+	err = ad.InputText("\""+strings.ReplaceAll(encodedStr, "\"", "\\\"")+"\"", options...)
+	return
+}
+
+func (ad *adbDriver) IsAdbKeyBoardInstalled() bool {
+	output, err := ad.adbClient.RunShellCommand("ime", "list", "-a")
+	if err != nil {
+		return false
+	}
+	return strings.Contains(output, AdbKeyBoardPackageName)
+}
+
+func (ad *adbDriver) IsUnicodeIMEInstalled() bool {
+	output, err := ad.adbClient.RunShellCommand("ime", "list", "-s")
+	if err != nil {
+		return false
+	}
+	return strings.Contains(output, UnicodeImePackageName)
+}
+
+func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
+	defer func() {
+		// Reset to default, don't care which keyboard was chosen before switch:
+		if _, resetErr := ad.adbClient.RunShellCommand("ime", "reset"); resetErr != nil {
+			log.Error().Err(err).Msg("failed to reset ime")
+		}
+	}()
+
+	// Enable ADBKeyBoard from adb
+	if _, err = ad.adbClient.RunShellCommand("ime", "enable", AdbKeyBoardPackageName); err != nil {
+		log.Error().Err(err).Msg("failed to enable adbKeyBoard")
+		return
+	}
+	// Switch to ADBKeyBoard from adb
+	if _, err = ad.adbClient.RunShellCommand("ime", "set", AdbKeyBoardPackageName); err != nil {
+		log.Error().Err(err).Msg("failed to set adbKeyBoard")
+		return
+	}
+	time.Sleep(time.Second)
+	// input Quoted text
+	text = strings.ReplaceAll(text, " ", "\\ ")
+	if _, err = ad.adbClient.RunShellCommand("am", "broadcast", "-a", "ADB_INPUT_TEXT", "--es", "msg", text); err != nil {
+		log.Error().Err(err).Msg("failed to input by adbKeyBoard")
+		return
+	}
+	if _, err = ad.adbClient.RunShellCommand("input", "keyevent", fmt.Sprintf("%d", KCEnter)); err != nil {
+		log.Error().Err(err).Msg("failed to input keyevent enter")
+		return
+	}
+	time.Sleep(time.Second)
+	return
 }
 
 func (ad *adbDriver) Input(text string, options ...ActionOption) (err error) {
@@ -356,8 +483,101 @@ func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
 }
 
 func (ad *adbDriver) Source(srcOpt ...SourceOption) (source string, err error) {
-	err = errDriverNotImplemented
+	_, err = ad.adbClient.RunShellCommand("rm", "-rf", "/sdcard/window_dump.xml")
+	if err != nil {
+		return
+	}
+	// 高版本报错 ERROR: null root node returned by UiTestAutomationBridge.
+	_, err = ad.adbClient.RunShellCommand("uiautomator", "dump")
+	if err != nil {
+		return
+	}
+	source, err = ad.adbClient.RunShellCommand("cat", "/sdcard/window_dump.xml")
+	if err != nil {
+		return
+	}
 	return
+}
+
+func (ad *adbDriver) sourceTree(srcOpt ...SourceOption) (sourceTree *Hierarchy, err error) {
+	source, err := ad.Source()
+	if err != nil {
+		return
+	}
+	sourceTree = new(Hierarchy)
+	err = xml.Unmarshal([]byte(source), sourceTree)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (ad *adbDriver) TapByText(text string, options ...ActionOption) error {
+	sourceTree, err := ad.sourceTree()
+	if err != nil {
+		return err
+	}
+	return ad.tapByTextUsingHierarchy(sourceTree, text, options...)
+}
+
+func (ad *adbDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, options ...ActionOption) error {
+	bounds := ad.searchNodes(hierarchy.Layout, text, options...)
+	actionOptions := NewActionOptions(options...)
+	if len(bounds) == 0 {
+		if actionOptions.IgnoreNotFoundError {
+			log.Info().Msg("not found element by text " + text)
+			return nil
+		}
+		return errors.New("not found element by text " + text)
+	}
+	for _, bound := range bounds {
+		width, height := bound.Center()
+		err := ad.TapFloat(width, height, options...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (ad *adbDriver) TapByTexts(actions ...TapTextAction) error {
+	sourceTree, err := ad.sourceTree()
+	if err != nil {
+		return err
+	}
+
+	for _, action := range actions {
+		err := ad.tapByTextUsingHierarchy(sourceTree, action.Text, action.Options...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (ad *adbDriver) searchNodes(nodes []Layout, text string, options ...ActionOption) []Bounds {
+	actionOptions := NewActionOptions(options...)
+	var results []Bounds
+	for _, node := range nodes {
+		result := ad.searchNodes(node.Layout, text, options...)
+		results = append(results, result...)
+		if actionOptions.Regex {
+			// regex on, check if match regex
+			if !regexp.MustCompile(text).MatchString(node.Text) {
+				continue
+			}
+		} else {
+			// regex off, check if match exactly
+			if node.Text != text {
+				ad.searchNodes(node.Layout, text, options...)
+				continue
+			}
+		}
+		if node.Bounds != nil {
+			results = append(results, *node.Bounds)
+		}
+	}
+	return results
 }
 
 func (ad *adbDriver) AccessibleSource() (source string, err error) {
@@ -387,14 +607,8 @@ func (ad *adbDriver) IsHealthy() (healthy bool, err error) {
 
 func (ad *adbDriver) StartCaptureLog(identifier ...string) (err error) {
 	log.Info().Msg("start adb log recording")
-
-	// clear logcat
-	if _, err = ad.adbClient.RunShellCommand("logcat", "-c"); err != nil {
-		return err
-	}
-
 	// start logcat
-	err = ad.logcat.CatchLogcat()
+	err = ad.logcat.CatchLogcat("iesqaMonitor:V")
 	if err != nil {
 		err = errors.Wrap(code.AndroidCaptureLogError,
 			fmt.Sprintf("start adb log recording failed: %v", err))
@@ -404,17 +618,66 @@ func (ad *adbDriver) StartCaptureLog(identifier ...string) (err error) {
 }
 
 func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
-	log.Info().Msg("stop adb log recording")
-	err = ad.logcat.Stop()
+	defer func() {
+		log.Info().Msg("stop adb log recording")
+		err = ad.logcat.Stop()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get adb log recording")
+		}
+	}()
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get adb log recording")
-		err = errors.Wrap(code.AndroidCaptureLogError,
-			fmt.Sprintf("get adb log recording failed: %v", err))
-		return "", err
+		log.Error().Err(err).Msg("failed to close adb log writer")
 	}
-	content := ad.logcat.logBuffer.String()
-	log.Info().Str("logcat content", content).Msg("display logcat content")
-	return ConvertPoints(content), nil
+	pointRes := ConvertPoints(ad.logcat.logs)
+
+	// 没有解析到打点日志，走兜底逻辑
+	if len(pointRes) == 0 {
+		log.Info().Msg("action log is null, use action file >>>")
+		logFilePathPrefix := fmt.Sprintf("%v/data", env.ActionLogFilePath)
+		files := []string{}
+		myexec.RunCommand("adb", "-s", ad.adbClient.Serial(), "pull", env.DeviceActionLogFilePath, env.ActionLogFilePath)
+		err = filepath.Walk(env.ActionLogFilePath, func(path string, info fs.FileInfo, err error) error {
+			// 只是需要日志文件
+			if ok := strings.Contains(path, logFilePathPrefix); ok {
+				files = append(files, path)
+			}
+			return nil
+		})
+		// 先保持原有状态码不变，这里不return error
+		if err != nil {
+			log.Error().Err(err).Msg("read log file fail")
+			return pointRes, nil
+		}
+
+		if len(files) != 1 {
+			log.Error().Err(err).Msg("log file count error")
+			return pointRes, nil
+		}
+
+		reader, err := os.Open(files[0])
+		if err != nil {
+			log.Info().Msg("open File error")
+			return pointRes, nil
+		}
+		defer func() {
+			_ = reader.Close()
+		}()
+
+		var lines []string // 创建一个空的字符串数组来存储文件的每一行
+
+		// 使用 bufio.NewScanner 读取文件
+		scanner := bufio.NewScanner(reader)
+		for scanner.Scan() {
+			lines = append(lines, scanner.Text()) // 将每行文本添加到字符串数组
+		}
+
+		if err := scanner.Err(); err != nil {
+			return pointRes, nil
+		}
+
+		pointRes = ConvertPoints(lines)
+	}
+	return pointRes, nil
 }
 
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
@@ -450,6 +713,30 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	}
 
 	return AppInfo{}, errors.Wrap(code.MobileUIAssertForegroundAppError, "get foreground app failed")
+}
+
+func (ad *adbDriver) SetIme(ime string) error {
+	_, err := ad.adbClient.RunShellCommand("ime", "set", ime)
+	if err != nil {
+		return err
+	}
+	// even if the shell command has returned,
+	// as there might be a situation where the input method has not been completely switched yet
+	// Listen to the following message.
+	// InputMethodManagerService: onServiceConnected, name:ComponentInfo{io.appium.settings/io.appium.settings.UnicodeIME}, token:android.os.Binder@44f825
+	// But there is no such log on Vivo.
+	time.Sleep(3 * time.Second)
+	return nil
+}
+
+func (ad *adbDriver) GetIme() (ime string, err error) {
+	currentIme, err := ad.adbClient.RunShellCommand("settings", "get", "secure", "default_input_method")
+	if err != nil {
+		log.Warn().Err(err).Msgf("get default ime failed")
+		return
+	}
+	currentIme = strings.TrimSpace(currentIme)
+	return currentIme, nil
 }
 
 func (ad *adbDriver) AssertForegroundApp(packageName string, activityType ...string) error {

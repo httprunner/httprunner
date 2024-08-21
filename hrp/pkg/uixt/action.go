@@ -59,6 +59,7 @@ const (
 	ACTION_SwipeToTapTexts ActionMethod = "swipe_to_tap_texts" // swipe up & down to find text and tap
 	ACTION_VideoCrawler    ActionMethod = "video_crawler"
 	ACTION_ClosePopups     ActionMethod = "close_popups"
+	ACTION_EndToEndDelay   ActionMethod = "live_e2e"
 )
 
 type MobileAction struct {
@@ -116,11 +117,13 @@ type ActionOptions struct {
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
 
 	// screenshot related
-	ScreenShotWithOCR         bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
-	ScreenShotWithUpload      bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
-	ScreenShotWithLiveType    bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
-	ScreenShotWithUITypes     []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
-	ScreenShotWithClosePopups bool     `json:"screenshot_with_close_popups,omitempty" yaml:"screenshot_with_close_popups,omitempty"`
+	ScreenShotWithOCR            bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
+	ScreenShotWithUpload         bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
+	ScreenShotWithLiveType       bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
+	ScreenShotWithLivePopularity bool     `json:"screenshot_with_live_popularity,omitempty" yaml:"screenshot_with_live_popularity,omitempty"`
+	ScreenShotWithUITypes        []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
+	ScreenShotWithClosePopups    bool     `json:"screenshot_with_close_popups,omitempty" yaml:"screenshot_with_close_popups,omitempty"`
+	ScreenShotWithOCRCluster     string   `json:"screenshot_with_ocr_cluster,omitempty" yaml:"screenshot_with_ocr_cluster,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -180,6 +183,9 @@ func (o *ActionOptions) Options() []ActionOption {
 	if len(o.AbsScope) == 4 {
 		options = append(options, WithAbsScope(
 			o.AbsScope[0], o.AbsScope[1], o.AbsScope[2], o.AbsScope[3]))
+	} else if len(o.Scope) == 4 {
+		options = append(options, WithScope(
+			o.Scope[0], o.Scope[1], o.Scope[2], o.Scope[3]))
 	}
 	if len(o.Offset) == 2 {
 		// for tap [x,y] offset
@@ -221,8 +227,17 @@ func (o *ActionOptions) Options() []ActionOption {
 	if o.ScreenShotWithLiveType {
 		options = append(options, WithScreenShotLiveType(true))
 	}
+	if o.ScreenShotWithLivePopularity {
+		options = append(options, WithScreenShotLivePopularity(true))
+	}
 	if len(o.ScreenShotWithUITypes) > 0 {
 		options = append(options, WithScreenShotUITypes(o.ScreenShotWithUITypes...))
+	}
+	if o.ScreenShotWithClosePopups {
+		options = append(options, WithScreenShotClosePopups(true))
+	}
+	if o.ScreenShotWithOCRCluster != "" {
+		options = append(options, WithScreenOCRCluster(o.ScreenShotWithOCRCluster))
 	}
 
 	return options
@@ -238,6 +253,9 @@ func (o *ActionOptions) screenshotActions() []string {
 	}
 	if o.ScreenShotWithLiveType {
 		actions = append(actions, "liveType")
+	}
+	if o.ScreenShotWithLivePopularity {
+		actions = append(actions, "livePopularity")
 	}
 	// UI detection
 	if len(o.ScreenShotWithUITypes) > 0 {
@@ -286,11 +304,11 @@ func (o *ActionOptions) updateData(data map[string]interface{}) {
 		data["frequency"] = o.Frequency
 	}
 	if _, ok := data["frequency"]; !ok {
-		data["frequency"] = 60 // default frequency
+		data["frequency"] = 10 // default frequency
 	}
 
-	if _, ok := data["isReplace"]; !ok {
-		data["isReplace"] = true // default true
+	if _, ok := data["replace"]; !ok {
+		data["replace"] = true // default true
 	}
 
 	// custom options
@@ -307,6 +325,11 @@ func NewActionOptions(options ...ActionOption) *ActionOptions {
 		option(actionOptions)
 	}
 	return actionOptions
+}
+
+type TapTextAction struct {
+	Text    string
+	Options []ActionOption
 }
 
 type ActionOption func(o *ActionOptions)
@@ -460,6 +483,12 @@ func WithScreenShotLiveType(liveTypeOn bool) ActionOption {
 	}
 }
 
+func WithScreenShotLivePopularity(livePopularityOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithLivePopularity = livePopularityOn
+	}
+}
+
 func WithScreenShotUITypes(uiTypes ...string) ActionOption {
 	return func(o *ActionOptions) {
 		o.ScreenShotWithUITypes = uiTypes
@@ -469,6 +498,12 @@ func WithScreenShotUITypes(uiTypes ...string) ActionOption {
 func WithScreenShotClosePopups(closeOn bool) ActionOption {
 	return func(o *ActionOptions) {
 		o.ScreenShotWithClosePopups = closeOn
+	}
+}
+
+func WithScreenOCRCluster(ocrCluster string) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithOCRCluster = ocrCluster
 	}
 }
 
@@ -669,6 +704,9 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		return dExt.VideoCrawler(configs)
 	case ACTION_ClosePopups:
 		return dExt.ClosePopupsHandler()
+	case ACTION_EndToEndDelay:
+		dExt.CollectEndToEndDelay(action.GetOptions()...)
+		return nil
 	}
 	return nil
 }

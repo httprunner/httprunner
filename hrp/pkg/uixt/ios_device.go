@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
@@ -235,6 +236,10 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 	deviceList, err := GetIOSDevices(device.UDID)
 	if err != nil {
 		return nil, errors.Wrap(code.IOSDeviceConnectionError, err.Error())
+	}
+
+	if device.UDID == "" && len(deviceList) > 1 {
+		return nil, errors.Wrap(code.IOSDeviceConnectionError, "more than one device connected, please specify the udid")
 	}
 
 	dev := deviceList[0]
@@ -592,7 +597,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 	var localPort int
 	localPort, err = strconv.Atoi(env.WDA_LOCAL_PORT)
 	if err != nil {
-		localPort, err = getFreePort()
+		localPort, err = builtin.GetFreePort()
 		if err != nil {
 			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
 				fmt.Sprintf("get free port failed: %v", err))
@@ -609,7 +614,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 	var localMjpegPort int
 	localMjpegPort, err = strconv.Atoi(env.WDA_LOCAL_MJPEG_PORT)
 	if err != nil {
-		localMjpegPort, err = getFreePort()
+		localMjpegPort, err = builtin.GetFreePort()
 		if err != nil {
 			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
 				fmt.Sprintf("get free port failed: %v", err))

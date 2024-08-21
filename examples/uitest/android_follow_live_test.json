@@ -1,0 +1,66 @@
+{
+  "config": {
+    "name": "直播_抖音_关注天窗_android",
+    "variables": {
+      "device": "${ENV(SerialNumber)}",
+      "ups": "${ENV(LIVEUPLIST)}"
+    },
+    "android": [
+      {
+        "serial": "$device",
+        "log_on": true,
+        "close_popup": true
+      }
+    ]
+  },
+  "teststeps": [
+    {
+      "name": "启动抖音",
+      "android": {
+        "actions": [
+          {
+            "method": "app_terminate",
+            "params": "com.ss.android.ugc.aweme"
+          },
+          {
+            "method": "app_launch",
+            "params": "com.ss.android.ugc.aweme"
+          }
+        ]
+      }
+    },
+    {
+      "name": "处理青少年弹窗",
+      "android": {
+        "actions": [
+          {
+            "method": "tap_ocr",
+            "params": "我知道了",
+            "ignore_NotFoundError": true
+          }
+        ]
+      },
+      "validate": [
+        {
+          "check": "ui_ocr",
+          "assert": "exists",
+          "expect": "推荐",
+          "msg": "进入抖音失败"
+        }
+      ]
+    },
+    {
+      "name": "点击关注",
+      "android": {
+        "actions": [
+          {
+            "method": "tap_ocr",
+            "params": "关注",
+            "index": -1,
+            "identifier": "click_live_new"
+          }
+        ]
+      }
+    }
+  ]
+}

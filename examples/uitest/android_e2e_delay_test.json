@@ -1,0 +1,146 @@
+{
+    "config": {
+        "name": "直播_抖音_端到端时延_android",
+        "variables": {
+            "device": "${ENV(SerialNumber)}",
+            "ups": "${ENV(LIVEUPLIST)}"
+        },
+        "android": [
+            {
+                "serial": "$device",
+                "log_on": true
+            }
+        ]
+    },
+    "teststeps": [
+        {
+            "name": "启动抖音",
+            "android": {
+                "actions": [
+                    {
+                        "method": "app_terminate",
+                        "params": "com.ss.android.ugc.aweme"
+                    },
+                    {
+                        "method": "app_launch",
+                        "params": "com.ss.android.ugc.aweme"
+                    },
+                    {
+                        "method": "home"
+                    },
+                    {
+                        "method": "swipe_to_tap_app",
+                        "params": "抖音",
+                        "options": {
+                            "max_retry_times": 5,
+                            "offset": [
+                                0,
+                                -50
+                            ]
+                        }
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 20
+                    }
+                ]
+            },
+            "validate": [
+                {
+                    "check": "ui_ocr",
+                    "assert": "exists",
+                    "expect": "推荐",
+                    "msg": "进入抖音失败"
+                }
+            ]
+        },
+        {
+            "name": "点击放大镜",
+            "android": {
+                "actions": [
+                    {
+                        "method": "tap_xy",
+                        "params": [
+                            0.9,
+                            0.08
+                        ],
+                        "options": {
+                            
+                        }
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            }
+        },
+        {
+            "name": "输入账号名称",
+            "android": {
+                "actions": [
+                    {
+                        "method": "input",
+                        "params": "$ups",
+                        "options": {
+                            
+                        }
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            }
+        },
+        {
+            "name": "点击搜索",
+            "android": {
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "搜索",
+                        "options": {
+                            
+                        }
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            }
+        },
+        {
+            "name": "端到端采集",
+            "android": {
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "直播中",
+                        "options": {
+                            "ignore_NotFoundError": true,
+                            "index": -1
+                        }
+                    },
+                    {
+                        "method": "live_e2e",
+                        "options": {
+                            "interval": 5,
+                            "timeout": 120
+                        }
+                    },
+                    {
+                        "method": "tap_cv",
+                        "options": {
+                            "screenshot_with_ui_types": [
+                                "close"
+                            ]
+                        }
+                    }
+                ]
+            },
+            "loops": 5
+        }
+    ]
+}

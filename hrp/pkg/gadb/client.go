@@ -108,7 +108,7 @@ func (c Client) DeviceList() (devices []*Device, err error) {
 		}
 
 		fields := strings.Fields(line)
-		if len(fields) < 5 || len(fields[0]) == 0 {
+		if len(fields) < 4 || len(fields[0]) == 0 {
 			log.Error().Str("line", line).Msg("get unexpected line")
 			continue
 		}
@@ -117,6 +117,9 @@ func (c Client) DeviceList() (devices []*Device, err error) {
 		mapAttrs := map[string]string{}
 		for _, field := range sliceAttrs {
 			split := strings.Split(field, ":")
+			if len(split) == 1 {
+				continue
+			}
 			key, val := split[0], split[1]
 			mapAttrs[key] = val
 		}
