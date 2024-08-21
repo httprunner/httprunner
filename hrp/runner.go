@@ -451,6 +451,9 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 	r.initWithParameters(givenVars)
 
 	defer func() {
+		// release session resources
+		r.releaseResources()
+
 		summary = r.summary
 		summary.Name = r.caseRunner.Config.Name
 		summary.Time.Duration = time.Since(summary.Time.StartAt).Seconds()

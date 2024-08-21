@@ -690,7 +690,6 @@ func getContentSize(resp interface{}) int64 {
 	}
 }
 
-// releaseResources releases resources used by session runner
 func (r *SessionRunner) releaseResources() {
 	// close websocket connections
 	for _, wsConn := range r.ws.wsConnMap {

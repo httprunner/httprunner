@@ -356,20 +356,19 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
-				// TODO: parse step struct
-				// parse step name
-				parsedName, err := caseRunner.parser.ParseString(step.Name(), sessionRunner.sessionVariables)
+				// parse step struct
+				err = sessionRunner.parseStepStruct(step)
 				if err != nil {
-					parsedName = step.Name()
+					log.Error().Err(err).Msg("parse step struct failed")
 				}
-				stepName := convertString(parsedName)
+
 				// reset start time only once before step
 				once.Do(func() {
 					b.Boomer.ResetStartTime()
 				})
 				stepResult, err := step.Run(sessionRunner)
 				// update step result name with parsed step name
-				stepResult.Name = stepName
+				stepResult.Name = step.Name()
 				// record requests result of the step if step type is testcase
 				if stepResult.StepType == stepTypeTestCase && stepResult.Data != nil {
 					// record requests of testcase step
