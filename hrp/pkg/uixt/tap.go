@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"fmt"
+
 	"github.com/rs/zerolog/log"
 )
 
@@ -110,8 +111,6 @@ func (dExt *DriverExt) DoubleTapXY(x, y float64) error {
 		x = x * float64(dExt.windowSize.Height)
 		y = y * float64(dExt.windowSize.Width)
 	}
-	x = x * float64(dExt.windowSize.Width)
-	y = y * float64(dExt.windowSize.Height)
 	return dExt.Driver.DoubleTapFloat(x, y)
 }
 
