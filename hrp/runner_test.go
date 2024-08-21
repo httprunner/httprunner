@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
@@ -219,6 +220,44 @@ func TestRunCaseWithRefAPI(t *testing.T) {
 	r := NewRunner(t)
 	err = r.Run(testcase)
 	if err != nil {
+		t.Fatal()
+	}
+}
+
+func TestSessionRunner(t *testing.T) {
+	testcase := TestCase{
+		Config: NewConfig("TestCase").
+			WithVariables(map[string]interface{}{
+				"a":      12.3,
+				"b":      3.45,
+				"varFoo": "${max($a, $b)}",
+			}),
+		TestSteps: []IStep{
+			NewStep("check variables").
+				WithVariables(map[string]interface{}{
+					"a":      12.3,
+					"b":      34.5,
+					"varFoo": "${max($a, $b)}",
+				}).
+				GET("/hello").
+				Validate().
+				AssertEqual("status_code", 200, "check status code"),
+			// AssertEqual("$varFoo", "$b", "check varFoo value"),
+		},
+	}
+
+	caseRunner, _ := NewRunner(t).NewCaseRunner(testcase)
+	sessionRunner := caseRunner.NewSession()
+	step := testcase.TestSteps[0]
+	if !assert.Equal(t, step.Struct().Variables["varFoo"], "${max($a, $b)}") {
+		t.Fatal()
+	}
+
+	err := sessionRunner.parseStepStruct(step)
+	if err != nil {
+		t.Fatal()
+	}
+	if !assert.Equal(t, step.Struct().Variables["varFoo"], 34.5) {
 		t.Fatal()
 	}
 }
