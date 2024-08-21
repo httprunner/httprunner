@@ -230,6 +230,13 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			return err
 		}
 
+		// release UI driver session
+		defer func() {
+			for _, client := range uiClients {
+				client.Driver.DeleteSession()
+			}
+		}()
+
 		for it := caseRunner.parametersIterator; it.HasNext(); {
 			// case runner can run multiple times with different parameters
 			// each run has its own session runner

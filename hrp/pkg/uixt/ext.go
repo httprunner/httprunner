@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/gif"
+	_ "image/gif"
 	"image/jpeg"
-	"image/png"
+	_ "image/png"
 	"math/rand"
 	"mime"
 	"mime/multipart"
@@ -62,9 +62,12 @@ type ScreenResult struct {
 	Video       *Video      `json:"video,omitempty"`
 	Popup       *PopupInfo  `json:"popup,omitempty"`
 
-	SwipeStartTime  int64 `json:"swipe_start_time"`  // 滑动开始时间戳
-	SwipeFinishTime int64 `json:"swipe_finish_time"` // 滑动结束时间戳
+	SwipeStartTime       int64 `json:"swipe_start_time"`        // 滑动开始时间戳
+	SwipeFinishTime      int64 `json:"swipe_finish_time"`       // 滑动结束时间戳
+	FetchVideoStartTime  int64 `json:"fetch_video_start_time"`  // 抓取视频开始时间戳
+	FetchVideoFinishTime int64 `json:"fetch_video_finish_time"` // 抓取视频结束时间戳
 
+	FetchVideoElapsed     int64 `json:"fetch_video_elapsed"`     // 抓取视频耗时(ms)
 	ScreenshotTakeElapsed int64 `json:"screenshot_take_elapsed"` // 设备截图耗时(ms)
 	ScreenshotCVElapsed   int64 `json:"screenshot_cv_elapsed"`   // CV 识别耗时(ms)
 
@@ -93,12 +96,14 @@ type cacheStepData struct {
 	screenResults ScreenResultMap
 	// cache feed/live video stat
 	videoCrawler *VideoCrawler
+	e2eDelay     []timeLog
 }
 
 func (d *cacheStepData) reset() {
 	d.screenShots = make([]string, 0)
 	d.screenResults = make(map[string]*ScreenResult)
 	d.videoCrawler = nil
+	d.e2eDelay = nil
 }
 
 type DriverExt struct {
@@ -190,8 +195,29 @@ func (dExt *DriverExt) takeScreenShot(fileName string) (raw *bytes.Buffer, path 
 }
 
 func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error) {
-	// TODO: compress image data
-	return raw, nil
+	// 解码原始图像数据
+	img, format, err := image.Decode(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建一个用来保存压缩后数据的buffer
+	var buf bytes.Buffer
+
+	switch format {
+	// Convert to jpeg uniformly and compress with a compression rate of 95
+	case "jpeg", "png":
+		jpegOptions := &jpeg.Options{Quality: 95}
+		err = jpeg.Encode(&buf, img, jpegOptions)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported image format: %s", format)
+	}
+
+	// 返回压缩后的图像数据
+	return &buf, nil
 }
 
 // saveScreenShot saves image file with file name
@@ -207,7 +233,8 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 		return "", errors.Wrap(err, "decode screenshot image failed")
 	}
 
-	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, format))
+	// The default format uses jpeg for compression
+	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, "jpeg"))
 	file, err := os.Create(screenshotPath)
 	if err != nil {
 		return "", errors.Wrap(err, "create screenshot image file failed")
@@ -217,12 +244,9 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 	}()
 
 	switch format {
-	case "png":
-		err = png.Encode(file, img)
-	case "jpeg":
-		err = jpeg.Encode(file, img, nil)
-	case "gif":
-		err = gif.Encode(file, img, nil)
+	case "jpeg", "png":
+		jpegOptions := &jpeg.Options{}
+		err = jpeg.Encode(file, img, jpegOptions)
 	default:
 		return "", fmt.Errorf("unsupported image format: %s", format)
 	}
@@ -242,6 +266,7 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenResults.getScreenShotUrls()
 	cacheData["screen_results"] = dExt.cacheStepData.screenResults
+	cacheData["e2e_results"] = dExt.cacheStepData.e2eDelay
 
 	// clear cache
 	dExt.cacheStepData.reset()

@@ -65,6 +65,10 @@ func LoadTestCases(tests ...ITestCase) ([]*TestCase, error) {
 		}
 	}
 
+	if len(testCases) < 1 {
+		return nil, errors.New("test case count less than 1 or parse error")
+	}
+
 	log.Info().Int("count", len(testCases)).Msg("load testcases successfully")
 	return testCases, nil
 }

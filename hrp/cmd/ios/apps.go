@@ -49,11 +49,11 @@ var listAppsCmd = &cobra.Command{
 			applicationType = gidevice.ApplicationTypeAny
 		}
 
-		result, errList := device.InstallationProxyBrowse(
+		result, err := device.InstallationProxyBrowse(
 			gidevice.WithApplicationType(applicationType),
 			gidevice.WithReturnAttributes("CFBundleVersion", "CFBundleDisplayName", "CFBundleIdentifier"))
-		if errList != nil {
-			return fmt.Errorf("get app list failed")
+		if err != nil {
+			return fmt.Errorf("get app list failed %v", err)
 		}
 
 		for _, app := range result {

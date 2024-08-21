@@ -1,0 +1,18 @@
+{
+    "config": {
+        "name": "run ui test on bili ios",
+        "variables": {
+            "RunTimes": 3,
+            "UDID": "${ENV(UDID)}"
+        }
+    },
+    "teststeps": [
+        {
+            "name": "run bili ios",
+            "shell": {
+                "string": "bili_ios",
+                "expect_exit_code": 0
+            }
+        }
+    ]
+}

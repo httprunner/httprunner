@@ -91,6 +91,9 @@ type PopupInfo struct {
 	*ClosePopupsResult
 	CloseStatus string   `json:"close_status"`           // found/success/fail
 	ClosePoints []PointF `json:"close_points,omitempty"` // CV 识别的所有关闭按钮（仅关闭按钮，可能存在多个）
+	RetryCount  int      `json:"retry_count"`
+	PicName     string   `json:"pic_name"`
+	PicURL      string   `json:"pic_url"`
 }
 
 func (p *PopupInfo) getClosePoint(lastPopup *PopupInfo) (*PointF, error) {

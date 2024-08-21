@@ -67,9 +67,10 @@ type ImageResult struct {
 	// Media（媒体）
 	// Chat（语音）
 	// Event（赛事）
-	LiveType          string             `json:"liveType,omitempty"`    // 直播间类型
-	UIResult          UIResultMap        `json:"uiResult,omitempty"`    // 图标检测
-	ClosePopupsResult *ClosePopupsResult `json:"closeResult,omitempty"` // 弹窗按钮检测
+	LiveType          string             `json:"liveType,omitempty"`       // 直播间类型
+	LivePopularity    int64              `json:"livePopularity,omitempty"` // 直播间热度
+	UIResult          UIResultMap        `json:"uiResult,omitempty"`       // 图标检测
+	ClosePopupsResult *ClosePopupsResult `json:"closeResult,omitempty"`    // 弹窗按钮检测
 }
 
 type APIResponseImage struct {
@@ -218,7 +219,18 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 		bodyWriter.WriteField("uiTypes", uiType)
 	}
 
+	// 使用高精度集群
 	bodyWriter.WriteField("ocrCluster", "highPrecision")
+
+	if actionOptions.ScreenShotWithOCRCluster != "" {
+		bodyWriter.WriteField("ocrCluster", actionOptions.ScreenShotWithOCRCluster)
+	}
+
+	if actionOptions.Timeout > 0 {
+		bodyWriter.WriteField("timeout", fmt.Sprintf("%v", actionOptions.Timeout))
+	} else {
+		bodyWriter.WriteField("timeout", fmt.Sprintf("%v", 10))
+	}
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {
@@ -406,18 +418,19 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
+		screenResult.Video = &Video{LiveType: imageResult.LiveType, ViewCount: imageResult.LivePopularity}
 
-		if actionOptions.ScreenShotWithClosePopups {
-			popup := &PopupInfo{
+		if actionOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
+			screenResult.Popup = &PopupInfo{
 				ClosePopupsResult: imageResult.ClosePopupsResult,
+				PicName:           imagePath,
+				PicURL:            imageResult.URL,
 			}
 
 			closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
 			for _, closeArea := range closeAreas {
-				popup.ClosePoints = append(popup.ClosePoints, closeArea.Center())
+				screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
 			}
-
-			screenResult.Popup = popup
 		}
 	}
 
@@ -482,8 +495,8 @@ func (box Box) IsEmpty() bool {
 func (box Box) IsIdentical(box2 Box) bool {
 	// set the coordinate precision to 1 pixel
 	return box.Point.IsIdentical(box2.Point) &&
-		math.Abs(box.Width-box2.Width) < 1 &&
-		math.Abs(box.Height-box2.Height) < 1
+		builtin.IsZeroFloat64(math.Abs(box.Width-box2.Width)) &&
+		builtin.IsZeroFloat64(math.Abs(box.Height-box2.Height))
 }
 
 func (box Box) Center() PointF {
@@ -538,7 +551,7 @@ func (u UIResultMap) FilterUIResults(uiTypes []string) (uiResults UIResults, err
 			return
 		}
 	}
-	err = errors.Errorf("UI types %v not detected", uiTypes)
+	err = errors.Wrap(code.CVResultNotFoundError, fmt.Sprintf("UI types %v not detected", uiTypes))
 	return
 }
 
