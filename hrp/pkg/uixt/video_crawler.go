@@ -271,8 +271,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					currentVideo.LiveType = screenResult.imageResult.LiveType
 				}
 
-				// simulation watch feed video
-				simulationPlayDuration := math.Min(float64(currentVideo.PlayDuration), 7200000)
+				// simulation watch live video
+				simulationPlayDuration := math.Min(float64(currentVideo.PlayDuration), 300000)
 				sleepStrict(swipeFinishTime, int64(simulationPlayDuration))
 
 				screenResult.Video = currentVideo
@@ -327,7 +327,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
 
 				// simulation watch feed video
-				simulationPlayDuration := math.Min(float64(currentVideo.PlayDuration), 7200000)
+				simulationPlayDuration := math.Min(float64(currentVideo.PlayDuration), 600000)
 				sleepStrict(swipeFinishTime, int64(simulationPlayDuration))
 				screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
 			}
