@@ -28,10 +28,10 @@ func NewServer(port int) error {
 	router.POST("/api/v1/:platform/:serial/app/launch", parseDeviceInfo(), launchAppHandler)
 	router.POST("/api/v1/:platform/:serial/app/terminal", parseDeviceInfo(), terminalAppHandler)
 	router.GET("/api/v1/:platform/:serial/screenshot", parseDeviceInfo(), screenshotHandler)
-	router.GET("/api/v1/:platform/:serial/shoots/source", parseDeviceInfo(), sourceHandler)
+	router.GET("/api/v1/:platform/:serial/stub/source", parseDeviceInfo(), sourceHandler)
 	router.GET("/api/v1/:platform/:serial/adb/source", parseDeviceInfo(), adbSourceHandler)
-	router.POST("/api/v1/:platform/:serial/shoots/login", parseDeviceInfo(), loginHandler)
-	router.POST("/api/v1/:platform/:serial/shoots/logout", parseDeviceInfo(), logoutHandler)
+	router.POST("/api/v1/:platform/:serial/stub/login", parseDeviceInfo(), loginHandler)
+	router.POST("/api/v1/:platform/:serial/stub/logout", parseDeviceInfo(), logoutHandler)
 
 	err := router.Run(fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
@@ -523,7 +523,7 @@ func parseDeviceInfo() gin.HandlerFunc {
 				c.Abort()
 				return
 			}
-			device, err := uixt.NewAndroidDevice(uixt.WithSerialNumber(serial), uixt.WithShoots(true))
+			device, err := uixt.NewAndroidDevice(uixt.WithSerialNumber(serial), uixt.WithStub(true))
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).Msg(fmt.Sprintf("[%s]: Device Not Found", c.HandlerName()))
 				c.JSON(http.StatusBadRequest, HttpResponse{

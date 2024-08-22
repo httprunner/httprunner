@@ -15,18 +15,18 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
-type ShootsAndroidDriver struct {
+type stubAndroidDriver struct {
 	socket  net.Conn
 	seq     int
 	timeout time.Duration
 	adbDriver
 }
 
-const ShootsSocketName = "com.bytest.device"
+const StubSocketName = "com.bytest.device"
 
-// newShootsAndroidDriver
-// 创建shoots Driver address为forward后的端口格式127.0.0.1:${port}
-func newShootsAndroidDriver(address string, urlPrefix string, readTimeout ...time.Duration) (*ShootsAndroidDriver, error) {
+// newStubAndroidDriver
+// 创建stub Driver address为forward后的端口格式127.0.0.1:${port}
+func newStubAndroidDriver(address string, urlPrefix string, readTimeout ...time.Duration) (*stubAndroidDriver, error) {
 	timeout := 10 * time.Second
 	if len(readTimeout) > 0 {
 		timeout = readTimeout[0]
@@ -38,7 +38,7 @@ func newShootsAndroidDriver(address string, urlPrefix string, readTimeout ...tim
 		return nil, err
 	}
 
-	driver := &ShootsAndroidDriver{
+	driver := &stubAndroidDriver{
 		socket:  conn,
 		timeout: timeout,
 	}
@@ -50,7 +50,7 @@ func newShootsAndroidDriver(address string, urlPrefix string, readTimeout ...tim
 	return driver, nil
 }
 
-func (sad *ShootsAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
+func (sad *stubAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
 	var localPort int
 	{
 		tmpURL, _ := url.Parse(sad.urlPrefix.String())
@@ -68,7 +68,7 @@ func (sad *ShootsAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse
 	return sad.httpRequest(http.MethodGet, sad.concatURL(nil, pathElem...), nil)
 }
 
-func (sad *ShootsAndroidDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+func (sad *stubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
 	var localPort int
 	{
 		tmpURL, _ := url.Parse(sad.urlPrefix.String())
@@ -93,11 +93,11 @@ func (sad *ShootsAndroidDriver) httpPOST(data interface{}, pathElem ...string) (
 	return sad.httpRequest(http.MethodPost, sad.concatURL(nil, pathElem...), bsJSON)
 }
 
-func (sad *ShootsAndroidDriver) NewSession(capabilities Capabilities) (SessionInfo, error) {
+func (sad *stubAndroidDriver) NewSession(capabilities Capabilities) (SessionInfo, error) {
 	return SessionInfo{}, errDriverNotImplemented
 }
 
-func (sad *ShootsAndroidDriver) sendCommand(packageName string, cmdType string, params map[string]interface{}, readTimeout ...time.Duration) (interface{}, error) {
+func (sad *stubAndroidDriver) sendCommand(packageName string, cmdType string, params map[string]interface{}, readTimeout ...time.Duration) (interface{}, error) {
 	sad.seq++
 	packet := map[string]interface{}{
 		"Seq": sad.seq,
@@ -115,7 +115,7 @@ func (sad *ShootsAndroidDriver) sendCommand(packageName string, cmdType string, 
 		return nil, err
 	}
 
-	res, err := sad.adbClient.RunShootsCommand(append(data, '\n'), packageName)
+	res, err := sad.adbClient.RunStubCommand(append(data, '\n'), packageName)
 	if err != nil {
 		return nil, err
 	}
@@ -124,24 +124,24 @@ func (sad *ShootsAndroidDriver) sendCommand(packageName string, cmdType string, 
 		return nil, err
 	}
 	if resultMap["Error"] != nil {
-		return nil, fmt.Errorf("failed to call shoots command: %s", resultMap["Error"].(string))
+		return nil, fmt.Errorf("failed to call stub command: %s", resultMap["Error"].(string))
 	}
 
 	return resultMap["Result"], nil
 }
 
-func (sad *ShootsAndroidDriver) DeleteSession() error {
+func (sad *stubAndroidDriver) DeleteSession() error {
 	return sad.close()
 }
 
-func (sad *ShootsAndroidDriver) close() error {
+func (sad *stubAndroidDriver) close() error {
 	if sad.socket != nil {
 		return sad.socket.Close()
 	}
 	return nil
 }
 
-func (sad *ShootsAndroidDriver) Status() (DeviceStatus, error) {
+func (sad *stubAndroidDriver) Status() (DeviceStatus, error) {
 	app, err := sad.GetForegroundApp()
 	if err != nil {
 		return DeviceStatus{}, err
@@ -150,11 +150,11 @@ func (sad *ShootsAndroidDriver) Status() (DeviceStatus, error) {
 	if err != nil {
 		return DeviceStatus{}, err
 	}
-	log.Info().Msg(fmt.Sprintf("pint shoots result :%v", res))
+	log.Info().Msg(fmt.Sprintf("ping stub result :%v", res))
 	return DeviceStatus{}, nil
 }
 
-func (sad *ShootsAndroidDriver) Source(srcOpt ...SourceOption) (source string, err error) {
+func (sad *stubAndroidDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 	app, err := sad.GetForegroundApp()
 	if err != nil {
 		return "", err
@@ -172,7 +172,7 @@ func (sad *ShootsAndroidDriver) Source(srcOpt ...SourceOption) (source string, e
 	return res.(string), nil
 }
 
-func (sad *ShootsAndroidDriver) LoginNoneUIBak(packageName, phoneNumber, captcha string) error {
+func (sad *stubAndroidDriver) LoginNoneUIBak(packageName, phoneNumber, captcha string) error {
 	_, err := sad.adbClient.RunShellCommand("am", "broadcast", "-a", fmt.Sprintf("%s.util.crony.action_login", packageName), "-e", "phone", phoneNumber, "-e", "code", captcha)
 	time.Sleep(10 * time.Second)
 	login, err := sad.isLogin(packageName)
@@ -183,7 +183,7 @@ func (sad *ShootsAndroidDriver) LoginNoneUIBak(packageName, phoneNumber, captcha
 	return err
 }
 
-func (sad *ShootsAndroidDriver) LoginNoneUI(packageName, phoneNumber, captcha string) error {
+func (sad *stubAndroidDriver) LoginNoneUI(packageName, phoneNumber, captcha string) error {
 	params := map[string]interface{}{
 		"phone": phoneNumber,
 		"code":  captcha,
@@ -213,7 +213,7 @@ func (sad *ShootsAndroidDriver) LoginNoneUI(packageName, phoneNumber, captcha st
 	return nil
 }
 
-func (sad *ShootsAndroidDriver) LogoutNoneUI(packageName string) error {
+func (sad *stubAndroidDriver) LogoutNoneUI(packageName string) error {
 	resp, err := sad.httpGET("/host", "/logout")
 	if err != nil {
 		return err
@@ -235,7 +235,7 @@ func (sad *ShootsAndroidDriver) LogoutNoneUI(packageName string) error {
 	return nil
 }
 
-func (sad *ShootsAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber string, captcha string) error {
+func (sad *stubAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber string, captcha string) error {
 	params := map[string]interface{}{
 		"ClassName": "qe.python.test.LoginUtil",
 		"Method":    "loginSync",
@@ -250,7 +250,7 @@ func (sad *ShootsAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber stri
 	return nil
 }
 
-func (sad *ShootsAndroidDriver) isLogin(packageName string) (login bool, err error) {
+func (sad *stubAndroidDriver) isLogin(packageName string) (login bool, err error) {
 	resp, err := sad.httpGET("/host", "/login", "/check")
 	if err != nil {
 		return false, err

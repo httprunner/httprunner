@@ -7,9 +7,6 @@ const (
 
 	InvalidParamErrorCode = 100002
 	InvalidParamErrorMsg  = "Invalid %s Param"
-
-	CodeNotFound = 1004
-	MsgNotFound  = "Resource not found"
 )
 
 const (

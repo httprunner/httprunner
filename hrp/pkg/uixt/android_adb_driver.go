@@ -719,7 +719,7 @@ func (ad *adbDriver) GetDriverResults() []*DriverResult {
 }
 
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
-	packageInfo, err := ad.adbClient.RunShellCommand("CLASSPATH=/data/local/tmp/eval_tool", "app_process", "/", "com.bytedance.iesqa.eval_process.PackageService")
+	packageInfo, err := ad.adbClient.RunShellCommand("CLASSPATH=/data/local/tmp/evalite", "app_process", "/", "com.bytedance.iesqa.eval_process.PackageService")
 	if err != nil {
 		return app, err
 	}

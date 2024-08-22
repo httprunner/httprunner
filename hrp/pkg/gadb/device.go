@@ -292,7 +292,7 @@ func (d *Device) ReverseForwardKill(remoteInterface interface{}) error {
 	return err
 }
 
-func (d *Device) RunShootsCommand(command []byte, processName string) (res string, err error) {
+func (d *Device) RunStubCommand(command []byte, processName string) (res string, err error) {
 	var tp transport
 	if tp, err = d.createDeviceTransport(); err != nil {
 		return "", err
