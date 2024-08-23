@@ -417,8 +417,8 @@ func (dev *AndroidDevice) installViaInstaller(app io.ReadSeeker, args ...string)
 	}()
 
 	// 需要监听是否完成安装
-	args = strings.Split(InstallViaInstallerCommand, " ")
-	args = append(args, appRemotePath)
+	command := strings.Split(InstallViaInstallerCommand, " ")
+	args = append(command, appRemotePath)
 	_, err = dev.d.RunShellCommand("am", args[1:]...)
 	if err != nil {
 		return err
