@@ -17,7 +17,7 @@ import (
 
 var ErrConnBroken = errors.New("socket connection broken")
 
-var DefaultAdbReadTimeout time.Duration = 60
+var DefaultAdbReadTimeout time.Duration = 300
 
 var regexDeviceOffline = regexp.MustCompile("device .* not found")
 

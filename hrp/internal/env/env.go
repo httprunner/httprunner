@@ -13,6 +13,7 @@ var (
 	VEDEM_IMAGE_URL      = os.Getenv("VEDEM_IMAGE_URL")
 	VEDEM_IMAGE_AK       = os.Getenv("VEDEM_IMAGE_AK")
 	VEDEM_IMAGE_SK       = os.Getenv("VEDEM_IMAGE_SK")
+	EAPI_TOKEN           = os.Getenv("EAPI_TOKEN")
 	DISABLE_GA           = os.Getenv("DISABLE_GA")
 	DISABLE_SENTRY       = os.Getenv("DISABLE_SENTRY")
 	PYPI_INDEX_URL       = os.Getenv("PYPI_INDEX_URL")
