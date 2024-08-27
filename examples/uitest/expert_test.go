@@ -121,27 +121,6 @@ func TestAndroidExpertTest(t *testing.T) {
 				).
 				Validate().
 				AssertOCRExists("推荐", "进入抖音失败"),
-			// 点播赛道
-			hrp.NewStep("【点播】滑动消费").
-				Android().
-				VideoCrawler(map[string]interface{}{
-					"timeout": 600,
-					"feed": map[string]interface{}{
-						"target_count": 10,
-						"target_labels": []map[string]interface{}{
-							{"text": "^广告$", "scope": []float64{0, 0.5, 1, 1}, "regex": true},
-							{"text": "^图文$", "scope": []float64{0, 0.5, 1, 1}, "regex": true},
-							{"text": `^特效\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
-							{"text": `^模板\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
-							{"text": `^购物\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
-						},
-						"sleep_random": []float64{0, 5, 0.6, 5, 15, 0.2, 15, 50, 0.2},
-					},
-					"live": map[string]interface{}{
-						"target_count": 0,
-						"sleep_random": []float64{20, 20},
-					},
-				}),
 			// localtime 时间戳界面
 			hrp.NewStep("返回主界面，并打开本地时间戳").
 				Android().
@@ -275,27 +254,6 @@ func TestIOSExpertTest(t *testing.T) {
 				).
 				Validate().
 				AssertOCRExists("推荐", "进入抖音失败"),
-			// 点播赛道
-			hrp.NewStep("【点播】滑动消费").
-				IOS().
-				VideoCrawler(map[string]interface{}{
-					"timeout": 600,
-					"feed": map[string]interface{}{
-						"target_count": 10,
-						"target_labels": []map[string]interface{}{
-							{"text": "^广告$", "scope": []float64{0, 0.5, 1, 1}, "regex": true},
-							{"text": "^图文$", "scope": []float64{0, 0.5, 1, 1}, "regex": true},
-							{"text": `^特效\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
-							{"text": `^模板\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
-							{"text": `^购物\|`, "scope": []float64{0, 0.5, 1, 1}, "regex": true},
-						},
-						"sleep_random": []float64{0, 5, 0.6, 5, 15, 0.2, 15, 50, 0.2},
-					},
-					"live": map[string]interface{}{
-						"target_count": 0,
-						"sleep_random": []float64{20, 20},
-					},
-				}),
 			// localtime 时间戳界面
 			hrp.NewStep("返回主界面，并打开本地时间戳").
 				IOS().

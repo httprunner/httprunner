@@ -62,7 +62,6 @@ const (
 	ACTION_SwipeToTapApp   ActionMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
 	ACTION_SwipeToTapText  ActionMethod = "swipe_to_tap_text"  // swipe up & down to find text and tap
 	ACTION_SwipeToTapTexts ActionMethod = "swipe_to_tap_texts" // swipe up & down to find text and tap
-	ACTION_VideoCrawler    ActionMethod = "video_crawler"
 	ACTION_ClosePopups     ActionMethod = "close_popups"
 	ACTION_EndToEndDelay   ActionMethod = "live_e2e"
 	ACTION_InstallApp      ActionMethod = "install_app"
@@ -740,17 +739,6 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		return dExt.Driver.StartCamera()
 	case ACTION_StopCamera:
 		return dExt.Driver.StopCamera()
-	case ACTION_VideoCrawler:
-		params, ok := action.Params.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("invalid video crawler params: %v(%T)", action.Params, action.Params)
-		}
-		data, _ := json.Marshal(params)
-		configs := &VideoCrawlerConfigs{}
-		if err := json.Unmarshal(data, configs); err != nil {
-			return errors.Wrapf(err, "invalid video crawler params: %v(%T)", action.Params, action.Params)
-		}
-		return dExt.VideoCrawler(configs)
 	case ACTION_ClosePopups:
 		return dExt.ClosePopupsHandler()
 	case ACTION_EndToEndDelay:

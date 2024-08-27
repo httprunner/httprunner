@@ -59,7 +59,6 @@ type ScreenResult struct {
 	Texts       OCRTexts    `json:"texts"`        // dumped raw OCRTexts
 	Icons       UIResultMap `json:"icons"`        // CV 识别的图标
 	Tags        []string    `json:"tags"`         // tags for image, e.g. ["feed", "ad", "live"]
-	Video       *Video      `json:"video,omitempty"`
 	Popup       *PopupInfo  `json:"popup,omitempty"`
 
 	SwipeStartTime       int64 `json:"swipe_start_time"`        // 滑动开始时间戳
@@ -94,15 +93,13 @@ type cacheStepData struct {
 	screenShots []string
 	// cache step screenshot ocr results, key is image path, value is ScreenResult
 	screenResults ScreenResultMap
-	// cache feed/live video stat
-	videoCrawler *VideoCrawler
-	e2eDelay     []timeLog
+	// cache e2e delay
+	e2eDelay []timeLog
 }
 
 func (d *cacheStepData) reset() {
 	d.screenShots = make([]string, 0)
 	d.screenResults = make(map[string]*ScreenResult)
-	d.videoCrawler = nil
 	d.e2eDelay = nil
 }
 
@@ -331,7 +328,6 @@ func (dExt *DriverExt) saveScreenShot(raw *bytes.Buffer, fileName string) (strin
 
 func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData := make(map[string]interface{})
-	cacheData["video_stat"] = dExt.cacheStepData.videoCrawler
 	cacheData["screenshots"] = dExt.cacheStepData.screenShots
 
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenResults.getScreenShotUrls()

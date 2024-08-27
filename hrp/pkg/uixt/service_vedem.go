@@ -418,7 +418,6 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
-		screenResult.Video = &Video{LiveType: imageResult.LiveType, ViewCount: imageResult.LivePopularity}
 
 		if actionOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
 			screenResult.Popup = &PopupInfo{
