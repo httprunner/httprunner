@@ -2,7 +2,7 @@ package adb
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -36,7 +36,7 @@ var screencapAndroidDevicesCmd = &cobra.Command{
 		}
 
 		filepath := fmt.Sprintf("%s.png", builtin.GenNameWithTimestamp("screencap_%d"))
-		if err = ioutil.WriteFile(filepath, res, 0o644); err != nil {
+		if err = os.WriteFile(filepath, res, 0o644); err != nil {
 			return err
 		}
 		fmt.Println("screencap saved to", filepath)

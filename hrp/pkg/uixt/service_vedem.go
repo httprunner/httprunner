@@ -67,10 +67,10 @@ type ImageResult struct {
 	// Media（媒体）
 	// Chat（语音）
 	// Event（赛事）
-	LiveType       string             `json:"liveType,omitempty"`       // 直播间类型
-	LivePopularity int64              `json:"livePopularity,omitempty"` // 直播间热度
-	UIResult       UIResultMap        `json:"uiResult,omitempty"`       // 图标检测
-	CPResult       *ClosePopupsResult `json:"closeResult,omitempty"`    // 弹窗按钮检测
+	LiveType          string             `json:"liveType,omitempty"`       // 直播间类型
+	LivePopularity    int64              `json:"livePopularity,omitempty"` // 直播间热度
+	UIResult          UIResultMap        `json:"uiResult,omitempty"`       // 图标检测
+	ClosePopupsResult *ClosePopupsResult `json:"closeResult,omitempty"`    // 弹窗按钮检测
 }
 
 type APIResponseImage struct {
@@ -410,7 +410,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	imageResult, err := dExt.ImageService.GetImage(bufSource, options...)
 	if err != nil {
 		log.Error().Err(err).Msg("GetImage from ImageService failed")
-		return nil, err
+		return screenResult, err
 	}
 	if imageResult != nil {
 		screenResult.imageResult = imageResult
@@ -420,14 +420,16 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		screenResult.Icons = imageResult.UIResult
 		screenResult.Video = &Video{LiveType: imageResult.LiveType, ViewCount: imageResult.LivePopularity}
 
-		if actionOptions.ScreenShotWithClosePopups && imageResult.CPResult != nil {
+		if actionOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
 			screenResult.Popup = &PopupInfo{
-				Type:      imageResult.CPResult.Type,
-				Text:      imageResult.CPResult.Text,
-				PicName:   imagePath,
-				PicURL:    imageResult.URL,
-				PopupArea: imageResult.CPResult.PopupArea,
-				CloseArea: imageResult.CPResult.CloseArea,
+				ClosePopupsResult: imageResult.ClosePopupsResult,
+				PicName:           imagePath,
+				PicURL:            imageResult.URL,
+			}
+
+			closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
+			for _, closeArea := range closeAreas {
+				screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
 			}
 		}
 	}
@@ -491,6 +493,7 @@ func (box Box) IsEmpty() bool {
 }
 
 func (box Box) IsIdentical(box2 Box) bool {
+	// set the coordinate precision to 1 pixel
 	return box.Point.IsIdentical(box2.Point) &&
 		builtin.IsZeroFloat64(math.Abs(box.Width-box2.Width)) &&
 		builtin.IsZeroFloat64(math.Abs(box.Height-box2.Height))

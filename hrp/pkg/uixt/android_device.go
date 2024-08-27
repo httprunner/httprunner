@@ -195,6 +195,10 @@ func (dev *AndroidDevice) Init() error {
 	return nil
 }
 
+func (dev *AndroidDevice) System() string {
+	return "android"
+}
+
 func (dev *AndroidDevice) UUID() string {
 	return dev.SerialNumber
 }

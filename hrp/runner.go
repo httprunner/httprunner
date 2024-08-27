@@ -240,6 +240,13 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			}
 		}()
 
+		if caseRunner.parsedConfig.PluginSetting != nil {
+			if p, ok := pluginMap.Load(caseRunner.parsedConfig.PluginSetting.Path); ok {
+				log.Info().Msg(fmt.Sprintf("starting to keep live, path: %v, address: %v", caseRunner.parsedConfig.PluginSetting.Path, p))
+				go p.(funplugin.IPlugin).StartHeartbeat()
+			}
+		}
+
 		for it := caseRunner.parametersIterator; it.HasNext(); {
 			// case runner can run multiple times with different parameters
 			// each run has its own session runner

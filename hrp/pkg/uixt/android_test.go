@@ -91,7 +91,7 @@ func TestDriver_Screenshot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(ioutil.WriteFile("/Users/hero/Desktop/s1.png", screenshot.Bytes(), 0o600))
+	t.Log(os.WriteFile("/Users/hero/Desktop/s1.png", screenshot.Bytes(), 0o600))
 }
 
 func TestDriver_Rotation(t *testing.T) {
@@ -363,7 +363,7 @@ func TestDriver_AppLaunch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(ioutil.WriteFile("s1.png", raw.Bytes(), 0o600))
+	t.Log(os.WriteFile("s1.png", raw.Bytes(), 0o600))
 }
 
 func TestDriver_IsAppInForeground(t *testing.T) {

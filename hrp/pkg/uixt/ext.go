@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -63,9 +62,12 @@ type ScreenResult struct {
 	Video       *Video      `json:"video,omitempty"`
 	Popup       *PopupInfo  `json:"popup,omitempty"`
 
-	SwipeStartTime  int64 `json:"swipe_start_time"`  // 滑动开始时间戳
-	SwipeFinishTime int64 `json:"swipe_finish_time"` // 滑动结束时间戳
+	SwipeStartTime       int64 `json:"swipe_start_time"`        // 滑动开始时间戳
+	SwipeFinishTime      int64 `json:"swipe_finish_time"`       // 滑动结束时间戳
+	FetchVideoStartTime  int64 `json:"fetch_video_start_time"`  // 抓取视频开始时间戳
+	FetchVideoFinishTime int64 `json:"fetch_video_finish_time"` // 抓取视频结束时间戳
 
+	FetchVideoElapsed     int64 `json:"fetch_video_elapsed"`     // 抓取视频耗时(ms)
 	ScreenshotTakeElapsed int64 `json:"screenshot_take_elapsed"` // 设备截图耗时(ms)
 	ScreenshotCVElapsed   int64 `json:"screenshot_cv_elapsed"`   // CV 识别耗时(ms)
 
@@ -85,40 +87,6 @@ func (screenResults ScreenResultMap) getScreenShotUrls() map[string]string {
 		screenShotsUrls[screenResult.imagePath] = screenResult.UploadedURL
 	}
 	return screenShotsUrls
-}
-
-// updatePopupCloseStatus checks if popup closed normally in every screenResult with close_popups on:
-func (screenResults ScreenResultMap) updatePopupCloseStatus() {
-	var popupScreenResultList []*ScreenResult
-	for _, screenResult := range screenResults {
-		if screenResult.Popup == nil {
-			continue
-		}
-		popupScreenResultList = append(popupScreenResultList, screenResult)
-	}
-	if len(popupScreenResultList) == 0 {
-		return
-	}
-	sort.Slice(popupScreenResultList, func(i, j int) bool {
-		return popupScreenResultList[i].Popup.RetryCount < popupScreenResultList[j].Popup.RetryCount
-	})
-
-	for i := 0; i < len(popupScreenResultList)-1; i++ {
-		curPopup := popupScreenResultList[i].Popup
-		nextPopup := popupScreenResultList[i+1].Popup
-
-		// popup not existed, no need to close
-		if curPopup.CloseArea.IsEmpty() {
-			continue
-		}
-		// popup existed, but identical popups occurs during next retry
-		if nextPopup.CloseArea.IsIdentical(curPopup.CloseArea) {
-			popupScreenResultList[i].Popup.CloseStatus = CloseStatusFail
-			continue
-		}
-		// popup existed, but no popup or different popup occurs during next retry (IsClosed=true)
-		popupScreenResultList[i].Popup.CloseStatus = CloseStatusSuccess
-	}
 }
 
 type cacheStepData struct {
@@ -153,6 +121,9 @@ type DriverExt struct {
 
 	// funplugin
 	plugin funplugin.IPlugin
+
+	// cache last popup to check if popup handle result
+	lastPopup *PopupInfo
 }
 
 func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dExt *DriverExt, err error) {
@@ -364,7 +335,6 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	cacheData["screenshots"] = dExt.cacheStepData.screenShots
 
 	cacheData["screenshots_urls"] = dExt.cacheStepData.screenResults.getScreenShotUrls()
-	dExt.cacheStepData.screenResults.updatePopupCloseStatus()
 	cacheData["screen_results"] = dExt.cacheStepData.screenResults
 	cacheData["e2e_results"] = dExt.cacheStepData.e2eDelay
 	cacheData["driver_request_results"] = dExt.Driver.GetDriverResults()
