@@ -17,10 +17,18 @@ import (
 )
 
 type Driver struct {
-	urlPrefix *url.URL
-	sessionId string
-	client    *http.Client
-	scale     float64
+	urlPrefix     *url.URL
+	sessionId     string
+	client        *http.Client
+	scale         float64
+	driverResults []*DriverResult
+}
+
+type DriverResult struct {
+	RequestUrl      string        `json:"request_driver_url"`
+	RequestBody     string        `json:"request_driver_body,omitempty"`
+	RequestDuration time.Duration `json:"request_driver_duration"`
+	RequestTime     time.Time     `json:"request_driver_time"`
 }
 
 func (wd *Driver) concatURL(u *url.URL, elem ...string) string {
@@ -73,7 +81,15 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 	}()
 
 	rawResp, err = io.ReadAll(resp.Body)
-	logger := log.Debug().Int("statusCode", resp.StatusCode).Str("duration", time.Since(start).String())
+	duration := time.Since(start)
+	driverResult := &DriverResult{
+		RequestUrl:      rawURL,
+		RequestBody:     string(rawBody),
+		RequestDuration: duration,
+		RequestTime:     time.Now(),
+	}
+	wd.driverResults = append(wd.driverResults, driverResult)
+	logger := log.Debug().Int("statusCode", resp.StatusCode).Str("duration", duration.String())
 	if !strings.HasSuffix(rawURL, "screenshot") {
 		// avoid printing screenshot data
 		logger.Str("response", string(rawResp))

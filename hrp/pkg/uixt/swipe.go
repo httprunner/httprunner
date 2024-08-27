@@ -11,13 +11,11 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )
 
-var (
-	directionSlice = [][]float64{
-		{0.85, 0.83, 0.85, 0.1},
-		{0.9, 0.75, 0.9, 0.1},
-		{0.6, 0.5, 0.6, 0.1},
-	}
-)
+var directionSlice = [][]float64{
+	{0.85, 0.83, 0.85, 0.1},
+	{0.9, 0.75, 0.9, 0.1},
+	{0.6, 0.5, 0.6, 0.1},
+}
 
 func assertRelative(p float64) bool {
 	return p >= 0 && p <= 1

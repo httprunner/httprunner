@@ -1,9 +1,10 @@
 package uixt
 
 import (
+	"math/rand"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	"math/rand"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 )

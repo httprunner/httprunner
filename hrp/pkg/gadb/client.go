@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -209,8 +210,8 @@ func (c Client) KillServer() (err error) {
 	return
 }
 
-func (c Client) createTransport() (tp transport, err error) {
-	return newTransport(fmt.Sprintf("%s:%d", c.host, c.port))
+func (c Client) createTransport(readTimeout ...time.Duration) (tp transport, err error) {
+	return newTransport(fmt.Sprintf("%s:%d", c.host, c.port), readTimeout...)
 }
 
 func (c Client) executeCommand(command string, onlyVerifyResponse ...bool) (resp string, err error) {

@@ -1,17 +1,23 @@
 package builtin
 
 import (
+	"bufio"
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/csv"
 	builtinJSON "encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"math/rand"
 	"net"
+	"net/http"
+	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -23,6 +29,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -508,4 +515,139 @@ func GetCurrentDay() string {
 	// 格式化日期为 yyyyMMdd
 	formattedDate := now.Format("20060102")
 	return formattedDate
+}
+
+func DownloadFile(filePath string, fileUrl string) error {
+	log.Info().Str("filePath", filePath).Str("url", fileUrl).Msg("download file")
+	parsedURL, err := url.Parse(fileUrl)
+	if err != nil {
+		return err
+	}
+
+	out, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// 创建一个新的 HTTP 请求
+	req, err := http.NewRequest("GET", fileUrl, nil)
+	if err != nil {
+		return err
+	}
+
+	if env.EAPI_TOKEN != "" {
+		if parsedURL.Host != "gtf-eapi-cn.bytedance.com" && parsedURL.Host != "gtf-eapi-cn.bytedance.net" {
+			return errors.New("invalid domain: must be gtf-eapi-cn.bytedance.com")
+		}
+		// 添加自定义头部
+		req.Header.Add("accessKey", "ies.vedem.video")
+		req.Header.Add("token", env.EAPI_TOKEN)
+	}
+
+	// 创建一个 HTTP 客户端并发送请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s, download failed", resp.Status)
+	}
+
+	// 将响应主体写入文件
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func RunCommand(cmdName string, args ...string) error {
+	cmd := exec.Command(cmdName, args...)
+	log.Info().Str("command", cmd.String()).Msg("exec command")
+
+	// print stderr output
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	var stdout bytes.Buffer
+	cmd.Stdout = &stdout
+
+	if err := cmd.Run(); err != nil {
+		stderrStr := stderr.String()
+		log.Error().Err(err).Msg("failed to exec command. msg: " + stderrStr)
+		if stderrStr != "" {
+			err = errors.Wrap(err, stderrStr)
+		}
+		return err
+	}
+	stderrStr := stderr.String()
+	log.Error().Msg("failed to exec command. msg: " + stderrStr)
+	log.Info().Msg("exec command output: " + stdout.String())
+	return nil
+}
+
+type LineCallback func(line string) bool
+
+// RunCommandWithCallback 运行命令并根据回调判断是否成功
+func RunCommandWithCallback(cmdName string, args []string, callback LineCallback) error {
+	cmd := exec.Command(cmdName, args...)
+	log.Info().Str("command", cmd.String()).Msg("exec command")
+
+	// 使用管道获取标准输出
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get stdout pipe")
+		return err
+	}
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Start(); err != nil {
+		log.Error().Err(err).Msg("failed to start command")
+		return err
+	}
+
+	// 创建一个用于标识成功的通道
+	done := make(chan struct{})
+	defer close(done)
+
+	// 逐行读取 stdout
+	go func() {
+		stdoutScanner := bufio.NewScanner(stdoutPipe)
+		for stdoutScanner.Scan() {
+			line := stdoutScanner.Text()
+			log.Info().Msg("stdout: " + line)
+			if callback(line) {
+				done <- struct{}{}
+				return
+			}
+		}
+	}()
+
+	// 等待命令执行完成
+	err = cmd.Wait()
+	if err != nil {
+		log.Error().Msg("failed to exec command. msg: " + stderr.String())
+		return err
+	}
+
+	// 设置一个1秒的超时上下文
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		// 超时，判断失败
+		log.Error().Msg("failed to exec command. msg: " + stderr.String())
+		err = errors.New("command execution failed: callback failed while exec command")
+		log.Error().Err(err).Msg("failed to find keyword in time")
+		return err
+	}
 }
