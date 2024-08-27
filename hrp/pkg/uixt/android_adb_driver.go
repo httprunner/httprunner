@@ -18,7 +18,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"

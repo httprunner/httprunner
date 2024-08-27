@@ -14,7 +14,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/cmd/adb"
 	"github.com/httprunner/httprunner/v4/hrp/cmd/ios"
-	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 

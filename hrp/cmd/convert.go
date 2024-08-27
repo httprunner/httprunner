@@ -9,8 +9,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/code"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/convert"
 )
 

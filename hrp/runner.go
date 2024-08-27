@@ -22,7 +22,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/code"
+	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
@@ -649,11 +649,11 @@ func (r *SessionRunner) initWithParameters(parameters map[string]interface{}) {
 }
 
 func (r *SessionRunner) IgnorePopup() bool {
-	if r.caseRunner.testCase.Config.Android != nil {
-		return r.caseRunner.testCase.Config.Android[0].IgnorePopup
+	if r.caseRunner.TestCase.Config.Android != nil {
+		return r.caseRunner.TestCase.Config.Android[0].IgnorePopup
 	}
-	if r.caseRunner.testCase.Config.IOS != nil {
-		return r.caseRunner.testCase.Config.IOS[0].IgnorePopup
+	if r.caseRunner.TestCase.Config.IOS != nil {
+		return r.caseRunner.TestCase.Config.IOS[0].IgnorePopup
 	}
 	return false
 }
