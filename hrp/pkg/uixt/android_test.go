@@ -3,8 +3,7 @@
 package uixt
 
 import (
-	"encoding/json"
-	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -21,8 +20,8 @@ var (
 func setupAndroid(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
-	device.UIA2 = false
-	device.LogOn = true
+	device.UIA2 = true
+	device.LogOn = false
 	driverExt, err = device.NewDriver()
 	checkErr(t, err)
 }
@@ -124,12 +123,9 @@ func TestDriver_DeviceSize(t *testing.T) {
 }
 
 func TestDriver_Source(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
+	setupAndroid(t)
 
-	source, err := driver.Source()
+	source, err := driverExt.Driver.Source()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,33 +195,24 @@ func TestDriver_DeviceInfo(t *testing.T) {
 func TestDriver_Tap(t *testing.T) {
 	setupAndroid(t)
 	driverExt.Driver.StartCaptureLog("")
-	err := driverExt.Driver.Tap(150, 340, WithIdentifier("test"))
+	err := driverExt.TapXY(0.5, 0.5, WithIdentifier("test"), WithPressDuration(4))
 	if err != nil {
 		t.Fatal(err)
 	}
-	time.Sleep(time.Second)
-
-	err = driverExt.Driver.TapFloat(60.5, 125.5, WithIdentifier("test"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Second)
-	result, _ := driverExt.Driver.StopCaptureLog()
-	t.Log(result)
+	//time.Sleep(time.Second)
+	//
+	//err = driverExt.Driver.TapFloat(60.5, 125.5, WithIdentifier("test"))
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//time.Sleep(time.Second)
+	//result, _ := driverExt.Driver.StopCaptureLog()
+	//t.Log(result)
 }
 
 func TestDriver_Swipe(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.Swipe(400, 1000, 400, 500, WithPressDuration(2000))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.SwipeFloat(400, 555.5, 400, 1255.5)
+	setupAndroid(t)
+	err := driverExt.Driver.Swipe(400, 1000, 400, 500, WithPressDuration(0.5))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -261,7 +248,7 @@ func TestDriver_Drag(t *testing.T) {
 func TestDriver_SendKeys(t *testing.T) {
 	setupAndroid(t)
 
-	err := driverExt.Driver.SendKeys("Android\"输入速度测试", WithIdentifier("test"))
+	err := driverExt.Driver.SendKeys("辽宁省沈阳市新民市民族街36-4", WithIdentifier("test"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -304,6 +291,14 @@ func TestDriver_SetRotation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestDriver_GetOrientation(t *testing.T) {
+	setupAndroid(t)
+	_, _ = driverExt.Driver.AppTerminate("com.quark.browser")
+	_ = driverExt.Driver.AppLaunch("com.quark.browser")
+	time.Sleep(2 * time.Second)
+	_ = driverExt.Driver.Homescreen()
 }
 
 func TestUiSelectorHelper_NewUiSelectorHelper(t *testing.T) {
@@ -448,8 +443,6 @@ func TestConvertPoints(t *testing.T) {
 	if len(eps) != 3 {
 		t.Fatal()
 	}
-	jsons, _ := json.Marshal(eps)
-	println(fmt.Sprintf("%v", string(jsons)))
 }
 
 func TestDriver_ShellInputUnicode(t *testing.T) {

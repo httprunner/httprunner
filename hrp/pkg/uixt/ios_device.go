@@ -276,6 +276,7 @@ type IOSDevice struct {
 	MjpegPort      int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
 	LogOn          bool                  `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 	XCTestBundleID string                `json:"xctest_bundle_id,omitempty" yaml:"xctest_bundle_id,omitempty"`
+	IgnorePopup    bool                  `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
 
 	// switch to iOS springboard before init WDA session
 	ResetHomeOnStartup bool `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
@@ -294,8 +295,8 @@ type IOSDevice struct {
 	pcapFile string        // saved pcap file path
 }
 
-func (dev *IOSDevice) System() string {
-	return "ios"
+func (dev *IOSDevice) Init() error {
+	return nil
 }
 
 func (dev *IOSDevice) UUID() string {
@@ -307,7 +308,7 @@ func (dev *IOSDevice) LogEnabled() bool {
 }
 
 func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, err error) {
-	driverOptions := &DriverOptions{}
+	driverOptions := NewDriverOptions()
 	for _, option := range options {
 		option(driverOptions)
 	}
@@ -338,7 +339,7 @@ func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, 
 		}
 	}
 
-	driverExt, err = newDriverExt(dev, driver, driverOptions.plugin)
+	driverExt, err = newDriverExt(dev, driver, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -469,6 +470,20 @@ func (dev *IOSDevice) StopPcap() string {
 	close(dev.pcapStop)
 	log.Info().Str("pcapFile", dev.pcapFile).Msg("stop packet capture")
 	return dev.pcapFile
+}
+
+func (dev *IOSDevice) Install(appPath string, opts *InstallOptions) (err error) {
+	for i := 0; i <= opts.RetryTime; i++ {
+		err = builtin.RunCommand("go-ios", "install", "--path="+appPath, "--udid="+dev.UDID)
+		if err == nil {
+			return nil
+		}
+	}
+	return err
+}
+
+func (dev *IOSDevice) Uninstall(bundleId string) error {
+	return builtin.RunCommand("go-ios", "uninstall", bundleId, "--udid="+dev.UDID)
 }
 
 func (dev *IOSDevice) forward(localPort, remotePort int) error {
@@ -635,7 +650,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 	wd := new(wdaDriver)
 	wd.client = http.DefaultClient
 
-	host := "127.0.0.1"
+	host := "localhost"
 	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError, err.Error())
 	}

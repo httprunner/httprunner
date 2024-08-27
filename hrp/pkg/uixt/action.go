@@ -17,6 +17,7 @@ type ActionMethod string
 const (
 	ACTION_AppInstall   ActionMethod = "install"
 	ACTION_AppUninstall ActionMethod = "uninstall"
+	ACTION_AppClear     ActionMethod = "app_clear"
 	ACTION_AppStart     ActionMethod = "app_start"
 	ACTION_AppLaunch    ActionMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
 	ACTION_AppTerminate ActionMethod = "app_terminate"
@@ -26,6 +27,10 @@ const (
 	ACTION_SleepRandom  ActionMethod = "sleep_random"
 	ACTION_StartCamera  ActionMethod = "camera_start" // alias for app_launch camera
 	ACTION_StopCamera   ActionMethod = "camera_stop"  // alias for app_terminate camera
+	ACTION_SetClipboard ActionMethod = "set_clipboard"
+	ACTION_GetClipboard ActionMethod = "get_clipboard"
+	ACTION_SetIme       ActionMethod = "set_ime"
+	ACTION_GetSource    ActionMethod = "get_source"
 
 	// UI validation
 	// selectors
@@ -60,6 +65,9 @@ const (
 	ACTION_VideoCrawler    ActionMethod = "video_crawler"
 	ACTION_ClosePopups     ActionMethod = "close_popups"
 	ACTION_EndToEndDelay   ActionMethod = "live_e2e"
+	ACTION_InstallApp      ActionMethod = "install_app"
+	ACTION_UninstallApp    ActionMethod = "uninstall_app"
+	ACTION_DownloadApp     ActionMethod = "download_app"
 )
 
 type MobileAction struct {
@@ -554,8 +562,23 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 
 	switch action.Method {
 	case ACTION_AppInstall:
-		// TODO
-		return errActionNotImplemented
+		if appUrl, ok := action.Params.(string); ok {
+			if err = dExt.InstallByUrl(appUrl, NewInstallOptions(WithRetryTime(action.MaxRetryTimes))); err != nil {
+				return errors.Wrap(err, "failed to install app")
+			}
+		}
+	case ACTION_AppUninstall:
+		if packageName, ok := action.Params.(string); ok {
+			if err = dExt.Uninstall(packageName, action.GetOptions()...); err != nil {
+				return errors.Wrap(err, "failed to uninstall app")
+			}
+		}
+	case ACTION_AppClear:
+		if packageName, ok := action.Params.(string); ok {
+			if err = dExt.Driver.Clear(packageName); err != nil {
+				return errors.Wrap(err, "failed to clear app")
+			}
+		}
 	case ACTION_AppLaunch:
 		if bundleId, ok := action.Params.(string); ok {
 			return dExt.Driver.AppLaunch(bundleId)
@@ -594,8 +617,34 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 			return nil
 		}
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
+	case ACTION_SetClipboard:
+		if text, ok := action.Params.(string); ok {
+			err := dExt.Driver.SetPasteboard(PasteboardTypePlaintext, text)
+			if err != nil {
+				return errors.Wrap(err, "failed to set clipboard")
+			}
+			return nil
+		}
+		return fmt.Errorf("set_clioboard params should be text(string), got %v", action.Params)
 	case ACTION_Home:
 		return dExt.Driver.Homescreen()
+	case ACTION_SetIme:
+		if ime, ok := action.Params.(string); ok {
+			err = dExt.Driver.SetIme(ime)
+			if err != nil {
+				return errors.Wrap(err, "failed to set ime")
+			}
+			return nil
+		}
+	case ACTION_GetSource:
+		if packageName, ok := action.Params.(string); ok {
+			source := NewSourceOption().WithProcessName(packageName)
+			_, err = dExt.Driver.Source(source)
+			if err != nil {
+				return errors.Wrap(err, "failed to set ime")
+			}
+			return nil
+		}
 	case ACTION_TapXY:
 		if location, ok := action.Params.([]interface{}); ok {
 			// relative x,y of window size: [0.5, 0.5]

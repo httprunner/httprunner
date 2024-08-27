@@ -292,6 +292,33 @@ func (d *Device) ReverseForwardKill(remoteInterface interface{}) error {
 	return err
 }
 
+func (d *Device) RunStubCommand(command []byte, processName string) (res string, err error) {
+	var tp transport
+	if tp, err = d.createDeviceTransport(); err != nil {
+		return "", err
+	}
+	defer func() { _ = tp.Close() }()
+
+	if err = tp.SendWithCheck(fmt.Sprintf("localabstract:%s", processName)); err != nil {
+		return "", err
+	}
+
+	if err = tp.SendBytes(command); err != nil {
+		return "", err
+	}
+
+	lenBuf, err := tp.ReadBytesN(4)
+	if err != nil {
+		return "", err
+	}
+	length := binary.LittleEndian.Uint32(lenBuf)
+	result, err := tp.ReadBytesN(int(length) - 4)
+	if err != nil {
+		return "", err
+	}
+	return string(result), nil
+}
+
 func (d *Device) ReverseForwardKillAll() error {
 	_, err := d.executeCommand("reverse:killforward-all")
 	return err
@@ -419,8 +446,8 @@ func (d *Device) EnableAdbOverTCP(port ...int) (err error) {
 	return
 }
 
-func (d *Device) createDeviceTransport() (tp transport, err error) {
-	if tp, err = newTransport(fmt.Sprintf("%s:%d", d.adbClient.host, d.adbClient.port)); err != nil {
+func (d *Device) createDeviceTransport(readTimeout ...time.Duration) (tp transport, err error) {
+	if tp, err = newTransport(fmt.Sprintf("%s:%d", d.adbClient.host, d.adbClient.port), readTimeout...); err != nil {
 		return transport{}, err
 	}
 
@@ -559,7 +586,7 @@ func (d *Device) installViaABBExec(apk io.ReadSeeker, args ...string) (raw []byt
 	if err != nil {
 		return nil, err
 	}
-	if tp, err = d.createDeviceTransport(); err != nil {
+	if tp, err = d.createDeviceTransport(5 * time.Minute); err != nil {
 		return nil, err
 	}
 	defer func() { _ = tp.Close() }()

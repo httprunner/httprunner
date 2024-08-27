@@ -3,6 +3,7 @@ package uixt
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/fs"
@@ -218,10 +219,18 @@ func (ad *adbDriver) Orientation() (orientation Orientation, err error) {
 }
 
 func (ad *adbDriver) Homescreen() (err error) {
-	return ad.PressKeyCode(KCHome, KMEmpty)
+	return ad.PressKeyCodes(KCHome, KMEmpty)
 }
 
-func (ad *adbDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta) (err error) {
+func (ad *adbDriver) Unlock() (err error) {
+	return ad.PressKeyCodes(KCMenu, KMEmpty)
+}
+
+func (ad *adbDriver) PressKeyCode(keyCode KeyCode) (err error) {
+	return ad.PressKeyCodes(keyCode, KMEmpty)
+}
+
+func (ad *adbDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta) (err error) {
 	// adb shell input keyevent <keyCode>
 	_, err = ad.adbClient.RunShellCommand(
 		"input", "keyevent", fmt.Sprintf("%d", keyCode))
@@ -421,6 +430,14 @@ func (ad *adbDriver) IsUnicodeIMEInstalled() bool {
 	return strings.Contains(output, UnicodeImePackageName)
 }
 
+func (ad *adbDriver) ListIme() []string {
+	output, err := ad.adbClient.RunShellCommand("ime", "list", "-s")
+	if err != nil {
+		return []string{}
+	}
+	return strings.Split(output, "\n")
+}
+
 func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 	defer func() {
 		// Reset to default, don't care which keyboard was chosen before switch:
@@ -456,6 +473,15 @@ func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 
 func (ad *adbDriver) Input(text string, options ...ActionOption) (err error) {
 	return ad.SendKeys(text, options...)
+}
+
+func (ad *adbDriver) Clear(packageName string) error {
+	if _, err := ad.adbClient.RunShellCommand("pm", "clear", packageName); err != nil {
+		log.Error().Str("packageName", packageName).Err(err).Msg("failed to clear package cache")
+		return err
+	}
+
+	return nil
 }
 
 func (ad *adbDriver) PressButton(devBtn DeviceButton) (err error) {
@@ -497,6 +523,14 @@ func (ad *adbDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 		return
 	}
 	return
+}
+
+func (ad *adbDriver) LoginNoneUI(packageName, phoneNumber string, captcha string) error {
+	return errDriverNotImplemented
+}
+
+func (ad *adbDriver) LogoutNoneUI(packageName string) error {
+	return errDriverNotImplemented
 }
 
 func (ad *adbDriver) sourceTree(srcOpt ...SourceOption) (sourceTree *Hierarchy, err error) {
@@ -680,45 +714,56 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 	return pointRes, nil
 }
 
+func (ad *adbDriver) GetDriverResults() []*DriverResult {
+	return nil
+}
+
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
-	// adb shell dumpsys activity activities
-	output, err := ad.adbClient.RunShellCommand("dumpsys", "activity", "activities")
+	packageInfo, err := ad.adbClient.RunShellCommand("CLASSPATH=/data/local/tmp/evalite", "app_process", "/", "com.bytedance.iesqa.eval_process.PackageService")
 	if err != nil {
-		log.Error().Err(err).Msg("failed to dumpsys activities")
-		return AppInfo{}, errors.Wrap(err, "dumpsys activities failed")
+		return app, err
+	}
+	log.Info().Msg(packageInfo)
+	err = json.Unmarshal([]byte(strings.TrimSpace(packageInfo)), &app)
+	return
+}
+
+func (ad *adbDriver) SetIme(imeRegx string) error {
+	imeList := ad.ListIme()
+	ime := ""
+	for _, imeName := range imeList {
+		if regexp.MustCompile(imeRegx).MatchString(imeName) {
+			ime = imeName
+			break
+		}
+	}
+	if ime == "" {
+		return fmt.Errorf("failed to set ime by %s, ime list: %v", imeRegx, imeList)
+	}
+	brand, _ := ad.adbClient.Brand()
+	packageName := strings.Split(ime, "/")[0]
+	res, err := ad.adbClient.RunShellCommand("ime", "set", ime)
+	log.Info().Str("funcName", "SetIme").Interface("ime", ime).
+		Interface("output", res).Msg("set ime")
+	if err != nil {
+		return err
 	}
 
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
-		trimmedLine := strings.TrimSpace(line)
-		// grep mResumedActivity|ResumedActivity
-		if strings.HasPrefix(trimmedLine, "mResumedActivity:") || strings.HasPrefix(trimmedLine, "ResumedActivity:") {
-			// mResumedActivity: ActivityRecord{9656d74 u0 com.android.settings/.Settings t407}
-			// ResumedActivity: ActivityRecord{8265c25 u0 com.android.settings/.Settings t73}
-			strs := strings.Split(trimmedLine, " ")
-			for _, str := range strs {
-				if strings.Contains(str, "/") {
-					// com.android.settings/.Settings
-					s := strings.Split(str, "/")
-					app := AppInfo{
-						AppBaseInfo: AppBaseInfo{
-							PackageName: s[0],
-							Activity:    s[1],
-						},
-					}
-					return app, nil
+	if strings.ToLower(brand) == "oppo" {
+		time.Sleep(1 * time.Second)
+		pid, _ := ad.adbClient.RunShellCommand("pidof", packageName)
+		if strings.TrimSpace(pid) == "" {
+			appInfo, err := ad.GetForegroundApp()
+			_ = ad.AppLaunch(packageName)
+			if err == nil && packageName != UnicodeImePackageName {
+				time.Sleep(10 * time.Second)
+				nextAppInfo, err := ad.GetForegroundApp()
+				log.Info().Str("beforeFocusedPackage", appInfo.PackageName).Str("afterFocusedPackage", nextAppInfo.PackageName).Msg("")
+				if err == nil && nextAppInfo.PackageName != appInfo.PackageName {
+					_ = ad.PressKeyCodes(KCBack, KMEmpty)
 				}
 			}
 		}
-	}
-
-	return AppInfo{}, errors.Wrap(code.MobileUIAssertForegroundAppError, "get foreground app failed")
-}
-
-func (ad *adbDriver) SetIme(ime string) error {
-	_, err := ad.adbClient.RunShellCommand("ime", "set", ime)
-	if err != nil {
-		return err
 	}
 	// even if the shell command has returned,
 	// as there might be a situation where the input method has not been completely switched yet
