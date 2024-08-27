@@ -403,7 +403,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		bufSource:             bufSource,
 		imagePath:             imagePath,
 		Tags:                  nil,
-		Resolution:            dExt.windowSize,
+		Resolution:            dExt.WindowSize,
 		ScreenshotTakeElapsed: screenshotTakeElapsed,
 	}
 
@@ -413,7 +413,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		return screenResult, err
 	}
 	if imageResult != nil {
-		screenResult.imageResult = imageResult
+		screenResult.ImageResult = imageResult
 		screenResult.ScreenshotCVElapsed = time.Since(startTime).Milliseconds() - screenshotTakeElapsed
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 		screenResult.UploadedURL = imageResult.URL

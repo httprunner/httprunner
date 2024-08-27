@@ -522,10 +522,10 @@ func (dExt *DriverExt) ParseActionOptions(options ...ActionOption) []ActionOptio
 
 func (dExt *DriverExt) GenAbsScope(x1, y1, x2, y2 float64) AbsScope {
 	// convert relative scope to absolute scope
-	absX1 := int(x1 * float64(dExt.windowSize.Width))
-	absY1 := int(y1 * float64(dExt.windowSize.Height))
-	absX2 := int(x2 * float64(dExt.windowSize.Width))
-	absY2 := int(y2 * float64(dExt.windowSize.Height))
+	absX1 := int(x1 * float64(dExt.WindowSize.Width))
+	absY1 := int(y1 * float64(dExt.WindowSize.Height))
+	absX2 := int(x2 * float64(dExt.WindowSize.Width))
+	absY2 := int(y2 * float64(dExt.WindowSize.Height))
 	return AbsScope{absX1, absY1, absX2, absY2}
 }
 

@@ -22,8 +22,8 @@ func assertRelative(p float64) bool {
 }
 
 func (dExt *DriverExt) SwipeUpUtil(count int64, options ...ActionOption) error {
-	width := dExt.windowSize.Width
-	height := dExt.windowSize.Height
+	width := dExt.WindowSize.Width
+	height := dExt.WindowSize.Height
 
 	fromX := float64(width) * directionSlice[count%3][0]
 	fromY := float64(height) * directionSlice[count%3][1]
@@ -35,8 +35,8 @@ func (dExt *DriverExt) SwipeUpUtil(count int64, options ...ActionOption) error {
 
 // SwipeRelative swipe from relative position [fromX, fromY] to relative position [toX, toY]
 func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, options ...ActionOption) error {
-	width := dExt.windowSize.Width
-	height := dExt.windowSize.Height
+	width := dExt.WindowSize.Width
+	height := dExt.WindowSize.Height
 	orientation, err := dExt.Driver.Orientation()
 	if err != nil {
 		log.Warn().Err(err).Msgf("swipe from (%v, %v) to (%v, %v) get orientation failed, use default orientation",

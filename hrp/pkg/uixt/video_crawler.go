@@ -228,8 +228,8 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 					time.Sleep(1 * time.Second)
 					// enter live room
 					entryPoint := PointF{
-						X: float64(dExt.windowSize.Width / 2),
-						Y: float64(dExt.windowSize.Height / 2),
+						X: float64(dExt.WindowSize.Width / 2),
+						Y: float64(dExt.WindowSize.Height / 2),
 					}
 
 					log.Info().Msg("tap screen center to enter live room")
@@ -265,10 +265,10 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				}
 
 				// add live type
-				if screenResult.imageResult != nil &&
-					screenResult.imageResult.LiveType != "" &&
-					screenResult.imageResult.LiveType != "NoLive" {
-					currentVideo.LiveType = screenResult.imageResult.LiveType
+				if screenResult.ImageResult != nil &&
+					screenResult.ImageResult.LiveType != "" &&
+					screenResult.ImageResult.LiveType != "NoLive" {
+					currentVideo.LiveType = screenResult.ImageResult.LiveType
 				}
 
 				// simulation watch live video
@@ -276,7 +276,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				sleepStrict(swipeFinishTime, int64(simulationPlayDuration))
 
 				screenResult.Video = currentVideo
-				screenResult.Resolution = dExt.windowSize
+				screenResult.Resolution = dExt.WindowSize
 				screenResult.SwipeStartTime = swipeStartTime.UnixMilli()
 				screenResult.SwipeFinishTime = swipeFinishTime.UnixMilli()
 				screenResult.TotalElapsed = time.Since(swipeFinishTime).Milliseconds()
@@ -314,7 +314,7 @@ func (dExt *DriverExt) VideoCrawler(configs *VideoCrawlerConfigs) (err error) {
 				log.Info().Interface("video", currentVideo).Msg(FOUND_FEED_SUCCESS)
 
 				screenResult := &ScreenResult{
-					Resolution: dExt.windowSize,
+					Resolution: dExt.WindowSize,
 					Video:      currentVideo,
 
 					// log swipe timelines
@@ -351,6 +351,7 @@ const (
 	VideoType_PreviewLive VideoType = "PREVIEW-LIVE" // 直播预览流
 	VideoType_Live        VideoType = "LIVE"
 	VideoType_Image       VideoType = "IMAGE"
+	VideoType_AD          VideoType = "AD"
 )
 
 type Video struct {

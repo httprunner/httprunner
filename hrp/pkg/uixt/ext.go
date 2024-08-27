@@ -52,7 +52,7 @@ func WithThreshold(threshold float64) CVOption {
 type ScreenResult struct {
 	bufSource   *bytes.Buffer // raw image buffer bytes
 	imagePath   string        // image file path
-	imageResult *ImageResult  // image result
+	ImageResult *ImageResult  // image result
 
 	Resolution  Size        `json:"resolution"`
 	UploadedURL string      `json:"uploaded_url"` // uploaded image url
@@ -110,7 +110,7 @@ type DriverExt struct {
 	CVArgs
 	Device          Device
 	Driver          WebDriver
-	windowSize      Size
+	WindowSize      Size
 	frame           *bytes.Buffer
 	doneMjpegStream chan bool
 	ImageService    IImageService // used to extract image data
@@ -146,7 +146,7 @@ func newDriverExt(device Device, driver WebDriver, plugin funplugin.IPlugin) (dE
 	dExt.doneMjpegStream = make(chan bool, 1)
 
 	// get device window size
-	dExt.windowSize, err = dExt.Driver.WindowSize()
+	dExt.WindowSize, err = dExt.Driver.WindowSize()
 	if err != nil {
 		return nil, errors.Wrap(err, "get screen resolution failed")
 	}

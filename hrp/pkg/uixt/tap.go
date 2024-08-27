@@ -24,11 +24,11 @@ func (dExt *DriverExt) TapXY(x, y float64, options ...ActionOption) error {
 		orientation = OrientationPortrait
 	}
 	if orientation == OrientationPortrait {
-		x = x * float64(dExt.windowSize.Width)
-		y = y * float64(dExt.windowSize.Height)
+		x = x * float64(dExt.WindowSize.Width)
+		y = y * float64(dExt.WindowSize.Height)
 	} else {
-		x = x * float64(dExt.windowSize.Height)
-		y = y * float64(dExt.windowSize.Width)
+		x = x * float64(dExt.WindowSize.Height)
+		y = y * float64(dExt.WindowSize.Width)
 	}
 	return dExt.TapAbsXY(x, y, options...)
 }
@@ -105,11 +105,11 @@ func (dExt *DriverExt) DoubleTapXY(x, y float64) error {
 		orientation = OrientationPortrait
 	}
 	if orientation == OrientationPortrait {
-		x = x * float64(dExt.windowSize.Width)
-		y = y * float64(dExt.windowSize.Height)
+		x = x * float64(dExt.WindowSize.Width)
+		y = y * float64(dExt.WindowSize.Height)
 	} else {
-		x = x * float64(dExt.windowSize.Height)
-		y = y * float64(dExt.windowSize.Width)
+		x = x * float64(dExt.WindowSize.Height)
+		y = y * float64(dExt.WindowSize.Width)
 	}
 	return dExt.Driver.DoubleTapFloat(x, y)
 }
