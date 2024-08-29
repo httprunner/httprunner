@@ -3,7 +3,6 @@
 package uixt
 
 import (
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"

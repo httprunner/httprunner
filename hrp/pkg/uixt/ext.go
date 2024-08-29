@@ -121,9 +121,6 @@ type DriverExt struct {
 
 	// funplugin
 	plugin funplugin.IPlugin
-
-	// cache last popup to check if popup handle result
-	lastPopup *PopupInfo
 }
 
 func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dExt *DriverExt, err error) {
