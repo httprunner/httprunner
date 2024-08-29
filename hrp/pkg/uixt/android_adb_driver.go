@@ -295,8 +295,21 @@ func (ad *adbDriver) DoubleTap(x, y int) error {
 }
 
 func (ad *adbDriver) DoubleTapFloat(x, y float64) (err error) {
-	err = errDriverNotImplemented
-	return
+	// adb shell input tap x y
+	xStr := fmt.Sprintf("%.1f", x)
+	yStr := fmt.Sprintf("%.1f", y)
+	_, err = ad.adbClient.RunShellCommand(
+		"input", "tap", xStr, yStr)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
+	}
+	time.Sleep(time.Duration(100) * time.Millisecond)
+	_, err = ad.adbClient.RunShellCommand(
+		"input", "tap", xStr, yStr)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
+	}
+	return nil
 }
 
 func (ad *adbDriver) TouchAndHold(x, y int, second ...float64) (err error) {
