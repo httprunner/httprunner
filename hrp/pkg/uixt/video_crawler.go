@@ -457,9 +457,10 @@ func (vc *VideoCrawler) getCurrentVideo() (video *Video, err error) {
 }
 
 func (vc *VideoCrawler) getLivePreviewProb() float64 {
-	if vc.driverExt.Device.System() == "ios" {
+	if _, ok := vc.driverExt.Device.(*IOSDevice); ok {
 		return 0.5326
-	} else if vc.driverExt.Device.System() == "android" {
+	}
+	if _, ok := vc.driverExt.Device.(*AndroidDevice); ok {
 		return 0.3414
 	}
 	return -1

@@ -286,6 +286,32 @@ func (ud *uiaDriver) Orientation() (orientation Orientation, err error) {
 	return
 }
 
+func (ud *uiaDriver) DoubleTap(x, y int) error {
+	return ud.DoubleFloatTap(float64(x), float64(y))
+}
+
+func (ud *uiaDriver) DoubleFloatTap(x, y float64) error {
+	data := map[string]interface{}{
+		"actions": []interface{}{
+			map[string]interface{}{
+				"type":       "pointer",
+				"parameters": map[string]string{"pointerType": "touch"},
+				"id":         "touch",
+				"actions": []interface{}{
+					map[string]interface{}{"type": "pointerMove", "duration": 0, "x": x, "y": y, "origin": "viewport"},
+					map[string]interface{}{"type": "pointerDown", "duration": 0, "button": 0},
+					map[string]interface{}{"type": "pointerUp", "duration": 0, "button": 0},
+					map[string]interface{}{"type": "pointerDown", "duration": 0, "button": 0},
+					map[string]interface{}{"type": "pointerUp", "duration": 0, "button": 0},
+				},
+			},
+		},
+	}
+
+	_, err := ud.httpPOST(data, "/session", ud.sessionId, "actions/tap")
+	return err
+}
+
 func (ud *uiaDriver) Tap(x, y int, options ...ActionOption) error {
 	return ud.TapFloat(float64(x), float64(y), options...)
 }
