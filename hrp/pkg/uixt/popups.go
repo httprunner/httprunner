@@ -71,12 +71,6 @@ func (dExt *DriverExt) AutoPopupHandler() error {
 	return dExt.handleTextPopup(screenResult.Texts)
 }
 
-const (
-	CloseStatusFound   = "found"
-	CloseStatusSuccess = "success"
-	CloseStatusFail    = "fail"
-)
-
 // ClosePopupsResult represents the result of recognized popup to close
 type ClosePopupsResult struct {
 	Type      string `json:"type"`
@@ -87,9 +81,7 @@ type ClosePopupsResult struct {
 
 type PopupInfo struct {
 	*ClosePopupsResult
-	CloseStatus string   `json:"close_status"`           // found/success/fail
 	ClosePoints []PointF `json:"close_points,omitempty"` // CV 识别的所有关闭按钮（仅关闭按钮，可能存在多个）
-	RetryCount  int      `json:"retry_count"`
 	PicName     string   `json:"pic_name"`
 	PicURL      string   `json:"pic_url"`
 }
@@ -129,7 +121,6 @@ func (dExt *DriverExt) ClosePopupsHandler() (err error) {
 		return nil
 	}
 
-	popup.CloseStatus = CloseStatusFound
 	log.Info().
 		Interface("closePoint", closePoint).
 		Interface("popup", popup).

@@ -60,18 +60,6 @@ type ScreenResult struct {
 	Icons       UIResultMap `json:"icons"`        // CV 识别的图标
 	Tags        []string    `json:"tags"`         // tags for image, e.g. ["feed", "ad", "live"]
 	Popup       *PopupInfo  `json:"popup,omitempty"`
-
-	SwipeStartTime       int64 `json:"swipe_start_time"`        // 滑动开始时间戳
-	SwipeFinishTime      int64 `json:"swipe_finish_time"`       // 滑动结束时间戳
-	FetchVideoStartTime  int64 `json:"fetch_video_start_time"`  // 抓取视频开始时间戳
-	FetchVideoFinishTime int64 `json:"fetch_video_finish_time"` // 抓取视频结束时间戳
-
-	FetchVideoElapsed     int64 `json:"fetch_video_elapsed"`     // 抓取视频耗时(ms)
-	ScreenshotTakeElapsed int64 `json:"screenshot_take_elapsed"` // 设备截图耗时(ms)
-	ScreenshotCVElapsed   int64 `json:"screenshot_cv_elapsed"`   // CV 识别耗时(ms)
-
-	// 当前 Feed/Live 整体耗时
-	TotalElapsed int64 `json:"total_elapsed"` // current_swipe_finish -> next_swipe_start 整体耗时(ms)
 }
 
 type ScreenResultMap map[string]*ScreenResult // key is date time

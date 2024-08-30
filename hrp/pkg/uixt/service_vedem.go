@@ -386,7 +386,6 @@ type IImageService interface {
 
 // GetScreenResult takes a screenshot, returns the image recognization result
 func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
-	startTime := time.Now()
 	fileName := builtin.GenNameWithTimestamp("%d_screenshot")
 	actionOptions := NewActionOptions(options...)
 	screenshotActions := actionOptions.screenshotActions()
@@ -397,14 +396,12 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	if err != nil {
 		return
 	}
-	screenshotTakeElapsed := time.Since(startTime).Milliseconds()
 
 	screenResult = &ScreenResult{
-		bufSource:             bufSource,
-		imagePath:             imagePath,
-		Tags:                  nil,
-		Resolution:            dExt.WindowSize,
-		ScreenshotTakeElapsed: screenshotTakeElapsed,
+		bufSource:  bufSource,
+		imagePath:  imagePath,
+		Tags:       nil,
+		Resolution: dExt.WindowSize,
 	}
 
 	imageResult, err := dExt.ImageService.GetImage(bufSource, options...)
@@ -414,7 +411,6 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	}
 	if imageResult != nil {
 		screenResult.ImageResult = imageResult
-		screenResult.ScreenshotCVElapsed = time.Since(startTime).Milliseconds() - screenshotTakeElapsed
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
@@ -438,8 +434,6 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	log.Debug().
 		Str("imagePath", imagePath).
 		Str("imageUrl", screenResult.UploadedURL).
-		Int64("screenshot_take_elapsed(ms)", screenResult.ScreenshotTakeElapsed).
-		Int64("screenshot_cv_elapsed(ms)", screenResult.ScreenshotCVElapsed).
 		Msg("log screenshot")
 	return screenResult, nil
 }
