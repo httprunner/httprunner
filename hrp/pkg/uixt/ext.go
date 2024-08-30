@@ -47,33 +47,6 @@ func WithThreshold(threshold float64) CVOption {
 	}
 }
 
-type ScreenResult struct {
-	bufSource   *bytes.Buffer // raw image buffer bytes
-	imagePath   string        // image file path
-	ImageResult *ImageResult  // image result
-
-	Resolution  Size        `json:"resolution"`
-	UploadedURL string      `json:"uploaded_url"` // uploaded image url
-	Texts       OCRTexts    `json:"texts"`        // dumped raw OCRTexts
-	Icons       UIResultMap `json:"icons"`        // CV 识别的图标
-	Tags        []string    `json:"tags"`         // tags for image, e.g. ["feed", "ad", "live"]
-	Popup       *PopupInfo  `json:"popup,omitempty"`
-}
-
-type ScreenResultMap map[string]*ScreenResult // key is date time
-
-// getScreenShotUrls returns screenShotsUrls using imagePath as key and uploaded URL as value
-func (screenResults ScreenResultMap) getScreenShotUrls() map[string]string {
-	screenShotsUrls := make(map[string]string)
-	for _, screenResult := range screenResults {
-		if screenResult.UploadedURL == "" {
-			continue
-		}
-		screenShotsUrls[screenResult.imagePath] = screenResult.UploadedURL
-	}
-	return screenShotsUrls
-}
-
 type cacheStepData struct {
 	// cache step screenshot paths
 	screenShots []string

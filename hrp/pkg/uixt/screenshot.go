@@ -7,12 +7,143 @@ import (
 	"image/jpeg"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 )
+
+type ScreenResult struct {
+	bufSource   *bytes.Buffer // raw image buffer bytes
+	imagePath   string        // image file path
+	ImageResult *ImageResult  // image result
+
+	Resolution  Size        `json:"resolution"`
+	UploadedURL string      `json:"uploaded_url"` // uploaded image url
+	Texts       OCRTexts    `json:"texts"`        // dumped raw OCRTexts
+	Icons       UIResultMap `json:"icons"`        // CV 识别的图标
+	Tags        []string    `json:"tags"`         // tags for image, e.g. ["feed", "ad", "live"]
+	Popup       *PopupInfo  `json:"popup,omitempty"`
+}
+
+type ScreenResultMap map[string]*ScreenResult // key is date time
+
+// getScreenShotUrls returns screenShotsUrls using imagePath as key and uploaded URL as value
+func (screenResults ScreenResultMap) getScreenShotUrls() map[string]string {
+	screenShotsUrls := make(map[string]string)
+	for _, screenResult := range screenResults {
+		if screenResult.UploadedURL == "" {
+			continue
+		}
+		screenShotsUrls[screenResult.imagePath] = screenResult.UploadedURL
+	}
+	return screenShotsUrls
+}
+
+// GetScreenResult takes a screenshot, returns the image recognization result
+func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
+	fileName := builtin.GenNameWithTimestamp("%d_screenshot")
+	actionOptions := NewActionOptions(options...)
+	screenshotActions := actionOptions.screenshotActions()
+	if len(screenshotActions) != 0 {
+		fileName = builtin.GenNameWithTimestamp("%d_" + strings.Join(screenshotActions, "_"))
+	}
+	bufSource, imagePath, err := dExt.GetScreenShot(fileName)
+	if err != nil {
+		return
+	}
+
+	screenResult = &ScreenResult{
+		bufSource:  bufSource,
+		imagePath:  imagePath,
+		Tags:       nil,
+		Resolution: dExt.WindowSize,
+	}
+
+	imageResult, err := dExt.ImageService.GetImage(bufSource, options...)
+	if err != nil {
+		log.Error().Err(err).Msg("GetImage from ImageService failed")
+		return screenResult, err
+	}
+	if imageResult != nil {
+		screenResult.ImageResult = imageResult
+		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
+		screenResult.UploadedURL = imageResult.URL
+		screenResult.Icons = imageResult.UIResult
+
+		if actionOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
+			screenResult.Popup = &PopupInfo{
+				ClosePopupsResult: imageResult.ClosePopupsResult,
+				PicName:           imagePath,
+				PicURL:            imageResult.URL,
+			}
+
+			closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
+			for _, closeArea := range closeAreas {
+				screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
+			}
+		}
+	}
+
+	dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
+
+	log.Debug().
+		Str("imagePath", imagePath).
+		Str("imageUrl", screenResult.UploadedURL).
+		Msg("log screenshot")
+	return screenResult, nil
+}
+
+func (dExt *DriverExt) GetScreenTexts() (ocrTexts OCRTexts, err error) {
+	screenResult, err := dExt.GetScreenResult(
+		WithScreenShotOCR(true), WithScreenShotUpload(true))
+	if err != nil {
+		return
+	}
+	return screenResult.Texts, nil
+}
+
+func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (point PointF, err error) {
+	ocrTexts, err := dExt.GetScreenTexts()
+	if err != nil {
+		return
+	}
+
+	result, err := ocrTexts.FindText(text, dExt.ParseActionOptions(options...)...)
+	if err != nil {
+		log.Warn().Msgf("FindText failed: %s", err.Error())
+		return
+	}
+	point = result.Center()
+
+	log.Info().Str("text", text).
+		Interface("point", point).Msgf("FindScreenText success")
+	return
+}
+
+func (dExt *DriverExt) FindUIResult(options ...ActionOption) (point PointF, err error) {
+	actionOptions := NewActionOptions(options...)
+
+	screenResult, err := dExt.GetScreenResult(options...)
+	if err != nil {
+		return
+	}
+
+	uiResults, err := screenResult.Icons.FilterUIResults(actionOptions.ScreenShotWithUITypes)
+	if err != nil {
+		return
+	}
+	uiResult, err := uiResults.GetUIResult(dExt.ParseActionOptions(options...)...)
+	point = uiResult.Center()
+
+	log.Info().Interface("text", actionOptions.ScreenShotWithUITypes).
+		Interface("point", point).Msg("FindUIResult success")
+	return
+}
 
 // GetScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
 func (dExt *DriverExt) GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error) {

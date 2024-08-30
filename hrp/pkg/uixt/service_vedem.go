@@ -9,7 +9,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -20,6 +19,11 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
+
+type IImageService interface {
+	// GetImage returns image result including ocr texts, uploaded image url, etc
+	GetImage(imageBuf *bytes.Buffer, options ...ActionOption) (imageResult *ImageResult, err error)
+}
 
 var client = &http.Client{
 	Timeout: time.Second * 10,
@@ -86,6 +90,16 @@ type OCRText struct {
 
 func (t OCRText) Center() PointF {
 	return getRectangleCenterPoint(t.Rect)
+}
+
+func getRectangleCenterPoint(rect image.Rectangle) (point PointF) {
+	x, y := float64(rect.Min.X), float64(rect.Min.Y)
+	width, height := float64(rect.Dx()), float64(rect.Dy())
+	point = PointF{
+		X: x + width*0.5,
+		Y: y + height*0.5,
+	}
+	return point
 }
 
 type OCRTexts []OCRText
@@ -379,102 +393,6 @@ func getLogID(header http.Header) string {
 	return logID[0]
 }
 
-type IImageService interface {
-	// GetImage returns image result including ocr texts, uploaded image url, etc
-	GetImage(imageBuf *bytes.Buffer, options ...ActionOption) (imageResult *ImageResult, err error)
-}
-
-// GetScreenResult takes a screenshot, returns the image recognization result
-func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
-	fileName := builtin.GenNameWithTimestamp("%d_screenshot")
-	actionOptions := NewActionOptions(options...)
-	screenshotActions := actionOptions.screenshotActions()
-	if len(screenshotActions) != 0 {
-		fileName = builtin.GenNameWithTimestamp("%d_" + strings.Join(screenshotActions, "_"))
-	}
-	bufSource, imagePath, err := dExt.GetScreenShot(fileName)
-	if err != nil {
-		return
-	}
-
-	screenResult = &ScreenResult{
-		bufSource:  bufSource,
-		imagePath:  imagePath,
-		Tags:       nil,
-		Resolution: dExt.WindowSize,
-	}
-
-	imageResult, err := dExt.ImageService.GetImage(bufSource, options...)
-	if err != nil {
-		log.Error().Err(err).Msg("GetImage from ImageService failed")
-		return screenResult, err
-	}
-	if imageResult != nil {
-		screenResult.ImageResult = imageResult
-		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
-		screenResult.UploadedURL = imageResult.URL
-		screenResult.Icons = imageResult.UIResult
-
-		if actionOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
-			screenResult.Popup = &PopupInfo{
-				ClosePopupsResult: imageResult.ClosePopupsResult,
-				PicName:           imagePath,
-				PicURL:            imageResult.URL,
-			}
-
-			closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
-			for _, closeArea := range closeAreas {
-				screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
-			}
-		}
-	}
-
-	dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
-
-	log.Debug().
-		Str("imagePath", imagePath).
-		Str("imageUrl", screenResult.UploadedURL).
-		Msg("log screenshot")
-	return screenResult, nil
-}
-
-func (dExt *DriverExt) GetScreenTexts() (ocrTexts OCRTexts, err error) {
-	screenResult, err := dExt.GetScreenResult(
-		WithScreenShotOCR(true), WithScreenShotUpload(true))
-	if err != nil {
-		return
-	}
-	return screenResult.Texts, nil
-}
-
-func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (point PointF, err error) {
-	ocrTexts, err := dExt.GetScreenTexts()
-	if err != nil {
-		return
-	}
-
-	result, err := ocrTexts.FindText(text, dExt.ParseActionOptions(options...)...)
-	if err != nil {
-		log.Warn().Msgf("FindText failed: %s", err.Error())
-		return
-	}
-	point = result.Center()
-
-	log.Info().Str("text", text).
-		Interface("point", point).Msgf("FindScreenText success")
-	return
-}
-
-func getRectangleCenterPoint(rect image.Rectangle) (point PointF) {
-	x, y := float64(rect.Min.X), float64(rect.Min.Y)
-	width, height := float64(rect.Dx()), float64(rect.Dy())
-	point = PointF{
-		X: x + width*0.5,
-		Y: y + height*0.5,
-	}
-	return point
-}
-
 type Box struct {
 	Point  PointF  `json:"point"`
 	Width  float64 `json:"width"`
@@ -533,21 +451,6 @@ func (u UIResults) FilterScope(scope AbsScope) (results UIResults) {
 	return
 }
 
-type UIResultMap map[string]UIResults
-
-// FilterUIResults filters ui icons, the former the uiTypes, the higher the priority
-func (u UIResultMap) FilterUIResults(uiTypes []string) (uiResults UIResults, err error) {
-	var ok bool
-	for _, uiType := range uiTypes {
-		uiResults, ok = u[uiType]
-		if ok && len(uiResults) != 0 {
-			return
-		}
-	}
-	err = errors.Wrap(code.CVResultNotFoundError, fmt.Sprintf("UI types %v not detected", uiTypes))
-	return
-}
-
 func (u UIResults) GetUIResult(options ...ActionOption) (UIResult, error) {
 	actionOptions := NewActionOptions(options...)
 
@@ -570,22 +473,17 @@ func (u UIResults) GetUIResult(options ...ActionOption) (UIResult, error) {
 	return uiResults[idx], nil
 }
 
-func (dExt *DriverExt) FindUIResult(options ...ActionOption) (point PointF, err error) {
-	actionOptions := NewActionOptions(options...)
+type UIResultMap map[string]UIResults
 
-	screenResult, err := dExt.GetScreenResult(options...)
-	if err != nil {
-		return
+// FilterUIResults filters ui icons, the former the uiTypes, the higher the priority
+func (u UIResultMap) FilterUIResults(uiTypes []string) (uiResults UIResults, err error) {
+	var ok bool
+	for _, uiType := range uiTypes {
+		uiResults, ok = u[uiType]
+		if ok && len(uiResults) != 0 {
+			return
+		}
 	}
-
-	uiResults, err := screenResult.Icons.FilterUIResults(actionOptions.ScreenShotWithUITypes)
-	if err != nil {
-		return
-	}
-	uiResult, err := uiResults.GetUIResult(dExt.ParseActionOptions(options...)...)
-	point = uiResult.Center()
-
-	log.Info().Interface("text", actionOptions.ScreenShotWithUITypes).
-		Interface("point", point).Msg("FindUIResult success")
+	err = errors.Wrap(code.CVResultNotFoundError, fmt.Sprintf("UI types %v not detected", uiTypes))
 	return
 }
