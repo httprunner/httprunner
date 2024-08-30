@@ -86,7 +86,7 @@ type PopupInfo struct {
 	PicURL      string   `json:"pic_url"`
 }
 
-func (p *PopupInfo) getClosePoint() *PointF {
+func (p *PopupInfo) ClosePoint() *PointF {
 	closeResult := p.ClosePopupsResult
 	if closeResult == nil {
 		return nil
@@ -101,25 +101,37 @@ func (p *PopupInfo) getClosePoint() *PointF {
 	return &closePoint
 }
 
-func (dExt *DriverExt) ClosePopupsHandler() (err error) {
-	log.Info().Msg("try to find and close popups")
-
+func (dExt *DriverExt) CheckPopup() (*PopupInfo, error) {
+	log.Info().Msg("check if popup exist")
 	screenResult, err := dExt.GetScreenResult(
 		WithScreenShotUpload(true),
 		WithScreenShotClosePopups(true), // get popup area and close area
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("get screen result failed for popup handler")
-		return err
+		return nil, errors.Wrap(err, "get screen result failed for popup handler")
 	}
-
 	popup := screenResult.Popup
-	closePoint := popup.getClosePoint()
+	if popup == nil {
+		return nil, errors.New("popup not found")
+	}
+	closePoint := popup.ClosePoint()
 	if closePoint == nil {
 		// close point not found
-		log.Debug().Msg("close point not found")
+		return nil, errors.New("popup close point not found")
+	}
+	log.Info().Interface("popup", popup).Msg("found popup")
+	return popup, nil
+}
+
+func (dExt *DriverExt) ClosePopupsHandler() (err error) {
+	log.Info().Msg("try to find and close popups")
+
+	popup, err := dExt.CheckPopup()
+	if err != nil {
+		// no popup found
 		return nil
 	}
+	closePoint := popup.ClosePoint()
 
 	log.Info().
 		Interface("closePoint", closePoint).
