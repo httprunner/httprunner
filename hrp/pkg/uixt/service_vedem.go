@@ -392,7 +392,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	if len(screenshotActions) != 0 {
 		fileName = builtin.GenNameWithTimestamp("%d_" + strings.Join(screenshotActions, "_"))
 	}
-	bufSource, imagePath, err := dExt.takeScreenShot(fileName)
+	bufSource, imagePath, err := dExt.GetScreenShot(fileName)
 	if err != nil {
 		return
 	}
