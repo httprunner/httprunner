@@ -4,10 +4,8 @@
 
 # Usage:
 # $ make build
-# $ make build tags=opencv
 # or
 # $ bash scripts/build.sh
-# $ bash scripts/build.sh opencv
 
 set -e
 set -x
@@ -16,15 +14,8 @@ set -x
 mkdir -p "output"
 bin_path="output/hrp"
 
-# optional build tags: opencv
-tags=$1
-
 # build
-if [ -z "$tags" ]; then
-    go build -ldflags '-s -w' -o "$bin_path" hrp/cmd/cli/main.go
-else
-    go build -ldflags '-s -w' -tags "$tags" -o "$bin_path" hrp/cmd/cli/main.go
-fi
+go build -ldflags '-s -w' -o "$bin_path" hrp/cmd/cli/main.go
 
 # check output and version
 ls -lh "$bin_path"

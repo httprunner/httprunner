@@ -47,20 +47,6 @@ func (dExt *DriverExt) TapByOCR(ocrText string, options ...ActionOption) error {
 	return dExt.TapAbsXY(point.X, point.Y, options...)
 }
 
-func (dExt *DriverExt) TapByCV(imagePath string, options ...ActionOption) error {
-	actionOptions := NewActionOptions(options...)
-
-	point, err := dExt.FindImageRectInUIKit(imagePath, options...)
-	if err != nil {
-		if actionOptions.IgnoreNotFoundError {
-			return nil
-		}
-		return err
-	}
-
-	return dExt.TapAbsXY(point.X, point.Y, options...)
-}
-
 func (dExt *DriverExt) TapByUIDetection(options ...ActionOption) error {
 	actionOptions := NewActionOptions(options...)
 

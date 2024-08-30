@@ -20,32 +20,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 )
-
-// TemplateMatchMode is the type of the template matching operation.
-type TemplateMatchMode int
-
-type CVArgs struct {
-	matchMode TemplateMatchMode
-	threshold float64
-}
-
-type CVOption func(*CVArgs)
-
-func WithTemplateMatchMode(mode TemplateMatchMode) CVOption {
-	return func(args *CVArgs) {
-		args.matchMode = mode
-	}
-}
-
-func WithThreshold(threshold float64) CVOption {
-	return func(args *CVArgs) {
-		args.threshold = threshold
-	}
-}
 
 type cacheStepData struct {
 	// cache step screenshot paths
@@ -63,7 +40,6 @@ func (d *cacheStepData) reset() {
 }
 
 type DriverExt struct {
-	CVArgs
 	Device          Device
 	Driver          WebDriver
 	WindowSize      Size
@@ -91,12 +67,6 @@ func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dEx
 		plugin:          driverOptions.plugin,
 		cacheStepData:   cacheStepData{},
 		interruptSignal: make(chan os.Signal, 1),
-	}
-
-	err = dExt.extendCV()
-	if err != nil {
-		return nil, errors.Wrap(code.MobileUIDriverError,
-			fmt.Sprintf("extend OpenCV failed: %v", err))
 	}
 
 	dExt.cacheStepData.reset()
@@ -218,8 +188,8 @@ func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...ActionOption)
 	if !isPathExists(search) {
 		return dExt.FindScreenText(search, options...)
 	}
-	// click on image, using opencv
-	return dExt.FindImageRectInUIKit(search, options...)
+	err = errors.New("ocr text not found")
+	return
 }
 
 func (dExt *DriverExt) AssertOCR(text, assert string) bool {
@@ -236,21 +206,6 @@ func (dExt *DriverExt) AssertOCR(text, assert string) bool {
 		return err == nil
 	case AssertionNotExists:
 		_, err = dExt.FindScreenText(text, WithRegex(true))
-		return err != nil
-	default:
-		log.Warn().Str("assert method", assert).Msg("unexpected assert method")
-	}
-	return false
-}
-
-func (dExt *DriverExt) AssertImage(imagePath, assert string) bool {
-	var err error
-	switch assert {
-	case AssertionExists:
-		_, err = dExt.FindImageRectInUIKit(imagePath)
-		return err == nil
-	case AssertionNotExists:
-		_, err = dExt.FindImageRectInUIKit(imagePath)
 		return err != nil
 	default:
 		log.Warn().Str("assert method", assert).Msg("unexpected assert method")
@@ -283,8 +238,6 @@ func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...s
 	switch check {
 	case SelectorOCR:
 		result = dExt.AssertOCR(expected, assert)
-	case SelectorImage:
-		result = dExt.AssertImage(expected, assert)
 	case SelectorForegroundApp:
 		result = dExt.AssertForegroundApp(expected, assert)
 	}

@@ -678,9 +678,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
 		actionOptions := NewActionOptions(action.GetOptions()...)
-		if imagePath, ok := action.Params.(string); ok {
-			return dExt.TapByCV(imagePath, action.GetOptions()...)
-		} else if len(actionOptions.ScreenShotWithUITypes) > 0 {
+		if len(actionOptions.ScreenShotWithUITypes) > 0 {
 			return dExt.TapByUIDetection(action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
