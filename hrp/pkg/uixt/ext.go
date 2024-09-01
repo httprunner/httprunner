@@ -5,7 +5,6 @@ import (
 	"fmt"
 	_ "image/gif"
 	_ "image/png"
-	"math/rand"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -177,10 +176,6 @@ func isPathExists(path string) bool {
 		return false
 	}
 	return true
-}
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
 }
 
 func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...ActionOption) (point PointF, err error) {
