@@ -56,6 +56,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	if err != nil {
 		return
 	}
+	dExt.cacheStepData.screenShots = append(dExt.cacheStepData.screenShots, imagePath)
 
 	screenResult = &ScreenResult{
 		bufSource:  bufSource,
@@ -171,7 +172,6 @@ func (dExt *DriverExt) GetScreenShot(fileName string) (raw *bytes.Buffer, path s
 		log.Error().Err(err).Msg("save screenshot file failed")
 		return nil, "", err
 	}
-	dExt.cacheStepData.screenShots = append(dExt.cacheStepData.screenShots, path)
 	return compressed, path, nil
 }
 

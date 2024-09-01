@@ -7,7 +7,7 @@ import (
 )
 
 func TestAndroidSwipeAction(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidAdbDriver(t)
 
 	swipeAction := driverExt.prepareSwipeAction(WithDirection("up"))
 	err := swipeAction(driverExt)
@@ -19,14 +19,14 @@ func TestAndroidSwipeAction(t *testing.T) {
 }
 
 func TestAndroidSwipeToTapApp(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidAdbDriver(t)
 
 	err := driverExt.swipeToTapApp("抖音")
 	checkErr(t, err)
 }
 
 func TestAndroidSwipeToTapTexts(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidAdbDriver(t)
 
 	err := driverExt.Driver.AppLaunch("com.ss.android.ugc.aweme")
 	checkErr(t, err)

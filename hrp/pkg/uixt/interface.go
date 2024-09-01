@@ -323,22 +323,6 @@ const (
 	NotificationTypeDarwin NotificationType = "darwin"
 )
 
-// EventPageID The event page identifier
-type EventPageID int
-
-const EventPageIDConsumer EventPageID = 0x0C
-
-// EventUsageID The event usage identifier (usages are defined per-page)
-type EventUsageID int
-
-const (
-	EventUsageIDCsmrVolumeUp   EventUsageID = 0xE9
-	EventUsageIDCsmrVolumeDown EventUsageID = 0xEA
-	EventUsageIDCsmrHome       EventUsageID = 0x40
-	EventUsageIDCsmrPower      EventUsageID = 0x30
-	EventUsageIDCsmrSnapshot   EventUsageID = 0x65 // Power + Home
-)
-
 type Orientation string
 
 const (

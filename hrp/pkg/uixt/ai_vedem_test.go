@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"regexp"
 	"testing"
 )
 
@@ -24,7 +23,7 @@ func checkOCR(buff *bytes.Buffer) error {
 }
 
 func TestOCRWithScreenshot(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidAdbDriver(t)
 
 	raw, err := driverExt.Driver.Screenshot()
 	if err != nil {
@@ -52,27 +51,6 @@ func TestOCRWithLocalFile(t *testing.T) {
 	}
 }
 
-func matchPopup(text string) bool {
-	for _, popup := range popups {
-		if regexp.MustCompile(popup[1]).MatchString(text) {
-			return true
-		}
-	}
-	return false
-}
-
-func TestMatchRegex(t *testing.T) {
-	testData := []string{
-		"以后再说", "我知道了", "同意", "拒绝", "稍后",
-		"始终允许", "继续使用", "仅在使用中允许",
-	}
-	for _, text := range testData {
-		if !matchPopup(text) {
-			t.Fatal(text)
-		}
-	}
-}
-
 func TestTapUIWithScreenshot(t *testing.T) {
 	serialNumber := os.Getenv("SERIAL_NUMBER")
 	device, _ := NewAndroidDevice(WithSerialNumber(serialNumber))
@@ -97,12 +75,4 @@ func TestDriverExtOCR(t *testing.T) {
 
 	t.Logf("point.X: %v, point.Y: %v", point.X, point.Y)
 	driverExt.Driver.TapFloat(point.X, point.Y-20)
-}
-
-func TestClosePopup(t *testing.T) {
-	setupAndroid(t)
-
-	if err := driverExt.ClosePopupsHandler(); err != nil {
-		t.Fatal(err)
-	}
 }

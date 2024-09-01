@@ -71,14 +71,6 @@ func (dExt *DriverExt) AutoPopupHandler() error {
 	return dExt.handleTextPopup(screenResult.Texts)
 }
 
-// ClosePopupsResult represents the result of recognized popup to close
-type ClosePopupsResult struct {
-	Type      string `json:"type"`
-	PopupArea Box    `json:"popupArea"`
-	CloseArea Box    `json:"closeArea"`
-	Text      string `json:"text"`
-}
-
 type PopupInfo struct {
 	*ClosePopupsResult
 	ClosePoints []PointF `json:"close_points,omitempty"` // CV 识别的所有关闭按钮（仅关闭按钮，可能存在多个）
@@ -101,8 +93,14 @@ func (p *PopupInfo) ClosePoint() *PointF {
 	return &closePoint
 }
 
-func (dExt *DriverExt) CheckPopup() (*PopupInfo, error) {
-	log.Info().Msg("check if popup exist")
+func (dExt *DriverExt) CheckPopup() (popup *PopupInfo, err error) {
+	defer func() {
+		if popup == nil {
+			log.Info().Msg("check popup, no found")
+		} else {
+			log.Info().Interface("popup", popup).Msg("found popup")
+		}
+	}()
 	screenResult, err := dExt.GetScreenResult(
 		WithScreenShotUpload(true),
 		WithScreenShotClosePopups(true), // get popup area and close area
@@ -110,7 +108,7 @@ func (dExt *DriverExt) CheckPopup() (*PopupInfo, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "get screen result failed for popup handler")
 	}
-	popup := screenResult.Popup
+	popup = screenResult.Popup
 	if popup == nil {
 		return nil, errors.New("popup not found")
 	}
@@ -119,7 +117,6 @@ func (dExt *DriverExt) CheckPopup() (*PopupInfo, error) {
 		// close point not found
 		return nil, errors.New("popup close point not found")
 	}
-	log.Info().Interface("popup", popup).Msg("found popup")
 	return popup, nil
 }
 

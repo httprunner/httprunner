@@ -16,7 +16,16 @@ var (
 	driverExt    *DriverExt
 )
 
-func setupAndroid(t *testing.T) {
+func setupAndroidAdbDriver(t *testing.T) {
+	device, err := NewAndroidDevice()
+	checkErr(t, err)
+	device.UIA2 = false
+	device.LogOn = false
+	driverExt, err = device.NewDriver()
+	checkErr(t, err)
+}
+
+func setupAndroidUIA2Driver(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
 	device.UIA2 = true
@@ -122,7 +131,7 @@ func TestDriver_DeviceSize(t *testing.T) {
 }
 
 func TestDriver_Source(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidUIA2Driver(t)
 
 	source, err := driverExt.Driver.Source()
 	if err != nil {
@@ -192,7 +201,7 @@ func TestDriver_DeviceInfo(t *testing.T) {
 }
 
 func TestDriver_Tap(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidUIA2Driver(t)
 	driverExt.Driver.StartCaptureLog("")
 	err := driverExt.TapXY(0.5, 0.5, WithIdentifier("test"), WithPressDuration(4))
 	if err != nil {
@@ -210,7 +219,7 @@ func TestDriver_Tap(t *testing.T) {
 }
 
 func TestDriver_Swipe(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidUIA2Driver(t)
 	err := driverExt.Driver.Swipe(400, 1000, 400, 500, WithPressDuration(0.5))
 	if err != nil {
 		t.Fatal(err)
@@ -218,7 +227,7 @@ func TestDriver_Swipe(t *testing.T) {
 }
 
 func TestDriver_Swipe_Relative(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidUIA2Driver(t)
 	err := driverExt.SwipeRelative(0.5, 0.7, 0.5, 0.5)
 	if err != nil {
 		t.Fatal(err)
@@ -245,7 +254,7 @@ func TestDriver_Drag(t *testing.T) {
 }
 
 func TestDriver_SendKeys(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidUIA2Driver(t)
 
 	err := driverExt.Driver.SendKeys("辽宁省沈阳市新民市民族街36-4", WithIdentifier("test"))
 	if err != nil {
@@ -293,7 +302,7 @@ func TestDriver_SetRotation(t *testing.T) {
 }
 
 func TestDriver_GetOrientation(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidUIA2Driver(t)
 	_, _ = driverExt.Driver.AppTerminate("com.quark.browser")
 	_ = driverExt.Driver.AppLaunch("com.quark.browser")
 	time.Sleep(2 * time.Second)
@@ -366,7 +375,7 @@ func TestDriver_AppLaunch(t *testing.T) {
 }
 
 func TestDriver_IsAppInForeground(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidUIA2Driver(t)
 
 	err := driverExt.Driver.AppLaunch("com.android.settings")
 	checkErr(t, err)
@@ -465,7 +474,7 @@ func TestDriver_ShellInputUnicode(t *testing.T) {
 }
 
 func TestTapTexts(t *testing.T) {
-	setupAndroid(t)
+	setupAndroidUIA2Driver(t)
 	actions := []TapTextAction{
 		{Text: "^.*无视风险安装$", Options: []ActionOption{WithTapOffset(100, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
 		{Text: "已了解此应用未经检测.*", Options: []ActionOption{WithTapOffset(-450, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
