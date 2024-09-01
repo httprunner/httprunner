@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -32,19 +31,7 @@ type ScreenResult struct {
 
 type ScreenResultMap map[string]*ScreenResult // key is date time
 
-// getScreenShotUrls returns screenShotsUrls using imagePath as key and uploaded URL as value
-func (screenResults ScreenResultMap) getScreenShotUrls() map[string]string {
-	screenShotsUrls := make(map[string]string)
-	for _, screenResult := range screenResults {
-		if screenResult.UploadedURL == "" {
-			continue
-		}
-		screenShotsUrls[screenResult.imagePath] = screenResult.UploadedURL
-	}
-	return screenShotsUrls
-}
-
-// GetScreenResult takes a screenshot, returns the image recognization result
+// GetScreenResult takes a screenshot, returns the image recognition result
 func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
 	fileName := builtin.GenNameWithTimestamp("%d_screenshot")
 	actionOptions := NewActionOptions(options...)
@@ -56,7 +43,6 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	if err != nil {
 		return
 	}
-	dExt.cacheStepData.screenShots = append(dExt.cacheStepData.screenShots, imagePath)
 
 	screenResult = &ScreenResult{
 		bufSource:  bufSource,
@@ -64,6 +50,8 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		Tags:       nil,
 		Resolution: dExt.WindowSize,
 	}
+	// cache screen result
+	dExt.DataCache.addScreenResult(screenResult)
 
 	imageResult, err := dExt.ImageService.GetImage(bufSource, options...)
 	if err != nil {
@@ -90,8 +78,6 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		}
 	}
 
-	dExt.cacheStepData.screenResults[time.Now().String()] = screenResult
-
 	log.Debug().
 		Str("imagePath", imagePath).
 		Str("imageUrl", screenResult.UploadedURL).
@@ -109,10 +95,11 @@ func (dExt *DriverExt) GetScreenTexts() (ocrTexts OCRTexts, err error) {
 }
 
 func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...ActionOption) (point PointF, err error) {
-	// click on text, using OCR
+	// find text using OCR
 	if !builtin.IsPathExists(search) {
 		return dExt.FindScreenText(search, options...)
 	}
+	// TODO: find image using CV
 	err = errors.New("ocr text not found")
 	return
 }

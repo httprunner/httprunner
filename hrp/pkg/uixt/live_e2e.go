@@ -48,7 +48,7 @@ func (dExt *DriverExt) CollectEndToEndDelay(options ...ActionOption) {
 
 	endToEndDelay.Start()
 
-	dExt.cacheStepData.e2eDelay = endToEndDelay.Timelines
+	dExt.DataCache.e2eDelay = endToEndDelay.Timelines
 }
 
 func (ete *EndToEndDelay) getCurrentLiveTime(utcTime time.Time) error {

@@ -20,19 +20,43 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 )
 
-type cacheStepData struct {
-	// cache step screenshot paths
-	screenShots []string
+type dataCache struct {
 	// cache step screenshot ocr results, key is image path, value is ScreenResult
 	screenResults ScreenResultMap
 	// cache e2e delay
 	e2eDelay []timeLog
 }
 
-func (d *cacheStepData) reset() {
-	d.screenShots = make([]string, 0)
+func (d *dataCache) addScreenResult(screenResult *ScreenResult) {
+	if screenResult == nil {
+		return
+	}
+	d.screenResults[screenResult.imagePath] = screenResult
+}
+
+func (d *dataCache) Clear() {
 	d.screenResults = make(map[string]*ScreenResult)
 	d.e2eDelay = nil
+}
+
+func (d *dataCache) GetAll() map[string]interface{} {
+	screenShots := make([]string, 0)
+	screenShotsUrls := make(map[string]string)
+	for _, screenResult := range d.screenResults {
+		screenShots = append(screenShots, screenResult.imagePath)
+		if screenResult.UploadedURL == "" {
+			continue
+		}
+		screenShotsUrls[screenResult.imagePath] = screenResult.UploadedURL
+	}
+
+	data := map[string]interface{}{
+		"screenshots":      screenShots,
+		"screenshots_urls": screenShotsUrls,
+		"screen_results":   d.screenResults,
+		"e2e_results":      d.e2eDelay,
+	}
+	return data
 }
 
 type DriverExt struct {
@@ -45,7 +69,7 @@ type DriverExt struct {
 	interruptSignal chan os.Signal
 
 	// cache step data
-	cacheStepData cacheStepData
+	DataCache dataCache
 
 	// funplugin
 	plugin funplugin.IPlugin
@@ -61,11 +85,11 @@ func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dEx
 		Device:          device,
 		Driver:          driver,
 		plugin:          driverOptions.plugin,
-		cacheStepData:   cacheStepData{},
+		DataCache:       dataCache{},
 		interruptSignal: make(chan os.Signal, 1),
 	}
 
-	dExt.cacheStepData.reset()
+	dExt.DataCache.Clear()
 	signal.Notify(dExt.interruptSignal, syscall.SIGTERM, syscall.SIGINT)
 	dExt.doneMjpegStream = make(chan bool, 1)
 
@@ -89,19 +113,6 @@ func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dEx
 		}
 	}
 	return dExt, nil
-}
-
-func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
-	cacheData := make(map[string]interface{})
-	cacheData["screenshots"] = dExt.cacheStepData.screenShots
-
-	cacheData["screenshots_urls"] = dExt.cacheStepData.screenResults.getScreenShotUrls()
-	cacheData["screen_results"] = dExt.cacheStepData.screenResults
-	cacheData["e2e_results"] = dExt.cacheStepData.e2eDelay
-	cacheData["driver_request_results"] = dExt.Driver.GetDriverResults()
-	// clear cache
-	dExt.cacheStepData.reset()
-	return cacheData
 }
 
 func (dExt *DriverExt) AssertOCR(text, assert string) bool {
