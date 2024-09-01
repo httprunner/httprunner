@@ -104,23 +104,6 @@ func (dExt *DriverExt) GetStepCacheData() map[string]interface{} {
 	return cacheData
 }
 
-// isPathExists returns true if path exists, whether path is file or dir
-func isPathExists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
-func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...ActionOption) (point PointF, err error) {
-	// click on text, using OCR
-	if !isPathExists(search) {
-		return dExt.FindScreenText(search, options...)
-	}
-	err = errors.New("ocr text not found")
-	return
-}
-
 func (dExt *DriverExt) AssertOCR(text, assert string) bool {
 	var err error
 	switch assert {

@@ -108,6 +108,15 @@ func (dExt *DriverExt) GetScreenTexts() (ocrTexts OCRTexts, err error) {
 	return screenResult.Texts, nil
 }
 
+func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...ActionOption) (point PointF, err error) {
+	// click on text, using OCR
+	if !builtin.IsPathExists(search) {
+		return dExt.FindScreenText(search, options...)
+	}
+	err = errors.New("ocr text not found")
+	return
+}
+
 func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (point PointF, err error) {
 	ocrTexts, err := dExt.GetScreenTexts()
 	if err != nil {
