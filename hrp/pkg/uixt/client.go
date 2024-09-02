@@ -69,7 +69,7 @@ type Driver struct {
 	windowSize *Size
 
 	// cache session data
-	session *DriverSession
+	session DriverSession
 }
 
 type DriverResult struct {

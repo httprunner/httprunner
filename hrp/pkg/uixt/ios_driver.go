@@ -906,7 +906,7 @@ func (wd *wdaDriver) StopCaptureLog() (result interface{}, err error) {
 }
 
 func (ud *wdaDriver) GetSession() *DriverSession {
-	return ud.Driver.session
+	return &ud.Driver.session
 }
 
 type rawResponse []byte

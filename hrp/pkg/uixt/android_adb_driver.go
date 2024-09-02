@@ -38,7 +38,9 @@ type adbDriver struct {
 
 func NewAdbDriver() *adbDriver {
 	log.Info().Msg("init adb driver")
-	return &adbDriver{}
+	driver := &adbDriver{}
+	driver.NewSession(nil)
+	return driver
 }
 
 func (ad *adbDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
@@ -743,7 +745,7 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 }
 
 func (ad *adbDriver) GetSession() *DriverSession {
-	return ad.Driver.session
+	return &ad.Driver.session
 }
 
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {

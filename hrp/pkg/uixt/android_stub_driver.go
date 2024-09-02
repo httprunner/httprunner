@@ -47,6 +47,7 @@ func newStubAndroidDriver(address string, urlPrefix string, readTimeout ...time.
 		return nil, err
 	}
 
+	driver.NewSession(nil)
 	return driver, nil
 }
 
