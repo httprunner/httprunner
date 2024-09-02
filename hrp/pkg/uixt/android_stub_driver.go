@@ -175,7 +175,14 @@ func (sad *stubAndroidDriver) Source(srcOpt ...SourceOption) (source string, err
 }
 
 func (sad *stubAndroidDriver) LoginNoneUIBak(packageName, phoneNumber, captcha string) error {
-	_, err := sad.adbClient.RunShellCommand("am", "broadcast", "-a", fmt.Sprintf("%s.util.crony.action_login", packageName), "-e", "phone", phoneNumber, "-e", "code", captcha)
+	_, err := sad.adbClient.RunShellCommand(
+		"am", "broadcast",
+		"-a", fmt.Sprintf("%s.util.crony.action_login", packageName),
+		"-e", "phone", phoneNumber,
+		"-e", "code", captcha)
+	if err != nil {
+		return err
+	}
 	time.Sleep(10 * time.Second)
 	login, err := sad.isLogin(packageName)
 	if err != nil || !login {
@@ -200,7 +207,7 @@ func (sad *stubAndroidDriver) LoginNoneUI(packageName, phoneNumber, captcha stri
 	}
 	log.Info().Msgf("%v", res)
 	if res["isSuccess"] != true {
-		err = fmt.Errorf("falied to logout %s", res["data"])
+		err = fmt.Errorf("failed to login %s", res["data"])
 		log.Err(err).Msgf("%v", res)
 		return err
 	}
@@ -226,14 +233,11 @@ func (sad *stubAndroidDriver) LogoutNoneUI(packageName string) error {
 	}
 	log.Info().Msgf("%v", res)
 	if res["isSuccess"] != true {
-		err = fmt.Errorf("falied to logout %s", res["data"])
+		err = fmt.Errorf("failed to logout %s", res["data"])
 		log.Err(err).Msgf("%v", res)
 		return err
 	}
-	fmt.Printf("%v", resp)
-	if err != nil {
-		return err
-	}
+	log.Info().Interface("resp", resp).Msg("logout success")
 	return nil
 }
 
@@ -263,13 +267,10 @@ func (sad *stubAndroidDriver) isLogin(packageName string) (login bool, err error
 	}
 	log.Info().Msgf("%v", res)
 	if res["isSuccess"] != true {
-		err = fmt.Errorf("falied to get is login %s", res["data"])
+		err = fmt.Errorf("failed to check login %s", res["data"])
 		log.Err(err).Msgf("%v", res)
 		return false, err
 	}
-	fmt.Printf("%v", resp)
-	if err != nil {
-		return false, err
-	}
+	log.Info().Interface("resp", resp).Msg("check login success")
 	return true, nil
 }

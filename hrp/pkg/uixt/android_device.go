@@ -180,8 +180,8 @@ type AndroidDevice struct {
 	d            *gadb.Device
 	logcat       *AdbLogcat
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
+	STUB         bool   `json:"stub,omitempty" yaml:"stub,omitempty"`           // use stub
 	UIA2         bool   `json:"uia2,omitempty" yaml:"uia2,omitempty"`           // use uiautomator2
-	STUB         bool   `json:"stub,omitempty" yaml:"stub,omitempty"`           // use uiautomator2
 	UIA2IP       string `json:"uia2_ip,omitempty" yaml:"uia2_ip,omitempty"`     // uiautomator2 server ip
 	UIA2Port     int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
