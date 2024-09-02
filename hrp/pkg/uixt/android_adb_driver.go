@@ -70,7 +70,7 @@ func (ad *adbDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 	return
 }
 
-func (ad *adbDriver) WindowSize() (size Size, err error) {
+func (ad *adbDriver) getWindowSize() (size Size, err error) {
 	// adb shell wm size
 	output, err := ad.adbClient.RunShellCommand("wm", "size")
 	if err != nil {
@@ -99,6 +99,21 @@ func (ad *adbDriver) WindowSize() (size Size, err error) {
 			return Size{Width: width, Height: height}, nil
 		}
 	}
+	err = errors.New("physical window size not found by adb")
+	return
+}
+
+func (ad *adbDriver) WindowSize() (size Size, err error) {
+	if ad.windowSize != nil {
+		size = *ad.windowSize
+	} else {
+		size, err = ad.getWindowSize()
+		if err != nil {
+			return
+		}
+		ad.windowSize = &size
+	}
+
 	orientation, err := ad.Orientation()
 	if err != nil {
 		log.Warn().Err(err).Msgf("window size get orientation failed, use default orientation")
@@ -107,7 +122,6 @@ func (ad *adbDriver) WindowSize() (size Size, err error) {
 	if orientation != OrientationPortrait {
 		size.Width, size.Height = size.Height, size.Width
 	}
-	err = errors.New("physical window size not found by adb")
 	return
 }
 

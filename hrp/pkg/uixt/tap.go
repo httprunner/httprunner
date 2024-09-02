@@ -2,8 +2,6 @@ package uixt
 
 import (
 	"fmt"
-
-	"github.com/rs/zerolog/log"
 )
 
 func (dExt *DriverExt) TapAbsXY(x, y float64, options ...ActionOption) error {
@@ -17,19 +15,12 @@ func (dExt *DriverExt) TapXY(x, y float64, options ...ActionOption) error {
 		return fmt.Errorf("x, y percentage should be <= 1, got x=%v, y=%v", x, y)
 	}
 
-	orientation, err := dExt.Driver.Orientation()
+	windowSize, err := dExt.Driver.WindowSize()
 	if err != nil {
-		log.Warn().Err(err).Msgf("tap (%v, %v) get orientation failed, use default orientation",
-			x, y)
-		orientation = OrientationPortrait
+		return err
 	}
-	if orientation == OrientationPortrait {
-		x = x * float64(dExt.WindowSize.Width)
-		y = y * float64(dExt.WindowSize.Height)
-	} else {
-		x = x * float64(dExt.WindowSize.Height)
-		y = y * float64(dExt.WindowSize.Width)
-	}
+	x = x * float64(windowSize.Width)
+	y = y * float64(windowSize.Height)
 	return dExt.TapAbsXY(x, y, options...)
 }
 
@@ -84,19 +75,13 @@ func (dExt *DriverExt) DoubleTapXY(x, y float64) error {
 	if x > 1 || y > 1 {
 		return fmt.Errorf("x, y percentage should be < 1, got x=%v, y=%v", x, y)
 	}
-	orientation, err := dExt.Driver.Orientation()
+
+	windowSize, err := dExt.Driver.WindowSize()
 	if err != nil {
-		log.Warn().Err(err).Msgf("tap (%v, %v) get orientation failed, use default orientation",
-			x, y)
-		orientation = OrientationPortrait
+		return err
 	}
-	if orientation == OrientationPortrait {
-		x = x * float64(dExt.WindowSize.Width)
-		y = y * float64(dExt.WindowSize.Height)
-	} else {
-		x = x * float64(dExt.WindowSize.Height)
-		y = y * float64(dExt.WindowSize.Width)
-	}
+	x = x * float64(windowSize.Width)
+	y = y * float64(windowSize.Height)
 	return dExt.Driver.DoubleTapFloat(x, y)
 }
 

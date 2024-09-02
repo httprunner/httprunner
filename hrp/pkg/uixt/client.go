@@ -16,8 +16,6 @@ import (
 )
 
 type DriverSession struct {
-	// cache device window size
-	windowSize Size
 	// cache uia2/wda request and response
 	requests []*DriverResult
 	// cache session screenshot ocr results, key is image path, value is ScreenResult
@@ -71,7 +69,11 @@ type Driver struct {
 	urlPrefix *url.URL
 	sessionId string
 	client    *http.Client
-	scale     float64
+
+	// cache to avoid repeated query
+	scale      float64
+	windowSize *Size
+
 	// cache session data
 	session *DriverSession
 }

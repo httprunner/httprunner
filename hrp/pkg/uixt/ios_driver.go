@@ -192,21 +192,28 @@ func (wd *wdaDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 
 func (wd *wdaDriver) WindowSize() (size Size, err error) {
 	// [[FBRoute GET:@"/window/size"] respondWithTarget:self action:@selector(handleGetWindowSize:)]
-	var rawResp rawResponse
-	if rawResp, err = wd.httpGET("/session", wd.sessionId, "/window/size"); err != nil {
-		return Size{}, errors.Wrap(err, "get window size failed with wda")
+	if wd.windowSize != nil {
+		size = *wd.windowSize
+	} else {
+		var rawResp rawResponse
+		if rawResp, err = wd.httpGET("/session", wd.sessionId, "/window/size"); err != nil {
+			return Size{}, errors.Wrap(err, "get window size failed with wda")
+		}
+		reply := new(struct{ Value struct{ Size } })
+		if err = json.Unmarshal(rawResp, reply); err != nil {
+			return Size{}, err
+		}
+		size = reply.Value.Size
+		scale, err := wd.Scale()
+		if err != nil {
+			return Size{}, errors.Wrap(err, "get window size scale failed")
+		}
+		size.Height = size.Height * int(scale)
+		size.Width = size.Width * int(scale)
+		wd.windowSize = &size
 	}
-	reply := new(struct{ Value struct{ Size } })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return Size{}, err
-	}
-	size = reply.Value.Size
-	scale, err := wd.Scale()
-	if err != nil {
-		return Size{}, errors.Wrap(err, "get window size scale failed")
-	}
-	size.Height = size.Height * int(scale)
-	size.Width = size.Width * int(scale)
+
+	// check orientation
 	orientation, err := wd.Orientation()
 	if err != nil {
 		log.Warn().Err(err).Msgf("window size get orientation failed, use default orientation")

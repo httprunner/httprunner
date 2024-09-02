@@ -25,8 +25,6 @@ type DriverExt struct {
 	Driver       WebDriver
 	ImageService IImageService // used to extract image data
 
-	WindowSize Size
-
 	// funplugin
 	plugin funplugin.IPlugin
 
@@ -52,11 +50,6 @@ func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dEx
 	signal.Notify(dExt.interruptSignal, syscall.SIGTERM, syscall.SIGINT)
 	dExt.doneMjpegStream = make(chan bool, 1)
 
-	// get device window size
-	dExt.WindowSize, err = dExt.Driver.WindowSize()
-	if err != nil {
-		return nil, errors.Wrap(err, "get screen resolution failed")
-	}
 	if driverOptions.withImageService {
 		if dExt.ImageService, err = newVEDEMImageService(); err != nil {
 			return nil, err
