@@ -148,11 +148,6 @@ func (dExt *DriverExt) FindUIResult(options ...ActionOption) (point PointF, err 
 
 // GetScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
 func (dExt *DriverExt) GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error) {
-	// iOS 优先使用 MJPEG 流进行截图，性能最优
-	// 如果 MJPEG 流未开启，则使用 WebDriver 的截图接口
-	if dExt.frame != nil {
-		return dExt.frame, "", nil
-	}
 	if raw, err = dExt.Driver.Screenshot(); err != nil {
 		log.Error().Err(err).Msg("capture screenshot data failed")
 		return nil, "", err

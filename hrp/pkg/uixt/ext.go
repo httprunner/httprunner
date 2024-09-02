@@ -1,16 +1,8 @@
 package uixt
 
 import (
-	"bytes"
 	_ "image/gif"
 	_ "image/png"
-	"mime"
-	"mime/multipart"
-	"net/http"
-	"os"
-	"os/signal"
-	"strings"
-	"syscall"
 
 	"github.com/httprunner/funplugin"
 	"github.com/pkg/errors"
@@ -27,10 +19,6 @@ type DriverExt struct {
 
 	// funplugin
 	plugin funplugin.IPlugin
-
-	frame           *bytes.Buffer
-	doneMjpegStream chan bool
-	interruptSignal chan os.Signal
 }
 
 func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dExt *DriverExt, err error) {
@@ -41,14 +29,10 @@ func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dEx
 
 	driver.GetSession().Clear()
 	dExt = &DriverExt{
-		Device:          device,
-		Driver:          driver,
-		plugin:          driverOptions.plugin,
-		interruptSignal: make(chan os.Signal, 1),
+		Device: device,
+		Driver: driver,
+		plugin: driverOptions.plugin,
 	}
-
-	signal.Notify(dExt.interruptSignal, syscall.SIGTERM, syscall.SIGINT)
-	dExt.doneMjpegStream = make(chan bool, 1)
 
 	if driverOptions.withImageService {
 		if dExt.ImageService, err = newVEDEMImageService(); err != nil {
@@ -134,59 +118,4 @@ func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...s
 		Str("expect", expected).
 		Msg("validate UI success")
 	return true
-}
-
-func (dExt *DriverExt) ConnectMjpegStream(httpClient *http.Client) (err error) {
-	if httpClient == nil {
-		return errors.New(`'httpClient' can't be nil`)
-	}
-
-	var req *http.Request
-	if req, err = http.NewRequest(http.MethodGet, "http://*", nil); err != nil {
-		return err
-	}
-
-	var resp *http.Response
-	if resp, err = httpClient.Do(req); err != nil {
-		return err
-	}
-	// defer func() { _ = resp.Body.Close() }()
-
-	var boundary string
-	if _, param, err := mime.ParseMediaType(resp.Header.Get("Content-Type")); err != nil {
-		return err
-	} else {
-		boundary = strings.Trim(param["boundary"], "-")
-	}
-
-	mjpegReader := multipart.NewReader(resp.Body, boundary)
-
-	go func() {
-		for {
-			select {
-			case <-dExt.doneMjpegStream:
-				_ = resp.Body.Close()
-				return
-			default:
-				var part *multipart.Part
-				if part, err = mjpegReader.NextPart(); err != nil {
-					dExt.frame = nil
-					continue
-				}
-
-				raw := new(bytes.Buffer)
-				if _, err = raw.ReadFrom(part); err != nil {
-					dExt.frame = nil
-					continue
-				}
-				dExt.frame = raw
-			}
-		}
-	}()
-
-	return
-}
-
-func (dExt *DriverExt) CloseMjpegStream() {
-	dExt.doneMjpegStream <- true
 }
