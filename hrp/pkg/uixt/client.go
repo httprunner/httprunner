@@ -16,6 +16,7 @@ import (
 )
 
 type DriverSession struct {
+	ID string
 	// cache uia2/wda request and response
 	requests []*DriverResult
 	// cache session screenshot ocr results, key is image path, value is ScreenResult
@@ -32,7 +33,7 @@ func (d *DriverSession) addRequestResult(driverResult *DriverResult) {
 	d.requests = append(d.requests, driverResult)
 }
 
-func (d *DriverSession) Clear() {
+func (d *DriverSession) Init() {
 	d.screenResults = make(map[string]*ScreenResult)
 	d.requests = nil
 	d.e2eDelay = nil
@@ -61,7 +62,6 @@ func (d *DriverSession) GetAll() map[string]interface{} {
 
 type Driver struct {
 	urlPrefix *url.URL
-	sessionId string
 	client    *http.Client
 
 	// cache to avoid repeated query

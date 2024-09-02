@@ -42,6 +42,7 @@ func NewAdbDriver() *adbDriver {
 }
 
 func (ad *adbDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
+	ad.Driver.session.Init()
 	err = errDriverNotImplemented
 	return
 }

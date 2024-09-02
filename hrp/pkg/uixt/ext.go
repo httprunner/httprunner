@@ -27,7 +27,6 @@ func newDriverExt(device IDevice, driver IWebDriver, options ...DriverOption) (d
 		option(driverOptions)
 	}
 
-	driver.GetSession().Clear()
 	dExt = &DriverExt{
 		Device: device,
 		Driver: driver,

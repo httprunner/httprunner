@@ -654,11 +654,9 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDrive
 	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError, err.Error())
 	}
-	var sessionInfo SessionInfo
-	if sessionInfo, err = wd.NewSession(capabilities); err != nil {
+	if _, err = wd.NewSession(capabilities); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError, err.Error())
 	}
-	wd.sessionId = sessionInfo.SessionId
 
 	if wd.mjpegHTTPConn, err = net.Dial(
 		"tcp",
@@ -697,11 +695,9 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver IWebDriver
 	if wd.urlPrefix, err = url.Parse("http://" + dev.UDID); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceUSBDriverError, err.Error())
 	}
-	var sessionInfo SessionInfo
-	if sessionInfo, err = wd.NewSession(capabilities); err != nil {
+	if _, err = wd.NewSession(capabilities); err != nil {
 		return nil, errors.Wrap(code.IOSDeviceUSBDriverError, err.Error())
 	}
-	wd.sessionId = sessionInfo.SessionId
 
 	// init WDA scale
 	if wd.scale, err = wd.Scale(); err != nil {

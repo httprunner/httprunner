@@ -62,7 +62,7 @@ func TestNewDriver(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(driver.sessionId)
+	t.Log(driver.session.ID)
 }
 
 func TestDriver_Quit(t *testing.T) {
