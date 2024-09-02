@@ -201,7 +201,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	}()
 
 	// record execution data to summary
-	s := newOutSummary()
+	s := NewSummary()
 
 	// load all testcases
 	testCases, err := LoadTestCases(testcases...)
@@ -242,7 +242,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			// each run has its own session runner
 			sessionRunner := caseRunner.NewSession()
 			caseSummary, err := sessionRunner.Start(it.Next())
-			s.appendCaseSummary(caseSummary)
+			s.AddCaseSummary(caseSummary)
 			if err != nil {
 				log.Error().Err(err).Msg("[Run] run testcase failed")
 				runErr = err
@@ -257,14 +257,14 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 
 	// save summary
 	if r.saveTests {
-		if err := s.genSummary(); err != nil {
+		if err := s.GenSummary(); err != nil {
 			return err
 		}
 	}
 
 	// generate HTML report
 	if r.genHTMLReport {
-		if err := s.genHTMLReport(); err != nil {
+		if err := s.GenHTMLReport(); err != nil {
 			return err
 		}
 	}
@@ -414,7 +414,7 @@ func (r *CaseRunner) NewSession() *SessionRunner {
 	sessionRunner := &SessionRunner{
 		caseRunner:       r,
 		sessionVariables: make(map[string]interface{}),
-		summary:          newSummary(),
+		summary:          NewCaseSummary(),
 
 		transactions: make(map[string]map[transactionType]time.Time),
 		ws:           newWSSession(),
@@ -538,7 +538,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 				stepResult.Name = stepName + loopIndex
 				stepResult.StartTime = startTime
 
-				r.updateSummary(stepResult)
+				r.summary.AddStepResult(stepResult)
 			}
 
 			// update extracted variables
@@ -656,34 +656,4 @@ func (r *SessionRunner) IgnorePopup() bool {
 		return r.caseRunner.TestCase.Config.IOS[0].IgnorePopup
 	}
 	return false
-}
-
-// updateSummary updates summary of StepResult.
-func (r *SessionRunner) updateSummary(stepResult *StepResult) {
-	switch stepResult.StepType {
-	case stepTypeTestCase:
-		// record requests of testcase step
-		if records, ok := stepResult.Data.([]*StepResult); ok {
-			for _, result := range records {
-				r.addSingleStepResult(result)
-			}
-		} else {
-			r.addSingleStepResult(stepResult)
-		}
-	default:
-		r.addSingleStepResult(stepResult)
-	}
-}
-
-func (r *SessionRunner) addSingleStepResult(stepResult *StepResult) {
-	// update summary
-	r.summary.Records = append(r.summary.Records, stepResult)
-	r.summary.Stat.Total += 1
-	if stepResult.Success {
-		r.summary.Stat.Successes += 1
-	} else {
-		r.summary.Stat.Failures += 1
-		// update summary result to failed
-		r.summary.Success = false
-	}
 }

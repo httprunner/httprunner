@@ -17,7 +17,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
-func newOutSummary() *Summary {
+func NewSummary() *Summary {
 	platForm := &Platform{
 		HttprunnerVersion: version.VERSION,
 		GoVersion:         runtime.Version(),
@@ -43,7 +43,8 @@ type Summary struct {
 	rootDir  string
 }
 
-func (s *Summary) appendCaseSummary(caseSummary *TestCaseSummary) {
+func (s *Summary) AddCaseSummary(caseSummary *TestCaseSummary) {
+	log.Info().Interface("caseSummary", caseSummary).Msg("add case summary")
 	s.Success = s.Success && caseSummary.Success
 	s.Stat.TestCases.Total += 1
 	s.Stat.TestSteps.Total += caseSummary.Stat.Total
@@ -55,7 +56,6 @@ func (s *Summary) appendCaseSummary(caseSummary *TestCaseSummary) {
 	s.Stat.TestSteps.Successes += caseSummary.Stat.Successes
 	s.Stat.TestSteps.Failures += caseSummary.Stat.Failures
 	s.Details = append(s.Details, caseSummary)
-	s.Success = s.Success && caseSummary.Success
 
 	// specify output reports dir
 	if len(s.Details) == 1 {
@@ -66,7 +66,7 @@ func (s *Summary) appendCaseSummary(caseSummary *TestCaseSummary) {
 	}
 }
 
-func (s *Summary) genHTMLReport() error {
+func (s *Summary) GenHTMLReport() error {
 	reportsDir := filepath.Join(s.rootDir, env.ResultsDir)
 	err := builtin.EnsureFolderExists(reportsDir)
 	if err != nil {
@@ -96,7 +96,7 @@ func (s *Summary) genHTMLReport() error {
 	return err
 }
 
-func (s *Summary) genSummary() error {
+func (s *Summary) GenSummary() error {
 	reportsDir := filepath.Join(s.rootDir, env.ResultsDir)
 	err := builtin.EnsureFolderExists(reportsDir)
 	if err != nil {
@@ -142,6 +142,18 @@ type Platform struct {
 	Platform          string `json:"platform" yaml:"platform"`
 }
 
+func NewCaseSummary() *TestCaseSummary {
+	return &TestCaseSummary{
+		Success: true,
+		Stat:    &TestStepStat{},
+		Time: &TestCaseTime{
+			StartAt: time.Now(),
+		},
+		InOut:   &TestCaseInOut{},
+		Records: []*StepResult{},
+	}
+}
+
 // TestCaseSummary stores tests summary for one testcase
 type TestCaseSummary struct {
 	Name    string         `json:"name" yaml:"name"`
@@ -153,6 +165,38 @@ type TestCaseSummary struct {
 	Logs    []interface{}  `json:"logs,omitempty" yaml:"logs,omitempty"`
 	Records []*StepResult  `json:"records" yaml:"records"`
 	RootDir string         `json:"root_dir" yaml:"root_dir"`
+}
+
+// AddStepResult updates summary of StepResult.
+func (s *TestCaseSummary) AddStepResult(stepResult *StepResult) {
+	switch stepResult.StepType {
+	case stepTypeTestCase:
+		// record requests of testcase step
+		records, ok := stepResult.Data.([]*StepResult)
+		if !ok {
+			log.Warn().
+				Interface("data", stepResult.Data).
+				Msg("get unexpected testcase step data")
+			return
+		}
+		s.Success = s.Success && stepResult.Success
+		for _, result := range records {
+			s.addSingleStepResult(result)
+		}
+	default:
+		s.addSingleStepResult(stepResult)
+	}
+}
+
+func (s *TestCaseSummary) addSingleStepResult(stepResult *StepResult) {
+	s.Success = s.Success && stepResult.Success
+	s.Stat.Total += 1
+	if stepResult.Success {
+		s.Stat.Successes += 1
+	} else {
+		s.Stat.Failures += 1
+	}
+	s.Records = append(s.Records, stepResult)
 }
 
 type TestCaseInOut struct {
@@ -190,16 +234,4 @@ type ValidationResult struct {
 	Validator
 	CheckValue  interface{} `json:"check_value" yaml:"check_value"`
 	CheckResult string      `json:"check_result" yaml:"check_result"`
-}
-
-func newSummary() *TestCaseSummary {
-	return &TestCaseSummary{
-		Success: true,
-		Stat:    &TestStepStat{},
-		Time: &TestCaseTime{
-			StartAt: time.Now(),
-		},
-		InOut:   &TestCaseInOut{},
-		Records: []*StepResult{},
-	}
 }

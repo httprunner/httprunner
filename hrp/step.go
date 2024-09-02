@@ -26,7 +26,7 @@ type StepResult struct {
 	Success     bool                   `json:"success" yaml:"success"`                             // step execution result
 	Elapsed     int64                  `json:"elapsed_ms" yaml:"elapsed_ms"`                       // step execution time in millisecond(ms)
 	HttpStat    map[string]int64       `json:"httpstat,omitempty" yaml:"httpstat,omitempty"`       // httpstat in millisecond(ms)
-	Data        interface{}            `json:"data,omitempty" yaml:"data,omitempty"`               // session data or slice of step data
+	Data        interface{}            `json:"data,omitempty" yaml:"data,omitempty"`               // step data, *StepResult or []*StepResult
 	ContentSize int64                  `json:"content_size" yaml:"content_size"`                   // response body length
 	ExportVars  map[string]interface{} `json:"export_vars,omitempty" yaml:"export_vars,omitempty"` // extract variables
 	Attachments interface{}            `json:"attachments,omitempty" yaml:"attachments,omitempty"` // store extra step information, such as error message or screenshots
