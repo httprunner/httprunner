@@ -196,11 +196,11 @@ func Interface2Float64(i interface{}) (float64, error) {
 	case float64:
 		return v, nil
 	case string:
-		intVar, err := strconv.Atoi(v)
+		floatVar, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			return 0, err
 		}
-		return float64(intVar), err
+		return floatVar, err
 	}
 	// json.Number
 	value, ok := i.(builtinJSON.Number)
