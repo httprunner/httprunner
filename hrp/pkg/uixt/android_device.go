@@ -209,7 +209,7 @@ func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverE
 		option(driverOptions)
 	}
 
-	var driver WebDriver
+	var driver IWebDriver
 	if dev.UIA2 || dev.LogOn {
 		driver, err = dev.NewUSBDriver(driverOptions.capabilities)
 	} else if dev.STUB {
@@ -237,7 +237,7 @@ func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverE
 }
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
-func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver, err error) {
+func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver IWebDriver, err error) {
 	localPort, err := dev.d.Forward(UIA2ServerPort)
 	if err != nil {
 		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
@@ -289,7 +289,7 @@ func (dev *AndroidDevice) NewStubDriver(capabilities Capabilities) (driver *stub
 }
 
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
-func (dev *AndroidDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver, err error) {
+func (dev *AndroidDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDriver, err error) {
 	rawURL := fmt.Sprintf("http://%s:%d/wd/hub", dev.UIA2IP, dev.UIA2Port)
 	uiaDriver, err := NewUIADriver(capabilities, rawURL)
 	if err != nil {
@@ -301,7 +301,7 @@ func (dev *AndroidDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDr
 	return uiaDriver, nil
 }
 
-func (dev *AndroidDevice) NewAdbDriver() (driver WebDriver, err error) {
+func (dev *AndroidDevice) NewAdbDriver() (driver IWebDriver, err error) {
 	adbDriver := NewAdbDriver()
 	adbDriver.adbClient = dev.d
 	adbDriver.logcat = dev.logcat

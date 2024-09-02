@@ -13,15 +13,15 @@ import (
 )
 
 type DriverExt struct {
-	Device       Device
-	Driver       WebDriver
+	Device       IDevice
+	Driver       IWebDriver
 	ImageService IImageService // used to extract image data
 
 	// funplugin
 	plugin funplugin.IPlugin
 }
 
-func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dExt *DriverExt, err error) {
+func newDriverExt(device IDevice, driver IWebDriver, options ...DriverOption) (dExt *DriverExt, err error) {
 	driverOptions := NewDriverOptions()
 	for _, option := range options {
 		option(driverOptions)

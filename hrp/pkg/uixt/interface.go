@@ -396,7 +396,7 @@ func (opt SourceOption) WithExcludedAttributes(attributes []string) SourceOption
 	return opt
 }
 
-type Condition func(wd WebDriver) (bool, error)
+type Condition func(wd IWebDriver) (bool, error)
 
 type Direction string
 
@@ -475,7 +475,7 @@ func WithDriverPlugin(plugin funplugin.IPlugin) DriverOption {
 }
 
 // current implemeted device: IOSDevice, AndroidDevice
-type Device interface {
+type IDevice interface {
 	Init() error  // init android device
 	UUID() string // ios udid or android serial
 	LogEnabled() bool
@@ -497,8 +497,8 @@ type ForegroundApp struct {
 	Activity    string
 }
 
-// WebDriver defines methods supported by WebDriver drivers.
-type WebDriver interface {
+// IWebDriver defines methods supported by IWebDriver drivers.
+type IWebDriver interface {
 	// NewSession starts a new session and returns the SessionInfo.
 	NewSession(capabilities Capabilities) (SessionInfo, error)
 

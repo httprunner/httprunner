@@ -15,7 +15,7 @@ var rootCmd = &cobra.Command{
 	Short:   "Monitor FIFA World Cup Live",
 	Version: "2022.12.03.0018",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var device uixt.Device
+		var device uixt.IDevice
 		var bundleID string
 		if iosApp != "" {
 			log.Info().Str("bundleID", iosApp).Msg("init ios device")

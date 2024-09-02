@@ -320,7 +320,7 @@ func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, 
 		capabilities.WithDefaultAlertAction(AlertActionAccept)
 	}
 
-	var driver WebDriver
+	var driver IWebDriver
 	if env.WDA_USB_DRIVER == "" {
 		// default use http driver
 		driver, err = dev.NewHTTPDriver(capabilities)
@@ -608,7 +608,7 @@ func (dev *IOSDevice) pcapOpitons() (pcapOptions []gidevice.PcapOption) {
 }
 
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
-func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver, err error) {
+func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDriver, err error) {
 	var localPort int
 	localPort, err = strconv.Atoi(env.WDA_LOCAL_PORT)
 	if err != nil {
@@ -677,7 +677,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver WebDriver
 }
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
-func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver WebDriver, err error) {
+func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver IWebDriver, err error) {
 	log.Info().Interface("capabilities", capabilities).
 		Str("udid", dev.UDID).Msg("init WDA USB driver")
 

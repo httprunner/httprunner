@@ -36,7 +36,7 @@ func convertTimeToSeconds(timeStr string) (int, error) {
 	return seconds, nil
 }
 
-func initIOSDevice(uuid string) uixt.Device {
+func initIOSDevice(uuid string) uixt.IDevice {
 	perfOptions := []uixt.IOSPerfOption{}
 	for _, p := range perf {
 		switch p {
@@ -71,7 +71,7 @@ func initIOSDevice(uuid string) uixt.Device {
 	return device
 }
 
-func initAndroidDevice(uuid string) uixt.Device {
+func initAndroidDevice(uuid string) uixt.IDevice {
 	device, err := uixt.NewAndroidDevice(uixt.WithSerialNumber(uuid))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init android device")
@@ -101,7 +101,7 @@ type WorldCupLive struct {
 	PerfFile  string    `json:"perf"`
 }
 
-func NewWorldCupLive(device uixt.Device, matchName, bundleID string, duration, interval int) *WorldCupLive {
+func NewWorldCupLive(device uixt.IDevice, matchName, bundleID string, duration, interval int) *WorldCupLive {
 	driverExt, err := device.NewDriver()
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init driver")

@@ -25,16 +25,10 @@ type DriverSession struct {
 }
 
 func (d *DriverSession) addScreenResult(screenResult *ScreenResult) {
-	if screenResult == nil {
-		return
-	}
 	d.screenResults[screenResult.imagePath] = screenResult
 }
 
 func (d *DriverSession) addRequestResult(driverResult *DriverResult) {
-	if driverResult == nil {
-		return
-	}
 	d.requests = append(d.requests, driverResult)
 }
 
