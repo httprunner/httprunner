@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -16,12 +15,65 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type DriverSession struct {
+	// cache device window size
+	windowSize Size
+	// cache uia2/wda request and response
+	requests []*DriverResult
+	// cache session screenshot ocr results, key is image path, value is ScreenResult
+	screenResults ScreenResultMap
+	// cache e2e delay
+	e2eDelay []timeLog
+}
+
+func (d *DriverSession) addScreenResult(screenResult *ScreenResult) {
+	if screenResult == nil {
+		return
+	}
+	d.screenResults[screenResult.imagePath] = screenResult
+}
+
+func (d *DriverSession) addRequestResult(driverResult *DriverResult) {
+	if driverResult == nil {
+		return
+	}
+	d.requests = append(d.requests, driverResult)
+}
+
+func (d *DriverSession) Clear() {
+	d.screenResults = make(map[string]*ScreenResult)
+	d.requests = nil
+	d.e2eDelay = nil
+}
+
+func (d *DriverSession) GetAll() map[string]interface{} {
+	screenShots := make([]string, 0)
+	screenShotsUrls := make(map[string]string)
+	for _, screenResult := range d.screenResults {
+		screenShots = append(screenShots, screenResult.imagePath)
+		if screenResult.UploadedURL == "" {
+			continue
+		}
+		screenShotsUrls[screenResult.imagePath] = screenResult.UploadedURL
+	}
+
+	data := map[string]interface{}{
+		"screenshots":      screenShots,
+		"screenshots_urls": screenShotsUrls,
+		"screen_results":   d.screenResults,
+		"requests":         d.requests,
+		"e2e_results":      d.e2eDelay,
+	}
+	return data
+}
+
 type Driver struct {
-	urlPrefix     *url.URL
-	sessionId     string
-	client        *http.Client
-	scale         float64
-	driverResults []*DriverResult
+	urlPrefix *url.URL
+	sessionId string
+	client    *http.Client
+	scale     float64
+	// cache session data
+	session *DriverSession
 }
 
 type DriverResult struct {
@@ -76,7 +128,7 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 	}
 	defer func() {
 		// https://github.com/etcd-io/etcd/blob/v3.3.25/pkg/httputil/httputil.go#L16-L22
-		_, _ = io.Copy(ioutil.Discard, resp.Body)
+		_, _ = io.Copy(io.Discard, resp.Body)
 		_ = resp.Body.Close()
 	}()
 
@@ -88,7 +140,7 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 		RequestDuration: duration,
 		RequestTime:     time.Now(),
 	}
-	wd.driverResults = append(wd.driverResults, driverResult)
+	wd.session.addRequestResult(driverResult)
 	logger := log.Debug().Int("statusCode", resp.StatusCode).Str("duration", duration.String())
 	if !strings.HasSuffix(rawURL, "screenshot") {
 		// avoid printing screenshot data

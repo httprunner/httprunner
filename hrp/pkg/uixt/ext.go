@@ -20,59 +20,19 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 )
 
-type dataCache struct {
-	// cache step screenshot ocr results, key is image path, value is ScreenResult
-	screenResults ScreenResultMap
-	// cache e2e delay
-	e2eDelay []timeLog
-}
-
-func (d *dataCache) addScreenResult(screenResult *ScreenResult) {
-	if screenResult == nil {
-		return
-	}
-	d.screenResults[screenResult.imagePath] = screenResult
-}
-
-func (d *dataCache) Clear() {
-	d.screenResults = make(map[string]*ScreenResult)
-	d.e2eDelay = nil
-}
-
-func (d *dataCache) GetAll() map[string]interface{} {
-	screenShots := make([]string, 0)
-	screenShotsUrls := make(map[string]string)
-	for _, screenResult := range d.screenResults {
-		screenShots = append(screenShots, screenResult.imagePath)
-		if screenResult.UploadedURL == "" {
-			continue
-		}
-		screenShotsUrls[screenResult.imagePath] = screenResult.UploadedURL
-	}
-
-	data := map[string]interface{}{
-		"screenshots":      screenShots,
-		"screenshots_urls": screenShotsUrls,
-		"screen_results":   d.screenResults,
-		"e2e_results":      d.e2eDelay,
-	}
-	return data
-}
-
 type DriverExt struct {
-	Device          Device
-	Driver          WebDriver
-	WindowSize      Size
-	frame           *bytes.Buffer
-	doneMjpegStream chan bool
-	ImageService    IImageService // used to extract image data
-	interruptSignal chan os.Signal
+	Device       Device
+	Driver       WebDriver
+	ImageService IImageService // used to extract image data
 
-	// cache step data
-	DataCache dataCache
+	WindowSize Size
 
 	// funplugin
 	plugin funplugin.IPlugin
+
+	frame           *bytes.Buffer
+	doneMjpegStream chan bool
+	interruptSignal chan os.Signal
 }
 
 func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dExt *DriverExt, err error) {
@@ -81,15 +41,14 @@ func newDriverExt(device Device, driver WebDriver, options ...DriverOption) (dEx
 		option(driverOptions)
 	}
 
+	driver.GetSession().Clear()
 	dExt = &DriverExt{
 		Device:          device,
 		Driver:          driver,
 		plugin:          driverOptions.plugin,
-		DataCache:       dataCache{},
 		interruptSignal: make(chan os.Signal, 1),
 	}
 
-	dExt.DataCache.Clear()
 	signal.Notify(dExt.interruptSignal, syscall.SIGTERM, syscall.SIGINT)
 	dExt.doneMjpegStream = make(chan bool, 1)
 

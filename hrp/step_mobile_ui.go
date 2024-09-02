@@ -648,13 +648,11 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		}
 
 		// save attachments
-		cacheData := uiDriver.DataCache.GetAll()
-		for key, value := range cacheData {
+		session := uiDriver.Driver.GetSession()
+		for key, value := range session.GetAll() {
 			attachments[key] = value
 		}
-		uiDriver.DataCache.Clear() // clear step cache
-
-		attachments["driver_request_results"] = uiDriver.Driver.GetDriverResults()
+		session.Clear() // clear step cache
 		stepResult.Attachments = attachments
 	}()
 

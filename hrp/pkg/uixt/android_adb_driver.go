@@ -727,8 +727,8 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 	return pointRes, nil
 }
 
-func (ad *adbDriver) GetDriverResults() []*DriverResult {
-	return nil
+func (ad *adbDriver) GetSession() *DriverSession {
+	return ad.Driver.session
 }
 
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {

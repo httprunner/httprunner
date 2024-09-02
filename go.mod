@@ -26,7 +26,6 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.9.0
-	gocv.io/x/gocv v0.32.1
 	golang.org/x/net v0.25.0
 	golang.org/x/oauth2 v0.8.0
 	golang.org/x/text v0.15.0

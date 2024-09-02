@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/httprunner/funplugin/myexec"
@@ -56,7 +56,7 @@ var convertCmd = &cobra.Command{
 		var files []string
 		for _, arg := range args {
 			if builtin.IsFolderPathExists(arg) {
-				fs, err := ioutil.ReadDir(arg)
+				fs, err := os.ReadDir(arg)
 				if err != nil {
 					log.Error().Err(err).Str("path", arg).Msg("read dir failed")
 					continue

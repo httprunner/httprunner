@@ -51,7 +51,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		Resolution: dExt.WindowSize,
 	}
 	// cache screen result
-	dExt.DataCache.addScreenResult(screenResult)
+	dExt.Driver.GetSession().addScreenResult(screenResult)
 
 	imageResult, err := dExt.ImageService.GetImage(bufSource, options...)
 	if err != nil {

@@ -300,7 +300,7 @@ func Test_remoteWD_SetPasteboard(t *testing.T) {
 	// err := driver.SetPasteboard(PasteboardTypePlaintext, "gwda")
 	err := driver.SetPasteboard(PasteboardTypeUrl, "Clock-stopwatch://")
 	// userHomeDir, _ := os.UserHomeDir()
-	// bytesImg, _ := ioutil.ReadFile(userHomeDir + "/Pictures/IMG_0806.jpg")
+	// bytesImg, _ := os.ReadFile(userHomeDir + "/Pictures/IMG_0806.jpg")
 	// err := driver.SetPasteboard(PasteboardTypeImage, string(bytesImg))
 	if err != nil {
 		t.Fatal(err)

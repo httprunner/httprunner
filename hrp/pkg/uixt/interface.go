@@ -507,6 +507,9 @@ type WebDriver interface {
 	//  2) testedApplicationBundleId terminate
 	DeleteSession() error
 
+	// GetSession returns session cache, including requests, screenshots, etc.
+	GetSession() *DriverSession
+
 	Status() (DeviceStatus, error)
 
 	DeviceInfo() (DeviceInfo, error)
@@ -635,5 +638,4 @@ type WebDriver interface {
 	// triggers the log capture and returns the log entries
 	StartCaptureLog(identifier ...string) (err error)
 	StopCaptureLog() (result interface{}, err error)
-	GetDriverResults() []*DriverResult
 }
