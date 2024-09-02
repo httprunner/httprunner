@@ -11,31 +11,8 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
-var directionSlice = [][]float64{
-	{0.85, 0.83, 0.85, 0.1},
-	{0.9, 0.75, 0.9, 0.1},
-	{0.6, 0.5, 0.6, 0.1},
-}
-
 func assertRelative(p float64) bool {
 	return p >= 0 && p <= 1
-}
-
-// TODO: remove this function
-func (dExt *DriverExt) SwipeUpUtil(count int64, options ...ActionOption) error {
-	windowSize, err := dExt.Driver.WindowSize()
-	if err != nil {
-		return err
-	}
-	width := windowSize.Width
-	height := windowSize.Height
-
-	fromX := float64(width) * directionSlice[count%3][0]
-	fromY := float64(height) * directionSlice[count%3][1]
-	toX := float64(width) * directionSlice[count%3][2]
-	toY := float64(height) * directionSlice[count%3][3]
-
-	return dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, options...)
 }
 
 // SwipeRelative swipe from relative position [fromX, fromY] to relative position [toX, toY]
