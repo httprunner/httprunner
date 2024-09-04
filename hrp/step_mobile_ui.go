@@ -652,7 +652,6 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		for key, value := range session.GetAll() {
 			attachments[key] = value
 		}
-		session.Init() // clear step cache
 		stepResult.Attachments = attachments
 	}()
 

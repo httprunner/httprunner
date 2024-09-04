@@ -164,7 +164,7 @@ type TestCaseSummary struct {
 	InOut   *TestCaseInOut `json:"in_out" yaml:"in_out"`
 	Logs    []interface{}  `json:"logs,omitempty" yaml:"logs,omitempty"`
 	Records []*StepResult  `json:"records" yaml:"records"`
-	RootDir string         `json:"root_dir" yaml:"root_dir"`
+	RootDir string         `json:"root_dir,omitempty" yaml:"root_dir,omitempty"`
 }
 
 // AddStepResult updates summary of StepResult.

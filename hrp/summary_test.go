@@ -25,7 +25,12 @@ func TestGenHTMLReport(t *testing.T) {
 	caseSummary2.AddStepResult(stepResult2)
 	summary.AddCaseSummary(caseSummary2)
 
-	err := summary.GenHTMLReport()
+	err := summary.GenSummary()
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = summary.GenHTMLReport()
 	if err != nil {
 		t.Error(err)
 	}
