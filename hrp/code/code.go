@@ -37,10 +37,11 @@ var (
 	ParseFunctionError  = errors.New("parse function failed")  // 22
 	CallFunctionError   = errors.New("call function failed")   // 23
 	ParseVariablesError = errors.New("parse variables failed") // 24
+	FFmpegError         = errors.New("ffmpeg error")           // 25
+	FFprobeError        = errors.New("ffprobe error")          // 26
 )
 
 // runner: [30, 40)
-
 var (
 	InitPluginFailed    = errors.New("init plugin failed")     // 31
 	BuildGoPluginFailed = errors.New("build go plugin failed") // 32
@@ -50,6 +51,10 @@ var (
 )
 
 // summary: [40, 50)
+var (
+	DownloadFailed = errors.New("download failed") // 48
+	UploadFailed   = errors.New("upload failed")   // 49
+)
 
 // ios device related: [50, 60)
 var (
