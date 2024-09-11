@@ -99,7 +99,8 @@ var (
 
 // trackings related: [90, 100)
 var (
-	TrackingGetError = errors.New("get trackings failed") // 90
+	TrackingGetError   = errors.New("get trackings failed")  // 90
+	TrackingFomatError = errors.New("tracking format error") // 91
 )
 
 var errorsMap = map[error]int{
@@ -173,7 +174,8 @@ var errorsMap = map[error]int{
 	CVResultNotFoundError:    84,
 
 	// trackings related
-	TrackingGetError: 90,
+	TrackingGetError:   90,
+	TrackingFomatError: 91,
 }
 
 func IsErrorPredefined(err error) bool {
