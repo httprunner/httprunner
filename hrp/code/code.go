@@ -1,8 +1,6 @@
 package code
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 )
 
@@ -14,6 +12,7 @@ const (
 
 // environment: [2, 10)
 var (
+	UnauthorizedError  = errors.New("unauthorized error")          // 4
 	InvalidPython3Venv = errors.New("prepare python3 venv failed") // 9
 )
 
@@ -43,6 +42,7 @@ var (
 
 // runner: [30, 40)
 var (
+	StartRunnerFailed   = errors.New("start runner failed")    // 30
 	InitPluginFailed    = errors.New("init plugin failed")     // 31
 	BuildGoPluginFailed = errors.New("build go plugin failed") // 32
 	BuildPyPluginFailed = errors.New("build py plugin failed") // 33
@@ -52,8 +52,9 @@ var (
 
 // summary: [40, 50)
 var (
-	DownloadFailed = errors.New("download failed") // 48
-	UploadFailed   = errors.New("upload failed")   // 49
+	GenSummaryFailed = errors.New("gen summary failed") // 40
+	DownloadFailed   = errors.New("download failed")    // 48
+	UploadFailed     = errors.New("upload failed")      // 49
 )
 
 // ios device related: [50, 60)
@@ -102,6 +103,7 @@ var (
 
 var errorsMap = map[error]int{
 	// environment
+	UnauthorizedError:  4,
 	InvalidPython3Venv: 9,
 
 	// loader
@@ -123,11 +125,17 @@ var errorsMap = map[error]int{
 	ParseVariablesError: 24,
 
 	// runner
+	StartRunnerFailed:   30,
 	InitPluginFailed:    31,
 	BuildGoPluginFailed: 32,
 	BuildPyPluginFailed: 33,
 	InterruptError:      38,
 	TimeoutError:        39,
+
+	// summary
+	GenSummaryFailed: 40,
+	DownloadFailed:   48,
+	UploadFailed:     49,
 
 	// ios related
 	IOSDeviceConnectionError: 50,
@@ -180,7 +188,5 @@ func GetErrorCode(err error) (errCode int) {
 	} else {
 		errCode = GeneralFail
 	}
-
-	fmt.Printf("hrp exit %d\n", errCode)
 	return
 }
