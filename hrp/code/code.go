@@ -12,6 +12,7 @@ const (
 
 // environment: [2, 10)
 var (
+	ConfigureError     = errors.New("configure error")             // 3
 	UnauthorizedError  = errors.New("unauthorized error")          // 4
 	InvalidPython3Venv = errors.New("prepare python3 venv failed") // 9
 )
@@ -103,6 +104,7 @@ var (
 
 var errorsMap = map[error]int{
 	// environment
+	ConfigureError:     3,
 	UnauthorizedError:  4,
 	InvalidPython3Venv: 9,
 
@@ -123,6 +125,8 @@ var errorsMap = map[error]int{
 	ParseFunctionError:  22,
 	CallFunctionError:   23,
 	ParseVariablesError: 24,
+	FFmpegError:         25,
+	FFprobeError:        26,
 
 	// runner
 	StartRunnerFailed:   30,
