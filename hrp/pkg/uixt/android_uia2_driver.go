@@ -294,7 +294,7 @@ func (ud *uiaDriver) Orientation() (orientation Orientation, err error) {
 	return
 }
 
-func (ud *uiaDriver) DoubleTap(x, y int) error {
+func (ud *uiaDriver) DoubleTap(x, y int, options ...ActionOption) error {
 	return ud.DoubleFloatTap(float64(x), float64(y))
 }
 

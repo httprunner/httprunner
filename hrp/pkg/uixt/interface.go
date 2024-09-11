@@ -566,8 +566,8 @@ type IWebDriver interface {
 	TapFloat(x, y float64, options ...ActionOption) error
 
 	// DoubleTap Sends a double tap event at the coordinate.
-	DoubleTap(x, y int) error
-	DoubleTapFloat(x, y float64) error
+	DoubleTap(x, y int, options ...ActionOption) error
+	DoubleTapFloat(x, y float64, options ...ActionOption) error
 
 	// TouchAndHold Initiates a long-press gesture at the coordinate, holding for the specified duration.
 	//  second: The default value is 1

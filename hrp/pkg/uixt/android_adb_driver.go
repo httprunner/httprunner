@@ -307,11 +307,11 @@ func (ad *adbDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 	return nil
 }
 
-func (ad *adbDriver) DoubleTap(x, y int) error {
-	return ad.DoubleTapFloat(float64(x), float64(y))
+func (ad *adbDriver) DoubleTap(x, y int, options ...ActionOption) error {
+	return ad.DoubleTapFloat(float64(x), float64(y), options...)
 }
 
-func (ad *adbDriver) DoubleTapFloat(x, y float64) (err error) {
+func (ad *adbDriver) DoubleTapFloat(x, y float64, options ...ActionOption) (err error) {
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)

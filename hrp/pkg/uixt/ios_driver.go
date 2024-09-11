@@ -499,11 +499,11 @@ func (wd *wdaDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 	return
 }
 
-func (wd *wdaDriver) DoubleTap(x, y int) error {
-	return wd.DoubleTapFloat(float64(x), float64(y))
+func (wd *wdaDriver) DoubleTap(x, y int, options ...ActionOption) error {
+	return wd.DoubleTapFloat(float64(x), float64(y), options...)
 }
 
-func (wd *wdaDriver) DoubleTapFloat(x, y float64) (err error) {
+func (wd *wdaDriver) DoubleTapFloat(x, y float64, options ...ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
 	data := map[string]interface{}{
 		"x": wd.toScale(x),

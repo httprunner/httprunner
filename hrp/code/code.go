@@ -81,6 +81,9 @@ var (
 var (
 	MobileUIDriverError                   = errors.New("mobile UI driver error")                     // 70
 	MobileUILaunchAppError                = errors.New("mobile UI launch app error")                 // 71
+	MobileUITapError                      = errors.New("mobile UI tap error")                        // 72
+	MobileUISwipeError                    = errors.New("mobile UI swipe error")                      // 73
+	MobileUIInputError                    = errors.New("mobile UI input error")                      // 74
 	MobileUIValidationError               = errors.New("mobile UI validation error")                 // 75
 	MobileUIAssertForegroundAppError      = errors.New("mobile UI assert foreground app error")      // 76
 	MobileUIAssertForegroundActivityError = errors.New("mobile UI assert foreground activity error") // 77
@@ -88,13 +91,15 @@ var (
 	LoopActionNotFoundError               = errors.New("loop action not found error")                // 79
 )
 
-// CV related: [80, 90)
+// AI related: [80, 90)
 var (
 	CVEnvMissedError         = errors.New("CV env missed error")      // 80
 	CVRequestError           = errors.New("CV prepare request error") // 81
 	CVServiceConnectionError = errors.New("CV service connect error") // 82
 	CVResponseError          = errors.New("CV parse response error")  // 83
 	CVResultNotFoundError    = errors.New("CV result not found")      // 84
+
+	ContextUnknowError = errors.New("detect context failed") // 85
 )
 
 // trackings related: [90, 100)
@@ -160,18 +165,22 @@ var errorsMap = map[error]int{
 	// UI automation related
 	MobileUIDriverError:                   70,
 	MobileUILaunchAppError:                71,
+	MobileUITapError:                      72,
+	MobileUISwipeError:                    73,
+	MobileUIInputError:                    74,
 	MobileUIValidationError:               75,
 	MobileUIAssertForegroundAppError:      76,
 	MobileUIAssertForegroundActivityError: 77,
 	MobileUIPopupError:                    78,
 	LoopActionNotFoundError:               79,
 
-	// OCR related
+	// AI related
 	CVEnvMissedError:         80,
 	CVRequestError:           81,
 	CVServiceConnectionError: 82,
 	CVResponseError:          83,
 	CVResultNotFoundError:    84,
+	ContextUnknowError:       85,
 
 	// trackings related
 	TrackingGetError:   90,
