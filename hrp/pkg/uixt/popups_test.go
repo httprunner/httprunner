@@ -11,9 +11,11 @@ func TestCheckPopup(t *testing.T) {
 	setupAndroidAdbDriver(t)
 	popup, err := driverExt.CheckPopup()
 	if err != nil {
-		t.Logf("error: %v", err)
+		t.Logf("check popup failed, err: %v", err)
+	} else if popup == nil {
+		t.Log("no popup found")
 	} else {
-		t.Logf("popup: %+v", popup)
+		t.Logf("found popup: %v", popup)
 	}
 }
 

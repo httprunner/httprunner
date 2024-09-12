@@ -94,13 +94,6 @@ func (p *PopupInfo) ClosePoint() *PointF {
 }
 
 func (dExt *DriverExt) CheckPopup() (popup *PopupInfo, err error) {
-	defer func() {
-		if popup == nil {
-			log.Info().Msg("check popup, no found")
-		} else {
-			log.Info().Interface("popup", popup).Msg("found popup")
-		}
-	}()
 	screenResult, err := dExt.GetScreenResult(
 		WithScreenShotUpload(true),
 		WithScreenShotClosePopups(true), // get popup area and close area
@@ -110,13 +103,16 @@ func (dExt *DriverExt) CheckPopup() (popup *PopupInfo, err error) {
 	}
 	popup = screenResult.Popup
 	if popup == nil {
-		return nil, errors.New("popup not found")
+		// popup not found
+		log.Debug().Msg("check popup, no found")
+		return nil, nil
 	}
 	closePoint := popup.ClosePoint()
 	if closePoint == nil {
 		// close point not found
-		return nil, errors.New("popup close point not found")
+		return nil, errors.Wrap(code.MobileUIPopupError, "popup close point not found")
 	}
+	log.Info().Interface("popup", popup).Msg("found popup")
 	return popup, nil
 }
 
@@ -125,9 +121,14 @@ func (dExt *DriverExt) ClosePopupsHandler() (err error) {
 
 	popup, err := dExt.CheckPopup()
 	if err != nil {
+		// check popup failed
+		return err
+	} else if popup == nil {
 		// no popup found
 		return nil
 	}
+
+	// found popup
 	closePoint := popup.ClosePoint()
 
 	log.Info().

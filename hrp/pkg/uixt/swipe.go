@@ -19,13 +19,14 @@ func assertRelative(p float64) bool {
 func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	if !assertRelative(fromX) || !assertRelative(fromY) ||
 		!assertRelative(toX) || !assertRelative(toY) {
-		return fmt.Errorf("fromX(%f), fromY(%f), toX(%f), toY(%f) must be less than 1",
-			fromX, fromY, toX, toY)
+		return errors.Wrap(code.MobileUISwipeError,
+			fmt.Sprintf("fromX(%f), fromY(%f), toX(%f), toY(%f) must be less than 1",
+				fromX, fromY, toX, toY))
 	}
 
 	windowSize, err := dExt.Driver.WindowSize()
 	if err != nil {
-		return err
+		return errors.Wrap(code.MobileUISwipeError, err.Error())
 	}
 	width := windowSize.Width
 	height := windowSize.Height
