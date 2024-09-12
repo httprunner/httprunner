@@ -8,5 +8,8 @@ import (
 
 func (dExt *DriverExt) Input(text string) (err error) {
 	err = dExt.Driver.Input(text)
-	return errors.Wrap(code.MobileUIInputError, err.Error())
+	if err != nil {
+		return errors.Wrap(code.MobileUIInputError, err.Error())
+	}
+	return nil
 }

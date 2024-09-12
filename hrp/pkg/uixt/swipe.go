@@ -35,7 +35,10 @@ func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, options ...
 	toX = float64(width) * toX
 	toY = float64(height) * toY
 	err = dExt.Driver.SwipeFloat(fromX, fromY, toX, toY, options...)
-	return errors.Wrap(code.MobileUISwipeError, err.Error())
+	if err != nil {
+		return errors.Wrap(code.MobileUISwipeError, err.Error())
+	}
+	return nil
 }
 
 func (dExt *DriverExt) SwipeTo(direction string, options ...ActionOption) (err error) {

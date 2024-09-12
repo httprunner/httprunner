@@ -172,7 +172,6 @@ func (dExt *DriverExt) GetScreenShot(fileName string) (raw *bytes.Buffer, path s
 		return nil, "", errors.Wrap(code.DeviceScreenShotError,
 			fmt.Sprintf("save screenshot file failed: %s", err.Error()))
 	}
-	log.Debug().Str("path", path).Msg("save screenshot file success")
 	return compressed, path, nil
 }
 
