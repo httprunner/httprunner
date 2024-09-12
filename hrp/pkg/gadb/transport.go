@@ -42,18 +42,18 @@ func newTransport(address string, readTimeout ...time.Duration) (tp transport, e
 
 	// connection refused
 	if strings.Contains(err.Error(), "connect: connection refused") {
-		err = errors.Wrap(code.AndroidDeviceConnectionRefusedError, err.Error())
+		err = errors.Wrap(code.DeviceConnectionError, err.Error())
 		return
 	}
 
 	// device offline
 	if regexDeviceOffline.MatchString(err.Error()) {
-		err = errors.Wrap(code.AndroidDeviceOfflineError, err.Error())
+		err = errors.Wrap(code.DeviceOfflineError, err.Error())
 		return
 	}
 
 	// other connection errors
-	err = errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
+	err = errors.Wrap(code.DeviceConnectionError, err.Error())
 	return
 }
 

@@ -674,7 +674,7 @@ func (ad *adbDriver) StartCaptureLog(identifier ...string) (err error) {
 	// start logcat
 	err = ad.logcat.CatchLogcat("iesqaMonitor:V")
 	if err != nil {
-		err = errors.Wrap(code.AndroidCaptureLogError,
+		err = errors.Wrap(code.DeviceCaptureLogError,
 			fmt.Sprintf("start adb log recording failed: %v", err))
 		return err
 	}

@@ -145,12 +145,12 @@ func WithIOSPcapOptions(options ...gidevice.PcapOption) IOSDeviceOption {
 func GetIOSDevices(udid ...string) (devices []gidevice.Device, err error) {
 	var usbmux gidevice.Usbmux
 	if usbmux, err = gidevice.NewUsbmux(); err != nil {
-		return nil, errors.Wrap(code.IOSDeviceConnectionError,
+		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("init usbmux failed: %v", err))
 	}
 
 	if devices, err = usbmux.Devices(); err != nil {
-		return nil, errors.Wrap(code.IOSDeviceConnectionError,
+		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("list ios devices failed: %v", err))
 	}
 
@@ -235,11 +235,11 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 
 	deviceList, err := GetIOSDevices(device.UDID)
 	if err != nil {
-		return nil, errors.Wrap(code.IOSDeviceConnectionError, err.Error())
+		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
 
 	if device.UDID == "" && len(deviceList) > 1 {
-		return nil, errors.Wrap(code.IOSDeviceConnectionError, "more than one device connected, please specify the udid")
+		return nil, errors.Wrap(code.DeviceConnectionError, "more than one device connected, please specify the udid")
 	}
 
 	dev := deviceList[0]
@@ -507,7 +507,7 @@ func (dev *IOSDevice) forward(localPort, remotePort int) error {
 			rInnerConn, err := device.NewConnect(remotePort)
 			if err != nil {
 				log.Error().Err(err).Msg("connect to ios device failed")
-				os.Exit(code.GetErrorCode(code.IOSDeviceConnectionError))
+				os.Exit(code.GetErrorCode(code.DeviceConnectionError))
 			}
 
 			rConn := rInnerConn.RawConn()
@@ -614,12 +614,12 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDrive
 	if err != nil {
 		localPort, err = builtin.GetFreePort()
 		if err != nil {
-			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("get free port failed: %v", err))
 		}
 
 		if err = dev.forward(localPort, dev.Port); err != nil {
-			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
 	} else {
@@ -631,11 +631,11 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDrive
 	if err != nil {
 		localMjpegPort, err = builtin.GetFreePort()
 		if err != nil {
-			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("get free port failed: %v", err))
 		}
 		if err = dev.forward(localMjpegPort, dev.MjpegPort); err != nil {
-			return nil, errors.Wrap(code.IOSDeviceHTTPDriverError,
+			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
 	} else {
@@ -652,17 +652,17 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDrive
 
 	host := "localhost"
 	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
-		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError, err.Error())
+		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
 	if _, err = wd.NewSession(capabilities); err != nil {
-		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError, err.Error())
+		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
 
 	if wd.mjpegHTTPConn, err = net.Dial(
 		"tcp",
 		fmt.Sprintf("%s:%d", host, localMjpegPort),
 	); err != nil {
-		return nil, errors.Wrap(code.IOSDeviceHTTPDriverError, err.Error())
+		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
 	wd.mjpegClient = convertToHTTPClient(wd.mjpegHTTPConn)
 
@@ -681,22 +681,22 @@ func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver IWebDriver
 
 	wd := new(wdaDriver)
 	if wd.defaultConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
-		return nil, errors.Wrap(code.IOSDeviceUSBDriverError,
+		return nil, errors.Wrap(code.DeviceUSBDriverError,
 			fmt.Sprintf("connect port %d failed: %v", dev.Port, err))
 	}
 	wd.client = convertToHTTPClient(wd.defaultConn.RawConn())
 
 	if wd.mjpegUSBConn, err = dev.d.NewConnect(dev.MjpegPort, 0); err != nil {
-		return nil, errors.Wrap(code.IOSDeviceUSBDriverError,
+		return nil, errors.Wrap(code.DeviceUSBDriverError,
 			fmt.Sprintf("connect MJPEG port %d failed: %v", dev.MjpegPort, err))
 	}
 	wd.mjpegClient = convertToHTTPClient(wd.mjpegUSBConn.RawConn())
 
 	if wd.urlPrefix, err = url.Parse("http://" + dev.UDID); err != nil {
-		return nil, errors.Wrap(code.IOSDeviceUSBDriverError, err.Error())
+		return nil, errors.Wrap(code.DeviceUSBDriverError, err.Error())
 	}
 	if _, err = wd.NewSession(capabilities); err != nil {
-		return nil, errors.Wrap(code.IOSDeviceUSBDriverError, err.Error())
+		return nil, errors.Wrap(code.DeviceUSBDriverError, err.Error())
 	}
 
 	// init WDA scale

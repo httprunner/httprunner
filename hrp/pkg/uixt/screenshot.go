@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 )
@@ -152,14 +153,15 @@ func (dExt *DriverExt) FindUIResult(options ...ActionOption) (point PointF, err 
 func (dExt *DriverExt) GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error) {
 	if raw, err = dExt.Driver.Screenshot(); err != nil {
 		log.Error().Err(err).Msg("capture screenshot data failed")
-		return nil, "", err
+		return nil, "", errors.Wrap(code.DeviceScreenShotError, err.Error())
 	}
 
 	// compress image data
 	compressed, err := compressImageBuffer(raw)
 	if err != nil {
 		log.Error().Err(err).Msg("compress screenshot data failed")
-		return nil, "", err
+		return nil, "", errors.Wrap(code.DeviceScreenShotError,
+			fmt.Sprintf("compress screenshot data failed: %s", err.Error()))
 	}
 
 	// save screenshot to file
@@ -167,8 +169,10 @@ func (dExt *DriverExt) GetScreenShot(fileName string) (raw *bytes.Buffer, path s
 	path, err = saveScreenShot(compressed, path)
 	if err != nil {
 		log.Error().Err(err).Msg("save screenshot file failed")
-		return nil, "", err
+		return nil, "", errors.Wrap(code.DeviceScreenShotError,
+			fmt.Sprintf("save screenshot file failed: %s", err.Error()))
 	}
+	log.Debug().Str("path", path).Msg("save screenshot file success")
 	return compressed, path, nil
 }
 

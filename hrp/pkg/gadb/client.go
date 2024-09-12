@@ -90,7 +90,7 @@ func (c Client) DeviceSerialList() (serials []string, err error) {
 func (c Client) DeviceList() (devices []*Device, err error) {
 	defer func() {
 		if err != nil && errors.Cause(err) == nil {
-			err = errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
+			err = errors.Wrap(code.DeviceConnectionError, err.Error())
 		}
 	}()
 

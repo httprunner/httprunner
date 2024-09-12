@@ -53,28 +53,20 @@ var (
 
 // summary: [40, 50)
 var (
-	GenSummaryFailed = errors.New("gen summary failed") // 40
-	DownloadFailed   = errors.New("download failed")    // 48
-	UploadFailed     = errors.New("upload failed")      // 49
+	GenSummaryFailed = errors.New("generate summary failed") // 40
+	DownloadFailed   = errors.New("download failed")         // 48
+	UploadFailed     = errors.New("upload failed")           // 49
 )
 
-// ios device related: [50, 60)
+// device related: [50, 70)
 var (
-	IOSDeviceConnectionError = errors.New("ios device connection error")  // 50
-	IOSDeviceHTTPDriverError = errors.New("ios device HTTP driver error") // 51
-	IOSDeviceUSBDriverError  = errors.New("ios device USB driver error")  // 52
-	IOSScreenShotError       = errors.New("ios screenshot error")         // 55
-	IOSCaptureLogError       = errors.New("ios capture log error")        // 56
-)
-
-// android device related: [60, 70)
-var (
-	AndroidDeviceConnectionError        = errors.New("android device general connection error") // 60
-	AndroidDeviceConnectionRefusedError = errors.New("android device connection refused")       // 61
-	AndroidShellExecError               = errors.New("android adb shell exec error")            // 62
-	AndroidDeviceOfflineError           = errors.New("android device offline")                  // 63
-	AndroidScreenShotError              = errors.New("android screenshot error")                // 65
-	AndroidCaptureLogError              = errors.New("android capture log error")               // 66
+	DeviceConnectionError = errors.New("device general connection error") // 50
+	DeviceHTTPDriverError = errors.New("device HTTP driver error")        // 51
+	DeviceUSBDriverError  = errors.New("device USB driver error")         // 52
+	DeviceShellExecError  = errors.New("device shell exec error")         // 62
+	DeviceOfflineError    = errors.New("device offline")                  // 63
+	DeviceScreenShotError = errors.New("device screenshot error")         // 65
+	DeviceCaptureLogError = errors.New("device capture log error")        // 66
 )
 
 // UI automation related: [70, 80)
@@ -147,20 +139,14 @@ var errorsMap = map[error]int{
 	DownloadFailed:   48,
 	UploadFailed:     49,
 
-	// ios related
-	IOSDeviceConnectionError: 50,
-	IOSDeviceHTTPDriverError: 51,
-	IOSDeviceUSBDriverError:  52,
-	IOSScreenShotError:       55,
-	IOSCaptureLogError:       56,
-
-	// android related
-	AndroidDeviceConnectionError:        60,
-	AndroidDeviceConnectionRefusedError: 61,
-	AndroidShellExecError:               62,
-	AndroidDeviceOfflineError:           63,
-	AndroidScreenShotError:              65,
-	AndroidCaptureLogError:              66,
+	// device related
+	DeviceConnectionError: 50,
+	DeviceHTTPDriverError: 51,
+	DeviceUSBDriverError:  52,
+	DeviceShellExecError:  62,
+	DeviceOfflineError:    63,
+	DeviceScreenShotError: 65,
+	DeviceCaptureLogError: 66,
 
 	// UI automation related
 	MobileUIDriverError:                   70,

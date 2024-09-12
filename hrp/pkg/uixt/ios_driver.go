@@ -742,13 +742,11 @@ func (wd *wdaDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	// [[FBRoute GET:@"/screenshot"].withoutSession respondWithTarget:self action:@selector(handleGetScreenshot:)]
 	var rawResp rawResponse
 	if rawResp, err = wd.httpGET("/session", wd.session.ID, "/screenshot"); err != nil {
-		return nil, errors.Wrap(code.IOSScreenShotError,
-			fmt.Sprintf("get WDA screenshot data failed: %v", err))
+		return nil, errors.Wrap(err, "get WDA screenshot data failed")
 	}
 
 	if raw, err = rawResp.valueDecodeAsBase64(); err != nil {
-		return nil, errors.Wrap(code.IOSScreenShotError,
-			fmt.Sprintf("decode WDA screenshot data failed: %v", err))
+		return nil, errors.Wrap(err, "decode WDA screenshot data failed")
 	}
 	return
 }
@@ -874,7 +872,7 @@ func (wd *wdaDriver) StartCaptureLog(identifier ...string) error {
 	data := map[string]interface{}{"action": "start", "type": 2, "identifier": identifier[0]}
 	_, err := wd.triggerWDALog(data)
 	if err != nil {
-		return errors.Wrap(code.IOSCaptureLogError,
+		return errors.Wrap(code.DeviceCaptureLogError,
 			fmt.Sprintf("start WDA log recording failed: %v", err))
 	}
 
@@ -892,13 +890,13 @@ func (wd *wdaDriver) StopCaptureLog() (result interface{}, err error) {
 	rawResp, err := wd.triggerWDALog(data)
 	if err != nil {
 		log.Error().Err(err).Bytes("rawResp", rawResp).Msg("failed to get WDA logs")
-		return "", errors.Wrap(code.IOSCaptureLogError,
+		return "", errors.Wrap(code.DeviceCaptureLogError,
 			fmt.Sprintf("get WDA logs failed: %v", err))
 	}
 	reply := new(wdaResponse)
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		log.Error().Err(err).Bytes("rawResp", rawResp).Msg("failed to json.Unmarshal WDA logs")
-		return reply, errors.Wrap(code.IOSCaptureLogError,
+		return reply, errors.Wrap(code.DeviceCaptureLogError,
 			fmt.Sprintf("json.Unmarshal WDA logs failed: %v", err))
 	}
 	log.Info().Interface("value", reply.Value).Msg("get WDA log response")

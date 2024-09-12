@@ -112,11 +112,11 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 	}
 	deviceList, err := GetAndroidDevices(device.SerialNumber)
 	if err != nil {
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
+		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
 
 	if device.SerialNumber == "" && len(deviceList) > 1 {
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError, "more than one device connected, please specify the serial")
+		return nil, errors.Wrap(code.DeviceConnectionError, "more than one device connected, please specify the serial")
 	}
 
 	dev := deviceList[0]
@@ -137,7 +137,7 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 	}
 	err = dev.Push(bytes.NewReader(evalToolRaw), "/data/local/tmp/evalite", time.Now())
 	if err != nil {
-		return nil, errors.Wrap(code.AndroidShellExecError, err.Error())
+		return nil, errors.Wrap(code.DeviceShellExecError, err.Error())
 	}
 	log.Info().Str("serial", device.SerialNumber).Msg("init android device")
 	return device, nil
@@ -240,7 +240,7 @@ func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverE
 func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver IWebDriver, err error) {
 	localPort, err := dev.d.Forward(UIA2ServerPort)
 	if err != nil {
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
+		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("forward port %d->%d failed: %v",
 				localPort, UIA2ServerPort, err))
 	}
@@ -250,7 +250,7 @@ func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver IWebDr
 	uiaDriver, err := NewUIADriver(capabilities, rawURL)
 	if err != nil {
 		_ = dev.d.ForwardKill(localPort)
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
+		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
 	uiaDriver.adbClient = dev.d
 	uiaDriver.logcat = dev.logcat
@@ -261,14 +261,14 @@ func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver IWebDr
 func (dev *AndroidDevice) NewStubDriver(capabilities Capabilities) (driver *stubAndroidDriver, err error) {
 	socketLocalPort, err := dev.d.Forward(StubSocketName)
 	if err != nil {
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
+		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("forward port %d->%s failed: %v",
 				socketLocalPort, StubSocketName, err))
 	}
 
 	serverLocalPort, err := dev.d.Forward(DouyinServerPort)
 	if err != nil {
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError,
+		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("forward port %d->%d failed: %v",
 				serverLocalPort, DouyinServerPort, err))
 	}
@@ -280,7 +280,7 @@ func (dev *AndroidDevice) NewStubDriver(capabilities Capabilities) (driver *stub
 	if err != nil {
 		_ = dev.d.ForwardKill(socketLocalPort)
 		_ = dev.d.ForwardKill(serverLocalPort)
-		return nil, errors.Wrap(code.AndroidDeviceConnectionError, err.Error())
+		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
 	stubDriver.adbClient = dev.d
 	stubDriver.logcat = dev.logcat
