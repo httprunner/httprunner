@@ -47,6 +47,7 @@ var (
 	InitPluginFailed    = errors.New("init plugin failed")     // 31
 	BuildGoPluginFailed = errors.New("build go plugin failed") // 32
 	BuildPyPluginFailed = errors.New("build py plugin failed") // 33
+	MaxRetryError       = errors.New("max retry error")        // 37
 	InterruptError      = errors.New("interrupt error")        // 38
 	TimeoutError        = errors.New("timeout error")          // 39
 )
@@ -131,6 +132,7 @@ var errorsMap = map[error]int{
 	InitPluginFailed:    31,
 	BuildGoPluginFailed: 32,
 	BuildPyPluginFailed: 33,
+	MaxRetryError:       37,
 	InterruptError:      38,
 	TimeoutError:        39,
 
