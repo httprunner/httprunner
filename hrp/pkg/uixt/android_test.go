@@ -34,6 +34,14 @@ func setupAndroidUIA2Driver(t *testing.T) {
 	checkErr(t, err)
 }
 
+func TestAndroidDevice_GetPackageInfo(t *testing.T) {
+	device, err := NewAndroidDevice()
+	checkErr(t, err)
+	appInfo, err := device.GetPackageInfo("com.android.settings")
+	checkErr(t, err)
+	t.Log(appInfo)
+}
+
 func TestDriver_NewSession(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
 	if err != nil {

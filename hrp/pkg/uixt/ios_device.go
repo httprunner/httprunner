@@ -733,3 +733,7 @@ func (dev *IOSDevice) RunXCTest(bundleID string) (cancel context.CancelFunc, err
 
 	return cancel, nil
 }
+
+func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
+	return AppInfo{}, nil
+}

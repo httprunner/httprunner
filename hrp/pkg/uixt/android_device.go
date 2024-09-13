@@ -438,6 +438,26 @@ func (dev *AndroidDevice) installCommon(app io.ReadSeeker, args ...string) error
 	return err
 }
 
+func (dev *AndroidDevice) GetPackageInfo(packageName string) (AppInfo, error) {
+	appInfo := AppInfo{
+		Name: packageName,
+	}
+	output, err := dev.d.RunShellCommand("dumpsys", "package", packageName, "|", "grep", "versionName")
+	if err != nil {
+		return appInfo, err
+	}
+	re := regexp.MustCompile(`versionName=(.+)`)
+	matches := re.FindStringSubmatch(output)
+	if len(matches) > 1 {
+		appInfo.AppBaseInfo = AppBaseInfo{
+			PackageName: packageName,
+			VersionName: matches[1],
+		}
+		return appInfo, nil
+	}
+	return appInfo, errors.New("failed to get package version")
+}
+
 type LineCallback func(string)
 
 type AdbLogcat struct {

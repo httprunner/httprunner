@@ -487,9 +487,10 @@ type IDevice interface {
 	StartPcap() error
 	StopPcap() string
 
+	Install(appPath string, opts *InstallOptions) error
 	Uninstall(packageName string) error
 
-	Install(appPath string, opts *InstallOptions) error
+	GetPackageInfo(packageName string) (AppInfo, error)
 }
 
 type ForegroundApp struct {
