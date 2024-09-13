@@ -442,21 +442,74 @@ func (dev *AndroidDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 	appInfo := AppInfo{
 		Name: packageName,
 	}
-	output, err := dev.d.RunShellCommand("dumpsys", "package", packageName, "|", "grep", "versionName")
-	if err != nil {
+	// get package version
+	appVersion, err := dev.getPackageVersion(packageName)
+	if err == nil {
+		appInfo.AppBaseInfo.VersionName = appVersion
+	} else {
+		log.Warn().Msg("failed to get package version")
 		return appInfo, err
 	}
+
+	// get package path
+	packagePath, err := dev.getPackagePath(packageName)
+	if err == nil {
+		appInfo.AppBaseInfo.AppPath = packagePath
+	} else {
+		log.Warn().Msg("failed to get package path")
+		return appInfo, err
+	}
+
+	// get package md5
+	packageMD5, err := dev.getPackageMD5(packagePath)
+	if err == nil {
+		appInfo.AppBaseInfo.AppMD5 = packageMD5
+	} else {
+		log.Warn().Msg("failed to get package md5")
+		return appInfo, err
+	}
+
+	return appInfo, nil
+}
+
+func (dev *AndroidDevice) getPackageVersion(packageName string) (string, error) {
+	output, err := dev.d.RunShellCommand("dumpsys", "package", packageName, "|", "grep", "versionName")
+	if err != nil {
+		return "", errors.Wrap(err, "get package version failed")
+	}
+	appVersion := ""
 	re := regexp.MustCompile(`versionName=(.+)`)
 	matches := re.FindStringSubmatch(output)
 	if len(matches) > 1 {
-		appInfo.AppBaseInfo = AppBaseInfo{
-			PackageName: packageName,
-			VersionName: matches[1],
-		}
-		log.Info().Interface("appInfo", appInfo).Msg("get app info")
-		return appInfo, nil
+		appVersion = matches[1]
+		return appVersion, nil
 	}
-	return appInfo, errors.New("failed to get package version")
+	return "", errors.New("failed to get package version")
+}
+
+func (dev *AndroidDevice) getPackagePath(packageName string) (string, error) {
+	output, err := dev.d.RunShellCommand("pm", "path", packageName)
+	if err != nil {
+		return "", errors.Wrap(err, "get package path failed")
+	}
+	re := regexp.MustCompile(`package:(.+)`)
+	matches := re.FindStringSubmatch(output)
+	if len(matches) > 1 {
+		return matches[1], nil
+	}
+	return "", errors.New("failed to get package path")
+}
+
+func (dev *AndroidDevice) getPackageMD5(packagePath string) (string, error) {
+	output, err := dev.d.RunShellCommand("md5sum", packagePath)
+	if err != nil {
+		return "", errors.Wrap(err, "get package md5 failed")
+	}
+	matches := strings.Split(output, " ")
+	if len(matches) > 1 {
+		return matches[0], nil
+	}
+	return "", errors.New("failed to get package md5")
 }
 
 type LineCallback func(string)

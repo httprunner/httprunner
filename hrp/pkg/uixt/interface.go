@@ -263,6 +263,8 @@ type AppBaseInfo struct {
 	VersionName    string `json:"versionName,omitempty"`
 	VersionCode    int    `json:"versionCode,omitempty"`
 	AppName        string `json:"appName,omitempty"`
+	AppPath        string `json:"appPath,omitempty"`
+	AppMD5         string `json:"appMD5,omitempty"`
 	// AppIcon        string `json:"appIcon,omitempty"`
 }
 
