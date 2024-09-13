@@ -102,6 +102,13 @@ var (
 	TrackingFomatError = errors.New("tracking format error") // 91
 )
 
+// risk control related: [100, 110)
+var (
+	RiskControlLogout            = errors.New("risk control logout")             // 100
+	RiskControlSlideVerification = errors.New("risk control slide verification") // 101
+	RiskControlAccountActivation = errors.New("risk control account activation") // 102
+)
+
 var errorsMap = map[error]int{
 	// environment
 	ConfigureError:     3,
@@ -175,6 +182,11 @@ var errorsMap = map[error]int{
 	// trackings related
 	TrackingGetError:   90,
 	TrackingFomatError: 91,
+
+	// risk control related
+	RiskControlLogout:            100,
+	RiskControlSlideVerification: 101,
+	RiskControlAccountActivation: 102,
 }
 
 func IsErrorPredefined(err error) bool {

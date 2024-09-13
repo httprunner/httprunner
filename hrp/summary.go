@@ -44,7 +44,7 @@ type Summary struct {
 }
 
 func (s *Summary) AddCaseSummary(caseSummary *TestCaseSummary) {
-	log.Info().Interface("caseSummary", caseSummary).Msg("add case summary")
+	log.Info().Str("name", caseSummary.Name).Msg("add case summary")
 	s.Success = s.Success && caseSummary.Success
 	s.Stat.TestCases.Total += 1
 	s.Stat.TestSteps.Total += caseSummary.Stat.Total
