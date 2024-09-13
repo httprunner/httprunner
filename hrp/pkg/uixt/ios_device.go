@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -734,6 +735,39 @@ func (dev *IOSDevice) RunXCTest(bundleID string) (cancel context.CancelFunc, err
 	return cancel, nil
 }
 
+type Application struct {
+	CFBundleVersion     string `json:"version"`
+	CFBundleDisplayName string `json:"name"`
+	CFBundleIdentifier  string `json:"bundleId"`
+}
+
 func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
-	return AppInfo{}, nil
+	appInfo := AppInfo{
+		Name: packageName,
+	}
+	applicationType := gidevice.ApplicationTypeAny
+	result, err := dev.d.InstallationProxyBrowse(
+		gidevice.WithApplicationType(applicationType),
+		gidevice.WithReturnAttributes("CFBundleVersion", "CFBundleDisplayName", "CFBundleIdentifier"))
+	if err != nil {
+		return appInfo, errors.Wrap(code.DeviceShellExecError,
+			fmt.Sprintf("get app list failed %v", err))
+	}
+
+	for _, app := range result {
+		a := Application{}
+		mapstructure.Decode(app, &a)
+
+		if a.CFBundleIdentifier != packageName {
+			continue
+		}
+		appInfo.AppBaseInfo = AppBaseInfo{
+			BundleId:    a.CFBundleIdentifier,
+			VersionName: a.CFBundleVersion,
+			AppName:     a.CFBundleDisplayName,
+		}
+		log.Info().Interface("appInfo", appInfo).Msg("get app info")
+		return appInfo, nil
+	}
+	return appInfo, errors.New("failed to get package version")
 }

@@ -453,6 +453,7 @@ func (dev *AndroidDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 			PackageName: packageName,
 			VersionName: matches[1],
 		}
+		log.Info().Interface("appInfo", appInfo).Msg("get app info")
 		return appInfo, nil
 	}
 	return appInfo, errors.New("failed to get package version")

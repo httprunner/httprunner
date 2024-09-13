@@ -42,6 +42,14 @@ func TestAndroidDevice_GetPackageInfo(t *testing.T) {
 	t.Log(appInfo)
 }
 
+func TestIOSDevice_GetPackageInfo(t *testing.T) {
+	device, err := NewIOSDevice()
+	checkErr(t, err)
+	appInfo, err := device.GetPackageInfo("com.apple.Preferences")
+	checkErr(t, err)
+	t.Log(appInfo)
+}
+
 func TestDriver_NewSession(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
 	if err != nil {
