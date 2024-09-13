@@ -21,7 +21,7 @@ import (
 
 type ScreenResult struct {
 	bufSource   *bytes.Buffer // raw image buffer bytes
-	imagePath   string        // image file path
+	ImagePath   string        // image file path
 	ImageResult *ImageResult  // image result
 
 	Resolution  Size        `json:"resolution"`
@@ -54,7 +54,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	}
 	screenResult = &ScreenResult{
 		bufSource:  bufSource,
-		imagePath:  imagePath,
+		ImagePath:  imagePath,
 		Tags:       nil,
 		Resolution: windowSize,
 	}

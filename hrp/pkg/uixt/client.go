@@ -26,7 +26,7 @@ type DriverSession struct {
 }
 
 func (d *DriverSession) addScreenResult(screenResult *ScreenResult) {
-	d.screenResults[screenResult.imagePath] = screenResult
+	d.screenResults[screenResult.ImagePath] = screenResult
 }
 
 func (d *DriverSession) addRequestResult(driverResult *DriverResult) {
@@ -43,11 +43,11 @@ func (d *DriverSession) GetAll() map[string]interface{} {
 	screenShots := make([]string, 0)
 	screenShotsUrls := make(map[string]string)
 	for _, screenResult := range d.screenResults {
-		screenShots = append(screenShots, screenResult.imagePath)
+		screenShots = append(screenShots, screenResult.ImagePath)
 		if screenResult.UploadedURL == "" {
 			continue
 		}
-		screenShotsUrls[screenResult.imagePath] = screenResult.UploadedURL
+		screenShotsUrls[screenResult.ImagePath] = screenResult.UploadedURL
 	}
 
 	data := map[string]interface{}{
