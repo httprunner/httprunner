@@ -68,6 +68,7 @@ var (
 	DeviceOfflineError    = errors.New("device offline")                  // 63
 	DeviceScreenShotError = errors.New("device screenshot error")         // 65
 	DeviceCaptureLogError = errors.New("device capture log error")        // 66
+	DeviceUIResponseSlow  = errors.New("device UI response slow")         // 67
 )
 
 // UI automation related: [70, 80)
@@ -149,6 +150,7 @@ var errorsMap = map[error]int{
 	DeviceOfflineError:    63,
 	DeviceScreenShotError: 65,
 	DeviceCaptureLogError: 66,
+	DeviceUIResponseSlow:  67,
 
 	// UI automation related
 	MobileUIDriverError:                   70,
