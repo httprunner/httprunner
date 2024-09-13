@@ -42,30 +42,47 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	if len(screenshotActions) != 0 {
 		fileName = builtin.GenNameWithTimestamp("%d_" + strings.Join(screenshotActions, "_"))
 	}
-	bufSource, imagePath, err := dExt.GetScreenShot(fileName)
-	if err != nil {
-		return
+	if actionOptions.MaxRetryTimes == 0 {
+		actionOptions.MaxRetryTimes = 1
 	}
 
-	windowSize, err := dExt.Driver.WindowSize()
+	var bufSource *bytes.Buffer
+	var imageResult *ImageResult
+	var imagePath string
+	var windowSize Size
+	for i := 0; i < actionOptions.MaxRetryTimes; i++ {
+		bufSource, imagePath, err = dExt.GetScreenShot(fileName)
+		if err != nil {
+			continue
+		}
+
+		windowSize, err = dExt.Driver.WindowSize()
+		if err != nil {
+			err = errors.Wrap(code.MobileUIDriverError, err.Error())
+			continue
+		}
+
+		screenResult = &ScreenResult{
+			bufSource:  bufSource,
+			ImagePath:  imagePath,
+			Tags:       nil,
+			Resolution: windowSize,
+		}
+		imageResult, err = dExt.ImageService.GetImage(bufSource, options...)
+		if err != nil {
+			log.Error().Err(err).Msg("GetImage from ImageService failed")
+			continue
+		}
+		// success
+		break
+	}
 	if err != nil {
-		err = errors.Wrap(code.MobileUIDriverError, err.Error())
-		return
+		return nil, err
 	}
-	screenResult = &ScreenResult{
-		bufSource:  bufSource,
-		ImagePath:  imagePath,
-		Tags:       nil,
-		Resolution: windowSize,
-	}
+
 	// cache screen result
 	dExt.Driver.GetSession().addScreenResult(screenResult)
 
-	imageResult, err := dExt.ImageService.GetImage(bufSource, options...)
-	if err != nil {
-		log.Error().Err(err).Msg("GetImage from ImageService failed")
-		return screenResult, err
-	}
 	if imageResult != nil {
 		screenResult.ImageResult = imageResult
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
