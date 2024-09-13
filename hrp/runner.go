@@ -257,7 +257,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 
 	// save summary
 	if r.saveTests {
-		if err := s.GenSummary(); err != nil {
+		if _, err := s.GenSummary(); err != nil {
 			return err
 		}
 	}

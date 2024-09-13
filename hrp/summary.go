@@ -96,19 +96,19 @@ func (s *Summary) GenHTMLReport() error {
 	return err
 }
 
-func (s *Summary) GenSummary() error {
+func (s *Summary) GenSummary() (path string, err error) {
 	reportsDir := filepath.Join(s.rootDir, env.ResultsDir)
-	err := builtin.EnsureFolderExists(reportsDir)
+	err = builtin.EnsureFolderExists(reportsDir)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	summaryPath := filepath.Join(reportsDir, "summary.json")
-	err = builtin.Dump2JSON(s, summaryPath)
+	path = filepath.Join(reportsDir, "summary.json")
+	err = builtin.Dump2JSON(s, path)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return path, nil
 }
 
 //go:embed internal/scaffold/templates/report/template.html
