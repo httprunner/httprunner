@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	_ "image/gif"
+	"image/gif"
 	"image/jpeg"
-	_ "image/png"
+	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
@@ -180,52 +180,18 @@ func (dExt *DriverExt) GetScreenShot(fileName string) (raw *bytes.Buffer, path s
 		return nil, "", errors.Wrap(code.DeviceScreenShotError, err.Error())
 	}
 
-	// compress image data
-	compressed, err := compressImageBuffer(raw)
-	if err != nil {
-		log.Error().Err(err).Msg("compress screenshot data failed")
-		return nil, "", errors.Wrap(code.DeviceScreenShotError,
-			fmt.Sprintf("compress screenshot data failed: %s", err.Error()))
-	}
-
 	// save screenshot to file
 	path = filepath.Join(env.ScreenShotsPath, fileName)
-	path, err = saveScreenShot(compressed, path)
+	path, err = saveScreenShot(raw, path)
 	if err != nil {
 		log.Error().Err(err).Msg("save screenshot file failed")
 		return nil, "", errors.Wrap(code.DeviceScreenShotError,
 			fmt.Sprintf("save screenshot file failed: %s", err.Error()))
 	}
-	return compressed, path, nil
+	return raw, path, nil
 }
 
-func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error) {
-	// 解码原始图像数据
-	img, format, err := image.Decode(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	// 创建一个用来保存压缩后数据的buffer
-	var buf bytes.Buffer
-
-	switch format {
-	// Convert to jpeg uniformly and compress with a compression rate of 95
-	case "jpeg", "png":
-		jpegOptions := &jpeg.Options{Quality: 95}
-		err = jpeg.Encode(&buf, img, jpegOptions)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("unsupported image format: %s", format)
-	}
-
-	// 返回压缩后的图像数据
-	return &buf, nil
-}
-
-// saveScreenShot saves image file with file name
+// saveScreenShot saves compressed image file with file name
 func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 	// notice: screenshot data is a stream, so we need to copy it to a new buffer
 	copiedBuffer := &bytes.Buffer{}
@@ -248,17 +214,36 @@ func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 		_ = file.Close()
 	}()
 
+	// compress image and save to file
 	switch format {
-	case "jpeg", "png":
-		jpegOptions := &jpeg.Options{}
+	case "jpeg":
+		jpegOptions := &jpeg.Options{Quality: 90}
 		err = jpeg.Encode(file, img, jpegOptions)
+	case "png":
+		encoder := png.Encoder{
+			CompressionLevel: png.BestCompression,
+		}
+		err = encoder.Encode(file, img)
+	case "gif":
+		gifOptions := &gif.Options{
+			NumColors: 256,
+		}
+		err = gif.Encode(file, img, gifOptions)
 	default:
-		return "", fmt.Errorf("unsupported image format: %s", format)
+		return "", fmt.Errorf("unsupported image format %s", format)
 	}
 	if err != nil {
-		return "", errors.Wrap(err, "encode screenshot image failed")
+		return "", errors.Wrap(err, "save image file failed")
 	}
 
-	log.Info().Str("path", screenshotPath).Msg("save screenshot file success")
+	var fileSize int64
+	fileInfo, err := file.Stat()
+	if err == nil {
+		fileSize = fileInfo.Size()
+	}
+	log.Info().Str("path", screenshotPath).
+		Int("rawBytes", raw.Len()).Int64("saveBytes", fileSize).
+		Msg("save screenshot file success")
+
 	return screenshotPath, nil
 }
