@@ -228,11 +228,11 @@ func (ud *uiaDriver) WindowSize() (size Size, err error) {
 	} else {
 		var rawResp rawResponse
 		if rawResp, err = ud.httpGET("/session", ud.session.ID, "window/:windowHandle/size"); err != nil {
-			return Size{}, errors.Wrap(err, "get window size failed with uiautomator2")
+			return Size{}, errors.Wrap(err, "get window size failed by UIA2 request")
 		}
 		reply := new(struct{ Value struct{ Size } })
 		if err = json.Unmarshal(rawResp, reply); err != nil {
-			return Size{}, err
+			return Size{}, errors.Wrap(err, "get window size failed by UIA2 response")
 		}
 		size = reply.Value.Size
 		ud.windowSize = &size

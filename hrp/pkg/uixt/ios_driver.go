@@ -198,11 +198,11 @@ func (wd *wdaDriver) WindowSize() (size Size, err error) {
 	} else {
 		var rawResp rawResponse
 		if rawResp, err = wd.httpGET("/session", wd.session.ID, "/window/size"); err != nil {
-			return Size{}, errors.Wrap(err, "get window size failed with wda")
+			return Size{}, errors.Wrap(err, "get window size failed by WDA request")
 		}
 		reply := new(struct{ Value struct{ Size } })
 		if err = json.Unmarshal(rawResp, reply); err != nil {
-			return Size{}, err
+			return Size{}, errors.Wrap(err, "get window size failed by WDA response")
 		}
 		size = reply.Value.Size
 		scale, err := wd.Scale()

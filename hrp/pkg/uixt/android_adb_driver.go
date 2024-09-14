@@ -77,7 +77,7 @@ func (ad *adbDriver) getWindowSize() (size Size, err error) {
 	// adb shell wm size
 	output, err := ad.adbClient.RunShellCommand("wm", "size")
 	if err != nil {
-		return size, errors.Wrap(err, "get window size failed with adb")
+		return size, errors.Wrap(err, "get window size failed by adb shell")
 	}
 
 	// output may contain both Physical and Override size, use Override if existed
