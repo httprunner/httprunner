@@ -167,16 +167,16 @@ func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (results OC
 			continue
 		}
 		results = append(results, ocrText)
+
+		// found one, skip searching and return
+		if actionOptions.MatchOne {
+			return results, nil
+		}
 	}
 
 	if len(results) == len(texts) {
 		return results, nil
 	}
-
-	if actionOptions.MatchOne && len(results) > 0 {
-		return results, nil
-	}
-
 	return nil, errors.Wrap(code.CVResultNotFoundError,
 		fmt.Sprintf("texts %s not found in %v", texts, t.texts()))
 }
