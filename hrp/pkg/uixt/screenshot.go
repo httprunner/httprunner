@@ -50,15 +50,19 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	var imageResult *ImageResult
 	var imagePath string
 	var windowSize Size
+	var lastErr error
+
+	// get screenshot info with retry
 	for i := 0; i < actionOptions.MaxRetryTimes; i++ {
 		bufSource, imagePath, err = dExt.GetScreenShot(fileName)
 		if err != nil {
+			lastErr = err
 			continue
 		}
 
 		windowSize, err = dExt.Driver.WindowSize()
 		if err != nil {
-			err = errors.Wrap(code.MobileUIDriverError, err.Error())
+			lastErr = errors.Wrap(code.MobileUIDriverError, err.Error())
 			continue
 		}
 
@@ -71,13 +75,15 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		imageResult, err = dExt.ImageService.GetImage(bufSource, options...)
 		if err != nil {
 			log.Error().Err(err).Msg("GetImage from ImageService failed")
+			lastErr = err
 			continue
 		}
-		// success
+		// success, break the loop
+		lastErr = nil
 		break
 	}
-	if err != nil {
-		return nil, err
+	if lastErr != nil {
+		return nil, lastErr
 	}
 
 	// cache screen result
