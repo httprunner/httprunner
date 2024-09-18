@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"regexp"
-	"strconv"
 	"time"
 
 	"code.byted.org/iesqa/ghdc"
@@ -59,32 +57,13 @@ func (hd *hdcDriver) BatteryInfo() (BatteryInfo, error) {
 }
 
 func (hd *hdcDriver) WindowSize() (size Size, err error) {
-	res, err := hd.device.RunShellCommand("hidumper", "-s", "RenderService", "-a", "screen")
+	display, err := hd.uiDriver.GetDisplaySize()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get window size")
-		return size, err
+		return Size{}, err
 	}
-	re := regexp.MustCompile(`activeMode:\s*(\d+)x(\d+)`)
-	matches := re.FindStringSubmatch(res)
-
-	if len(matches) > 2 {
-		fmt.Printf("Width: %s, Height: %s\n", matches[1], matches[2])
-		width, err := strconv.Atoi(matches[1])
-		if err != nil {
-			log.Error().Err(err).Str("width", matches[1]).Msg("failed to get window size")
-			return size, err
-		}
-		size.Width = width
-		height, err := strconv.Atoi(matches[2])
-		if err != nil {
-			log.Error().Err(err).Str("height", matches[2]).Msg("failed to get window size")
-			return size, err
-		}
-		size.Height = height
-		return size, nil
-	}
-	err = fmt.Errorf("failed to find window size in dump result")
-	log.Error().Err(err).Str("result", res).Msg("failed to get window size")
+	size.Width = display.Width
+	size.Height = display.Height
 	return size, err
 }
 
@@ -105,7 +84,12 @@ func (hd *hdcDriver) Homescreen() error {
 }
 
 func (hd *hdcDriver) Unlock() (err error) {
-	return hd.uiDriver.PressKey(ghdc.KEYCODE_HOME)
+	// Todo 检查是否锁屏 hdc shell hidumper -s RenderService -a screen
+	err = hd.uiDriver.PressPowerKey()
+	if err != nil {
+		return err
+	}
+	return hd.Swipe(500, 2000, 500, 500)
 }
 
 func (hd *hdcDriver) AppLaunch(packageName string) error {
@@ -114,8 +98,12 @@ func (hd *hdcDriver) AppLaunch(packageName string) error {
 }
 
 func (hd *hdcDriver) AppTerminate(packageName string) (bool, error) {
-	// Todo
-	return false, errDriverNotImplemented
+	_, err := hd.device.RunShellCommand("aa", "force-stop", packageName)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to terminal app")
+		return false, err
+	}
+	return true, nil
 }
 
 func (hd *hdcDriver) GetForegroundApp() (app AppInfo, err error) {
@@ -155,7 +143,7 @@ func (hd *hdcDriver) TapFloat(x, y float64, options ...ActionOption) error {
 	x += actionOptions.getRandomOffset()
 	y += actionOptions.getRandomOffset()
 
-	return hd.uiDriver.Touch(int(x), int(y))
+	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
 }
 
 func (hd *hdcDriver) DoubleTap(x, y int, options ...ActionOption) error {
@@ -200,12 +188,12 @@ func (hd *hdcDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...Actio
 	toX += actionOptions.getRandomOffset()
 	toY += actionOptions.getRandomOffset()
 
-	duration := 0.2
+	duration := 200
 	if actionOptions.PressDuration > 0 {
-		duration = actionOptions.PressDuration
+		duration = int(actionOptions.PressDuration * 1000)
 	}
 
-	return hd.uiDriver.Drag(int(fromX), int(fromY), int(toX), int(toY), duration)
+	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(fromX), Y: int(fromY)}).MoveTo(ghdc.Point{X: int(toX), Y: int(toY)}, duration))
 }
 
 func (hd *hdcDriver) SetPasteboard(contentType PasteboardType, content string) error {

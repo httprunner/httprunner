@@ -36,6 +36,12 @@ cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RX
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 code.byted.org/iesqa/ghdc v0.0.0-20240911080657-3fe04d3190a5 h1:9H06vi9l4K8xjhQg5Lsu4lbtB2NBKUG/l4XyRGhLuAk=
 code.byted.org/iesqa/ghdc v0.0.0-20240911080657-3fe04d3190a5/go.mod h1:0IrKgKT75jmlpi9N0Mi5xWKctJuKHFM6f+ZMQe5vnNs=
+code.byted.org/iesqa/ghdc v0.0.0-20240918062858-e57e2d72ed7b h1:pbIbB1S+vhIgEeaDoIqM5GtsCtlGXYaO7VZBYbVGYZU=
+code.byted.org/iesqa/ghdc v0.0.0-20240918062858-e57e2d72ed7b/go.mod h1:0IrKgKT75jmlpi9N0Mi5xWKctJuKHFM6f+ZMQe5vnNs=
+code.byted.org/iesqa/ghdc v0.0.0-20240918083005-02dc9c3eed10 h1:QwIVe4NaY3i3u0sN3JGczfrtAlI0FnPQSfOCfojudoc=
+code.byted.org/iesqa/ghdc v0.0.0-20240918083005-02dc9c3eed10/go.mod h1:0IrKgKT75jmlpi9N0Mi5xWKctJuKHFM6f+ZMQe5vnNs=
+code.byted.org/iesqa/ghdc v0.0.0-20240918093157-b4feef0e5af0 h1:qsKGQS3A530QpOXY80ogzzhVpf25Q4WfHusSlRyNvLU=
+code.byted.org/iesqa/ghdc v0.0.0-20240918093157-b4feef0e5af0/go.mod h1:0IrKgKT75jmlpi9N0Mi5xWKctJuKHFM6f+ZMQe5vnNs=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=

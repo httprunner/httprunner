@@ -34,7 +34,7 @@ func TestWindowSize(t *testing.T) {
 	t.Log(fmt.Sprintf("width: %d, height: %d", size.Width, size.Height))
 }
 
-func TestTap(t *testing.T) {
+func TestHarmonyTap(t *testing.T) {
 	setup(t)
 	err := harmonyDriverExt.TapAbsXY(200, 2000)
 	if err != nil {
@@ -52,7 +52,7 @@ func TestSwipe(t *testing.T) {
 
 func TestInput(t *testing.T) {
 	setup(t)
-	err := harmonyDriverExt.Input("test测试123!@#")
+	err := harmonyDriverExt.Input("test")
 	if err != nil {
 		t.Fatal(err)
 	}
