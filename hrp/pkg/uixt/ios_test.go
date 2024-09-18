@@ -71,7 +71,7 @@ func TestNewIOSDevice(t *testing.T) {
 }
 
 func TestNewWDAHTTPDriver(t *testing.T) {
-	device, _ := NewIOSDevice()
+	device, _ := NewIOSDevice(WithWDAPort(8700), WithWDAMjpegPort(8800))
 	var err error
 	_, err = device.NewHTTPDriver(nil)
 	if err != nil {
@@ -83,6 +83,14 @@ func TestNewUSBDriver(t *testing.T) {
 	setup(t)
 
 	// t.Log(driver.IsWdaHealthy())
+}
+
+func TestIOSDevice_GetPackageInfo(t *testing.T) {
+	device, err := NewIOSDevice(WithWDAPort(8700))
+	checkErr(t, err)
+	appInfo, err := device.GetPackageInfo("com.apple.Preferences")
+	checkErr(t, err)
+	t.Log(appInfo)
 }
 
 func TestDriver_DeviceScaleRatio(t *testing.T) {
