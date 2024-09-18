@@ -35,6 +35,8 @@ func initUIClient(serial, osType string) (client *uixt.DriverExt, err error) {
 	var device uixt.IDevice
 	if osType == "ios" {
 		device, err = uixt.NewIOSDevice(uixt.WithUDID(serial))
+	} else if osType == "harmony" {
+		device, err = uixt.NewHarmonyDevice(uixt.WithConnectKey(serial))
 	} else {
 		device, err = uixt.NewAndroidDevice(uixt.WithSerialNumber(serial))
 	}

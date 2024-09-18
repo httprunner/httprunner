@@ -1,6 +1,8 @@
 module github.com/httprunner/httprunner/v4
 
-go 1.18
+go 1.22
+
+toolchain go1.22.0
 
 require (
 	github.com/andybalholm/brotli v1.0.4
@@ -39,6 +41,7 @@ require (
 require (
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	code.byted.org/iesqa/ghdc v0.0.0-20240911080657-3fe04d3190a5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
