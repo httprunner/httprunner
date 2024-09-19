@@ -18,6 +18,7 @@ function install() {
 # 1. gofumpt go files automatically
 # 2. goimports-reviser go files automatically
 # 3. black python files automatically
+# 4. bump hrp version
 
 # make sure gofumpt is installed
 # What does each letter mean in "ACMRTUXB"?
@@ -38,6 +39,22 @@ do
     black "$file"
     git add "$file"
 done
+
+# bump hrp version
+version_file=hrp/internal/version/VERSION
+
+# get current date
+current_date=$(date +"%y%m%d%H%M")
+
+# update version
+sed -i '' "s/[0-9]\{10\}/${current_date}/" "$version_file"
+
+# add change to stage
+git add $version_file
+
+# print updated version
+updated_version=$(cat "$version_file")
+echo "update hrp version to $updated_version"
 EOF
 
     chmod +x $PRE_COMMIT_FILE
