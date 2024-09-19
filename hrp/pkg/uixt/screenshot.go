@@ -62,7 +62,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 
 		windowSize, err = dExt.Driver.WindowSize()
 		if err != nil {
-			lastErr = errors.Wrap(code.MobileUIDriverError, err.Error())
+			lastErr = errors.Wrap(code.DeviceGetInfoError, err.Error())
 			continue
 		}
 

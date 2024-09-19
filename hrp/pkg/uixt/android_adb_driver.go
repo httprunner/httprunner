@@ -537,7 +537,7 @@ func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	if err == nil {
 		return bytes.NewBuffer(resp), nil
 	}
-	return nil, err
+	return nil, errors.Wrap(err, "adb screencap failed")
 }
 
 func (ad *adbDriver) Source(srcOpt ...SourceOption) (source string, err error) {
