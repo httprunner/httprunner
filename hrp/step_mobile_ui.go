@@ -398,6 +398,8 @@ func (s *StepMobile) Name() string {
 func (s *StepMobile) Type() StepType {
 	if s.step.Android != nil {
 		return stepTypeAndroid
+	} else if s.step.Harmony != nil {
+		return stepTypeHarmony
 	}
 	return stepTypeIOS
 }
@@ -591,10 +593,13 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		// ios step
 		osType = "ios"
 		mobileStep = step.IOS
-	} else {
+	} else if step.Android != nil {
 		// android step
 		osType = "android"
 		mobileStep = step.Android
+	} else {
+		osType = "harmony"
+		mobileStep = step.Harmony
 	}
 
 	// report GA event
