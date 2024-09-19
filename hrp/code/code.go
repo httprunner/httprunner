@@ -24,7 +24,7 @@ var (
 	LoadYAMLError            = errors.New("load yaml error")            // 12
 	LoadEnvError             = errors.New("load .env error")            // 13
 	LoadCSVError             = errors.New("load csv error")             // 14
-	InvalidCaseFormat        = errors.New("invalid case format")        // 15
+	InvalidCaseError         = errors.New("invalid case error")         // 15
 	UnsupportedFileExtension = errors.New("unsupported file extension") // 16
 	ReferencedFileNotFound   = errors.New("referenced file not found")  // 17
 	InvalidPluginFile        = errors.New("invalid plugin file")        // 18
@@ -64,6 +64,7 @@ var (
 	DeviceConnectionError = errors.New("device general connection error") // 50
 	DeviceHTTPDriverError = errors.New("device HTTP driver error")        // 51
 	DeviceUSBDriverError  = errors.New("device USB driver error")         // 52
+	DeviceGetInfoError    = errors.New("device get info error")           // 60
 	DeviceShellExecError  = errors.New("device shell exec error")         // 62
 	DeviceOfflineError    = errors.New("device offline")                  // 63
 	DeviceScreenShotError = errors.New("device screenshot error")         // 65
@@ -121,7 +122,7 @@ var errorsMap = map[error]int{
 	LoadYAMLError:            12,
 	LoadEnvError:             13,
 	LoadCSVError:             14,
-	InvalidCaseFormat:        15,
+	InvalidCaseError:         15,
 	UnsupportedFileExtension: 16,
 	ReferencedFileNotFound:   17,
 	InvalidPluginFile:        18,
@@ -153,6 +154,7 @@ var errorsMap = map[error]int{
 	DeviceConnectionError: 50,
 	DeviceHTTPDriverError: 51,
 	DeviceUSBDriverError:  52,
+	DeviceGetInfoError:    60,
 	DeviceShellExecError:  62,
 	DeviceOfflineError:    63,
 	DeviceScreenShotError: 65,
