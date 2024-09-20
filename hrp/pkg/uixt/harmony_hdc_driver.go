@@ -145,7 +145,10 @@ func (hd *hdcDriver) TapFloat(x, y float64, options ...ActionOption) error {
 
 	x += actionOptions.getRandomOffset()
 	y += actionOptions.getRandomOffset()
-
+	if actionOptions.Identifier != "" {
+		startTime := int(time.Now().UnixMilli())
+		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
+	}
 	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
 }
 
@@ -195,7 +198,10 @@ func (hd *hdcDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...Actio
 	if actionOptions.PressDuration > 0 {
 		duration = int(actionOptions.PressDuration * 1000)
 	}
-
+	if actionOptions.Identifier != "" {
+		startTime := int(time.Now().UnixMilli())
+		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
+	}
 	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(fromX), Y: int(fromY)}).MoveTo(ghdc.Point{X: int(toX), Y: int(toY)}, duration))
 }
 
@@ -304,5 +310,6 @@ func (hd *hdcDriver) StartCaptureLog(identifier ...string) (err error) {
 }
 
 func (hd *hdcDriver) StopCaptureLog() (result interface{}, err error) {
-	return nil, errDriverNotImplemented
+	// defer clear(hd.points)
+	return hd.points, nil
 }

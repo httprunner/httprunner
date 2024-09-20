@@ -19,6 +19,7 @@ type HarmonyDevice struct {
 	d           *ghdc.Device
 	ConnectKey  string `json:"connect_key,omitempty" yaml:"connect_key,omitempty"`
 	IgnorePopup bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
+	LogOn       bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
 type HarmonyDeviceOption func(*HarmonyDevice)
@@ -26,6 +27,18 @@ type HarmonyDeviceOption func(*HarmonyDevice)
 func WithConnectKey(connectKey string) HarmonyDeviceOption {
 	return func(device *HarmonyDevice) {
 		device.ConnectKey = connectKey
+	}
+}
+
+func WithIgnorePopup(ignorePopup bool) HarmonyDeviceOption {
+	return func(device *HarmonyDevice) {
+		device.IgnorePopup = ignorePopup
+	}
+}
+
+func WithLogOn(logOn bool) HarmonyDeviceOption {
+	return func(device *HarmonyDevice) {
+		device.LogOn = logOn
 	}
 }
 
@@ -101,7 +114,7 @@ func (dev *HarmonyDevice) UUID() string {
 }
 
 func (dev *HarmonyDevice) LogEnabled() bool {
-	return false
+	return dev.LogOn
 }
 
 func (dev *HarmonyDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, err error) {
