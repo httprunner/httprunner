@@ -7,12 +7,9 @@ import (
 	"testing"
 )
 
-var (
-	driver           IWebDriver
-	harmonyDriverExt *DriverExt
-)
+var harmonyDriverExt *DriverExt
 
-func setup(t *testing.T) {
+func setupHarmonyDevice(t *testing.T) {
 	device, err := NewHarmonyDevice()
 	if err != nil {
 		t.Fatal(err)
@@ -28,7 +25,7 @@ func setup(t *testing.T) {
 }
 
 func TestWindowSize(t *testing.T) {
-	setup(t)
+	setupHarmonyDevice(t)
 	size, err := driver.WindowSize()
 	if err != nil {
 		t.Fatal(err)
@@ -37,7 +34,7 @@ func TestWindowSize(t *testing.T) {
 }
 
 func TestHarmonyTap(t *testing.T) {
-	setup(t)
+	setupHarmonyDevice(t)
 	err := harmonyDriverExt.TapAbsXY(200, 2000)
 	if err != nil {
 		t.Fatal(err)
@@ -45,7 +42,7 @@ func TestHarmonyTap(t *testing.T) {
 }
 
 func TestSwipe(t *testing.T) {
-	setup(t)
+	setupHarmonyDevice(t)
 	err := harmonyDriverExt.SwipeLeft()
 	if err != nil {
 		t.Fatal(err)
@@ -53,7 +50,7 @@ func TestSwipe(t *testing.T) {
 }
 
 func TestInput(t *testing.T) {
-	setup(t)
+	setupHarmonyDevice(t)
 	err := harmonyDriverExt.Input("test")
 	if err != nil {
 		t.Fatal(err)
@@ -61,7 +58,7 @@ func TestInput(t *testing.T) {
 }
 
 func TestHomeScreen(t *testing.T) {
-	setup(t)
+	setupHarmonyDevice(t)
 	err := driver.Homescreen()
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +66,7 @@ func TestHomeScreen(t *testing.T) {
 }
 
 func TestUnlock(t *testing.T) {
-	setup(t)
+	setupHarmonyDevice(t)
 	err := driver.Unlock()
 	if err != nil {
 		t.Fatal(err)
@@ -77,7 +74,7 @@ func TestUnlock(t *testing.T) {
 }
 
 func TestPressBack(t *testing.T) {
-	setup(t)
+	setupHarmonyDevice(t)
 	err := driver.PressBack()
 	if err != nil {
 		t.Fatal(err)
@@ -85,7 +82,7 @@ func TestPressBack(t *testing.T) {
 }
 
 func TestScreenshot(t *testing.T) {
-	setup(t)
+	setupHarmonyDevice(t)
 	screenshot, err := driver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
@@ -94,7 +91,7 @@ func TestScreenshot(t *testing.T) {
 }
 
 func TestLaunch(t *testing.T) {
-	setup(t)
+	setupHarmonyDevice(t)
 	err := driver.AppLaunch("")
 	if err != nil {
 		t.Fatal(err)
@@ -102,7 +99,7 @@ func TestLaunch(t *testing.T) {
 }
 
 func TestForegroundApp(t *testing.T) {
-	setup(t)
+	setupHarmonyDevice(t)
 	appInfo, err := driver.GetForegroundApp()
 	if err != nil {
 		t.Fatal(err)

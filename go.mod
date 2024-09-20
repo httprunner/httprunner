@@ -1,8 +1,11 @@
 module github.com/httprunner/httprunner/v4
 
-go 1.18
+go 1.22
+
+toolchain go1.22.7
 
 require (
+	code.byted.org/iesqa/ghdc v0.0.0-20240918093157-b4feef0e5af0
 	github.com/andybalholm/brotli v1.0.4
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/fatih/color v1.16.0
@@ -39,7 +42,6 @@ require (
 require (
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	code.byted.org/iesqa/ghdc v0.0.0-20240918093157-b4feef0e5af0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
