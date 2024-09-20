@@ -117,15 +117,17 @@ func (ad *adbDriver) WindowSize() (size Size, err error) {
 		ad.windowSize = &size
 	}
 
-	orientation, err := ad.Orientation()
-	if err != nil {
-		log.Warn().Err(err).Msgf("window size get orientation failed, use default orientation")
+	orientation, err2 := ad.Orientation()
+	if err2 != nil {
 		orientation = OrientationPortrait
+		log.Warn().Err(err2).Msgf(
+			"get window orientation failed, use default %s", orientation)
 	}
 	if orientation != OrientationPortrait {
 		size.Width, size.Height = size.Height, size.Width
 	}
-	return
+	// Notice: do not return err if get window orientation failed
+	return size, nil
 }
 
 func (ad *adbDriver) Screen() (screen Screen, err error) {
@@ -535,7 +537,7 @@ func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	if err == nil {
 		return bytes.NewBuffer(resp), nil
 	}
-	return nil, err
+	return nil, errors.Wrap(err, "adb screencap failed")
 }
 
 func (ad *adbDriver) Source(srcOpt ...SourceOption) (source string, err error) {

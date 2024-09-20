@@ -32,7 +32,7 @@ func (path *TestCasePath) GetTestCase() (*TestCase, error) {
 		return nil, err
 	}
 	if tc.Steps == nil {
-		return nil, errors.Wrap(code.InvalidCaseFormat,
+		return nil, errors.Wrap(code.InvalidCaseError,
 			"invalid testcase format, missing teststeps!")
 	}
 
@@ -171,7 +171,7 @@ func (tc *TestCase) loadISteps() (*TestCase, error) {
 			} else {
 				apiMap, ok := step.API.(map[string]interface{})
 				if !ok {
-					return nil, errors.Wrap(code.InvalidCaseFormat,
+					return nil, errors.Wrap(code.InvalidCaseError,
 						fmt.Sprintf("referenced api should be map or path(string), got %v", step.API))
 				}
 				api := &API{}
@@ -183,7 +183,7 @@ func (tc *TestCase) loadISteps() (*TestCase, error) {
 			}
 			_, ok = step.API.(*API)
 			if !ok {
-				return nil, errors.Wrap(code.InvalidCaseFormat,
+				return nil, errors.Wrap(code.InvalidCaseError,
 					fmt.Sprintf("failed to handle referenced API, got %v", step.TestCase))
 			}
 			testCase.TestSteps = append(testCase.TestSteps, &StepAPIWithOptionalArgs{
@@ -207,7 +207,7 @@ func (tc *TestCase) loadISteps() (*TestCase, error) {
 			} else {
 				testCaseMap, ok := step.TestCase.(map[string]interface{})
 				if !ok {
-					return nil, errors.Wrap(code.InvalidCaseFormat,
+					return nil, errors.Wrap(code.InvalidCaseError,
 						fmt.Sprintf("referenced testcase should be map or path(string), got %v", step.TestCase))
 				}
 				tCase := &TestCase{}
@@ -223,7 +223,7 @@ func (tc *TestCase) loadISteps() (*TestCase, error) {
 			}
 			_, ok = step.TestCase.(*TestCase)
 			if !ok {
-				return nil, errors.Wrap(code.InvalidCaseFormat,
+				return nil, errors.Wrap(code.InvalidCaseError,
 					fmt.Sprintf("failed to handle referenced testcase, got %v", step.TestCase))
 			}
 			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
@@ -309,7 +309,7 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 				validatorMap[strKey] = value
 			}
 		} else {
-			return errors.Wrap(code.InvalidCaseFormat,
+			return errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("unexpected validator format: %v", iValidator))
 		}
 
@@ -335,7 +335,7 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 			for assertMethod, iValidatorContent := range validatorMap {
 				validatorContent := iValidatorContent.([]interface{})
 				if len(validatorContent) > 3 {
-					return errors.Wrap(code.InvalidCaseFormat,
+					return errors.Wrap(code.InvalidCaseError,
 						fmt.Sprintf("unexpected validator format: %v", validatorMap))
 				}
 				validator.Check = validatorContent[0].(string)
@@ -349,7 +349,7 @@ func convertCompatValidator(Validators []interface{}) (err error) {
 			Validators[i] = validator
 			continue
 		}
-		return errors.Wrap(code.InvalidCaseFormat,
+		return errors.Wrap(code.InvalidCaseError,
 			fmt.Sprintf("unexpected validator format: %v", validatorMap))
 	}
 	return nil
