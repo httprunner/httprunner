@@ -35,6 +35,8 @@ func initUIClient(serial, osType string) (client *uixt.DriverExt, err error) {
 	var device uixt.IDevice
 	if osType == "ios" {
 		device, err = uixt.NewIOSDevice(uixt.WithUDID(serial))
+	} else if osType == "harmony" {
+		device, err = uixt.NewHarmonyDevice(uixt.WithConnectKey(serial))
 	} else {
 		device, err = uixt.NewAndroidDevice(uixt.WithSerialNumber(serial))
 	}
@@ -396,6 +398,8 @@ func (s *StepMobile) Name() string {
 func (s *StepMobile) Type() StepType {
 	if s.step.Android != nil {
 		return stepTypeAndroid
+	} else if s.step.Harmony != nil {
+		return stepTypeHarmony
 	}
 	return stepTypeIOS
 }
@@ -589,10 +593,13 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		// ios step
 		osType = "ios"
 		mobileStep = step.IOS
-	} else {
+	} else if step.Android != nil {
 		// android step
 		osType = "android"
 		mobileStep = step.Android
+	} else {
+		osType = "harmony"
+		mobileStep = step.Harmony
 	}
 
 	// report GA event

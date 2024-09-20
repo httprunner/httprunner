@@ -11,6 +11,7 @@ const (
 	stepTypeThinkTime   StepType = "thinktime"
 	stepTypeWebSocket   StepType = "websocket"
 	stepTypeAndroid     StepType = "android"
+	stepTypeHarmony     StepType = "harmony"
 	stepTypeIOS         StepType = "ios"
 	stepTypeShell       StepType = "shell"
 
@@ -54,6 +55,7 @@ type TStep struct {
 	ThinkTime     *ThinkTime             `json:"think_time,omitempty" yaml:"think_time,omitempty"`
 	WebSocket     *WebSocketAction       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
 	Android       *MobileUI              `json:"android,omitempty" yaml:"android,omitempty"`
+	Harmony       *MobileUI              `json:"harmony,omitempty" yaml:"harmony,omitempty"`
 	IOS           *MobileUI              `json:"ios,omitempty" yaml:"ios,omitempty"`
 	Shell         *Shell                 `json:"shell,omitempty" yaml:"shell,omitempty"`
 	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`

@@ -257,6 +257,10 @@ func (tc *TestCase) loadISteps() (*TestCase, error) {
 			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
 				step: step,
 			})
+		} else if step.Harmony != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
+				step: step,
+			})
 		} else if step.Android != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
 				step: step,
