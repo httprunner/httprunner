@@ -55,9 +55,10 @@ var (
 
 // summary: [40, 50)
 var (
-	GenSummaryFailed = errors.New("generate summary failed") // 40
-	DownloadFailed   = errors.New("download failed")         // 48
-	UploadFailed     = errors.New("upload failed")           // 49
+	GenSummaryFailed         = errors.New("generate summary failed") // 40
+	CollectValidResultFailed = errors.New("no valid result")         // 44
+	DownloadFailed           = errors.New("download failed")         // 48
+	UploadFailed             = errors.New("upload failed")           // 49
 )
 
 // device related: [50, 70)
@@ -148,9 +149,10 @@ var errorsMap = map[error]int{
 	TimeoutError:        39,
 
 	// summary
-	GenSummaryFailed: 40,
-	DownloadFailed:   48,
-	UploadFailed:     49,
+	GenSummaryFailed:         40,
+	CollectValidResultFailed: 44,
+	DownloadFailed:           48,
+	UploadFailed:             49,
 
 	// device related
 	DeviceConnectionError: 50,
