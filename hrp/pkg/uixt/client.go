@@ -73,10 +73,10 @@ type Driver struct {
 }
 
 type DriverResult struct {
-	RequestUrl      string        `json:"request_driver_url"`
-	RequestBody     string        `json:"request_driver_body,omitempty"`
-	RequestDuration time.Duration `json:"request_driver_duration"`
-	RequestTime     time.Time     `json:"request_driver_time"`
+	RequestUrl      string    `json:"request_driver_url"`
+	RequestBody     string    `json:"request_driver_body,omitempty"`
+	RequestDuration int64     `json:"request_driver_duration(ms)"` // ms
+	RequestTime     time.Time `json:"request_driver_time"`
 }
 
 func (wd *Driver) concatURL(u *url.URL, elem ...string) string {
@@ -133,7 +133,7 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 	driverResult := &DriverResult{
 		RequestUrl:      rawURL,
 		RequestBody:     string(rawBody),
-		RequestDuration: duration,
+		RequestDuration: duration.Milliseconds(),
 		RequestTime:     time.Now(),
 	}
 	wd.session.addRequestResult(driverResult)
