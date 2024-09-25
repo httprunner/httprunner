@@ -11,14 +11,14 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
-var uiClients map[string]*uixt.DriverExt // UI automation clients for iOS and Android, key is udid/serial
+var uiClients = make(map[string]*uixt.DriverExt) // UI automation clients for iOS and Android, key is udid/serial
 
 func initUIClient(serial, osType string) (client *uixt.DriverExt, err error) {
 	if uiClients == nil {
 		uiClients = make(map[string]*uixt.DriverExt)
 	}
 
-	// avoid duplicate init
+	// get the first device
 	if serial == "" && len(uiClients) > 0 {
 		for _, v := range uiClients {
 			return v, nil
@@ -42,6 +42,10 @@ func initUIClient(serial, osType string) (client *uixt.DriverExt, err error) {
 	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "init %s device failed", osType)
+	}
+
+	if err := device.Init(); err != nil {
+		return nil, err
 	}
 
 	client, err = device.NewDriver()
@@ -595,26 +599,14 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		// ios step
 		osType = "ios"
 		mobileStep = step.IOS
-		iosDevices := s.caseRunner.Config.IOS
-		if mobileStep.Serial == "" && len(iosDevices) > 0 {
-			mobileStep.Serial = iosDevices[0].UDID
-		}
 	} else if step.Harmony != nil {
 		// harmony step
 		osType = "harmony"
 		mobileStep = step.Harmony
-		harmonyDevices := s.caseRunner.Config.Harmony
-		if mobileStep.Serial == "" && len(harmonyDevices) > 0 {
-			mobileStep.Serial = harmonyDevices[0].ConnectKey
-		}
 	} else {
 		// android step
 		osType = "android"
 		mobileStep = step.Android
-		androidDevices := s.caseRunner.Config.Android
-		if mobileStep.Serial == "" && len(androidDevices) > 0 {
-			mobileStep.Serial = androidDevices[0].SerialNumber
-		}
 	}
 
 	// report GA event

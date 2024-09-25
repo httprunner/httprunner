@@ -42,6 +42,19 @@ func WithLogOn(logOn bool) HarmonyDeviceOption {
 	}
 }
 
+func GetHarmonyDeviceOptions(dev *HarmonyDevice) (deviceOptions []HarmonyDeviceOption) {
+	if dev.ConnectKey != "" {
+		deviceOptions = append(deviceOptions, WithConnectKey(dev.ConnectKey))
+	}
+	if dev.IgnorePopup {
+		deviceOptions = append(deviceOptions, WithIgnorePopup(true))
+	}
+	if dev.LogOn {
+		deviceOptions = append(deviceOptions, WithLogOn(true))
+	}
+	return
+}
+
 func NewHarmonyDevice(options ...HarmonyDeviceOption) (device *HarmonyDevice, err error) {
 	device = &HarmonyDevice{}
 	for _, option := range options {

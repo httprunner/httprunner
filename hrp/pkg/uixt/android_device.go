@@ -189,9 +189,8 @@ type AndroidDevice struct {
 }
 
 func (dev *AndroidDevice) Init() error {
-	myexec.RunCommand("adb", "-s", dev.SerialNumber, "shell",
-		"ime", "enable", "io.appium.settings/.UnicodeIME")
-	myexec.RunCommand("adb", "-s", dev.SerialNumber, "shell", "rm", "-r", env.DeviceActionLogFilePath)
+	dev.d.RunShellCommand("ime", "enable", "io.appium.settings/.UnicodeIME")
+	dev.d.RunShellCommand("rm", "-r", env.DeviceActionLogFilePath)
 	return nil
 }
 
