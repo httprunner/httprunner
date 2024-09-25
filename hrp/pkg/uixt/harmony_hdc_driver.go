@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 
 	"code.byted.org/iesqa/ghdc"
@@ -16,6 +17,13 @@ type hdcDriver struct {
 	device   *ghdc.Device
 	uiDriver *ghdc.UIDriver
 }
+
+type PowerStatus string
+
+const (
+	POWER_STATUS_SUSPEND PowerStatus = "POWER_STATUS_SUSPEND"
+	POWER_STATUS_ON      PowerStatus = "POWER_STATUS_ON"
+)
 
 func newHarmonyDriver(device *ghdc.Device) (driver *hdcDriver, err error) {
 	driver = new(hdcDriver)
@@ -32,6 +40,7 @@ func newHarmonyDriver(device *ghdc.Device) (driver *hdcDriver, err error) {
 
 func (hd *hdcDriver) NewSession(capabilities Capabilities) (SessionInfo, error) {
 	hd.Driver.session.Init()
+	hd.Unlock()
 	return SessionInfo{}, errDriverNotImplemented
 }
 
@@ -88,11 +97,23 @@ func (hd *hdcDriver) Homescreen() error {
 
 func (hd *hdcDriver) Unlock() (err error) {
 	// Todo 检查是否锁屏 hdc shell hidumper -s RenderService -a screen
-	err = hd.uiDriver.PressPowerKey()
+	screenInfo, err := hd.device.RunShellCommand("hidumper", "-s", "RenderService", "-a", "screen")
 	if err != nil {
 		return err
 	}
-	return hd.Swipe(500, 2000, 500, 500)
+	re := regexp.MustCompile(`powerstatus=([\w_]+)`)
+	match := re.FindStringSubmatch(screenInfo)
+	if len(match) <= 1 {
+		return fmt.Errorf("failed to unlock; failed to find powerstatus")
+	}
+	if match[1] == string(POWER_STATUS_SUSPEND) {
+		err = hd.uiDriver.PressPowerKey()
+		if err != nil {
+			return err
+		}
+	}
+
+	return hd.Swipe(500, 1500, 500, 500)
 }
 
 func (hd *hdcDriver) AppLaunch(packageName string) error {
