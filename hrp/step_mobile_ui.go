@@ -73,6 +73,8 @@ type StepMobile struct {
 func (s *StepMobile) obj() *MobileUI {
 	if s.step.IOS != nil {
 		return s.step.IOS
+	} else if s.step.Harmony != nil {
+		return s.step.Harmony
 	}
 	return s.step.Android
 }
@@ -593,13 +595,26 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		// ios step
 		osType = "ios"
 		mobileStep = step.IOS
-	} else if step.Android != nil {
+		iosDevices := s.caseRunner.Config.IOS
+		if mobileStep.Serial == "" && len(iosDevices) > 0 {
+			mobileStep.Serial = iosDevices[0].UDID
+		}
+	} else if step.Harmony != nil {
+		// harmony step
+		osType = "harmony"
+		mobileStep = step.Harmony
+		harmonyDevices := s.caseRunner.Config.Harmony
+		if mobileStep.Serial == "" && len(harmonyDevices) > 0 {
+			mobileStep.Serial = harmonyDevices[0].ConnectKey
+		}
+	} else {
 		// android step
 		osType = "android"
 		mobileStep = step.Android
-	} else {
-		osType = "harmony"
-		mobileStep = step.Harmony
+		androidDevices := s.caseRunner.Config.Android
+		if mobileStep.Serial == "" && len(androidDevices) > 0 {
+			mobileStep.Serial = androidDevices[0].SerialNumber
+		}
 	}
 
 	// report GA event

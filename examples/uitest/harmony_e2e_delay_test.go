@@ -56,4 +56,9 @@ func TestHarmonyDouyinE2E(t *testing.T) {
 	if err := testCase.Dump2JSON("harmony_e2e_delay_test.json"); err != nil {
 		t.Fatal(err)
 	}
+
+	err := hrp.Run(t, testCase)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
