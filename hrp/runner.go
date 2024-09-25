@@ -474,9 +474,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 	return parsedConfig, nil
 }
 
-func (r *CaseRunner) parseDeviceConfig(
-	device interface{}, configVariables map[string]interface{},
-) error {
+func (r *CaseRunner) parseDeviceConfig(device interface{}, configVariables map[string]interface{}) error {
 	deviceValue := reflect.ValueOf(device).Elem()
 	deviceType := deviceValue.Type()
 	for i := 0; i < deviceType.NumField(); i++ {
