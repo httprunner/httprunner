@@ -762,6 +762,14 @@ func (s *StepRequest) IOS() *StepMobile {
 	}
 }
 
+// Harmony creates a new harmony action
+func (s *StepRequest) Harmony() *StepMobile {
+	s.step.Harmony = &MobileUI{}
+	return &StepMobile{
+		step: s.step,
+	}
+}
+
 // Shell creates a new shell action
 func (s *StepRequest) Shell(content string) *StepShell {
 	s.step.Shell = &Shell{

@@ -31,6 +31,7 @@ type TConfig struct {
 	WebSocketSetting  *WebSocketConfig       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
 	IOS               []*uixt.IOSDevice      `json:"ios,omitempty" yaml:"ios,omitempty"`
 	Android           []*uixt.AndroidDevice  `json:"android,omitempty" yaml:"android,omitempty"`
+	Harmony           []*uixt.HarmonyDevice  `json:"harmony,omitempty" yaml:"harmony,omitempty"`
 	RequestTimeout    float32                `json:"request_timeout,omitempty" yaml:"request_timeout,omitempty"` // request timeout in seconds
 	CaseTimeout       float32                `json:"case_timeout,omitempty" yaml:"case_timeout,omitempty"`       // testcase timeout in seconds
 	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
@@ -125,6 +126,27 @@ func (c *TConfig) SetIOS(options ...uixt.IOSDeviceOption) *TConfig {
 		c.IOS = append(c.IOS, wdaOptions)
 	} else {
 		c.IOS[0] = wdaOptions
+	}
+	return c
+}
+
+func (c *TConfig) SetHarmony(options ...uixt.HarmonyDeviceOption) *TConfig {
+	harmonyOptions := &uixt.HarmonyDevice{}
+	for _, option := range options {
+		option(harmonyOptions)
+	}
+
+	// each device can have its own settings
+	if harmonyOptions.ConnectKey != "" {
+		c.Harmony = append(c.Harmony, harmonyOptions)
+		return c
+	}
+
+	// device UDID is not specified, settings will be shared
+	if len(c.Harmony) == 0 {
+		c.Harmony = append(c.Harmony, harmonyOptions)
+	} else {
+		c.Harmony[0] = harmonyOptions
 	}
 	return c
 }
