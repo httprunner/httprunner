@@ -67,7 +67,6 @@ require (
 	github.com/hashicorp/go-plugin v1.4.10 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
-	github.com/incu6us/goimports-reviser/v2 v2.5.3 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
@@ -97,13 +96,9 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/tools v0.17.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
-	mvdan.cc/gofumpt v0.7.0 // indirect
 )
 
 // replace github.com/httprunner/funplugin => ../funplugin
