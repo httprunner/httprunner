@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"reflect"
 	"strings"
 	"syscall"
 	"testing"
@@ -404,7 +405,60 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 	}
 	r.parametersIterator = parametersIterator
 
+	// parse android/ios/harmony config
+	for _, device := range parsedConfig.Android {
+		err := r.parseDeviceConfig(device, parsedConfig.Variables)
+		if err != nil {
+			return nil, errors.Wrap(code.InvalidCaseError,
+				fmt.Sprintf("parse android config failed: %v", err))
+		}
+	}
+	for _, device := range parsedConfig.IOS {
+		err := r.parseDeviceConfig(device, parsedConfig.Variables)
+		if err != nil {
+			return nil, errors.Wrap(code.InvalidCaseError,
+				fmt.Sprintf("parse ios config failed: %v", err))
+		}
+	}
+	for _, device := range parsedConfig.Harmony {
+		err := r.parseDeviceConfig(device, parsedConfig.Variables)
+		if err != nil {
+			return nil, errors.Wrap(code.InvalidCaseError,
+				fmt.Sprintf("parse harmony config failed: %v", err))
+		}
+	}
 	return parsedConfig, nil
+}
+
+func (r *CaseRunner) parseDeviceConfig(
+	device interface{}, configVariables map[string]interface{}) error {
+	deviceValue := reflect.ValueOf(device).Elem()
+	deviceType := deviceValue.Type()
+	for i := 0; i < deviceType.NumField(); i++ {
+		field := deviceType.Field(i)
+		fieldValue := deviceValue.Field(i)
+		if fieldValue.Kind() != reflect.String {
+			continue
+		}
+
+		parsedValue, err := r.parser.ParseString(
+			fieldValue.String(), configVariables)
+		if err != nil {
+			log.Error().Err(err).Msgf(
+				"parse config device variable %s failed", field.Name)
+			return err
+		}
+
+		parsedValueReflect := reflect.ValueOf(parsedValue)
+		if parsedValueReflect.Type().ConvertibleTo(fieldValue.Type()) {
+			convertedValue := parsedValueReflect.Convert(fieldValue.Type())
+			fieldValue.Set(convertedValue)
+		} else {
+			log.Error().Msgf("update config device variable %s failed", field.Name)
+			return err
+		}
+	}
+	return nil
 }
 
 // each boomer task initiates a new session
