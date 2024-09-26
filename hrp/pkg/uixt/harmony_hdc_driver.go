@@ -103,6 +103,7 @@ func (hd *hdcDriver) Unlock() (err error) {
 	}
 	re := regexp.MustCompile(`powerstatus=([\w_]+)`)
 	match := re.FindStringSubmatch(screenInfo)
+	log.Info().Msg("screen info: " + screenInfo)
 	if len(match) <= 1 {
 		return fmt.Errorf("failed to unlock; failed to find powerstatus")
 	}
