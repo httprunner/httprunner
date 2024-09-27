@@ -570,8 +570,12 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 
 			if client.Device.LogEnabled() {
 				log, err1 := client.Driver.StopCaptureLog()
-				if err != nil {
-					err = errors.Wrap(err1, "get summary failed")
+				if err1 != nil {
+					if err == nil {
+						err = errors.Wrap(err1, "stop capture log failed")
+					} else {
+						err = errors.Wrap(err, "stop capture log failed")
+					}
 					return
 				}
 				logs["content"] = log
