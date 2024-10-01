@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"context"
 	_ "image/gif"
 	_ "image/png"
 
@@ -13,6 +14,7 @@ import (
 )
 
 type DriverExt struct {
+	Ctx          context.Context
 	Device       IDevice
 	Driver       IWebDriver
 	ImageService IImageService // used to extract image data
