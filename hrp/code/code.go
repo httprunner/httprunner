@@ -97,7 +97,7 @@ var (
 	CVResponseError          = errors.New("CV parse response error")  // 83
 	CVResultNotFoundError    = errors.New("CV result not found")      // 84
 
-	ContextUnknowError = errors.New("detect context failed") // 85
+	StateUnknowError = errors.New("detect state failed") // 85
 )
 
 // trackings related: [90, 100)
@@ -185,7 +185,7 @@ var errorsMap = map[error]int{
 	CVServiceConnectionError: 82,
 	CVResponseError:          83,
 	CVResultNotFoundError:    84,
-	ContextUnknowError:       85,
+	StateUnknowError:         85,
 
 	// trackings related
 	TrackingGetError:   90,
