@@ -29,11 +29,17 @@ import (
 )
 
 var (
-	DouyinServerPort           = 32316
-	AdbServerHost              = "localhost"
-	AdbServerPort              = gadb.AdbServerPort // 5037
-	UIA2ServerHost             = "localhost"
-	UIA2ServerPort             = 6790
+	DouyinServerPort = 32316
+
+	// adb server
+	AdbServerHost = "localhost"
+	AdbServerPort = gadb.AdbServerPort // 5037
+
+	// uiautomator2 server
+	UIA2ServerHost        = "localhost"
+	UIA2ServerPort        = 6790
+	UIA2ServerPackageName = "io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner"
+
 	EvalInstallerPackageName   = "sogou.mobile.explorer"
 	InstallViaInstallerCommand = "am start -S -n sogou.mobile.explorer/.PackageInstallerActivity -d"
 )
@@ -101,11 +107,12 @@ func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceO
 }
 
 // uiautomator2 server must be started before
-// adb shell am instrument -w io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner
+// adb shell am instrument -w $UIA2ServerPackageName
 func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, err error) {
 	device = &AndroidDevice{
-		UIA2IP:   UIA2ServerHost,
-		UIA2Port: UIA2ServerPort,
+		UIA2IP:      UIA2ServerHost,
+		UIA2Port:    UIA2ServerPort,
+		UIA2Package: UIA2ServerPackageName,
 	}
 	for _, option := range options {
 		option(device)
@@ -184,6 +191,7 @@ type AndroidDevice struct {
 	UIA2         bool   `json:"uia2,omitempty" yaml:"uia2,omitempty"`           // use uiautomator2
 	UIA2IP       string `json:"uia2_ip,omitempty" yaml:"uia2_ip,omitempty"`     // uiautomator2 server ip
 	UIA2Port     int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
+	UIA2Package  string `json:"uia2_package,omitempty" yaml:"uia2_package,omitempty"`
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 	IgnorePopup  bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
 }
@@ -191,6 +199,11 @@ type AndroidDevice struct {
 func (dev *AndroidDevice) Init() error {
 	dev.d.RunShellCommand("ime", "enable", "io.appium.settings/.UnicodeIME")
 	dev.d.RunShellCommand("rm", "-r", env.DeviceActionLogFilePath)
+
+	if dev.UIA2Package != "" {
+		// start uiautomator2 server
+		return dev.startUIA2Server()
+	}
 	return nil
 }
 
@@ -509,6 +522,16 @@ func (dev *AndroidDevice) getPackageMD5(packagePath string) (string, error) {
 		return matches[0], nil
 	}
 	return "", errors.New("failed to get package md5")
+}
+
+func (dev *AndroidDevice) startUIA2Server() error {
+	_, err := dev.d.RunShellCommand("am", "instrument", "-w", UIA2ServerPackageName)
+	return err
+}
+
+func (dev *AndroidDevice) stopUIA2Server() error {
+	_, err := dev.d.RunShellCommand("am", "force-stop", UIA2ServerPackageName)
+	return err
 }
 
 type LineCallback func(string)
