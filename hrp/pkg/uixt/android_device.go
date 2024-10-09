@@ -81,6 +81,12 @@ func WithUIA2Port(port int) AndroidDeviceOption {
 	}
 }
 
+func WithUIA2Package(packageName string) AndroidDeviceOption {
+	return func(device *AndroidDevice) {
+		device.UIA2Package = packageName
+	}
+}
+
 func WithAdbLogOn(logOn bool) AndroidDeviceOption {
 	return func(device *AndroidDevice) {
 		device.LogOn = logOn
@@ -99,6 +105,9 @@ func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceO
 	}
 	if dev.UIA2Port != 0 {
 		deviceOptions = append(deviceOptions, WithUIA2Port(dev.UIA2Port))
+	}
+	if dev.UIA2Package != "" {
+		deviceOptions = append(deviceOptions, WithUIA2Package(dev.UIA2Package))
 	}
 	if dev.LogOn {
 		deviceOptions = append(deviceOptions, WithAdbLogOn(true))
@@ -200,9 +209,9 @@ func (dev *AndroidDevice) Init() error {
 	dev.d.RunShellCommand("ime", "enable", "io.appium.settings/.UnicodeIME")
 	dev.d.RunShellCommand("rm", "-r", env.DeviceActionLogFilePath)
 
-	if dev.UIA2Package != "" {
+	if dev.UIA2 {
 		// start uiautomator2 server
-		return dev.startUIA2Server()
+		go dev.startUIA2Server()
 	}
 	return nil
 }
@@ -525,7 +534,11 @@ func (dev *AndroidDevice) getPackageMD5(packagePath string) (string, error) {
 }
 
 func (dev *AndroidDevice) startUIA2Server() error {
-	_, err := dev.d.RunShellCommand("am", "instrument", "-w", UIA2ServerPackageName)
+	out, err := dev.d.RunShellCommand("am", "instrument", "-w", UIA2ServerPackageName)
+	if strings.Contains(out, "Process crashed") {
+		log.Error().Msg("uiautomator server crashed, restart...")
+		return dev.startUIA2Server()
+	}
 	return err
 }
 
