@@ -259,15 +259,15 @@ func (dev *AndroidDevice) NewDriver(options ...DriverOption) (driverExt *DriverE
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
 func (dev *AndroidDevice) NewUSBDriver(capabilities Capabilities) (driver IWebDriver, err error) {
-	localPort, err := dev.d.Forward(UIA2ServerPort)
+	localPort, err := dev.d.Forward(dev.UIA2Port)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("forward port %d->%d failed: %v",
-				localPort, UIA2ServerPort, err))
+				localPort, dev.UIA2Port, err))
 	}
 
 	rawURL := fmt.Sprintf("http://%s%d:%d/wd/hub",
-		forwardToPrefix, localPort, UIA2ServerPort)
+		forwardToPrefix, localPort, dev.UIA2Port)
 	uiaDriver, err := NewUIADriver(capabilities, rawURL)
 	if err != nil {
 		_ = dev.d.ForwardKill(localPort)
@@ -534,7 +534,8 @@ func (dev *AndroidDevice) getPackageMD5(packagePath string) (string, error) {
 }
 
 func (dev *AndroidDevice) startUIA2Server() error {
-	out, err := dev.d.RunShellCommand("am", "instrument", "-w", UIA2ServerPackageName)
+	log.Info().Msgf("start uiautomator server %s", dev.UIA2Package)
+	out, err := dev.d.RunShellCommand("am", "instrument", "-w", dev.UIA2Package)
 	if strings.Contains(out, "Process crashed") {
 		log.Error().Msg("uiautomator server crashed, restart...")
 		return dev.startUIA2Server()
@@ -543,7 +544,7 @@ func (dev *AndroidDevice) startUIA2Server() error {
 }
 
 func (dev *AndroidDevice) stopUIA2Server() error {
-	_, err := dev.d.RunShellCommand("am", "force-stop", UIA2ServerPackageName)
+	_, err := dev.d.RunShellCommand("am", "force-stop", dev.UIA2Package)
 	return err
 }
 
