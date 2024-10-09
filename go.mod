@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.7
 
 require (
-	code.byted.org/iesqa/ghdc v0.0.0-20241008133702-1c71219a0303
+	code.byted.org/iesqa/ghdc v0.0.0-20241009130937-5efa701d3f56
 	github.com/andybalholm/brotli v1.0.4
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/fatih/color v1.16.0
