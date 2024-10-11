@@ -210,10 +210,10 @@ func (dev *AndroidDevice) Init() error {
 				"%s not installed", UIA2ServerTestPackageName)
 		}
 
-		// check uiautomator server package running
-		if dev.d.IsPackageRunning(UIA2ServerPackageName) {
-			return nil
-		}
+		// TODO: check uiautomator server package running
+		// if dev.d.IsPackageRunning(UIA2ServerPackageName) {
+		// 	return nil
+		// }
 
 		// start uiautomator2 server
 		go func() {
@@ -221,6 +221,7 @@ func (dev *AndroidDevice) Init() error {
 				log.Error().Err(err).Msg("start UIA2 failed")
 			}
 		}()
+		time.Sleep(5 * time.Second) // wait for uiautomator2 server start
 	}
 	return nil
 }
