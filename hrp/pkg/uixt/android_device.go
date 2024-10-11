@@ -36,9 +36,10 @@ var (
 	AdbServerPort = gadb.AdbServerPort // 5037
 
 	// uiautomator2 server
-	UIA2ServerHost        = "localhost"
-	UIA2ServerPort        = 6790
-	UIA2ServerPackageName = "io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner"
+	UIA2ServerHost            = "localhost"
+	UIA2ServerPort            = 6790
+	UIA2ServerPackageName     = "io.appium.uiautomator2.server"
+	UIA2ServerTestPackageName = "io.appium.uiautomator2.server.test"
 
 	EvalInstallerPackageName   = "sogou.mobile.explorer"
 	InstallViaInstallerCommand = "am start -S -n sogou.mobile.explorer/.PackageInstallerActivity -d"
@@ -81,12 +82,6 @@ func WithUIA2Port(port int) AndroidDeviceOption {
 	}
 }
 
-func WithUIA2Package(packageName string) AndroidDeviceOption {
-	return func(device *AndroidDevice) {
-		device.UIA2Package = packageName
-	}
-}
-
 func WithAdbLogOn(logOn bool) AndroidDeviceOption {
 	return func(device *AndroidDevice) {
 		device.LogOn = logOn
@@ -106,9 +101,6 @@ func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceO
 	if dev.UIA2Port != 0 {
 		deviceOptions = append(deviceOptions, WithUIA2Port(dev.UIA2Port))
 	}
-	if dev.UIA2Package != "" {
-		deviceOptions = append(deviceOptions, WithUIA2Package(dev.UIA2Package))
-	}
 	if dev.LogOn {
 		deviceOptions = append(deviceOptions, WithAdbLogOn(true))
 	}
@@ -117,9 +109,8 @@ func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceO
 
 func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, err error) {
 	device = &AndroidDevice{
-		UIA2IP:      UIA2ServerHost,
-		UIA2Port:    UIA2ServerPort,
-		UIA2Package: UIA2ServerPackageName,
+		UIA2IP:   UIA2ServerHost,
+		UIA2Port: UIA2ServerPort,
 	}
 	for _, option := range options {
 		option(device)
@@ -198,7 +189,6 @@ type AndroidDevice struct {
 	UIA2         bool   `json:"uia2,omitempty" yaml:"uia2,omitempty"`           // use uiautomator2
 	UIA2IP       string `json:"uia2_ip,omitempty" yaml:"uia2_ip,omitempty"`     // uiautomator2 server ip
 	UIA2Port     int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
-	UIA2Package  string `json:"uia2_package,omitempty" yaml:"uia2_package,omitempty"`
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 	IgnorePopup  bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
 }
@@ -209,17 +199,20 @@ func (dev *AndroidDevice) Init() error {
 
 	if dev.UIA2 {
 		// uiautomator2 server must be started before
-		var packageName string
-		if strings.Contains(dev.UIA2Package, "/") {
-			packageName = strings.Split(dev.UIA2Package, "/")[0]
-		} else {
-			packageName = dev.UIA2Package
-		}
 
 		// check uiautomator server package installed
-		if !dev.d.IsPackageInstalled(packageName) {
-			return errors.Wrap(code.MobileUIDriverAppNotInstalled,
-				"uiautomator server package not installed")
+		if !dev.d.IsPackageInstalled(UIA2ServerPackageName) {
+			return errors.Wrapf(code.MobileUIDriverAppNotInstalled,
+				"%s not installed", UIA2ServerPackageName)
+		}
+		if !dev.d.IsPackageInstalled(UIA2ServerTestPackageName) {
+			return errors.Wrapf(code.MobileUIDriverAppNotInstalled,
+				"%s not installed", UIA2ServerTestPackageName)
+		}
+
+		// check uiautomator server package running
+		if dev.d.IsPackageRunning(UIA2ServerPackageName) {
+			return nil
 		}
 
 		// start uiautomator2 server
@@ -552,12 +545,12 @@ func (dev *AndroidDevice) getPackageMD5(packagePath string) (string, error) {
 func (dev *AndroidDevice) startUIA2Server() error {
 	const maxRetries = 3
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		log.Info().Str("package", dev.UIA2Package).
+		log.Info().Str("package", UIA2ServerTestPackageName).
 			Int("attempt", attempt).Msg("start uiautomator server")
-		// $ adb shell am instrument -w $UIA2ServerPackageName
+		// $ adb shell am instrument -w $UIA2ServerTestPackageName
 		// -w: wait for instrumentation to finish before returning.
 		// Required for test runners.
-		out, err := dev.d.RunShellCommand("am", "instrument", "-w", dev.UIA2Package)
+		out, err := dev.d.RunShellCommand("am", "instrument", "-w", UIA2ServerTestPackageName)
 		if err != nil {
 			return errors.Wrap(err, "start uiautomator server failed")
 		}
@@ -571,7 +564,7 @@ func (dev *AndroidDevice) startUIA2Server() error {
 }
 
 func (dev *AndroidDevice) stopUIA2Server() error {
-	_, err := dev.d.RunShellCommand("am", "force-stop", dev.UIA2Package)
+	_, err := dev.d.RunShellCommand("am", "force-stop", UIA2ServerPackageName)
 	return err
 }
 

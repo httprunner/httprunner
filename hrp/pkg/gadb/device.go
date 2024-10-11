@@ -687,6 +687,14 @@ func (d *Device) IsPackageInstalled(packageName string) bool {
 	return builtin.Contains(packages, packageName)
 }
 
+func (d *Device) IsPackageRunning(packageName string) bool {
+	output, err := d.RunShellCommand("pidof", packageName)
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(output) != ""
+}
+
 func (d *Device) ScreenCap() ([]byte, error) {
 	if d.HasFeature(FeatShellV2) {
 		return d.RunShellCommandV2WithBytes("screencap", "-p")
