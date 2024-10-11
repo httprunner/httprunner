@@ -675,7 +675,7 @@ func (d *Device) ListPackages() ([]string, error) {
 	return packages, nil
 }
 
-func (d *Device) IsPackagesInstalled(packageName string) bool {
+func (d *Device) IsPackageInstalled(packageName string) bool {
 	packages, err := d.ListPackages()
 	if err != nil {
 		return false

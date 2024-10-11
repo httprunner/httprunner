@@ -77,6 +77,8 @@ var (
 
 // UI automation related: [70, 80)
 var (
+	MobileUIDriverAppNotInstalled         = errors.New("mobile UI driver app not installed")         // 68
+	MobileUIDriverAppCrashed              = errors.New("mobile UI driver app crashed")               // 69
 	MobileUIDriverError                   = errors.New("mobile UI driver error")                     // 70
 	MobileUILaunchAppError                = errors.New("mobile UI launch app error")                 // 71
 	MobileUITapError                      = errors.New("mobile UI tap error")                        // 72
@@ -168,6 +170,8 @@ var errorsMap = map[error]int{
 	DeviceUIResponseSlow:  67,
 
 	// UI automation related
+	MobileUIDriverAppNotInstalled:         68,
+	MobileUIDriverAppCrashed:              69,
 	MobileUIDriverError:                   70,
 	MobileUILaunchAppError:                71,
 	MobileUITapError:                      72,

@@ -384,6 +384,7 @@ func TestDriver_AppLaunch(t *testing.T) {
 
 func TestDriver_IsAppInForeground(t *testing.T) {
 	setupAndroidUIA2Driver(t)
+	// setupAndroidAdbDriver(t)
 
 	err := driverExt.Driver.AppLaunch("com.android.settings")
 	checkErr(t, err)
