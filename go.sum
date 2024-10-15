@@ -46,6 +46,8 @@ code.byted.org/iesqa/ghdc v0.0.0-20241008133702-1c71219a0303 h1:98fx5eC2fYzZKL48
 code.byted.org/iesqa/ghdc v0.0.0-20241008133702-1c71219a0303/go.mod h1:C2kq6TTE+JAOnqDorSwae1MQzRuex03RshuSUC2U/FY=
 code.byted.org/iesqa/ghdc v0.0.0-20241009130937-5efa701d3f56 h1:KolYCn3C/sgWUotywSO4L/8r4lOAgP/2bh6YeIofOJY=
 code.byted.org/iesqa/ghdc v0.0.0-20241009130937-5efa701d3f56/go.mod h1:C2kq6TTE+JAOnqDorSwae1MQzRuex03RshuSUC2U/FY=
+code.byted.org/iesqa/ghdc v0.0.0-20241011071205-a1bec975e48c h1:MagwhUnFDkOB/feAUSagsFQuaiqmZDBY0fFvs1tj8uU=
+code.byted.org/iesqa/ghdc v0.0.0-20241011071205-a1bec975e48c/go.mod h1:C2kq6TTE+JAOnqDorSwae1MQzRuex03RshuSUC2U/FY=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
