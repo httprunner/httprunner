@@ -481,6 +481,8 @@ type IDevice interface {
 	Init() error  // init android device
 	UUID() string // ios udid or android serial
 	LogEnabled() bool
+
+	// TODO: add ctx to NewDriver
 	NewDriver(...DriverOption) (driverExt *DriverExt, err error)
 
 	StartPerf() error

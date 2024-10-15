@@ -675,7 +675,7 @@ func (d *Device) ListPackages() ([]string, error) {
 	return packages, nil
 }
 
-func (d *Device) IsPackagesInstalled(packageName string) bool {
+func (d *Device) IsPackageInstalled(packageName string) bool {
 	packages, err := d.ListPackages()
 	if err != nil {
 		return false
@@ -685,6 +685,14 @@ func (d *Device) IsPackagesInstalled(packageName string) bool {
 		return false
 	}
 	return builtin.Contains(packages, packageName)
+}
+
+func (d *Device) IsPackageRunning(packageName string) bool {
+	output, err := d.RunShellCommand("pidof", packageName)
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(output) != ""
 }
 
 func (d *Device) ScreenCap() ([]byte, error) {

@@ -67,6 +67,7 @@ var (
 	DeviceHTTPDriverError = errors.New("device HTTP driver error")        // 51
 	DeviceUSBDriverError  = errors.New("device USB driver error")         // 52
 	DeviceGetInfoError    = errors.New("device get info error")           // 60
+	DeviceConfigureError  = errors.New("device configure error")          // 61
 	DeviceShellExecError  = errors.New("device shell exec error")         // 62
 	DeviceOfflineError    = errors.New("device offline")                  // 63
 	DeviceScreenShotError = errors.New("device screenshot error")         // 65
@@ -76,6 +77,8 @@ var (
 
 // UI automation related: [70, 80)
 var (
+	MobileUIDriverAppNotInstalled         = errors.New("mobile UI driver app not installed")         // 68
+	MobileUIDriverAppCrashed              = errors.New("mobile UI driver app crashed")               // 69
 	MobileUIDriverError                   = errors.New("mobile UI driver error")                     // 70
 	MobileUILaunchAppError                = errors.New("mobile UI launch app error")                 // 71
 	MobileUITapError                      = errors.New("mobile UI tap error")                        // 72
@@ -96,7 +99,7 @@ var (
 	CVResponseError          = errors.New("CV parse response error")  // 83
 	CVResultNotFoundError    = errors.New("CV result not found")      // 84
 
-	ContextUnknowError = errors.New("detect context failed") // 85
+	StateUnknowError = errors.New("detect state failed") // 85
 )
 
 // trackings related: [90, 100)
@@ -159,6 +162,7 @@ var errorsMap = map[error]int{
 	DeviceHTTPDriverError: 51,
 	DeviceUSBDriverError:  52,
 	DeviceGetInfoError:    60,
+	DeviceConfigureError:  61,
 	DeviceShellExecError:  62,
 	DeviceOfflineError:    63,
 	DeviceScreenShotError: 65,
@@ -166,6 +170,8 @@ var errorsMap = map[error]int{
 	DeviceUIResponseSlow:  67,
 
 	// UI automation related
+	MobileUIDriverAppNotInstalled:         68,
+	MobileUIDriverAppCrashed:              69,
 	MobileUIDriverError:                   70,
 	MobileUILaunchAppError:                71,
 	MobileUITapError:                      72,
@@ -183,7 +189,7 @@ var errorsMap = map[error]int{
 	CVServiceConnectionError: 82,
 	CVResponseError:          83,
 	CVResultNotFoundError:    84,
-	ContextUnknowError:       85,
+	StateUnknowError:         85,
 
 	// trackings related
 	TrackingGetError:   90,
