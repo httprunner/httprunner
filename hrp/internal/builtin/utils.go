@@ -29,7 +29,6 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/httprunner/httprunner/v4/hrp/code"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -456,13 +455,14 @@ func DownloadFile(filePath string, fileUrl string) error {
 		return err
 	}
 
-	if env.EAPI_TOKEN != "" {
+	eapiToken := os.Getenv("EAPI_TOKEN")
+	if eapiToken != "" {
 		if parsedURL.Host != "gtf-eapi-cn.bytedance.com" && parsedURL.Host != "gtf-eapi-cn.bytedance.net" {
 			return errors.New("invalid domain: must be gtf-eapi-cn.bytedance.com")
 		}
 		// 添加自定义头部
 		req.Header.Add("accessKey", "ies.vedem.video")
-		req.Header.Add("token", env.EAPI_TOKEN)
+		req.Header.Add("token", eapiToken)
 	}
 
 	// 创建一个 HTTP 客户端并发送请求

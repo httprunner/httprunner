@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/pkg/errors"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
@@ -105,7 +105,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 			continue
 		}
 
-		req, err = http.NewRequest("POST", env.VEDEM_IMAGE_URL, copiedBodyBuf)
+		req, err = http.NewRequest("POST", os.Getenv("VEDEM_IMAGE_URL"), copiedBodyBuf)
 		if err != nil {
 			err = errors.Wrap(code.CVRequestError,
 				fmt.Sprintf("construct request error: %v", err))
@@ -117,7 +117,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 		// req.Header.Add("x-use-ppe", "1")
 
 		signToken := "UNSIGNED-PAYLOAD"
-		token := builtin.Sign("auth-v2", env.VEDEM_IMAGE_AK, env.VEDEM_IMAGE_SK, []byte(signToken))
+		token := builtin.Sign("auth-v2", os.Getenv("VEDEM_IMAGE_AK"), os.Getenv("VEDEM_IMAGE_SK"), []byte(signToken))
 
 		req.Header.Add("Agw-Auth", token)
 		req.Header.Add("Agw-Auth-Content", signToken)
@@ -197,14 +197,15 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 }
 
 func checkEnv() error {
-	if env.VEDEM_IMAGE_URL == "" {
+	vedemImageURL := os.Getenv("VEDEM_IMAGE_URL")
+	if vedemImageURL == "" {
 		return errors.Wrap(code.CVEnvMissedError, "VEDEM_IMAGE_URL missed")
 	}
-	log.Info().Str("VEDEM_IMAGE_URL", env.VEDEM_IMAGE_URL).Msg("get env")
-	if env.VEDEM_IMAGE_AK == "" {
+	log.Info().Str("VEDEM_IMAGE_URL", vedemImageURL).Msg("get env")
+	if os.Getenv("VEDEM_IMAGE_AK") == "" {
 		return errors.Wrap(code.CVEnvMissedError, "VEDEM_IMAGE_AK missed")
 	}
-	if env.VEDEM_IMAGE_SK == "" {
+	if os.Getenv("VEDEM_IMAGE_SK") == "" {
 		return errors.Wrap(code.CVEnvMissedError, "VEDEM_IMAGE_SK missed")
 	}
 	return nil

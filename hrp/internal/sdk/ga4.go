@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
 	"runtime"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/rs/zerolog/log"
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
@@ -195,7 +195,7 @@ func (g *GA4Client) SendEvent(event Event) error {
 }
 
 func SendGA4Event(name string, params map[string]interface{}) {
-	if env.DISABLE_GA == "true" {
+	if os.Getenv("DISABLE_GA") == "true" {
 		// do not send GA4 events in CI environment
 		return
 	}

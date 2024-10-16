@@ -322,7 +322,7 @@ func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, 
 	}
 
 	var driver IWebDriver
-	if env.WDA_USB_DRIVER == "" {
+	if os.Getenv("WDA_USB_DRIVER") == "" {
 		// default use http driver
 		driver, err = dev.NewHTTPDriver(capabilities)
 	} else {
@@ -611,7 +611,7 @@ func (dev *IOSDevice) pcapOpitons() (pcapOptions []gidevice.PcapOption) {
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
 func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDriver, err error) {
 	var localPort int
-	localPort, err = strconv.Atoi(env.WDA_LOCAL_PORT)
+	localPort, err = strconv.Atoi(os.Getenv("WDA_LOCAL_PORT"))
 	if err != nil {
 		localPort, err = builtin.GetFreePort()
 		if err != nil {
@@ -628,7 +628,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDrive
 	}
 
 	var localMjpegPort int
-	localMjpegPort, err = strconv.Atoi(env.WDA_LOCAL_MJPEG_PORT)
+	localMjpegPort, err = strconv.Atoi(os.Getenv("WDA_LOCAL_MJPEG_PORT"))
 	if err != nil {
 		localMjpegPort, err = builtin.GetFreePort()
 		if err != nil {

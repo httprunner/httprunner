@@ -2,11 +2,11 @@ package sdk
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
@@ -16,7 +16,7 @@ const (
 
 func init() {
 	// init sentry sdk
-	if env.DISABLE_SENTRY == "true" {
+	if os.Getenv("DISABLE_SENTRY") == "true" {
 		return
 	}
 	err := sentry.Init(sentry.ClientOptions{
