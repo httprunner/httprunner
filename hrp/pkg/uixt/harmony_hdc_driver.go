@@ -22,6 +22,7 @@ type PowerStatus string
 
 const (
 	POWER_STATUS_SUSPEND PowerStatus = "POWER_STATUS_SUSPEND"
+	POWER_STATUS_OFF     PowerStatus = "POWER_STATUS_OFF"
 	POWER_STATUS_ON      PowerStatus = "POWER_STATUS_ON"
 )
 
@@ -103,10 +104,11 @@ func (hd *hdcDriver) Unlock() (err error) {
 	}
 	re := regexp.MustCompile(`powerstatus=([\w_]+)`)
 	match := re.FindStringSubmatch(screenInfo)
+	log.Info().Msg("screen info: " + screenInfo)
 	if len(match) <= 1 {
 		return fmt.Errorf("failed to unlock; failed to find powerstatus")
 	}
-	if match[1] == string(POWER_STATUS_SUSPEND) {
+	if match[1] == string(POWER_STATUS_SUSPEND) || match[1] == string(POWER_STATUS_OFF) {
 		err = hd.uiDriver.PressPowerKey()
 		if err != nil {
 			return err
