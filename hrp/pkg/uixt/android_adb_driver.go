@@ -19,7 +19,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/code"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/httprunner/httprunner/v4/hrp/internal/config"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
 )
@@ -699,10 +699,10 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 	// 没有解析到打点日志，走兜底逻辑
 	if len(pointRes) == 0 {
 		log.Info().Msg("action log is null, use action file >>>")
-		logFilePathPrefix := fmt.Sprintf("%v/data", env.ActionLogFilePath)
+		logFilePathPrefix := fmt.Sprintf("%v/data", config.ActionLogFilePath)
 		files := []string{}
-		myexec.RunCommand("adb", "-s", ad.adbClient.Serial(), "pull", env.DeviceActionLogFilePath, env.ActionLogFilePath)
-		err = filepath.Walk(env.ActionLogFilePath, func(path string, info fs.FileInfo, err error) error {
+		myexec.RunCommand("adb", "-s", ad.adbClient.Serial(), "pull", config.DeviceActionLogFilePath, config.ActionLogFilePath)
+		err = filepath.Walk(config.ActionLogFilePath, func(path string, info fs.FileInfo, err error) error {
 			// 只是需要日志文件
 			if ok := strings.Contains(path, logFilePathPrefix); ok {
 				files = append(files, path)

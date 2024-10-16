@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/code"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/httprunner/httprunner/v4/hrp/internal/config"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 )
 
@@ -185,5 +185,5 @@ func GetProjectRootDirPath(path string) (rootDir string, err error) {
 	// failed to locate project root dir
 	// maybe project plugin debugtalk.xx and proj.json are not exist
 	// use current dir instead
-	return env.RootDir, nil
+	return config.RootDir, nil
 }

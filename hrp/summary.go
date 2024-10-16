@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/httprunner/httprunner/v4/hrp/internal/config"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
 
@@ -27,7 +27,7 @@ func NewSummary() *Summary {
 		Success: true,
 		Stat:    &Stat{},
 		Time: &TestCaseTime{
-			StartAt: env.StartTime,
+			StartAt: config.StartTime,
 		},
 		Platform: platForm,
 	}
@@ -62,12 +62,12 @@ func (s *Summary) AddCaseSummary(caseSummary *TestCaseSummary) {
 		s.rootDir = caseSummary.RootDir
 	} else if s.rootDir != caseSummary.RootDir {
 		// if multiple testcases have different root path, use current working dir
-		s.rootDir = env.RootDir
+		s.rootDir = config.RootDir
 	}
 }
 
 func (s *Summary) GenHTMLReport() error {
-	reportsDir := filepath.Join(s.rootDir, env.ResultsDir)
+	reportsDir := filepath.Join(s.rootDir, config.ResultsDir)
 	err := builtin.EnsureFolderExists(reportsDir)
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func (s *Summary) GenHTMLReport() error {
 }
 
 func (s *Summary) GenSummary() (path string, err error) {
-	reportsDir := filepath.Join(s.rootDir, env.ResultsDir)
+	reportsDir := filepath.Join(s.rootDir, config.ResultsDir)
 	err = builtin.EnsureFolderExists(reportsDir)
 	if err != nil {
 		return "", err

@@ -23,7 +23,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/httprunner/httprunner/v4/hrp/internal/config"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 )
@@ -195,7 +195,7 @@ type AndroidDevice struct {
 
 func (dev *AndroidDevice) Init() error {
 	dev.d.RunShellCommand("ime", "enable", "io.appium.settings/.UnicodeIME")
-	dev.d.RunShellCommand("rm", "-r", env.DeviceActionLogFilePath)
+	dev.d.RunShellCommand("rm", "-r", config.DeviceActionLogFilePath)
 
 	if dev.UIA2 {
 		// uiautomator2 server must be started before

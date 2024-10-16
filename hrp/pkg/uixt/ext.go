@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/httprunner/httprunner/v4/hrp/internal/config"
 )
 
 type DriverExt struct {
@@ -42,10 +42,10 @@ func newDriverExt(device IDevice, driver IWebDriver, options ...DriverOption) (d
 	}
 	if driverOptions.withResultFolder {
 		// create results directory
-		if err = builtin.EnsureFolderExists(env.ResultsPath); err != nil {
+		if err = builtin.EnsureFolderExists(config.ResultsPath); err != nil {
 			return nil, errors.Wrap(err, "create results directory failed")
 		}
-		if err = builtin.EnsureFolderExists(env.ScreenShotsPath); err != nil {
+		if err = builtin.EnsureFolderExists(config.ScreenShotsPath); err != nil {
 			return nil, errors.Wrap(err, "create screenshots directory failed")
 		}
 	}

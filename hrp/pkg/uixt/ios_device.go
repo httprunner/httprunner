@@ -19,7 +19,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/httprunner/httprunner/v4/hrp/internal/config"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 )
 
@@ -383,7 +383,7 @@ func (dev *IOSDevice) StartPerf() error {
 		return err
 	}
 
-	dev.perfFile = filepath.Join(env.ResultsPath, "perf.data")
+	dev.perfFile = filepath.Join(config.ResultsPath, "perf.data")
 	file, err := os.OpenFile(dev.perfFile,
 		os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o755)
 	if err != nil {
@@ -428,7 +428,7 @@ func (dev *IOSDevice) StartPcap() error {
 		return err
 	}
 
-	dev.pcapFile = filepath.Join(env.ResultsPath, "dump.pcap")
+	dev.pcapFile = filepath.Join(config.ResultsPath, "dump.pcap")
 	file, err := os.OpenFile(dev.pcapFile,
 		os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o755)
 	if err != nil {

@@ -17,7 +17,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/httprunner/httprunner/v4/hrp/internal/config"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
 )
@@ -107,7 +107,7 @@ func (pt *pluginTemplate) generate(tmpl, output string) error {
 func (pt *pluginTemplate) generatePy(output string) error {
 	// specify output file path
 	if output == "" {
-		output = filepath.Join(env.RootDir, PluginPySourceGenFile)
+		output = filepath.Join(config.RootDir, PluginPySourceGenFile)
 	} else if builtin.IsFolderPathExists(output) {
 		output = filepath.Join(output, PluginPySourceGenFile)
 	}
@@ -155,7 +155,7 @@ func (pt *pluginTemplate) generateGo(output string) error {
 
 	// specify output file path
 	if output == "" {
-		output = filepath.Join(env.RootDir, PluginHashicorpGoBuiltFile)
+		output = filepath.Join(config.RootDir, PluginHashicorpGoBuiltFile)
 	} else if builtin.IsFolderPathExists(output) {
 		output = filepath.Join(output, PluginHashicorpGoBuiltFile)
 	}

@@ -16,7 +16,7 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/httprunner/httprunner/v4/hrp/internal/config"
 )
 
 type ScreenResult struct {
@@ -181,7 +181,7 @@ func (dExt *DriverExt) GetScreenShot(fileName string) (raw *bytes.Buffer, path s
 	}
 
 	// save screenshot to file
-	path = filepath.Join(env.ScreenShotsPath, fileName)
+	path = filepath.Join(config.ScreenShotsPath, fileName)
 	path, err = saveScreenShot(raw, path)
 	if err != nil {
 		log.Error().Err(err).Msg("save screenshot file failed")

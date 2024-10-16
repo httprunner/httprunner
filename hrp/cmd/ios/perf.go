@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/env"
+	"github.com/httprunner/httprunner/v4/hrp/internal/config"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
@@ -58,7 +58,7 @@ var perfCmd = &cobra.Command{
 			log.Fatal().Err(err).Msg("failed to init ios device")
 		}
 
-		err = builtin.EnsureFolderExists(env.ResultsPath)
+		err = builtin.EnsureFolderExists(config.ResultsPath)
 		if err != nil {
 			return err
 		}
