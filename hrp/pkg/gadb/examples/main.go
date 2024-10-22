@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
@@ -22,13 +23,12 @@ func main() {
 	dev := devices[0]
 
 	userHomeDir, _ := os.UserHomeDir()
-	apk, err := os.Open(userHomeDir + "/Desktop/xuexi_android_10002068.apk")
-	checkErr(err)
+	localPath := filepath.Join(userHomeDir, "xxx.apk")
 
 	log.Println("starting to push apk")
 
 	remotePath := "/data/local/tmp/xuexi_android_10002068.apk"
-	err = dev.PushFile(apk, remotePath)
+	err = dev.PushFile(localPath, remotePath)
 	checkErr(err, "adb push")
 
 	log.Println("push completed")
@@ -42,7 +42,6 @@ func main() {
 	}
 
 	log.Println("install completed")
-
 }
 
 func checkErr(err error, msg ...string) {

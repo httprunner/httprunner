@@ -246,8 +246,8 @@ func TestDevice_Push(t *testing.T) {
 	setupDevices(t)
 
 	for _, dev := range devices {
-		file, _ := os.Open("/Users/hero/Documents/temp/MuMu共享文件夹/test.txt")
-		err := dev.PushFile(file, "/sdcard/Download/push.txt", time.Now())
+		localPath := "test.txt"
+		err := dev.PushFile(localPath, "/sdcard/Download/push.txt", time.Now())
 		if err != nil {
 			t.Fatal(err)
 		}

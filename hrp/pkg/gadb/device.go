@@ -508,16 +508,22 @@ func (d *Device) List(remotePath string) (devFileInfos []DeviceFileInfo, err err
 	return
 }
 
-func (d *Device) PushFile(local *os.File, remotePath string, modification ...time.Time) (err error) {
+func (d *Device) PushFile(localPath, remotePath string, modification ...time.Time) (err error) {
+	localFile, err := os.Open(localPath)
+	if err != nil {
+		return err
+	}
+	defer localFile.Close()
+
 	if len(modification) == 0 {
 		var stat os.FileInfo
-		if stat, err = local.Stat(); err != nil {
+		if stat, err = localFile.Stat(); err != nil {
 			return err
 		}
 		modification = []time.Time{stat.ModTime()}
 	}
 
-	return d.Push(local, remotePath, modification[0], DefaultFileMode)
+	return d.Push(localFile, remotePath, modification[0], DefaultFileMode)
 }
 
 func (d *Device) Push(source io.Reader, remotePath string, modification time.Time, mode ...os.FileMode) (err error) {
