@@ -70,6 +70,7 @@ var (
 	DeviceConfigureError  = errors.New("device configure error")          // 61
 	DeviceShellExecError  = errors.New("device shell exec error")         // 62
 	DeviceOfflineError    = errors.New("device offline")                  // 63
+	DeviceInstallFailed   = errors.New("device install app failed")       // 64
 	DeviceScreenShotError = errors.New("device screenshot error")         // 65
 	DeviceCaptureLogError = errors.New("device capture log error")        // 66
 	DeviceUIResponseSlow  = errors.New("device UI response slow")         // 67
@@ -165,6 +166,7 @@ var errorsMap = map[error]int{
 	DeviceConfigureError:  61,
 	DeviceShellExecError:  62,
 	DeviceOfflineError:    63,
+	DeviceInstallFailed:   64,
 	DeviceScreenShotError: 65,
 	DeviceCaptureLogError: 66,
 	DeviceUIResponseSlow:  67,
