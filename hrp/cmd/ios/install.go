@@ -34,8 +34,13 @@ var installCmd = &cobra.Command{
 			fmt.Println(err)
 			return err
 		}
+		driverExt, err := device.NewDriver()
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
 
-		err = device.Install(args[0], uixt.NewInstallOptions())
+		err = driverExt.Install(args[0])
 		if err != nil {
 			fmt.Println(err)
 			return err

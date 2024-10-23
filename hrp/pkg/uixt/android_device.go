@@ -361,7 +361,8 @@ func (dev *AndroidDevice) Uninstall(packageName string) error {
 	return myexec.RunCommand("adb", "-s", dev.SerialNumber, "uninstall", packageName)
 }
 
-func (dev *AndroidDevice) Install(apkPath string, opts *InstallOptions) error {
+func (dev *AndroidDevice) Install(apkPath string, options ...InstallOption) error {
+	opts := NewInstallOptions(options...)
 	brand, err := dev.d.Brand()
 	if err != nil {
 		return err

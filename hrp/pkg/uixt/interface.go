@@ -491,7 +491,7 @@ type IDevice interface {
 	StartPcap() error
 	StopPcap() string
 
-	Install(appPath string, opts *InstallOptions) error
+	Install(appPath string, options ...InstallOption) error
 	Uninstall(packageName string) error
 
 	GetPackageInfo(packageName string) (AppInfo, error)
@@ -620,11 +620,9 @@ type IWebDriver interface {
 	Source(srcOpt ...SourceOption) (string, error)
 
 	LoginNoneUI(packageName, phoneNumber string, captcha string) error
-
 	LogoutNoneUI(packageName string) error
 
 	TapByText(text string, options ...ActionOption) error
-
 	TapByTexts(actions ...TapTextAction) error
 
 	// AccessibleSource Return application elements accessibility tree

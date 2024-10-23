@@ -473,8 +473,9 @@ func (dev *IOSDevice) StopPcap() string {
 	return dev.pcapFile
 }
 
-func (dev *IOSDevice) Install(appPath string, opts *InstallOptions) (err error) {
-	for i := 0; i <= opts.RetryTime; i++ {
+func (dev *IOSDevice) Install(appPath string, options ...InstallOption) (err error) {
+	installOptions := NewInstallOptions(options...)
+	for i := 0; i <= installOptions.RetryTimes; i++ {
 		err = builtin.RunCommand("go-ios", "install", "--path="+appPath, "--udid="+dev.UDID)
 		if err == nil {
 			return nil

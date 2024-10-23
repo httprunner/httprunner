@@ -171,7 +171,7 @@ func (dev *HarmonyDevice) StopPcap() string {
 	return ""
 }
 
-func (dev *HarmonyDevice) Install(appPath string, opts *InstallOptions) error {
+func (dev *HarmonyDevice) Install(appPath string, options ...InstallOption) error {
 	return nil
 }
 

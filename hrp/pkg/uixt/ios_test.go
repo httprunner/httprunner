@@ -41,7 +41,7 @@ func TestViaUSB(t *testing.T) {
 
 func TestInstall(t *testing.T) {
 	setup(t)
-	err := iOSDriverExt.Install("/Users/bytedance/Downloads/com.yueyou.cyreader_1387717110_7.54.20.ipa", NewInstallOptions(WithRetryTime(5)))
+	err := iOSDriverExt.Install("/Users/bytedance/Downloads/com.yueyou.cyreader_1387717110_7.54.20.ipa", WithRetryTimes(5))
 	log.Error().Err(err)
 	if err != nil {
 		t.Fatal(err)

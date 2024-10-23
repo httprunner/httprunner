@@ -11,6 +11,12 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
+var (
+	replace   bool
+	downgrade bool
+	grant     bool
+)
+
 var installCmd = &cobra.Command{
 	Use:   "install [flags] PACKAGE",
 	Short: "Push package to the device and install them atomically",
@@ -39,11 +45,12 @@ var installCmd = &cobra.Command{
 			fmt.Println(err)
 			return err
 		}
-		replace, _ := cmd.Flags().GetBool("replace")
-		downgrade, _ := cmd.Flags().GetBool("downgrade")
-		grant, _ := cmd.Flags().GetBool("grant")
 
-		err = driverExt.Install(args[0], uixt.NewInstallOptions(uixt.WithReinstall(replace), uixt.WithDowngrade(downgrade), uixt.WithGrantPermission(grant)))
+		err = driverExt.Install(args[0],
+			uixt.WithReinstall(replace),
+			uixt.WithDowngrade(downgrade),
+			uixt.WithGrantPermission(grant),
+		)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -55,8 +62,8 @@ var installCmd = &cobra.Command{
 
 func init() {
 	installCmd.Flags().StringVarP(&serial, "serial", "s", "", "filter by device's serial")
-	installCmd.Flags().BoolP("replace", "r", false, "replace existing application")
-	installCmd.Flags().BoolP("downgrade", "d", false, "allow version code downgrade (debuggable packages only)")
-	installCmd.Flags().BoolP("grant", "g", false, "grant all runtime permissions")
+	installCmd.Flags().BoolVarP(&replace, "replace", "r", false, "replace existing application")
+	installCmd.Flags().BoolVarP(&downgrade, "downgrade", "d", false, "allow version code downgrade (debuggable packages only)")
+	installCmd.Flags().BoolVarP(&grant, "grant", "g", false, "grant all runtime permissions")
 	androidRootCmd.AddCommand(installCmd)
 }
