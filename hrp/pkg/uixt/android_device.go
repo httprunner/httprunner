@@ -9,8 +9,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"io"
-	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -363,13 +361,7 @@ func (dev *AndroidDevice) Uninstall(packageName string) error {
 	return myexec.RunCommand("adb", "-s", dev.SerialNumber, "uninstall", packageName)
 }
 
-func (dev *AndroidDevice) Install(appPath string, opts *InstallOptions) error {
-	app, err := os.Open(appPath)
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("install %s open file failed", appPath))
-	}
-
-	defer app.Close()
+func (dev *AndroidDevice) Install(apkPath string, opts *InstallOptions) error {
 	brand, err := dev.d.Brand()
 	if err != nil {
 		return err
@@ -386,19 +378,19 @@ func (dev *AndroidDevice) Install(appPath string, opts *InstallOptions) error {
 	}
 	switch strings.ToLower(brand) {
 	case "vivo":
-		return dev.installVivoSilent(app, args...)
+		return dev.installVivoSilent(apkPath, args...)
 	case "oppo", "realme", "oneplus":
 		if dev.d.IsPackageInstalled(EvalInstallerPackageName) {
-			return dev.installViaInstaller(app, args...)
+			return dev.installViaInstaller(apkPath, args...)
 		}
 		log.Warn().Msg("oppo not install eval installer")
-		return dev.installCommon(app, args...)
+		return dev.installCommon(apkPath, args...)
 	default:
-		return dev.installCommon(app, args...)
+		return dev.installCommon(apkPath, args...)
 	}
 }
 
-func (dev *AndroidDevice) installVivoSilent(app io.ReadSeeker, args ...string) error {
+func (dev *AndroidDevice) installVivoSilent(apkPath string, args ...string) error {
 	currentTime := builtin.GetCurrentDay()
 	md5HashInBytes := md5.Sum([]byte(currentTime))
 	verifyCode := hex.EncodeToString(md5HashInBytes[:])
@@ -406,13 +398,13 @@ func (dev *AndroidDevice) installVivoSilent(app io.ReadSeeker, args ...string) e
 	verifyCode = verifyCode[:8]
 	verifyCode = "-V" + verifyCode
 	args = append([]string{verifyCode}, args...)
-	_, err := dev.d.InstallAPK(app, args...)
+	_, err := dev.d.InstallAPK(apkPath, args...)
 	return err
 }
 
-func (dev *AndroidDevice) installViaInstaller(app io.ReadSeeker, args ...string) error {
+func (dev *AndroidDevice) installViaInstaller(apkPath string, args ...string) error {
 	appRemotePath := "/data/local/tmp/" + strconv.FormatInt(time.Now().UnixMilli(), 10) + ".apk"
-	err := dev.d.Push(app, appRemotePath, time.Now())
+	err := dev.d.PushFile(apkPath, appRemotePath, time.Now())
 	if err != nil {
 		return err
 	}
@@ -464,8 +456,8 @@ func (dev *AndroidDevice) installViaInstaller(app io.ReadSeeker, args ...string)
 	}
 }
 
-func (dev *AndroidDevice) installCommon(app io.ReadSeeker, args ...string) error {
-	_, err := dev.d.InstallAPK(app, args...)
+func (dev *AndroidDevice) installCommon(apkPath string, args ...string) error {
+	_, err := dev.d.InstallAPK(apkPath, args...)
 	return err
 }
 

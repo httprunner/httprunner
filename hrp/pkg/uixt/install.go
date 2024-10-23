@@ -69,11 +69,13 @@ func (dExt *DriverExt) InstallByUrl(url string, opts *InstallOptions) error {
 	appPath := filepath.Join(cwd, fmt.Sprint(time.Now().UnixNano())) // 替换为你想保存的文件名
 	err = builtin.DownloadFile(appPath, url)
 	if err != nil {
+		log.Error().Err(err).Msg("download file failed")
 		return err
 	}
 
 	err = dExt.Install(appPath, opts)
 	if err != nil {
+		log.Error().Err(err).Msg("install app failed")
 		return err
 	}
 	return nil

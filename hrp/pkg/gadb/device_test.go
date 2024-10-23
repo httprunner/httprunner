@@ -331,9 +331,9 @@ func TestDevice_RunShellCommandBackgroundWithBytes(t *testing.T) {
 func TestDevice_InstallAPK(t *testing.T) {
 	setupDevices(t)
 
-	apk, _ := os.Open("test.apk")
+	apkPath := "test.apk"
 	for _, dev := range devices {
-		res, err := dev.InstallAPK(apk)
+		res, err := dev.InstallAPK(apkPath)
 		if err != nil {
 			t.Fatal(err)
 		}

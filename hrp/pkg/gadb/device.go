@@ -617,12 +617,18 @@ func (d *Device) installViaABBExec(apk io.ReadSeeker, args ...string) (raw []byt
 	return
 }
 
-func (d *Device) InstallAPK(apk io.ReadSeeker, args ...string) (string, error) {
+func (d *Device) InstallAPK(apkPath string, args ...string) (string, error) {
+	apkFile, err := os.Open(apkPath)
+	if err != nil {
+		return "", errors.Wrap(err, fmt.Sprintf("open apk file %s failed", apkPath))
+	}
+	defer apkFile.Close()
+
 	haserr := func(ret string) bool {
 		return strings.Contains(ret, "Failure")
 	}
 	if d.HasFeature(FeatAbbExec) {
-		raw, err := d.installViaABBExec(apk)
+		raw, err := d.installViaABBExec(apkFile)
 		if err != nil {
 			return "", fmt.Errorf("error installing: %v", err)
 		}
@@ -633,7 +639,7 @@ func (d *Device) InstallAPK(apk io.ReadSeeker, args ...string) (string, error) {
 	}
 
 	remote := fmt.Sprintf("/data/local/tmp/%s.apk", builtin.GenNameWithTimestamp("gadb_remote_%d"))
-	err := d.Push(apk, remote, time.Now())
+	err = d.Push(apkFile, remote, time.Now())
 	if err != nil {
 		return "", fmt.Errorf("error pushing: %v", err)
 	}
