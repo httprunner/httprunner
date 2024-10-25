@@ -104,7 +104,7 @@ func (dExt *DriverExt) Install(filePath string, options ...InstallOption) error 
 					_ = dExt.Driver.TapByTexts(actions...)
 
 					_ = dExt.TapByOCR(
-						"^.*(无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|授权本次安装|现在安装|继续安装|重新安装|安装)$",
+						"^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|授权本次安装|稍后提醒|继续安装|重新安装|安装)$",
 						WithRegex(true), WithIgnoreNotFoundError(true),
 					)
 				case <-stopChan:
