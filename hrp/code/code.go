@@ -12,10 +12,11 @@ const (
 
 // environment: [2, 10)
 var (
-	ConfigureError     = errors.New("configure error")             // 3
-	UnauthorizedError  = errors.New("unauthorized error")          // 4
-	NetworkError       = errors.New("network error")               // 5
-	InvalidPython3Venv = errors.New("prepare python3 venv failed") // 9
+	ConfigureError        = errors.New("configure error")             // 3
+	UnauthorizedError     = errors.New("unauthorized error")          // 4
+	NetworkError          = errors.New("network error")               // 5
+	NetworkConfigureError = errors.New("network configure error")     // 6
+	InvalidPython3Venv    = errors.New("prepare python3 venv failed") // 9
 )
 
 // loader: [10, 20)
@@ -118,10 +119,11 @@ var (
 
 var errorsMap = map[error]int{
 	// environment
-	ConfigureError:     3,
-	UnauthorizedError:  4,
-	NetworkError:       5,
-	InvalidPython3Venv: 9,
+	ConfigureError:        3,
+	UnauthorizedError:     4,
+	NetworkError:          5,
+	NetworkConfigureError: 6,
+	InvalidPython3Venv:    9,
 
 	// loader
 	LoadFileError:            10,
