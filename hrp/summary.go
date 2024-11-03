@@ -66,9 +66,17 @@ func (s *Summary) AddCaseSummary(caseSummary *TestCaseSummary) {
 	}
 }
 
+func (s *Summary) SetupDirPath() (path string, err error) {
+	dirPath := filepath.Join(s.rootDir, config.ResultsDir)
+	err = builtin.EnsureFolderExists(dirPath)
+	if err != nil {
+		return "", err
+	}
+	return dirPath, nil
+}
+
 func (s *Summary) GenHTMLReport() error {
-	reportsDir := filepath.Join(s.rootDir, config.ResultsDir)
-	err := builtin.EnsureFolderExists(reportsDir)
+	reportsDir, err := s.SetupDirPath()
 	if err != nil {
 		return err
 	}
@@ -97,8 +105,7 @@ func (s *Summary) GenHTMLReport() error {
 }
 
 func (s *Summary) GenSummary() (path string, err error) {
-	reportsDir := filepath.Join(s.rootDir, config.ResultsDir)
-	err = builtin.EnsureFolderExists(reportsDir)
+	reportsDir, err := s.SetupDirPath()
 	if err != nil {
 		return "", err
 	}
