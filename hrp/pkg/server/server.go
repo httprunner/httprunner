@@ -124,7 +124,21 @@ func tapHandler(c *gin.Context) {
 	}
 
 	dExt := driverObj.(*uixt.DriverExt)
-	if tapReq.X < 1 && tapReq.Y < 1 {
+	if tapReq.Text != "" {
+		err := dExt.TapByOCR(tapReq.Text, uixt.WithPressDuration(tapReq.Duration))
+		if err != nil {
+			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap text %s", c.HandlerName(), tapReq.Text))
+			c.JSON(http.StatusInternalServerError,
+				HttpResponse{
+					Result:    false,
+					ErrorCode: InternalServerErrorCode,
+					ErrorMsg:  InternalServerErrorMsg,
+				},
+			)
+			c.Abort()
+			return
+		}
+	} else if tapReq.X < 1 && tapReq.Y < 1 {
 		err := dExt.TapXY(tapReq.X, tapReq.Y, uixt.WithPressDuration(tapReq.Duration))
 		if err != nil {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap %f, %f", c.HandlerName(), tapReq.X, tapReq.Y))
@@ -427,22 +441,15 @@ func sourceHandler(c *gin.Context) {
 }
 
 func adbSourceHandler(c *gin.Context) {
-	deviceObj, exists := c.Get("device")
+	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "device")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
-	device := deviceObj.(*uixt.AndroidDevice)
-	driver, err := device.NewAdbDriver()
-	if err != nil {
-		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to new adb driver", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
-		c.Abort()
-		return
-	}
-	source, err := driver.Source()
+	driver := driverObj.(*uixt.DriverExt)
+	source, err := driver.Driver.Source()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get adb source", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
@@ -508,21 +515,30 @@ func logoutHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, HttpResponse{Result: true})
 }
 
+var uiClients = make(map[string]*uixt.DriverExt) // UI automation clients for iOS and Android, key is udid/serial
+
 func parseDeviceInfo() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		platform := c.Param("platform")
+		serial := c.Param("serial")
+		if serial == "" {
+			log.Error().Str("platform", platform).Msg(fmt.Sprintf("[%s]: serial is empty", c.HandlerName()))
+			c.JSON(http.StatusBadRequest, HttpResponse{
+				ErrorCode: InvalidParamErrorCode,
+				ErrorMsg:  fmt.Sprintf(InvalidParamErrorMsg, "serial"),
+			})
+			c.Abort()
+			return
+		}
+		// get cached driver
+		if driver, ok := uiClients[serial]; ok {
+			c.Set("driver", driver)
+			c.Next()
+			return
+		}
+
 		switch strings.ToLower(platform) {
 		case "android":
-			serial := c.Param("serial")
-			if serial == "" {
-				log.Error().Str("platform", platform).Msg(fmt.Sprintf("[%s]: serial is empty", c.HandlerName()))
-				c.JSON(http.StatusBadRequest, HttpResponse{
-					ErrorCode: InvalidParamErrorCode,
-					ErrorMsg:  fmt.Sprintf(InvalidParamErrorMsg, "serial"),
-				})
-				c.Abort()
-				return
-			}
 			device, err := uixt.NewAndroidDevice(uixt.WithSerialNumber(serial), uixt.WithStub(true))
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).Msg(fmt.Sprintf("[%s]: Device Not Found", c.HandlerName()))
@@ -533,8 +549,8 @@ func parseDeviceInfo() gin.HandlerFunc {
 				c.Abort()
 				return
 			}
-			c.Set("device", device)
-			driver, err := device.NewDriver(uixt.WithDriverImageService(false), uixt.WithDriverResultFolder(false))
+			// c.Set("device", device)
+			driver, err := device.NewDriver(uixt.WithDriverImageService(true), uixt.WithDriverResultFolder(true))
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).Msg(fmt.Sprintf("[%s]: Failed New Driver", c.HandlerName()))
 				c.JSON(http.StatusInternalServerError, HttpResponse{
@@ -545,6 +561,8 @@ func parseDeviceInfo() gin.HandlerFunc {
 				return
 			}
 			c.Set("driver", driver)
+			// cache driver
+			uiClients[serial] = driver
 		default:
 			c.JSON(http.StatusBadRequest, HttpResponse{
 				ErrorCode: InvalidParamErrorCode,
