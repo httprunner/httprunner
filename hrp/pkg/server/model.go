@@ -1,5 +1,7 @@
 package server
 
+import "github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
+
 type HttpResponse struct {
 	Result    interface{} `json:"result,omitempty"`
 	ErrorCode int         `json:"errorCode"`
@@ -7,10 +9,12 @@ type HttpResponse struct {
 }
 
 type TapRequest struct {
-	X        float64 `json:"x"`
-	Y        float64 `json:"y"`
-	Duration float64 `json:"duration"`
-	Text     string  `json:"text"`
+	X    float64 `json:"x"`
+	Y    float64 `json:"y"`
+	Text string  `json:"text"`
+
+	Duration float64             `json:"duration"` // move to options
+	Options  *uixt.ActionOptions `json:"options,omitempty"`
 }
 
 type DragRequest struct {

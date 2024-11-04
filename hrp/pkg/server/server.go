@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
@@ -125,14 +126,18 @@ func tapHandler(c *gin.Context) {
 
 	dExt := driverObj.(*uixt.DriverExt)
 	if tapReq.Text != "" {
-		err := dExt.TapByOCR(tapReq.Text, uixt.WithPressDuration(tapReq.Duration))
+		var actionOptions []uixt.ActionOption
+		if tapReq.Options != nil {
+			actionOptions = tapReq.Options.Options()
+		}
+		err := dExt.TapByOCR(tapReq.Text, actionOptions...)
 		if err != nil {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap text %s", c.HandlerName(), tapReq.Text))
 			c.JSON(http.StatusInternalServerError,
 				HttpResponse{
 					Result:    false,
-					ErrorCode: InternalServerErrorCode,
-					ErrorMsg:  InternalServerErrorMsg,
+					ErrorCode: code.GetErrorCode(err),
+					ErrorMsg:  err.Error(),
 				},
 			)
 			c.Abort()
@@ -142,7 +147,13 @@ func tapHandler(c *gin.Context) {
 		err := dExt.TapXY(tapReq.X, tapReq.Y, uixt.WithPressDuration(tapReq.Duration))
 		if err != nil {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap %f, %f", c.HandlerName(), tapReq.X, tapReq.Y))
-			c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+			c.JSON(http.StatusInternalServerError,
+				HttpResponse{
+					Result:    false,
+					ErrorCode: code.GetErrorCode(err),
+					ErrorMsg:  err.Error(),
+				},
+			)
 			c.Abort()
 			return
 		}
@@ -150,7 +161,13 @@ func tapHandler(c *gin.Context) {
 		err := dExt.TapAbsXY(tapReq.X, tapReq.Y, uixt.WithPressDuration(tapReq.Duration))
 		if err != nil {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap %f, %f", c.HandlerName(), tapReq.X, tapReq.Y))
-			c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+			c.JSON(http.StatusInternalServerError,
+				HttpResponse{
+					Result:    false,
+					ErrorCode: code.GetErrorCode(err),
+					ErrorMsg:  err.Error(),
+				},
+			)
 			c.Abort()
 			return
 		}
