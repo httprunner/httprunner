@@ -54,7 +54,12 @@ func listDeviceHandler(c *gin.Context) {
 			client, err := gadb.NewClient()
 			if err != nil {
 				log.Err(err).Msg("failed to init adb client")
-				c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+				c.JSON(http.StatusInternalServerError,
+					HttpResponse{
+						ErrorCode: code.GetErrorCode(err),
+						ErrorMsg:  err.Error(),
+					},
+				)
 				c.Abort()
 				return
 			}
@@ -64,7 +69,12 @@ func listDeviceHandler(c *gin.Context) {
 				return
 			} else if err != nil {
 				log.Err(err).Msg("failed to list devices")
-				c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+				c.JSON(http.StatusInternalServerError,
+					HttpResponse{
+						ErrorCode: code.GetErrorCode(err),
+						ErrorMsg:  err.Error(),
+					},
+				)
 				c.Abort()
 				return
 			}
@@ -73,14 +83,24 @@ func listDeviceHandler(c *gin.Context) {
 				brand, err := device.Brand()
 				if err != nil {
 					log.Err(err).Msg("failed to get device brand")
-					c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+					c.JSON(http.StatusInternalServerError,
+						HttpResponse{
+							ErrorCode: code.GetErrorCode(err),
+							ErrorMsg:  err.Error(),
+						},
+					)
 					c.Abort()
 					return
 				}
 				model, err := device.Model()
 				if err != nil {
 					log.Err(err).Msg("failed to get device model")
-					c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+					c.JSON(http.StatusInternalServerError,
+						HttpResponse{
+							ErrorCode: code.GetErrorCode(err),
+							ErrorMsg:  err.Error(),
+						},
+					)
 					c.Abort()
 					return
 				}
@@ -135,7 +155,6 @@ func tapHandler(c *gin.Context) {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap text %s", c.HandlerName(), tapReq.Text))
 			c.JSON(http.StatusInternalServerError,
 				HttpResponse{
-					Result:    false,
 					ErrorCode: code.GetErrorCode(err),
 					ErrorMsg:  err.Error(),
 				},
@@ -149,7 +168,6 @@ func tapHandler(c *gin.Context) {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap %f, %f", c.HandlerName(), tapReq.X, tapReq.Y))
 			c.JSON(http.StatusInternalServerError,
 				HttpResponse{
-					Result:    false,
 					ErrorCode: code.GetErrorCode(err),
 					ErrorMsg:  err.Error(),
 				},
@@ -163,7 +181,6 @@ func tapHandler(c *gin.Context) {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap %f, %f", c.HandlerName(), tapReq.X, tapReq.Y))
 			c.JSON(http.StatusInternalServerError,
 				HttpResponse{
-					Result:    false,
 					ErrorCode: code.GetErrorCode(err),
 					ErrorMsg:  err.Error(),
 				},
@@ -196,7 +213,12 @@ func dragHandler(c *gin.Context) {
 		err := dExt.SwipeRelative(dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY, uixt.WithPressDuration(dragReq.Duration))
 		if err != nil {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to drag from %f, %f to %f, %f", c.HandlerName(), dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY))
-			c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+			c.JSON(http.StatusInternalServerError,
+				HttpResponse{
+					ErrorCode: code.GetErrorCode(err),
+					ErrorMsg:  err.Error(),
+				},
+			)
 			c.Abort()
 			return
 		}
@@ -204,7 +226,12 @@ func dragHandler(c *gin.Context) {
 		err := dExt.Driver.SwipeFloat(dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY, uixt.WithPressDuration(dragReq.Duration))
 		if err != nil {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to drag from %f, %f to %f, %f", c.HandlerName(), dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY))
-			c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+			c.JSON(http.StatusInternalServerError,
+				HttpResponse{
+					ErrorCode: code.GetErrorCode(err),
+					ErrorMsg:  err.Error(),
+				},
+			)
 			c.Abort()
 			return
 		}
@@ -232,7 +259,12 @@ func inputHandler(c *gin.Context) {
 	err := dExt.Driver.SendKeys(inputReq.Text, uixt.WithFrequency(inputReq.Frequency))
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to input text %s", c.HandlerName(), inputReq.Text))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -252,7 +284,12 @@ func unlockHandler(c *gin.Context) {
 	err := dExt.Driver.Unlock()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -272,7 +309,12 @@ func homeHandler(c *gin.Context) {
 	err := dExt.Driver.Homescreen()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to enter homescreen", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -299,7 +341,12 @@ func keycodeHandler(c *gin.Context) {
 	err := dExt.Driver.PressKeyCode(uixt.KeyCode(keycodeReq.Keycode))
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to input keycode %d", c.HandlerName(), keycodeReq.Keycode))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -319,7 +366,12 @@ func foregroundAppHandler(c *gin.Context) {
 	appInfo, err := dExt.Driver.GetForegroundApp()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -347,7 +399,12 @@ func clearAppHandler(c *gin.Context) {
 	err := dExt.Driver.Clear(appClearReq.PackageName)
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: false, ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -374,7 +431,12 @@ func launchAppHandler(c *gin.Context) {
 	err := dExt.Driver.AppLaunch(appLaunchReq.PackageName)
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to launch app %s", c.HandlerName(), appLaunchReq.PackageName))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -401,7 +463,12 @@ func terminalAppHandler(c *gin.Context) {
 	success, err := dExt.Driver.AppTerminate(appTerminalReq.PackageName)
 	if !success {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to launch app %s", c.HandlerName(), appTerminalReq.PackageName))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -421,7 +488,12 @@ func screenshotHandler(c *gin.Context) {
 	raw, err := dExt.Driver.Screenshot()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get screenshot", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -442,14 +514,24 @@ func sourceHandler(c *gin.Context) {
 	app, err := dExt.Driver.GetForegroundApp()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get foreground app", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
 	source, err := dExt.Driver.Source(uixt.NewSourceOption().WithProcessName(app.PackageName))
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get source %s", c.HandlerName(), app.PackageName))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -469,7 +551,12 @@ func adbSourceHandler(c *gin.Context) {
 	source, err := driver.Driver.Source()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get adb source", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -497,7 +584,12 @@ func loginHandler(c *gin.Context) {
 	err := dExt.Driver.LoginNoneUI(loginReq.PackageName, loginReq.PhoneNumber, loginReq.Captcha)
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to login", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -525,7 +617,12 @@ func logoutHandler(c *gin.Context) {
 	err := dExt.Driver.LogoutNoneUI(logoutReq.PackageName)
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to login", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError, HttpResponse{Result: "", ErrorCode: InternalServerErrorCode, ErrorMsg: InternalServerErrorMsg})
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				ErrorCode: code.GetErrorCode(err),
+				ErrorMsg:  err.Error(),
+			},
+		)
 		c.Abort()
 		return
 	}
@@ -570,10 +667,12 @@ func parseDeviceInfo() gin.HandlerFunc {
 			driver, err := device.NewDriver(uixt.WithDriverImageService(true), uixt.WithDriverResultFolder(true))
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).Msg(fmt.Sprintf("[%s]: Failed New Driver", c.HandlerName()))
-				c.JSON(http.StatusInternalServerError, HttpResponse{
-					ErrorCode: InternalServerErrorCode,
-					ErrorMsg:  err.Error(),
-				})
+				c.JSON(http.StatusInternalServerError,
+					HttpResponse{
+						ErrorCode: code.GetErrorCode(err),
+						ErrorMsg:  err.Error(),
+					},
+				)
 				c.Abort()
 				return
 			}
