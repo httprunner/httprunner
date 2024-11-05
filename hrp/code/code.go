@@ -30,6 +30,7 @@ var (
 	UnsupportedFileExtension = errors.New("unsupported file extension") // 16
 	ReferencedFileNotFound   = errors.New("referenced file not found")  // 17
 	InvalidPluginFile        = errors.New("invalid plugin file")        // 18
+	InvalidParamError        = errors.New("invalid param error")        // 19
 )
 
 // parser: [20, 30)
@@ -135,6 +136,7 @@ var errorsMap = map[error]int{
 	UnsupportedFileExtension: 16,
 	ReferencedFileNotFound:   17,
 	InvalidPluginFile:        18,
+	InvalidParamError:        19,
 
 	// parser
 	ParseError:          20,
