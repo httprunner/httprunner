@@ -3,9 +3,9 @@ package server
 import "github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 
 type HttpResponse struct {
-	Result    interface{} `json:"result,omitempty"`
-	ErrorCode int         `json:"errorCode"`
-	ErrorMsg  string      `json:"errorMsg"`
+	Code    int         `json:"code"`
+	Message string      `json:"msg"`
+	Result  interface{} `json:"result,omitempty"`
 }
 
 type TapRequest struct {

@@ -56,8 +56,8 @@ func listDeviceHandler(c *gin.Context) {
 				log.Err(err).Msg("failed to init adb client")
 				c.JSON(http.StatusInternalServerError,
 					HttpResponse{
-						ErrorCode: code.GetErrorCode(err),
-						ErrorMsg:  err.Error(),
+						Code:    code.GetErrorCode(err),
+						Message: err.Error(),
 					},
 				)
 				c.Abort()
@@ -71,8 +71,8 @@ func listDeviceHandler(c *gin.Context) {
 				log.Err(err).Msg("failed to list devices")
 				c.JSON(http.StatusInternalServerError,
 					HttpResponse{
-						ErrorCode: code.GetErrorCode(err),
-						ErrorMsg:  err.Error(),
+						Code:    code.GetErrorCode(err),
+						Message: err.Error(),
 					},
 				)
 				c.Abort()
@@ -85,8 +85,8 @@ func listDeviceHandler(c *gin.Context) {
 					log.Err(err).Msg("failed to get device brand")
 					c.JSON(http.StatusInternalServerError,
 						HttpResponse{
-							ErrorCode: code.GetErrorCode(err),
-							ErrorMsg:  err.Error(),
+							Code:    code.GetErrorCode(err),
+							Message: err.Error(),
 						},
 					)
 					c.Abort()
@@ -97,8 +97,8 @@ func listDeviceHandler(c *gin.Context) {
 					log.Err(err).Msg("failed to get device model")
 					c.JSON(http.StatusInternalServerError,
 						HttpResponse{
-							ErrorCode: code.GetErrorCode(err),
-							ErrorMsg:  err.Error(),
+							Code:    code.GetErrorCode(err),
+							Message: err.Error(),
 						},
 					)
 					c.Abort()
@@ -118,8 +118,8 @@ func listDeviceHandler(c *gin.Context) {
 	default:
 		{
 			c.JSON(http.StatusBadRequest, HttpResponse{
-				ErrorCode: InvalidParamErrorCode,
-				ErrorMsg:  fmt.Sprintf(InvalidParamErrorMsg, "platform"),
+				Code:    InvalidParamErrorCode,
+				Message: fmt.Sprintf(InvalidParamErrorMsg, "platform"),
 			})
 			c.Abort()
 			return
@@ -131,7 +131,7 @@ func tapHandler(c *gin.Context) {
 	var tapReq TapRequest
 	if err := c.ShouldBindJSON(&tapReq); err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: Invalid Request", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "request")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "request")})
 		c.Abort()
 		return
 	}
@@ -139,7 +139,7 @@ func tapHandler(c *gin.Context) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -155,8 +155,8 @@ func tapHandler(c *gin.Context) {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap text %s", c.HandlerName(), tapReq.Text))
 			c.JSON(http.StatusInternalServerError,
 				HttpResponse{
-					ErrorCode: code.GetErrorCode(err),
-					ErrorMsg:  err.Error(),
+					Code:    code.GetErrorCode(err),
+					Message: err.Error(),
 				},
 			)
 			c.Abort()
@@ -168,8 +168,8 @@ func tapHandler(c *gin.Context) {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap %f, %f", c.HandlerName(), tapReq.X, tapReq.Y))
 			c.JSON(http.StatusInternalServerError,
 				HttpResponse{
-					ErrorCode: code.GetErrorCode(err),
-					ErrorMsg:  err.Error(),
+					Code:    code.GetErrorCode(err),
+					Message: err.Error(),
 				},
 			)
 			c.Abort()
@@ -181,8 +181,8 @@ func tapHandler(c *gin.Context) {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap %f, %f", c.HandlerName(), tapReq.X, tapReq.Y))
 			c.JSON(http.StatusInternalServerError,
 				HttpResponse{
-					ErrorCode: code.GetErrorCode(err),
-					ErrorMsg:  err.Error(),
+					Code:    code.GetErrorCode(err),
+					Message: err.Error(),
 				},
 			)
 			c.Abort()
@@ -196,14 +196,14 @@ func dragHandler(c *gin.Context) {
 	var dragReq DragRequest
 	if err := c.ShouldBindJSON(&dragReq); err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: Invalid Request", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "request")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "request")})
 		c.Abort()
 		return
 	}
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -215,8 +215,8 @@ func dragHandler(c *gin.Context) {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to drag from %f, %f to %f, %f", c.HandlerName(), dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY))
 			c.JSON(http.StatusInternalServerError,
 				HttpResponse{
-					ErrorCode: code.GetErrorCode(err),
-					ErrorMsg:  err.Error(),
+					Code:    code.GetErrorCode(err),
+					Message: err.Error(),
 				},
 			)
 			c.Abort()
@@ -228,8 +228,8 @@ func dragHandler(c *gin.Context) {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to drag from %f, %f to %f, %f", c.HandlerName(), dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY))
 			c.JSON(http.StatusInternalServerError,
 				HttpResponse{
-					ErrorCode: code.GetErrorCode(err),
-					ErrorMsg:  err.Error(),
+					Code:    code.GetErrorCode(err),
+					Message: err.Error(),
 				},
 			)
 			c.Abort()
@@ -243,14 +243,14 @@ func inputHandler(c *gin.Context) {
 	var inputReq InputRequest
 	if err := c.ShouldBindJSON(&inputReq); err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: Invalid Request", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "request")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "request")})
 		c.Abort()
 		return
 	}
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -261,8 +261,8 @@ func inputHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to input text %s", c.HandlerName(), inputReq.Text))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -275,7 +275,7 @@ func unlockHandler(c *gin.Context) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -286,8 +286,8 @@ func unlockHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -300,7 +300,7 @@ func homeHandler(c *gin.Context) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -311,8 +311,8 @@ func homeHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to enter homescreen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -325,14 +325,14 @@ func keycodeHandler(c *gin.Context) {
 	var keycodeReq KeycodeRequest
 	if err := c.ShouldBindJSON(&keycodeReq); err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: Invalid Request", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "request")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "request")})
 		c.Abort()
 		return
 	}
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -343,8 +343,8 @@ func keycodeHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to input keycode %d", c.HandlerName(), keycodeReq.Keycode))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -357,7 +357,7 @@ func foregroundAppHandler(c *gin.Context) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -368,8 +368,8 @@ func foregroundAppHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -382,7 +382,7 @@ func clearAppHandler(c *gin.Context) {
 	var appClearReq AppClearRequest
 	if err := c.ShouldBindJSON(&appClearReq); err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: Invalid Request", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "request")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "request")})
 		c.Abort()
 		return
 	}
@@ -390,7 +390,7 @@ func clearAppHandler(c *gin.Context) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: false, Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -401,8 +401,8 @@ func clearAppHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -415,14 +415,14 @@ func launchAppHandler(c *gin.Context) {
 	var appLaunchReq AppLaunchRequest
 	if err := c.ShouldBindJSON(&appLaunchReq); err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: Invalid Request", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "request")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "request")})
 		c.Abort()
 		return
 	}
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -433,8 +433,8 @@ func launchAppHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to launch app %s", c.HandlerName(), appLaunchReq.PackageName))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -447,14 +447,14 @@ func terminalAppHandler(c *gin.Context) {
 	var appTerminalReq AppTerminalRequest
 	if err := c.ShouldBindJSON(&appTerminalReq); err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: Invalid Request", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "request")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "request")})
 		c.Abort()
 		return
 	}
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -465,8 +465,8 @@ func terminalAppHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to launch app %s", c.HandlerName(), appTerminalReq.PackageName))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -479,7 +479,7 @@ func screenshotHandler(c *gin.Context) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -490,8 +490,8 @@ func screenshotHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get screenshot", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -505,7 +505,7 @@ func sourceHandler(c *gin.Context) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -516,8 +516,8 @@ func sourceHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get foreground app", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -528,8 +528,8 @@ func sourceHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get source %s", c.HandlerName(), app.PackageName))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -543,7 +543,7 @@ func adbSourceHandler(c *gin.Context) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -553,8 +553,8 @@ func adbSourceHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get adb source", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -567,7 +567,7 @@ func loginHandler(c *gin.Context) {
 	var loginReq LoginRequest
 	if err := c.ShouldBindJSON(&loginReq); err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: Invalid Request", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "request")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "request")})
 		c.Abort()
 		return
 	}
@@ -575,7 +575,7 @@ func loginHandler(c *gin.Context) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -586,8 +586,8 @@ func loginHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to login", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -600,7 +600,7 @@ func logoutHandler(c *gin.Context) {
 	var logoutReq LogoutRequest
 	if err := c.ShouldBindJSON(&logoutReq); err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: Invalid Request", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "request")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "request")})
 		c.Abort()
 		return
 	}
@@ -608,7 +608,7 @@ func logoutHandler(c *gin.Context) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		log.Error().Msg(fmt.Sprintf("[%s]: Driver Not exsit", c.HandlerName()))
-		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", ErrorCode: InvalidParamErrorCode, ErrorMsg: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
+		c.JSON(http.StatusBadRequest, HttpResponse{Result: "", Code: InvalidParamErrorCode, Message: fmt.Sprintf(InvalidParamErrorMsg, "driver")})
 		c.Abort()
 		return
 	}
@@ -619,8 +619,8 @@ func logoutHandler(c *gin.Context) {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to login", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
 			HttpResponse{
-				ErrorCode: code.GetErrorCode(err),
-				ErrorMsg:  err.Error(),
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
 			},
 		)
 		c.Abort()
@@ -638,8 +638,8 @@ func parseDeviceInfo() gin.HandlerFunc {
 		if serial == "" {
 			log.Error().Str("platform", platform).Msg(fmt.Sprintf("[%s]: serial is empty", c.HandlerName()))
 			c.JSON(http.StatusBadRequest, HttpResponse{
-				ErrorCode: InvalidParamErrorCode,
-				ErrorMsg:  fmt.Sprintf(InvalidParamErrorMsg, "serial"),
+				Code:    InvalidParamErrorCode,
+				Message: fmt.Sprintf(InvalidParamErrorMsg, "serial"),
 			})
 			c.Abort()
 			return
@@ -657,8 +657,8 @@ func parseDeviceInfo() gin.HandlerFunc {
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).Msg(fmt.Sprintf("[%s]: Device Not Found", c.HandlerName()))
 				c.JSON(http.StatusBadRequest, HttpResponse{
-					ErrorCode: DeviceNotFoundCode,
-					ErrorMsg:  fmt.Sprintf(DeviceNotFoundMsg, serial),
+					Code:    DeviceNotFoundCode,
+					Message: fmt.Sprintf(DeviceNotFoundMsg, serial),
 				})
 				c.Abort()
 				return
@@ -669,8 +669,8 @@ func parseDeviceInfo() gin.HandlerFunc {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).Msg(fmt.Sprintf("[%s]: Failed New Driver", c.HandlerName()))
 				c.JSON(http.StatusInternalServerError,
 					HttpResponse{
-						ErrorCode: code.GetErrorCode(err),
-						ErrorMsg:  err.Error(),
+						Code:    code.GetErrorCode(err),
+						Message: err.Error(),
 					},
 				)
 				c.Abort()
@@ -681,8 +681,8 @@ func parseDeviceInfo() gin.HandlerFunc {
 			uiClients[serial] = driver
 		default:
 			c.JSON(http.StatusBadRequest, HttpResponse{
-				ErrorCode: InvalidParamErrorCode,
-				ErrorMsg:  fmt.Sprintf(InvalidParamErrorMsg, "platform"),
+				Code:    InvalidParamErrorCode,
+				Message: fmt.Sprintf(InvalidParamErrorMsg, "platform"),
 			})
 			c.Abort()
 			return
