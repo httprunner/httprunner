@@ -17,22 +17,31 @@ import (
 func NewServer(port int) error {
 	router := gin.Default()
 	router.GET("/ping", pingHandler)
-	router.GET("/api/v1/:platform/devices", listDeviceHandler)
-	router.POST("/api/v1/:platform/:serial/ui/tap", parseDeviceInfo(), tapHandler)
-	router.POST("/api/v1/:platform/:serial/ui/drag", parseDeviceInfo(), dragHandler)
-	router.POST("/api/v1/:platform/:serial/ui/input", parseDeviceInfo(), inputHandler)
-	router.POST("/api/v1/:platform/:serial/key/unlock", parseDeviceInfo(), unlockHandler)
-	router.POST("/api/v1/:platform/:serial/key/home", parseDeviceInfo(), homeHandler)
-	router.POST("/api/v1/:platform/:serial/key", parseDeviceInfo(), keycodeHandler)
-	router.GET("/api/v1/:platform/:serial/app/foreground", parseDeviceInfo(), foregroundAppHandler)
-	router.POST("/api/v1/:platform/:serial/app/clear", parseDeviceInfo(), clearAppHandler)
-	router.POST("/api/v1/:platform/:serial/app/launch", parseDeviceInfo(), launchAppHandler)
-	router.POST("/api/v1/:platform/:serial/app/terminal", parseDeviceInfo(), terminalAppHandler)
-	router.GET("/api/v1/:platform/:serial/screenshot", parseDeviceInfo(), screenshotHandler)
-	router.GET("/api/v1/:platform/:serial/stub/source", parseDeviceInfo(), sourceHandler)
-	router.GET("/api/v1/:platform/:serial/adb/source", parseDeviceInfo(), adbSourceHandler)
-	router.POST("/api/v1/:platform/:serial/stub/login", parseDeviceInfo(), loginHandler)
-	router.POST("/api/v1/:platform/:serial/stub/logout", parseDeviceInfo(), logoutHandler)
+
+	apiV1Platform := router.Group("/api/v1").Group("/:platform")
+	apiV1Platform.GET("/devices", listDeviceHandler)
+
+	apiV1PlatformSerial := apiV1Platform.Group("/:serial")
+	// UI operations
+	apiV1PlatformSerial.POST("/ui/tap", parseDeviceInfo(), tapHandler)
+	apiV1PlatformSerial.POST("/ui/drag", parseDeviceInfo(), dragHandler)
+	apiV1PlatformSerial.POST("/ui/input", parseDeviceInfo(), inputHandler)
+	// Key operations
+	apiV1PlatformSerial.POST("/key/unlock", parseDeviceInfo(), unlockHandler)
+	apiV1PlatformSerial.POST("/key/home", parseDeviceInfo(), homeHandler)
+	apiV1PlatformSerial.POST("/key", parseDeviceInfo(), keycodeHandler)
+	// App operations
+	apiV1PlatformSerial.GET("/app/foreground", parseDeviceInfo(), foregroundAppHandler)
+	apiV1PlatformSerial.POST("/app/clear", parseDeviceInfo(), clearAppHandler)
+	apiV1PlatformSerial.POST("/app/launch", parseDeviceInfo(), launchAppHandler)
+	apiV1PlatformSerial.POST("/app/terminal", parseDeviceInfo(), terminalAppHandler)
+	// get screen info
+	apiV1PlatformSerial.GET("/screenshot", parseDeviceInfo(), screenshotHandler)
+	apiV1PlatformSerial.GET("/stub/source", parseDeviceInfo(), sourceHandler)
+	apiV1PlatformSerial.GET("/adb/source", parseDeviceInfo(), adbSourceHandler)
+	// Stub operations
+	apiV1PlatformSerial.POST("/stub/login", parseDeviceInfo(), loginHandler)
+	apiV1PlatformSerial.POST("/stub/logout", parseDeviceInfo(), logoutHandler)
 
 	err := router.Run(fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
@@ -658,13 +667,12 @@ func parseDeviceInfo() gin.HandlerFunc {
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).Msg(fmt.Sprintf("[%s]: Device Not Found", c.HandlerName()))
 				c.JSON(http.StatusBadRequest, HttpResponse{
-					Code:    DeviceNotFoundCode,
-					Message: fmt.Sprintf(DeviceNotFoundMsg, serial),
+					Code:    code.GetErrorCode(err),
+					Message: err.Error(),
 				})
 				c.Abort()
 				return
 			}
-			// c.Set("device", device)
 			driver, err := device.NewDriver(uixt.WithDriverImageService(true), uixt.WithDriverResultFolder(true))
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).Msg(fmt.Sprintf("[%s]: Failed New Driver", c.HandlerName()))
