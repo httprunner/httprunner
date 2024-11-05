@@ -17,11 +17,12 @@ type TapRequest struct {
 }
 
 type DragRequest struct {
-	FromX    float64 `json:"from_x"`
-	FromY    float64 `json:"from_y"`
-	ToX      float64 `json:"to_x"`
-	ToY      float64 `json:"to_y"`
-	Duration float64 `json:"duration"`
+	FromX float64 `json:"from_x"`
+	FromY float64 `json:"from_y"`
+	ToX   float64 `json:"to_x"`
+	ToY   float64 `json:"to_y"`
+
+	Options *uixt.ActionOptions `json:"options,omitempty"`
 }
 
 type InputRequest struct {
