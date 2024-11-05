@@ -31,6 +31,7 @@ func NewServer(port int) error {
 	apiV1PlatformSerial.POST("/app/terminal", handleDeviceContext(), terminalAppHandler)
 	// get screen info
 	apiV1PlatformSerial.GET("/screenshot", handleDeviceContext(), screenshotHandler)
+	apiV1PlatformSerial.POST("/screenresult", handleDeviceContext(), screenResultHandler)
 	apiV1PlatformSerial.GET("/stub/source", handleDeviceContext(), sourceHandler)
 	apiV1PlatformSerial.GET("/adb/source", handleDeviceContext(), adbSourceHandler)
 	// Stub operations

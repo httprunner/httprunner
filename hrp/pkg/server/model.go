@@ -30,6 +30,10 @@ type InputRequest struct {
 	Frequency int    `json:"frequency"` // only iOS
 }
 
+type ScreenRequest struct {
+	Options *uixt.ActionOptions `json:"options,omitempty"`
+}
+
 type KeycodeRequest struct {
 	Keycode int `json:"keycode"`
 }

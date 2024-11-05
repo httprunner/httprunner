@@ -30,7 +30,51 @@ func screenshotHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, HttpResponse{Result: base64.StdEncoding.EncodeToString(raw.Bytes())})
+	c.JSON(http.StatusOK,
+		HttpResponse{
+			Code:    code.Success,
+			Message: "success",
+			Result:  base64.StdEncoding.EncodeToString(raw.Bytes()),
+		},
+	)
+}
+
+func screenResultHandler(c *gin.Context) {
+	dExt, err := getContextDriver(c)
+	if err != nil {
+		return
+	}
+
+	var screenReq ScreenRequest
+	if err := c.ShouldBindJSON(&screenReq); err != nil {
+		handlerValidateRequestFailedContext(c, err)
+		return
+	}
+
+	var actionOptions []uixt.ActionOption
+	if screenReq.Options != nil {
+		actionOptions = screenReq.Options.Options()
+	}
+
+	screenResult, err := dExt.GetScreenResult(actionOptions...)
+	if err != nil {
+		log.Err(err).Msg("get screen result failed")
+		c.JSON(http.StatusInternalServerError,
+			HttpResponse{
+				Code:    code.GetErrorCode(err),
+				Message: err.Error(),
+			},
+		)
+		c.Abort()
+		return
+	}
+	c.JSON(http.StatusOK,
+		HttpResponse{
+			Code:    code.Success,
+			Message: "success",
+			Result:  screenResult,
+		},
+	)
 }
 
 func sourceHandler(c *gin.Context) {
