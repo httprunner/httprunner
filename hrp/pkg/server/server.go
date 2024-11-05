@@ -43,7 +43,7 @@ func NewServer(port int) error {
 }
 
 func pingHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 func listDeviceHandler(c *gin.Context) {
@@ -144,12 +144,13 @@ func tapHandler(c *gin.Context) {
 		return
 	}
 
+	var actionOptions []uixt.ActionOption
+	if tapReq.Options != nil {
+		actionOptions = tapReq.Options.Options()
+	}
+
 	dExt := driverObj.(*uixt.DriverExt)
 	if tapReq.Text != "" {
-		var actionOptions []uixt.ActionOption
-		if tapReq.Options != nil {
-			actionOptions = tapReq.Options.Options()
-		}
 		err := dExt.TapByOCR(tapReq.Text, actionOptions...)
 		if err != nil {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap text %s", c.HandlerName(), tapReq.Text))
@@ -163,7 +164,7 @@ func tapHandler(c *gin.Context) {
 			return
 		}
 	} else if tapReq.X < 1 && tapReq.Y < 1 {
-		err := dExt.TapXY(tapReq.X, tapReq.Y, uixt.WithPressDuration(tapReq.Duration))
+		err := dExt.TapXY(tapReq.X, tapReq.Y, actionOptions...)
 		if err != nil {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap %f, %f", c.HandlerName(), tapReq.X, tapReq.Y))
 			c.JSON(http.StatusInternalServerError,
@@ -176,7 +177,7 @@ func tapHandler(c *gin.Context) {
 			return
 		}
 	} else {
-		err := dExt.TapAbsXY(tapReq.X, tapReq.Y, uixt.WithPressDuration(tapReq.Duration))
+		err := dExt.TapAbsXY(tapReq.X, tapReq.Y, actionOptions...)
 		if err != nil {
 			log.Err(err).Msg(fmt.Sprintf("[%s]: failed to tap %f, %f", c.HandlerName(), tapReq.X, tapReq.Y))
 			c.JSON(http.StatusInternalServerError,
@@ -189,7 +190,7 @@ func tapHandler(c *gin.Context) {
 			return
 		}
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 func dragHandler(c *gin.Context) {
@@ -236,7 +237,7 @@ func dragHandler(c *gin.Context) {
 			return
 		}
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 func inputHandler(c *gin.Context) {
@@ -268,7 +269,7 @@ func inputHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 func unlockHandler(c *gin.Context) {
@@ -293,7 +294,7 @@ func unlockHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 func homeHandler(c *gin.Context) {
@@ -318,7 +319,7 @@ func homeHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 func keycodeHandler(c *gin.Context) {
@@ -350,7 +351,7 @@ func keycodeHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 func foregroundAppHandler(c *gin.Context) {
@@ -408,7 +409,7 @@ func clearAppHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 func launchAppHandler(c *gin.Context) {
@@ -440,7 +441,7 @@ func launchAppHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 func terminalAppHandler(c *gin.Context) {
@@ -472,7 +473,7 @@ func terminalAppHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 func screenshotHandler(c *gin.Context) {
@@ -593,7 +594,7 @@ func loginHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 func logoutHandler(c *gin.Context) {
@@ -626,7 +627,7 @@ func logoutHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: true})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
 }
 
 var uiClients = make(map[string]*uixt.DriverExt) // UI automation clients for iOS and Android, key is udid/serial

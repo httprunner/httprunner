@@ -13,8 +13,7 @@ type TapRequest struct {
 	Y    float64 `json:"y"`
 	Text string  `json:"text"`
 
-	Duration float64             `json:"duration"` // move to options
-	Options  *uixt.ActionOptions `json:"options,omitempty"`
+	Options *uixt.ActionOptions `json:"options,omitempty"`
 }
 
 type DragRequest struct {
