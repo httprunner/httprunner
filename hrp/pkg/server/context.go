@@ -37,17 +37,23 @@ func handleDeviceContext() gin.HandlerFunc {
 		case "android":
 			device, err := uixt.NewAndroidDevice(uixt.WithSerialNumber(serial), uixt.WithStub(true))
 			if err != nil {
-				log.Error().Err(err).Str("platform", platform).Str("serial", serial).Msg(fmt.Sprintf("[%s]: Device Not Found", c.HandlerName()))
-				c.JSON(http.StatusBadRequest, HttpResponse{
-					Code:    code.GetErrorCode(err),
-					Message: err.Error(),
-				})
+				log.Error().Err(err).Str("platform", platform).Str("serial", serial).
+					Msg("device not found")
+				c.JSON(http.StatusBadRequest,
+					HttpResponse{
+						Code:    code.GetErrorCode(err),
+						Message: err.Error(),
+					},
+				)
 				c.Abort()
 				return
 			}
+			device.Init()
+
 			driver, err := device.NewDriver(uixt.WithDriverImageService(true), uixt.WithDriverResultFolder(true))
 			if err != nil {
-				log.Error().Err(err).Str("platform", platform).Str("serial", serial).Msg(fmt.Sprintf("[%s]: Failed New Driver", c.HandlerName()))
+				log.Error().Err(err).Str("platform", platform).Str("serial", serial).
+					Msg("failed to init driver")
 				c.JSON(http.StatusInternalServerError,
 					HttpResponse{
 						Code:    code.GetErrorCode(err),
