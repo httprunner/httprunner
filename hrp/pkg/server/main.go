@@ -38,6 +38,9 @@ func NewServer(port int) error {
 	apiV1PlatformSerial.POST("/stub/login", handleDeviceContext(), loginHandler)
 	apiV1PlatformSerial.POST("/stub/logout", handleDeviceContext(), logoutHandler)
 
+	// run uixt actions
+	apiV1PlatformSerial.POST("/uixt/action", handleDeviceContext(), uixtActionHandler)
+
 	err := router.Run(fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		log.Err(err).Msg("failed to start http server")
