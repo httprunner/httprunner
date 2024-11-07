@@ -40,6 +40,7 @@ func NewServer(port int) error {
 
 	// run uixt actions
 	apiV1PlatformSerial.POST("/uixt/action", handleDeviceContext(), uixtActionHandler)
+	apiV1PlatformSerial.POST("/uixt/actions", handleDeviceContext(), uixtActionsHandler)
 
 	err := router.Run(fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
