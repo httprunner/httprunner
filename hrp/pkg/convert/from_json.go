@@ -7,9 +7,9 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp"
 )
 
-func LoadJSONCase(path string) (*hrp.TestCase, error) {
+func LoadJSONCase(path string) (*hrp.TestCaseDef, error) {
 	log.Info().Str("path", path).Msg("load json case file")
-	caseJSON := new(hrp.TestCase)
+	caseJSON := new(hrp.TestCaseDef)
 	err := hrp.LoadFileObject(path, caseJSON)
 	if err != nil {
 		return nil, errors.Wrap(err, "load json file failed")

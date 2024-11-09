@@ -357,7 +357,7 @@ type TestResult struct {
 
 // ==================== model definition ends here ====================
 
-func LoadHARCase(path string) (*hrp.TestCase, error) {
+func LoadHARCase(path string) (*hrp.TestCaseDef, error) {
 	// load har file
 	caseHAR, err := loadCaseHAR(path)
 	if err != nil {
@@ -381,13 +381,13 @@ func loadCaseHAR(path string) (*CaseHar, error) {
 }
 
 // convert CaseHar to TestCase format
-func (c *CaseHar) ToTestCase() (*hrp.TestCase, error) {
+func (c *CaseHar) ToTestCase() (*hrp.TestCaseDef, error) {
 	teststeps, err := c.prepareTestSteps()
 	if err != nil {
 		return nil, err
 	}
 
-	tCase := &hrp.TestCase{
+	tCase := &hrp.TestCaseDef{
 		Config: c.prepareConfig(),
 		Steps:  teststeps,
 	}
@@ -424,8 +424,10 @@ func (c *CaseHar) prepareTestStep(entry *Entry) (*hrp.TStep, error) {
 
 	step := &stepFromHAR{
 		TStep: hrp.TStep{
-			Request:    &hrp.Request{},
-			Validators: make([]interface{}, 0),
+			Request: &hrp.Request{},
+			StepConfig: hrp.StepConfig{
+				Validators: make([]interface{}, 0),
+			},
 		},
 	}
 	if err := step.makeRequestMethod(entry); err != nil {

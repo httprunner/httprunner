@@ -17,68 +17,86 @@ type Shell struct {
 
 // StepShell implements IStep interface.
 type StepShell struct {
-	step *TStep
+	StepConfig
+	Shell *Shell `json:"shell,omitempty" yaml:"shell,omitempty"`
 }
 
 func (s *StepShell) Name() string {
-	return s.step.Name
+	return s.StepName
 }
 
 func (s *StepShell) Type() StepType {
 	return stepTypeShell
 }
 
-func (s *StepShell) Struct() *TStep {
-	return s.step
+func (s *StepShell) Config() *StepConfig {
+	return &StepConfig{
+		StepName:  s.StepName,
+		Variables: s.Variables,
+	}
 }
 
 func (s *StepShell) Run(r *SessionRunner) (*StepResult, error) {
-	return runStepShell(r, s.step)
+	return runStepShell(r, s)
 }
 
 // Validate switches to step validation.
 func (s *StepShell) Validate() *StepShellValidation {
 	return &StepShellValidation{
-		step: s.step,
+		StepConfig: s.StepConfig,
+		Shell:      s.Shell,
 	}
 }
 
 // StepShellValidation implements IStep interface.
 type StepShellValidation struct {
-	step *TStep
+	StepConfig
+	Shell *Shell `json:"shell,omitempty" yaml:"shell,omitempty"`
 }
 
 func (s *StepShellValidation) Name() string {
-	return s.step.Name
+	return s.StepName
 }
 
 func (s *StepShellValidation) Type() StepType {
 	return stepTypeShell + stepTypeSuffixValidation
 }
 
-func (s *StepShellValidation) Struct() *TStep {
-	return s.step
+func (s *StepShellValidation) Config() *StepConfig {
+	return &StepConfig{
+		StepName:  s.StepName,
+		Variables: s.Variables,
+	}
 }
 
 func (s *StepShellValidation) Run(r *SessionRunner) (*StepResult, error) {
-	return runStepShell(r, s.step)
+	return runStepShell(r, s)
 }
 
 func (s *StepShellValidation) AssertExitCode(expected int) *StepShellValidation {
-	s.step.Shell.ExpectExitCode = expected
+	s.Shell.ExpectExitCode = expected
 	return s
 }
 
-func runStepShell(r *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
-	shell := step.Shell
+func runStepShell(r *SessionRunner, step IStep) (stepResult *StepResult, err error) {
+	var shell *Shell
+	switch stepShell := step.(type) {
+	case *StepShell:
+		shell = stepShell.Shell
+	case *StepShellValidation:
+		shell = stepShell.Shell
+	default:
+		return nil, errors.New("invalid shell step type")
+	}
+
 	log.Info().
-		Str("name", step.Name).
+		Str("name", step.Name()).
 		Str("type", string(stepTypeShell)).
 		Str("content", shell.String).
 		Msg("run shell string")
 
 	stepResult = &StepResult{
-		Name:        step.Name,
+		Name:        step.Name(),
 		StepType:    stepTypeShell,
 		Success:     false,
 		Elapsed:     0,

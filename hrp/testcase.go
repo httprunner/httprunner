@@ -25,7 +25,7 @@ type TestCasePath string
 
 // GetTestCase loads testcase path and convert to *TestCase
 func (path *TestCasePath) GetTestCase() (*TestCase, error) {
-	tc := &TestCase{}
+	tc := &TestCaseDef{}
 	casePath := string(*path)
 	err := LoadFileObject(casePath, tc)
 	if err != nil {
@@ -47,8 +47,7 @@ func (path *TestCasePath) GetTestCase() (*TestCase, error) {
 // TestCase implements ITestCase interface.
 type TestCase struct {
 	Config    *TConfig `json:"config" yaml:"config"`
-	Steps     []*TStep `json:"teststeps" yaml:"teststeps"`
-	TestSteps []IStep  `json:"-" yaml:"-"`
+	TestSteps []IStep  `json:"teststeps" yaml:"teststeps"`
 }
 
 func (tc *TestCase) GetTestCase() (*TestCase, error) {
@@ -56,7 +55,7 @@ func (tc *TestCase) GetTestCase() (*TestCase, error) {
 }
 
 // MakeCompat converts TestCase compatible with Golang engine style
-func (tc *TestCase) MakeCompat() (err error) {
+func (tc *TestCaseDef) MakeCompat() (err error) {
 	defer func() {
 		if p := recover(); p != nil {
 			err = fmt.Errorf("[MakeCompat] convert compat testcase error: %v", p)
@@ -86,7 +85,6 @@ func (tc *TestCase) MakeCompat() (err error) {
 }
 
 func (tc *TestCase) Dump2JSON(targetPath string) error {
-	tc.loadTSteps()
 	err := builtin.Dump2JSON(tc, targetPath)
 	if err != nil {
 		return errors.Wrap(err, "dump testcase to json failed")
@@ -95,7 +93,6 @@ func (tc *TestCase) Dump2JSON(targetPath string) error {
 }
 
 func (tc *TestCase) Dump2YAML(targetPath string) error {
-	tc.loadTSteps()
 	err := builtin.Dump2YAML(tc, targetPath)
 	if err != nil {
 		return errors.Wrap(err, "dump testcase to yaml failed")
@@ -103,21 +100,8 @@ func (tc *TestCase) Dump2YAML(targetPath string) error {
 	return nil
 }
 
-// loadTSteps loads TSteps structs from TestSteps([]IStep)
-func (tc *TestCase) loadTSteps() {
-	tc.Steps = make([]*TStep, 0)
-	for _, step := range tc.TestSteps {
-		if step.Type() == stepTypeTestCase {
-			if testcase, ok := step.Struct().TestCase.(*TestCase); ok {
-				step.Struct().TestCase = testcase
-			}
-		}
-		tc.Steps = append(tc.Steps, step.Struct())
-	}
-}
-
-// loadTSteps loads TestSteps([]IStep) from TSteps structs
-func (tc *TestCase) loadISteps() (*TestCase, error) {
+// loadISteps loads TestSteps([]IStep) from TSteps structs
+func (tc *TestCaseDef) loadISteps() (*TestCase, error) {
 	testCase := &TestCase{
 		Config: tc.Config,
 	}
@@ -187,7 +171,8 @@ func (tc *TestCase) loadISteps() (*TestCase, error) {
 					fmt.Sprintf("failed to handle referenced API, got %v", step.TestCase))
 			}
 			testCase.TestSteps = append(testCase.TestSteps, &StepAPIWithOptionalArgs{
-				step: step,
+				StepConfig: step.StepConfig,
+				API:        step.API,
 			})
 		} else if step.TestCase != nil {
 			casePath, ok := step.TestCase.(string)
@@ -210,7 +195,7 @@ func (tc *TestCase) loadISteps() (*TestCase, error) {
 					return nil, errors.Wrap(code.InvalidCaseError,
 						fmt.Sprintf("referenced testcase should be map or path(string), got %v", step.TestCase))
 				}
-				tCase := &TestCase{}
+				tCase := &TestCaseDef{}
 				err = mapstructure.Decode(testCaseMap, tCase)
 				if err != nil {
 					return nil, err
@@ -227,47 +212,60 @@ func (tc *TestCase) loadISteps() (*TestCase, error) {
 					fmt.Sprintf("failed to handle referenced testcase, got %v", step.TestCase))
 			}
 			testCase.TestSteps = append(testCase.TestSteps, &StepTestCaseWithOptionalArgs{
-				step: step,
+				StepConfig: step.StepConfig,
+				TestCase:   step.TestCase,
 			})
 		} else if step.ThinkTime != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepThinkTime{
-				step: step,
+				StepConfig: step.StepConfig,
+				ThinkTime:  step.ThinkTime,
 			})
 		} else if step.Request != nil {
+			stepRequest := &StepRequestWithOptionalArgs{
+				StepRequest: &StepRequest{
+					StepConfig: step.StepConfig,
+					Request:    step.Request,
+				},
+			}
 			// init upload
 			if len(step.Request.Upload) != 0 {
-				initUpload(step)
+				initUpload(stepRequest)
 			}
-			testCase.TestSteps = append(testCase.TestSteps, &StepRequestWithOptionalArgs{
-				step: step,
-			})
+			testCase.TestSteps = append(testCase.TestSteps, stepRequest)
 		} else if step.Transaction != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepTransaction{
-				step: step,
+				StepConfig:  step.StepConfig,
+				Transaction: step.Transaction,
 			})
 		} else if step.Rendezvous != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepRendezvous{
-				step: step,
+				StepConfig: step.StepConfig,
+				Rendezvous: step.Rendezvous,
 			})
 		} else if step.WebSocket != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepWebSocket{
-				step: step,
+				StepConfig: step.StepConfig,
+				WebSocket:  step.WebSocket,
 			})
 		} else if step.IOS != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
-				step: step,
+				StepConfig: step.StepConfig,
+				IOS:        step.IOS,
 			})
 		} else if step.Harmony != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
-				step: step,
+				StepConfig: step.StepConfig,
+				Harmony:    step.Harmony,
 			})
 		} else if step.Android != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
-				step: step,
+				StepConfig: step.StepConfig,
+				Android:    step.Android,
 			})
 		} else if step.Shell != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepShell{
-				step: step,
+				StepConfig: step.StepConfig,
+				Shell:      step.Shell,
 			})
 		} else {
 			log.Warn().Interface("step", step).Msg("[convertTestCase] unexpected step")

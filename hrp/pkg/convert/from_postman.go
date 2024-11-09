@@ -111,7 +111,7 @@ var contentTypeMap = map[string]string{
 	"xml":        "application/xml",
 }
 
-func LoadPostmanCase(path string) (*hrp.TestCase, error) {
+func LoadPostmanCase(path string) (*hrp.TestCaseDef, error) {
 	log.Info().Str("path", path).Msg("load postman case file")
 	casePostman, err := loadCasePostman(path)
 	if err != nil {
@@ -135,12 +135,12 @@ func loadCasePostman(path string) (*CasePostman, error) {
 	return casePostman, nil
 }
 
-func (c *CasePostman) ToTestCase() (*hrp.TestCase, error) {
+func (c *CasePostman) ToTestCase() (*hrp.TestCaseDef, error) {
 	teststeps, err := c.prepareTestSteps()
 	if err != nil {
 		return nil, err
 	}
-	tCase := &hrp.TestCase{
+	tCase := &hrp.TestCaseDef{
 		Config: c.prepareConfig(),
 		Steps:  teststeps,
 	}
@@ -199,8 +199,10 @@ func (c *CasePostman) prepareTestStep(item *TItem) (*hrp.TStep, error) {
 
 	step := &stepFromPostman{
 		TStep: hrp.TStep{
-			Request:    &hrp.Request{},
-			Validators: make([]interface{}, 0),
+			Request: &hrp.Request{},
+			StepConfig: hrp.StepConfig{
+				Validators: make([]interface{}, 0),
+			},
 		},
 	}
 	if err := step.makeRequestName(item); err != nil {
@@ -233,7 +235,7 @@ type stepFromPostman struct {
 
 // makeRequestName indicates the step name the same as item name
 func (s *stepFromPostman) makeRequestName(item *TItem) error {
-	s.Name = item.Name
+	s.StepName = item.Name
 	return nil
 }
 

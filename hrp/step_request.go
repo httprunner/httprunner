@@ -251,7 +251,7 @@ func (r *requestBuilder) prepareBody(stepVariables map[string]interface{}) error
 	return nil
 }
 
-func initUpload(step *TStep) {
+func initUpload(step *StepRequestWithOptionalArgs) {
 	if step.Request.Headers == nil {
 		step.Request.Headers = make(map[string]string)
 	}
@@ -259,7 +259,7 @@ func initUpload(step *TStep) {
 	step.Request.Body = "$m_encoder"
 }
 
-func prepareUpload(parser *Parser, step *TStep, stepVariables map[string]interface{}) (err error) {
+func prepareUpload(parser *Parser, step *StepRequestWithOptionalArgs, stepVariables map[string]interface{}) (err error) {
 	if len(step.Request.Upload) == 0 {
 		return
 	}
@@ -276,9 +276,10 @@ func prepareUpload(parser *Parser, step *TStep, stepVariables map[string]interfa
 	return
 }
 
-func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
+func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err error) {
+	stepRequest := step.(*StepRequestWithOptionalArgs)
 	stepResult = &StepResult{
-		Name:        step.Name,
+		Name:        stepRequest.StepName,
 		StepType:    stepTypeRequest,
 		Success:     false,
 		ContentSize: 0,
@@ -291,7 +292,7 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 		}
 	}()
 
-	err = prepareUpload(r.caseRunner.parser, step, step.Variables)
+	err = prepareUpload(r.caseRunner.parser, stepRequest, stepRequest.Variables)
 	if err != nil {
 		return
 	}
@@ -300,32 +301,32 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	parser := r.caseRunner.parser
 	config := r.caseRunner.Config
 
-	rb := newRequestBuilder(parser, config, step.Request)
-	rb.req.Method = strings.ToUpper(string(step.Request.Method))
+	rb := newRequestBuilder(parser, config, stepRequest.Request)
+	rb.req.Method = strings.ToUpper(string(stepRequest.Request.Method))
 
-	err = rb.prepareUrlParams(step.Variables)
+	err = rb.prepareUrlParams(stepRequest.Variables)
 	if err != nil {
 		return
 	}
 
-	err = rb.prepareHeaders(step.Variables)
+	err = rb.prepareHeaders(stepRequest.Variables)
 	if err != nil {
 		return
 	}
 
-	err = rb.prepareBody(step.Variables)
+	err = rb.prepareBody(stepRequest.Variables)
 	if err != nil {
 		return
 	}
 
 	// add request object to step variables, could be used in setup hooks
-	step.Variables["hrp_step_name"] = step.Name
-	step.Variables["hrp_step_request"] = rb.requestMap
-	step.Variables["request"] = rb.requestMap // setup hooks compatible with v3
+	stepRequest.Variables["hrp_step_name"] = step.Name
+	stepRequest.Variables["hrp_step_request"] = rb.requestMap
+	stepRequest.Variables["request"] = rb.requestMap // setup hooks compatible with v3
 
 	// deal with setup hooks
-	for _, setupHook := range step.SetupHooks {
-		_, err := parser.Parse(setupHook, step.Variables)
+	for _, setupHook := range stepRequest.SetupHooks {
+		_, err := parser.Parse(setupHook, stepRequest.Variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run setup hooks failed")
 		}
@@ -347,15 +348,15 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 
 	// select HTTP client
 	var client *http.Client
-	if step.Request.HTTP2 {
+	if stepRequest.Request.HTTP2 {
 		client = r.caseRunner.hrpRunner.http2Client
 	} else {
 		client = r.caseRunner.hrpRunner.httpClient
 	}
 
 	// set step timeout
-	if step.Request.Timeout != 0 {
-		client.Timeout = time.Duration(step.Request.Timeout*1000) * time.Millisecond
+	if stepRequest.Request.Timeout != 0 {
+		client.Timeout = time.Duration(stepRequest.Request.Timeout*1000) * time.Millisecond
 	}
 
 	// do request action
@@ -398,12 +399,12 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	}
 
 	// add response object to step variables, could be used in teardown hooks
-	step.Variables["hrp_step_response"] = respObj.respObjMeta
-	step.Variables["response"] = respObj.respObjMeta
+	stepRequest.Variables["hrp_step_response"] = respObj.respObjMeta
+	stepRequest.Variables["response"] = respObj.respObjMeta
 
 	// deal with teardown hooks
-	for _, teardownHook := range step.TeardownHooks {
-		_, err := parser.Parse(teardownHook, step.Variables)
+	for _, teardownHook := range stepRequest.TeardownHooks {
+		_, err := parser.Parse(teardownHook, stepRequest.Variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run teardown hooks failed")
 		}
@@ -413,15 +414,15 @@ func runStepRequest(r *SessionRunner, step *TStep) (stepResult *StepResult, err 
 	sessionData.ReqResps.Response = builtin.FormatResponse(respObj.respObjMeta)
 
 	// extract variables from response
-	extractors := step.Extract
-	extractMapping := respObj.Extract(extractors, step.Variables)
+	extractors := stepRequest.StepRequest.Extract
+	extractMapping := respObj.Extract(extractors, stepRequest.Variables)
 	stepResult.ExportVars = extractMapping
 
 	// override step variables with extracted variables
-	step.Variables = mergeVariables(step.Variables, extractMapping)
+	stepRequest.Variables = mergeVariables(stepRequest.Variables, extractMapping)
 
 	// validate response
-	err = respObj.Validate(step.Validators, step.Variables)
+	err = respObj.Validate(stepRequest.Validators, stepRequest.Variables)
 	sessionData.Validators = respObj.validationResults
 	if err == nil {
 		sessionData.Success = true
@@ -521,32 +522,33 @@ func shouldPrintBody(contentType string) bool {
 // NewStep returns a new constructed teststep with specified step name.
 func NewStep(name string) *StepRequest {
 	return &StepRequest{
-		step: &TStep{
-			Name:      name,
+		StepConfig: StepConfig{
+			StepName:  name,
 			Variables: make(map[string]interface{}),
 		},
 	}
 }
 
 type StepRequest struct {
-	step *TStep
+	StepConfig
+	Request *Request `json:"request,omitempty" yaml:"request,omitempty"`
 }
 
 // WithVariables sets variables for current teststep.
 func (s *StepRequest) WithVariables(variables map[string]interface{}) *StepRequest {
-	s.step.Variables = variables
+	s.Variables = variables
 	return s
 }
 
 // SetupHook adds a setup hook for current teststep.
 func (s *StepRequest) SetupHook(hook string) *StepRequest {
-	s.step.SetupHooks = append(s.step.SetupHooks, hook)
+	s.SetupHooks = append(s.SetupHooks, hook)
 	return s
 }
 
 // HTTP2 enables HTTP/2 protocol
 func (s *StepRequest) HTTP2() *StepRequest {
-	s.step.Request = &Request{
+	s.Request = &Request{
 		HTTP2: true,
 	}
 	return s
@@ -554,250 +556,248 @@ func (s *StepRequest) HTTP2() *StepRequest {
 
 // Loop specify running times for the current step
 func (s *StepRequest) Loop(times int) *StepRequest {
-	s.step.Loops = times
+	s.Loops = times
 	return s
 }
 
 // GET makes a HTTP GET request.
 func (s *StepRequest) GET(url string) *StepRequestWithOptionalArgs {
-	if s.step.Request != nil {
-		s.step.Request.Method = httpGET
-		s.step.Request.URL = url
+	if s.Request != nil {
+		s.Request.Method = httpGET
+		s.Request.URL = url
 	} else {
-		s.step.Request = &Request{
+		s.Request = &Request{
 			Method: httpGET,
 			URL:    url,
 		}
 	}
 	return &StepRequestWithOptionalArgs{
-		step: s.step,
+		StepRequest: s,
 	}
 }
 
 // HEAD makes a HTTP HEAD request.
 func (s *StepRequest) HEAD(url string) *StepRequestWithOptionalArgs {
-	if s.step.Request != nil {
-		s.step.Request.Method = httpHEAD
-		s.step.Request.URL = url
+	if s.Request != nil {
+		s.Request.Method = httpHEAD
+		s.Request.URL = url
 	} else {
-		s.step.Request = &Request{
+		s.Request = &Request{
 			Method: httpHEAD,
 			URL:    url,
 		}
 	}
 	return &StepRequestWithOptionalArgs{
-		step: s.step,
+		StepRequest: s,
 	}
 }
 
 // POST makes a HTTP POST request.
 func (s *StepRequest) POST(url string) *StepRequestWithOptionalArgs {
-	if s.step.Request != nil {
-		s.step.Request.Method = httpPOST
-		s.step.Request.URL = url
+	if s.Request != nil {
+		s.Request.Method = httpPOST
+		s.Request.URL = url
 	} else {
-		s.step.Request = &Request{
+		s.Request = &Request{
 			Method: httpPOST,
 			URL:    url,
 		}
 	}
 	return &StepRequestWithOptionalArgs{
-		step: s.step,
+		StepRequest: s,
 	}
 }
 
 // PUT makes a HTTP PUT request.
 func (s *StepRequest) PUT(url string) *StepRequestWithOptionalArgs {
-	if s.step.Request != nil {
-		s.step.Request.Method = httpPUT
-		s.step.Request.URL = url
+	if s.Request != nil {
+		s.Request.Method = httpPUT
+		s.Request.URL = url
 	} else {
-		s.step.Request = &Request{
+		s.Request = &Request{
 			Method: httpPUT,
 			URL:    url,
 		}
 	}
 	return &StepRequestWithOptionalArgs{
-		step: s.step,
+		StepRequest: s,
 	}
 }
 
 // DELETE makes a HTTP DELETE request.
 func (s *StepRequest) DELETE(url string) *StepRequestWithOptionalArgs {
-	if s.step.Request != nil {
-		s.step.Request.Method = httpDELETE
-		s.step.Request.URL = url
+	if s.Request != nil {
+		s.Request.Method = httpDELETE
+		s.Request.URL = url
 	} else {
-		s.step.Request = &Request{
+		s.Request = &Request{
 			Method: httpDELETE,
 			URL:    url,
 		}
 	}
 	return &StepRequestWithOptionalArgs{
-		step: s.step,
+		StepRequest: s,
 	}
 }
 
 // OPTIONS makes a HTTP OPTIONS request.
 func (s *StepRequest) OPTIONS(url string) *StepRequestWithOptionalArgs {
-	if s.step.Request != nil {
-		s.step.Request.Method = httpOPTIONS
-		s.step.Request.URL = url
+	if s.Request != nil {
+		s.Request.Method = httpOPTIONS
+		s.Request.URL = url
 	} else {
-		s.step.Request = &Request{
+		s.Request = &Request{
 			Method: httpOPTIONS,
 			URL:    url,
 		}
 	}
 	return &StepRequestWithOptionalArgs{
-		step: s.step,
+		StepRequest: s,
 	}
 }
 
 // PATCH makes a HTTP PATCH request.
 func (s *StepRequest) PATCH(url string) *StepRequestWithOptionalArgs {
-	if s.step.Request != nil {
-		s.step.Request.Method = httpPATCH
-		s.step.Request.URL = url
+	if s.Request != nil {
+		s.Request.Method = httpPATCH
+		s.Request.URL = url
 	} else {
-		s.step.Request = &Request{
+		s.Request = &Request{
 			Method: httpPATCH,
 			URL:    url,
 		}
 	}
 	return &StepRequestWithOptionalArgs{
-		step: s.step,
+		StepRequest: s,
 	}
 }
 
 // CallRefCase calls a referenced testcase.
 func (s *StepRequest) CallRefCase(tc ITestCase) *StepTestCaseWithOptionalArgs {
-	var err error
-	s.step.TestCase, err = tc.GetTestCase()
+	testCase, err := tc.GetTestCase()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcase")
 		os.Exit(code.GetErrorCode(err))
 	}
 	return &StepTestCaseWithOptionalArgs{
-		step: s.step,
+		StepConfig: s.StepConfig,
+		TestCase:   testCase,
 	}
 }
 
 // CallRefAPI calls a referenced api.
 func (s *StepRequest) CallRefAPI(api IAPI) *StepAPIWithOptionalArgs {
-	var err error
-	s.step.API, err = api.ToAPI()
+	api, err := api.ToAPI()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load api")
 		os.Exit(code.GetErrorCode(err))
 	}
 	return &StepAPIWithOptionalArgs{
-		step: s.step,
+		StepConfig: s.StepConfig,
+		API:        api,
 	}
 }
 
 // StartTransaction starts a transaction.
 func (s *StepRequest) StartTransaction(name string) *StepTransaction {
-	s.step.Transaction = &Transaction{
-		Name: name,
-		Type: transactionStart,
-	}
 	return &StepTransaction{
-		step: s.step,
+		StepConfig: s.StepConfig,
+		Transaction: &Transaction{
+			Name: name,
+			Type: transactionStart,
+		},
 	}
 }
 
 // EndTransaction ends a transaction.
 func (s *StepRequest) EndTransaction(name string) *StepTransaction {
-	s.step.Transaction = &Transaction{
-		Name: name,
-		Type: transactionEnd,
-	}
 	return &StepTransaction{
-		step: s.step,
+		StepConfig: s.StepConfig,
+		Transaction: &Transaction{
+			Name: name,
+			Type: transactionEnd,
+		},
 	}
 }
 
 // SetThinkTime sets think time.
 func (s *StepRequest) SetThinkTime(time float64) *StepThinkTime {
-	s.step.ThinkTime = &ThinkTime{
-		Time: time,
-	}
 	return &StepThinkTime{
-		step: s.step,
+		StepConfig: s.StepConfig,
+		ThinkTime: &ThinkTime{
+			Time: time,
+		},
 	}
 }
 
 // SetRendezvous creates a new rendezvous
 func (s *StepRequest) SetRendezvous(name string) *StepRendezvous {
-	s.step.Rendezvous = &Rendezvous{
-		Name: name,
-	}
 	return &StepRendezvous{
-		step: s.step,
+		Rendezvous: &Rendezvous{
+			Name: name,
+		},
 	}
 }
 
 // WebSocket creates a new websocket action
 func (s *StepRequest) WebSocket() *StepWebSocket {
-	s.step.WebSocket = &WebSocketAction{}
 	return &StepWebSocket{
-		step: s.step,
+		StepConfig: s.StepConfig,
+		WebSocket:  &WebSocketAction{},
 	}
 }
 
 // Android creates a new android action
 func (s *StepRequest) Android() *StepMobile {
-	s.step.Android = &MobileUI{}
 	return &StepMobile{
-		step: s.step,
+		StepConfig: s.StepConfig,
+		Android:    &MobileUI{},
 	}
 }
 
 // IOS creates a new ios action
 func (s *StepRequest) IOS() *StepMobile {
-	s.step.IOS = &MobileUI{}
 	return &StepMobile{
-		step: s.step,
+		StepConfig: s.StepConfig,
+		IOS:        &MobileUI{},
 	}
 }
 
 // Harmony creates a new harmony action
 func (s *StepRequest) Harmony() *StepMobile {
-	s.step.Harmony = &MobileUI{}
 	return &StepMobile{
-		step: s.step,
+		StepConfig: s.StepConfig,
+		Harmony:    &MobileUI{},
 	}
 }
 
 // Shell creates a new shell action
 func (s *StepRequest) Shell(content string) *StepShell {
-	s.step.Shell = &Shell{
-		String:         content,
-		ExpectExitCode: 0,
-	}
-
 	return &StepShell{
-		step: s.step,
+		StepConfig: s.StepConfig,
+		Shell: &Shell{
+			String:         content,
+			ExpectExitCode: 0,
+		},
 	}
 }
 
 // StepRequestWithOptionalArgs implements IStep interface.
 type StepRequestWithOptionalArgs struct {
-	step *TStep
+	*StepRequest
 }
 
 // SetVerify sets whether to verify SSL for current HTTP request.
 func (s *StepRequestWithOptionalArgs) SetVerify(verify bool) *StepRequestWithOptionalArgs {
 	log.Info().Bool("verify", verify).Msg("set step request verify")
-	s.step.Request.Verify = verify
+	s.Request.Verify = verify
 	return s
 }
 
 // SetTimeout sets timeout for current HTTP request.
 func (s *StepRequestWithOptionalArgs) SetTimeout(timeout time.Duration) *StepRequestWithOptionalArgs {
 	log.Info().Float64("timeout(seconds)", timeout.Seconds()).Msg("set step request timeout")
-	s.step.Request.Timeout = timeout.Seconds()
+	s.Request.Timeout = timeout.Seconds()
 	return s
 }
 
@@ -811,7 +811,7 @@ func (s *StepRequestWithOptionalArgs) SetProxies(proxies map[string]string) *Ste
 // SetAllowRedirects sets whether to allow redirects for current HTTP request.
 func (s *StepRequestWithOptionalArgs) SetAllowRedirects(allowRedirects bool) *StepRequestWithOptionalArgs {
 	log.Info().Bool("allowRedirects", allowRedirects).Msg("set step request allowRedirects")
-	s.step.Request.AllowRedirects = allowRedirects
+	s.Request.AllowRedirects = allowRedirects
 	return s
 }
 
@@ -824,154 +824,142 @@ func (s *StepRequestWithOptionalArgs) SetAuth(auth map[string]string) *StepReque
 
 // WithParams sets HTTP request params for current step.
 func (s *StepRequestWithOptionalArgs) WithParams(params map[string]interface{}) *StepRequestWithOptionalArgs {
-	s.step.Request.Params = params
+	s.Request.Params = params
 	return s
 }
 
 // WithHeaders sets HTTP request headers for current step.
 func (s *StepRequestWithOptionalArgs) WithHeaders(headers map[string]string) *StepRequestWithOptionalArgs {
-	s.step.Request.Headers = headers
+	s.Request.Headers = headers
 	return s
 }
 
 // WithCookies sets HTTP request cookies for current step.
 func (s *StepRequestWithOptionalArgs) WithCookies(cookies map[string]string) *StepRequestWithOptionalArgs {
-	s.step.Request.Cookies = cookies
+	s.Request.Cookies = cookies
 	return s
 }
 
 // WithBody sets HTTP request body for current step.
 func (s *StepRequestWithOptionalArgs) WithBody(body interface{}) *StepRequestWithOptionalArgs {
-	s.step.Request.Body = body
+	s.Request.Body = body
 	return s
 }
 
 // WithUpload sets HTTP request body for uploading file(s).
 func (s *StepRequestWithOptionalArgs) WithUpload(upload map[string]interface{}) *StepRequestWithOptionalArgs {
 	// init upload
-	initUpload(s.step)
-	s.step.Request.Upload = upload
+	initUpload(s)
+	s.Request.Upload = upload
 	return s
 }
 
 // TeardownHook adds a teardown hook for current teststep.
 func (s *StepRequestWithOptionalArgs) TeardownHook(hook string) *StepRequestWithOptionalArgs {
-	s.step.TeardownHooks = append(s.step.TeardownHooks, hook)
+	s.TeardownHooks = append(s.TeardownHooks, hook)
 	return s
 }
 
 // Validate switches to step validation.
 func (s *StepRequestWithOptionalArgs) Validate() *StepRequestValidation {
 	return &StepRequestValidation{
-		step: s.step,
+		StepRequestWithOptionalArgs: s,
 	}
 }
 
 // Extract switches to step extraction.
 func (s *StepRequestWithOptionalArgs) Extract() *StepRequestExtraction {
-	s.step.Extract = make(map[string]string)
+	s.StepConfig.Extract = make(map[string]string)
 	return &StepRequestExtraction{
-		step: s.step,
+		StepRequestWithOptionalArgs: s,
 	}
 }
 
 func (s *StepRequestWithOptionalArgs) Name() string {
-	if s.step.Name != "" {
-		return s.step.Name
+	if s.StepName != "" {
+		return s.StepName
 	}
-	return fmt.Sprintf("%v %s", s.step.Request.Method, s.step.Request.URL)
+	return fmt.Sprintf("%v %s", s.Request.Method, s.Request.URL)
 }
 
 func (s *StepRequestWithOptionalArgs) Type() StepType {
-	return StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
+	return StepType(fmt.Sprintf("request-%v", s.Request.Method))
 }
 
-func (s *StepRequestWithOptionalArgs) Struct() *TStep {
-	return s.step
+func (s *StepRequestWithOptionalArgs) Config() *StepConfig {
+	return &s.StepConfig
 }
 
 func (s *StepRequestWithOptionalArgs) Run(r *SessionRunner) (*StepResult, error) {
-	return runStepRequest(r, s.step)
+	return runStepRequest(r, s)
 }
 
 // StepRequestExtraction implements IStep interface.
 type StepRequestExtraction struct {
-	step *TStep
+	*StepRequestWithOptionalArgs
 }
 
 // WithJmesPath sets the JMESPath expression to extract from the response.
 func (s *StepRequestExtraction) WithJmesPath(jmesPath string, varName string) *StepRequestExtraction {
-	s.step.Extract[varName] = jmesPath
+	s.StepConfig.Extract[varName] = jmesPath
 	return s
 }
 
 // Validate switches to step validation.
 func (s *StepRequestExtraction) Validate() *StepRequestValidation {
 	return &StepRequestValidation{
-		step: s.step,
+		StepRequestWithOptionalArgs: &StepRequestWithOptionalArgs{
+			StepRequest: &StepRequest{
+				StepConfig: s.StepConfig,
+			},
+		},
 	}
 }
 
 func (s *StepRequestExtraction) Name() string {
-	return s.step.Name
+	return s.StepName
 }
 
 func (s *StepRequestExtraction) Type() StepType {
-	var stepType StepType
-	if s.step.WebSocket != nil {
-		stepType = StepType(fmt.Sprintf("websocket-%v", s.step.WebSocket.Type))
-	} else {
-		stepType = StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
-	}
+	stepType := StepType(fmt.Sprintf("request-%v", s.Request.Method))
 	return stepType + stepTypeSuffixExtraction
 }
 
-func (s *StepRequestExtraction) Struct() *TStep {
-	return s.step
+func (s *StepRequestExtraction) Struct() *StepConfig {
+	return &s.StepConfig
 }
 
 func (s *StepRequestExtraction) Run(r *SessionRunner) (*StepResult, error) {
-	if s.step.Request != nil {
-		return runStepRequest(r, s.step)
-	}
-	if s.step.WebSocket != nil {
-		return runStepWebSocket(r, s.step)
+	if s.StepRequestWithOptionalArgs != nil {
+		return runStepRequest(r, s.StepRequestWithOptionalArgs)
 	}
 	return nil, errors.New("unexpected protocol type")
 }
 
 // StepRequestValidation implements IStep interface.
 type StepRequestValidation struct {
-	step *TStep
+	*StepRequestWithOptionalArgs
 }
 
 func (s *StepRequestValidation) Name() string {
-	if s.step.Name != "" {
-		return s.step.Name
+	if s.StepName != "" {
+		return s.StepName
 	}
-	return fmt.Sprintf("%s %s", s.step.Request.Method, s.step.Request.URL)
+	return fmt.Sprintf("%s %s", s.Request.Method, s.Request.URL)
 }
 
 func (s *StepRequestValidation) Type() StepType {
-	var stepType StepType
-	if s.step.WebSocket != nil {
-		stepType = StepType(fmt.Sprintf("websocket-%v", s.step.WebSocket.Type))
-	} else {
-		stepType = StepType(fmt.Sprintf("request-%v", s.step.Request.Method))
-	}
+	stepType := StepType(fmt.Sprintf("request-%v", s.Request.Method))
 	return stepType + stepTypeSuffixValidation
 }
 
-func (s *StepRequestValidation) Struct() *TStep {
-	return s.step
+func (s *StepRequestValidation) Config() *StepConfig {
+	return &s.StepConfig
 }
 
 func (s *StepRequestValidation) Run(r *SessionRunner) (*StepResult, error) {
-	if s.step.Request != nil {
-		return runStepRequest(r, s.step)
-	}
-	if s.step.WebSocket != nil {
-		return runStepWebSocket(r, s.step)
+	if s.StepRequestWithOptionalArgs != nil {
+		return runStepRequest(r, s.StepRequestWithOptionalArgs)
 	}
 	return nil, errors.New("unexpected protocol type")
 }
@@ -983,7 +971,7 @@ func (s *StepRequestValidation) AssertEqual(jmesPath string, expected interface{
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -994,7 +982,7 @@ func (s *StepRequestValidation) AssertGreater(jmesPath string, expected interfac
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1005,7 +993,7 @@ func (s *StepRequestValidation) AssertLess(jmesPath string, expected interface{}
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1016,7 +1004,7 @@ func (s *StepRequestValidation) AssertGreaterOrEqual(jmesPath string, expected i
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1027,7 +1015,7 @@ func (s *StepRequestValidation) AssertLessOrEqual(jmesPath string, expected inte
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1038,7 +1026,7 @@ func (s *StepRequestValidation) AssertNotEqual(jmesPath string, expected interfa
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1049,7 +1037,7 @@ func (s *StepRequestValidation) AssertContains(jmesPath string, expected interfa
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1060,7 +1048,7 @@ func (s *StepRequestValidation) AssertTypeMatch(jmesPath string, expected interf
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1071,7 +1059,7 @@ func (s *StepRequestValidation) AssertRegexp(jmesPath string, expected interface
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1082,7 +1070,7 @@ func (s *StepRequestValidation) AssertStartsWith(jmesPath string, expected inter
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1093,7 +1081,7 @@ func (s *StepRequestValidation) AssertEndsWith(jmesPath string, expected interfa
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1104,7 +1092,7 @@ func (s *StepRequestValidation) AssertLengthEqual(jmesPath string, expected inte
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1115,7 +1103,7 @@ func (s *StepRequestValidation) AssertContainedBy(jmesPath string, expected inte
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1126,7 +1114,7 @@ func (s *StepRequestValidation) AssertLengthLessThan(jmesPath string, expected i
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1137,7 +1125,7 @@ func (s *StepRequestValidation) AssertStringEqual(jmesPath string, expected inte
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1148,7 +1136,7 @@ func (s *StepRequestValidation) AssertEqualFold(jmesPath string, expected interf
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1159,7 +1147,7 @@ func (s *StepRequestValidation) AssertLengthLessOrEquals(jmesPath string, expect
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1170,7 +1158,7 @@ func (s *StepRequestValidation) AssertLengthGreaterThan(jmesPath string, expecte
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -1181,7 +1169,7 @@ func (s *StepRequestValidation) AssertLengthGreaterOrEquals(jmesPath string, exp
 		Expect:  expected,
 		Message: msg,
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 

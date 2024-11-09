@@ -60,7 +60,7 @@ func TestLoadHARWithProfileOverride(t *testing.T) {
 
 func TestMakeRequestWithProfile(t *testing.T) {
 	caseConverter := &TCaseConverter{
-		tCase: &hrp.TestCase{
+		tCase: &hrp.TestCaseDef{
 			Steps: []*hrp.TStep{
 				{
 					Request: &hrp.Request{
@@ -101,7 +101,7 @@ func TestMakeRequestWithProfile(t *testing.T) {
 
 func TestMakeRequestWithProfileOverride(t *testing.T) {
 	caseConverter := &TCaseConverter{
-		tCase: &hrp.TestCase{
+		tCase: &hrp.TestCaseDef{
 			Steps: []*hrp.TStep{
 				{
 					Request: &hrp.Request{

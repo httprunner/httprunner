@@ -59,29 +59,30 @@ func (path *APIPath) ToAPI() (*API, error) {
 
 // StepAPIWithOptionalArgs implements IStep interface.
 type StepAPIWithOptionalArgs struct {
-	step *TStep
+	StepConfig
+	API interface{} `json:"api,omitempty" yaml:"api,omitempty"` // *APIPath or *API
 }
 
 // TeardownHook adds a teardown hook for current teststep.
 func (s *StepAPIWithOptionalArgs) TeardownHook(hook string) *StepAPIWithOptionalArgs {
-	s.step.TeardownHooks = append(s.step.TeardownHooks, hook)
+	s.TeardownHooks = append(s.TeardownHooks, hook)
 	return s
 }
 
 // Export specifies variable names to export from referenced api for current step.
 func (s *StepAPIWithOptionalArgs) Export(names ...string) *StepAPIWithOptionalArgs {
-	api, ok := s.step.API.(*API)
+	api, ok := s.API.(*API)
 	if ok {
-		s.step.Export = append(api.Export, names...)
+		s.StepExport = append(api.Export, names...)
 	}
 	return s
 }
 
 func (s *StepAPIWithOptionalArgs) Name() string {
-	if s.step.Name != "" {
-		return s.step.Name
+	if s.StepName != "" {
+		return s.StepName
 	}
-	api, ok := s.step.API.(*API)
+	api, ok := s.API.(*API)
 	if ok {
 		return api.Name
 	}
@@ -92,8 +93,8 @@ func (s *StepAPIWithOptionalArgs) Type() StepType {
 	return stepTypeAPI
 }
 
-func (s *StepAPIWithOptionalArgs) Struct() *TStep {
-	return s.step
+func (s *StepAPIWithOptionalArgs) Config() *StepConfig {
+	return &s.StepConfig
 }
 
 func (s *StepAPIWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepResult, err error) {
@@ -101,10 +102,10 @@ func (s *StepAPIWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepResult,
 		stepResult.StepType = stepTypeAPI
 	}()
 	// extend request with referenced API
-	api, _ := s.step.API.(*API)
-	step := &TStep{}
+	api, _ := s.API.(*API)
+	step := &StepRequestWithOptionalArgs{}
 	// deep copy step to avoid data racing
-	if err = copier.Copy(step, s.step); err != nil {
+	if err = copier.Copy(step, s.StepConfig); err != nil {
 		log.Error().Err(err).Msg("copy step failed")
 		return
 	}
@@ -114,10 +115,10 @@ func (s *StepAPIWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepResult,
 }
 
 // extend teststep with api, teststep will merge and override referenced api
-func extendWithAPI(testStep *TStep, overriddenStep *API) {
+func extendWithAPI(testStep *StepRequestWithOptionalArgs, overriddenStep *API) {
 	// override api name
-	if testStep.Name == "" {
-		testStep.Name = overriddenStep.Name
+	if testStep.StepName == "" {
+		testStep.StepName = overriddenStep.Name
 	}
 	// merge & override request
 	testStep.Request = overriddenStep.Request
@@ -128,7 +129,7 @@ func extendWithAPI(testStep *TStep, overriddenStep *API) {
 	// merge & override variables
 	testStep.Variables = mergeVariables(testStep.Variables, overriddenStep.Variables)
 	// merge & override extractors
-	testStep.Extract = mergeMap(testStep.Extract, overriddenStep.Extract)
+	testStep.StepConfig.Extract = mergeMap(testStep.StepConfig.Extract, overriddenStep.Extract)
 	// merge & override validators
 	testStep.Validators = mergeValidators(testStep.Validators, overriddenStep.Validators)
 	// merge & override setupHooks

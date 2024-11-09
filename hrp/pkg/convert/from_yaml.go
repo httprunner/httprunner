@@ -8,9 +8,9 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp"
 )
 
-func LoadYAMLCase(path string) (*hrp.TestCase, error) {
+func LoadYAMLCase(path string) (*hrp.TestCaseDef, error) {
 	// load yaml case file
-	caseJSON := new(hrp.TestCase)
+	caseJSON := new(hrp.TestCaseDef)
 	err := hrp.LoadFileObject(path, caseJSON)
 	if err != nil {
 		return nil, errors.Wrap(err, "load yaml file failed")

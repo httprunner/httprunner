@@ -10,26 +10,30 @@ import (
 
 // StepRendezvous implements IStep interface.
 type StepRendezvous struct {
-	step *TStep
+	StepConfig
+	Rendezvous *Rendezvous `json:"rendezvous,omitempty" yaml:"rendezvous,omitempty"`
 }
 
 func (s *StepRendezvous) Name() string {
-	if s.step.Name != "" {
-		return s.step.Name
+	if s.StepName != "" {
+		return s.StepName
 	}
-	return s.step.Rendezvous.Name
+	return s.Rendezvous.Name
 }
 
 func (s *StepRendezvous) Type() StepType {
 	return stepTypeRendezvous
 }
 
-func (s *StepRendezvous) Struct() *TStep {
-	return s.step
+func (s *StepRendezvous) Config() *StepConfig {
+	return &StepConfig{
+		StepName:  s.StepName,
+		Variables: s.Variables,
+	}
 }
 
 func (s *StepRendezvous) Run(r *SessionRunner) (*StepResult, error) {
-	rendezvous := s.step.Rendezvous
+	rendezvous := s.Rendezvous
 	log.Info().
 		Str("name", rendezvous.Name).
 		Float32("percent", rendezvous.Percent).
@@ -70,8 +74,11 @@ func (s *StepRendezvous) Run(r *SessionRunner) (*StepResult, error) {
 }
 
 func isPreRendezvousAllReleased(rendezvous *Rendezvous, testCase *TestCase) bool {
-	for _, step := range testCase.Steps {
-		preRendezvous := step.Rendezvous
+	for _, step := range testCase.TestSteps {
+		if step.Type() != stepTypeRendezvous {
+			continue
+		}
+		preRendezvous := step.(*StepRendezvous).Rendezvous
 		if preRendezvous == nil {
 			continue
 		}
@@ -88,19 +95,19 @@ func isPreRendezvousAllReleased(rendezvous *Rendezvous, testCase *TestCase) bool
 
 // WithUserNumber sets the user number needed to release the current rendezvous
 func (s *StepRendezvous) WithUserNumber(number int64) *StepRendezvous {
-	s.step.Rendezvous.Number = number
+	s.Rendezvous.Number = number
 	return s
 }
 
 // WithUserPercent sets the user percent needed to release the current rendezvous
 func (s *StepRendezvous) WithUserPercent(percent float32) *StepRendezvous {
-	s.step.Rendezvous.Percent = percent
+	s.Rendezvous.Percent = percent
 	return s
 }
 
 // WithTimeout sets the timeout of duration between each user arriving at the current rendezvous
 func (s *StepRendezvous) WithTimeout(timeout int64) *StepRendezvous {
-	s.step.Rendezvous.Timeout = timeout
+	s.Rendezvous.Timeout = timeout
 	return s
 }
 
@@ -157,7 +164,7 @@ func (r *Rendezvous) setReleased() {
 func initRendezvous(testcase *TestCase, total int64) []*Rendezvous {
 	var rendezvousList []*Rendezvous
 	for _, s := range testcase.TestSteps {
-		step := s.Struct()
+		step := s.(*StepRendezvous)
 		if step.Rendezvous == nil {
 			continue
 		}

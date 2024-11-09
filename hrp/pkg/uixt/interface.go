@@ -476,7 +476,7 @@ func WithDriverPlugin(plugin funplugin.IPlugin) DriverOption {
 	}
 }
 
-// current implemeted device: IOSDevice, AndroidDevice
+// current implemeted device: IOSDevice, AndroidDevice, HarmonyDevice
 type IDevice interface {
 	Init() error  // init android device
 	UUID() string // ios udid or android serial

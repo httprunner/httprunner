@@ -32,19 +32,6 @@ const (
 	ACTION_SetIme       ActionMethod = "set_ime"
 	ACTION_GetSource    ActionMethod = "get_source"
 
-	// UI validation
-	// selectors
-	SelectorName          string = "ui_name"
-	SelectorLabel         string = "ui_label"
-	SelectorOCR           string = "ui_ocr"
-	SelectorImage         string = "ui_image"
-	SelectorForegroundApp string = "ui_foreground_app"
-	// assertions
-	AssertionEqual     string = "equal"
-	AssertionNotEqual  string = "not_equal"
-	AssertionExists    string = "exists"
-	AssertionNotExists string = "not_exists"
-
 	// UI handling
 	ACTION_Home        ActionMethod = "home"
 	ACTION_TapXY       ActionMethod = "tap_xy"
@@ -67,6 +54,21 @@ const (
 	ACTION_InstallApp      ActionMethod = "install_app"
 	ACTION_UninstallApp    ActionMethod = "uninstall_app"
 	ACTION_DownloadApp     ActionMethod = "download_app"
+)
+
+const (
+	// UI validation
+	// selectors
+	SelectorName          string = "ui_name"
+	SelectorLabel         string = "ui_label"
+	SelectorOCR           string = "ui_ocr"
+	SelectorImage         string = "ui_image"
+	SelectorForegroundApp string = "ui_foreground_app"
+	// assertions
+	AssertionEqual     string = "equal"
+	AssertionNotEqual  string = "not_equal"
+	AssertionExists    string = "exists"
+	AssertionNotExists string = "not_exists"
 )
 
 type MobileAction struct {
@@ -741,7 +743,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 	case ACTION_ClosePopups:
 		return dExt.ClosePopupsHandler()
 	case ACTION_EndToEndDelay:
-		dExt.CollectEndToEndDelay(action.GetOptions()...)
+		CollectEndToEndDelay(dExt, action.GetOptions()...)
 		return nil
 	}
 	return nil

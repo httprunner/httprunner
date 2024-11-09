@@ -10,26 +10,27 @@ import (
 
 // StepTestCaseWithOptionalArgs implements IStep interface.
 type StepTestCaseWithOptionalArgs struct {
-	step *TStep
+	StepConfig
+	TestCase interface{} `json:"testcase,omitempty" yaml:"testcase,omitempty"` // *TestCasePath or *TestCase
 }
 
 // TeardownHook adds a teardown hook for current teststep.
 func (s *StepTestCaseWithOptionalArgs) TeardownHook(hook string) *StepTestCaseWithOptionalArgs {
-	s.step.TeardownHooks = append(s.step.TeardownHooks, hook)
+	s.TeardownHooks = append(s.TeardownHooks, hook)
 	return s
 }
 
 // Export specifies variable names to export from referenced testcase for current step.
 func (s *StepTestCaseWithOptionalArgs) Export(names ...string) *StepTestCaseWithOptionalArgs {
-	s.step.Export = append(s.step.Export, names...)
+	s.StepExport = append(s.StepExport, names...)
 	return s
 }
 
 func (s *StepTestCaseWithOptionalArgs) Name() string {
-	if s.step.Name != "" {
-		return s.step.Name
+	if s.StepName != "" {
+		return s.StepName
 	}
-	ts, ok := s.step.TestCase.(*TestCase)
+	ts, ok := s.TestCase.(*TestCase)
 	if ok {
 		return ts.Config.Name
 	}
@@ -40,13 +41,13 @@ func (s *StepTestCaseWithOptionalArgs) Type() StepType {
 	return stepTypeTestCase
 }
 
-func (s *StepTestCaseWithOptionalArgs) Struct() *TStep {
-	return s.step
+func (s *StepTestCaseWithOptionalArgs) Config() *StepConfig {
+	return &s.StepConfig
 }
 
 func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepResult, err error) {
 	stepResult = &StepResult{
-		Name:     s.step.Name,
+		Name:     s.StepName,
 		StepType: stepTypeTestCase,
 		Success:  false,
 	}
@@ -58,7 +59,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 		}
 	}()
 
-	stepTestCase := s.step.TestCase.(*TestCase)
+	stepTestCase := s.TestCase.(*TestCase)
 
 	// copy testcase to avoid data racing
 	copiedTestCase := &TestCase{}
@@ -69,11 +70,11 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 
 	// override testcase config
 	// override testcase name
-	if s.step.Name != "" {
-		copiedTestCase.Config.Name = s.step.Name
+	if s.StepName != "" {
+		copiedTestCase.Config.Name = s.StepName
 	}
 	// merge & override extractors
-	copiedTestCase.Config.Export = mergeSlices(s.step.Export, copiedTestCase.Config.Export)
+	copiedTestCase.Config.Export = mergeSlices(s.StepExport, copiedTestCase.Config.Export)
 
 	caseRunner, err := r.caseRunner.hrpRunner.NewCaseRunner(*copiedTestCase)
 	if err != nil {
@@ -85,7 +86,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	start := time.Now()
 	var summary *TestCaseSummary
 	// run referenced testcase with step variables
-	summary, err = sessionRunner.Start(s.step.Variables)
+	summary, err = sessionRunner.Start(s.Variables)
 	stepResult.Elapsed = time.Since(start).Milliseconds()
 
 	// update step names

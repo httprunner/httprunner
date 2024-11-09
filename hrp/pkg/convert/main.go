@@ -114,7 +114,7 @@ type TCaseConverter struct {
 	fromFile    string
 	profilePath string
 	outputDir   string
-	tCase       *hrp.TestCase
+	tCase       *hrp.TestCaseDef
 }
 
 // LoadCase loads source file and convert to TCase type

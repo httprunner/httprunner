@@ -7,7 +7,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp"
 )
 
-func LoadSwaggerCase(path string) (*hrp.TestCase, error) {
+func LoadSwaggerCase(path string) (*hrp.TestCaseDef, error) {
 	// load swagger file
 	caseSwagger := new(spec.Swagger)
 	err := hrp.LoadFileObject(path, caseSwagger)

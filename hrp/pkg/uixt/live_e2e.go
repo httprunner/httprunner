@@ -28,7 +28,7 @@ type EndToEndDelay struct {
 	Timelines []timeLog `json:"timelines"`
 }
 
-func (dExt *DriverExt) CollectEndToEndDelay(options ...ActionOption) {
+func CollectEndToEndDelay(dExt *DriverExt, options ...ActionOption) {
 	dataOptions := NewActionOptions(options...)
 	startTime := time.Now()
 

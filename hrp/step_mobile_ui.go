@@ -63,6 +63,7 @@ func initUIClient(serial, osType string) (client *uixt.DriverExt, err error) {
 }
 
 type MobileUI struct {
+	OSType            string `json:"-" yaml:"-"`                               // ios or harmony or android
 	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"` // android serial or ios udid
 	uixt.MobileAction `yaml:",inline"`
 	Actions           []uixt.MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
@@ -70,22 +71,35 @@ type MobileUI struct {
 
 // StepMobile implements IStep interface.
 type StepMobile struct {
-	step *TStep
+	StepConfig
+	stepObj *MobileUI
+	Android *MobileUI `json:"android,omitempty" yaml:"android,omitempty"`
+	Harmony *MobileUI `json:"harmony,omitempty" yaml:"harmony,omitempty"`
+	IOS     *MobileUI `json:"ios,omitempty" yaml:"ios,omitempty"`
 }
 
 // uniform interface for all types of mobile systems
 func (s *StepMobile) obj() *MobileUI {
-	if s.step.IOS != nil {
-		return s.step.IOS
-	} else if s.step.Harmony != nil {
-		return s.step.Harmony
+	if s.stepObj != nil {
+		return s.stepObj
 	}
-	return s.step.Android
+	if s.IOS != nil {
+		s.stepObj = s.IOS
+		s.stepObj.OSType = string(stepTypeIOS)
+		return s.stepObj
+	} else if s.Harmony != nil {
+		s.stepObj = s.Harmony
+		s.stepObj.OSType = string(stepTypeHarmony)
+		return s.stepObj
+	}
+	s.stepObj = s.Android
+	s.stepObj.OSType = string(stepTypeAndroid)
+	return s.stepObj
 }
 
 func (s *StepMobile) Serial(serial string) *StepMobile {
 	s.obj().Serial = serial
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) InstallApp(path string) *StepMobile {
@@ -117,7 +131,7 @@ func (s *StepMobile) Home() *StepMobile {
 		Method: uixt.ACTION_Home,
 		Params: nil,
 	})
-	return &StepMobile{step: s.step}
+	return s
 }
 
 // TapXY taps the point {X,Y}, X & Y is percentage of coordinates
@@ -129,7 +143,7 @@ func (s *StepMobile) TapXY(x, y float64, options ...uixt.ActionOption) *StepMobi
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 // TapAbsXY taps the point {X,Y}, X & Y is absolute coordinates
@@ -141,7 +155,7 @@ func (s *StepMobile) TapAbsXY(x, y float64, options ...uixt.ActionOption) *StepM
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 // Tap taps on the target element
@@ -153,7 +167,7 @@ func (s *StepMobile) Tap(params string, options ...uixt.ActionOption) *StepMobil
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 // TapByOCR taps on the target element by OCR recognition
@@ -165,7 +179,7 @@ func (s *StepMobile) TapByOCR(ocrText string, options ...uixt.ActionOption) *Ste
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 // TapByCV taps on the target element by CV recognition
@@ -177,7 +191,7 @@ func (s *StepMobile) TapByCV(imagePath string, options ...uixt.ActionOption) *St
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 // TapByUITypes taps on the target element specified by uiTypes, the higher the uiTypes, the higher the priority
@@ -188,7 +202,7 @@ func (s *StepMobile) TapByUITypes(options ...uixt.ActionOption) *StepMobile {
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 // DoubleTapXY double taps the point {X,Y}, X & Y is percentage of coordinates
@@ -198,7 +212,7 @@ func (s *StepMobile) DoubleTapXY(x, y float64, options ...uixt.ActionOption) *St
 		Params:  []float64{x, y},
 		Options: uixt.NewActionOptions(options...),
 	})
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) DoubleTap(params string, options ...uixt.ActionOption) *StepMobile {
@@ -209,7 +223,7 @@ func (s *StepMobile) DoubleTap(params string, options ...uixt.ActionOption) *Ste
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) Back(options ...uixt.ActionOption) *StepMobile {
@@ -220,7 +234,7 @@ func (s *StepMobile) Back(options ...uixt.ActionOption) *StepMobile {
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) Swipe(sx, sy, ex, ey float64, options ...uixt.ActionOption) *StepMobile {
@@ -231,7 +245,7 @@ func (s *StepMobile) Swipe(sx, sy, ex, ey float64, options ...uixt.ActionOption)
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) SwipeUp(options ...uixt.ActionOption) *StepMobile {
@@ -242,7 +256,7 @@ func (s *StepMobile) SwipeUp(options ...uixt.ActionOption) *StepMobile {
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) SwipeDown(options ...uixt.ActionOption) *StepMobile {
@@ -253,7 +267,7 @@ func (s *StepMobile) SwipeDown(options ...uixt.ActionOption) *StepMobile {
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) SwipeLeft(options ...uixt.ActionOption) *StepMobile {
@@ -264,7 +278,7 @@ func (s *StepMobile) SwipeLeft(options ...uixt.ActionOption) *StepMobile {
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) SwipeRight(options ...uixt.ActionOption) *StepMobile {
@@ -275,7 +289,7 @@ func (s *StepMobile) SwipeRight(options ...uixt.ActionOption) *StepMobile {
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) SwipeToTapApp(appName string, options ...uixt.ActionOption) *StepMobile {
@@ -286,7 +300,7 @@ func (s *StepMobile) SwipeToTapApp(appName string, options ...uixt.ActionOption)
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) SwipeToTapText(text string, options ...uixt.ActionOption) *StepMobile {
@@ -297,7 +311,7 @@ func (s *StepMobile) SwipeToTapText(text string, options ...uixt.ActionOption) *
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) SwipeToTapTexts(texts interface{}, options ...uixt.ActionOption) *StepMobile {
@@ -308,7 +322,7 @@ func (s *StepMobile) SwipeToTapTexts(texts interface{}, options ...uixt.ActionOp
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobile {
@@ -319,7 +333,7 @@ func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobil
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
-	return &StepMobile{step: s.step}
+	return s
 }
 
 // Sleep specify sleep seconds after last action
@@ -329,7 +343,7 @@ func (s *StepMobile) Sleep(n float64) *StepMobile {
 		Params:  n,
 		Options: nil,
 	})
-	return &StepMobile{step: s.step}
+	return s
 }
 
 // SleepRandom specify random sleeping seconds after last action
@@ -342,7 +356,7 @@ func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 		Params:  params,
 		Options: nil,
 	})
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) EndToEndDelay(options ...uixt.ActionOption) *StepMobile {
@@ -351,7 +365,7 @@ func (s *StepMobile) EndToEndDelay(options ...uixt.ActionOption) *StepMobile {
 		Params:  nil,
 		Options: uixt.NewActionOptions(options...),
 	})
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) ScreenShot(options ...uixt.ActionOption) *StepMobile {
@@ -360,7 +374,7 @@ func (s *StepMobile) ScreenShot(options ...uixt.ActionOption) *StepMobile {
 		Params:  nil,
 		Options: uixt.NewActionOptions(options...),
 	})
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) StartCamera() *StepMobile {
@@ -369,7 +383,7 @@ func (s *StepMobile) StartCamera() *StepMobile {
 		Params:  nil,
 		Options: nil,
 	})
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) StopCamera() *StepMobile {
@@ -378,7 +392,7 @@ func (s *StepMobile) StopCamera() *StepMobile {
 		Params:  nil,
 		Options: nil,
 	})
-	return &StepMobile{step: s.step}
+	return s
 }
 
 func (s *StepMobile) ClosePopups(options ...uixt.ActionOption) *StepMobile {
@@ -387,40 +401,37 @@ func (s *StepMobile) ClosePopups(options ...uixt.ActionOption) *StepMobile {
 		Params:  nil,
 		Options: uixt.NewActionOptions(options...),
 	})
-	return &StepMobile{step: s.step}
+	return s
 }
 
 // Validate switches to step validation.
 func (s *StepMobile) Validate() *StepMobileUIValidation {
 	return &StepMobileUIValidation{
-		step: s.step,
+		StepMobile: s,
+		Validators: make([]interface{}, 0),
 	}
 }
 
 func (s *StepMobile) Name() string {
-	return s.step.Name
+	return s.StepName
 }
 
 func (s *StepMobile) Type() StepType {
-	if s.step.Android != nil {
-		return stepTypeAndroid
-	} else if s.step.Harmony != nil {
-		return stepTypeHarmony
-	}
-	return stepTypeIOS
+	return StepType(s.obj().OSType)
 }
 
-func (s *StepMobile) Struct() *TStep {
-	return s.step
+func (s *StepMobile) Config() *StepConfig {
+	return &s.StepConfig
 }
 
 func (s *StepMobile) Run(r *SessionRunner) (*StepResult, error) {
-	return runStepMobileUI(r, s.step)
+	return runStepMobileUI(r, s)
 }
 
 // StepMobileUIValidation implements IStep interface.
 type StepMobileUIValidation struct {
-	step *TStep
+	*StepMobile
+	Validators []interface{} `json:"validate,omitempty" yaml:"validate,omitempty"`
 }
 
 func (s *StepMobileUIValidation) AssertNameExists(expectedName string, msg ...string) *StepMobileUIValidation {
@@ -434,7 +445,7 @@ func (s *StepMobileUIValidation) AssertNameExists(expectedName string, msg ...st
 	} else {
 		v.Message = fmt.Sprintf("attribute name [%s] not found", expectedName)
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -449,7 +460,7 @@ func (s *StepMobileUIValidation) AssertNameNotExists(expectedName string, msg ..
 	} else {
 		v.Message = fmt.Sprintf("attribute name [%s] should not exist", expectedName)
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -464,7 +475,7 @@ func (s *StepMobileUIValidation) AssertLabelExists(expectedLabel string, msg ...
 	} else {
 		v.Message = fmt.Sprintf("attribute label [%s] not found", expectedLabel)
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -479,7 +490,7 @@ func (s *StepMobileUIValidation) AssertLabelNotExists(expectedLabel string, msg 
 	} else {
 		v.Message = fmt.Sprintf("attribute label [%s] should not exist", expectedLabel)
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -494,7 +505,7 @@ func (s *StepMobileUIValidation) AssertOCRExists(expectedText string, msg ...str
 	} else {
 		v.Message = fmt.Sprintf("ocr text [%s] not found", expectedText)
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -509,7 +520,7 @@ func (s *StepMobileUIValidation) AssertOCRNotExists(expectedText string, msg ...
 	} else {
 		v.Message = fmt.Sprintf("ocr text [%s] should not exist", expectedText)
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -524,7 +535,7 @@ func (s *StepMobileUIValidation) AssertImageExists(expectedImagePath string, msg
 	} else {
 		v.Message = fmt.Sprintf("cv image [%s] not found", expectedImagePath)
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -539,7 +550,7 @@ func (s *StepMobileUIValidation) AssertImageNotExists(expectedImagePath string, 
 	} else {
 		v.Message = fmt.Sprintf("cv image [%s] should not exist", expectedImagePath)
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -554,7 +565,7 @@ func (s *StepMobileUIValidation) AssertAppInForeground(packageName string, msg .
 	} else {
 		v.Message = fmt.Sprintf("app [%s] should be in foreground", packageName)
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
@@ -569,49 +580,53 @@ func (s *StepMobileUIValidation) AssertAppNotInForeground(packageName string, ms
 	} else {
 		v.Message = fmt.Sprintf("app [%s] should not be in foreground", packageName)
 	}
-	s.step.Validators = append(s.step.Validators, v)
+	s.Validators = append(s.Validators, v)
 	return s
 }
 
 func (s *StepMobileUIValidation) Name() string {
-	return s.step.Name
+	return s.StepName
 }
 
 func (s *StepMobileUIValidation) Type() StepType {
-	if s.step.Android != nil {
-		return stepTypeAndroid + stepTypeSuffixValidation
-	}
-	return stepTypeIOS + stepTypeSuffixValidation
+	return s.StepMobile.Type() + stepTypeSuffixValidation
 }
 
-func (s *StepMobileUIValidation) Struct() *TStep {
-	return s.step
+func (s *StepMobileUIValidation) Config() *StepConfig {
+	return &StepConfig{
+		StepName:   s.StepName,
+		Variables:  s.Variables,
+		Validators: s.Validators,
+	}
 }
 
 func (s *StepMobileUIValidation) Run(r *SessionRunner) (*StepResult, error) {
-	return runStepMobileUI(r, s.step)
+	return runStepMobileUI(r, s)
 }
 
-func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
-	var osType string
+func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err error) {
+	var stepVariables map[string]interface{}
+	var stepValidators []interface{}
+	var ignorePopup bool
+
 	var mobileStep *MobileUI
-	if step.IOS != nil {
-		// ios step
-		osType = "ios"
-		mobileStep = step.IOS
-	} else if step.Harmony != nil {
-		// harmony step
-		osType = "harmony"
-		mobileStep = step.Harmony
-	} else {
-		// android step
-		osType = "android"
-		mobileStep = step.Android
+	switch stepMobile := step.(type) {
+	case *StepMobile:
+		mobileStep = stepMobile.obj()
+		stepVariables = stepMobile.Variables
+		ignorePopup = stepMobile.IgnorePopup
+	case *StepMobileUIValidation:
+		mobileStep = stepMobile.obj()
+		stepVariables = stepMobile.Variables
+		stepValidators = stepMobile.Validators
+		ignorePopup = stepMobile.StepMobile.IgnorePopup
+	default:
+		return nil, errors.New("invalid mobile UI step type")
 	}
 
 	// report GA event
 	go sdk.SendGA4Event("hrp_run_ui", map[string]interface{}{
-		"osType": osType,
+		"osType": mobileStep.OSType,
 	})
 
 	identifier := mobileStep.Identifier
@@ -628,15 +643,15 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	}
 
 	stepResult = &StepResult{
-		Name:        step.Name,
+		Name:        step.Name(),
 		Identifier:  identifier,
-		StepType:    StepType(osType),
+		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
 	}
 
 	// init wda/uia driver
-	uiDriver, err := initUIClient(mobileStep.Serial, osType)
+	uiDriver, err := initUIClient(mobileStep.Serial, mobileStep.OSType)
 	if err != nil {
 		return
 	}
@@ -655,9 +670,9 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 		}
 
 		// automatic handling of pop-up windows on each step finished
-		if !step.IgnorePopup && !s.IgnorePopup() {
+		if !ignorePopup && !s.IgnorePopup() {
 			if err2 := uiDriver.ClosePopupsHandler(); err2 != nil {
-				log.Error().Err(err2).Str("step", step.Name).Msg("auto handle popup failed")
+				log.Error().Err(err2).Str("step", step.Name()).Msg("auto handle popup failed")
 			}
 		}
 
@@ -692,7 +707,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 			log.Warn().Msg("interrupted in mobile UI runner")
 			return stepResult, errors.Wrap(code.InterruptError, "mobile UI runner interrupted")
 		default:
-			if action.Params, err = s.caseRunner.parser.Parse(action.Params, step.Variables); err != nil {
+			if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
 				if !code.IsErrorPredefined(err) {
 					err = errors.Wrap(code.ParseError,
 						fmt.Sprintf("parse action params failed: %v", err))
@@ -709,7 +724,7 @@ func runStepMobileUI(s *SessionRunner, step *TStep) (stepResult *StepResult, err
 	}
 
 	// validate
-	validateResults, err := validateUI(uiDriver, step.Validators)
+	validateResults, err := validateUI(uiDriver, stepValidators)
 	if err != nil {
 		if !code.IsErrorPredefined(err) {
 			err = errors.Wrap(code.MobileUIValidationError, err.Error())

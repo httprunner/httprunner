@@ -16,8 +16,7 @@ func NewConfig(name string) *TConfig {
 	}
 }
 
-// TConfig represents config data structure for testcase.
-// Each testcase should contain one config part.
+// define struct for testcase config
 type TConfig struct {
 	Name              string                 `json:"name" yaml:"name"` // required
 	Verify            bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`

@@ -21,26 +21,27 @@ const (
 
 // StepTransaction implements IStep interface.
 type StepTransaction struct {
-	step *TStep
+	StepConfig
+	Transaction *Transaction `json:"transaction,omitempty" yaml:"transaction,omitempty"`
 }
 
 func (s *StepTransaction) Name() string {
-	if s.step.Name != "" {
-		return s.step.Name
+	if s.StepName != "" {
+		return s.StepName
 	}
-	return fmt.Sprintf("transaction %s %s", s.step.Transaction.Name, s.step.Transaction.Type)
+	return fmt.Sprintf("transaction %s %s", s.Transaction.Name, s.Transaction.Type)
 }
 
 func (s *StepTransaction) Type() StepType {
 	return stepTypeTransaction
 }
 
-func (s *StepTransaction) Struct() *TStep {
-	return s.step
+func (s *StepTransaction) Config() *StepConfig {
+	return &s.StepConfig
 }
 
 func (s *StepTransaction) Run(r *SessionRunner) (*StepResult, error) {
-	transaction := s.step.Transaction
+	transaction := s.Transaction
 	log.Info().
 		Str("name", transaction.Name).
 		Str("type", string(transaction.Type)).

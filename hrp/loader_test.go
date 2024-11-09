@@ -51,8 +51,8 @@ func TestLoadTestCases(t *testing.T) {
 }
 
 func TestLoadCase(t *testing.T) {
-	tcJSON := &TestCase{}
-	tcYAML := &TestCase{}
+	tcJSON := &TestCaseDef{}
+	tcYAML := &TestCaseDef{}
 	err := LoadFileObject(demoTestCaseWithPluginJSONPath, tcJSON)
 	if !assert.NoError(t, err) {
 		t.Fatal()
@@ -68,10 +68,10 @@ func TestLoadCase(t *testing.T) {
 	if !assert.Equal(t, tcJSON.Config.BaseURL, tcYAML.Config.BaseURL) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, tcJSON.Steps[1].Name, tcYAML.Steps[1].Name) {
+	if !assert.Equal(t, tcJSON.Steps[1].StepName, tcYAML.Steps[1].StepName) {
 		t.Fatal()
 	}
-	if !assert.Equal(t, tcJSON.Steps[1].Request, tcYAML.Steps[1].Request) {
+	if !assert.Equal(t, tcJSON.Steps[1].Request, tcJSON.Steps[1].Request) {
 		t.Fatal()
 	}
 }

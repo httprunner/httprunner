@@ -357,7 +357,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
 				// parse step struct
-				err = sessionRunner.parseStepStruct(step)
+				err = sessionRunner.parseStep(step)
 				if err != nil {
 					log.Error().Err(err).Msg("parse step struct failed")
 				}
@@ -406,8 +406,9 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 				if stepResult.StepType == stepTypeTransaction {
 					// transaction
 					// FIXME: support nested transactions
-					if step.Struct().Transaction.Type == transactionEnd { // only record when transaction ends
-						b.RecordTransaction(step.Struct().Transaction.Name, transactionSuccess, stepResult.Elapsed, 0)
+					stepTransaction := step.(*StepTransaction)
+					if stepTransaction.Transaction.Type == transactionEnd { // only record when transaction ends
+						b.RecordTransaction(stepTransaction.Name(), transactionSuccess, stepResult.Elapsed, 0)
 						transactionSuccess = true // reset flag for next transaction
 					}
 				} else if stepResult.StepType == stepTypeRendezvous {

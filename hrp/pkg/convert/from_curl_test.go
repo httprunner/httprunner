@@ -18,7 +18,7 @@ func TestLoadCurlCase(t *testing.T) {
 	}
 
 	// curl httpbin.org
-	if !assert.Equal(t, "curl httpbin.org", tCase.Steps[0].Name) {
+	if !assert.Equal(t, "curl httpbin.org", tCase.Steps[0].StepName) {
 		t.Fatal()
 	}
 	if !assert.EqualValues(t, "GET", tCase.Steps[0].Request.Method) {

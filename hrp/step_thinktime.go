@@ -14,27 +14,28 @@ type ThinkTime struct {
 
 // StepThinkTime implements IStep interface.
 type StepThinkTime struct {
-	step *TStep
+	StepConfig
+	ThinkTime *ThinkTime `json:"think_time,omitempty" yaml:"think_time,omitempty"`
 }
 
 func (s *StepThinkTime) Name() string {
-	return s.step.Name
+	return s.StepName
 }
 
 func (s *StepThinkTime) Type() StepType {
 	return stepTypeThinkTime
 }
 
-func (s *StepThinkTime) Struct() *TStep {
-	return s.step
+func (s *StepThinkTime) Config() *StepConfig {
+	return &s.StepConfig
 }
 
 func (s *StepThinkTime) Run(r *SessionRunner) (*StepResult, error) {
-	thinkTime := s.step.ThinkTime
+	thinkTime := s.ThinkTime
 	log.Info().Float64("time", thinkTime.Time).Msg("think time")
 
 	stepResult := &StepResult{
-		Name:     s.step.Name,
+		Name:     s.StepName,
 		StepType: stepTypeThinkTime,
 		Success:  true,
 	}

@@ -120,26 +120,27 @@ func (wsConfig *WebSocketConfig) checkWebSocket() {
 
 // StepWebSocket implements IStep interface.
 type StepWebSocket struct {
-	step *TStep
+	StepConfig
+	WebSocket *WebSocketAction `json:"websocket,omitempty" yaml:"websocket,omitempty"`
 }
 
 func (s *StepWebSocket) Name() string {
-	if s.step.Name != "" {
-		return s.step.Name
+	if s.StepName != "" {
+		return s.StepName
 	}
-	return fmt.Sprintf("%s %s", s.step.WebSocket.Type, s.step.WebSocket.URL)
+	return fmt.Sprintf("%s %s", s.WebSocket.Type, s.WebSocket.URL)
 }
 
 func (s *StepWebSocket) Type() StepType {
-	return StepType(fmt.Sprintf("websocket-%v", s.step.WebSocket.Type))
+	return StepType(fmt.Sprintf("websocket-%v", s.WebSocket.Type))
 }
 
-func (s *StepWebSocket) Struct() *TStep {
-	return s.step
+func (s *StepWebSocket) Config() *StepConfig {
+	return &s.StepConfig
 }
 
 func (s *StepWebSocket) Run(r *SessionRunner) (*StepResult, error) {
-	return runStepWebSocket(r, s.step)
+	return runStepWebSocket(r, s)
 }
 
 func (s *StepWebSocket) withUrl(url ...string) *StepWebSocket {
@@ -149,87 +150,95 @@ func (s *StepWebSocket) withUrl(url ...string) *StepWebSocket {
 	if len(url) > 1 {
 		log.Warn().Msg("too many WebSocket step URL specified, using first URL")
 	}
-	s.step.WebSocket.URL = url[0]
+	s.WebSocket.URL = url[0]
 	return s
 }
 
 func (s *StepWebSocket) OpenConnection(url ...string) *StepWebSocket {
-	s.step.WebSocket.Type = wsOpen
+	s.WebSocket.Type = wsOpen
 	return s.withUrl(url...)
 }
 
 func (s *StepWebSocket) PingPong(url ...string) *StepWebSocket {
-	s.step.WebSocket.Type = wsPing
+	s.WebSocket.Type = wsPing
 	return s.withUrl(url...)
 }
 
 func (s *StepWebSocket) WriteAndRead(url ...string) *StepWebSocket {
-	s.step.WebSocket.Type = wsWriteAndRead
+	s.WebSocket.Type = wsWriteAndRead
 	return s.withUrl(url...)
 }
 
 func (s *StepWebSocket) Read(url ...string) *StepWebSocket {
-	s.step.WebSocket.Type = wsRead
+	s.WebSocket.Type = wsRead
 	return s.withUrl(url...)
 }
 
 func (s *StepWebSocket) Write(url ...string) *StepWebSocket {
-	s.step.WebSocket.Type = wsWrite
+	s.WebSocket.Type = wsWrite
 	return s.withUrl(url...)
 }
 
 func (s *StepWebSocket) CloseConnection(url ...string) *StepWebSocket {
-	s.step.WebSocket.Type = wsClose
+	s.WebSocket.Type = wsClose
 	return s.withUrl(url...)
 }
 
 func (s *StepWebSocket) WithParams(params map[string]interface{}) *StepWebSocket {
-	s.step.WebSocket.Params = params
+	s.WebSocket.Params = params
 	return s
 }
 
 func (s *StepWebSocket) WithHeaders(headers map[string]string) *StepWebSocket {
-	s.step.WebSocket.Headers = headers
+	s.WebSocket.Headers = headers
 	return s
 }
 
 func (s *StepWebSocket) NewConnection() *StepWebSocket {
-	s.step.WebSocket.NewConnection = true
+	s.WebSocket.NewConnection = true
 	return s
 }
 
 func (s *StepWebSocket) WithTextMessage(message interface{}) *StepWebSocket {
-	s.step.WebSocket.TextMessage = message
+	s.WebSocket.TextMessage = message
 	return s
 }
 
 func (s *StepWebSocket) WithBinaryMessage(message interface{}) *StepWebSocket {
-	s.step.WebSocket.BinaryMessage = message
+	s.WebSocket.BinaryMessage = message
 	return s
 }
 
 func (s *StepWebSocket) WithTimeout(timeout int64) *StepWebSocket {
-	s.step.WebSocket.Timeout = timeout
+	s.WebSocket.Timeout = timeout
 	return s
 }
 
 func (s *StepWebSocket) WithCloseStatus(closeStatus int64) *StepWebSocket {
-	s.step.WebSocket.CloseStatusCode = closeStatus
+	s.WebSocket.CloseStatusCode = closeStatus
 	return s
 }
 
 // Validate switches to step validation.
 func (s *StepWebSocket) Validate() *StepRequestValidation {
 	return &StepRequestValidation{
-		step: s.step,
+		StepRequestWithOptionalArgs: &StepRequestWithOptionalArgs{
+			StepRequest: &StepRequest{
+				StepConfig: s.StepConfig,
+			},
+		},
 	}
 }
 
 // Extract switches to step extraction.
 func (s *StepWebSocket) Extract() *StepRequestExtraction {
-	s.step.Extract = make(map[string]string)
+	s.StepConfig.Extract = make(map[string]string)
 	return &StepRequestExtraction{
-		step: s.step,
+		StepRequestWithOptionalArgs: &StepRequestWithOptionalArgs{
+			StepRequest: &StepRequest{
+				StepConfig: s.StepConfig,
+			},
+		},
 	}
 }
 
@@ -260,9 +269,12 @@ func (w *WebSocketAction) GetCloseStatusCode() int64 {
 	return w.CloseStatusCode
 }
 
-func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, err error) {
+func runStepWebSocket(r *SessionRunner, step IStep) (stepResult *StepResult, err error) {
+	stepWebSocket := step.(*StepWebSocket)
+	webSocket := stepWebSocket.WebSocket
+	variables := stepWebSocket.Variables
 	stepResult = &StepResult{
-		Name:        step.Name,
+		Name:        step.Name(),
 		StepType:    stepTypeWebSocket,
 		Success:     false,
 		ContentSize: 0,
@@ -280,18 +292,18 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 	config := r.caseRunner.Config
 
 	dummyReq := &Request{
-		URL:     step.WebSocket.URL,
-		Params:  step.WebSocket.Params,
-		Headers: step.WebSocket.Headers,
+		URL:     webSocket.URL,
+		Params:  webSocket.Params,
+		Headers: webSocket.Headers,
 	}
 	rb := newRequestBuilder(parser, config, dummyReq)
 
-	err = rb.prepareUrlParams(step.Variables)
+	err = rb.prepareUrlParams(variables)
 	if err != nil {
 		return
 	}
 
-	err = rb.prepareHeaders(step.Variables)
+	err = rb.prepareHeaders(variables)
 	if err != nil {
 		return
 	}
@@ -299,12 +311,12 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 	parsedHeader := rb.req.Header
 
 	// add request object to step variables, could be used in setup hooks
-	step.Variables["hrp_step_name"] = step.Name
-	step.Variables["hrp_step_request"] = rb.requestMap
+	variables["hrp_step_name"] = step.Name
+	variables["hrp_step_request"] = rb.requestMap
 
 	// deal with setup hooks
-	for _, setupHook := range step.SetupHooks {
-		_, err = parser.Parse(setupHook, step.Variables)
+	for _, setupHook := range stepWebSocket.SetupHooks {
+		_, err = parser.Parse(setupHook, variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run setup hooks failed")
 		}
@@ -315,26 +327,26 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 
 	// do websocket action
 	if r.caseRunner.hrpRunner.requestsLogOn {
-		fmt.Printf("-------------------- websocket action: %v --------------------\n", step.WebSocket.Type.toString())
+		fmt.Printf("-------------------- websocket action: %v --------------------\n", webSocket.Type.toString())
 	}
-	switch step.WebSocket.Type {
+	switch webSocket.Type {
 	case wsOpen:
-		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("open websocket connection")
+		log.Info().Int64("timeout(ms)", webSocket.GetTimeout()).Str("url", parsedURL).Msg("open websocket connection")
 		// use the current websocket connection if existed
 		if getWsClient(r, parsedURL) != nil {
 			break
 		}
-		resp, err = openWithTimeout(parsedURL, parsedHeader, r, step)
+		resp, err = openWithTimeout(parsedURL, parsedHeader, r, stepWebSocket)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "open connection failed")
 		}
 	case wsPing:
-		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("send ping and expect pong")
-		err = writeWebSocket(parsedURL, r, step, step.Variables)
+		log.Info().Int64("timeout(ms)", webSocket.GetTimeout()).Str("url", parsedURL).Msg("send ping and expect pong")
+		err = writeWebSocket(parsedURL, r, stepWebSocket, stepWebSocket.Variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "send ping message failed")
 		}
-		timer := time.NewTimer(time.Duration(step.WebSocket.GetTimeout()) * time.Millisecond)
+		timer := time.NewTimer(time.Duration(webSocket.GetTimeout()) * time.Millisecond)
 		// asynchronous receiving pong message with timeout
 		go func() {
 			select {
@@ -347,35 +359,35 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 			}
 		}()
 	case wsWriteAndRead:
-		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("write a message and read response")
-		err = writeWebSocket(parsedURL, r, step, step.Variables)
+		log.Info().Int64("timeout(ms)", webSocket.GetTimeout()).Str("url", parsedURL).Msg("write a message and read response")
+		err = writeWebSocket(parsedURL, r, stepWebSocket, variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "write message failed")
 		}
-		resp, err = readMessageWithTimeout(parsedURL, r, step)
+		resp, err = readMessageWithTimeout(parsedURL, r, stepWebSocket)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "read message failed")
 		}
 	case wsRead:
-		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("read only")
-		resp, err = readMessageWithTimeout(parsedURL, r, step)
+		log.Info().Int64("timeout(ms)", webSocket.GetTimeout()).Str("url", parsedURL).Msg("read only")
+		resp, err = readMessageWithTimeout(parsedURL, r, stepWebSocket)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "read message failed")
 		}
 	case wsWrite:
 		log.Info().Str("url", parsedURL).Msg("write only")
-		err = writeWebSocket(parsedURL, r, step, step.Variables)
+		err = writeWebSocket(parsedURL, r, stepWebSocket, variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "write message failed")
 		}
 	case wsClose:
-		log.Info().Int64("timeout(ms)", step.WebSocket.GetTimeout()).Str("url", parsedURL).Msg("close webSocket connection")
-		resp, err = closeWithTimeout(parsedURL, r, step, step.Variables)
+		log.Info().Int64("timeout(ms)", webSocket.GetTimeout()).Str("url", parsedURL).Msg("close webSocket connection")
+		resp, err = closeWithTimeout(parsedURL, r, stepWebSocket, variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "close connection failed")
 		}
 	default:
-		return stepResult, errors.Errorf("unexpected websocket frame type: %v", step.WebSocket.Type)
+		return stepResult, errors.Errorf("unexpected websocket frame type: %v", webSocket.Type)
 	}
 	if r.caseRunner.hrpRunner.requestsLogOn {
 		err = printWebSocketResponse(resp)
@@ -393,12 +405,12 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 
 	if respObj != nil {
 		// add response object to step variables, could be used in teardown hooks
-		step.Variables["hrp_step_response"] = respObj.respObjMeta
+		variables["hrp_step_response"] = respObj.respObjMeta
 	}
 
 	// deal with teardown hooks
-	for _, teardownHook := range step.TeardownHooks {
-		_, err = parser.Parse(teardownHook, step.Variables)
+	for _, teardownHook := range stepWebSocket.TeardownHooks {
+		_, err = parser.Parse(teardownHook, variables)
 		if err != nil {
 			return stepResult, errors.Wrap(err, "run teardown hooks failed")
 		}
@@ -409,15 +421,15 @@ func runStepWebSocket(r *SessionRunner, step *TStep) (stepResult *StepResult, er
 		sessionData.ReqResps.Response = builtin.FormatResponse(respObj.respObjMeta)
 
 		// extract variables from response
-		extractors := step.Extract
-		extractMapping := respObj.Extract(extractors, step.Variables)
+		extractors := stepWebSocket.StepConfig.Extract
+		extractMapping := respObj.Extract(extractors, variables)
 		stepResult.ExportVars = extractMapping
 
 		// override step variables with extracted variables
-		step.Variables = mergeVariables(step.Variables, extractMapping)
+		variables = mergeVariables(variables, extractMapping)
 
 		// validate response
-		err = respObj.Validate(step.Validators, step.Variables)
+		err = respObj.Validate(stepWebSocket.Validators, variables)
 		sessionData.Validators = respObj.validationResults
 		if err == nil {
 			sessionData.Success = true
@@ -471,7 +483,7 @@ func printWebSocketResponse(resp interface{}) error {
 	return nil
 }
 
-func openWithTimeout(urlStr string, requestHeader http.Header, r *SessionRunner, step *TStep) (*http.Response, error) {
+func openWithTimeout(urlStr string, requestHeader http.Header, r *SessionRunner, step *StepWebSocket) (*http.Response, error) {
 	openResponseChan := make(chan *http.Response)
 	errorChan := make(chan error)
 	go func() {
@@ -519,7 +531,7 @@ func openWithTimeout(urlStr string, requestHeader http.Header, r *SessionRunner,
 	}
 }
 
-func readMessageWithTimeout(urlString string, r *SessionRunner, step *TStep) (*wsReadRespObject, error) {
+func readMessageWithTimeout(urlString string, r *SessionRunner, step *StepWebSocket) (*wsReadRespObject, error) {
 	wsConn := getWsClient(r, urlString)
 	if wsConn == nil {
 		return nil, errors.New("try to use existing connection, but there is no connection")
@@ -549,7 +561,7 @@ func readMessageWithTimeout(urlString string, r *SessionRunner, step *TStep) (*w
 	}
 }
 
-func writeWebSocket(urlString string, r *SessionRunner, step *TStep, stepVariables map[string]interface{}) error {
+func writeWebSocket(urlString string, r *SessionRunner, step *StepWebSocket, stepVariables map[string]interface{}) error {
 	wsConn := getWsClient(r, urlString)
 	if wsConn == nil {
 		return errors.New("try to use existing connection, but there is no connection")
@@ -583,7 +595,7 @@ func writeWebSocket(urlString string, r *SessionRunner, step *TStep, stepVariabl
 	return nil
 }
 
-func writeWithType(c *websocket.Conn, step *TStep, messageType int, message interface{}) error {
+func writeWithType(c *websocket.Conn, step *StepWebSocket, messageType int, message interface{}) error {
 	if message == nil {
 		return nil
 	}
@@ -603,7 +615,7 @@ func writeWithType(c *websocket.Conn, step *TStep, messageType int, message inte
 	}
 }
 
-func writeWithAction(c *websocket.Conn, step *TStep, messageType int, message []byte) error {
+func writeWithAction(c *websocket.Conn, step *StepWebSocket, messageType int, message []byte) error {
 	switch step.WebSocket.Type {
 	case wsPing:
 		return c.WriteControl(websocket.PingMessage, message, time.Now().Add(defaultWriteWait))
@@ -615,7 +627,7 @@ func writeWithAction(c *websocket.Conn, step *TStep, messageType int, message []
 	}
 }
 
-func closeWithTimeout(urlString string, r *SessionRunner, step *TStep, stepVariables map[string]interface{}) (*wsCloseRespObject, error) {
+func closeWithTimeout(urlString string, r *SessionRunner, step *StepWebSocket, stepVariables map[string]interface{}) (*wsCloseRespObject, error) {
 	wsConn := getWsClient(r, urlString)
 	if wsConn == nil {
 		return nil, errors.New("no connection needs to be closed")

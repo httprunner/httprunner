@@ -250,15 +250,15 @@ func TestSessionRunner(t *testing.T) {
 	caseRunner, _ := NewRunner(t).NewCaseRunner(testcase)
 	sessionRunner := caseRunner.NewSession()
 	step := testcase.TestSteps[0]
-	if !assert.Equal(t, step.Struct().Variables["varFoo"], "${max($a, $b)}") {
+	if !assert.Equal(t, step.Config().Variables["varFoo"], "${max($a, $b)}") {
 		t.Fatal()
 	}
 
-	err := sessionRunner.parseStepStruct(step)
+	err := sessionRunner.parseStep(step)
 	if err != nil {
 		t.Fatal()
 	}
-	if !assert.Equal(t, step.Struct().Variables["varFoo"], 34.5) {
+	if !assert.Equal(t, step.Config().Variables["varFoo"], 34.5) {
 		t.Fatal()
 	}
 }
