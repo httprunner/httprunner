@@ -14,6 +14,12 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
+// define struct for testcase
+type TestCaseDef struct {
+	Config *TConfig `json:"config" yaml:"config"`
+	Steps  []*TStep `json:"teststeps" yaml:"teststeps"`
+}
+
 // ITestCase represents interface for testcases,
 // includes TestCase and TestCasePath.
 type ITestCase interface {

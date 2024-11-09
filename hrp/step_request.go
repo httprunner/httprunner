@@ -259,11 +259,11 @@ func initUpload(step *StepRequestWithOptionalArgs) {
 	step.Request.Body = "$m_encoder"
 }
 
-func prepareUpload(parser *Parser, step *StepRequestWithOptionalArgs, stepVariables map[string]interface{}) (err error) {
-	if len(step.Request.Upload) == 0 {
+func prepareUpload(parser *Parser, stepRequest *StepRequest, stepVariables map[string]interface{}) (err error) {
+	if len(stepRequest.Request.Upload) == 0 {
 		return
 	}
-	uploadMap, err := parser.Parse(step.Request.Upload, stepVariables)
+	uploadMap, err := parser.Parse(stepRequest.Request.Upload, stepVariables)
 	if err != nil {
 		return
 	}
@@ -292,7 +292,7 @@ func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err e
 		}
 	}()
 
-	err = prepareUpload(r.caseRunner.parser, stepRequest, stepRequest.Variables)
+	err = prepareUpload(r.caseRunner.parser, stepRequest.StepRequest, stepRequest.Variables)
 	if err != nil {
 		return
 	}
@@ -908,11 +908,7 @@ func (s *StepRequestExtraction) WithJmesPath(jmesPath string, varName string) *S
 // Validate switches to step validation.
 func (s *StepRequestExtraction) Validate() *StepRequestValidation {
 	return &StepRequestValidation{
-		StepRequestWithOptionalArgs: &StepRequestWithOptionalArgs{
-			StepRequest: &StepRequest{
-				StepConfig: s.StepConfig,
-			},
-		},
+		StepRequestWithOptionalArgs: s.StepRequestWithOptionalArgs,
 	}
 }
 
