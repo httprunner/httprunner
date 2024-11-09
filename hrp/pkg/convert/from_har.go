@@ -391,7 +391,7 @@ func (c *CaseHar) ToTestCase() (*hrp.TestCaseDef, error) {
 		Config: c.prepareConfig(),
 		Steps:  teststeps,
 	}
-	err = tCase.MakeCompat()
+	err = hrp.ConvertCaseCompatibility(tCase)
 	if err != nil {
 		return nil, err
 	}

@@ -19,7 +19,7 @@ func LoadJSONCase(path string) (*hrp.TestCaseDef, error) {
 		return nil, errors.New("invalid json case file, missing teststeps")
 	}
 
-	err = caseJSON.MakeCompat()
+	err = hrp.ConvertCaseCompatibility(caseJSON)
 	if err != nil {
 		return nil, err
 	}

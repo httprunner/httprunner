@@ -111,7 +111,7 @@ func LoadCurlCase(path string) (*hrp.TestCaseDef, error) {
 		}
 		tCase.Steps = append(tCase.Steps, tSteps...)
 	}
-	err = tCase.MakeCompat()
+	err = hrp.ConvertCaseCompatibility(tCase)
 	if err != nil {
 		return nil, err
 	}

@@ -19,7 +19,7 @@ func LoadYAMLCase(path string) (*hrp.TestCaseDef, error) {
 		return nil, errors.New("invalid yaml file")
 	}
 
-	err = caseJSON.MakeCompat()
+	err = hrp.ConvertCaseCompatibility(caseJSON)
 	if err != nil {
 		return nil, err
 	}
