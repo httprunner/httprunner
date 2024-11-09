@@ -601,7 +601,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 			return summary, errors.Wrap(code.InterruptError, "session runner interrupted")
 		default:
 			// parse step struct
-			err = r.parseStep(step)
+			err = r.parseStepStruct(step)
 			if err != nil {
 				log.Error().Err(err).Msg("parse step struct failed")
 				if r.caseRunner.hrpRunner.failfast {
@@ -682,7 +682,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 	return summary, nil
 }
 
-func (r *SessionRunner) parseStep(step IStep) error {
+func (r *SessionRunner) parseStepStruct(step IStep) error {
 	caseConfig := r.caseRunner.TestCase.Config.Get()
 	stepConfig := step.Config()
 

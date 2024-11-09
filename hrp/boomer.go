@@ -359,7 +359,7 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
 				// parse step struct
-				err = sessionRunner.parseStep(step)
+				err = sessionRunner.parseStepStruct(step)
 				if err != nil {
 					log.Error().Err(err).Msg("parse step struct failed")
 				}
