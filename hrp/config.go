@@ -7,6 +7,10 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
+type IConfig interface {
+	Get() *TConfig
+}
+
 // NewConfig returns a new constructed testcase config with specified testcase name.
 func NewConfig(name string) *TConfig {
 	return &TConfig{
@@ -37,6 +41,10 @@ type TConfig struct {
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
 	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
 	PluginSetting     *PluginConfig          `json:"plugin,omitempty" yaml:"plugin,omitempty"` // plugin config
+}
+
+func (c *TConfig) Get() *TConfig {
+	return c
 }
 
 // WithVariables sets variables for current testcase.

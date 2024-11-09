@@ -46,8 +46,8 @@ func (path *TestCasePath) GetTestCase() (*TestCase, error) {
 // TestCase is a container for one testcase, which is used for testcase runner.
 // TestCase implements ITestCase interface.
 type TestCase struct {
-	Config    *TConfig `json:"config" yaml:"config"`
-	TestSteps []IStep  `json:"teststeps" yaml:"teststeps"`
+	Config    IConfig `json:"config" yaml:"config"`
+	TestSteps []IStep `json:"teststeps" yaml:"teststeps"`
 }
 
 func (tc *TestCase) GetTestCase() (*TestCase, error) {
@@ -126,13 +126,14 @@ func (tc *TestCaseDef) loadISteps() (*TestCase, error) {
 			return nil, errors.Wrap(err, "failed to load .env file")
 		}
 
+		config := testCase.Config.Get()
 		// override testcase config env with variables loaded from .env file
 		// priority: .env file > testcase config env
-		if testCase.Config.Environs == nil {
-			testCase.Config.Environs = make(map[string]string)
+		if config.Environs == nil {
+			config.Environs = make(map[string]string)
 		}
 		for key, value := range envVars {
-			testCase.Config.Environs[key] = value
+			config.Environs[key] = value
 		}
 	}
 

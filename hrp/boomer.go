@@ -138,9 +138,10 @@ func (b *HRPBoomer) ParseTestCases(testCases []*TestCase) []*TestCase {
 			log.Error().Err(err).Msg("failed to create runner")
 			os.Exit(code.GetErrorCode(err))
 		}
-		caseRunner.Config.Parameters = caseRunner.parametersIterator.outParameters()
+		caseConfig := caseRunner.TestCase.Config.Get()
+		caseConfig.Parameters = caseRunner.parametersIterator.outParameters()
 		parsedTestCases = append(parsedTestCases, &TestCase{
-			Config:    caseRunner.Config,
+			Config:    caseConfig,
 			TestSteps: caseRunner.TestSteps,
 		})
 	}
@@ -184,19 +185,20 @@ func (b *HRPBoomer) parseTCases(testCases []*TestCase) (testcases []ITestCase) {
 			return
 		}
 
-		if tc.Config.PluginSetting != nil {
-			tc.Config.PluginSetting.Path = filepath.Join(tempDir, fmt.Sprintf("debugtalk.%s", tc.Config.PluginSetting.Type))
-			err = builtin.Bytes2File(tc.Config.PluginSetting.Content, tc.Config.PluginSetting.Path)
+		caseConfig := tc.Config.Get()
+		if caseConfig.PluginSetting != nil {
+			caseConfig.PluginSetting.Path = filepath.Join(tempDir, fmt.Sprintf("debugtalk.%s", caseConfig.PluginSetting.Type))
+			err = builtin.Bytes2File(caseConfig.PluginSetting.Content, caseConfig.PluginSetting.Path)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to save plugin file")
 				return
 			}
-			tc.Config.PluginSetting.Content = nil // remove the content in testcase
+			caseConfig.PluginSetting.Content = nil // remove the content in testcase
 		}
 
-		if tc.Config.Environs != nil {
+		if caseConfig.Environs != nil {
 			envContent := ""
-			for k, v := range tc.Config.Environs {
+			for k, v := range caseConfig.Environs {
 				envContent += fmt.Sprintf("%s=%s\n", k, v)
 			}
 			err = os.WriteFile(filepath.Join(tempDir, ".env"), []byte(envContent), 0o644)
@@ -206,8 +208,8 @@ func (b *HRPBoomer) parseTCases(testCases []*TestCase) (testcases []ITestCase) {
 			}
 		}
 
-		tc.Config.Path = filepath.Join(tempDir, "test-case.json")
-		err = builtin.Dump2JSON(tc, tc.Config.Path)
+		caseConfig.Path = filepath.Join(tempDir, "test-case.json")
+		err = builtin.Dump2JSON(tc, caseConfig.Path)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to dump testcases")
 			return
@@ -335,8 +337,8 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 	mutex := sync.Mutex{}
 
 	return &boomer.Task{
-		Name:   testcase.Config.Name,
-		Weight: testcase.Config.Weight,
+		Name:   testcase.Config.Get().Name,
+		Weight: testcase.Config.Get().Weight,
 		Fn: func() {
 			testcaseSuccess := true    // flag whole testcase result
 			transactionSuccess := true // flag current transaction result

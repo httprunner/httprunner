@@ -6,9 +6,12 @@ HttpRunner 以 `TestCase` 为核心，将任意测试场景抽象为有序步骤
 
 ```go
 type TestCase struct {
-	Config    *TConfig `json:"config" yaml:"config"`
-	Steps     []*TStep `json:"teststeps" yaml:"teststeps"`
-	TestSteps []IStep  `json:"-" yaml:"-"`
+	Config    IConfig `json:"config" yaml:"config"`
+	TestSteps []IStep `json:"teststeps" yaml:"teststeps"`
+}
+
+type IConfig interface {
+	Get() *TConfig
 }
 ```
 
@@ -18,7 +21,7 @@ type TestCase struct {
 type IStep interface {
 	Name() string
 	Type() StepType
-	Struct() *TStep
+	Config() *StepConfig
 	Run(*SessionRunner) (*StepResult, error)
 }
 ```
@@ -32,6 +35,7 @@ type IStep interface {
 - [transaction](step_transaction.go)：事务机制，用于压测
 - [rendezvous](step_rendezvous.go)：集合点机制，用于压测
 - [mobile_UI](step_mobile_ui.go)：移动端 UI 自动化
+- [shell](step_shell.go)：执行 shell 命令
 
 基于该机制，我们可以扩展支持新的协议类型，例如 HTTP2/WebSocket/RPC 等；同时也可以支持新的测试类型，例如 UI 自动化。甚至我们还可以在一个测试用例中混合调用多种不同的 Step 类型，例如实现 HTTP/RPC/UI 混合场景。
 
@@ -53,7 +57,7 @@ type HRPRunner struct {
 }
 
 func (r *HRPRunner) Run(testcases ...ITestCase) error
-func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
+func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error)
 ```
 
 重点关注两个方法：
@@ -75,7 +79,7 @@ type CaseRunner struct {
 	parametersIterator *ParametersIterator
 }
 
-func (r *CaseRunner) NewSession() *SessionRunner {
+func (r *CaseRunner) NewSession() *SessionRunner
 ```
 
 重点关注一个方法：

@@ -32,7 +32,7 @@ func (s *StepTestCaseWithOptionalArgs) Name() string {
 	}
 	ts, ok := s.TestCase.(*TestCase)
 	if ok {
-		return ts.Config.Name
+		return ts.Config.Get().Name
 	}
 	return ""
 }
@@ -68,13 +68,14 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 		return stepResult, err
 	}
 
+	config := copiedTestCase.Config.Get()
 	// override testcase config
 	// override testcase name
 	if s.StepName != "" {
-		copiedTestCase.Config.Name = s.StepName
+		config.Name = s.StepName
 	}
 	// merge & override extractors
-	copiedTestCase.Config.Export = mergeSlices(s.StepExport, copiedTestCase.Config.Export)
+	config.Export = mergeSlices(s.StepExport, config.Export)
 
 	caseRunner, err := r.caseRunner.hrpRunner.NewCaseRunner(*copiedTestCase)
 	if err != nil {

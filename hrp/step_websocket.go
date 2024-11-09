@@ -289,7 +289,7 @@ func runStepWebSocket(r *SessionRunner, step IStep) (stepResult *StepResult, err
 
 	sessionData := newSessionData()
 	parser := r.caseRunner.parser
-	config := r.caseRunner.Config
+	config := r.caseRunner.Config.Get()
 
 	dummyReq := &Request{
 		URL:     webSocket.URL,
@@ -706,7 +706,7 @@ func (r *SessionRunner) releaseResources() {
 	// close websocket connections
 	for _, wsConn := range r.ws.wsConnMap {
 		if wsConn != nil {
-			log.Info().Str("testcase", r.caseRunner.Config.Name).Msg("websocket disconnected")
+			log.Info().Str("testcase", r.caseRunner.Config.Get().Name).Msg("websocket disconnected")
 			err := wsConn.Close()
 			if err != nil {
 				log.Error().Err(err).Msg("websocket disconnection failed")

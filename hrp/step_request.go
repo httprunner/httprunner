@@ -299,7 +299,7 @@ func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err e
 
 	sessionData := newSessionData()
 	parser := r.caseRunner.parser
-	config := r.caseRunner.Config
+	config := r.caseRunner.Config.Get()
 
 	rb := newRequestBuilder(parser, config, stepRequest.Request)
 	rb.req.Method = strings.ToUpper(string(stepRequest.Request.Method))

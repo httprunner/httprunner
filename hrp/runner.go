@@ -282,9 +282,10 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 		hrpRunner: r,
 		parser:    newParser(),
 	}
+	config := testcase.Config.Get()
 
 	// init parser plugin
-	plugin, err := initPlugin(testcase.Config.Path, r.venv, r.pluginLogOn)
+	plugin, err := initPlugin(config.Path, r.venv, r.pluginLogOn)
 	if err != nil {
 		return nil, errors.Wrap(err, "init plugin failed")
 	}
@@ -297,27 +298,26 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "parse testcase config failed")
 	}
-	caseRunner.TestCase.Config = parsedConfig
 
 	// set request timeout in seconds
-	if testcase.Config.RequestTimeout != 0 {
-		r.SetRequestTimeout(testcase.Config.RequestTimeout)
+	if config.RequestTimeout != 0 {
+		r.SetRequestTimeout(config.RequestTimeout)
 	}
 	// set testcase timeout in seconds
-	if testcase.Config.CaseTimeout != 0 {
-		r.SetCaseTimeout(testcase.Config.CaseTimeout)
+	if config.CaseTimeout != 0 {
+		r.SetCaseTimeout(config.CaseTimeout)
 	}
 
 	// load plugin info to testcase config
 	if plugin != nil {
-		pluginPath, _ := locatePlugin(testcase.Config.Path)
-		if caseRunner.Config.PluginSetting == nil {
+		pluginPath, _ := locatePlugin(config.Path)
+		if parsedConfig.PluginSetting == nil {
 			pluginContent, err := readFile(pluginPath)
 			if err != nil {
 				return nil, err
 			}
 			tp := strings.Split(plugin.Path(), ".")
-			caseRunner.Config.PluginSetting = &PluginConfig{
+			parsedConfig.PluginSetting = &PluginConfig{
 				Path:    pluginPath,
 				Content: pluginContent,
 				Type:    tp[len(tp)-1],
@@ -325,6 +325,7 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 		}
 	}
 
+	caseRunner.TestCase.Config = parsedConfig
 	return caseRunner, nil
 }
 
@@ -339,7 +340,7 @@ type CaseRunner struct {
 
 // parseConfig parses testcase config, stores to parsedConfig.
 func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
-	cfg := r.TestCase.Config
+	cfg := r.TestCase.Config.Get()
 
 	parsedConfig = &TConfig{}
 	// deep copy config to avoid data racing
@@ -541,7 +542,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 	// report GA event
 	sdk.SendGA4Event("hrp_session_runner_start", nil)
 
-	config := r.caseRunner.Config
+	config := r.caseRunner.TestCase.Config.Get()
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
 	// update config variables with given variables
@@ -552,14 +553,14 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 		r.releaseResources()
 
 		summary = r.summary
-		summary.Name = r.caseRunner.Config.Name
+		summary.Name = config.Name
 		summary.Time.Duration = time.Since(summary.Time.StartAt).Seconds()
 		exportVars := make(map[string]interface{})
-		for _, value := range r.caseRunner.Config.Export {
+		for _, value := range config.Export {
 			exportVars[value] = r.sessionVariables[value]
 		}
 		summary.InOut.ExportVars = exportVars
-		summary.InOut.ConfigVars = r.caseRunner.Config.Variables
+		summary.InOut.ConfigVars = config.Variables
 
 		// TODO: move to mobile ui step
 		for uuid, client := range uiClients {
@@ -682,18 +683,19 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 }
 
 func (r *SessionRunner) parseStep(step IStep) error {
+	caseConfig := r.caseRunner.TestCase.Config.Get()
 	stepConfig := step.Config()
 
 	// update step variables: merges step variables with config variables and session variables
 	// variables priority: step variables > session variables (extracted variables from previous steps)
 	overrideVars := mergeVariables(stepConfig.Variables, r.sessionVariables)
 	// step variables > testcase config variables
-	overrideVars = mergeVariables(overrideVars, r.caseRunner.Config.Variables)
+	overrideVars = mergeVariables(overrideVars, caseConfig.Variables)
 
 	// parse step variables
 	parsedVariables, err := r.caseRunner.parser.ParseVariables(overrideVars)
 	if err != nil {
-		log.Error().Interface("variables", r.caseRunner.Config.Variables).
+		log.Error().Interface("variables", caseConfig.Variables).
 			Err(err).Msg("parse step variables failed")
 		return errors.Wrap(err, "parse step variables failed")
 	}
@@ -750,11 +752,12 @@ func (r *SessionRunner) initWithParameters(parameters map[string]interface{}) {
 }
 
 func (r *SessionRunner) IgnorePopup() bool {
-	if r.caseRunner.TestCase.Config.Android != nil {
-		return r.caseRunner.TestCase.Config.Android[0].IgnorePopup
+	caseConfig := r.caseRunner.TestCase.Config.Get()
+	if caseConfig.Android != nil {
+		return caseConfig.Android[0].IgnorePopup
 	}
-	if r.caseRunner.TestCase.Config.IOS != nil {
-		return r.caseRunner.TestCase.Config.IOS[0].IgnorePopup
+	if caseConfig.IOS != nil {
+		return caseConfig.IOS[0].IgnorePopup
 	}
 	return false
 }
