@@ -14,32 +14,54 @@ import (
 
 var uiClients = make(map[string]*uixt.DriverExt) // UI automation clients for iOS and Android, key is udid/serial
 
-func initUIClient(serial, osType string) (client *uixt.DriverExt, err error) {
-	if uiClients == nil {
-		uiClients = make(map[string]*uixt.DriverExt)
-	}
-
-	// get the first device
-	if serial == "" && len(uiClients) > 0 {
-		for _, v := range uiClients {
-			return v, nil
+func initUIClient(serial, osType string, caseConfig *TConfig) (client *uixt.DriverExt, err error) {
+	// get cached driver
+	for key, driver := range uiClients {
+		// if serial is empty, return the first driver
+		if serial == "" {
+			return driver, nil
+		}
+		// or return the driver with the same serial
+		if key == serial {
+			return driver, nil
 		}
 	}
 
-	// avoid duplicate init
-	if serial != "" {
-		if client, ok := uiClients[serial]; ok {
-			return client, nil
-		}
-	}
-
+	// init new driver
 	var device uixt.IDevice
-	if osType == "ios" {
-		device, err = uixt.NewIOSDevice(uixt.WithUDID(serial))
-	} else if osType == "harmony" {
-		device, err = uixt.NewHarmonyDevice(uixt.WithConnectKey(serial))
-	} else {
-		device, err = uixt.NewAndroidDevice(uixt.WithSerialNumber(serial))
+	switch strings.ToLower(osType) {
+	case "ios":
+		for _, ios := range caseConfig.IOS {
+			if serial == "" || ios.UDID == serial {
+				device, err = uixt.NewIOSDevice(ios.Options()...)
+				break
+			}
+		}
+		if device == nil {
+			device, err = uixt.NewIOSDevice(uixt.WithUDID(serial))
+		}
+	case "harmony":
+		for _, harmony := range caseConfig.Harmony {
+			if serial == "" || harmony.ConnectKey == serial {
+				device, err = uixt.NewHarmonyDevice(harmony.Options()...)
+				break
+			}
+		}
+		if device == nil {
+			device, err = uixt.NewHarmonyDevice(uixt.WithConnectKey(serial))
+		}
+	case "android":
+		for _, android := range caseConfig.Android {
+			if serial == "" || android.SerialNumber == serial {
+				device, err = uixt.NewAndroidDevice(android.Options()...)
+				break
+			}
+		}
+		if device == nil {
+			device, err = uixt.NewAndroidDevice(uixt.WithSerialNumber(serial))
+		}
+	default:
+		return nil, errors.Errorf("unsupported os type: %s", osType)
 	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "init %s device failed", osType)
@@ -55,10 +77,7 @@ func initUIClient(serial, osType string) (client *uixt.DriverExt, err error) {
 	}
 
 	// cache wda client
-	if uiClients == nil {
-		uiClients = make(map[string]*uixt.DriverExt)
-	}
-	uiClients[client.Device.UUID()] = client
+	uiClients[serial] = client
 
 	return client, nil
 }
@@ -73,29 +92,34 @@ type MobileUI struct {
 // StepMobile implements IStep interface.
 type StepMobile struct {
 	StepConfig
-	stepObj *MobileUI
 	Android *MobileUI `json:"android,omitempty" yaml:"android,omitempty"`
 	Harmony *MobileUI `json:"harmony,omitempty" yaml:"harmony,omitempty"`
 	IOS     *MobileUI `json:"ios,omitempty" yaml:"ios,omitempty"`
+
+	cache *MobileUI // used for caching
 }
 
 // uniform interface for all types of mobile systems
 func (s *StepMobile) obj() *MobileUI {
-	if s.stepObj != nil {
-		return s.stepObj
+	if s.cache != nil {
+		return s.cache
 	}
+
 	if s.IOS != nil {
-		s.stepObj = s.IOS
-		s.stepObj.OSType = string(stepTypeIOS)
-		return s.stepObj
+		s.cache = s.IOS
+		s.cache.OSType = string(stepTypeIOS)
+		return s.cache
 	} else if s.Harmony != nil {
-		s.stepObj = s.Harmony
-		s.stepObj.OSType = string(stepTypeHarmony)
-		return s.stepObj
+		s.cache = s.Harmony
+		s.cache.OSType = string(stepTypeHarmony)
+		return s.cache
+	} else if s.Android != nil {
+		s.cache = s.Android
+		s.cache.OSType = string(stepTypeAndroid)
+		return s.cache
 	}
-	s.stepObj = s.Android
-	s.stepObj.OSType = string(stepTypeAndroid)
-	return s.stepObj
+
+	panic("no mobile device config")
 }
 
 func (s *StepMobile) Serial(serial string) *StepMobile {
@@ -651,8 +675,9 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		ContentSize: 0,
 	}
 
-	// init wda/uia driver
-	uiDriver, err := initUIClient(mobileStep.Serial, mobileStep.OSType)
+	// init wda/uia/hdc driver
+	caseConfig := s.caseRunner.TestCase.Config.Get()
+	uiDriver, err := initUIClient(mobileStep.Serial, mobileStep.OSType, caseConfig)
 	if err != nil {
 		return
 	}

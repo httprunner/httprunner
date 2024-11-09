@@ -26,7 +26,6 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 // Run starts to run testcase with default configs.
@@ -407,69 +406,29 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 	}
 	r.parametersIterator = parametersIterator
 
-	// init android devices
+	// parse android devices config
 	for _, androidDevice := range parsedConfig.Android {
 		err := r.parseDeviceConfig(androidDevice, parsedConfig.Variables)
 		if err != nil {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse android config failed: %v", err))
 		}
-
-		device, err := uixt.NewAndroidDevice(
-			uixt.GetAndroidDeviceOptions(androidDevice)...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init android device failed")
-		}
-		if err := device.Init(); err != nil {
-			return nil, err
-		}
-		client, err := device.NewDriver(uixt.WithDriverPlugin(r.parser.plugin))
-		if err != nil {
-			return nil, errors.Wrap(err, "init android driver failed")
-		}
-		uiClients[device.SerialNumber] = client
 	}
-	// init iOS devices
+	// parse iOS devices config
 	for _, iosDevice := range parsedConfig.IOS {
 		err := r.parseDeviceConfig(iosDevice, parsedConfig.Variables)
 		if err != nil {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse ios config failed: %v", err))
 		}
-		device, err := uixt.NewIOSDevice(
-			uixt.GetIOSDeviceOptions(iosDevice)...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init ios device failed")
-		}
-		if err := device.Init(); err != nil {
-			return nil, err
-		}
-		client, err := device.NewDriver(uixt.WithDriverPlugin(r.parser.plugin))
-		if err != nil {
-			return nil, errors.Wrap(err, "init ios driver failed")
-		}
-		uiClients[device.UDID] = client
 	}
-	// init harmony devices
+	// parse harmony devices config
 	for _, harmonyDevice := range parsedConfig.Harmony {
 		err := r.parseDeviceConfig(harmonyDevice, parsedConfig.Variables)
 		if err != nil {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse harmony config failed: %v", err))
 		}
-		device, err := uixt.NewHarmonyDevice(
-			uixt.GetHarmonyDeviceOptions(harmonyDevice)...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init harmony device failed")
-		}
-		if err := device.Init(); err != nil {
-			return nil, err
-		}
-		client, err := device.NewDriver(uixt.WithDriverPlugin(r.parser.plugin))
-		if err != nil {
-			return nil, errors.Wrap(err, "init harmony driver failed")
-		}
-		uiClients[device.ConnectKey] = client
 	}
 
 	return parsedConfig, nil

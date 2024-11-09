@@ -182,43 +182,6 @@ func GetIOSDevices(udid ...string) (devices []gidevice.Device, err error) {
 	return deviceList, nil
 }
 
-func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
-	if dev.UDID != "" {
-		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
-	}
-	if dev.Port != 0 {
-		deviceOptions = append(deviceOptions, WithWDAPort(dev.Port))
-	}
-	if dev.MjpegPort != 0 {
-		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
-	}
-	if dev.LogOn {
-		deviceOptions = append(deviceOptions, WithWDALogOn(true))
-	}
-	if dev.PerfOptions != nil {
-		deviceOptions = append(deviceOptions, WithIOSPerfOptions(dev.perfOpitons()...))
-	}
-	if dev.PcapOptions != nil {
-		deviceOptions = append(deviceOptions, WithIOSPcapOptions(dev.pcapOpitons()...))
-	}
-	if dev.XCTestBundleID != "" {
-		deviceOptions = append(deviceOptions, WithXCTest(dev.XCTestBundleID))
-	}
-	if dev.ResetHomeOnStartup {
-		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
-	}
-	if dev.SnapshotMaxDepth != 0 {
-		deviceOptions = append(deviceOptions, WithSnapshotMaxDepth(dev.SnapshotMaxDepth))
-	}
-	if dev.AcceptAlertButtonSelector != "" {
-		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.AcceptAlertButtonSelector))
-	}
-	if dev.DismissAlertButtonSelector != "" {
-		deviceOptions = append(deviceOptions, WithDismissAlertButtonSelector(dev.DismissAlertButtonSelector))
-	}
-	return
-}
-
 func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 	device = &IOSDevice{
 		Port:                       defaultWDAPort,
@@ -294,6 +257,43 @@ type IOSDevice struct {
 	// pcap monitor
 	pcapStop chan struct{} // stop pcap monitor
 	pcapFile string        // saved pcap file path
+}
+
+func (dev *IOSDevice) Options() (deviceOptions []IOSDeviceOption) {
+	if dev.UDID != "" {
+		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
+	}
+	if dev.Port != 0 {
+		deviceOptions = append(deviceOptions, WithWDAPort(dev.Port))
+	}
+	if dev.MjpegPort != 0 {
+		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
+	}
+	if dev.LogOn {
+		deviceOptions = append(deviceOptions, WithWDALogOn(true))
+	}
+	if dev.PerfOptions != nil {
+		deviceOptions = append(deviceOptions, WithIOSPerfOptions(dev.perfOpitons()...))
+	}
+	if dev.PcapOptions != nil {
+		deviceOptions = append(deviceOptions, WithIOSPcapOptions(dev.pcapOpitons()...))
+	}
+	if dev.XCTestBundleID != "" {
+		deviceOptions = append(deviceOptions, WithXCTest(dev.XCTestBundleID))
+	}
+	if dev.ResetHomeOnStartup {
+		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
+	}
+	if dev.SnapshotMaxDepth != 0 {
+		deviceOptions = append(deviceOptions, WithSnapshotMaxDepth(dev.SnapshotMaxDepth))
+	}
+	if dev.AcceptAlertButtonSelector != "" {
+		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.AcceptAlertButtonSelector))
+	}
+	if dev.DismissAlertButtonSelector != "" {
+		deviceOptions = append(deviceOptions, WithDismissAlertButtonSelector(dev.DismissAlertButtonSelector))
+	}
+	return
 }
 
 func (dev *IOSDevice) Init() error {

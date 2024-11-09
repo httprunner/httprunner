@@ -22,6 +22,19 @@ type HarmonyDevice struct {
 	LogOn       bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
+func (dev *HarmonyDevice) Options() (deviceOptions []HarmonyDeviceOption) {
+	if dev.ConnectKey != "" {
+		deviceOptions = append(deviceOptions, WithConnectKey(dev.ConnectKey))
+	}
+	if dev.IgnorePopup {
+		deviceOptions = append(deviceOptions, WithIgnorePopup(true))
+	}
+	if dev.LogOn {
+		deviceOptions = append(deviceOptions, WithLogOn(true))
+	}
+	return
+}
+
 type HarmonyDeviceOption func(*HarmonyDevice)
 
 func WithConnectKey(connectKey string) HarmonyDeviceOption {
@@ -40,19 +53,6 @@ func WithLogOn(logOn bool) HarmonyDeviceOption {
 	return func(device *HarmonyDevice) {
 		device.LogOn = logOn
 	}
-}
-
-func GetHarmonyDeviceOptions(dev *HarmonyDevice) (deviceOptions []HarmonyDeviceOption) {
-	if dev.ConnectKey != "" {
-		deviceOptions = append(deviceOptions, WithConnectKey(dev.ConnectKey))
-	}
-	if dev.IgnorePopup {
-		deviceOptions = append(deviceOptions, WithIgnorePopup(true))
-	}
-	if dev.LogOn {
-		deviceOptions = append(deviceOptions, WithLogOn(true))
-	}
-	return
 }
 
 func NewHarmonyDevice(options ...HarmonyDeviceOption) (device *HarmonyDevice, err error) {

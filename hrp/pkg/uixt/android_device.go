@@ -86,25 +86,6 @@ func WithAdbLogOn(logOn bool) AndroidDeviceOption {
 	}
 }
 
-func GetAndroidDeviceOptions(dev *AndroidDevice) (deviceOptions []AndroidDeviceOption) {
-	if dev.SerialNumber != "" {
-		deviceOptions = append(deviceOptions, WithSerialNumber(dev.SerialNumber))
-	}
-	if dev.UIA2 {
-		deviceOptions = append(deviceOptions, WithUIA2(true))
-	}
-	if dev.UIA2IP != "" {
-		deviceOptions = append(deviceOptions, WithUIA2IP(dev.UIA2IP))
-	}
-	if dev.UIA2Port != 0 {
-		deviceOptions = append(deviceOptions, WithUIA2Port(dev.UIA2Port))
-	}
-	if dev.LogOn {
-		deviceOptions = append(deviceOptions, WithAdbLogOn(true))
-	}
-	return
-}
-
 func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, err error) {
 	device = &AndroidDevice{
 		UIA2IP:   UIA2ServerHost,
@@ -189,6 +170,25 @@ type AndroidDevice struct {
 	UIA2Port     int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 	IgnorePopup  bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
+}
+
+func (dev *AndroidDevice) Options() (deviceOptions []AndroidDeviceOption) {
+	if dev.SerialNumber != "" {
+		deviceOptions = append(deviceOptions, WithSerialNumber(dev.SerialNumber))
+	}
+	if dev.UIA2 {
+		deviceOptions = append(deviceOptions, WithUIA2(true))
+	}
+	if dev.UIA2IP != "" {
+		deviceOptions = append(deviceOptions, WithUIA2IP(dev.UIA2IP))
+	}
+	if dev.UIA2Port != 0 {
+		deviceOptions = append(deviceOptions, WithUIA2Port(dev.UIA2Port))
+	}
+	if dev.LogOn {
+		deviceOptions = append(deviceOptions, WithAdbLogOn(true))
+	}
+	return
 }
 
 func (dev *AndroidDevice) Init() error {
