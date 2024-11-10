@@ -92,6 +92,7 @@ type MobileUI struct {
 // StepMobile implements IStep interface.
 type StepMobile struct {
 	StepConfig
+	Mobile  *MobileUI `json:"mobile,omitempty" yaml:"mobile,omitempty"`
 	Android *MobileUI `json:"android,omitempty" yaml:"android,omitempty"`
 	Harmony *MobileUI `json:"harmony,omitempty" yaml:"harmony,omitempty"`
 	IOS     *MobileUI `json:"ios,omitempty" yaml:"ios,omitempty"`
@@ -116,6 +117,9 @@ func (s *StepMobile) obj() *MobileUI {
 	} else if s.Android != nil {
 		s.cache = s.Android
 		s.cache.OSType = string(stepTypeAndroid)
+		return s.cache
+	} else if s.Mobile != nil {
+		s.cache = s.Mobile
 		return s.cache
 	}
 
@@ -362,12 +366,35 @@ func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobil
 }
 
 // Sleep specify sleep seconds after last action
-func (s *StepMobile) Sleep(n float64) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
+func (s *StepMobile) Sleep(nSeconds float64, startTime ...time.Time) *StepMobile {
+	action := uixt.MobileAction{
 		Method:  uixt.ACTION_Sleep,
-		Params:  n,
+		Params:  nSeconds,
 		Options: nil,
-	})
+	}
+	if len(startTime) > 0 {
+		action.Params = uixt.SleepConfig{
+			StartTime: startTime[0],
+			Seconds:   nSeconds,
+		}
+	}
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+func (s *StepMobile) SleepMS(nMilliseconds int64, startTime ...time.Time) *StepMobile {
+	action := uixt.MobileAction{
+		Method:  uixt.ACTION_SleepMS,
+		Params:  nMilliseconds,
+		Options: nil,
+	}
+	if len(startTime) > 0 {
+		action.Params = uixt.SleepConfig{
+			StartTime:    startTime[0],
+			Milliseconds: nMilliseconds,
+		}
+	}
+	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
 

@@ -24,6 +24,7 @@ const (
 	ACTION_AppStop      ActionMethod = "app_stop"
 	ACTION_ScreenShot   ActionMethod = "screenshot"
 	ACTION_Sleep        ActionMethod = "sleep"
+	ACTION_SleepMS      ActionMethod = "sleep_ms"
 	ACTION_SleepRandom  ActionMethod = "sleep_random"
 	ACTION_StartCamera  ActionMethod = "camera_start" // alias for app_launch camera
 	ACTION_StopCamera   ActionMethod = "camera_stop"  // alias for app_terminate camera
@@ -724,8 +725,24 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		} else if param, ok := action.Params.(int64); ok {
 			time.Sleep(time.Duration(param) * time.Second)
 			return nil
+		} else if sd, ok := action.Params.(SleepConfig); ok {
+			sleepStrict(sd.StartTime, int64(sd.Seconds*1000))
+			return nil
 		}
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
+	case ACTION_SleepMS:
+		if param, ok := action.Params.(json.Number); ok {
+			milliseconds, _ := param.Int64()
+			time.Sleep(time.Duration(milliseconds) * time.Millisecond)
+			return nil
+		} else if param, ok := action.Params.(int64); ok {
+			time.Sleep(time.Duration(param) * time.Millisecond)
+			return nil
+		} else if sd, ok := action.Params.(SleepConfig); ok {
+			sleepStrict(sd.StartTime, sd.Milliseconds)
+			return nil
+		}
+		return fmt.Errorf("invalid sleep ms params: %v(%T)", action.Params, action.Params)
 	case ACTION_SleepRandom:
 		if params, ok := action.Params.([]interface{}); ok {
 			sleepStrict(time.Now(), getSimulationDuration(params))
@@ -748,6 +765,12 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		return nil
 	}
 	return nil
+}
+
+type SleepConfig struct {
+	StartTime    time.Time `json:"start_time"`
+	Seconds      float64   `json:"seconds"`
+	Milliseconds int64     `json:"milliseconds"`
 }
 
 var errActionNotImplemented = errors.New("UI action not implemented")
@@ -821,7 +844,10 @@ func getSimulationDuration(params []interface{}) (milliseconds int64) {
 // sleepStrict sleeps strict duration with given params
 // startTime is used to correct sleep duration caused by process time
 func sleepStrict(startTime time.Time, strictMilliseconds int64) {
-	elapsed := time.Since(startTime).Milliseconds()
+	var elapsed int64
+	if !startTime.IsZero() {
+		elapsed = time.Since(startTime).Milliseconds()
+	}
 	dur := strictMilliseconds - elapsed
 
 	// if elapsed time is greater than given duration, skip sleep to reduce deviation caused by process time
