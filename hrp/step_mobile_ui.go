@@ -737,6 +737,11 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			log.Warn().Msg("interrupted in mobile UI runner")
 			return stepResult, errors.Wrap(code.InterruptError, "mobile UI runner interrupted")
 		default:
+			actionStartTime := time.Now()
+			actionResult := &ActionResult{
+				Name:      string(action.Method),
+				StartTime: actionStartTime.Unix(), // action 开始时间
+			}
 			if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
 				if !code.IsErrorPredefined(err) {
 					err = errors.Wrap(code.ParseError,
@@ -744,7 +749,10 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				}
 				return stepResult, err
 			}
-			if err := uiDriver.DoAction(action); err != nil {
+			err = uiDriver.DoAction(action)
+			actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
+			stepResult.Actions = append(stepResult.Actions, actionResult)
+			if err != nil {
 				if !code.IsErrorPredefined(err) {
 					err = errors.Wrap(code.MobileUIDriverError, err.Error())
 				}
