@@ -278,14 +278,17 @@ func prepareUpload(parser *Parser, stepRequest *StepRequest, stepVariables map[s
 
 func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err error) {
 	stepRequest := step.(*StepRequestWithOptionalArgs)
+	start := time.Now()
 	stepResult = &StepResult{
 		Name:        stepRequest.StepName,
 		StepType:    stepTypeRequest,
 		Success:     false,
 		ContentSize: 0,
+		StartTime:   start.Unix(),
 	}
 
 	defer func() {
+		stepResult.Elapsed = time.Since(start).Milliseconds()
 		// update testcase summary
 		if err != nil {
 			stepResult.Attachments = err.Error()
@@ -360,7 +363,6 @@ func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err e
 	}
 
 	// do request action
-	start := time.Now()
 	resp, err := client.Do(rb.req)
 	if err != nil {
 		return stepResult, errors.Wrap(err, "do request failed")
@@ -390,7 +392,6 @@ func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err e
 		return
 	}
 
-	stepResult.Elapsed = time.Since(start).Milliseconds()
 	if r.caseRunner.hrpRunner.httpStatOn {
 		// resp.Body has been ReadAll
 		httpStat.Finish()

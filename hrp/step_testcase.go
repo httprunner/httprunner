@@ -46,10 +46,12 @@ func (s *StepTestCaseWithOptionalArgs) Config() *StepConfig {
 }
 
 func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepResult, err error) {
+	start := time.Now()
 	stepResult = &StepResult{
-		Name:     s.StepName,
-		StepType: stepTypeTestCase,
-		Success:  false,
+		Name:      s.StepName,
+		StepType:  stepTypeTestCase,
+		Success:   false,
+		StartTime: start.Unix(),
 	}
 
 	defer func() {
@@ -57,6 +59,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 		if err != nil {
 			stepResult.Attachments = err.Error()
 		}
+		stepResult.Elapsed = time.Since(start).Milliseconds()
 	}()
 
 	stepTestCase := s.TestCase.(*TestCase)
@@ -84,11 +87,9 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	}
 	sessionRunner := caseRunner.NewSession()
 
-	start := time.Now()
 	var summary *TestCaseSummary
 	// run referenced testcase with step variables
 	summary, err = sessionRunner.Start(s.Variables)
-	stepResult.Elapsed = time.Since(start).Milliseconds()
 
 	// update step names
 	for _, record := range summary.Records {

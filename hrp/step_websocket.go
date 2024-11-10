@@ -273,11 +273,13 @@ func runStepWebSocket(r *SessionRunner, step IStep) (stepResult *StepResult, err
 	stepWebSocket := step.(*StepWebSocket)
 	webSocket := stepWebSocket.WebSocket
 	variables := stepWebSocket.Variables
+	start := time.Now()
 	stepResult = &StepResult{
 		Name:        step.Name(),
 		StepType:    stepTypeWebSocket,
 		Success:     false,
 		ContentSize: 0,
+		StartTime:   start.Unix(),
 	}
 
 	defer func() {
@@ -285,6 +287,7 @@ func runStepWebSocket(r *SessionRunner, step IStep) (stepResult *StepResult, err
 		if err != nil {
 			stepResult.Attachments = err.Error()
 		}
+		stepResult.Elapsed = time.Since(start).Milliseconds()
 	}()
 
 	sessionData := newSessionData()
@@ -323,7 +326,6 @@ func runStepWebSocket(r *SessionRunner, step IStep) (stepResult *StepResult, err
 	}
 
 	var resp interface{}
-	start := time.Now()
 
 	// do websocket action
 	if r.caseRunner.hrpRunner.requestsLogOn {
@@ -396,7 +398,6 @@ func runStepWebSocket(r *SessionRunner, step IStep) (stepResult *StepResult, err
 		}
 	}
 
-	stepResult.Elapsed = time.Since(start).Milliseconds()
 	respObj, err := getResponseObject(r.caseRunner.hrpRunner.t, r.caseRunner.parser, resp)
 	if err != nil {
 		err = errors.Wrap(err, "get response object error")

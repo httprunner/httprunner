@@ -95,22 +95,24 @@ func runStepShell(r *SessionRunner, step IStep) (stepResult *StepResult, err err
 		Str("content", shell.String).
 		Msg("run shell string")
 
+	start := time.Now()
 	stepResult = &StepResult{
 		Name:        step.Name(),
 		StepType:    stepTypeShell,
 		Success:     false,
-		Elapsed:     0,
 		ContentSize: 0,
+		StartTime:   start.Unix(),
 	}
+	defer func() {
+		stepResult.Elapsed = time.Since(start).Milliseconds()
+	}()
 
 	vars := r.caseRunner.Config.Get().Variables
 	for key, value := range vars {
 		os.Setenv(key, fmt.Sprintf("%v", value))
 	}
 
-	start := time.Now()
 	exitCode, err := myexec.RunShell(shell.String)
-	stepResult.Elapsed = time.Since(start).Milliseconds()
 	if err != nil {
 		if exitCode == shell.ExpectExitCode {
 			// get expected error

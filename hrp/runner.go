@@ -559,72 +559,10 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 			log.Warn().Msg("interrupted in session runner")
 			return summary, errors.Wrap(code.InterruptError, "session runner interrupted")
 		default:
-			// parse step struct
-			err = r.parseStepStruct(step)
-			if err != nil {
-				log.Error().Err(err).Msg("parse step struct failed")
-				if r.caseRunner.hrpRunner.failfast {
-					return summary, errors.Wrap(err, "parse step struct failed")
-				}
-			}
-
-			stepName := step.Name()
-			stepType := string(step.Type())
-			log.Info().Str("step", stepName).Str("type", stepType).Msg("run step start")
-			stepStartTime := time.Now()
-
-			// run times of step
-			loopTimes := step.Config().Loops
-			if loopTimes < 0 {
-				log.Warn().Int("loops", loopTimes).Msg("loop times should be positive, set to 1")
-				loopTimes = 1
-			} else if loopTimes == 0 {
-				loopTimes = 1
-			} else if loopTimes > 1 {
-				log.Info().Int("loops", loopTimes).Msg("run step with specified loop times")
-			}
-
-			// run step with specified loop times
-			var stepResult *StepResult
-			for i := 1; i <= loopTimes; i++ {
-				var loopIndex string
-				if loopTimes > 1 {
-					log.Info().Int("index", i).Msg("start running step in loop")
-					loopIndex = fmt.Sprintf("_loop_%d", i)
-				}
-
-				// run step
-				startTime := time.Now().Unix()
-				stepResult, err = step.Run(r)
-				stepResult.Name = stepName + loopIndex
-				stepResult.StartTime = startTime
-
-				r.summary.AddStepResult(stepResult)
-			}
-
-			// update extracted variables
-			for k, v := range stepResult.ExportVars {
-				r.sessionVariables[k] = v
-			}
-
-			stepElapsed := time.Since(stepStartTime).Milliseconds()
+			_, err := r.RunStep(step)
 			if err == nil {
-				log.Info().Str("step", stepName).
-					Str("type", stepType).
-					Bool("success", true).
-					Int64("elapsed(ms)", stepElapsed).
-					Interface("exportVars", stepResult.ExportVars).
-					Msg("run step end")
 				continue
 			}
-
-			// failed
-			log.Error().Err(err).Str("step", stepName).
-				Str("type", stepType).
-				Bool("success", false).
-				Int64("elapsed(ms)", stepElapsed).
-				Msg("run step end")
-
 			// interrupted or timeout, abort running
 			if errors.Is(err, code.InterruptError) || errors.Is(err, code.TimeoutError) {
 				return summary, err
@@ -639,6 +577,72 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 
 	log.Info().Str("testcase", config.Name).Msg("run testcase end")
 	return summary, nil
+}
+
+func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) {
+	// parse step struct
+	if err = r.parseStepStruct(step); err != nil {
+		log.Error().Err(err).Msg("parse step struct failed")
+		if r.caseRunner.hrpRunner.failfast {
+			return nil, errors.Wrap(err, "parse step struct failed")
+		}
+	}
+
+	stepName := step.Name()
+	stepType := string(step.Type())
+	log.Info().Str("step", stepName).Str("type", stepType).Msg("run step start")
+
+	// run times of step
+	loopTimes := step.Config().Loops
+	if loopTimes < 0 {
+		log.Warn().Int("loops", loopTimes).Msg("loop times should be positive, set to 1")
+		loopTimes = 1
+	} else if loopTimes == 0 {
+		loopTimes = 1
+	} else if loopTimes > 1 {
+		log.Info().Int("loops", loopTimes).Msg("run step with specified loop times")
+	}
+
+	// run step with specified loop times
+	for i := 1; i <= loopTimes; i++ {
+		var loopIndex string
+		if loopTimes > 1 {
+			log.Info().Int("index", i).Msg("start running step in loop")
+			loopIndex = fmt.Sprintf("_loop_%d", i)
+		}
+
+		// run step
+		stepResult, err = step.Run(r)
+		stepResult.Name = stepName + loopIndex
+
+		// add step result to summary
+		r.summary.AddStepResult(stepResult)
+
+		// update extracted variables
+		for k, v := range stepResult.ExportVars {
+			r.sessionVariables[k] = v
+		}
+
+		// run step success
+		if err == nil {
+			log.Info().Str("step", stepName).
+				Str("type", stepType).
+				Bool("success", true).
+				Int64("elapsed(ms)", stepResult.Elapsed).
+				Interface("exportVars", stepResult.ExportVars).
+				Msg("run step end")
+			continue
+		}
+		// run step failed
+		log.Error().Err(err).Str("step", stepName).
+			Str("type", stepType).
+			Bool("success", false).
+			Int64("elapsed(ms)", stepResult.Elapsed).
+			Msg("run step end")
+		return stepResult, err
+	}
+
+	return stepResult, nil
 }
 
 func (r *SessionRunner) parseStepStruct(step IStep) error {

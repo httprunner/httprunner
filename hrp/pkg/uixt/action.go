@@ -82,6 +82,7 @@ func (ma MobileAction) GetOptions() []ActionOption {
 	var actionOptionList []ActionOption
 	if ma.Options != nil {
 		actionOptionList = append(actionOptionList, ma.Options.Options()...)
+		return actionOptionList
 	}
 	actionOptionList = append(actionOptionList, ma.ActionOptions.Options()...)
 	return actionOptionList

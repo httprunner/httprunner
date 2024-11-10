@@ -3,6 +3,7 @@ package hrp
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -654,6 +655,13 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		"osType": mobileStep.OSType,
 	})
 
+	// init wda/uia/hdc driver
+	caseConfig := s.caseRunner.TestCase.Config.Get()
+	uiDriver, err := initUIClient(mobileStep.Serial, mobileStep.OSType, caseConfig)
+	if err != nil {
+		return
+	}
+
 	identifier := mobileStep.Identifier
 	if mobileStep.Options != nil && identifier == "" {
 		identifier = mobileStep.Options.Identifier
@@ -667,19 +675,14 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		}
 	}
 
+	start := time.Now()
 	stepResult = &StepResult{
 		Name:        step.Name(),
 		Identifier:  identifier,
 		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
-	}
-
-	// init wda/uia/hdc driver
-	caseConfig := s.caseRunner.TestCase.Config.Get()
-	uiDriver, err := initUIClient(mobileStep.Serial, mobileStep.OSType, caseConfig)
-	if err != nil {
-		return
+		StartTime:   start.Unix(),
 	}
 
 	defer func() {
@@ -708,6 +711,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			attachments[key] = value
 		}
 		stepResult.Attachments = attachments
+		stepResult.Elapsed = time.Since(start).Milliseconds()
 	}()
 
 	// prepare actions
