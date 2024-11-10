@@ -24,6 +24,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/httpstat"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 type HTTPMethod string
@@ -748,31 +749,52 @@ func (s *StepRequest) WebSocket() *StepWebSocket {
 	}
 }
 
-// Android creates a new android action
-func (s *StepRequest) Android() *StepMobile {
+// Android creates a new android step session
+func (s *StepRequest) Android(options ...uixt.AndroidDeviceOption) *StepMobile {
+	androidOptions := &uixt.AndroidDevice{}
+	for _, option := range options {
+		option(androidOptions)
+	}
 	return &StepMobile{
 		StepConfig: s.StepConfig,
-		Android:    &MobileUI{},
+		Android: &MobileUI{
+			OSType: string(stepTypeAndroid),
+			Serial: androidOptions.SerialNumber,
+		},
 	}
 }
 
-// IOS creates a new ios action
-func (s *StepRequest) IOS() *StepMobile {
+// IOS creates a new ios step session
+func (s *StepRequest) IOS(options ...uixt.IOSDeviceOption) *StepMobile {
+	iosOptions := &uixt.IOSDevice{}
+	for _, option := range options {
+		option(iosOptions)
+	}
 	return &StepMobile{
 		StepConfig: s.StepConfig,
-		IOS:        &MobileUI{},
+		IOS: &MobileUI{
+			OSType: string(stepTypeIOS),
+			Serial: iosOptions.UDID,
+		},
 	}
 }
 
-// Harmony creates a new harmony action
-func (s *StepRequest) Harmony() *StepMobile {
+// Harmony creates a new harmony step session
+func (s *StepRequest) Harmony(options ...uixt.HarmonyDeviceOption) *StepMobile {
+	harmonyOptions := &uixt.HarmonyDevice{}
+	for _, option := range options {
+		option(harmonyOptions)
+	}
 	return &StepMobile{
 		StepConfig: s.StepConfig,
-		Harmony:    &MobileUI{},
+		Harmony: &MobileUI{
+			OSType: string(stepTypeHarmony),
+			Serial: harmonyOptions.ConnectKey,
+		},
 	}
 }
 
-// Shell creates a new shell action
+// Shell creates a new shell step session
 func (s *StepRequest) Shell(content string) *StepShell {
 	return &StepShell{
 		StepConfig: s.StepConfig,

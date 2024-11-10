@@ -26,6 +26,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 // Run starts to run testcase with default configs.
@@ -233,7 +234,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 
 		// release UI driver session
 		defer func() {
-			for _, client := range uiClients {
+			for _, client := range caseRunner.uixtDrivers {
 				client.Driver.DeleteSession()
 			}
 		}()
@@ -277,9 +278,10 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 // each testcase has its own case runner
 func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 	caseRunner := &CaseRunner{
-		TestCase:  testcase,
-		hrpRunner: r,
-		parser:    newParser(),
+		TestCase:    testcase,
+		hrpRunner:   r,
+		parser:      newParser(),
+		uixtDrivers: make(map[string]*uixt.DriverExt),
 	}
 	config := testcase.Config.Get()
 
@@ -335,6 +337,9 @@ type CaseRunner struct {
 	parser    *Parser    // each CaseRunner init its own Parser
 
 	parametersIterator *ParametersIterator
+
+	// UI automation clients for iOS and Android, key is udid/serial
+	uixtDrivers map[string]*uixt.DriverExt
 }
 
 // parseConfig parses testcase config, stores to parsedConfig.
@@ -522,7 +527,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 		summary.InOut.ConfigVars = config.Variables
 
 		// TODO: move to mobile ui step
-		for uuid, client := range uiClients {
+		for uuid, client := range r.caseRunner.uixtDrivers {
 			// add WDA/UIA logs to summary
 			logs := map[string]interface{}{
 				"uuid": uuid,

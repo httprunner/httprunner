@@ -13,11 +13,9 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
-var uiClients = make(map[string]*uixt.DriverExt) // UI automation clients for iOS and Android, key is udid/serial
-
-func initUIClient(serial, osType string, caseConfig *TConfig) (client *uixt.DriverExt, err error) {
+func (r *SessionRunner) GetUIXTDriver(serial, osType string) (driver *uixt.DriverExt, err error) {
 	// get cached driver
-	for key, driver := range uiClients {
+	for key, driver := range r.caseRunner.uixtDrivers {
 		// if serial is empty, return the first driver
 		if serial == "" {
 			return driver, nil
@@ -28,6 +26,7 @@ func initUIClient(serial, osType string, caseConfig *TConfig) (client *uixt.Driv
 		}
 	}
 
+	caseConfig := r.caseRunner.TestCase.Config.Get()
 	// init new driver
 	var device uixt.IDevice
 	switch strings.ToLower(osType) {
@@ -72,15 +71,15 @@ func initUIClient(serial, osType string, caseConfig *TConfig) (client *uixt.Driv
 		return nil, err
 	}
 
-	client, err = device.NewDriver()
+	driver, err = device.NewDriver()
 	if err != nil {
 		return nil, err
 	}
 
-	// cache wda client
-	uiClients[serial] = client
+	// cache driver
+	r.caseRunner.uixtDrivers[serial] = driver
 
-	return client, nil
+	return driver, nil
 }
 
 type MobileUI struct {
@@ -656,8 +655,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 	})
 
 	// init wda/uia/hdc driver
-	caseConfig := s.caseRunner.TestCase.Config.Get()
-	uiDriver, err := initUIClient(mobileStep.Serial, mobileStep.OSType, caseConfig)
+	uiDriver, err := s.GetUIXTDriver(mobileStep.Serial, mobileStep.OSType)
 	if err != nil {
 		return
 	}
