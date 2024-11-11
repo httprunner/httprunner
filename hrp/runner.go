@@ -418,6 +418,18 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse android config failed: %v", err))
 		}
+		device, err := uixt.NewAndroidDevice(androidDevice.Options()...)
+		if err != nil {
+			return nil, errors.Wrap(err, "init android device failed")
+		}
+		if err := device.Init(); err != nil {
+			return nil, err
+		}
+		driver, err := device.NewDriver()
+		if err != nil {
+			return nil, err
+		}
+		r.uixtDrivers[device.SerialNumber] = driver
 	}
 	// parse iOS devices config
 	for _, iosDevice := range parsedConfig.IOS {
@@ -426,6 +438,18 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse ios config failed: %v", err))
 		}
+		device, err := uixt.NewIOSDevice(iosDevice.Options()...)
+		if err != nil {
+			return nil, errors.Wrap(err, "init ios device failed")
+		}
+		if err := device.Init(); err != nil {
+			return nil, err
+		}
+		driver, err := device.NewDriver()
+		if err != nil {
+			return nil, err
+		}
+		r.uixtDrivers[device.UDID] = driver
 	}
 	// parse harmony devices config
 	for _, harmonyDevice := range parsedConfig.Harmony {
@@ -434,6 +458,18 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse harmony config failed: %v", err))
 		}
+		device, err := uixt.NewHarmonyDevice(harmonyDevice.Options()...)
+		if err != nil {
+			return nil, errors.Wrap(err, "init harmony device failed")
+		}
+		if err := device.Init(); err != nil {
+			return nil, err
+		}
+		driver, err := device.NewDriver()
+		if err != nil {
+			return nil, err
+		}
+		r.uixtDrivers[device.ConnectKey] = driver
 	}
 
 	return parsedConfig, nil
@@ -467,6 +503,21 @@ func (r *CaseRunner) parseDeviceConfig(device interface{}, configVariables map[s
 		}
 	}
 	return nil
+}
+
+func (r *CaseRunner) GetUIXTDriver(serial string) (driver *uixt.DriverExt, err error) {
+	for key, driver := range r.uixtDrivers {
+		// return the driver with the same serial
+		if key == serial {
+			return driver, nil
+		}
+		// or return the first driver if serial is empty
+		if serial == "" {
+			r.uixtDrivers[serial] = driver
+			return driver, nil
+		}
+	}
+	return nil, errors.New("no driver found")
 }
 
 // each boomer task initiates a new session
@@ -651,6 +702,7 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 }
 
 func (r *SessionRunner) GetSummary() *TestCaseSummary {
+	r.summary.Time.Duration = time.Since(r.summary.Time.StartAt).Seconds()
 	return r.summary
 }
 

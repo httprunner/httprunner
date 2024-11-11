@@ -13,75 +13,6 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
-func (r *SessionRunner) GetUIXTDriver(serial, osType string) (driver *uixt.DriverExt, err error) {
-	// get cached driver
-	for key, driver := range r.caseRunner.uixtDrivers {
-		// if serial is empty, return the first driver
-		if serial == "" {
-			return driver, nil
-		}
-		// or return the driver with the same serial
-		if key == serial {
-			return driver, nil
-		}
-	}
-
-	caseConfig := r.caseRunner.TestCase.Config.Get()
-	// init new driver
-	var device uixt.IDevice
-	switch strings.ToLower(osType) {
-	case "ios":
-		for _, ios := range caseConfig.IOS {
-			if serial == "" || ios.UDID == serial {
-				device, err = uixt.NewIOSDevice(ios.Options()...)
-				break
-			}
-		}
-		if device == nil {
-			device, err = uixt.NewIOSDevice(uixt.WithUDID(serial))
-		}
-	case "harmony":
-		for _, harmony := range caseConfig.Harmony {
-			if serial == "" || harmony.ConnectKey == serial {
-				device, err = uixt.NewHarmonyDevice(harmony.Options()...)
-				break
-			}
-		}
-		if device == nil {
-			device, err = uixt.NewHarmonyDevice(uixt.WithConnectKey(serial))
-		}
-	case "android":
-		for _, android := range caseConfig.Android {
-			if serial == "" || android.SerialNumber == serial {
-				device, err = uixt.NewAndroidDevice(android.Options()...)
-				break
-			}
-		}
-		if device == nil {
-			device, err = uixt.NewAndroidDevice(uixt.WithSerialNumber(serial))
-		}
-	default:
-		return nil, errors.Errorf("unsupported os type: %s", osType)
-	}
-	if err != nil {
-		return nil, errors.Wrapf(err, "init %s device failed", osType)
-	}
-
-	if err := device.Init(); err != nil {
-		return nil, err
-	}
-
-	driver, err = device.NewDriver()
-	if err != nil {
-		return nil, err
-	}
-
-	// cache driver
-	r.caseRunner.uixtDrivers[serial] = driver
-
-	return driver, nil
-}
-
 type MobileUI struct {
 	OSType            string `json:"os_type,omitempty" yaml:"os_type,omitempty"` // ios or harmony or android
 	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"`   // android serial or ios udid
@@ -689,18 +620,13 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		return nil, errors.New("invalid mobile UI step type")
 	}
 
-	// TODO: fix this
-	if mobileStep.OSType == "" {
-		mobileStep.OSType = string(stepTypeAndroid)
-	}
-
 	// report GA event
 	go sdk.SendGA4Event("hrp_run_ui", map[string]interface{}{
 		"osType": mobileStep.OSType,
 	})
 
 	// init wda/uia/hdc driver
-	uiDriver, err := s.GetUIXTDriver(mobileStep.Serial, mobileStep.OSType)
+	uiDriver, err := s.caseRunner.GetUIXTDriver(mobileStep.Serial)
 	if err != nil {
 		return
 	}
