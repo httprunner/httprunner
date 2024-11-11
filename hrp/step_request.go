@@ -749,6 +749,14 @@ func (s *StepRequest) WebSocket() *StepWebSocket {
 	}
 }
 
+// MobileUI creates a new mobile step session
+func (s *StepRequest) MobileUI() *StepMobile {
+	return &StepMobile{
+		StepConfig: s.StepConfig,
+		Mobile:     &MobileUI{},
+	}
+}
+
 // Android creates a new android step session
 func (s *StepRequest) Android(options ...uixt.AndroidDeviceOption) *StepMobile {
 	androidOptions := &uixt.AndroidDevice{}

@@ -131,6 +131,14 @@ func (s *StepMobile) Serial(serial string) *StepMobile {
 	return s
 }
 
+func (s *StepMobile) Log(actionName string) *StepMobile {
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
+		Method: uixt.ACTION_LOG,
+		Params: actionName,
+	})
+	return s
+}
+
 func (s *StepMobile) InstallApp(path string) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method: uixt.ACTION_AppInstall,
@@ -674,6 +682,11 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		ignorePopup = stepMobile.StepMobile.IgnorePopup
 	default:
 		return nil, errors.New("invalid mobile UI step type")
+	}
+
+	// TODO: fix this
+	if mobileStep.OSType == "" {
+		mobileStep.OSType = string(stepTypeAndroid)
 	}
 
 	// report GA event

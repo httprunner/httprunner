@@ -650,6 +650,10 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 	return stepResult, nil
 }
 
+func (r *SessionRunner) GetSummary() *TestCaseSummary {
+	return r.summary
+}
+
 func (r *SessionRunner) parseStepStruct(step IStep) error {
 	caseConfig := r.caseRunner.TestCase.Config.Get()
 	stepConfig := step.Config()
