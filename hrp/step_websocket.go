@@ -31,12 +31,12 @@ type wsSession struct {
 }
 
 const (
-	wsOpen         ActionType = "open"
-	wsPing         ActionType = "ping"
-	wsWriteAndRead ActionType = "wr"
-	wsRead         ActionType = "r"
-	wsWrite        ActionType = "w"
-	wsClose        ActionType = "close"
+	wsOpen         WSActionType = "open"
+	wsPing         WSActionType = "ping"
+	wsWriteAndRead WSActionType = "wr"
+	wsRead         WSActionType = "r"
+	wsWrite        WSActionType = "w"
+	wsClose        WSActionType = "close"
 )
 
 const (
@@ -45,9 +45,9 @@ const (
 	defaultWriteWait   = 5 * time.Second              // default timeout 5 seconds for writing control message
 )
 
-type ActionType string
+type WSActionType string
 
-func (at ActionType) toString() string {
+func (at WSActionType) toString() string {
 	switch at {
 	case wsOpen:
 		return "open new connection"
@@ -243,7 +243,7 @@ func (s *StepWebSocket) Extract() *StepRequestExtraction {
 }
 
 type WebSocketAction struct {
-	Type            ActionType             `json:"type" yaml:"type"`
+	Type            WSActionType           `json:"type" yaml:"type"`
 	URL             string                 `json:"url" yaml:"url"`
 	Params          map[string]interface{} `json:"params,omitempty" yaml:"params,omitempty"`
 	Headers         map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`
