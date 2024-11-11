@@ -83,8 +83,8 @@ func (r *SessionRunner) GetUIXTDriver(serial, osType string) (driver *uixt.Drive
 }
 
 type MobileUI struct {
-	OSType            string `json:"-" yaml:"-"`                               // ios or harmony or android
-	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"` // android serial or ios udid
+	OSType            string `json:"os_type,omitempty" yaml:"os_type,omitempty"` // ios or harmony or android
+	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"`   // android serial or ios udid
 	uixt.MobileAction `yaml:",inline"`
 	Actions           []uixt.MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
@@ -124,6 +124,11 @@ func (s *StepMobile) obj() *MobileUI {
 	}
 
 	panic("no mobile device config")
+}
+
+func (s *StepMobile) OSType(ostype string) *StepMobile {
+	s.obj().OSType = ostype
+	return s
 }
 
 func (s *StepMobile) Serial(serial string) *StepMobile {
