@@ -67,7 +67,7 @@ func (s *StepMobile) Serial(serial string) *StepMobile {
 	return s
 }
 
-func (s *StepMobile) Log(actionName string) *StepMobile {
+func (s *StepMobile) Log(actionName uixt.ActionMethod) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method: uixt.ACTION_LOG,
 		Params: actionName,
@@ -718,6 +718,15 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				}
 				return stepResult, err
 			}
+
+			// stat uixt action
+			if action.Method == uixt.ACTION_LOG {
+				log.Info().Interface("action", action.Params).Msg("stat uixt action")
+				actionMethod := uixt.ActionMethod(action.Params.(string))
+				s.summary.Stat.Actions[actionMethod]++
+				continue
+			}
+
 			err = uiDriver.DoAction(action)
 			actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
 			stepResult.Actions = append(stepResult.Actions, actionResult)

@@ -15,6 +15,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/config"
 	"github.com/httprunner/httprunner/v4/hrp/internal/version"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 func NewSummary() *Summary {
@@ -25,7 +26,11 @@ func NewSummary() *Summary {
 	}
 	return &Summary{
 		Success: true,
-		Stat:    &Stat{},
+		Stat: &Stat{
+			TestSteps: TestStepStat{
+				Actions: make(map[uixt.ActionMethod]int),
+			},
+		},
 		Time: &TestCaseTime{
 			StartAt: config.StartTime,
 		},
@@ -63,6 +68,14 @@ func (s *Summary) AddCaseSummary(caseSummary *TestCaseSummary) {
 	} else if s.rootDir != caseSummary.RootDir {
 		// if multiple testcases have different root path, use current working dir
 		s.rootDir = config.RootDir
+	}
+
+	// merge action stats
+	for action, count := range caseSummary.Stat.Actions {
+		if _, ok := s.Stat.TestSteps.Actions[action]; !ok {
+			s.Stat.TestSteps.Actions[action] = 0
+		}
+		s.Stat.TestSteps.Actions[action] += count
 	}
 }
 
@@ -133,9 +146,10 @@ type TestCaseStat struct {
 }
 
 type TestStepStat struct {
-	Total     int `json:"total" yaml:"total"`
-	Successes int `json:"successes" yaml:"successes"`
-	Failures  int `json:"failures" yaml:"failures"`
+	Total     int                       `json:"total" yaml:"total"`
+	Successes int                       `json:"successes" yaml:"successes"`
+	Failures  int                       `json:"failures" yaml:"failures"`
+	Actions   map[uixt.ActionMethod]int `json:"actions" yaml:"actions"` // record action stats
 }
 
 type TestCaseTime struct {
@@ -152,7 +166,9 @@ type Platform struct {
 func NewCaseSummary() *TestCaseSummary {
 	return &TestCaseSummary{
 		Success: true,
-		Stat:    &TestStepStat{},
+		Stat: &TestStepStat{
+			Actions: make(map[uixt.ActionMethod]int),
+		},
 		Time: &TestCaseTime{
 			StartAt: time.Now(),
 		},
