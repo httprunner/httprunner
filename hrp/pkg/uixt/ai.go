@@ -283,3 +283,7 @@ type ClosePopupsResult struct {
 	CloseArea Box    `json:"closeArea"`
 	Text      string `json:"text"`
 }
+
+func (c ClosePopupsResult) IsEmpty() bool {
+	return c.PopupArea.IsEmpty() && c.CloseArea.IsEmpty()
+}

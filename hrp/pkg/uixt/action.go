@@ -543,7 +543,7 @@ func (dExt *DriverExt) GenAbsScope(x1, y1, x2, y2 float64) AbsScope {
 }
 
 func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
-	log.Debug().
+	log.Info().
 		Str("method", string(action.Method)).
 		Interface("params", action.Params).
 		Msg("uixt action start")
@@ -557,7 +557,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 				Int64("elapsed(ms)", time.Since(actionStartTime).Milliseconds()).
 				Msg("uixt action end")
 		} else {
-			log.Debug().
+			log.Info().
 				Str("method", string(action.Method)).
 				Interface("params", action.Params).
 				Int64("elapsed(ms)", time.Since(actionStartTime).Milliseconds()).

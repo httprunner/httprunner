@@ -90,23 +90,28 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	dExt.Driver.GetSession().addScreenResult(screenResult)
 
 	if imageResult != nil {
-		screenResult.ImageResult = imageResult
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
 
 		if actionOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
-			screenResult.Popup = &PopupInfo{
-				ClosePopupsResult: imageResult.ClosePopupsResult,
-				PicName:           imagePath,
-				PicURL:            imageResult.URL,
-			}
+			if imageResult.ClosePopupsResult.IsEmpty() {
+				// set nil to reduce unnecessary summary info
+				imageResult.ClosePopupsResult = nil
+			} else {
+				screenResult.Popup = &PopupInfo{
+					ClosePopupsResult: imageResult.ClosePopupsResult,
+					PicName:           imagePath,
+					PicURL:            imageResult.URL,
+				}
 
-			closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
-			for _, closeArea := range closeAreas {
-				screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
+				closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
+				for _, closeArea := range closeAreas {
+					screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
+				}
 			}
 		}
+		screenResult.ImageResult = imageResult
 	}
 
 	log.Debug().
