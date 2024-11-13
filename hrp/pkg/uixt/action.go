@@ -136,6 +136,7 @@ type ActionOptions struct {
 	ScreenShotWithUITypes        []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
 	ScreenShotWithClosePopups    bool     `json:"screenshot_with_close_popups,omitempty" yaml:"screenshot_with_close_popups,omitempty"`
 	ScreenShotWithOCRCluster     string   `json:"screenshot_with_ocr_cluster,omitempty" yaml:"screenshot_with_ocr_cluster,omitempty"`
+	ScreenShotFileName           string   `json:"screenshot_file_name,omitempty" yaml:"screenshot_file_name,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -250,6 +251,9 @@ func (o *ActionOptions) Options() []ActionOption {
 	}
 	if o.ScreenShotWithOCRCluster != "" {
 		options = append(options, WithScreenOCRCluster(o.ScreenShotWithOCRCluster))
+	}
+	if o.ScreenShotFileName != "" {
+		options = append(options, WithScreenShotFileName(o.ScreenShotFileName))
 	}
 
 	return options
@@ -516,6 +520,12 @@ func WithScreenShotClosePopups(closeOn bool) ActionOption {
 func WithScreenOCRCluster(ocrCluster string) ActionOption {
 	return func(o *ActionOptions) {
 		o.ScreenShotWithOCRCluster = ocrCluster
+	}
+}
+
+func WithScreenShotFileName(fileName string) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotFileName = fileName
 	}
 }
 

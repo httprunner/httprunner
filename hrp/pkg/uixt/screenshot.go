@@ -36,14 +36,19 @@ type ScreenResultMap map[string]*ScreenResult // key is date time
 
 // GetScreenResult takes a screenshot, returns the image recognition result
 func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
-	fileName := builtin.GenNameWithTimestamp("%d_screenshot")
 	actionOptions := NewActionOptions(options...)
-	screenshotActions := actionOptions.screenshotActions()
-	if len(screenshotActions) != 0 {
-		fileName = builtin.GenNameWithTimestamp("%d_" + strings.Join(screenshotActions, "_"))
-	}
 	if actionOptions.MaxRetryTimes == 0 {
 		actionOptions.MaxRetryTimes = 1
+	}
+
+	var fileName string
+	screenshotActions := actionOptions.screenshotActions()
+	if actionOptions.ScreenShotFileName != "" {
+		fileName = builtin.GenNameWithTimestamp("%d_" + actionOptions.ScreenShotFileName)
+	} else if len(screenshotActions) != 0 {
+		fileName = builtin.GenNameWithTimestamp("%d_" + strings.Join(screenshotActions, "_"))
+	} else {
+		fileName = builtin.GenNameWithTimestamp("%d_screenshot")
 	}
 
 	var bufSource *bytes.Buffer
@@ -123,7 +128,9 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 
 func (dExt *DriverExt) GetScreenTexts() (ocrTexts OCRTexts, err error) {
 	screenResult, err := dExt.GetScreenResult(
-		WithScreenShotOCR(true), WithScreenShotUpload(true))
+		WithScreenShotOCR(true), WithScreenShotUpload(true),
+		WithScreenShotFileName("get_screen_texts"),
+	)
 	if err != nil {
 		return
 	}
@@ -159,6 +166,7 @@ func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (poi
 }
 
 func (dExt *DriverExt) FindUIResult(options ...ActionOption) (point PointF, err error) {
+	options = append(options, WithScreenShotFileName("find_ui_result"))
 	actionOptions := NewActionOptions(options...)
 
 	screenResult, err := dExt.GetScreenResult(options...)

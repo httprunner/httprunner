@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -151,6 +152,9 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		screenResult, err := d.GetScreenResult(
 			WithScreenShotOCR(true),
 			WithScreenShotUpload(true),
+			WithScreenShotFileName(
+				fmt.Sprintf("swipe_to_tap_texts_%s", strings.Join(texts, "_")),
+			),
 		)
 		if err != nil {
 			return err

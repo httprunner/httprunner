@@ -63,7 +63,10 @@ func (dExt *DriverExt) AutoPopupHandler() error {
 
 	// check popup by screenshot
 	screenResult, err := dExt.GetScreenResult(
-		WithScreenShotOCR(true), WithScreenShotUpload(true))
+		WithScreenShotOCR(true),
+		WithScreenShotUpload(true),
+		WithScreenShotFileName("check_popup"),
+	)
 	if err != nil {
 		return errors.Wrap(err, "get screen result failed for popup handler")
 	}
@@ -97,6 +100,7 @@ func (dExt *DriverExt) CheckPopup() (popup *PopupInfo, err error) {
 	screenResult, err := dExt.GetScreenResult(
 		WithScreenShotUpload(true),
 		WithScreenShotClosePopups(true), // get popup area and close area
+		WithScreenShotFileName("check_popup"),
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "get screen result failed for popup handler")
