@@ -9,11 +9,11 @@ import (
 func TestAndroidSwipeAction(t *testing.T) {
 	setupAndroidAdbDriver(t)
 
-	swipeAction := driverExt.prepareSwipeAction(WithDirection("up"))
+	swipeAction := driverExt.prepareSwipeAction("up", WithDirection("down"))
 	err := swipeAction(driverExt)
 	checkErr(t, err)
 
-	swipeAction = driverExt.prepareSwipeAction(WithCustomDirection(0.5, 0.5, 0.5, 0.9))
+	swipeAction = driverExt.prepareSwipeAction("up", WithCustomDirection(0.5, 0.5, 0.5, 0.9))
 	err = swipeAction(driverExt)
 	checkErr(t, err)
 }

@@ -210,6 +210,7 @@ func (s *StepMobile) Back(options ...uixt.ActionOption) *StepMobile {
 	return s
 }
 
+// Swipe drags from [sx, sy] to [ex, ey]
 func (s *StepMobile) Swipe(sx, sy, ex, ey float64, options ...uixt.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_Swipe,

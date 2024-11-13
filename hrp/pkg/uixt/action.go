@@ -718,7 +718,8 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTap, action.Params)
 	case ACTION_Swipe:
-		swipeAction := dExt.prepareSwipeAction(action.GetOptions()...)
+		params := action.Params
+		swipeAction := dExt.prepareSwipeAction(params, action.GetOptions()...)
 		return swipeAction(dExt)
 	case ACTION_Input:
 		// input text on current active element

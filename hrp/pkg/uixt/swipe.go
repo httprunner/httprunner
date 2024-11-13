@@ -43,20 +43,6 @@ func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, options ...
 	return nil
 }
 
-func (dExt *DriverExt) SwipeTo(direction string, options ...ActionOption) (err error) {
-	switch direction {
-	case "up":
-		return dExt.SwipeUp(options...)
-	case "down":
-		return dExt.SwipeDown(options...)
-	case "left":
-		return dExt.SwipeLeft(options...)
-	case "right":
-		return dExt.SwipeRight(options...)
-	}
-	return fmt.Errorf("unexpected direction: %s", direction)
-}
-
 func (dExt *DriverExt) SwipeUp(options ...ActionOption) (err error) {
 	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.1, options...)
 }
@@ -98,10 +84,14 @@ func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, 
 		fmt.Sprintf("loop %d times, match find condition failed", maxRetryTimes))
 }
 
-func (dExt *DriverExt) prepareSwipeAction(options ...ActionOption) func(d *DriverExt) error {
+func (dExt *DriverExt) prepareSwipeAction(params interface{}, options ...ActionOption) func(d *DriverExt) error {
 	actionOptions := NewActionOptions(options...)
+
 	var swipeDirection interface{}
-	if actionOptions.Direction != nil {
+	// priority: params > actionOptions.Direction, default swipe up
+	if params != nil {
+		swipeDirection = params
+	} else if actionOptions.Direction != nil {
 		swipeDirection = actionOptions.Direction
 	} else {
 		swipeDirection = "up" // default swipe up
@@ -119,9 +109,18 @@ func (dExt *DriverExt) prepareSwipeAction(options ...ActionOption) func(d *Drive
 
 		if d, ok := swipeDirection.(string); ok {
 			// enum direction: up, down, left, right
-			if err := dExt.SwipeTo(d, options...); err != nil {
-				log.Error().Err(err).Msgf("swipe %s failed", d)
-				return err
+			switch d {
+			case "up":
+				return dExt.SwipeUp(options...)
+			case "down":
+				return dExt.SwipeDown(options...)
+			case "left":
+				return dExt.SwipeLeft(options...)
+			case "right":
+				return dExt.SwipeRight(options...)
+			default:
+				return errors.Wrap(code.InvalidParamError,
+					fmt.Sprintf("get unexpected swipe direction: %s", d))
 			}
 		} else if d, ok := swipeDirection.([]float64); ok && len(d) == 4 {
 			// custom direction: [fromX, fromY, toX, toY]
@@ -180,7 +179,7 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 		return d.TapAbsXY(point.X, point.Y, options...)
 	}
 
-	findAction := dExt.prepareSwipeAction(optionsWithoutIdentifier...)
+	findAction := dExt.prepareSwipeAction(nil, optionsWithoutIdentifier...)
 	return dExt.LoopUntil(findAction, findTexts, foundTextAction, optionsWithoutIdentifier...)
 }
 
