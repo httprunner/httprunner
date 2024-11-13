@@ -34,6 +34,9 @@ func (dExt *DriverExt) TapXY(x, y float64, options ...ActionOption) error {
 
 func (dExt *DriverExt) TapByOCR(ocrText string, options ...ActionOption) error {
 	actionOptions := NewActionOptions(options...)
+	if actionOptions.ScreenShotFileName == "" {
+		options = append(options, WithScreenShotFileName(fmt.Sprintf("tap_by_ocr_%s", ocrText)))
+	}
 
 	point, err := dExt.FindScreenText(ocrText, options...)
 	if err != nil {

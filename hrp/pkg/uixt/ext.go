@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"context"
+	"fmt"
 	_ "image/gif"
 	_ "image/png"
 
@@ -53,19 +54,24 @@ func newDriverExt(device IDevice, driver IWebDriver, options ...DriverOption) (d
 }
 
 func (dExt *DriverExt) AssertOCR(text, assert string) bool {
+	var options []ActionOption
+	options = append(options, WithScreenShotFileName(fmt.Sprintf("assert_ocr_%s", text)))
+
 	var err error
 	switch assert {
 	case AssertionEqual:
-		_, err = dExt.FindScreenText(text)
+		_, err = dExt.FindScreenText(text, options...)
 		return err == nil
 	case AssertionNotEqual:
-		_, err = dExt.FindScreenText(text)
+		_, err = dExt.FindScreenText(text, options...)
 		return err != nil
 	case AssertionExists:
-		_, err = dExt.FindScreenText(text, WithRegex(true))
+		options = append(options, WithRegex(true))
+		_, err = dExt.FindScreenText(text, options...)
 		return err == nil
 	case AssertionNotExists:
-		_, err = dExt.FindScreenText(text, WithRegex(true))
+		options = append(options, WithRegex(true))
+		_, err = dExt.FindScreenText(text, options...)
 		return err != nil
 	default:
 		log.Warn().Str("assert method", assert).Msg("unexpected assert method")

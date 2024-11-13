@@ -126,11 +126,13 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	return screenResult, nil
 }
 
-func (dExt *DriverExt) GetScreenTexts() (ocrTexts OCRTexts, err error) {
-	screenResult, err := dExt.GetScreenResult(
-		WithScreenShotOCR(true), WithScreenShotUpload(true),
-		WithScreenShotFileName("get_screen_texts"),
-	)
+func (dExt *DriverExt) GetScreenTexts(options ...ActionOption) (ocrTexts OCRTexts, err error) {
+	actionOptions := NewActionOptions(options...)
+	if actionOptions.ScreenShotFileName == "" {
+		options = append(options, WithScreenShotFileName("get_screen_texts"))
+	}
+	options = append(options, WithScreenShotOCR(true), WithScreenShotUpload(true))
+	screenResult, err := dExt.GetScreenResult(options...)
 	if err != nil {
 		return
 	}
@@ -148,7 +150,11 @@ func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...ActionOption)
 }
 
 func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (point PointF, err error) {
-	ocrTexts, err := dExt.GetScreenTexts()
+	actionOptions := NewActionOptions(options...)
+	if actionOptions.ScreenShotFileName == "" {
+		options = append(options, WithScreenShotFileName(fmt.Sprintf("find_screen_text_%s", text)))
+	}
+	ocrTexts, err := dExt.GetScreenTexts(options...)
 	if err != nil {
 		return
 	}
@@ -166,8 +172,11 @@ func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (poi
 }
 
 func (dExt *DriverExt) FindUIResult(options ...ActionOption) (point PointF, err error) {
-	options = append(options, WithScreenShotFileName("find_ui_result"))
 	actionOptions := NewActionOptions(options...)
+	if actionOptions.ScreenShotFileName == "" {
+		options = append(options, WithScreenShotFileName(
+			fmt.Sprintf("find_ui_result_%s", strings.Join(actionOptions.ScreenShotWithUITypes, "_"))))
+	}
 
 	screenResult, err := dExt.GetScreenResult(options...)
 	if err != nil {
