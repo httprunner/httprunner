@@ -16,6 +16,7 @@ var (
 	UnauthorizedError     = errors.New("unauthorized error")          // 4
 	NetworkError          = errors.New("network error")               // 5
 	NetworkConfigureError = errors.New("network configure error")     // 6
+	PanicError            = errors.New("panic error")                 // 7
 	InvalidPython3Venv    = errors.New("prepare python3 venv failed") // 9
 )
 
@@ -124,6 +125,7 @@ var errorsMap = map[error]int{
 	UnauthorizedError:     4,
 	NetworkError:          5,
 	NetworkConfigureError: 6,
+	PanicError:            7,
 	InvalidPython3Venv:    9,
 
 	// loader
