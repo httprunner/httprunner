@@ -21,15 +21,13 @@ import (
 
 type ScreenResult struct {
 	bufSource   *bytes.Buffer // raw image buffer bytes
-	ImagePath   string        // image file path
-	ImageResult *ImageResult  // image result
-
-	Resolution  Size        `json:"resolution"`
-	UploadedURL string      `json:"uploaded_url"` // uploaded image url
-	Texts       OCRTexts    `json:"texts"`        // dumped raw OCRTexts
-	Icons       UIResultMap `json:"icons"`        // CV 识别的图标
-	Tags        []string    `json:"tags"`         // tags for image, e.g. ["feed", "ad", "live"]
-	Popup       *PopupInfo  `json:"popup,omitempty"`
+	ImagePath   string        `json:"image_path"` // image file path
+	Resolution  Size          `json:"resolution"`
+	UploadedURL string        `json:"uploaded_url"` // uploaded image url
+	Texts       OCRTexts      `json:"texts"`        // dumped raw OCRTexts
+	Icons       UIResultMap   `json:"icons"`        // CV 识别的图标
+	Tags        []string      `json:"tags"`         // tags for image, e.g. ["feed", "ad", "live"]
+	Popup       *PopupInfo    `json:"popup,omitempty"`
 }
 
 // GetScreenResult takes a screenshot, returns the image recognition result
@@ -114,7 +112,6 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 				}
 			}
 		}
-		screenResult.ImageResult = imageResult
 	}
 
 	log.Debug().

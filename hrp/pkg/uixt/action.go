@@ -784,8 +784,8 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 
 type SleepConfig struct {
 	StartTime    time.Time `json:"start_time"`
-	Seconds      float64   `json:"seconds"`
-	Milliseconds int64     `json:"milliseconds"`
+	Seconds      float64   `json:"seconds,omitempty"`
+	Milliseconds int64     `json:"milliseconds,omitempty"`
 }
 
 var errActionNotImplemented = errors.New("UI action not implemented")
