@@ -485,6 +485,12 @@ func (r *CaseRunner) parseDeviceConfig(device interface{}, configVariables map[s
 			continue
 		}
 
+		// skip if field cannot be set
+		if !fieldValue.CanSet() {
+			log.Warn().Str("field", field.Name).Msg("field cannot be set, skip")
+			continue
+		}
+
 		parsedValue, err := r.parser.ParseString(
 			fieldValue.String(), configVariables)
 		if err != nil {
@@ -773,15 +779,4 @@ func (r *SessionRunner) initWithParameters(parameters map[string]interface{}) {
 	for k, v := range parameters {
 		r.sessionVariables[k] = v
 	}
-}
-
-func (r *SessionRunner) IgnorePopup() bool {
-	caseConfig := r.caseRunner.TestCase.Config.Get()
-	if caseConfig.Android != nil {
-		return caseConfig.Android[0].IgnorePopup
-	}
-	if caseConfig.IOS != nil {
-		return caseConfig.IOS[0].IgnorePopup
-	}
-	return false
 }
