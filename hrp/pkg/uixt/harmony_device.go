@@ -16,18 +16,14 @@ var (
 )
 
 type HarmonyDevice struct {
-	d           *ghdc.Device
-	ConnectKey  string `json:"connect_key,omitempty" yaml:"connect_key,omitempty"`
-	IgnorePopup bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
-	LogOn       bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	d          *ghdc.Device
+	ConnectKey string `json:"connect_key,omitempty" yaml:"connect_key,omitempty"`
+	LogOn      bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
 func (dev *HarmonyDevice) Options() (deviceOptions []HarmonyDeviceOption) {
 	if dev.ConnectKey != "" {
 		deviceOptions = append(deviceOptions, WithConnectKey(dev.ConnectKey))
-	}
-	if dev.IgnorePopup {
-		deviceOptions = append(deviceOptions, WithIgnorePopup(true))
 	}
 	if dev.LogOn {
 		deviceOptions = append(deviceOptions, WithLogOn(true))
@@ -40,12 +36,6 @@ type HarmonyDeviceOption func(*HarmonyDevice)
 func WithConnectKey(connectKey string) HarmonyDeviceOption {
 	return func(device *HarmonyDevice) {
 		device.ConnectKey = connectKey
-	}
-}
-
-func WithIgnorePopup(ignorePopup bool) HarmonyDeviceOption {
-	return func(device *HarmonyDevice) {
-		device.IgnorePopup = ignorePopup
 	}
 }
 

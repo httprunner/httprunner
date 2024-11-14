@@ -41,6 +41,7 @@ type TConfig struct {
 	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
 	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
 	PluginSetting     *PluginConfig          `json:"plugin,omitempty" yaml:"plugin,omitempty"` // plugin config
+	IgnorePopup       bool                   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
 }
 
 func (c *TConfig) Get() *TConfig {
@@ -177,6 +178,11 @@ func (c *TConfig) SetAndroid(options ...uixt.AndroidDeviceOption) *TConfig {
 		c.Android[0] = uiaOptions
 	}
 	return c
+}
+
+func (s *TConfig) DisableAutoPopupHandler() *TConfig {
+	s.IgnorePopup = true
+	return s
 }
 
 type ThinkTimeConfig struct {

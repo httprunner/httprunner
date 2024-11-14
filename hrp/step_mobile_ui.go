@@ -392,6 +392,11 @@ func (s *StepMobile) StopCamera() *StepMobile {
 	return s
 }
 
+func (s *StepMobile) DisableAutoPopupHandler() *StepMobile {
+	s.IgnorePopup = true
+	return s
+}
+
 func (s *StepMobile) ClosePopups(options ...uixt.ActionOption) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_ClosePopups,
@@ -669,7 +674,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		}
 
 		// automatic handling of pop-up windows on each step finished
-		if !ignorePopup && !s.IgnorePopup() {
+		if !ignorePopup && !s.caseRunner.Config.Get().IgnorePopup {
 			if err2 := uiDriver.ClosePopupsHandler(); err2 != nil {
 				log.Error().Err(err2).Str("step", step.Name()).Msg("auto handle popup failed")
 			}
