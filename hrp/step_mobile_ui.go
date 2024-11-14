@@ -714,8 +714,8 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		default:
 			actionStartTime := time.Now()
 			actionResult := &ActionResult{
-				Name:      string(action.Method),
-				StartTime: actionStartTime.Unix(), // action 开始时间
+				MobileAction: action,
+				StartTime:    actionStartTime.Unix(), // action 开始时间
 			}
 			if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
 				if !code.IsErrorPredefined(err) {

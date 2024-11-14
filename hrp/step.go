@@ -1,5 +1,7 @@
 package hrp
 
+import "github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
+
 type StepType string
 
 const (
@@ -49,10 +51,10 @@ type TStep struct {
 
 // one step contains one or multiple actions
 type ActionResult struct {
-	Name      string `json:"name"`       // action name
-	StartTime int64  `json:"start_time"` // action start time
-	Elapsed   int64  `json:"elapsed_ms"` // action elapsed time(ms)
-	Error     error  `json:"error"`      // action execution result
+	uixt.MobileAction `json:",inline"`
+	StartTime         int64 `json:"start_time"` // action start time
+	Elapsed           int64 `json:"elapsed_ms"` // action elapsed time(ms)
+	Error             error `json:"error"`      // action execution result
 }
 
 // one testcase contains one or multiple steps
