@@ -33,6 +33,8 @@ var (
 )
 
 func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err error) {
+	log.Info().Str("path", path).Str("venv", venv).
+		Bool("logOn", logOn).Msg("init plugin")
 	// plugin file not found
 	if path == "" {
 		return nil, nil
@@ -99,6 +101,7 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 }
 
 func locatePlugin(path string) (pluginPath string, err error) {
+	log.Info().Str("path", path).Msg("locate plugin")
 	// priority: hashicorp plugin (debugtalk.bin > debugtalk.py) > go plugin (debugtalk.so)
 
 	pluginPath, err = locateFile(path, PluginHashicorpGoBuiltFile)

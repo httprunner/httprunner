@@ -286,12 +286,26 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 	config := testcase.Config.Get()
 
 	// init parser plugin
-	plugin, err := initPlugin(config.Path, r.venv, r.pluginLogOn)
-	if err != nil {
-		return nil, errors.Wrap(err, "init plugin failed")
-	}
-	if plugin != nil {
+	if config.PluginSetting != nil {
+		plugin, err := initPlugin(config.Path, r.venv, r.pluginLogOn)
+		if err != nil {
+			return nil, errors.Wrap(err, "init plugin failed")
+		}
 		caseRunner.parser.plugin = plugin
+
+		// load plugin info to testcase config
+		pluginPath := plugin.Path()
+		pluginContent, err := readFile(pluginPath)
+		if err != nil {
+			return nil, err
+		}
+		config.PluginSetting.Path = pluginPath
+		config.PluginSetting.Content = pluginContent
+		tp := strings.Split(pluginPath, ".")
+		config.PluginSetting.Type = tp[len(tp)-1]
+		log.Info().Str("pluginPath", pluginPath).
+			Str("pluginType", config.PluginSetting.Type).
+			Msg("plugin info loaded")
 	}
 
 	// parse testcase config
@@ -307,23 +321,6 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 	// set testcase timeout in seconds
 	if config.CaseTimeout != 0 {
 		r.SetCaseTimeout(config.CaseTimeout)
-	}
-
-	// load plugin info to testcase config
-	if plugin != nil {
-		pluginPath, _ := locatePlugin(config.Path)
-		if parsedConfig.PluginSetting == nil {
-			pluginContent, err := readFile(pluginPath)
-			if err != nil {
-				return nil, err
-			}
-			tp := strings.Split(plugin.Path(), ".")
-			parsedConfig.PluginSetting = &PluginConfig{
-				Path:    pluginPath,
-				Content: pluginContent,
-				Type:    tp[len(tp)-1],
-			}
-		}
 	}
 
 	caseRunner.TestCase.Config = parsedConfig

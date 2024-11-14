@@ -180,9 +180,16 @@ func (c *TConfig) SetAndroid(options ...uixt.AndroidDeviceOption) *TConfig {
 	return c
 }
 
-func (s *TConfig) DisableAutoPopupHandler() *TConfig {
-	s.IgnorePopup = true
-	return s
+// EnablePlugin enables plugin for current testcase.
+// default to disable plugin
+func (c *TConfig) EnablePlugin() *TConfig {
+	c.PluginSetting = &PluginConfig{}
+	return c
+}
+
+func (c *TConfig) DisableAutoPopupHandler() *TConfig {
+	c.IgnorePopup = true
+	return c
 }
 
 type ThinkTimeConfig struct {
