@@ -32,8 +32,6 @@ type ScreenResult struct {
 	Popup       *PopupInfo  `json:"popup,omitempty"`
 }
 
-type ScreenResultMap map[string]*ScreenResult // key is date time
-
 // GetScreenResult takes a screenshot, returns the image recognition result
 func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
 	actionOptions := NewActionOptions(options...)

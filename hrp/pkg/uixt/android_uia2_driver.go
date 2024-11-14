@@ -155,7 +155,7 @@ func (ud *uiaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 		return SessionInfo{SessionId: ""}, err
 	}
 	sessionID := reply.Value.SessionId
-	ud.Driver.session.Init()
+	ud.Driver.session.Reset()
 	ud.Driver.session.ID = sessionID
 	// d.sessionIdCache[sessionID] = true
 	return SessionInfo{SessionId: sessionID}, nil

@@ -19,43 +19,38 @@ type DriverSession struct {
 	ID string
 	// cache uia2/wda request and response
 	requests []*DriverResult
-	// cache session screenshot ocr results, key is image path, value is ScreenResult
-	screenResults ScreenResultMap
+	// cache screenshot ocr results
+	screenResults []*ScreenResult // list of actions
 	// cache e2e delay
 	e2eDelay []timeLog
 }
 
 func (d *DriverSession) addScreenResult(screenResult *ScreenResult) {
-	d.screenResults[screenResult.ImagePath] = screenResult
+	d.screenResults = append(d.screenResults, screenResult)
 }
 
 func (d *DriverSession) addRequestResult(driverResult *DriverResult) {
 	d.requests = append(d.requests, driverResult)
 }
 
-func (d *DriverSession) Init() {
-	d.screenResults = make(map[string]*ScreenResult)
-	d.requests = nil
+func (d *DriverSession) Reset() {
+	d.screenResults = make([]*ScreenResult, 0)
+	d.requests = make([]*DriverResult, 0)
 	d.e2eDelay = nil
 }
 
-func (d *DriverSession) GetAll() map[string]interface{} {
-	screenShots := make([]string, 0)
-	screenShotsUrls := make(map[string]string)
-	for _, screenResult := range d.screenResults {
-		screenShots = append(screenShots, screenResult.ImagePath)
-		if screenResult.UploadedURL == "" {
-			continue
-		}
-		screenShotsUrls[screenResult.ImagePath] = screenResult.UploadedURL
-	}
-
+func (d *DriverSession) Get(withReset bool) map[string]interface{} {
 	data := map[string]interface{}{
-		"screenshots":      screenShots,
-		"screenshots_urls": screenShotsUrls,
-		"screen_results":   d.screenResults,
-		"requests":         d.requests,
-		"e2e_results":      d.e2eDelay,
+		"screen_results": d.screenResults,
+	}
+	if len(d.e2eDelay) != 0 {
+		data["requests"] = d.requests
+	}
+	if d.e2eDelay != nil {
+		data["e2e_results"] = d.e2eDelay
+	}
+	if withReset {
+		d.Reset()
 	}
 	return data
 }

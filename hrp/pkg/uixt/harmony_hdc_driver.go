@@ -40,7 +40,7 @@ func newHarmonyDriver(device *ghdc.Device) (driver *hdcDriver, err error) {
 }
 
 func (hd *hdcDriver) NewSession(capabilities Capabilities) (SessionInfo, error) {
-	hd.Driver.session.Init()
+	hd.Driver.session.Reset()
 	hd.Unlock()
 	return SessionInfo{}, errDriverNotImplemented
 }

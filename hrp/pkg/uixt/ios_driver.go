@@ -108,7 +108,7 @@ func (wd *wdaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 	if sessionInfo, err = rawResp.valueConvertToSessionInfo(); err != nil {
 		return SessionInfo{}, err
 	}
-	wd.Driver.session.Init()
+	wd.Driver.session.Reset()
 	wd.Driver.session.ID = sessionInfo.SessionId
 	return
 }
