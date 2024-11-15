@@ -16,19 +16,19 @@ func checkErr(t *testing.T, err error, msg ...string) {
 }
 
 func TestGetSimulationDuration(t *testing.T) {
-	params := []interface{}{1.23}
+	params := []float64{1.23}
 	duration := getSimulationDuration(params)
 	if duration != 1230 {
 		t.Fatal("getSimulationDuration failed")
 	}
 
-	params = []interface{}{1, 2}
+	params = []float64{1, 2}
 	duration = getSimulationDuration(params)
 	if duration < 1000 || duration > 2000 {
 		t.Fatal("getSimulationDuration failed")
 	}
 
-	params = []interface{}{1, 5, 0.7, 5, 10, 0.3}
+	params = []float64{1, 5, 0.7, 5, 10, 0.3}
 	duration = getSimulationDuration(params)
 	if duration < 1000 || duration > 10000 {
 		t.Fatal("getSimulationDuration failed")

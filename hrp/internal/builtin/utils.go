@@ -210,26 +210,13 @@ func Interface2Float64(i interface{}) (float64, error) {
 }
 
 func TypeNormalization(raw interface{}) interface{} {
-	rawValue := reflect.ValueOf(raw)
-	switch rawValue.Kind() {
-	case reflect.Int:
-		return rawValue.Int()
-	case reflect.Int8:
-		return rawValue.Int()
-	case reflect.Int16:
-		return rawValue.Int()
-	case reflect.Int32:
-		return rawValue.Int()
-	case reflect.Float32:
-		return rawValue.Float()
-	case reflect.Uint:
-		return rawValue.Uint()
-	case reflect.Uint8:
-		return rawValue.Uint()
-	case reflect.Uint16:
-		return rawValue.Uint()
-	case reflect.Uint32:
-		return rawValue.Uint()
+	switch v := raw.(type) {
+	case int, int8, int16, int32, int64:
+		return reflect.ValueOf(v).Int()
+	case uint, uint8, uint16, uint32, uint64:
+		return reflect.ValueOf(v).Uint()
+	case float32, float64:
+		return reflect.ValueOf(v).Float()
 	default:
 		return raw
 	}
@@ -396,19 +383,37 @@ func ConvertToFloat64(val interface{}) (float64, error) {
 	}
 }
 
-func ConvertToStringSlice(val interface{}) ([]string, error) {
-	if valSlice, ok := val.([]interface{}); ok {
-		var res []string
-		for _, iVal := range valSlice {
-			valString, ok := iVal.(string)
-			if !ok {
-				return nil, fmt.Errorf("invalid type for converting one of the elements to string: %T, value: %v", iVal, iVal)
-			}
-			res = append(res, valString)
-		}
-		return res, nil
+func ConvertToFloat64Slice(val interface{}) ([]float64, error) {
+	paramsSlice, ok := val.([]interface{})
+	if !ok {
+		return nil, errors.New("val is not slice")
 	}
-	return nil, fmt.Errorf("invalid type for conversion to []string")
+
+	var err error
+	float64Slice := make([]float64, len(paramsSlice))
+	for i, v := range paramsSlice {
+		float64Slice[i], err = ConvertToFloat64(v)
+		if err != nil {
+			return nil, errors.New("val is not float64 slice")
+		}
+	}
+	return float64Slice, nil
+}
+
+func ConvertToStringSlice(val interface{}) ([]string, error) {
+	paramsSlice, ok := val.([]interface{})
+	if !ok {
+		return nil, errors.New("val is not slice")
+	}
+
+	stringSlice := make([]string, len(paramsSlice))
+	for i, v := range paramsSlice {
+		stringSlice[i], ok = v.(string)
+		if !ok {
+			return nil, errors.New("val is not string slice")
+		}
+	}
+	return stringSlice, nil
 }
 
 func GetFreePort() (int, error) {
@@ -455,6 +460,7 @@ func DownloadFile(filePath string, fileUrl string) error {
 		return err
 	}
 
+	// TODO: rename token
 	eapiToken := os.Getenv("EAPI_TOKEN")
 	if eapiToken != "" {
 		if parsedURL.Host != "gtf-eapi-cn.bytedance.com" && parsedURL.Host != "gtf-eapi-cn.bytedance.net" {

@@ -664,24 +664,22 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 			return nil
 		}
 	case ACTION_TapXY:
-		if location, ok := action.Params.([]interface{}); ok {
+		if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil {
 			// relative x,y of window size: [0.5, 0.5]
-			if len(location) != 2 {
-				return fmt.Errorf("invalid tap location params: %v", location)
+			if len(params) != 2 {
+				return fmt.Errorf("invalid tap location params: %v", params)
 			}
-			x, _ := location[0].(float64)
-			y, _ := location[1].(float64)
+			x, y := params[0], params[1]
 			return dExt.TapXY(x, y, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapXY, action.Params)
 	case ACTION_TapAbsXY:
-		if location, ok := action.Params.([]interface{}); ok {
+		if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil {
 			// absolute coordinates x,y of window size: [100, 300]
-			if len(location) != 2 {
-				return fmt.Errorf("invalid tap location params: %v", location)
+			if len(params) != 2 {
+				return fmt.Errorf("invalid tap location params: %v", params)
 			}
-			x, _ := location[0].(float64)
-			y, _ := location[1].(float64)
+			x, y := params[0], params[1]
 			return dExt.TapAbsXY(x, y, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapAbsXY, action.Params)
@@ -702,13 +700,12 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
-		if location, ok := action.Params.([]interface{}); ok {
+		if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil {
 			// relative x,y of window size: [0.5, 0.5]
-			if len(location) != 2 {
-				return fmt.Errorf("invalid tap location params: %v", location)
+			if len(params) != 2 {
+				return fmt.Errorf("invalid tap location params: %v", params)
 			}
-			x, _ := location[0].(float64)
-			y, _ := location[1].(float64)
+			x, y := params[0], params[1]
 			return dExt.DoubleTapXY(x, y)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTapXY, action.Params)
@@ -759,7 +756,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		}
 		return fmt.Errorf("invalid sleep ms params: %v(%T)", action.Params, action.Params)
 	case ACTION_SleepRandom:
-		if params, ok := action.Params.([]interface{}); ok {
+		if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil {
 			sleepStrict(time.Now(), getSimulationDuration(params))
 			return nil
 		}
@@ -791,15 +788,10 @@ type SleepConfig struct {
 var errActionNotImplemented = errors.New("UI action not implemented")
 
 // getSimulationDuration returns simulation duration by given params (in seconds)
-func getSimulationDuration(params []interface{}) (milliseconds int64) {
+func getSimulationDuration(params []float64) (milliseconds int64) {
 	if len(params) == 1 {
 		// given constant duration time
-		seconds, err := builtin.ConvertToFloat64(params[0])
-		if err != nil {
-			log.Error().Err(err).Interface("params", params).Msg("invalid params")
-			return 0
-		}
-		return int64(seconds * 1000)
+		return int64(params[0] * 1000)
 	}
 
 	if len(params) == 2 {
@@ -813,21 +805,9 @@ func getSimulationDuration(params []interface{}) (milliseconds int64) {
 	}
 	totalProb := 0.0
 	for i := 0; i+3 <= len(params); i += 3 {
-		min, err := builtin.ConvertToFloat64(params[i])
-		if err != nil {
-			log.Error().Err(err).Interface("min", params[i]).Msg("invalid minimum time")
-			return 0
-		}
-		max, err := builtin.ConvertToFloat64(params[i+1])
-		if err != nil {
-			log.Error().Err(err).Interface("max", params[i+1]).Msg("invalid maximum time")
-			return 0
-		}
-		weight, err := builtin.ConvertToFloat64(params[i+2])
-		if err != nil {
-			log.Error().Err(err).Interface("weight", params[i+2]).Msg("invalid weight value")
-			return 0
-		}
+		min := params[i]
+		max := params[i+1]
+		weight := params[i+2]
 		totalProb += weight
 		sections = append(sections,
 			struct{ min, max, weight float64 }{min, max, weight},

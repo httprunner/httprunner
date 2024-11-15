@@ -109,10 +109,6 @@ func (p *Parser) Parse(raw interface{}, variablesMapping map[string]interface{})
 		value = strings.TrimSpace(value)
 		return p.ParseString(value, variablesMapping)
 	case reflect.Slice:
-		if rawValue.Type().Elem().Kind() == reflect.Float64 {
-			// return float64, avoid convert to []interface{}
-			return raw, nil
-		}
 		parsedSlice := make([]interface{}, rawValue.Len())
 		for i := 0; i < rawValue.Len(); i++ {
 			parsedValue, err := p.Parse(rawValue.Index(i).Interface(), variablesMapping)
