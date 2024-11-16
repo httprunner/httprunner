@@ -39,8 +39,10 @@ func (d *DriverSession) Reset() {
 	d.e2eDelay = nil
 }
 
-func (d *DriverSession) Get(withReset bool) map[string]interface{} {
-	data := map[string]interface{}{
+type Attachments map[string]interface{}
+
+func (d *DriverSession) Get(withReset bool) Attachments {
+	data := Attachments{
 		"screen_results": d.screenResults,
 	}
 	if len(d.e2eDelay) != 0 {

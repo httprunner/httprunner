@@ -661,7 +661,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 	}
 
 	defer func() {
-		attachments := make(map[string]interface{})
+		attachments := uixt.Attachments{}
 		if err != nil {
 			attachments["error"] = err.Error()
 

@@ -122,9 +122,9 @@ func (dExt *DriverExt) prepareSwipeAction(params interface{}, options ...ActionO
 				return errors.Wrap(code.InvalidParamError,
 					fmt.Sprintf("get unexpected swipe direction: %s", d))
 			}
-		} else if d, ok := swipeDirection.([]float64); ok && len(d) == 4 {
+		} else if params, err := builtin.ConvertToFloat64Slice(swipeDirection); err == nil && len(params) == 4 {
 			// custom direction: [fromX, fromY, toX, toY]
-			if err := dExt.SwipeRelative(d[0], d[1], d[2], d[3], options...); err != nil {
+			if err := dExt.SwipeRelative(params[0], params[1], params[2], params[3], options...); err != nil {
 				log.Error().Err(err).Msgf("swipe from (%v, %v) to (%v, %v) failed",
 					d[0], d[1], d[2], d[3])
 				return err
