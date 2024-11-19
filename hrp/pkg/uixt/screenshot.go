@@ -30,6 +30,17 @@ type ScreenResult struct {
 	Popup       *PopupInfo    `json:"popup,omitempty"`
 }
 
+func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) OCRTexts {
+	if x1 > 1 || y1 > 1 || x2 > 1 || y2 > 1 {
+		log.Warn().Msg("x1, y1, x2, y2 should be in percentage, skip filter scope")
+		return s.Texts
+	}
+	return s.Texts.FilterScope(AbsScope{
+		int(float64(s.Resolution.Width) * x1), int(float64(s.Resolution.Height) * y1),
+		int(float64(s.Resolution.Width) * x2), int(float64(s.Resolution.Height) * y2),
+	})
+}
+
 // GetScreenResult takes a screenshot, returns the image recognition result
 func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
 	actionOptions := NewActionOptions(options...)
