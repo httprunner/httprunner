@@ -433,13 +433,11 @@ func runStepWebSocket(r *SessionRunner, step IStep) (stepResult *StepResult, err
 		err = respObj.Validate(stepWebSocket.Validators, variables)
 		sessionData.Validators = respObj.validationResults
 		if err == nil {
-			sessionData.Success = true
 			stepResult.Success = true
 		}
 		stepResult.ContentSize = getContentSize(resp)
 		stepResult.Data = sessionData
 	} else {
-		sessionData.Success = true
 		stepResult.Success = true
 	}
 

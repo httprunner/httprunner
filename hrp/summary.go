@@ -229,13 +229,11 @@ type TestCaseInOut struct {
 
 func newSessionData() *SessionData {
 	return &SessionData{
-		Success:  false,
 		ReqResps: &ReqResps{},
 	}
 }
 
 type SessionData struct {
-	Success    bool                `json:"success" yaml:"success"`
 	ReqResps   *ReqResps           `json:"req_resps" yaml:"req_resps"`
 	Address    *Address            `json:"address,omitempty" yaml:"address,omitempty"` // TODO
 	Validators []*ValidationResult `json:"validators,omitempty" yaml:"validators,omitempty"`

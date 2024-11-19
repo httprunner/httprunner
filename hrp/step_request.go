@@ -427,7 +427,6 @@ func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err e
 	err = respObj.Validate(stepRequest.Validators, stepRequest.Variables)
 	sessionData.Validators = respObj.validationResults
 	if err == nil {
-		sessionData.Success = true
 		stepResult.Success = true
 	}
 	stepResult.ContentSize = resp.ContentLength
