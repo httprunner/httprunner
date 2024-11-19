@@ -59,18 +59,18 @@ type ActionResult struct {
 
 // one testcase contains one or multiple steps
 type StepResult struct {
-	Name        string                 `json:"name" yaml:"name"`                                   // step name
-	Identifier  string                 `json:"identifier,omitempty" yaml:"identifier,omitempty"`   // step identifier
-	StartTime   int64                  `json:"start_time" yaml:"time"`                             // step start time
-	StepType    StepType               `json:"step_type" yaml:"step_type"`                         // step type, testcase/request/transaction/rendezvous
-	Success     bool                   `json:"success" yaml:"success"`                             // step execution result
-	Elapsed     int64                  `json:"elapsed_ms" yaml:"elapsed_ms"`                       // step execution time in millisecond(ms)
-	HttpStat    map[string]int64       `json:"httpstat,omitempty" yaml:"httpstat,omitempty"`       // httpstat in millisecond(ms)
-	Data        interface{}            `json:"data,omitempty" yaml:"data,omitempty"`               // step data
-	ContentSize int64                  `json:"content_size" yaml:"content_size"`                   // response body length
-	ExportVars  map[string]interface{} `json:"export_vars,omitempty" yaml:"export_vars,omitempty"` // extract variables
-	Actions     []*ActionResult        `json:"actions,omitempty" yaml:"actions,omitempty"`         // store action execution info
-	Attachments interface{}            `json:"attachments,omitempty" yaml:"attachments,omitempty"` // store extra step information, such as error message or screenshots
+	Name        string                 `json:"name" yaml:"name"`                                     // step name
+	Identifier  string                 `json:"identifier,omitempty" yaml:"identifier,omitempty"`     // step identifier
+	StartTime   int64                  `json:"start_time" yaml:"time"`                               // step start time
+	StepType    StepType               `json:"step_type" yaml:"step_type"`                           // step type, testcase/request/transaction/rendezvous
+	Success     bool                   `json:"success" yaml:"success"`                               // step execution result
+	Elapsed     int64                  `json:"elapsed_ms" yaml:"elapsed_ms"`                         // step execution time in millisecond(ms)
+	HttpStat    map[string]int64       `json:"httpstat,omitempty" yaml:"httpstat,omitempty"`         // httpstat in millisecond(ms)
+	Data        interface{}            `json:"data,omitempty" yaml:"data,omitempty"`                 // step data
+	ContentSize int64                  `json:"content_size,omitempty" yaml:"content_size,omitempty"` // response body length
+	ExportVars  map[string]interface{} `json:"export_vars,omitempty" yaml:"export_vars,omitempty"`   // extract variables
+	Actions     []*ActionResult        `json:"actions,omitempty" yaml:"actions,omitempty"`           // store action execution info
+	Attachments interface{}            `json:"attachments,omitempty" yaml:"attachments,omitempty"`   // store extra step information, such as error message or screenshots
 }
 
 // IStep represents interface for all types for teststeps, includes:

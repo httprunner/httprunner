@@ -753,9 +753,12 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		}
 		return
 	}
-	sessionData := newSessionData()
-	sessionData.Validators = validateResults
-	stepResult.Data = sessionData
+	if len(validateResults) > 0 {
+		sessionData := &SessionData{
+			Validators: validateResults,
+		}
+		stepResult.Data = sessionData
+	}
 	stepResult.Success = true
 	return stepResult, nil
 }

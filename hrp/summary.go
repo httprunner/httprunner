@@ -227,12 +227,6 @@ type TestCaseInOut struct {
 	ExportVars map[string]interface{} `json:"export_vars" yaml:"export_vars"`
 }
 
-func newSessionData() *SessionData {
-	return &SessionData{
-		ReqResps: &ReqResps{},
-	}
-}
-
 type SessionData struct {
 	ReqResps   *ReqResps           `json:"req_resps" yaml:"req_resps"`
 	Address    *Address            `json:"address,omitempty" yaml:"address,omitempty"` // TODO

@@ -301,7 +301,9 @@ func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err e
 		return
 	}
 
-	sessionData := newSessionData()
+	sessionData := &SessionData{
+		ReqResps: &ReqResps{},
+	}
 	parser := r.caseRunner.parser
 	config := r.caseRunner.Config.Get()
 
