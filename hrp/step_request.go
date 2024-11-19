@@ -767,7 +767,6 @@ func (s *StepRequest) Android(options ...uixt.AndroidDeviceOption) *StepMobile {
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		Android: &MobileUI{
-			OSType: string(stepTypeAndroid),
 			Serial: androidOptions.SerialNumber,
 		},
 	}
@@ -782,7 +781,6 @@ func (s *StepRequest) IOS(options ...uixt.IOSDeviceOption) *StepMobile {
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		IOS: &MobileUI{
-			OSType: string(stepTypeIOS),
 			Serial: iosOptions.UDID,
 		},
 	}
@@ -797,7 +795,6 @@ func (s *StepRequest) Harmony(options ...uixt.HarmonyDeviceOption) *StepMobile {
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		Harmony: &MobileUI{
-			OSType: string(stepTypeHarmony),
 			Serial: harmonyOptions.ConnectKey,
 		},
 	}

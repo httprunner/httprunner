@@ -57,11 +57,6 @@ func (s *StepMobile) obj() *MobileUI {
 	panic("no mobile device config")
 }
 
-func (s *StepMobile) OSType(ostype string) *StepMobile {
-	s.obj().OSType = ostype
-	return s
-}
-
 func (s *StepMobile) Serial(serial string) *StepMobile {
 	s.obj().Serial = serial
 	return s
@@ -419,7 +414,11 @@ func (s *StepMobile) Name() string {
 }
 
 func (s *StepMobile) Type() StepType {
-	return StepType(s.obj().OSType)
+	osType := s.obj().OSType
+	if osType != "" {
+		return StepType(osType)
+	}
+	return StepType("mobile")
 }
 
 func (s *StepMobile) Config() *StepConfig {
