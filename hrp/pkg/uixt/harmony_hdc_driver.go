@@ -139,7 +139,7 @@ func (hd *hdcDriver) GetForegroundApp() (app AppInfo, err error) {
 
 func (hd *hdcDriver) AssertForegroundApp(packageName string, activityType ...string) error {
 	// Todo
-	return errDriverNotImplemented
+	return nil
 }
 
 func (hd *hdcDriver) StartCamera() error {

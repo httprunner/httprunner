@@ -787,8 +787,9 @@ func validateUI(ud *uixt.DriverExt, iValidators []interface{}) (validateResults 
 			return nil, errors.New("validator expect should be string")
 		}
 
-		if !ud.DoValidation(validator.Check, validator.Assert, expected, validator.Message) {
-			return validateResults, errors.New("step validation failed")
+		err := ud.DoValidation(validator.Check, validator.Assert, expected, validator.Message)
+		if err != nil {
+			return validateResults, errors.Wrap(err, "step validation failed")
 		}
 
 		validataResult.CheckResult = "pass"

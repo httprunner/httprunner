@@ -53,76 +53,73 @@ func newDriverExt(device IDevice, driver IWebDriver, options ...DriverOption) (d
 	return dExt, nil
 }
 
-func (dExt *DriverExt) AssertOCR(text, assert string) bool {
+func (dExt *DriverExt) assertOCR(text, assert string) error {
 	var options []ActionOption
 	options = append(options, WithScreenShotFileName(fmt.Sprintf("assert_ocr_%s", text)))
 
-	var err error
 	switch assert {
 	case AssertionEqual:
-		_, err = dExt.FindScreenText(text, options...)
-		return err == nil
+		_, err := dExt.FindScreenText(text, options...)
+		if err != nil {
+			return errors.Wrap(err, "assert ocr equal failed")
+		}
 	case AssertionNotEqual:
-		_, err = dExt.FindScreenText(text, options...)
-		return err != nil
+		_, err := dExt.FindScreenText(text, options...)
+		if err == nil {
+			return errors.New("assert ocr not equal failed")
+		}
 	case AssertionExists:
 		options = append(options, WithRegex(true))
-		_, err = dExt.FindScreenText(text, options...)
-		return err == nil
+		_, err := dExt.FindScreenText(text, options...)
+		if err != nil {
+			return errors.Wrap(err, "assert ocr exists failed")
+		}
 	case AssertionNotExists:
 		options = append(options, WithRegex(true))
-		_, err = dExt.FindScreenText(text, options...)
-		return err != nil
+		_, err := dExt.FindScreenText(text, options...)
+		if err == nil {
+			return errors.New("assert ocr not exists failed")
+		}
 	default:
-		log.Warn().Str("assert method", assert).Msg("unexpected assert method")
+		return fmt.Errorf("unexpected assert method %s", assert)
 	}
-	return false
+	return nil
 }
 
-func (dExt *DriverExt) AssertForegroundApp(appName, assert string) bool {
-	app, err := dExt.Driver.GetForegroundApp()
-	if err != nil {
-		log.Warn().Err(err).Msg("get foreground app failed, skip app/activity assertion")
-		return true // Notice: ignore error when get foreground app failed
-	}
-	log.Debug().Interface("app", app).Msg("get foreground app")
-
-	// assert package name
+func (dExt *DriverExt) assertForegroundApp(appName, assert string) (err error) {
+	err = dExt.Driver.AssertForegroundApp(appName)
 	switch assert {
 	case AssertionEqual:
-		return app.PackageName == appName
+		if err != nil {
+			return errors.Wrap(err, "assert foreground app equal failed")
+		}
 	case AssertionNotEqual:
-		return app.PackageName != appName
+		if err == nil {
+			return errors.New("assert foreground app not equal failed")
+		}
 	default:
-		log.Warn().Str("assert method", assert).Msg("unexpected assert method")
+		return fmt.Errorf("unexpected assert method %s", assert)
 	}
-	return false
+	return nil
 }
 
-func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) bool {
-	var result bool
+func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) (err error) {
 	switch check {
 	case SelectorOCR:
-		result = dExt.AssertOCR(expected, assert)
+		err = dExt.assertOCR(expected, assert)
 	case SelectorForegroundApp:
-		result = dExt.AssertForegroundApp(expected, assert)
+		err = dExt.assertForegroundApp(expected, assert)
 	}
 
-	if !result {
+	if err != nil {
 		if message == nil {
 			message = []string{""}
 		}
-		log.Error().
-			Str("assert", assert).
-			Str("expect", expected).
-			Str("msg", message[0]).
-			Msg("validate UI failed")
-		return false
+		log.Error().Err(err).Str("assert", assert).Str("expect", expected).
+			Str("msg", message[0]).Msg("validate failed")
+		return err
 	}
 
-	log.Info().
-		Str("assert", assert).
-		Str("expect", expected).
-		Msg("validate UI success")
-	return true
+	log.Info().Str("assert", assert).Str("expect", expected).Msg("validate success")
+	return nil
 }
