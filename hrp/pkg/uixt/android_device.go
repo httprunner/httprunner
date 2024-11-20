@@ -466,21 +466,31 @@ func (dev *AndroidDevice) installCommon(apkPath string, args ...string) error {
 }
 
 func (dev *AndroidDevice) GetCurrentWindow() (windowInfo WindowInfo, err error) {
-	output, err := dev.d.RunShellCommand("dumpsys", "window", "|", "grep", "mCurrentFocus")
+	output, err := dev.d.RunShellCommand("dumpsys", "window", "|", "grep", "-E", "'mCurrentFocus|mFocusedApp'")
 	if err != nil {
 		return WindowInfo{}, errors.Wrap(err, "get current window failed")
 	}
 	// mCurrentFocus=Window{a33bc55 u0 com.miui.home/com.miui.home.launcher.Launcher}
-	re := regexp.MustCompile(`mCurrentFocus=Window{.*? (\S+)/(\S+)}`)
-	matches := re.FindStringSubmatch(output)
-	if len(matches) != 3 {
-		return WindowInfo{}, errors.New("failed to extract current window")
+	reFocus := regexp.MustCompile(`mCurrentFocus=Window{.*? (\S+)/(\S+)}`)
+	matches := reFocus.FindStringSubmatch(output)
+	if len(matches) == 3 {
+		windowInfo = WindowInfo{
+			PackageName: matches[1],
+			Activity:    matches[2],
+		}
+		return windowInfo, nil
 	}
-	windowInfo = WindowInfo{
-		PackageName: matches[1],
-		Activity:    matches[2],
+	// mFocusedApp=ActivityRecord{2db504f u0 com.miui.home/.launcher.Launcher t2}
+	reApp := regexp.MustCompile(`mFocusedApp=ActivityRecord{.*? (\S+)/(\S+?)\s`)
+	matches = reApp.FindStringSubmatch(output)
+	if len(matches) == 3 {
+		windowInfo = WindowInfo{
+			PackageName: matches[1],
+			Activity:    matches[2],
+		}
+		return windowInfo, nil
 	}
-	return windowInfo, nil
+	return WindowInfo{}, errors.New("failed to extract current window")
 }
 
 func (dev *AndroidDevice) GetPackageInfo(packageName string) (AppInfo, error) {
