@@ -751,12 +751,17 @@ func (ad *adbDriver) GetSession() *DriverSession {
 }
 
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
-	packageInfo, err := ad.adbClient.RunShellCommand("CLASSPATH=/data/local/tmp/evalite", "app_process", "/", "com.bytedance.iesqa.eval_process.PackageService")
+	packageInfo, err := ad.adbClient.RunShellCommand(
+		"CLASSPATH=/data/local/tmp/evalite", "app_process", "/",
+		"com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
 	if err != nil {
 		return app, err
 	}
 	log.Info().Msg(packageInfo)
 	err = json.Unmarshal([]byte(strings.TrimSpace(packageInfo)), &app)
+	if err != nil {
+		log.Error().Err(err).Str("packageInfo", packageInfo).Msg("get foreground app failed")
+	}
 	return
 }
 
