@@ -466,6 +466,7 @@ func (dev *AndroidDevice) installCommon(apkPath string, args ...string) error {
 }
 
 func (dev *AndroidDevice) GetCurrentWindow() (windowInfo WindowInfo, err error) {
+	// adb shell dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'
 	output, err := dev.d.RunShellCommand("dumpsys", "window", "|", "grep", "-E", "'mCurrentFocus|mFocusedApp'")
 	if err != nil {
 		return WindowInfo{}, errors.Wrap(err, "get current window failed")
@@ -490,6 +491,23 @@ func (dev *AndroidDevice) GetCurrentWindow() (windowInfo WindowInfo, err error) 
 		}
 		return windowInfo, nil
 	}
+
+	// adb shell dumpsys activity activities | grep mResumedActivity
+	output, err = dev.d.RunShellCommand("dumpsys", "activity", "activities", "|", "grep", "mResumedActivity")
+	if err != nil {
+		return WindowInfo{}, errors.Wrap(err, "get current activity failed")
+	}
+	// mResumedActivity: ActivityRecord{2db504f u0 com.miui.home/.launcher.Launcher t2}
+	reActivity := regexp.MustCompile(`mResumedActivity: ActivityRecord{.*? (\S+)/(\S+?)\s`)
+	matches = reActivity.FindStringSubmatch(output)
+	if len(matches) == 3 {
+		windowInfo = WindowInfo{
+			PackageName: matches[1],
+			Activity:    matches[2],
+		}
+		return windowInfo, nil
+	}
+
 	return WindowInfo{}, errors.New("failed to extract current window")
 }
 
