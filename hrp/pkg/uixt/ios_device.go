@@ -771,3 +771,7 @@ func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 	}
 	return appInfo, errors.New("failed to get package version")
 }
+
+func (dev *IOSDevice) GetCurrentWindow() (WindowInfo, error) {
+	return WindowInfo{}, nil
+}

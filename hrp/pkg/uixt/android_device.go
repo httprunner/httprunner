@@ -465,6 +465,24 @@ func (dev *AndroidDevice) installCommon(apkPath string, args ...string) error {
 	return err
 }
 
+func (dev *AndroidDevice) GetCurrentWindow() (windowInfo WindowInfo, err error) {
+	output, err := dev.d.RunShellCommand("dumpsys", "window", "|", "grep", "mCurrentFocus")
+	if err != nil {
+		return WindowInfo{}, errors.Wrap(err, "get current window failed")
+	}
+	// mCurrentFocus=Window{a33bc55 u0 com.miui.home/com.miui.home.launcher.Launcher}
+	re := regexp.MustCompile(`mCurrentFocus=Window{.*? (\S+)/(\S+)}`)
+	matches := re.FindStringSubmatch(output)
+	if len(matches) != 3 {
+		return WindowInfo{}, errors.New("failed to extract current window")
+	}
+	windowInfo = WindowInfo{
+		PackageName: matches[1],
+		Activity:    matches[2],
+	}
+	return windowInfo, nil
+}
+
 func (dev *AndroidDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 	appInfo := AppInfo{
 		Name: packageName,

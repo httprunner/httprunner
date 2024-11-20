@@ -254,6 +254,11 @@ type AppInfo struct {
 	AppBaseInfo
 }
 
+type WindowInfo struct {
+	PackageName string `json:"packageName,omitempty"`
+	Activity    string `json:"activity,omitempty"`
+}
+
 type AppBaseInfo struct {
 	Pid            int    `json:"pid,omitempty"`
 	BundleId       string `json:"bundleId,omitempty"`       // ios package name
@@ -495,6 +500,7 @@ type IDevice interface {
 	Uninstall(packageName string) error
 
 	GetPackageInfo(packageName string) (AppInfo, error)
+	GetCurrentWindow() (windowInfo WindowInfo, err error)
 }
 
 type ForegroundApp struct {

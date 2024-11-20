@@ -172,3 +172,7 @@ func (dev *HarmonyDevice) Uninstall(packageName string) error {
 func (dev *HarmonyDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 	return AppInfo{}, nil
 }
+
+func (dev *HarmonyDevice) GetCurrentWindow() (WindowInfo, error) {
+	return WindowInfo{}, nil
+}

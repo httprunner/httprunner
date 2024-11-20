@@ -42,6 +42,14 @@ func TestAndroidDevice_GetPackageInfo(t *testing.T) {
 	t.Log(appInfo)
 }
 
+func TestAndroidDevice_GetCurrentWindow(t *testing.T) {
+	device, err := NewAndroidDevice()
+	checkErr(t, err)
+	windowInfo, err := device.GetCurrentWindow()
+	checkErr(t, err)
+	t.Logf("packageName: %s\tactivityName: %s", windowInfo.PackageName, windowInfo.Activity)
+}
+
 func TestDriver_NewSession(t *testing.T) {
 	driver, err := NewUIADriver(nil, uiaServerURL)
 	if err != nil {
