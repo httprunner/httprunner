@@ -576,9 +576,6 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 	}()
 
 	switch action.Method {
-	case ACTION_LOG:
-		// TODO: stat action
-		log.Info().Str("action", action.Params.(string)).Msg("log uixt action")
 	case ACTION_AppInstall:
 		if appUrl, ok := action.Params.(string); ok {
 			if err = dExt.InstallByUrl(appUrl, WithRetryTimes(action.MaxRetryTimes)); err != nil {
