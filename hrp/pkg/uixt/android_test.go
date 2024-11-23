@@ -225,7 +225,7 @@ func TestDriver_Tap(t *testing.T) {
 	}
 	//time.Sleep(time.Second)
 	//
-	//err = driverExt.Driver.TapFloat(60.5, 125.5, WithIdentifier("test"))
+	//err = driverExt.Driver.Tap(60.5, 125.5, WithIdentifier("test"))
 	//if err != nil {
 	//	t.Fatal(err)
 	//}

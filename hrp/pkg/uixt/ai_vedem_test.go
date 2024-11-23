@@ -74,5 +74,5 @@ func TestDriverExtOCR(t *testing.T) {
 	checkErr(t, err)
 
 	t.Logf("point.X: %v, point.Y: %v", point.X, point.Y)
-	driverExt.Driver.TapFloat(point.X, point.Y-20)
+	driverExt.Driver.Tap(point.X, point.Y-20)
 }

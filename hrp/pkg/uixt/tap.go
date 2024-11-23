@@ -10,7 +10,7 @@ import (
 
 func (dExt *DriverExt) TapAbsXY(x, y float64, options ...ActionOption) error {
 	// tap on absolute coordinate [x, y]
-	err := dExt.Driver.TapFloat(x, y, options...)
+	err := dExt.Driver.Tap(x, y, options...)
 	if err != nil {
 		return errors.Wrap(code.MobileUITapError, err.Error())
 	}

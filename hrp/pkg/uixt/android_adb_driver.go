@@ -315,11 +315,7 @@ func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err erro
 	return true, nil
 }
 
-func (ad *adbDriver) Tap(x, y int, options ...ActionOption) error {
-	return ad.TapFloat(float64(x), float64(y), options...)
-}
-
-func (ad *adbDriver) TapFloat(x, y float64, options ...ActionOption) (err error) {
+func (ad *adbDriver) Tap(x, y float64, options ...ActionOption) (err error) {
 	actionOptions := NewActionOptions(options...)
 
 	if len(actionOptions.Offset) == 2 {
@@ -663,7 +659,7 @@ func (ad *adbDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, 
 	}
 	for _, bound := range bounds {
 		width, height := bound.Center()
-		err := ad.TapFloat(width, height, options...)
+		err := ad.Tap(width, height, options...)
 		if err != nil {
 			return err
 		}

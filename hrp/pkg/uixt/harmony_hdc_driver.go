@@ -154,11 +154,7 @@ func (hd *hdcDriver) Orientation() (orientation Orientation, err error) {
 	return OrientationPortrait, nil
 }
 
-func (hd *hdcDriver) Tap(x, y int, options ...ActionOption) error {
-	return hd.TapFloat(float64(x), float64(y), options...)
-}
-
-func (hd *hdcDriver) TapFloat(x, y float64, options ...ActionOption) error {
+func (hd *hdcDriver) Tap(x, y float64, options ...ActionOption) error {
 	actionOptions := NewActionOptions(options...)
 
 	if len(actionOptions.Offset) == 2 {

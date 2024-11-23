@@ -219,20 +219,12 @@ func (s *stubIOSDriver) Orientation() (orientation Orientation, err error) {
 }
 
 // Tap Sends a tap event at the coordinate.
-func (s *stubIOSDriver) Tap(x, y int, options ...ActionOption) error {
+func (s *stubIOSDriver) Tap(x, y float64, options ...ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
 	return s.wdaDriver.Tap(x, y, options...)
-}
-
-func (s *stubIOSDriver) TapFloat(x, y float64, options ...ActionOption) error {
-	err := s.setUpWda()
-	if err != nil {
-		return err
-	}
-	return s.wdaDriver.TapFloat(x, y, options...)
 }
 
 // DoubleTap Sends a double tap event at the coordinate.

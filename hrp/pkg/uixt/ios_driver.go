@@ -495,11 +495,7 @@ func (wd *wdaDriver) AssertForegroundApp(bundleId string, viewControllerType ...
 	return nil
 }
 
-func (wd *wdaDriver) Tap(x, y int, options ...ActionOption) error {
-	return wd.TapFloat(float64(x), float64(y), options...)
-}
-
-func (wd *wdaDriver) TapFloat(x, y float64, options ...ActionOption) (err error) {
+func (wd *wdaDriver) Tap(x, y float64, options ...ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 	actionOptions := NewActionOptions(options...)
 
@@ -548,7 +544,7 @@ func (wd *wdaDriver) TouchAndHold(x, y float64, options ...ActionOption) (err er
 	if actionOptions.Duration == 0 {
 		options = append(options, WithDuration(1))
 	}
-	return wd.TapFloat(x, y, options...)
+	return wd.Tap(x, y, options...)
 }
 
 func (wd *wdaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {

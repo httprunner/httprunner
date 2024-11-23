@@ -577,8 +577,7 @@ type IWebDriver interface {
 	Orientation() (orientation Orientation, err error)
 
 	// Tap Sends a tap event at the coordinate.
-	Tap(x, y int, options ...ActionOption) error
-	TapFloat(x, y float64, options ...ActionOption) error
+	Tap(x, y float64, options ...ActionOption) error
 
 	// DoubleTap Sends a double tap event at the coordinate.
 	DoubleTap(x, y float64, options ...ActionOption) error

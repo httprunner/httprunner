@@ -320,11 +320,7 @@ func (ud *uiaDriver) DoubleFloatTap(x, y float64) error {
 	return err
 }
 
-func (ud *uiaDriver) Tap(x, y int, options ...ActionOption) error {
-	return ud.TapFloat(float64(x), float64(y), options...)
-}
-
-func (ud *uiaDriver) TapFloat(x, y float64, options ...ActionOption) (err error) {
+func (ud *uiaDriver) Tap(x, y float64, options ...ActionOption) (err error) {
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
 	actionOptions := NewActionOptions(options...)
 
