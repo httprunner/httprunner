@@ -30,7 +30,7 @@ func newStubIOSDriver(bightInsightAddr, serverAddr string, dev *IOSDevice, readT
 	driver.serverPrefix = serverAddr
 	driver.timeout = timeout
 	driver.Driver.client = &http.Client{
-		Timeout: time.Second * 20, // 设置超时时间为 10 秒
+		Timeout: time.Second * 10, // 设置超时时间为 10 秒
 	}
 	return driver, nil
 }

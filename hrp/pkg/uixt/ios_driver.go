@@ -457,10 +457,11 @@ func (wd *wdaDriver) GetForegroundApp() (appInfo AppInfo, err error) {
 	}
 	for _, app := range apps {
 		if app.CFBundleIdentifier == activeAppInfo.BundleId {
-			appInfo.BundleId = app.CFBundleIdentifier
+			appInfo.Name = app.CFBundleDisplayName
 			appInfo.AppName = app.CFBundleName
-			appInfo.VersionName = app.CFBundleShortVersionString
+			appInfo.BundleId = app.CFBundleIdentifier
 			appInfo.PackageName = app.CFBundleIdentifier
+			appInfo.VersionName = app.CFBundleShortVersionString
 			versionCode, err := strconv.Atoi(app.CFBundleVersion)
 			if err == nil {
 				appInfo.VersionCode = versionCode
@@ -472,9 +473,25 @@ func (wd *wdaDriver) GetForegroundApp() (appInfo AppInfo, err error) {
 }
 
 func (wd *wdaDriver) AssertForegroundApp(bundleId string, viewControllerType ...string) error {
-	log.Warn().Str("bundleId", bundleId).
+	log.Debug().Str("bundleId", bundleId).
 		Strs("viewControllerType", viewControllerType).
-		Msg("ios view controller assertion not implemented, skip")
+		Msg("assert ios foreground bundleId")
+
+	app, err := wd.GetForegroundApp()
+	if err != nil {
+		log.Warn().Err(err).Msg("get foreground app failed, skip bundleId assertion")
+		return nil // Notice: ignore error when get foreground app failed
+	}
+
+	// assert package
+	if app.BundleId != bundleId {
+		log.Error().
+			Interface("foreground_app", app.AppBaseInfo).
+			Str("expected_package", bundleId).
+			Msg("assert package failed")
+		return errors.Wrap(code.MobileUIAssertForegroundAppError,
+			"assert foreground package failed")
+	}
 	return nil
 }
 

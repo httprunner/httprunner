@@ -435,6 +435,15 @@ func Test_remoteWD_Source(t *testing.T) {
 	fmt.Println(source)
 }
 
+func TestGetForegroundApp(t *testing.T) {
+	setup(t)
+	app, err := driver.GetForegroundApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(app)
+}
+
 func Test_remoteWD_AccessibleSource(t *testing.T) {
 	setup(t)
 
