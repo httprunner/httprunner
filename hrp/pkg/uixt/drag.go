@@ -3,16 +3,19 @@ package uixt
 import (
 	"fmt"
 
+	"github.com/httprunner/httprunner/v4/hrp/code"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
 func (dExt *DriverExt) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
-	return dExt.Driver.Drag(fromX, fromY, toX, toY, options...)
-}
+	windowSize, err := dExt.Driver.WindowSize()
+	if err != nil {
+		return errors.Wrap(code.DeviceGetInfoError, err.Error())
+	}
+	width := windowSize.Width
+	height := windowSize.Height
 
-func (dExt *DriverExt) DragRelative(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
-	width := dExt.windowSize.Width
-	height := dExt.windowSize.Height
 	orientation, err := dExt.Driver.Orientation()
 	if err != nil {
 		log.Warn().Err(err).Msgf("drag from (%v, %v) to (%v, %v) get orientation failed, use default orientation",

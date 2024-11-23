@@ -20,7 +20,6 @@ type DriverExt struct {
 	Driver       IWebDriver
 	ImageService IImageService // used to extract image data
 
-	windowSize Size
 	// funplugin
 	plugin funplugin.IPlugin
 }
