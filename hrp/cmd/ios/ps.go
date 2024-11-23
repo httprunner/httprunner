@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
@@ -30,34 +29,12 @@ var psCmd = &cobra.Command{
 			return err
 		}
 
-		apps, err := device.AppList()
+		runningProcesses, err := device.ListProcess(!isAll)
 		if err != nil {
-			return errors.Wrap(err, "get ios apps failed")
-		}
-
-		maxNameLen := 0
-		mapper := make(map[string]interface{})
-		for _, app := range apps {
-			mapper[app.ExecutableName] = app.CFBundleIdentifier
-			if len(app.ExecutableName) > maxNameLen {
-				maxNameLen = len(app.ExecutableName)
-			}
-		}
-
-		runningProcesses, err := device.AppRunningProcesses()
-		if err != nil {
-			return errors.Wrap(err, "get running processes failed")
+			return err
 		}
 		for _, p := range runningProcesses {
-			if !isAll && !p.IsApplication {
-				continue
-			}
-			bundleID, ok := mapper[p.Name]
-			if !ok {
-				bundleID = ""
-			}
-
-			fmt.Printf("%4d %-"+fmt.Sprintf("%d", maxNameLen)+"s %20s %s\n",
+			fmt.Printf("%4d %-"+fmt.Sprintf("%d", len(runningProcesses))+"s %20s %s\n",
 				p.Pid, p.Name, time.Since(p.StartDate).String(), bundleID)
 		}
 		return nil

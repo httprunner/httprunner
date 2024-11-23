@@ -11,10 +11,10 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
-var installCmd = &cobra.Command{
-	Use:   "install [flags] PACKAGE",
-	Short: "Push package to the device and install them atomically",
-	Args:  cobra.MinimumNArgs(1),
+var uninstallCmd = &cobra.Command{
+	Use:   "uninstall [flags] PACKAGE",
+	Short: "uninstall Package atomically",
+	Args:  cobra.MinimumNArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		startTime := time.Now()
 		defer func() {
@@ -24,6 +24,10 @@ var installCmd = &cobra.Command{
 				"engagement_time_msec": time.Since(startTime).Milliseconds(),
 			})
 		}()
+		if len(bundleId) == 0 {
+			return fmt.Errorf("bundleId is empty")
+		}
+
 		_, err = getDevice(udid)
 		if err != nil {
 			return err
@@ -35,7 +39,7 @@ var installCmd = &cobra.Command{
 			return err
 		}
 
-		err = device.Install(args[0])
+		err = device.Uninstall(bundleId)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -45,8 +49,11 @@ var installCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	installCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's serial")
+var bundleId string
 
-	iosRootCmd.AddCommand(installCmd)
+func init() {
+	uninstallCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's serial")
+	uninstallCmd.Flags().StringVarP(&bundleId, "bundleId", "b", "", "bundleId to uninstall")
+
+	iosRootCmd.AddCommand(uninstallCmd)
 }

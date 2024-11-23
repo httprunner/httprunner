@@ -54,6 +54,7 @@ type LoginRequest struct {
 	PackageName string `json:"packageName"`
 	PhoneNumber string `json:"phoneNumber"`
 	Captcha     string `json:"captcha"`
+	Password    string `json:"password"`
 }
 
 type LogoutRequest struct {

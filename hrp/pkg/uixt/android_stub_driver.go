@@ -24,6 +24,12 @@ type stubAndroidDriver struct {
 
 const StubSocketName = "com.bytest.device"
 
+type AppLoginInfo struct {
+	Did     string `json:"did,omitempty" yaml:"did,omitempty"`
+	Uid     string `json:"uid,omitempty" yaml:"uid,omitempty"`
+	IsLogin bool   `json:"is_login,omitempty" yaml:"is_login,omitempty"`
+}
+
 // newStubAndroidDriver
 // 创建stub Driver address为forward后的端口格式127.0.0.1:${port}
 func newStubAndroidDriver(address string, urlPrefix string, readTimeout ...time.Duration) (*stubAndroidDriver, error) {
@@ -174,52 +180,37 @@ func (sad *stubAndroidDriver) Source(srcOpt ...SourceOption) (source string, err
 	return res.(string), nil
 }
 
-func (sad *stubAndroidDriver) LoginNoneUIBak(packageName, phoneNumber, captcha string) error {
-	_, err := sad.adbClient.RunShellCommand(
-		"am", "broadcast",
-		"-a", fmt.Sprintf("%s.util.crony.action_login", packageName),
-		"-e", "phone", phoneNumber,
-		"-e", "code", captcha)
-	if err != nil {
-		return err
-	}
-	time.Sleep(10 * time.Second)
-	login, err := sad.isLogin(packageName)
-	if err != nil || !login {
-		log.Err(err).Msg("failed to login")
-		return fmt.Errorf("failed to login")
-	}
-	return err
-}
-
-func (sad *stubAndroidDriver) LoginNoneUI(packageName, phoneNumber, captcha string) error {
+func (sad *stubAndroidDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
 	params := map[string]interface{}{
 		"phone": phoneNumber,
-		"code":  captcha,
+	}
+	if captcha != "" {
+		params["captcha"] = captcha
+	} else if password != "" {
+		params["password"] = password
+	} else {
+		return info, fmt.Errorf("password and capcha is empty")
 	}
 	resp, err := sad.httpPOST(params, "/host", "/login", "account")
 	if err != nil {
-		return err
+		return info, err
 	}
 	res, err := resp.valueConvertToJsonObject()
 	if err != nil {
-		return err
+		return info, err
 	}
 	log.Info().Msgf("%v", res)
 	if res["isSuccess"] != true {
-		err = fmt.Errorf("failed to login %s", res["data"])
+		err = fmt.Errorf("falied to login %s", res["data"])
 		log.Err(err).Msgf("%v", res)
-		return err
+		return info, err
 	}
-	time.Sleep(10 * time.Second)
-	login, err := sad.isLogin(packageName)
-	if err != nil {
-		return err
+	time.Sleep(20 * time.Second)
+	info, err = sad.getLoginAppInfo(packageName)
+	if err != nil || !info.IsLogin {
+		return info, fmt.Errorf("falied to login %v", info)
 	}
-	if !login {
-		return fmt.Errorf("failed to login")
-	}
-	return nil
+	return info, nil
 }
 
 func (sad *stubAndroidDriver) LogoutNoneUI(packageName string) error {
@@ -233,11 +224,15 @@ func (sad *stubAndroidDriver) LogoutNoneUI(packageName string) error {
 	}
 	log.Info().Msgf("%v", res)
 	if res["isSuccess"] != true {
-		err = fmt.Errorf("failed to logout %s", res["data"])
+		err = fmt.Errorf("falied to logout %s", res["data"])
 		log.Err(err).Msgf("%v", res)
 		return err
 	}
-	log.Info().Interface("resp", resp).Msg("logout success")
+	fmt.Printf("%v", resp)
+	if err != nil {
+		return err
+	}
+	time.Sleep(3 * time.Second)
 	return nil
 }
 
@@ -256,21 +251,44 @@ func (sad *stubAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber string
 	return nil
 }
 
-func (sad *stubAndroidDriver) isLogin(packageName string) (login bool, err error) {
-	resp, err := sad.httpGET("/host", "/login", "/check")
+func (sad *stubAndroidDriver) SetHDTStatus(status bool) error {
+	_, err := sad.adbClient.RunShellCommand("settings", "put", "global", "feedbacker_sso_bypass_token", "default_sso_bypass_token")
 	if err != nil {
-		return false, err
+		log.Warn().Msg(fmt.Sprintf("failed to disable sso, error: %v", err))
+	}
+	params := map[string]interface{}{
+		"ClassName": "com.bytedance.ies.stark.framework.HybridDevTool",
+		"Method":    "setEnabled",
+		"RetType":   "",
+		"Args":      []bool{status},
+	}
+	res, err := sad.sendCommand("com.ss.android.ugc.aweme", "CallStaticMethod", params)
+	if err != nil {
+		return fmt.Errorf("failed to set hds status %v, error: %v", status, err)
+	}
+	log.Info().Msg(fmt.Sprintf("set hdt status result: %s", res))
+	return nil
+}
+
+func (sad *stubAndroidDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {
+	resp, err := sad.httpGET("/host", "/app", "/info")
+	if err != nil {
+		return info, err
 	}
 	res, err := resp.valueConvertToJsonObject()
 	if err != nil {
-		return false, err
+		return info, err
 	}
-	log.Info().Msgf("%v", res)
 	if res["isSuccess"] != true {
-		err = fmt.Errorf("failed to check login %s", res["data"])
+		err = fmt.Errorf("falied to get app info %s", res["data"])
 		log.Err(err).Msgf("%v", res)
-		return false, err
+		return info, err
 	}
-	log.Info().Interface("resp", resp).Msg("check login success")
-	return true, nil
+
+	err = json.Unmarshal([]byte(res["data"].(string)), &info)
+	if err != nil {
+		err = fmt.Errorf("falied to parse app info %s", res["data"])
+		return
+	}
+	return info, nil
 }

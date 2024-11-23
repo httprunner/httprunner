@@ -1,9 +1,7 @@
 package ios
 
 import (
-	"encoding/base64"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -33,22 +31,18 @@ var mountCmd = &cobra.Command{
 			return err
 		}
 
-		value, err := device.GetValue("", "ProductVersion")
+		images, errImage := device.ListImage()
 		if err != nil {
-			return fmt.Errorf("get device ProductVersion failed: %v", err)
+			return fmt.Errorf("list device images failed: %v", err)
 		}
-		log.Info().Str("version", value.(string)).Msg("get device version")
-
-		imageSignatures, errImage := device.Images()
-
 		if listDeveloperDiskImage {
-			for i, imgSign := range imageSignatures {
-				fmt.Printf("[%d] %s\n", i+1, base64.StdEncoding.EncodeToString(imgSign))
+			for i, imgSign := range images {
+				fmt.Printf("[%d] %s\n", i+1, imgSign)
 			}
 			return nil
 		}
 
-		if errImage == nil && len(imageSignatures) > 0 {
+		if errImage == nil && len(images) > 0 {
 			log.Info().Msg("ios developer image is already mounted")
 			return nil
 		}
@@ -59,27 +53,8 @@ var mountCmd = &cobra.Command{
 			return fmt.Errorf("developer disk image directory not exist: %s", developerDiskImageDir)
 		}
 
-		ver := strings.Split(value.(string), ".")
-		if len(ver) < 2 {
-			return fmt.Errorf("got invalid device ProductVersion: %v", value)
-		}
-		version := ver[0] + "." + ver[1]
-
-		var dmgPath, signaturePath string
-		if builtin.IsFilePathExists(filepath.Join(developerDiskImageDir, "DeveloperDiskImage.dmg")) {
-			dmgPath = filepath.Join(developerDiskImageDir, "DeveloperDiskImage.dmg")
-			signaturePath = filepath.Join(developerDiskImageDir, "DeveloperDiskImage.dmg.signature")
-		} else if builtin.IsFilePathExists(filepath.Join(developerDiskImageDir, version, "DeveloperDiskImage.dmg")) {
-			dmgPath = filepath.Join(developerDiskImageDir, version, "DeveloperDiskImage.dmg")
-			signaturePath = filepath.Join(developerDiskImageDir, version, "DeveloperDiskImage.dmg.signature")
-		} else {
-			log.Error().Str("dir", developerDiskImageDir).Msgf(
-				"developer disk image %s not found in directory", version)
-			return fmt.Errorf("developer disk image %s not found", version)
-		}
-
-		if err = device.MountDeveloperDiskImage(dmgPath, signaturePath); err != nil {
-			return fmt.Errorf("mount developer disk image %s failed: %s", version, err)
+		if err = device.MountImage(developerDiskImageDir); err != nil {
+			return fmt.Errorf("mount developer disk image failed: %s", err)
 		}
 
 		log.Info().Msg("mount developer disk image successfully")

@@ -446,12 +446,14 @@ type DriverOptions struct {
 	plugin           funplugin.IPlugin
 	withImageService bool
 	withResultFolder bool
+	withUIAction     bool
 }
 
 func NewDriverOptions() *DriverOptions {
 	return &DriverOptions{
 		withImageService: true,
 		withResultFolder: true,
+		withUIAction:     true,
 	}
 }
 
@@ -475,6 +477,12 @@ func WithDriverResultFolder(withResultFolder bool) DriverOption {
 	}
 }
 
+func WithUIAction(withUIAction bool) DriverOption {
+	return func(options *DriverOptions) {
+		options.withUIAction = withUIAction
+	}
+}
+
 func WithDriverPlugin(plugin funplugin.IPlugin) DriverOption {
 	return func(options *DriverOptions) {
 		options.plugin = plugin
@@ -490,17 +498,13 @@ type IDevice interface {
 	// TODO: add ctx to NewDriver
 	NewDriver(...DriverOption) (driverExt *DriverExt, err error)
 
-	StartPerf() error
-	StopPerf() string
-
-	StartPcap() error
-	StopPcap() string
-
 	Install(appPath string, options ...InstallOption) error
 	Uninstall(packageName string) error
 
 	GetPackageInfo(packageName string) (AppInfo, error)
 	GetCurrentWindow() (windowInfo WindowInfo, err error)
+
+	// Teardown() error
 }
 
 type ForegroundApp struct {
@@ -577,18 +581,15 @@ type IWebDriver interface {
 	TapFloat(x, y float64, options ...ActionOption) error
 
 	// DoubleTap Sends a double tap event at the coordinate.
-	DoubleTap(x, y int, options ...ActionOption) error
-	DoubleTapFloat(x, y float64, options ...ActionOption) error
+	DoubleTap(x, y float64, options ...ActionOption) error
 
 	// TouchAndHold Initiates a long-press gesture at the coordinate, holding for the specified duration.
 	//  second: The default value is 1
-	TouchAndHold(x, y int, second ...float64) error
-	TouchAndHoldFloat(x, y float64, second ...float64) error
+	TouchAndHold(x, y float64, options ...ActionOption) error
 
 	// Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
 	// WithPressDurationOption option can be used to set pressForDuration (default to 1 second).
-	Drag(fromX, fromY, toX, toY int, options ...ActionOption) error
-	DragFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error
+	Drag(fromX, fromY, toX, toY float64, options ...ActionOption) error
 
 	// Swipe works like Drag, but `pressForDuration` value is 0
 	Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error
@@ -620,12 +621,14 @@ type IWebDriver interface {
 
 	PressKeyCode(keyCode KeyCode) (err error)
 
+	Backspace(count int, options ...ActionOption) (err error)
+
 	Screenshot() (*bytes.Buffer, error)
 
 	// Source Return application elements tree
 	Source(srcOpt ...SourceOption) (string, error)
 
-	LoginNoneUI(packageName, phoneNumber string, captcha string) error
+	LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error)
 	LogoutNoneUI(packageName string) error
 
 	TapByText(text string, options ...ActionOption) error
@@ -647,4 +650,9 @@ type IWebDriver interface {
 	// triggers the log capture and returns the log entries
 	StartCaptureLog(identifier ...string) (err error)
 	StopCaptureLog() (result interface{}, err error)
+
+	GetDriverResults() []*DriverResult
+	RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error)
+
+	TearDown() error
 }

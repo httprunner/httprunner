@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
+	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
 )
 
 type Application struct {
@@ -37,21 +37,20 @@ var listAppsCmd = &cobra.Command{
 			return err
 		}
 
-		var applicationType gidevice.ApplicationType
+		device.GetDeviceInfo()
+		var applicationType uixt.ApplicationType
 		switch appType {
 		case "user":
-			applicationType = gidevice.ApplicationTypeUser
+			applicationType = uixt.ApplicationTypeUser
 		case "system":
-			applicationType = gidevice.ApplicationTypeSystem
+			applicationType = uixt.ApplicationTypeSystem
 		case "internal":
-			applicationType = gidevice.ApplicationTypeInternal
+			applicationType = uixt.ApplicationTypeInternal
 		case "all":
-			applicationType = gidevice.ApplicationTypeAny
+			applicationType = uixt.ApplicationTypeAny
 		}
 
-		result, err := device.InstallationProxyBrowse(
-			gidevice.WithApplicationType(applicationType),
-			gidevice.WithReturnAttributes("CFBundleVersion", "CFBundleDisplayName", "CFBundleIdentifier"))
+		result, err := device.ListApps(applicationType)
 		if err != nil {
 			return fmt.Errorf("get app list failed %v", err)
 		}

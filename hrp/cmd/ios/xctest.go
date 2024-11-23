@@ -2,10 +2,7 @@ package ios
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
@@ -37,33 +34,24 @@ var xctestCmd = &cobra.Command{
 		}
 
 		log.Info().Str("bundleID", bundleID).Msg("run xctest")
-		out, cancel, err := device.XCTest(bundleID)
+		err = device.RunXCTest(bundleID, testRunnerBundleID, xctestConfig)
 		if err != nil {
 			return errors.Wrap(err, "run xctest failed")
 		}
-
-		done := make(chan os.Signal, 1)
-		signal.Notify(done, syscall.SIGTERM, syscall.SIGINT)
-
-		// print xctest running logs
-		go func() {
-			for s := range out {
-				fmt.Print(s)
-			}
-			done <- os.Interrupt
-		}()
-
-		<-done
-		cancel()
-
 		return nil
 	},
 }
 
-var bundleID string
+var (
+	bundleID           string
+	testRunnerBundleID string
+	xctestConfig       string
+)
 
 func init() {
 	xctestCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's udid")
 	xctestCmd.Flags().StringVarP(&bundleID, "bundleID", "b", "", "specify ios bundleID")
+	xctestCmd.Flags().StringVarP(&testRunnerBundleID, "testRunnerBundleID", "t", "", "specify ios testRunnerBundleID")
+	xctestCmd.Flags().StringVarP(&xctestConfig, "xctestConfig", "x", "", "specify ios xctestConfig")
 	iosRootCmd.AddCommand(xctestCmd)
 }

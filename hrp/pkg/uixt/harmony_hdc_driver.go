@@ -175,27 +175,15 @@ func (hd *hdcDriver) TapFloat(x, y float64, options ...ActionOption) error {
 	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
 }
 
-func (hd *hdcDriver) DoubleTap(x, y int, options ...ActionOption) error {
+func (hd *hdcDriver) DoubleTap(x, y float64, options ...ActionOption) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) DoubleTapFloat(x, y float64, options ...ActionOption) error {
+func (hd *hdcDriver) TouchAndHold(x, y float64, options ...ActionOption) (err error) {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) TouchAndHold(x, y int, second ...float64) error {
-	return errDriverNotImplemented
-}
-
-func (hd *hdcDriver) TouchAndHoldFloat(x, y float64, second ...float64) error {
-	return errDriverNotImplemented
-}
-
-func (hd *hdcDriver) Drag(fromX, fromY, toX, toY int, options ...ActionOption) error {
-	return errDriverNotImplemented
-}
-
-func (hd *hdcDriver) DragFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
+func (hd *hdcDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	return errDriverNotImplemented
 }
 
@@ -260,6 +248,10 @@ func (hd *hdcDriver) PressBack(options ...ActionOption) error {
 	return hd.uiDriver.PressBack()
 }
 
+func (hd *hdcDriver) Backspace(count int, options ...ActionOption) (err error) {
+	return nil
+}
+
 func (hd *hdcDriver) PressKeyCode(keyCode KeyCode) (err error) {
 	return errDriverNotImplemented
 }
@@ -292,8 +284,9 @@ func (hd *hdcDriver) Source(srcOpt ...SourceOption) (string, error) {
 	return "", nil
 }
 
-func (hd *hdcDriver) LoginNoneUI(packageName, phoneNumber string, captcha string) error {
-	return errDriverNotImplemented
+func (hd *hdcDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+	err = errDriverNotImplemented
+	return
 }
 
 func (hd *hdcDriver) LogoutNoneUI(packageName string) error {
@@ -335,4 +328,16 @@ func (hd *hdcDriver) StartCaptureLog(identifier ...string) (err error) {
 func (hd *hdcDriver) StopCaptureLog() (result interface{}, err error) {
 	// defer clear(hd.points)
 	return hd.points, nil
+}
+
+func (hd *hdcDriver) GetDriverResults() []*DriverResult {
+	return nil
+}
+
+func (hd *hdcDriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
+	return "", nil
+}
+
+func (hd *hdcDriver) TearDown() error {
+	return nil
 }

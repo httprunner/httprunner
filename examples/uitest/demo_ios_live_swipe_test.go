@@ -19,10 +19,6 @@ func TestIOSDouyinLive(t *testing.T) {
 				uixt.WithWDALogOn(true),
 				uixt.WithWDAPort(8700),
 				uixt.WithWDAMjpegPort(8800),
-				uixt.WithIOSPerfOptions(
-					uixt.WithIOSPerfSystemCPU(true),
-					uixt.WithIOSPerfSystemMem(true),
-				),
 			),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").

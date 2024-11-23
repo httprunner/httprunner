@@ -600,10 +600,6 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 				logs["content"] = log
 			}
 
-			// stop performance monitor
-			logs["performance"] = client.Device.StopPerf()
-			logs["pcap"] = client.Device.StopPcap()
-
 			summary.Logs = append(summary.Logs, logs)
 		}
 	}()

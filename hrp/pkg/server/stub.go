@@ -105,7 +105,7 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 
-	err = dExt.Driver.LoginNoneUI(loginReq.PackageName, loginReq.PhoneNumber, loginReq.Captcha)
+	info, err := dExt.Driver.LoginNoneUI(loginReq.PackageName, loginReq.PhoneNumber, loginReq.Captcha, loginReq.Password)
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to login", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
@@ -117,7 +117,7 @@ func loginHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
+	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success", Result: info})
 }
 
 func logoutHandler(c *gin.Context) {

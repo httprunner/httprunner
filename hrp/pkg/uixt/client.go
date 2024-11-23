@@ -62,8 +62,9 @@ type Driver struct {
 	client    *http.Client
 
 	// cache to avoid repeated query
-	scale      float64
-	windowSize *Size
+	scale         float64
+	windowSize    *Size
+	driverResults []*DriverResult
 
 	// cache session data
 	session DriverSession

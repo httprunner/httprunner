@@ -262,7 +262,7 @@ func TestDriver_Drag(t *testing.T) {
 	}
 	time.Sleep(time.Millisecond * 200)
 
-	err = driver.DragFloat(400, 501.5, 400, 261.5)
+	err = driver.Drag(400, 501.5, 400, 261.5)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -498,6 +498,24 @@ func TestTapTexts(t *testing.T) {
 		{Text: "^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|安装|授权本次安装|继续安装|重新安装)$", Options: []ActionOption{WithRegex(true), WithIgnoreNotFoundError(true)}},
 	}
 	err := driverExt.Driver.TapByTexts(actions...)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRecordVideo(t *testing.T) {
+	setupAndroidAdbDriver(t)
+	path, err := driverExt.Driver.(*adbDriver).RecordScreen("", 5*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	println(path)
+}
+
+func Test_Android_Backspace(t *testing.T) {
+	setupAndroidAdbDriver(t)
+
+	err := driverExt.Driver.Backspace(1)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -37,33 +37,11 @@ func convertTimeToSeconds(timeStr string) (int, error) {
 }
 
 func initIOSDevice(uuid string) uixt.IDevice {
-	perfOptions := []uixt.IOSPerfOption{}
-	for _, p := range perf {
-		switch p {
-		case "sys_cpu":
-			perfOptions = append(perfOptions, uixt.WithIOSPerfSystemCPU(true))
-		case "sys_mem":
-			perfOptions = append(perfOptions, uixt.WithIOSPerfSystemMem(true))
-		case "sys_net":
-			perfOptions = append(perfOptions, uixt.WithIOSPerfSystemNetwork(true))
-		case "sys_disk":
-			perfOptions = append(perfOptions, uixt.WithIOSPerfSystemDisk(true))
-		case "network":
-			perfOptions = append(perfOptions, uixt.WithIOSPerfNetwork(true))
-		case "fps":
-			perfOptions = append(perfOptions, uixt.WithIOSPerfFPS(true))
-		case "gpu":
-			perfOptions = append(perfOptions, uixt.WithIOSPerfGPU(true))
-		}
-	}
-	perfOptions = append(perfOptions, uixt.WithIOSPerfOutputInterval(interval*1000))
-
 	device, err := uixt.NewIOSDevice(
 		uixt.WithUDID(uuid),
 		uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800),
 		uixt.WithResetHomeOnStartup(false), // not reset home on startup
-		uixt.WithIOSPerfOptions(perfOptions...),
-		uixt.WithXCTest("com.gtf.wda.runner.xctrunner"),
+
 	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init ios device")
@@ -267,7 +245,6 @@ func (wc *WorldCupLive) dumpResult() error {
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "    ")
 
-	wc.PerfFile = wc.driver.Device.StopPerf()
 	err := encoder.Encode(wc)
 	if err != nil {
 		log.Error().Err(err).Msg("encode json failed")
