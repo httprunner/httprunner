@@ -1047,5 +1047,6 @@ func (ad *adbDriver) RecordScreen(folderPath string, duration time.Duration) (vi
 	return filepath.Abs(fileName)
 }
 
-func (ad *adbDriver) TearDown() {
+func (ad *adbDriver) TearDown() error {
+	return nil
 }

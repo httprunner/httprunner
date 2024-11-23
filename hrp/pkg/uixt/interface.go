@@ -654,5 +654,5 @@ type IWebDriver interface {
 	GetDriverResults() []*DriverResult
 	RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error)
 
-	TearDown()
+	TearDown() error
 }

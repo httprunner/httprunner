@@ -537,9 +537,9 @@ func (s *stubIOSDriver) LogoutNoneUI(packageName string) error {
 	return nil
 }
 
-func (s *stubIOSDriver) TearDown() {
+func (s *stubIOSDriver) TearDown() error {
 	s.Driver.client.CloseIdleConnections()
-	return
+	return nil
 }
 
 func (s *stubIOSDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {

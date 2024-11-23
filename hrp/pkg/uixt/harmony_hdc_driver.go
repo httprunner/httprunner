@@ -338,5 +338,6 @@ func (hd *hdcDriver) RecordScreen(folderPath string, duration time.Duration) (vi
 	return "", nil
 }
 
-func (hd *hdcDriver) TearDown() {
+func (hd *hdcDriver) TearDown() error {
+	return nil
 }

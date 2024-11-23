@@ -997,9 +997,10 @@ func (wd *wdaDriver) GetDriverResults() []*DriverResult {
 	return wd.Driver.driverResults
 }
 
-func (wd *wdaDriver) TearDown() {
+func (wd *wdaDriver) TearDown() error {
 	wd.mjpegClient.CloseIdleConnections()
 	wd.client.CloseIdleConnections()
+	return nil
 }
 
 type rawResponse []byte

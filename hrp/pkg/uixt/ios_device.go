@@ -356,6 +356,9 @@ func (dev *IOSDevice) Init() error {
 		dev.d.UserspaceTUNPort = info.UserspaceTUNPort
 		dev.d.UserspaceTUN = info.UserspaceTUN
 		rsdService, err := ios.NewWithAddrPortDevice(info.Address, info.RsdPort, dev.d)
+		if err != nil {
+			return err
+		}
 		defer rsdService.Close()
 		rsdProvider, err := rsdService.Handshake()
 		if err != nil {
