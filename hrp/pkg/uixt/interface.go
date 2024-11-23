@@ -592,8 +592,7 @@ type IWebDriver interface {
 	Drag(fromX, fromY, toX, toY float64, options ...ActionOption) error
 
 	// Swipe works like Drag, but `pressForDuration` value is 0
-	Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error
-	SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error
+	Swipe(fromX, fromY, toX, toY float64, options ...ActionOption) error
 
 	// SetPasteboard Sets data to the general pasteboard
 	SetPasteboard(contentType PasteboardType, content string) error

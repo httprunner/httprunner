@@ -418,11 +418,7 @@ func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 	return nil
 }
 
-func (ad *adbDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error {
-	return ad.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
-}
-
-func (ad *adbDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
+func (ad *adbDriver) Swipe(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	actionOptions := NewActionOptions(options...)
 
 	if len(actionOptions.Offset) == 4 {

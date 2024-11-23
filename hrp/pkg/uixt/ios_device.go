@@ -818,7 +818,9 @@ func (dev *IOSDevice) NewStubDriver() (driver IWebDriver, err error) {
 			fmt.Sprintf("forward tcp port failed: %v", err))
 	}
 	host := "localhost"
-	stubDriver, err := newStubIOSDriver(fmt.Sprintf("http://%s:%d", host, localStubPort), fmt.Sprintf("http://%s:%d", host, localServerPort), dev)
+	stubDriver, err := newStubIOSDriver(
+		fmt.Sprintf("http://%s:%d", host, localStubPort),
+		fmt.Sprintf("http://%s:%d", host, localServerPort), dev)
 	if err != nil {
 		return nil, err
 	}

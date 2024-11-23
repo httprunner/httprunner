@@ -588,11 +588,7 @@ func (wd *wdaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 	return
 }
 
-func (wd *wdaDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error {
-	return wd.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
-}
-
-func (wd *wdaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
+func (wd *wdaDriver) Swipe(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	return wd.Drag(fromX, fromY, toX, toY, options...)
 }
 

@@ -265,23 +265,6 @@ func (s *stubIOSDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOp
 	return s.wdaDriver.Drag(fromX, fromY, toX, toY, options...)
 }
 
-// Swipe works like Drag, but `pressForDuration` value is 0
-func (s *stubIOSDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error {
-	err := s.setUpWda()
-	if err != nil {
-		return err
-	}
-	return s.wdaDriver.Swipe(fromX, fromY, toX, toY, options...)
-}
-
-func (s *stubIOSDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
-	err := s.setUpWda()
-	if err != nil {
-		return err
-	}
-	return s.wdaDriver.SwipeFloat(fromX, fromY, toX, toY, options...)
-}
-
 // SetPasteboard Sets data to the general pasteboard
 func (s *stubIOSDriver) SetPasteboard(contentType PasteboardType, content string) error {
 	err := s.setUpWda()

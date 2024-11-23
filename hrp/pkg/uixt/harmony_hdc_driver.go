@@ -188,11 +188,7 @@ func (hd *hdcDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 }
 
 // Swipe works like Drag, but `pressForDuration` value is 0
-func (hd *hdcDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error {
-	return hd.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
-}
-
-func (hd *hdcDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
+func (hd *hdcDriver) Swipe(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	actionOptions := NewActionOptions(options...)
 	if len(actionOptions.Offset) == 4 {
 		fromX += float64(actionOptions.Offset[0])

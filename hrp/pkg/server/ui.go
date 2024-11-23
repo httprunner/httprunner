@@ -106,7 +106,7 @@ func dragHandler(c *gin.Context) {
 			return
 		}
 	} else {
-		err := dExt.Driver.SwipeFloat(
+		err := dExt.Driver.Swipe(
 			dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY,
 			actionOptions...)
 		if err != nil {

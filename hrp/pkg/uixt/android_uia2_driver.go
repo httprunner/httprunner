@@ -417,11 +417,7 @@ func (ud *uiaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 // per step. So for a 100 steps, the swipe will take about 1/2 second to complete.
 //
 //	`steps` is the number of move steps sent to the system
-func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error {
-	return ud.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
-}
-
-func (ud *uiaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
+func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY float64, options ...ActionOption) error {
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
 	actionOptions := NewActionOptions(options...)
 	if len(actionOptions.Offset) == 4 {
