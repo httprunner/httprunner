@@ -24,7 +24,7 @@ func setup(t *testing.T) {
 	}
 	capabilities := NewCapabilities()
 	capabilities.WithDefaultAlertAction(AlertActionAccept)
-	driver, err = device.NewUSBDriver(capabilities)
+	driver, err = device.NewHTTPDriver(capabilities)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func TestInstall(t *testing.T) {
 }
 
 func TestNewIOSDevice(t *testing.T) {
-	device, _ := NewIOSDevice()
+	device, _ := NewIOSDevice(WithWDAPort(8700), WithWDAMjpegPort(8800))
 	if device != nil {
 		t.Log(device)
 	}
@@ -70,8 +70,16 @@ func TestNewIOSDevice(t *testing.T) {
 	}
 }
 
+func TestIOSDevice_GetPackageInfo(t *testing.T) {
+	device, err := NewIOSDevice(WithWDAPort(8700))
+	checkErr(t, err)
+	appInfo, err := device.GetPackageInfo("com.apple.Preferences")
+	checkErr(t, err)
+	t.Log(appInfo)
+}
+
 func TestNewWDAHTTPDriver(t *testing.T) {
-	device, _ := NewIOSDevice(WithWDAPort(8700), WithWDAMjpegPort(8800))
+	device, _ := NewIOSDevice()
 	var err error
 	_, err = device.NewHTTPDriver(nil)
 	if err != nil {
@@ -83,14 +91,6 @@ func TestNewUSBDriver(t *testing.T) {
 	setup(t)
 
 	// t.Log(driver.IsWdaHealthy())
-}
-
-func TestIOSDevice_GetPackageInfo(t *testing.T) {
-	device, err := NewIOSDevice(WithWDAPort(8700))
-	checkErr(t, err)
-	appInfo, err := device.GetPackageInfo("com.apple.Preferences")
-	checkErr(t, err)
-	t.Log(appInfo)
 }
 
 func TestDriver_DeviceScaleRatio(t *testing.T) {
@@ -276,7 +276,7 @@ func Test_remoteWD_TouchAndHold(t *testing.T) {
 	setup(t)
 
 	// err := driver.TouchAndHold(200, 300)
-	err := driver.TouchAndHold(200, 300, -1)
+	err := driver.TouchAndHold(200, 300)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -286,7 +286,7 @@ func Test_remoteWD_Drag(t *testing.T) {
 	setup(t)
 
 	// err := driver.Drag(200, 300, 200, 500, WithDataPressDuration(0.5))
-	err := driver.Swipe(200, 300, 200, 500)
+	err := driver.Drag(200, 300, 200, 500, WithPressDuration(2), WithDuration(3))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -308,7 +308,7 @@ func Test_remoteWD_SetPasteboard(t *testing.T) {
 	// err := driver.SetPasteboard(PasteboardTypePlaintext, "gwda")
 	err := driver.SetPasteboard(PasteboardTypeUrl, "Clock-stopwatch://")
 	// userHomeDir, _ := os.UserHomeDir()
-	// bytesImg, _ := os.ReadFile(userHomeDir + "/Pictures/IMG_0806.jpg")
+	// bytesImg, _ := ioutil.ReadFile(userHomeDir + "/Pictures/IMG_0806.jpg")
 	// err := driver.SetPasteboard(PasteboardTypeImage, string(bytesImg))
 	if err != nil {
 		t.Fatal(err)
@@ -333,21 +333,21 @@ func Test_remoteWD_GetPasteboard(t *testing.T) {
 	// 	t.Fatal(err)
 	// }
 	// userHomeDir, _ := os.UserHomeDir()
-	// if err = os.WriteFile(userHomeDir+"/Desktop/p1.png", buffer.Bytes(), 0600); err != nil {
+	// if err = ioutil.WriteFile(userHomeDir+"/Desktop/p1.png", buffer.Bytes(), 0600); err != nil {
 	// 	t.Error(err)
 	// }
 }
 
 func Test_remoteWD_SendKeys(t *testing.T) {
 	setup(t)
-	driver.StartCaptureLog("hrp_wda_log")
-	err := driver.SendKeys("", WithIdentifier("test"))
-	result, _ := driver.StopCaptureLog()
+	// driver.StartCaptureLog("hrp_wda_log")
+	err := driver.SendKeys("test", WithIdentifier("test"))
+	// result, _ := driver.StopCaptureLog()
 	// err := driver.SendKeys("App Store", WithFrequency(3))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(result)
+	// t.Log(result)
 }
 
 func Test_remoteWD_PressButton(t *testing.T) {
@@ -445,3 +445,21 @@ func Test_remoteWD_AccessibleSource(t *testing.T) {
 	_ = source
 	fmt.Println(source)
 }
+
+func TestRecord(t *testing.T) {
+	setup(t)
+	path, err := driver.(*wdaDriver).RecordScreen("", 5*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	println(path)
+}
+
+// func Test_Backspace(t *testing.T) {
+// 	setup(t)
+
+// 	err := driver.Backspace(3)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// }

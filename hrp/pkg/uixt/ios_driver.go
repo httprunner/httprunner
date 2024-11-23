@@ -5,11 +5,17 @@ import (
 	"encoding/base64"
 	builtinJSON "encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
@@ -18,35 +24,32 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 )
 
 type wdaDriver struct {
 	Driver
-
-	// default port
-	defaultConn gidevice.InnerConn
-
-	// mjpeg port
-	mjpegUSBConn  gidevice.InnerConn // via USB
-	mjpegHTTPConn net.Conn           // via HTTP
+	udid          string
+	device        *IOSDevice
+	mjpegHTTPConn net.Conn // via HTTP
 	mjpegClient   *http.Client
+	mjpegUrl      string
 }
 
 func (wd *wdaDriver) resetSession() error {
 	capabilities := NewCapabilities()
 	capabilities.WithDefaultAlertAction(AlertActionAccept)
 
-	_, err := wd.NewSession(capabilities)
+	sessionInfo, err := wd.NewSession(capabilities)
 	if err != nil {
 		return err
 	}
+	wd.session.ID = sessionInfo.SessionId
 	return nil
 }
 
 func (wd *wdaDriver) httpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (rawResp rawResponse, err error) {
 	disableRetryBool := len(disableRetry) > 0 && disableRetry[0]
-	for retryCount := 1; retryCount <= 5; retryCount++ {
+	for retryCount := 1; retryCount <= 2; retryCount++ {
 		rawResp, err = wd.Driver.httpRequest(method, rawURL, rawBody)
 		if err == nil || disableRetryBool {
 			return
@@ -108,19 +111,10 @@ func (wd *wdaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 	if sessionInfo, err = rawResp.valueConvertToSessionInfo(); err != nil {
 		return SessionInfo{}, err
 	}
-	wd.Driver.session.Reset()
-	wd.Driver.session.ID = sessionInfo.SessionId
 	return
 }
 
 func (wd *wdaDriver) DeleteSession() (err error) {
-	if wd.defaultConn != nil {
-		wd.defaultConn.Close()
-	}
-	if wd.mjpegUSBConn != nil {
-		wd.mjpegUSBConn.Close()
-	}
-
 	if wd.mjpegClient != nil {
 		wd.mjpegClient.CloseIdleConnections()
 	}
@@ -399,6 +393,9 @@ func (wd *wdaDriver) AppLaunch(bundleId string) (err error) {
 	// [[FBRoute POST:@"/wda/apps/launch"] respondWithTarget:self action:@selector(handleSessionAppLaunch:)]
 	data := make(map[string]interface{})
 	data["bundleId"] = bundleId
+	data["environment"] = map[string]interface{}{
+		"SHOW_EXPLORER": "NO",
+	}
 	_, err = wd.httpPOST(data, "/session", wd.session.ID, "/wda/apps/launch")
 	if err != nil {
 		return errors.Wrap(code.MobileUILaunchAppError,
@@ -448,20 +445,30 @@ func (wd *wdaDriver) AppDeactivate(second float64) (err error) {
 	return
 }
 
-func (wd *wdaDriver) GetForegroundApp() (app AppInfo, err error) {
-	// appInfo, err := wd.ActiveAppInfo()
-	// if err != nil {
-	// 	return AppInfo{}, err
-	// }
-
-	// app = AppInfo{
-	// 	AppBaseInfo: AppBaseInfo{
-	// 		PackageName: appInfo.BundleId,
-	// 		Activity:    "",
-	// 	},
-	// }
-	return AppInfo{}, errors.Wrap(errDriverNotImplemented,
-		"GetForegroundApp not implemented for ios")
+func (wd *wdaDriver) GetForegroundApp() (appInfo AppInfo, err error) {
+	activeAppInfo, err := wd.ActiveAppInfo()
+	appInfo.BundleId = activeAppInfo.BundleId
+	if err != nil {
+		return appInfo, err
+	}
+	apps, err := wd.device.ListApps(ApplicationTypeAny)
+	if err != nil {
+		return appInfo, err
+	}
+	for _, app := range apps {
+		if app.CFBundleIdentifier == activeAppInfo.BundleId {
+			appInfo.BundleId = app.CFBundleIdentifier
+			appInfo.AppName = app.CFBundleName
+			appInfo.VersionName = app.CFBundleShortVersionString
+			appInfo.PackageName = app.CFBundleIdentifier
+			versionCode, err := strconv.Atoi(app.CFBundleVersion)
+			if err == nil {
+				appInfo.VersionCode = versionCode
+			}
+			return appInfo, err
+		}
+	}
+	return appInfo, err
 }
 
 func (wd *wdaDriver) AssertForegroundApp(bundleId string, viewControllerType ...string) error {
@@ -499,43 +506,35 @@ func (wd *wdaDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 	return
 }
 
-func (wd *wdaDriver) DoubleTap(x, y int, options ...ActionOption) error {
-	return wd.DoubleTapFloat(float64(x), float64(y), options...)
-}
-
-func (wd *wdaDriver) DoubleTapFloat(x, y float64, options ...ActionOption) (err error) {
+func (wd *wdaDriver) DoubleTap(x, y float64, options ...ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
+	actionOptions := NewActionOptions(options...)
+	x = wd.toScale(x)
+	y = wd.toScale(y)
+	if len(actionOptions.Offset) == 2 {
+		x += float64(actionOptions.Offset[0])
+		y += float64(actionOptions.Offset[1])
+	}
+	x += actionOptions.getRandomOffset()
+	y += actionOptions.getRandomOffset()
+
 	data := map[string]interface{}{
-		"x": wd.toScale(x),
-		"y": wd.toScale(y),
+		"x": x,
+		"y": y,
 	}
 	_, err = wd.httpPOST(data, "/session", wd.session.ID, "/wda/doubleTap")
 	return
 }
 
-func (wd *wdaDriver) TouchAndHold(x, y int, second ...float64) error {
-	return wd.TouchAndHoldFloat(float64(x), float64(y), second...)
-}
-
-func (wd *wdaDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err error) {
-	// [[FBRoute POST:@"/wda/touchAndHold"] respondWithTarget:self action:@selector(handleTouchAndHoldCoordinate:)]
-	data := map[string]interface{}{
-		"x": wd.toScale(x),
-		"y": wd.toScale(y),
+func (wd *wdaDriver) TouchAndHold(x, y float64, options ...ActionOption) (err error) {
+	actionOptions := NewActionOptions(options...)
+	if actionOptions.Duration == 0 {
+		options = append(options, WithDuration(1))
 	}
-	if len(second) == 0 || second[0] <= 0 {
-		second = []float64{1.0}
-	}
-	data["duration"] = second[0]
-	_, err = wd.httpPOST(data, "/session", wd.session.ID, "/wda/touchAndHold")
-	return
+	return wd.TapFloat(x, y, options...)
 }
 
-func (wd *wdaDriver) Drag(fromX, fromY, toX, toY int, options ...ActionOption) error {
-	return wd.DragFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
-}
-
-func (wd *wdaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
+func (wd *wdaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
 	actionOptions := NewActionOptions(options...)
 
@@ -560,11 +559,15 @@ func (wd *wdaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...Action
 		"toX":   toX,
 		"toY":   toY,
 	}
+	if actionOptions.PressDuration > 0 {
+		data["pressDuration"] = actionOptions.PressDuration
+	}
 
 	// update data options in post data for extra WDA configurations
 	actionOptions.updateData(data)
 	// wda 43 version
 	_, err = wd.httpPOST(data, "/session", wd.session.ID, "/wda/dragfromtoforduration")
+	// _, err = wd.httpPOST(data, "/session", wd.session.ID, "/wda/drag")
 	return
 }
 
@@ -573,7 +576,7 @@ func (wd *wdaDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) 
 }
 
 func (wd *wdaDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...ActionOption) error {
-	return wd.DragFloat(fromX, fromY, toX, toY, options...)
+	return wd.Drag(fromX, fromY, toX, toY, options...)
 }
 
 func (wd *wdaDriver) SetPasteboard(contentType PasteboardType, content string) (err error) {
@@ -616,6 +619,20 @@ func (wd *wdaDriver) SendKeys(text string, options ...ActionOption) (err error) 
 	actionOptions.updateData(data)
 
 	_, err = wd.httpPOST(data, "/session", wd.session.ID, "/wda/keys")
+	return
+}
+
+func (wd *wdaDriver) Backspace(count int, options ...ActionOption) (err error) {
+	if count == 0 {
+		return nil
+	}
+	actionOptions := NewActionOptions(options...)
+	data := map[string]interface{}{"count": count}
+
+	// new data options in post data for extra WDA configurations
+	actionOptions.updateData(data)
+
+	_, err = wd.httpPOST(data, "/gtf/interaction/input/backspace")
 	return
 }
 
@@ -671,8 +688,8 @@ func (wd *wdaDriver) PressButton(devBtn DeviceButton) (err error) {
 	return
 }
 
-func (wd *wdaDriver) LoginNoneUI(packageName, phoneNumber string, captcha string) error {
-	return errDriverNotImplemented
+func (wd *wdaDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+	return info, errDriverNotImplemented
 }
 
 func (wd *wdaDriver) LogoutNoneUI(packageName string) error {
@@ -742,11 +759,13 @@ func (wd *wdaDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	// [[FBRoute GET:@"/screenshot"].withoutSession respondWithTarget:self action:@selector(handleGetScreenshot:)]
 	var rawResp rawResponse
 	if rawResp, err = wd.httpGET("/session", wd.session.ID, "/screenshot"); err != nil {
-		return nil, errors.Wrap(err, "get WDA screenshot data failed")
+		return nil, errors.Wrap(code.DeviceScreenShotError,
+			fmt.Sprintf("get WDA screenshot data failed: %v", err))
 	}
 
 	if raw, err = rawResp.valueDecodeAsBase64(); err != nil {
-		return nil, errors.Wrap(err, "decode WDA screenshot data failed")
+		return nil, errors.Wrap(code.DeviceScreenShotError,
+			fmt.Sprintf("decode WDA screenshot data failed: %v", err))
 	}
 	return
 }
@@ -864,6 +883,70 @@ func (wd *wdaDriver) triggerWDALog(data map[string]interface{}) (rawResp []byte,
 	return wd.httpPOST(data, "/gtf/automation/log")
 }
 
+func (wd *wdaDriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
+	// 获取当前时间戳
+	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
+	// 创建文件名
+	fileName := fmt.Sprintf("%s/%s.mp4", folderPath, timestamp)
+	err = os.MkdirAll(folderPath, os.ModePerm)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating directory")
+	}
+	// 创建一个文件
+	file, err := os.Create(fileName)
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return "", err
+	}
+	defer func() {
+		// 确保文件在程序结束时被删除
+		_ = file.Close()
+	}()
+
+	// ffmpeg 命令
+	cmd := exec.Command(
+		"ffmpeg",
+		"-use_wallclock_as_timestamps", "1",
+		"-f", "mjpeg",
+		"-y",
+		"-r", "10",
+		"-i", "http://"+wd.mjpegUrl,
+		"-c:v", "libx264",
+		"-vf", "pad=width=ceil(iw/2)*2:height=ceil(ih/2)*2",
+		fileName,
+	)
+	cmd.Stdout = io.Discard
+	cmd.Stderr = io.Discard
+	// 启动命令
+	if err := cmd.Start(); err != nil {
+		fmt.Println("Error starting ffmpeg command:", err)
+		return "", err
+	}
+	timer := time.After(duration)
+
+	done := make(chan error)
+	go func() {
+		// 等待 ffmpeg 命令执行完毕
+		done <- cmd.Wait()
+	}()
+	select {
+	case <-timer:
+		// 超时，停止 ffmpeg 进程
+		fmt.Println("Time is up, stopping ffmpeg command...")
+		if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
+			fmt.Println("Error killing ffmpeg process:", err)
+		}
+	case err := <-done:
+		// ffmpeg 正常结束
+		if err != nil {
+			fmt.Println("FFmpeg finished with error:", err)
+		} else {
+			fmt.Println("FFmpeg finished successfully")
+		}
+	}
+	return filepath.Abs(fileName)
+}
+
 func (wd *wdaDriver) StartCaptureLog(identifier ...string) error {
 	log.Info().Msg("start WDA log recording")
 	if identifier == nil {
@@ -903,8 +986,20 @@ func (wd *wdaDriver) StopCaptureLog() (result interface{}, err error) {
 	return reply.Value, nil
 }
 
-func (ud *wdaDriver) GetSession() *DriverSession {
-	return &ud.Driver.session
+func (wd *wdaDriver) GetSession() *DriverSession {
+	return &wd.Driver.session
+}
+
+func (wd *wdaDriver) GetDriverResults() []*DriverResult {
+	defer func() {
+		wd.Driver.driverResults = nil
+	}()
+	return wd.Driver.driverResults
+}
+
+func (wd *wdaDriver) TearDown() {
+	wd.mjpegClient.CloseIdleConnections()
+	wd.client.CloseIdleConnections()
 }
 
 type rawResponse []byte

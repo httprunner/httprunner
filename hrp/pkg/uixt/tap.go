@@ -93,7 +93,7 @@ func (dExt *DriverExt) DoubleTapXY(x, y float64, options ...ActionOption) error 
 	}
 	x = x * float64(windowSize.Width)
 	y = y * float64(windowSize.Height)
-	err = dExt.Driver.DoubleTapFloat(x, y, options...)
+	err = dExt.Driver.DoubleTap(x, y, options...)
 	if err != nil {
 		return errors.Wrap(code.MobileUITapError, err.Error())
 	}
@@ -110,7 +110,7 @@ func (dExt *DriverExt) DoubleTapOffset(param string, xOffset, yOffset float64, o
 		return err
 	}
 
-	err = dExt.Driver.DoubleTapFloat(point.X+xOffset, point.Y+yOffset, options...)
+	err = dExt.Driver.DoubleTap(point.X+xOffset, point.Y+yOffset, options...)
 	if err != nil {
 		return errors.Wrap(code.MobileUITapError, err.Error())
 	}

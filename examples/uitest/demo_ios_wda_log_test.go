@@ -18,13 +18,6 @@ func TestWDALog(t *testing.T) {
 			SetIOS(
 				uixt.WithWDALogOn(true),
 				uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800),
-				uixt.WithIOSPerfOptions(
-					uixt.WithIOSPerfSystemCPU(true),
-					uixt.WithIOSPerfSystemMem(true),
-					uixt.WithIOSPerfNetwork(true),
-					uixt.WithIOSPerfFPS(true),
-				),
-				uixt.WithXCTest("com.gtf.wda.runner.xctrunner"),
 			),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").

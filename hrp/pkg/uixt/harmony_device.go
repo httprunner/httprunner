@@ -145,22 +145,6 @@ func (dev *HarmonyDevice) NewUSBDriver(options ...DriverOption) (driver IWebDriv
 	return harmonyDriver, nil
 }
 
-func (dev *HarmonyDevice) StartPerf() error {
-	return nil
-}
-
-func (dev *HarmonyDevice) StopPerf() string {
-	return ""
-}
-
-func (dev *HarmonyDevice) StartPcap() error {
-	return nil
-}
-
-func (dev *HarmonyDevice) StopPcap() string {
-	return ""
-}
-
 func (dev *HarmonyDevice) Install(appPath string, options ...InstallOption) error {
 	return nil
 }

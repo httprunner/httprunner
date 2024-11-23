@@ -2,30 +2,41 @@ package uixt
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
-	builtinLog "log"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/Masterminds/semver"
+	"github.com/danielpaulus/go-ios/ios"
+	"github.com/danielpaulus/go-ios/ios/deviceinfo"
+	"github.com/danielpaulus/go-ios/ios/diagnostics"
+	"github.com/danielpaulus/go-ios/ios/forward"
+	"github.com/danielpaulus/go-ios/ios/imagemounter"
+	"github.com/danielpaulus/go-ios/ios/installationproxy"
+	"github.com/danielpaulus/go-ios/ios/instruments"
+	"github.com/danielpaulus/go-ios/ios/testmanagerd"
+	"github.com/danielpaulus/go-ios/ios/tunnel"
+	"github.com/danielpaulus/go-ios/ios/zipconduit"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/config"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/gidevice"
 )
 
 const (
-	defaultWDAPort   = 8100
-	defaultMjpegPort = 9100
+	defaultWDAPort          = 8100
+	defaultMjpegPort        = 9100
+	defaultBightInsightPort = 8000
+	defaultDouyinServerPort = 32921
 )
 
 const (
@@ -43,31 +54,7 @@ const (
 	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
 )
 
-type IOSPerfOption = gidevice.PerfOption
-
-var (
-	WithIOSPerfSystemCPU         = gidevice.WithPerfSystemCPU
-	WithIOSPerfSystemMem         = gidevice.WithPerfSystemMem
-	WithIOSPerfSystemDisk        = gidevice.WithPerfSystemDisk
-	WithIOSPerfSystemNetwork     = gidevice.WithPerfSystemNetwork
-	WithIOSPerfGPU               = gidevice.WithPerfGPU
-	WithIOSPerfFPS               = gidevice.WithPerfFPS
-	WithIOSPerfNetwork           = gidevice.WithPerfNetwork
-	WithIOSPerfBundleID          = gidevice.WithPerfBundleID
-	WithIOSPerfPID               = gidevice.WithPerfPID
-	WithIOSPerfOutputInterval    = gidevice.WithPerfOutputInterval
-	WithIOSPerfProcessAttributes = gidevice.WithPerfProcessAttributes
-	WithIOSPerfSystemAttributes  = gidevice.WithPerfSystemAttributes
-)
-
-type IOSPcapOption = gidevice.PcapOption
-
-var (
-	WithIOSPcapAll      = gidevice.WithPcapAll
-	WithIOSPcapPID      = gidevice.WithPcapPID
-	WithIOSPcapProcName = gidevice.WithPcapProcName
-	WithIOSPcapBundleID = gidevice.WithPcapBundleID
-)
+var tunnelManager *tunnel.TunnelManager = nil
 
 type IOSDeviceOption func(*IOSDevice)
 
@@ -95,6 +82,12 @@ func WithWDALogOn(logOn bool) IOSDeviceOption {
 	}
 }
 
+func WithIOSStub(stub bool) IOSDeviceOption {
+	return func(device *IOSDevice) {
+		device.STUB = stub
+	}
+}
+
 func WithResetHomeOnStartup(reset bool) IOSDeviceOption {
 	return func(device *IOSDevice) {
 		device.ResetHomeOnStartup = reset
@@ -119,54 +112,26 @@ func WithDismissAlertButtonSelector(selector string) IOSDeviceOption {
 	}
 }
 
-func WithXCTest(bundleID string) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.XCTestBundleID = bundleID
-	}
-}
-
-func WithIOSPerfOptions(options ...gidevice.PerfOption) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.PerfOptions = &gidevice.PerfOptions{}
-		for _, option := range options {
-			option(device.PerfOptions)
-		}
-	}
-}
-
-func WithIOSPcapOptions(options ...gidevice.PcapOption) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.PcapOptions = &gidevice.PcapOptions{}
-		for _, option := range options {
-			option(device.PcapOptions)
-		}
-	}
-}
-
-func GetIOSDevices(udid ...string) (devices []gidevice.Device, err error) {
-	var usbmux gidevice.Usbmux
-	if usbmux, err = gidevice.NewUsbmux(); err != nil {
-		return nil, errors.Wrap(code.DeviceConnectionError,
-			fmt.Sprintf("init usbmux failed: %v", err))
-	}
-
-	if devices, err = usbmux.Devices(); err != nil {
+func GetIOSDevices(udid ...string) (deviceList []ios.DeviceEntry, err error) {
+	devices, err := ios.ListDevices()
+	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("list ios devices failed: %v", err))
 	}
-
-	// filter by udid
-	var deviceList []gidevice.Device
-	for _, d := range devices {
-		for _, u := range udid {
-			if u != "" && u != d.Properties().SerialNumber {
-				continue
+	for _, d := range devices.DeviceList {
+		if len(udid) > 0 {
+			for _, u := range udid {
+				if u != "" && u != d.Properties.SerialNumber {
+					continue
+				}
+				// filter non-usb ios devices
+				if d.Properties.ConnectionType != "USB" {
+					continue
+				}
+				deviceList = append(deviceList, d)
 			}
-			// filter non-usb ios devices
-			if d.Properties().ConnectionType != "USB" {
-				continue
-			}
-			deviceList = append(deviceList, d)
+		} else {
+			deviceList = devices.DeviceList
 		}
 	}
 
@@ -182,83 +147,7 @@ func GetIOSDevices(udid ...string) (devices []gidevice.Device, err error) {
 	return deviceList, nil
 }
 
-func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
-	device = &IOSDevice{
-		Port:                       defaultWDAPort,
-		MjpegPort:                  defaultMjpegPort,
-		SnapshotMaxDepth:           snapshotMaxDepth,
-		AcceptAlertButtonSelector:  acceptAlertButtonSelector,
-		DismissAlertButtonSelector: dismissAlertButtonSelector,
-		// switch to iOS springboard before init WDA session
-		// avoid getting stuck when some super app is active such as douyin or wexin
-		ResetHomeOnStartup: true,
-	}
-	for _, option := range options {
-		option(device)
-	}
-
-	deviceList, err := GetIOSDevices(device.UDID)
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
-	}
-
-	if device.UDID == "" && len(deviceList) > 1 {
-		return nil, errors.Wrap(code.DeviceConnectionError, "more than one device connected, please specify the udid")
-	}
-
-	dev := deviceList[0]
-	udid := dev.Properties().SerialNumber
-
-	if device.UDID == "" {
-		device.UDID = udid
-		log.Warn().
-			Str("udid", udid).
-			Msg("ios UDID is not specified, select the first one")
-	}
-
-	device.d = dev
-
-	// run xctest if XCTestBundleID is set
-	if device.XCTestBundleID != "" {
-		_, err = device.RunXCTest(device.XCTestBundleID)
-		if err != nil {
-			log.Error().Err(err).Str("udid", udid).Msg("failed to init XCTest")
-			return
-		}
-	}
-
-	log.Info().Str("udid", device.UDID).Msg("init ios device")
-	return device, nil
-}
-
-type IOSDevice struct {
-	d              gidevice.Device
-	PerfOptions    *gidevice.PerfOptions `json:"perf_options,omitempty" yaml:"perf_options,omitempty"`
-	PcapOptions    *gidevice.PcapOptions `json:"pcap_options,omitempty" yaml:"pcap_options,omitempty"`
-	UDID           string                `json:"udid,omitempty" yaml:"udid,omitempty"`
-	Port           int                   `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
-	MjpegPort      int                   `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
-	LogOn          bool                  `json:"log_on,omitempty" yaml:"log_on,omitempty"`
-	XCTestBundleID string                `json:"xctest_bundle_id,omitempty" yaml:"xctest_bundle_id,omitempty"`
-
-	// switch to iOS springboard before init WDA session
-	ResetHomeOnStartup bool `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
-
-	// config appium settings
-	SnapshotMaxDepth           int    `json:"snapshot_max_depth,omitempty" yaml:"snapshot_max_depth,omitempty"`
-	AcceptAlertButtonSelector  string `json:"accept_alert_button_selector,omitempty" yaml:"accept_alert_button_selector,omitempty"`
-	DismissAlertButtonSelector string `json:"dismiss_alert_button_selector,omitempty" yaml:"dismiss_alert_button_selector,omitempty"`
-
-	// performance monitor
-	perfStop chan struct{} // stop performance monitor
-	perfFile string        // saved perf file path
-
-	// pcap monitor
-	pcapStop chan struct{} // stop pcap monitor
-	pcapFile string        // saved pcap file path
-}
-
-func (dev *IOSDevice) Options() (deviceOptions []IOSDeviceOption) {
+func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
 	if dev.UDID != "" {
 		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
 	}
@@ -270,15 +159,6 @@ func (dev *IOSDevice) Options() (deviceOptions []IOSDeviceOption) {
 	}
 	if dev.LogOn {
 		deviceOptions = append(deviceOptions, WithWDALogOn(true))
-	}
-	if dev.PerfOptions != nil {
-		deviceOptions = append(deviceOptions, WithIOSPerfOptions(dev.perfOpitons()...))
-	}
-	if dev.PcapOptions != nil {
-		deviceOptions = append(deviceOptions, WithIOSPcapOptions(dev.pcapOpitons()...))
-	}
-	if dev.XCTestBundleID != "" {
-		deviceOptions = append(deviceOptions, WithXCTest(dev.XCTestBundleID))
 	}
 	if dev.ResetHomeOnStartup {
 		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
@@ -295,7 +175,207 @@ func (dev *IOSDevice) Options() (deviceOptions []IOSDeviceOption) {
 	return
 }
 
+func StartTunnel(recordsPath string, tunnelInfoPort int, userspaceTUN bool) (err error) {
+	pm, err := tunnel.NewPairRecordManager(recordsPath)
+	if err != nil {
+		return err
+	}
+	tm := tunnel.NewTunnelManager(pm, userspaceTUN)
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+		for {
+			err := tm.UpdateTunnels(context.Background())
+			if err != nil {
+				log.Error().Err(err).Msg("failed to update tunnels")
+			}
+		}
+	}()
+
+	go func() {
+		err := tunnel.ServeTunnelInfo(tm, tunnelInfoPort)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to start tunnel server")
+		}
+	}()
+
+	log.Info().Msg("Tunnel server started")
+	return nil
+}
+
+func RebootTunnel() (err error) {
+	if tunnelManager != nil {
+		_ = tunnelManager.Close()
+	}
+	return StartTunnel(os.TempDir(), ios.HttpApiPort(), true)
+}
+
+func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
+	device = &IOSDevice{
+		Port:                       defaultWDAPort,
+		MjpegPort:                  defaultMjpegPort,
+		SnapshotMaxDepth:           snapshotMaxDepth,
+		AcceptAlertButtonSelector:  acceptAlertButtonSelector,
+		DismissAlertButtonSelector: dismissAlertButtonSelector,
+		// switch to iOS springboard before init WDA session
+		// avoid getting stuck when some super app is active such as douyin or wexin
+		ResetHomeOnStartup: true,
+		listeners:          make(map[int]*forward.ConnListener),
+	}
+	for _, option := range options {
+		option(device)
+	}
+
+	deviceList, err := GetIOSDevices(device.UDID)
+	if err != nil {
+		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
+	}
+
+	if device.UDID == "" && len(deviceList) > 1 {
+		return nil, errors.Wrap(code.DeviceConnectionError, "more than one device connected, please specify the udid")
+	}
+
+	dev := deviceList[0]
+	udid := dev.Properties.SerialNumber
+
+	if device.UDID == "" {
+		device.UDID = udid
+		log.Warn().
+			Str("udid", udid).
+			Msg("ios UDID is not specified, select the first one")
+	}
+
+	device.d = dev
+	log.Info().Str("udid", device.UDID).Msg("init ios device")
+	err = device.Init()
+	if err != nil {
+		_ = device.Teardown()
+		return nil, err
+	}
+	return device, nil
+}
+
+type IOSDevice struct {
+	d         ios.DeviceEntry
+	listeners map[int]*forward.ConnListener
+	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
+	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
+	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
+	STUB      bool   `json:"stub,omitempty" yaml:"stub,omitempty"`             // use stub
+	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+
+	// switch to iOS springboard before init WDA session
+	ResetHomeOnStartup bool `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
+
+	// config appium settings
+	SnapshotMaxDepth           int    `json:"snapshot_max_depth,omitempty" yaml:"snapshot_max_depth,omitempty"`
+	AcceptAlertButtonSelector  string `json:"accept_alert_button_selector,omitempty" yaml:"accept_alert_button_selector,omitempty"`
+	DismissAlertButtonSelector string `json:"dismiss_alert_button_selector,omitempty" yaml:"dismiss_alert_button_selector,omitempty"`
+}
+
+func (dev *IOSDevice) Options() (deviceOptions []IOSDeviceOption) {
+	if dev.UDID != "" {
+		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
+	}
+	if dev.Port != 0 {
+		deviceOptions = append(deviceOptions, WithWDAPort(dev.Port))
+	}
+	if dev.MjpegPort != 0 {
+		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
+	}
+	if dev.STUB {
+		deviceOptions = append(deviceOptions, WithIOSStub(true))
+	}
+	if dev.LogOn {
+		deviceOptions = append(deviceOptions, WithWDALogOn(true))
+	}
+	if dev.ResetHomeOnStartup {
+		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
+	}
+	if dev.SnapshotMaxDepth != 0 {
+		deviceOptions = append(deviceOptions, WithSnapshotMaxDepth(dev.SnapshotMaxDepth))
+	}
+	if dev.AcceptAlertButtonSelector != "" {
+		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.AcceptAlertButtonSelector))
+	}
+	if dev.DismissAlertButtonSelector != "" {
+		deviceOptions = append(deviceOptions, WithDismissAlertButtonSelector(dev.DismissAlertButtonSelector))
+	}
+	return
+}
+
+type DeviceDetail struct {
+	DeviceName        string `json:"deviceName,omitempty"`
+	DeviceClass       string `json:"deviceClass,omitempty"`
+	ProductVersion    string `json:"productVersion,omitempty"`
+	ProductType       string `json:"productType,omitempty"`
+	ProductName       string `json:"productName,omitempty"`
+	PasswordProtected bool   `json:"passwordProtected,omitempty"`
+	ModelNumber       string `json:"modelNumber,omitempty"`
+	SerialNumber      string `json:"serialNumber,omitempty"`
+	SIMStatus         string `json:"simStatus,omitempty"`
+	PhoneNumber       string `json:"phoneNumber,omitempty"`
+	CPUArchitecture   string `json:"cpuArchitecture,omitempty"`
+	ProtocolVersion   string `json:"protocolVersion,omitempty"`
+	RegionInfo        string `json:"regionInfo,omitempty"`
+	TimeZone          string `json:"timeZone,omitempty"`
+	UniqueDeviceID    string `json:"uniqueDeviceID,omitempty"`
+	WiFiAddress       string `json:"wifiAddress,omitempty"`
+	BuildVersion      string `json:"buildVersion,omitempty"`
+}
+type ApplicationType string
+
+const (
+	ApplicationTypeSystem   ApplicationType = "System"
+	ApplicationTypeUser     ApplicationType = "User"
+	ApplicationTypeInternal ApplicationType = "internal"
+	ApplicationTypeAny      ApplicationType = "Any"
+)
+
 func (dev *IOSDevice) Init() error {
+	images, err := dev.ListImage()
+	if err != nil {
+		return err
+	}
+	version, err := dev.getVersion()
+	if err != nil {
+		return err
+	}
+	if len(images) == 0 && version.LessThan(ios.IOS17()) {
+		err = dev.AutoMountImage(os.TempDir())
+		if err != nil {
+			return err
+		}
+	}
+
+	if version.GreaterThan(semver.MustParse("17.4.0")) && dev.STUB {
+		info, err := tunnel.TunnelInfoForDevice(dev.d.Properties.SerialNumber, ios.HttpApiPort())
+		if err != nil {
+			return err
+		}
+		dev.d.UserspaceTUNPort = info.UserspaceTUNPort
+		dev.d.UserspaceTUN = info.UserspaceTUN
+		rsdService, err := ios.NewWithAddrPortDevice(info.Address, info.RsdPort, dev.d)
+		defer rsdService.Close()
+		rsdProvider, err := rsdService.Handshake()
+		if err != nil {
+			return err
+		}
+		device, err := ios.GetDeviceWithAddress(dev.d.Properties.SerialNumber, info.Address, rsdProvider)
+		if err != nil {
+			return err
+		}
+		device.UserspaceTUN = dev.d.UserspaceTUN
+		device.UserspaceTUNPort = dev.d.UserspaceTUNPort
+		dev.d = device
+	}
+	return nil
+}
+
+func (dev *IOSDevice) Teardown() error {
+	for _, listener := range dev.listeners {
+		_ = listener.Close()
+	}
 	return nil
 }
 
@@ -305,6 +385,27 @@ func (dev *IOSDevice) UUID() string {
 
 func (dev *IOSDevice) LogEnabled() bool {
 	return dev.LogOn
+}
+
+func (dev *IOSDevice) getAppInfo(packageName string) (appInfo AppInfo, err error) {
+	apps, err := dev.ListApps(ApplicationTypeAny)
+	if err != nil {
+		return AppInfo{}, err
+	}
+	for _, app := range apps {
+		if app.CFBundleIdentifier == packageName {
+			appInfo.BundleId = app.CFBundleIdentifier
+			appInfo.AppName = app.CFBundleName
+			appInfo.VersionName = app.CFBundleShortVersionString
+			appInfo.PackageName = app.CFBundleIdentifier
+			versionCode, err := strconv.Atoi(app.CFBundleVersion)
+			if err == nil {
+				appInfo.VersionCode = versionCode
+			}
+			return appInfo, err
+		}
+	}
+	return AppInfo{}, fmt.Errorf("not found App by bundle id: %s", packageName)
 }
 
 func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, err error) {
@@ -321,14 +422,25 @@ func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, 
 	}
 
 	var driver IWebDriver
-	if os.Getenv("WDA_USB_DRIVER") == "" {
-		// default use http driver
-		driver, err = dev.NewHTTPDriver(capabilities)
+	if dev.STUB {
+		driver, err = dev.NewStubDriver()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to init Stub driver")
+		}
+
 	} else {
-		driver, err = dev.NewUSBDriver(capabilities)
-	}
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to init WDA driver")
+		driver, err = dev.NewHTTPDriver(capabilities)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to init WDA driver")
+		}
+		settings, err := driver.SetAppiumSettings(map[string]interface{}{
+			"snapshotMaxDepth":          dev.SnapshotMaxDepth,
+			"acceptAlertButtonSelector": dev.AcceptAlertButtonSelector,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to set appium WDA settings")
+		}
+		log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
 	}
 
 	if dev.ResetHomeOnStartup {
@@ -360,122 +472,22 @@ func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, 
 		}
 	}
 
-	if dev.PerfOptions != nil {
-		if err := dev.StartPerf(); err != nil {
-			return nil, err
-		}
-	}
-
-	if dev.PcapOptions != nil {
-		if err := dev.StartPcap(); err != nil {
-			return nil, err
-		}
-	}
-
 	return driverExt, nil
 }
 
-func (dev *IOSDevice) StartPerf() error {
-	log.Info().Msg("start performance monitor")
-	data, err := dev.d.PerfStart(dev.perfOpitons()...)
-	if err != nil {
-		return err
-	}
-
-	dev.perfFile = filepath.Join(config.ResultsPath, "perf.data")
-	file, err := os.OpenFile(dev.perfFile,
-		os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o755)
-	if err != nil {
-		return err
-	}
-
-	dev.perfStop = make(chan struct{})
-	// start performance monitor
-	go func() {
-		for {
-			select {
-			case <-dev.perfStop:
-				file.Close()
-				dev.d.PerfStop()
-				return
-			case d := <-data:
-				_, err = file.WriteString(string(d) + "\n")
-				if err != nil {
-					log.Error().Err(err).
-						Str("line", string(d)).
-						Msg("write perf data failed")
-				}
-			}
-		}
-	}()
-	return nil
-}
-
-func (dev *IOSDevice) StopPerf() string {
-	if dev.perfStop == nil {
-		return ""
-	}
-	close(dev.perfStop)
-	log.Info().Str("perfFile", dev.perfFile).Msg("stop performance monitor")
-	return dev.perfFile
-}
-
-func (dev *IOSDevice) StartPcap() error {
-	log.Info().Msg("start packet capture")
-	packets, err := dev.d.PcapStart(dev.pcapOpitons()...)
-	if err != nil {
-		return err
-	}
-
-	dev.pcapFile = filepath.Join(config.ResultsPath, "dump.pcap")
-	file, err := os.OpenFile(dev.pcapFile,
-		os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o755)
-	if err != nil {
-		return err
-	}
-
-	// pcap magic number
-	// https://www.ietf.org/archive/id/draft-gharris-opsawg-pcap-01.html
-	_, _ = file.Write([]byte{
-		0xd4, 0xc3, 0xb2, 0xa1, 0x02, 0x00, 0x04, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0xff, 0xff, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-	})
-
-	dev.pcapStop = make(chan struct{})
-	// start pcap monitor
-	go func() {
-		for {
-			select {
-			case <-dev.pcapStop:
-				file.Close()
-				dev.d.PcapStop()
-				return
-			case d := <-packets:
-				_, err = file.Write(d)
-				if err != nil {
-					log.Error().Err(err).Msg("write pcap data failed")
-				}
-			}
-		}
-	}()
-	return nil
-}
-
-// StopPcap stops pcap monitor and returns the saved pcap file path
-func (dev *IOSDevice) StopPcap() string {
-	if dev.pcapStop == nil {
-		return ""
-	}
-	close(dev.pcapStop)
-	log.Info().Str("pcapFile", dev.pcapFile).Msg("stop packet capture")
-	return dev.pcapFile
-}
-
 func (dev *IOSDevice) Install(appPath string, options ...InstallOption) (err error) {
-	installOptions := NewInstallOptions(options...)
-	for i := 0; i <= installOptions.RetryTimes; i++ {
-		err = builtin.RunCommand("go-ios", "install", "--path="+appPath, "--udid="+dev.UDID)
+	opts := NewInstallOptions(options...)
+	for i := 0; i <= opts.RetryTimes; i++ {
+		var conn *zipconduit.Connection
+		conn, err = zipconduit.New(dev.d)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+		err = conn.SendFile(appPath)
+		if err != nil {
+			log.Error().Err(err).Msg(fmt.Sprintf("failed to install app Retry time %d", i))
+		}
 		if err == nil {
 			return nil
 		}
@@ -483,129 +495,241 @@ func (dev *IOSDevice) Install(appPath string, options ...InstallOption) (err err
 	return err
 }
 
-func (dev *IOSDevice) Uninstall(bundleId string) error {
-	return builtin.RunCommand("go-ios", "uninstall", bundleId, "--udid="+dev.UDID)
-}
-
-func (dev *IOSDevice) forward(localPort, remotePort int) error {
-	log.Info().Int("localPort", localPort).Int("remotePort", remotePort).
-		Str("udid", dev.UDID).Msg("forward tcp port")
-
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", localPort))
+func (dev *IOSDevice) InstallByUrl(url string, options ...InstallOption) (err error) {
+	appPath, err := builtin.DownloadFileByUrl(url)
 	if err != nil {
-		log.Error().Err(err).Msg("listen tcp error")
 		return err
 	}
-
-	go func(listener net.Listener, device gidevice.Device) {
-		for {
-			accept, err := listener.Accept()
-			if err != nil {
-				log.Error().Err(err).Msg("accept error")
-				continue
-			}
-
-			rInnerConn, err := device.NewConnect(remotePort)
-			if err != nil {
-				log.Error().Err(err).Msg("connect to ios device failed")
-				os.Exit(code.GetErrorCode(code.DeviceConnectionError))
-			}
-
-			rConn := rInnerConn.RawConn()
-			_ = rConn.SetDeadline(time.Time{})
-
-			go func(lConn net.Conn) {
-				go func(lConn, rConn net.Conn) {
-					if _, err := io.Copy(lConn, rConn); err != nil {
-						log.Error().Err(err).Msg("copy local -> remote")
-						rConn.Close()
-						accept.Close()
-					}
-				}(lConn, rConn)
-				go func(lConn, rConn net.Conn) {
-					if _, err := io.Copy(rConn, lConn); err != nil {
-						log.Error().Err(err).Msg("copy local <- remote")
-						rConn.Close()
-						accept.Close()
-					}
-				}(lConn, rConn)
-			}(accept)
-		}
-	}(listener, dev.d)
-
+	err = dev.Install(appPath, options...)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (dev *IOSDevice) perfOpitons() (perfOptions []gidevice.PerfOption) {
-	if dev.PerfOptions == nil {
+func (dev *IOSDevice) Uninstall(bundleId string) error {
+	svc, err := installationproxy.New(dev.d)
+	if err != nil {
+		return err
+	}
+	defer svc.Close()
+	err = svc.Uninstall(bundleId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (dev *IOSDevice) forward(localPort, remotePort int) error {
+	if dev.listeners[localPort] != nil {
+		log.Warn().Msg(fmt.Sprintf("local port :%d is already in use", localPort))
+		_ = dev.listeners[localPort].Close()
+	}
+	listener, err := forward.Forward(dev.d, uint16(localPort), uint16(remotePort))
+	if err != nil {
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to forward %d to %d", localPort, remotePort))
+		return err
+	}
+	dev.listeners[localPort] = listener
+	return nil
+}
+
+func (dev *IOSDevice) GetDeviceInfo() (*DeviceDetail, error) {
+	deviceInfo, err := deviceinfo.NewDeviceInfo(dev.d)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get device info")
+		return nil, err
+	}
+	defer deviceInfo.Close()
+	info, err := deviceInfo.GetDisplayInfo()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get device info")
+		return nil, err
+	}
+
+	jsonData, err := json.Marshal(info)
+	if err != nil {
+		return nil, err
+	}
+
+	// 将 JSON 反序列化为结构体
+	detail := new(DeviceDetail)
+	err = json.Unmarshal(jsonData, &detail)
+	if err != nil {
+		return nil, err
+	}
+	return detail, err
+}
+
+func (dev *IOSDevice) ListApps(appType ApplicationType) (apps []installationproxy.AppInfo, err error) {
+	svc, _ := installationproxy.New(dev.d)
+	defer svc.Close()
+	switch appType {
+	case ApplicationTypeSystem:
+		apps, err = svc.BrowseSystemApps()
+	case ApplicationTypeAny:
+		apps, err = svc.BrowseAllApps()
+	case ApplicationTypeInternal:
+		apps, err = svc.BrowseFileSharingApps()
+	case ApplicationTypeUser:
+		apps, err = svc.BrowseUserApps()
+	}
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list ios apps")
+		return nil, err
+	}
+	return apps, nil
+}
+
+func (dev *IOSDevice) GetAppInfo(packageName string) (appInfo installationproxy.AppInfo, err error) {
+	svc, _ := installationproxy.New(dev.d)
+	defer svc.Close()
+	apps, err := svc.BrowseAllApps()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list ios apps")
+		return installationproxy.AppInfo{}, err
+	}
+	for _, app := range apps {
+		if app.CFBundleIdentifier == packageName {
+			return app, nil
+		}
+	}
+	return installationproxy.AppInfo{}, nil
+}
+
+func (dev *IOSDevice) ListImage() (images []string, err error) {
+	conn, err := imagemounter.NewImageMounter(dev.d)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list image")
+		return
+	}
+	defer conn.Close()
+	signatures, err := conn.ListImages()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list image")
 		return
 	}
 
-	// system
-	if dev.PerfOptions.SysCPU {
-		perfOptions = append(perfOptions, gidevice.WithPerfSystemCPU(true))
-	}
-	if dev.PerfOptions.SysMem {
-		perfOptions = append(perfOptions, gidevice.WithPerfSystemMem(true))
-	}
-	if dev.PerfOptions.SysDisk {
-		perfOptions = append(perfOptions, gidevice.WithPerfSystemDisk(true))
-	}
-	if dev.PerfOptions.SysNetwork {
-		perfOptions = append(perfOptions, gidevice.WithPerfSystemNetwork(true))
-	}
-	if dev.PerfOptions.FPS {
-		perfOptions = append(perfOptions, gidevice.WithPerfFPS(true))
-	}
-	if dev.PerfOptions.Network {
-		perfOptions = append(perfOptions, gidevice.WithPerfNetwork(true))
-	}
-
-	// process
-	if dev.PerfOptions.BundleID != "" {
-		perfOptions = append(perfOptions,
-			gidevice.WithPerfBundleID(dev.PerfOptions.BundleID))
-	}
-	if dev.PerfOptions.Pid != 0 {
-		perfOptions = append(perfOptions,
-			gidevice.WithPerfPID(dev.PerfOptions.Pid))
-	}
-
-	// config
-	if dev.PerfOptions.OutputInterval != 0 {
-		perfOptions = append(perfOptions,
-			gidevice.WithPerfOutputInterval(dev.PerfOptions.OutputInterval))
-	}
-	if dev.PerfOptions.SystemAttributes != nil {
-		perfOptions = append(perfOptions,
-			gidevice.WithPerfSystemAttributes(dev.PerfOptions.SystemAttributes...))
-	}
-	if dev.PerfOptions.ProcessAttributes != nil {
-		perfOptions = append(perfOptions,
-			gidevice.WithPerfProcessAttributes(dev.PerfOptions.ProcessAttributes...))
+	for _, sig := range signatures {
+		images = append(images, fmt.Sprintf("%x", sig))
 	}
 	return
 }
 
-func (dev *IOSDevice) pcapOpitons() (pcapOptions []gidevice.PcapOption) {
-	if dev.PcapOptions == nil {
+func (dev *IOSDevice) MountImage(imagePath string) (err error) {
+	conn, err := imagemounter.NewImageMounter(dev.d)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to mount image")
 		return
 	}
+	defer conn.Close()
+	err = conn.MountImage(imagePath)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to mount image")
+		return
+	}
+	return nil
+}
 
-	if dev.PcapOptions.All {
-		pcapOptions = append(pcapOptions, gidevice.WithPcapAll(true))
+func (dev *IOSDevice) AutoMountImage(basedir string) (err error) {
+	imagePath, err := imagemounter.DownloadImageFor(dev.d, basedir)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to auto mount image")
+		return
 	}
-	if dev.PcapOptions.Pid > 0 {
-		pcapOptions = append(pcapOptions, gidevice.WithPcapPID(dev.PcapOptions.Pid))
+	conn, err := imagemounter.NewImageMounter(dev.d)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to auto mount image")
+		return
 	}
-	if dev.PcapOptions.ProcName != "" {
-		pcapOptions = append(pcapOptions, gidevice.WithPcapProcName(dev.PcapOptions.ProcName))
+	defer conn.Close()
+	err = conn.MountImage(imagePath)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to auto mount image")
+		return
 	}
-	if dev.PcapOptions.BundleID != "" {
-		pcapOptions = append(pcapOptions, gidevice.WithPcapBundleID(dev.PcapOptions.BundleID))
-	}
+	return nil
+}
 
+func (dev *IOSDevice) RunXCTest(bundleID, testRunnerBundleID, xctestConfig string) (err error) {
+	errorChannel := make(chan error)
+	defer close(errorChannel)
+	ctx, stopWda := context.WithCancel(context.Background())
+	go func() {
+		_, err = testmanagerd.RunXCUIWithBundleIdsCtx(ctx, bundleID, testRunnerBundleID, xctestConfig, dev.d, []string{}, nil, nil, nil, testmanagerd.NewTestListener(io.Discard, os.Stderr, os.TempDir()), true)
+		if err != nil {
+			errorChannel <- err
+		}
+		stopWda()
+	}()
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	select {
+	case err := <-errorChannel:
+		log.Error().Err(err).Msg("failed to running WDA")
+		stopWda()
+		return err
+	case <-ctx.Done():
+		log.Error().Err(err).Msg("WDA process ended unexpectedly")
+		return err
+	case signal := <-c:
+		log.Info().Msg(fmt.Sprintf("os signal:%d received, closing...", signal))
+		stopWda()
+	}
+	return nil
+}
+
+func (dev *IOSDevice) RunXCTestDaemon(bundleID, testRunnerBundleID, xctestConfig string) {
+	ctx, stopWda := context.WithCancel(context.Background())
+	go func() {
+		_, err := testmanagerd.RunXCUIWithBundleIdsCtx(ctx, bundleID, testRunnerBundleID, xctestConfig, dev.d, []string{}, nil, nil, nil, testmanagerd.NewTestListener(io.Discard, os.Stderr, os.TempDir()), true)
+		if err != nil {
+			log.Error().Err(err).Msg("wda ended")
+		}
+		stopWda()
+	}()
+}
+
+func (dev *IOSDevice) getVersion() (version *semver.Version, err error) {
+	version, err = ios.GetProductVersion(dev.d)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get version")
+		return nil, err
+	}
+	return version, nil
+}
+
+func (dev *IOSDevice) RunGTFDaemon() {
+	dev.RunXCTestDaemon("com.gtf.wda.runner.xctrunner", "com.gtf.wda.runner.xctrunner", "GtfWdaRunner.xctest")
+}
+
+func (dev *IOSDevice) ListProcess(applicationsOnly bool) (processList []instruments.ProcessInfo, err error) {
+	service, err := instruments.NewDeviceInfoService(dev.d)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list process")
+		return
+	}
+	defer service.Close()
+	processList, err = service.ProcessList()
+	if applicationsOnly {
+		var applicationProcessList []instruments.ProcessInfo
+		for _, processInfo := range processList {
+			if processInfo.IsApplication {
+				applicationProcessList = append(applicationProcessList, processInfo)
+			}
+		}
+		processList = applicationProcessList
+	}
 	return
+}
+
+func (dev *IOSDevice) Reboot() error {
+	err := diagnostics.Reboot(dev.d)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to reboot device")
+		return err
+	}
+	return nil
 }
 
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
@@ -618,7 +742,6 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDrive
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("get free port failed: %v", err))
 		}
-
 		if err = dev.forward(localPort, dev.Port); err != nil {
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
@@ -649,15 +772,21 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDrive
 		Msg("init WDA HTTP driver")
 
 	wd := new(wdaDriver)
-	wd.client = http.DefaultClient
+	wd.device = dev
+	wd.udid = dev.UDID
+	wd.client = &http.Client{
+		Timeout: time.Second * 10, // 设置超时时间为 10 秒
+	}
 
 	host := "localhost"
 	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
-	if _, err = wd.NewSession(capabilities); err != nil {
+	var sessionInfo SessionInfo
+	if sessionInfo, err = wd.NewSession(capabilities); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
+	wd.session.ID = sessionInfo.SessionId
 
 	if wd.mjpegHTTPConn, err = net.Dial(
 		"tcp",
@@ -666,7 +795,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDrive
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
 	wd.mjpegClient = convertToHTTPClient(wd.mjpegHTTPConn)
-
+	wd.mjpegUrl = fmt.Sprintf("%s:%d", host, localMjpegPort)
 	// init WDA scale
 	if wd.scale, err = wd.Scale(); err != nil {
 		return nil, err
@@ -675,103 +804,39 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDrive
 	return wd, nil
 }
 
-// NewUSBDriver creates new client via USB connected device, this will also start a new session.
-func (dev *IOSDevice) NewUSBDriver(capabilities Capabilities) (driver IWebDriver, err error) {
-	log.Info().Interface("capabilities", capabilities).
-		Str("udid", dev.UDID).Msg("init WDA USB driver")
-
-	wd := new(wdaDriver)
-	if wd.defaultConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
-		return nil, errors.Wrap(code.DeviceUSBDriverError,
-			fmt.Sprintf("connect port %d failed: %v", dev.Port, err))
-	}
-	wd.client = convertToHTTPClient(wd.defaultConn.RawConn())
-
-	if wd.mjpegUSBConn, err = dev.d.NewConnect(dev.MjpegPort, 0); err != nil {
-		return nil, errors.Wrap(code.DeviceUSBDriverError,
-			fmt.Sprintf("connect MJPEG port %d failed: %v", dev.MjpegPort, err))
-	}
-	wd.mjpegClient = convertToHTTPClient(wd.mjpegUSBConn.RawConn())
-
-	if wd.urlPrefix, err = url.Parse("http://" + dev.UDID); err != nil {
-		return nil, errors.Wrap(code.DeviceUSBDriverError, err.Error())
-	}
-	if _, err = wd.NewSession(capabilities); err != nil {
-		return nil, errors.Wrap(code.DeviceUSBDriverError, err.Error())
-	}
-
-	// init WDA scale
-	if wd.scale, err = wd.Scale(); err != nil {
-		return nil, err
-	}
-
-	return wd, nil
-}
-
-func (dev *IOSDevice) RunXCTest(bundleID string) (cancel context.CancelFunc, err error) {
-	log.Info().Str("bundleID", bundleID).Msg("run xctest")
-	out, cancel, err := dev.d.XCTest(bundleID)
+func (dev *IOSDevice) NewStubDriver() (driver IWebDriver, err error) {
+	localStubPort, err := builtin.GetFreePort()
 	if err != nil {
-		return nil, errors.Wrap(err, "run xctest failed")
+		return nil, errors.Wrap(code.DeviceHTTPDriverError,
+			fmt.Sprintf("get free port failed: %v", err))
 	}
-	// wait for xctest to start
-	time.Sleep(5 * time.Second)
 
-	f, err := os.OpenFile(fmt.Sprintf("xctest_%s.log", dev.UDID),
-		os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
+	if err = dev.forward(localStubPort, defaultBightInsightPort); err != nil {
+		return nil, errors.Wrap(code.DeviceHTTPDriverError,
+			fmt.Sprintf("forward tcp port failed: %v", err))
+	}
+
+	localServerPort, err := builtin.GetFreePort()
+	if err != nil {
+		return nil, errors.Wrap(code.DeviceHTTPDriverError,
+			fmt.Sprintf("get free port failed: %v", err))
+	}
+	if err = dev.forward(localServerPort, defaultDouyinServerPort); err != nil {
+		return nil, errors.Wrap(code.DeviceHTTPDriverError,
+			fmt.Sprintf("forward tcp port failed: %v", err))
+	}
+	host := "localhost"
+	stubDriver, err := newStubIOSDriver(fmt.Sprintf("http://%s:%d", host, localStubPort), fmt.Sprintf("http://%s:%d", host, localServerPort), dev)
 	if err != nil {
 		return nil, err
 	}
-	defer builtinLog.SetOutput(f)
-
-	// print xctest running logs
-	go func() {
-		for s := range out {
-			builtinLog.Print(s)
-		}
-		f.Close()
-	}()
-
-	return cancel, nil
-}
-
-type Application struct {
-	CFBundleVersion     string `json:"version"`
-	CFBundleDisplayName string `json:"name"`
-	CFBundleIdentifier  string `json:"bundleId"`
-}
-
-func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
-	appInfo := AppInfo{
-		Name: packageName,
-	}
-	applicationType := gidevice.ApplicationTypeAny
-	result, err := dev.d.InstallationProxyBrowse(
-		gidevice.WithApplicationType(applicationType),
-		gidevice.WithReturnAttributes("CFBundleVersion", "CFBundleDisplayName", "CFBundleIdentifier"))
-	if err != nil {
-		return appInfo, errors.Wrap(code.DeviceShellExecError,
-			fmt.Sprintf("get app list failed %v", err))
-	}
-
-	for _, app := range result {
-		a := Application{}
-		mapstructure.Decode(app, &a)
-
-		if a.CFBundleIdentifier != packageName {
-			continue
-		}
-		appInfo.AppBaseInfo = AppBaseInfo{
-			BundleId:    a.CFBundleIdentifier,
-			VersionName: a.CFBundleVersion,
-			AppName:     a.CFBundleDisplayName,
-		}
-		log.Info().Interface("appInfo", appInfo).Msg("get app info")
-		return appInfo, nil
-	}
-	return appInfo, errors.New("failed to get package version")
+	return stubDriver, nil
 }
 
 func (dev *IOSDevice) GetCurrentWindow() (WindowInfo, error) {
 	return WindowInfo{}, nil
+}
+
+func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
+	return AppInfo{}, nil
 }

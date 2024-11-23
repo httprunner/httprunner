@@ -294,8 +294,8 @@ func (ud *uiaDriver) Orientation() (orientation Orientation, err error) {
 	return
 }
 
-func (ud *uiaDriver) DoubleTap(x, y int, options ...ActionOption) error {
-	return ud.DoubleFloatTap(float64(x), float64(y))
+func (ud *uiaDriver) DoubleTap(x, y float64, options ...ActionOption) error {
+	return ud.DoubleFloatTap(x, y)
 }
 
 func (ud *uiaDriver) DoubleFloatTap(x, y float64) error {
@@ -362,20 +362,18 @@ func (ud *uiaDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 	return err
 }
 
-func (ud *uiaDriver) TouchAndHold(x, y int, second ...float64) (err error) {
-	return ud.TouchAndHoldFloat(float64(x), float64(y), second...)
-}
-
-func (ud *uiaDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err error) {
-	if len(second) == 0 {
-		second = []float64{1.0}
+func (ud *uiaDriver) TouchAndHold(x, y float64, options ...ActionOption) (err error) {
+	opts := NewActionOptions(options...)
+	duration := opts.Duration
+	if duration == 0 {
+		duration = 1.0
 	}
 	// register(postHandler, new TouchLongClick("/wd/hub/session/:sessionId/touch/longclick"))
 	data := map[string]interface{}{
 		"params": map[string]interface{}{
 			"x":        x,
 			"y":        y,
-			"duration": int(second[0] * 1000),
+			"duration": int(duration * 1000),
 		},
 	}
 	_, err = ud.httpPOST(data, "/session", ud.session.ID, "touch/longclick")
@@ -386,11 +384,7 @@ func (ud *uiaDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err err
 // the smoothness and speed of the swipe by specifying the number of steps.
 // Each step execution is throttled to 5 milliseconds per step, so for a 100
 // steps, the swipe will take around 0.5 seconds to complete.
-func (ud *uiaDriver) Drag(fromX, fromY, toX, toY int, options ...ActionOption) error {
-	return ud.DragFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
-}
-
-func (ud *uiaDriver) DragFloat(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
+func (ud *uiaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
 	actionOptions := NewActionOptions(options...)
 	if len(actionOptions.Offset) == 4 {
 		fromX += float64(actionOptions.Offset[0])
@@ -661,4 +655,11 @@ func (ud *uiaDriver) TapByTexts(actions ...TapTextAction) error {
 		}
 	}
 	return nil
+}
+
+func (ud *uiaDriver) GetDriverResults() []*DriverResult {
+	defer func() {
+		ud.Driver.driverResults = nil
+	}()
+	return ud.Driver.driverResults
 }

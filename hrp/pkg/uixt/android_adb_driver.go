@@ -6,12 +6,15 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/httprunner/funplugin/myexec"
@@ -245,6 +248,34 @@ func (ad *adbDriver) Unlock() (err error) {
 	return ad.PressKeyCodes(KCMenu, KMEmpty)
 }
 
+func (ad *adbDriver) Backspace(count int, options ...ActionOption) (err error) {
+	if count == 0 {
+		return nil
+	}
+	if count == 1 {
+		return ad.PressKeyCode(67)
+	}
+	keyArray := make([]KeyCode, count)
+
+	for i := range keyArray {
+		keyArray[i] = KeyCode(67)
+	}
+	return ad.combinationKey(keyArray)
+}
+
+func (ad *adbDriver) combinationKey(keyCodes []KeyCode) (err error) {
+	if len(keyCodes) == 1 {
+		return ad.PressKeyCode(keyCodes[0])
+	}
+	strKeyCodes := make([]string, len(keyCodes))
+	for i, keycode := range keyCodes {
+		strKeyCodes[i] = fmt.Sprintf("%d", keycode)
+	}
+	_, err = ad.adbClient.RunShellCommand(
+		"input", append([]string{"keycombination"}, strKeyCodes...)...)
+	return
+}
+
 func (ad *adbDriver) PressKeyCode(keyCode KeyCode) (err error) {
 	return ad.PressKeyCodes(keyCode, KMEmpty)
 }
@@ -309,15 +340,11 @@ func (ad *adbDriver) TapFloat(x, y float64, options ...ActionOption) (err error)
 	return nil
 }
 
-func (ad *adbDriver) DoubleTap(x, y int, options ...ActionOption) error {
-	return ad.DoubleTapFloat(float64(x), float64(y), options...)
-}
-
-func (ad *adbDriver) DoubleTapFloat(x, y float64, options ...ActionOption) (err error) {
+func (ad *adbDriver) DoubleTap(x, y float64, options ...ActionOption) error {
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
-	_, err = ad.adbClient.RunShellCommand(
+	_, err := ad.adbClient.RunShellCommand(
 		"input", "tap", xStr, yStr)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
@@ -331,22 +358,64 @@ func (ad *adbDriver) DoubleTapFloat(x, y float64, options ...ActionOption) (err 
 	return nil
 }
 
-func (ad *adbDriver) TouchAndHold(x, y int, second ...float64) (err error) {
-	return ad.TouchAndHoldFloat(float64(x), float64(y), second...)
+func (ad *adbDriver) TouchAndHold(x, y float64, options ...ActionOption) (err error) {
+	actionOptions := NewActionOptions(options...)
+
+	if len(actionOptions.Offset) == 2 {
+		x += float64(actionOptions.Offset[0])
+		y += float64(actionOptions.Offset[1])
+	}
+	x += actionOptions.getRandomOffset()
+	y += actionOptions.getRandomOffset()
+	duration := 1000.0
+	if actionOptions.Duration > 0 {
+		duration = actionOptions.Duration * 1000
+	}
+	// adb shell input swipe fromX fromY toX toY
+	_, err = ad.adbClient.RunShellCommand(
+		"input", "swipe",
+		fmt.Sprintf("%.1f", x), fmt.Sprintf("%.1f", y),
+		fmt.Sprintf("%.1f", x), fmt.Sprintf("%.1f", y),
+		fmt.Sprintf("%d", int(duration)),
+	)
+	if err != nil {
+		return errors.Wrap(err, "long press failed")
+	}
+	return nil
 }
 
-func (ad *adbDriver) TouchAndHoldFloat(x, y float64, second ...float64) (err error) {
-	err = errDriverNotImplemented
-	return
-}
+func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
+	actionOptions := NewActionOptions(options...)
 
-func (ad *adbDriver) Drag(fromX, fromY, toX, toY int, options ...ActionOption) error {
-	return ad.DragFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
-}
-
-func (ad *adbDriver) DragFloat(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
-	err = errDriverNotImplemented
-	return
+	if len(actionOptions.Offset) == 4 {
+		fromX += float64(actionOptions.Offset[0])
+		fromY += float64(actionOptions.Offset[1])
+		toX += float64(actionOptions.Offset[2])
+		toY += float64(actionOptions.Offset[3])
+	}
+	fromX += actionOptions.getRandomOffset()
+	fromY += actionOptions.getRandomOffset()
+	toX += actionOptions.getRandomOffset()
+	toY += actionOptions.getRandomOffset()
+	duration := 200.0
+	if actionOptions.Duration > 0 {
+		duration = actionOptions.Duration * 1000
+	}
+	command := "swipe"
+	if actionOptions.PressDuration > 0 {
+		command = "draganddrop"
+	}
+	// adb shell input swipe fromX fromY toX toY
+	_, err = ad.adbClient.RunShellCommand(
+		"input", command,
+		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
+		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
+		fmt.Sprintf("%d", int(duration)),
+	)
+	if err != nil {
+		return errors.Wrap(err, "drag failed")
+	}
+	return nil
 }
 
 func (ad *adbDriver) Swipe(fromX, fromY, toX, toY int, options ...ActionOption) error {
@@ -557,8 +626,8 @@ func (ad *adbDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 	return
 }
 
-func (ad *adbDriver) LoginNoneUI(packageName, phoneNumber string, captcha string) error {
-	return errDriverNotImplemented
+func (ad *adbDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+	return info, errDriverNotImplemented
 }
 
 func (ad *adbDriver) LogoutNoneUI(packageName string) error {
@@ -750,6 +819,10 @@ func (ad *adbDriver) GetSession() *DriverSession {
 	return &ad.Driver.session
 }
 
+func (ad *adbDriver) GetDriverResults() []*DriverResult {
+	return nil
+}
+
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	packageInfo, err := ad.adbClient.RunShellCommand(
 		"CLASSPATH=/data/local/tmp/evalite", "app_process", "/",
@@ -915,4 +988,64 @@ var androidActivities = map[string]map[string][]string{
 		},
 	},
 	// TODO: SPH, XHS
+}
+
+func (ad *adbDriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
+	// 获取当前时间戳
+	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
+	// 创建文件名
+	fileName := fmt.Sprintf("%s/%s.mp4", folderPath, timestamp)
+	err = os.MkdirAll(folderPath, os.ModePerm)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating directory")
+	}
+
+	// 创建一个文件
+	file, err := os.Create(fileName)
+	if err != nil {
+		log.Error().Err(err)
+		return "", err
+	}
+	defer func() {
+		_ = file.Close()
+	}()
+
+	// scrcpy -s 7d21bb91 --record=file.mp4 -N
+	cmd := exec.Command(
+		"scrcpy",
+		"-s", ad.adbClient.Serial(),
+		fmt.Sprintf("--record=%s", fileName),
+		"-N",
+	)
+	cmd.Stdout = io.Discard
+	cmd.Stderr = io.Discard
+	// 启动命令
+	if err := cmd.Start(); err != nil {
+		log.Error().Err(err)
+		return "", err
+	}
+	timer := time.After(duration)
+
+	done := make(chan error)
+	go func() {
+		// 等待 ffmpeg 命令执行完毕
+		done <- cmd.Wait()
+	}()
+	select {
+	case <-timer:
+		// 超时，停止 scrcpy 进程
+		if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
+			log.Error().Err(err)
+		}
+	case err := <-done:
+		// ffmpeg 正常结束
+		if err != nil {
+			log.Error().Err(err)
+			return "", err
+		}
+	}
+	return filepath.Abs(fileName)
+}
+
+func (ad *adbDriver) TearDown() {
 }

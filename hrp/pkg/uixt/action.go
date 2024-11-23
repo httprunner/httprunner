@@ -15,24 +15,25 @@ import (
 type ActionMethod string
 
 const (
-	ACTION_LOG          ActionMethod = "log"
-	ACTION_AppInstall   ActionMethod = "install"
-	ACTION_AppUninstall ActionMethod = "uninstall"
-	ACTION_AppClear     ActionMethod = "app_clear"
-	ACTION_AppStart     ActionMethod = "app_start"
-	ACTION_AppLaunch    ActionMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
-	ACTION_AppTerminate ActionMethod = "app_terminate"
-	ACTION_AppStop      ActionMethod = "app_stop"
-	ACTION_ScreenShot   ActionMethod = "screenshot"
-	ACTION_Sleep        ActionMethod = "sleep"
-	ACTION_SleepMS      ActionMethod = "sleep_ms"
-	ACTION_SleepRandom  ActionMethod = "sleep_random"
-	ACTION_StartCamera  ActionMethod = "camera_start" // alias for app_launch camera
-	ACTION_StopCamera   ActionMethod = "camera_stop"  // alias for app_terminate camera
-	ACTION_SetClipboard ActionMethod = "set_clipboard"
-	ACTION_GetClipboard ActionMethod = "get_clipboard"
-	ACTION_SetIme       ActionMethod = "set_ime"
-	ACTION_GetSource    ActionMethod = "get_source"
+	ACTION_LOG              ActionMethod = "log"
+	ACTION_AppInstall       ActionMethod = "install"
+	ACTION_AppUninstall     ActionMethod = "uninstall"
+	ACTION_AppClear         ActionMethod = "app_clear"
+	ACTION_AppStart         ActionMethod = "app_start"
+	ACTION_AppLaunch        ActionMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
+	ACTION_AppTerminate     ActionMethod = "app_terminate"
+	ACTION_AppStop          ActionMethod = "app_stop"
+	ACTION_ScreenShot       ActionMethod = "screenshot"
+	ACTION_Sleep            ActionMethod = "sleep"
+	ACTION_SleepMS          ActionMethod = "sleep_ms"
+	ACTION_SleepRandom      ActionMethod = "sleep_random"
+	ACTION_StartCamera      ActionMethod = "camera_start" // alias for app_launch camera
+	ACTION_StopCamera       ActionMethod = "camera_stop"  // alias for app_terminate camera
+	ACTION_SetClipboard     ActionMethod = "set_clipboard"
+	ACTION_GetClipboard     ActionMethod = "get_clipboard"
+	ACTION_SetIme           ActionMethod = "set_ime"
+	ACTION_GetSource        ActionMethod = "get_source"
+	ACTION_GetForegroundApp ActionMethod = "get_foreground_app"
 
 	// UI handling
 	ACTION_Home        ActionMethod = "home"
@@ -46,6 +47,7 @@ const (
 	ACTION_Swipe       ActionMethod = "swipe"
 	ACTION_Input       ActionMethod = "input"
 	ACTION_Back        ActionMethod = "back"
+	ACTION_KeyCode     ActionMethod = "keycode"
 
 	// custom actions
 	ACTION_SwipeToTapApp   ActionMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
@@ -109,7 +111,8 @@ type ActionOptions struct {
 	MaxRetryTimes       int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
 	IgnoreNotFoundError bool        `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
 	Interval            float64     `json:"interval,omitempty" yaml:"interval,omitempty"`                         // interval between retries in seconds
-	PressDuration       float64     `json:"duration,omitempty" yaml:"duration,omitempty"`                         // used to set duration of ios swipe action
+	Duration            float64     `json:"duration,omitempty" yaml:"duration,omitempty"`                         // used to set duration of ios swipe action
+	PressDuration       float64     `json:"press_duration,omitempty" yaml:"press_duration,omitempty"`             // used to set duration of ios swipe action
 	Steps               int         `json:"steps,omitempty" yaml:"steps,omitempty"`                               // used to set steps of android swipe action
 	Direction           interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`                       // used by swipe to tap text or app
 	Timeout             int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
@@ -158,6 +161,9 @@ func (o *ActionOptions) Options() []ActionOption {
 	}
 	if o.Interval != 0 {
 		options = append(options, WithInterval(o.Interval))
+	}
+	if o.Duration != 0 {
+		options = append(options, WithDuration(o.Duration))
 	}
 	if o.PressDuration != 0 {
 		options = append(options, WithPressDuration(o.PressDuration))
@@ -309,8 +315,8 @@ func (o *ActionOptions) updateData(data map[string]interface{}) {
 		data["steps"] = 12 // default steps
 	}
 
-	if o.PressDuration > 0 {
-		data["duration"] = o.PressDuration
+	if o.Duration > 0 {
+		data["duration"] = o.Duration
 	}
 	if _, ok := data["duration"]; !ok {
 		data["duration"] = 0 // default duration
@@ -380,9 +386,15 @@ func WithInterval(sec float64) ActionOption {
 	}
 }
 
-func WithPressDuration(duration float64) ActionOption {
+func WithDuration(duration float64) ActionOption {
 	return func(o *ActionOptions) {
-		o.PressDuration = duration
+		o.Duration = duration
+	}
+}
+
+func WithPressDuration(pressDuration float64) ActionOption {
+	return func(o *ActionOptions) {
+		o.PressDuration = pressDuration
 	}
 }
 

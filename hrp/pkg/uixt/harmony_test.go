@@ -41,7 +41,7 @@ func TestHarmonyTap(t *testing.T) {
 	}
 }
 
-func TestSwipe(t *testing.T) {
+func TestHarmonySwipe(t *testing.T) {
 	setupHarmonyDevice(t)
 	err := harmonyDriverExt.SwipeLeft()
 	if err != nil {
@@ -49,7 +49,7 @@ func TestSwipe(t *testing.T) {
 	}
 }
 
-func TestInput(t *testing.T) {
+func TestHarmonyInput(t *testing.T) {
 	setupHarmonyDevice(t)
 	err := harmonyDriverExt.Input("test")
 	if err != nil {
