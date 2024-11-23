@@ -13,7 +13,7 @@ import (
 
 var uninstallCmd = &cobra.Command{
 	Use:   "uninstall [flags] PACKAGE",
-	Short: "uninstall Package atomically",
+	Short: "uninstall package automatically",
 	Args:  cobra.MinimumNArgs(0),
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		startTime := time.Now()

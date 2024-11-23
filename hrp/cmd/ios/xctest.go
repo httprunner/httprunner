@@ -1,12 +1,12 @@
 package ios
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
@@ -33,8 +33,7 @@ var xctestCmd = &cobra.Command{
 			return err
 		}
 
-		log.Info().Str("bundleID", bundleID).Msg("run xctest")
-		err = device.RunXCTest(bundleID, testRunnerBundleID, xctestConfig)
+		err = device.RunXCTest(context.Background(), bundleID, testRunnerBundleID, xctestConfig)
 		if err != nil {
 			return errors.Wrap(err, "run xctest failed")
 		}
@@ -49,9 +48,9 @@ var (
 )
 
 func init() {
-	xctestCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's udid")
-	xctestCmd.Flags().StringVarP(&bundleID, "bundleID", "b", "", "specify ios bundleID")
-	xctestCmd.Flags().StringVarP(&testRunnerBundleID, "testRunnerBundleID", "t", "", "specify ios testRunnerBundleID")
-	xctestCmd.Flags().StringVarP(&xctestConfig, "xctestConfig", "x", "", "specify ios xctestConfig")
+	xctestCmd.Flags().StringVarP(&udid, "udid", "u", "", "specify ios device's UDID")
+	xctestCmd.Flags().StringVarP(&bundleID, "bundleID", "b", "com.gtf.wda.runner.xctrunner", "specify ios bundleID")
+	xctestCmd.Flags().StringVarP(&testRunnerBundleID, "testRunnerBundleID", "t", "com.gtf.wda.runner.xctrunner", "specify ios testRunnerBundleID")
+	xctestCmd.Flags().StringVarP(&xctestConfig, "xctestConfig", "x", "GtfWdaRunner.xctest", "specify ios xctestConfig")
 	iosRootCmd.AddCommand(xctestCmd)
 }

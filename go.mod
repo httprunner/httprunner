@@ -9,7 +9,7 @@ require (
 	github.com/BurntSushi/locker v0.0.0-20171006230638-a6e239ea1c69
 	github.com/Masterminds/semver v1.5.0
 	github.com/andybalholm/brotli v1.0.4
-	github.com/danielpaulus/go-ios v1.0.144
+	github.com/danielpaulus/go-ios v1.0.161
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/fatih/color v1.16.0
 	github.com/getsentry/sentry-go v0.13.0
@@ -21,7 +21,6 @@ require (
 	github.com/jinzhu/copier v0.3.5
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.12
-	github.com/lunixbochs/struc v0.0.0-20200707160740-784aaebc1d40
 	github.com/maja42/goval v1.2.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
@@ -39,7 +38,6 @@ require (
 	google.golang.org/protobuf v1.34.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	howett.net/plist v1.0.0
 )
 
 require (
@@ -124,6 +122,7 @@ require (
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac // indirect
 	gvisor.dev/gvisor v0.0.0-20240405191320-0878b34101b5 // indirect
+	howett.net/plist v1.0.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.2.0 // indirect
 )
 

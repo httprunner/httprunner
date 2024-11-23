@@ -19,7 +19,7 @@ var (
 
 var installCmd = &cobra.Command{
 	Use:   "install [flags] PACKAGE",
-	Short: "Push package to the device and install them atomically",
+	Short: "push package to the device and install them automatically",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		startTime := time.Now()

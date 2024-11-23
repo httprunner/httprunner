@@ -9,9 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -349,7 +347,9 @@ func (dev *IOSDevice) Init() error {
 	}
 
 	if version.GreaterThan(semver.MustParse("17.4.0")) && dev.STUB {
-		info, err := tunnel.TunnelInfoForDevice(dev.d.Properties.SerialNumber, ios.HttpApiPort())
+		info, err := tunnel.TunnelInfoForDevice(
+			dev.d.Properties.SerialNumber,
+			ios.HttpApiHost(), ios.HttpApiPort())
 		if err != nil {
 			return err
 		}
@@ -654,38 +654,31 @@ func (dev *IOSDevice) AutoMountImage(basedir string) (err error) {
 	return nil
 }
 
-func (dev *IOSDevice) RunXCTest(bundleID, testRunnerBundleID, xctestConfig string) (err error) {
-	errorChannel := make(chan error)
-	defer close(errorChannel)
-	ctx, stopWda := context.WithCancel(context.Background())
-	go func() {
-		_, err = testmanagerd.RunXCUIWithBundleIdsCtx(ctx, bundleID, testRunnerBundleID, xctestConfig, dev.d, []string{}, nil, nil, nil, testmanagerd.NewTestListener(io.Discard, os.Stderr, os.TempDir()), true)
-		if err != nil {
-			errorChannel <- err
-		}
-		stopWda()
-	}()
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-	select {
-	case err := <-errorChannel:
-		log.Error().Err(err).Msg("failed to running WDA")
-		stopWda()
+func (dev *IOSDevice) RunXCTest(ctx context.Context, bundleID, testRunnerBundleID, xctestConfig string) (err error) {
+	log.Info().Str("bundleID", bundleID).
+		Str("testRunnerBundleID", testRunnerBundleID).
+		Str("xctestConfig", xctestConfig).
+		Msg("run xctest")
+	listener := testmanagerd.NewTestListener(io.Discard, io.Discard, os.TempDir())
+	config := testmanagerd.TestConfig{
+		BundleId:           bundleID,
+		TestRunnerBundleId: testRunnerBundleID,
+		XctestConfigName:   xctestConfig,
+		Device:             dev.d,
+		Listener:           listener,
+	}
+	_, err = testmanagerd.RunTestWithConfig(ctx, config)
+	if err != nil {
+		log.Error().Err(err).Msg("run xctest failed")
 		return err
-	case <-ctx.Done():
-		log.Error().Err(err).Msg("WDA process ended unexpectedly")
-		return err
-	case signal := <-c:
-		log.Info().Msg(fmt.Sprintf("os signal:%d received, closing...", signal))
-		stopWda()
 	}
 	return nil
 }
 
-func (dev *IOSDevice) RunXCTestDaemon(bundleID, testRunnerBundleID, xctestConfig string) {
-	ctx, stopWda := context.WithCancel(context.Background())
+func (dev *IOSDevice) RunXCTestDaemon(ctx context.Context, bundleID, testRunnerBundleID, xctestConfig string) {
+	ctx, stopWda := context.WithCancel(ctx)
 	go func() {
-		_, err := testmanagerd.RunXCUIWithBundleIdsCtx(ctx, bundleID, testRunnerBundleID, xctestConfig, dev.d, []string{}, nil, nil, nil, testmanagerd.NewTestListener(io.Discard, os.Stderr, os.TempDir()), true)
+		err := dev.RunXCTest(ctx, bundleID, testRunnerBundleID, xctestConfig)
 		if err != nil {
 			log.Error().Err(err).Msg("wda ended")
 		}
@@ -700,10 +693,6 @@ func (dev *IOSDevice) getVersion() (version *semver.Version, err error) {
 		return nil, err
 	}
 	return version, nil
-}
-
-func (dev *IOSDevice) RunGTFDaemon() {
-	dev.RunXCTestDaemon("com.gtf.wda.runner.xctrunner", "com.gtf.wda.runner.xctrunner", "GtfWdaRunner.xctest")
 }
 
 func (dev *IOSDevice) ListProcess(applicationsOnly bool) (processList []instruments.ProcessInfo, err error) {
