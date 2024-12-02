@@ -68,7 +68,7 @@ func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, 
 
 	for i := 0; i < maxRetryTimes; i++ {
 		// wait interval between each findAction
-		time.Sleep(time.Duration(1000*interval) * time.Millisecond)
+		time.Sleep(time.Duration(interval) * time.Second)
 
 		if err := findCondition(dExt); err == nil {
 			// do action after found

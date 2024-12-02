@@ -71,6 +71,13 @@ type OCRText struct {
 	Rect image.Rectangle
 }
 
+func (t OCRText) Size() Size {
+	return Size{
+		Width:  t.Rect.Dx(),
+		Height: t.Rect.Dy(),
+	}
+}
+
 func (t OCRText) Center() PointF {
 	return getRectangleCenterPoint(t.Rect)
 }
