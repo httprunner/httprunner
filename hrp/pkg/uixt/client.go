@@ -108,8 +108,11 @@ func (wd *Driver) httpDELETE(pathElem ...string) (rawResp rawResponse, err error
 func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
 	log.Debug().Str("method", method).Str("url", rawURL).Str("body", string(rawBody)).Msg("request driver agent")
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	var req *http.Request
-	if req, err = http.NewRequest(method, rawURL, bytes.NewBuffer(rawBody)); err != nil {
+	if req, err = http.NewRequestWithContext(ctx, method, rawURL, bytes.NewBuffer(rawBody)); err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json;charset=UTF-8")
@@ -162,6 +165,6 @@ func convertToHTTPClient(conn net.Conn) *http.Client {
 				return conn, nil
 			},
 		},
-		Timeout: 0,
+		Timeout: 30 * time.Second,
 	}
 }
