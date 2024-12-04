@@ -193,10 +193,11 @@ func (dev *AndroidDevice) Options() (deviceOptions []AndroidDeviceOption) {
 func (dev *AndroidDevice) Init() error {
 	dev.d.RunShellCommand("ime", "enable", "io.appium.settings/.UnicodeIME")
 	dev.d.RunShellCommand("rm", "-r", config.DeviceActionLogFilePath)
-	// unlock android device screen
-	dev.d.RunShellCommand("input", "keyevent", "82")
+	// Notice: brighten should be executed before unlock
 	// brighten android device screen
 	dev.d.RunShellCommand("input", "keyevent", "224")
+	// unlock android device screen
+	dev.d.RunShellCommand("input", "keyevent", "82")
 
 	if dev.UIA2 {
 		// uiautomator2 server must be started before
