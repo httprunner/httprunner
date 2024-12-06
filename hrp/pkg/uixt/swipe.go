@@ -126,7 +126,7 @@ func (dExt *DriverExt) prepareSwipeAction(params interface{}, options ...ActionO
 			// custom direction: [fromX, fromY, toX, toY]
 			if err := dExt.SwipeRelative(params[0], params[1], params[2], params[3], options...); err != nil {
 				log.Error().Err(err).Msgf("swipe from (%v, %v) to (%v, %v) failed",
-					d[0], d[1], d[2], d[3])
+					params[0], params[1], params[2], params[3])
 				return err
 			}
 		} else {
