@@ -187,37 +187,29 @@ func (wd *wdaDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 
 func (wd *wdaDriver) WindowSize() (size Size, err error) {
 	// [[FBRoute GET:@"/window/size"] respondWithTarget:self action:@selector(handleGetWindowSize:)]
-	if wd.windowSize != nil {
-		size = *wd.windowSize
-	} else {
-		var rawResp rawResponse
-		if rawResp, err = wd.httpGET("/session", wd.session.ID, "/window/size"); err != nil {
-			return Size{}, errors.Wrap(err, "get window size failed by WDA request")
-		}
-		reply := new(struct{ Value struct{ Size } })
-		if err = json.Unmarshal(rawResp, reply); err != nil {
-			return Size{}, errors.Wrap(err, "get window size failed by WDA response")
-		}
-		size = reply.Value.Size
-		scale, err := wd.Scale()
-		if err != nil {
-			return Size{}, errors.Wrap(err, "get window size scale failed")
-		}
-		size.Height = size.Height * int(scale)
-		size.Width = size.Width * int(scale)
-		wd.windowSize = &size
+	if !wd.windowSize.IsNil() {
+		// use cached window size
+		return wd.windowSize, nil
 	}
 
-	// check orientation
-	orientation, err := wd.Orientation()
+	var rawResp rawResponse
+	if rawResp, err = wd.httpGET("/session", wd.session.ID, "/window/size"); err != nil {
+		return Size{}, errors.Wrap(err, "get window size failed by WDA request")
+	}
+	reply := new(struct{ Value struct{ Size } })
+	if err = json.Unmarshal(rawResp, reply); err != nil {
+		return Size{}, errors.Wrap(err, "get window size failed by WDA response")
+	}
+	size = reply.Value.Size
+	scale, err := wd.Scale()
 	if err != nil {
-		log.Warn().Err(err).Msgf("window size get orientation failed, use default orientation")
-		orientation = OrientationPortrait
+		return Size{}, errors.Wrap(err, "get window size scale failed")
 	}
-	if orientation != OrientationPortrait {
-		size.Width, size.Height = size.Height, size.Width
-	}
-	return
+	size.Height = size.Height * int(scale)
+	size.Width = size.Width * int(scale)
+
+	wd.windowSize = size // cache window size
+	return wd.windowSize, nil
 }
 
 func (wd *wdaDriver) Screen() (screen Screen, err error) {

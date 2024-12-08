@@ -244,6 +244,10 @@ type Size struct {
 	Height int `json:"height"`
 }
 
+func (s Size) IsNil() bool {
+	return s.Width == 0 && s.Height == 0
+}
+
 type Screen struct {
 	StatusBarSize Size    `json:"statusBarSize"`
 	Scale         float64 `json:"scale"`

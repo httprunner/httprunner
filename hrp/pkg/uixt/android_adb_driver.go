@@ -143,18 +143,19 @@ func (ad *adbDriver) getWindowSize() (size Size, err error) {
 }
 
 func (ad *adbDriver) WindowSize() (size Size, err error) {
-	if ad.windowSize != nil {
-		size = *ad.windowSize
-	} else {
-		size, err = ad.getWindowSize()
-		if err != nil {
-			return
-		}
-		ad.windowSize = &size
+	if !ad.windowSize.IsNil() {
+		// use cached window size
+		return ad.windowSize, nil
+	}
+
+	size, err = ad.getWindowSize()
+	if err != nil {
+		return
 	}
 
 	orientation, err2 := ad.Orientation()
 	if err2 != nil {
+		// Notice: do not return err if get window orientation failed
 		orientation = OrientationPortrait
 		log.Warn().Err(err2).Msgf(
 			"get window orientation failed, use default %s", orientation)
@@ -162,7 +163,8 @@ func (ad *adbDriver) WindowSize() (size Size, err error) {
 	if orientation != OrientationPortrait {
 		size.Width, size.Height = size.Height, size.Width
 	}
-	// Notice: do not return err if get window orientation failed
+
+	ad.windowSize = size // cache window size
 	return size, nil
 }
 

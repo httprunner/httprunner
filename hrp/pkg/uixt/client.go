@@ -64,7 +64,7 @@ type Driver struct {
 
 	// cache to avoid repeated query
 	scale         float64
-	windowSize    *Size
+	windowSize    Size
 	driverResults []*DriverResult
 
 	// cache session data

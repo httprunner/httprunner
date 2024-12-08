@@ -223,20 +223,20 @@ func (ud *uiaDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 
 func (ud *uiaDriver) WindowSize() (size Size, err error) {
 	// register(getHandler, new GetDeviceSize("/wd/hub/session/:sessionId/window/:windowHandle/size"))
-	if ud.windowSize != nil {
-		size = *ud.windowSize
-	} else {
-		var rawResp rawResponse
-		if rawResp, err = ud.httpGET("/session", ud.session.ID, "window/:windowHandle/size"); err != nil {
-			return Size{}, errors.Wrap(err, "get window size failed by UIA2 request")
-		}
-		reply := new(struct{ Value struct{ Size } })
-		if err = json.Unmarshal(rawResp, reply); err != nil {
-			return Size{}, errors.Wrap(err, "get window size failed by UIA2 response")
-		}
-		size = reply.Value.Size
-		ud.windowSize = &size
+	if !ud.windowSize.IsNil() {
+		// use cached window size
+		return ud.windowSize, nil
 	}
+
+	var rawResp rawResponse
+	if rawResp, err = ud.httpGET("/session", ud.session.ID, "window/:windowHandle/size"); err != nil {
+		return Size{}, errors.Wrap(err, "get window size failed by UIA2 request")
+	}
+	reply := new(struct{ Value struct{ Size } })
+	if err = json.Unmarshal(rawResp, reply); err != nil {
+		return Size{}, errors.Wrap(err, "get window size failed by UIA2 response")
+	}
+	size = reply.Value.Size
 
 	// check orientation
 	orientation, err := ud.Orientation()
@@ -247,7 +247,9 @@ func (ud *uiaDriver) WindowSize() (size Size, err error) {
 	if orientation != OrientationPortrait {
 		size.Width, size.Height = size.Height, size.Width
 	}
-	return
+
+	ud.windowSize = size // cache window size
+	return size, nil
 }
 
 // PressBack simulates a short press on the BACK button.
