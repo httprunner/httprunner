@@ -189,6 +189,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 			Int("code", imageResponse.Code).
 			Str("message", imageResponse.Message).
 			Msg("request veDEM OCR service failed")
+		return nil, errors.New(imageResponse.Message)
 	}
 
 	imageResult = &imageResponse.Result

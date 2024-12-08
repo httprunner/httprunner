@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
@@ -565,26 +566,19 @@ func (dExt *DriverExt) GenAbsScope(x1, y1, x2, y2 float64) AbsScope {
 }
 
 func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
-	log.Info().
-		Str("method", string(action.Method)).
-		Interface("params", action.Params).
-		Msg("uixt action start")
 	actionStartTime := time.Now()
-
 	defer func() {
+		var logger *zerolog.Event
 		if err != nil {
-			log.Error().Err(err).
-				Str("method", string(action.Method)).
-				Interface("params", action.Params).
-				Int64("elapsed(ms)", time.Since(actionStartTime).Milliseconds()).
-				Msg("uixt action end")
+			logger = log.Error().Bool("success", false).Err(err)
 		} else {
-			log.Info().
-				Str("method", string(action.Method)).
-				Interface("params", action.Params).
-				Int64("elapsed(ms)", time.Since(actionStartTime).Milliseconds()).
-				Msg("uixt action end")
+			logger = log.Debug().Bool("success", true)
 		}
+		logger = logger.
+			Str("method", string(action.Method)).
+			Interface("params", action.Params).
+			Int64("elapsed(ms)", time.Since(actionStartTime).Milliseconds())
+		logger.Msg("exec uixt action")
 	}()
 
 	switch action.Method {
