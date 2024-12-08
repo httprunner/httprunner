@@ -46,6 +46,36 @@ func NewAdbDriver() *adbDriver {
 	return driver
 }
 
+func (ad *adbDriver) runShellCommand(cmd string, args ...string) (output string, err error) {
+	driverResult := &DriverResult{
+		RequestMethod: "adb",
+		RequestUrl:    cmd,
+		RequestBody:   strings.Join(args, " "),
+		RequestTime:   time.Now(),
+	}
+	defer func() {
+		driverResult.ResponseDuration = time.Since(driverResult.RequestTime).Milliseconds()
+		if err != nil {
+			driverResult.Success = false
+			driverResult.Error = err.Error()
+		} else {
+			driverResult.Success = true
+		}
+		ad.session.addRequestResult(driverResult)
+	}()
+
+	// adb shell screencap -p
+	if cmd == "screencap" {
+		resp, err := ad.adbClient.ScreenCap()
+		if err == nil {
+			return string(resp), nil
+		}
+		return "", errors.Wrap(err, "adb screencap failed")
+	}
+
+	return ad.adbClient.RunShellCommand(cmd, args...)
+}
+
 func (ad *adbDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
 	ad.Driver.session.Reset()
 	err = errDriverNotImplemented
@@ -78,7 +108,7 @@ func (ad *adbDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 
 func (ad *adbDriver) getWindowSize() (size Size, err error) {
 	// adb shell wm size
-	output, err := ad.adbClient.RunShellCommand("wm", "size")
+	output, err := ad.runShellCommand("wm", "size")
 	if err != nil {
 		return size, errors.Wrap(err, "get window size failed by adb shell")
 	}
@@ -144,7 +174,7 @@ func (ad *adbDriver) Scale() (scale float64, err error) {
 
 func (ad *adbDriver) GetTimestamp() (timestamp int64, err error) {
 	// adb shell date +%s
-	output, err := ad.adbClient.RunShellCommand("date", "+%s")
+	output, err := ad.runShellCommand("date", "+%s")
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to get timestamp by adb")
 	}
@@ -160,7 +190,7 @@ func (ad *adbDriver) GetTimestamp() (timestamp int64, err error) {
 // PressBack simulates a short press on the BACK button.
 func (ad *adbDriver) PressBack(options ...ActionOption) (err error) {
 	// adb shell input keyevent 4
-	_, err = ad.adbClient.RunShellCommand("input", "keyevent", fmt.Sprintf("%d", KCBack))
+	_, err = ad.runShellCommand("input", "keyevent", fmt.Sprintf("%d", KCBack))
 	if err != nil {
 		return errors.Wrap(err, "press back failed")
 	}
@@ -168,33 +198,33 @@ func (ad *adbDriver) PressBack(options ...ActionOption) (err error) {
 }
 
 func (ad *adbDriver) StartCamera() (err error) {
-	if _, err = ad.adbClient.RunShellCommand("rm", "-r", "/sdcard/DCIM/Camera"); err != nil {
+	if _, err = ad.runShellCommand("rm", "-r", "/sdcard/DCIM/Camera"); err != nil {
 		return errors.Wrap(err, "remove /sdcard/DCIM/Camera failed")
 	}
 	time.Sleep(5 * time.Second)
 	var version string
-	if version, err = ad.adbClient.RunShellCommand("getprop", "ro.build.version.release"); err != nil {
+	if version, err = ad.runShellCommand("getprop", "ro.build.version.release"); err != nil {
 		return err
 	}
 	if version == "11" || version == "12" {
-		if _, err = ad.adbClient.RunShellCommand("am", "start", "-a", "android.media.action.STILL_IMAGE_CAMERA"); err != nil {
+		if _, err = ad.runShellCommand("am", "start", "-a", "android.media.action.STILL_IMAGE_CAMERA"); err != nil {
 			return err
 		}
 		time.Sleep(5 * time.Second)
-		if _, err = ad.adbClient.RunShellCommand("input", "swipe", "750", "1000", "250", "1000"); err != nil {
+		if _, err = ad.runShellCommand("input", "swipe", "750", "1000", "250", "1000"); err != nil {
 			return err
 		}
 		time.Sleep(5 * time.Second)
-		if _, err = ad.adbClient.RunShellCommand("input", "keyevent", fmt.Sprintf("%d", KCCamera)); err != nil {
+		if _, err = ad.runShellCommand("input", "keyevent", fmt.Sprintf("%d", KCCamera)); err != nil {
 			return err
 		}
 		return
 	} else {
-		if _, err = ad.adbClient.RunShellCommand("am", "start", "-a", "android.media.action.VIDEO_CAPTURE"); err != nil {
+		if _, err = ad.runShellCommand("am", "start", "-a", "android.media.action.VIDEO_CAPTURE"); err != nil {
 			return err
 		}
 		time.Sleep(5 * time.Second)
-		if _, err = ad.adbClient.RunShellCommand("input", "keyevent", fmt.Sprintf("%d", KCCamera)); err != nil {
+		if _, err = ad.runShellCommand("input", "keyevent", fmt.Sprintf("%d", KCCamera)); err != nil {
 			return err
 		}
 		return
@@ -223,7 +253,7 @@ func (ad *adbDriver) StopCamera() (err error) {
 }
 
 func (ad *adbDriver) Orientation() (orientation Orientation, err error) {
-	output, err := ad.adbClient.RunShellCommand("dumpsys", "input", "|", "grep", "'SurfaceOrientation'")
+	output, err := ad.runShellCommand("dumpsys", "input", "|", "grep", "'SurfaceOrientation'")
 	if err != nil {
 		return
 	}
@@ -271,7 +301,7 @@ func (ad *adbDriver) combinationKey(keyCodes []KeyCode) (err error) {
 	for i, keycode := range keyCodes {
 		strKeyCodes[i] = fmt.Sprintf("%d", keycode)
 	}
-	_, err = ad.adbClient.RunShellCommand(
+	_, err = ad.runShellCommand(
 		"input", append([]string{"keycombination"}, strKeyCodes...)...)
 	return
 }
@@ -282,7 +312,7 @@ func (ad *adbDriver) PressKeyCode(keyCode KeyCode) (err error) {
 
 func (ad *adbDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta) (err error) {
 	// adb shell input keyevent <keyCode>
-	_, err = ad.adbClient.RunShellCommand(
+	_, err = ad.runShellCommand(
 		"input", "keyevent", fmt.Sprintf("%d", keyCode))
 	return
 }
@@ -290,7 +320,7 @@ func (ad *adbDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta) (err erro
 func (ad *adbDriver) AppLaunch(packageName string) (err error) {
 	// 不指定 Activity 名称启动（启动主 Activity）
 	// adb shell monkey -p <packagename> -c android.intent.category.LAUNCHER 1
-	sOutput, err := ad.adbClient.RunShellCommand(
+	sOutput, err := ad.runShellCommand(
 		"monkey", "-p", packageName, "-c", "android.intent.category.LAUNCHER", "1",
 	)
 	if err != nil {
@@ -307,7 +337,7 @@ func (ad *adbDriver) AppLaunch(packageName string) (err error) {
 func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err error) {
 	// 强制停止应用，停止 <packagename> 相关的进程
 	// adb shell am force-stop <packagename>
-	_, err = ad.adbClient.RunShellCommand("am", "force-stop", packageName)
+	_, err = ad.runShellCommand("am", "force-stop", packageName)
 	if err != nil {
 		return false, errors.Wrap(err, "force-stop app failed")
 	}
@@ -315,7 +345,7 @@ func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err erro
 	return true, nil
 }
 
-func (ad *adbDriver) Tap(x, y float64, options ...ActionOption) (err error) {
+func (ad *adbDriver) Tap(x, y float64, options ...ActionOption) error {
 	actionOptions := NewActionOptions(options...)
 
 	if len(actionOptions.Offset) == 2 {
@@ -328,7 +358,7 @@ func (ad *adbDriver) Tap(x, y float64, options ...ActionOption) (err error) {
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
-	_, err = ad.adbClient.RunShellCommand(
+	_, err := ad.runShellCommand(
 		"input", "tap", xStr, yStr)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
@@ -340,13 +370,13 @@ func (ad *adbDriver) DoubleTap(x, y float64, options ...ActionOption) error {
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
-	_, err := ad.adbClient.RunShellCommand(
+	_, err := ad.runShellCommand(
 		"input", "tap", xStr, yStr)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
 	}
 	time.Sleep(time.Duration(100) * time.Millisecond)
-	_, err = ad.adbClient.RunShellCommand(
+	_, err = ad.runShellCommand(
 		"input", "tap", xStr, yStr)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
@@ -368,7 +398,7 @@ func (ad *adbDriver) TouchAndHold(x, y float64, options ...ActionOption) (err er
 		duration = actionOptions.Duration * 1000
 	}
 	// adb shell input swipe fromX fromY toX toY
-	_, err = ad.adbClient.RunShellCommand(
+	_, err = ad.runShellCommand(
 		"input", "swipe",
 		fmt.Sprintf("%.1f", x), fmt.Sprintf("%.1f", y),
 		fmt.Sprintf("%.1f", x), fmt.Sprintf("%.1f", y),
@@ -402,7 +432,7 @@ func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 		command = "draganddrop"
 	}
 	// adb shell input swipe fromX fromY toX toY
-	_, err = ad.adbClient.RunShellCommand(
+	_, err = ad.runShellCommand(
 		"input", command,
 		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
 		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
@@ -429,7 +459,7 @@ func (ad *adbDriver) Swipe(fromX, fromY, toX, toY float64, options ...ActionOpti
 	toY += actionOptions.getRandomOffset()
 
 	// adb shell input swipe fromX fromY toX toY
-	_, err := ad.adbClient.RunShellCommand(
+	_, err := ad.runShellCommand(
 		"input", "swipe",
 		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
 		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
@@ -468,9 +498,9 @@ func (ad *adbDriver) SendKeys(text string, options ...ActionOption) (err error) 
 	return
 }
 
-func (ad *adbDriver) InputText(text string, options ...ActionOption) (err error) {
+func (ad *adbDriver) InputText(text string, options ...ActionOption) error {
 	// adb shell input text <text>
-	_, err = ad.adbClient.RunShellCommand("input", "text", text)
+	_, err := ad.runShellCommand("input", "text", text)
 	if err != nil {
 		return errors.Wrap(err, "send keys failed")
 	}
@@ -508,7 +538,7 @@ func (ad *adbDriver) SendUnicodeKeys(text string, options ...ActionOption) (err 
 }
 
 func (ad *adbDriver) IsAdbKeyBoardInstalled() bool {
-	output, err := ad.adbClient.RunShellCommand("ime", "list", "-a")
+	output, err := ad.runShellCommand("ime", "list", "-a")
 	if err != nil {
 		return false
 	}
@@ -516,7 +546,7 @@ func (ad *adbDriver) IsAdbKeyBoardInstalled() bool {
 }
 
 func (ad *adbDriver) IsUnicodeIMEInstalled() bool {
-	output, err := ad.adbClient.RunShellCommand("ime", "list", "-s")
+	output, err := ad.runShellCommand("ime", "list", "-s")
 	if err != nil {
 		return false
 	}
@@ -524,7 +554,7 @@ func (ad *adbDriver) IsUnicodeIMEInstalled() bool {
 }
 
 func (ad *adbDriver) ListIme() []string {
-	output, err := ad.adbClient.RunShellCommand("ime", "list", "-s")
+	output, err := ad.runShellCommand("ime", "list", "-s")
 	if err != nil {
 		return []string{}
 	}
@@ -534,29 +564,29 @@ func (ad *adbDriver) ListIme() []string {
 func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 	defer func() {
 		// Reset to default, don't care which keyboard was chosen before switch:
-		if _, resetErr := ad.adbClient.RunShellCommand("ime", "reset"); resetErr != nil {
+		if _, resetErr := ad.runShellCommand("ime", "reset"); resetErr != nil {
 			log.Error().Err(err).Msg("failed to reset ime")
 		}
 	}()
 
 	// Enable ADBKeyBoard from adb
-	if _, err = ad.adbClient.RunShellCommand("ime", "enable", AdbKeyBoardPackageName); err != nil {
+	if _, err = ad.runShellCommand("ime", "enable", AdbKeyBoardPackageName); err != nil {
 		log.Error().Err(err).Msg("failed to enable adbKeyBoard")
 		return
 	}
 	// Switch to ADBKeyBoard from adb
-	if _, err = ad.adbClient.RunShellCommand("ime", "set", AdbKeyBoardPackageName); err != nil {
+	if _, err = ad.runShellCommand("ime", "set", AdbKeyBoardPackageName); err != nil {
 		log.Error().Err(err).Msg("failed to set adbKeyBoard")
 		return
 	}
 	time.Sleep(time.Second)
 	// input Quoted text
 	text = strings.ReplaceAll(text, " ", "\\ ")
-	if _, err = ad.adbClient.RunShellCommand("am", "broadcast", "-a", "ADB_INPUT_TEXT", "--es", "msg", text); err != nil {
+	if _, err = ad.runShellCommand("am", "broadcast", "-a", "ADB_INPUT_TEXT", "--es", "msg", text); err != nil {
 		log.Error().Err(err).Msg("failed to input by adbKeyBoard")
 		return
 	}
-	if _, err = ad.adbClient.RunShellCommand("input", "keyevent", fmt.Sprintf("%d", KCEnter)); err != nil {
+	if _, err = ad.runShellCommand("input", "keyevent", fmt.Sprintf("%d", KCEnter)); err != nil {
 		log.Error().Err(err).Msg("failed to input keyevent enter")
 		return
 	}
@@ -569,7 +599,7 @@ func (ad *adbDriver) Input(text string, options ...ActionOption) (err error) {
 }
 
 func (ad *adbDriver) Clear(packageName string) error {
-	if _, err := ad.adbClient.RunShellCommand("pm", "clear", packageName); err != nil {
+	if _, err := ad.runShellCommand("pm", "clear", packageName); err != nil {
 		log.Error().Str("packageName", packageName).Err(err).Msg("failed to clear package cache")
 		return err
 	}
@@ -593,25 +623,25 @@ func (ad *adbDriver) SetRotation(rotation Rotation) (err error) {
 }
 
 func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
-	// adb shell screencap -p
-	resp, err := ad.adbClient.ScreenCap()
-	if err == nil {
-		return bytes.NewBuffer(resp), nil
+	resp, err := ad.runShellCommand("screencap", "-p")
+	if err != nil {
+		return nil, errors.Wrap(err, "adb screencap failed")
 	}
-	return nil, errors.Wrap(err, "adb screencap failed")
+
+	return bytes.NewBuffer([]byte(resp)), nil
 }
 
 func (ad *adbDriver) Source(srcOpt ...SourceOption) (source string, err error) {
-	_, err = ad.adbClient.RunShellCommand("rm", "-rf", "/sdcard/window_dump.xml")
+	_, err = ad.runShellCommand("rm", "-rf", "/sdcard/window_dump.xml")
 	if err != nil {
 		return
 	}
 	// 高版本报错 ERROR: null root node returned by UiTestAutomationBridge.
-	_, err = ad.adbClient.RunShellCommand("uiautomator", "dump")
+	_, err = ad.runShellCommand("uiautomator", "dump")
 	if err != nil {
 		return
 	}
-	source, err = ad.adbClient.RunShellCommand("cat", "/sdcard/window_dump.xml")
+	source, err = ad.runShellCommand("cat", "/sdcard/window_dump.xml")
 	if err != nil {
 		return
 	}
@@ -816,7 +846,7 @@ func (ad *adbDriver) GetDriverResults() []*DriverResult {
 }
 
 func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
-	packageInfo, err := ad.adbClient.RunShellCommand(
+	packageInfo, err := ad.runShellCommand(
 		"CLASSPATH=/data/local/tmp/evalite", "app_process", "/",
 		"com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
 	if err != nil {
@@ -844,7 +874,7 @@ func (ad *adbDriver) SetIme(imeRegx string) error {
 	}
 	brand, _ := ad.adbClient.Brand()
 	packageName := strings.Split(ime, "/")[0]
-	res, err := ad.adbClient.RunShellCommand("ime", "set", ime)
+	res, err := ad.runShellCommand("ime", "set", ime)
 	log.Info().Str("funcName", "SetIme").Interface("ime", ime).
 		Interface("output", res).Msg("set ime")
 	if err != nil {
@@ -853,7 +883,7 @@ func (ad *adbDriver) SetIme(imeRegx string) error {
 
 	if strings.ToLower(brand) == "oppo" {
 		time.Sleep(1 * time.Second)
-		pid, _ := ad.adbClient.RunShellCommand("pidof", packageName)
+		pid, _ := ad.runShellCommand("pidof", packageName)
 		if strings.TrimSpace(pid) == "" {
 			appInfo, err := ad.GetForegroundApp()
 			_ = ad.AppLaunch(packageName)
@@ -877,7 +907,7 @@ func (ad *adbDriver) SetIme(imeRegx string) error {
 }
 
 func (ad *adbDriver) GetIme() (ime string, err error) {
-	currentIme, err := ad.adbClient.RunShellCommand("settings", "get", "secure", "default_input_method")
+	currentIme, err := ad.runShellCommand("settings", "get", "secure", "default_input_method")
 	if err != nil {
 		log.Warn().Err(err).Msgf("get default ime failed")
 		return

@@ -46,7 +46,7 @@ func (d *DriverSession) Get(withReset bool) Attachments {
 	data := Attachments{
 		"screen_results": d.screenResults,
 	}
-	if len(d.e2eDelay) != 0 {
+	if len(d.requests) != 0 {
 		data["requests"] = d.requests
 	}
 	if d.e2eDelay != nil {
@@ -77,9 +77,11 @@ type DriverResult struct {
 	RequestBody   string    `json:"request_body,omitempty"`
 	RequestTime   time.Time `json:"request_time"`
 
+	Success          bool   `json:"success"`
 	ResponseStatus   int    `json:"response_status"`
 	ResponseDuration int64  `json:"response_duration(ms)"` // ms
 	ResponseBody     string `json:"response_body"`
+	Error            string `json:"error,omitempty"`
 }
 
 func (wd *Driver) concatURL(u *url.URL, elem ...string) string {
@@ -122,8 +124,11 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 
 		var logger *zerolog.Event
 		if err != nil {
+			driverResult.Success = false
+			driverResult.Error = err.Error()
 			logger = log.Error().Bool("success", false).Err(err)
 		} else {
+			driverResult.Success = true
 			logger = log.Debug().Bool("success", true)
 		}
 

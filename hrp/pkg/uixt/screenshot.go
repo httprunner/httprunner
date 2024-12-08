@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -65,10 +66,11 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	var lastErr error
 
 	// get screenshot info with retry
-	for i := 0; i < actionOptions.MaxRetryTimes; i++ {
+	for i := 0; i <= actionOptions.MaxRetryTimes; i++ {
 		bufSource, imagePath, err = dExt.GetScreenShot(fileName)
 		if err != nil {
 			lastErr = err
+			time.Sleep(time.Second * 1)
 			continue
 		}
 
