@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -71,10 +72,14 @@ type Driver struct {
 }
 
 type DriverResult struct {
-	RequestUrl      string    `json:"request_driver_url"`
-	RequestBody     string    `json:"request_driver_body,omitempty"`
-	RequestDuration int64     `json:"request_driver_duration(ms)"` // ms
-	RequestTime     time.Time `json:"request_driver_time"`
+	RequestMethod string    `json:"request_method"`
+	RequestUrl    string    `json:"request_url"`
+	RequestBody   string    `json:"request_body,omitempty"`
+	RequestTime   time.Time `json:"request_time"`
+
+	ResponseStatus   int    `json:"response_status"`
+	ResponseDuration int64  `json:"response_duration(ms)"` // ms
+	ResponseBody     string `json:"response_body"`
 }
 
 func (wd *Driver) concatURL(u *url.URL, elem ...string) string {
@@ -106,7 +111,35 @@ func (wd *Driver) httpDELETE(pathElem ...string) (rawResp rawResponse, err error
 }
 
 func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
-	log.Debug().Str("method", method).Str("url", rawURL).Str("body", string(rawBody)).Msg("request driver agent")
+	driverResult := &DriverResult{
+		RequestMethod: method,
+		RequestUrl:    rawURL,
+		RequestBody:   string(rawBody),
+	}
+
+	defer func() {
+		wd.session.addRequestResult(driverResult)
+
+		var logger *zerolog.Event
+		if err != nil {
+			logger = log.Error().Bool("success", false).Err(err)
+		} else {
+			logger = log.Debug().Bool("success", true)
+		}
+
+		logger = logger.Str("request_method", method).Str("request_url", rawURL).
+			Str("request_body", string(rawBody))
+		if !driverResult.RequestTime.IsZero() {
+			logger = logger.Int64("request_time", driverResult.RequestTime.UnixMilli())
+		}
+		if driverResult.ResponseStatus != 0 {
+			logger = logger.
+				Int("response_status", driverResult.ResponseStatus).
+				Int64("response_duration(ms)", driverResult.ResponseDuration).
+				Str("response_body", driverResult.ResponseBody)
+		}
+		logger.Msg("request uixt driver")
+	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -118,7 +151,7 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 	req.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	req.Header.Set("Accept", "application/json")
 
-	start := time.Now()
+	driverResult.RequestTime = time.Now()
 	var resp *http.Response
 	if resp, err = wd.client.Do(req); err != nil {
 		return nil, err
@@ -130,20 +163,16 @@ func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (raw
 	}()
 
 	rawResp, err = io.ReadAll(resp.Body)
-	duration := time.Since(start)
-	driverResult := &DriverResult{
-		RequestUrl:      rawURL,
-		RequestBody:     string(rawBody),
-		RequestDuration: duration.Milliseconds(),
-		RequestTime:     time.Now(),
-	}
-	wd.session.addRequestResult(driverResult)
-	logger := log.Debug().Int("statusCode", resp.StatusCode).Str("duration", duration.String())
-	if !strings.HasSuffix(rawURL, "screenshot") {
+	duration := time.Since(driverResult.RequestTime)
+	driverResult.ResponseDuration = duration.Milliseconds()
+	driverResult.ResponseStatus = resp.StatusCode
+
+	if strings.HasSuffix(rawURL, "screenshot") {
 		// avoid printing screenshot data
-		logger.Str("response", string(rawResp))
+		driverResult.ResponseBody = "OMITTED"
+	} else {
+		driverResult.ResponseBody = string(rawResp)
 	}
-	logger.Msg("get driver agent response")
 	if err != nil {
 		return nil, err
 	}
