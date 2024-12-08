@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v4/hrp/code"
@@ -52,6 +53,33 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 		// skip
 		return nil, nil
 	}
+
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start).Milliseconds()
+		var logger *zerolog.Event
+		if err != nil {
+			logger = log.Error().Err(err)
+		} else {
+			logger = log.Debug()
+			if imageResult.URL != "" {
+				logger = logger.Str("url", imageResult.URL)
+			}
+			if imageResult.UIResult != nil {
+				logger = logger.Interface("uiResult", imageResult.UIResult)
+			}
+			if imageResult.ClosePopupsResult != nil {
+				if imageResult.ClosePopupsResult.IsEmpty() {
+					// set nil to reduce unnecessary summary info
+					imageResult.ClosePopupsResult = nil
+				} else {
+					logger = logger.Interface("closePopupsResult", imageResult.ClosePopupsResult)
+				}
+			}
+		}
+		logger = logger.Int64("elapsed(ms)", elapsed)
+		logger.Msg("get image data by veDEM")
+	}()
 
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
@@ -176,24 +204,19 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOp
 	var imageResponse APIResponseImage
 	err = json.Unmarshal(results, &imageResponse)
 	if err != nil {
-		log.Error().Err(err).
-			Str("response", string(results)).
-			Msg("json unmarshal veDEM image response body failed")
 		err = errors.Wrap(code.CVResponseError,
-			"json unmarshal veDEM image response body error")
+			fmt.Sprintf("json unmarshal veDEM image response body error, response=%s", string(results)))
 		return
 	}
 
 	if imageResponse.Code != 0 {
-		log.Error().
-			Int("code", imageResponse.Code).
-			Str("message", imageResponse.Message).
-			Msg("request veDEM OCR service failed")
-		return nil, errors.New(imageResponse.Message)
+		err = errors.Wrap(code.CVResponseError,
+			fmt.Sprintf("unexpected response data code: %d, message: %s",
+				imageResponse.Code, imageResponse.Message))
+		return
 	}
 
 	imageResult = &imageResponse.Result
-	log.Debug().Interface("imageResult", imageResult).Msg("get image data by veDEM")
 	return imageResult, nil
 }
 

@@ -109,20 +109,15 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 		screenResult.Icons = imageResult.UIResult
 
 		if actionOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
-			if imageResult.ClosePopupsResult.IsEmpty() {
-				// set nil to reduce unnecessary summary info
-				imageResult.ClosePopupsResult = nil
-			} else {
-				screenResult.Popup = &PopupInfo{
-					ClosePopupsResult: imageResult.ClosePopupsResult,
-					PicName:           imagePath,
-					PicURL:            imageResult.URL,
-				}
+			screenResult.Popup = &PopupInfo{
+				ClosePopupsResult: imageResult.ClosePopupsResult,
+				PicName:           imagePath,
+				PicURL:            imageResult.URL,
+			}
 
-				closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
-				for _, closeArea := range closeAreas {
-					screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
-				}
+			closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
+			for _, closeArea := range closeAreas {
+				screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
 			}
 		}
 	}
