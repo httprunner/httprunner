@@ -57,9 +57,12 @@ func (o OCRResults) ToOCRTexts() (ocrTexts OCRTexts) {
 				Y: int(ocrResult.Points[2].Y),
 			},
 		}
+		rectStr := fmt.Sprintf("%d,%d,%d,%d",
+			rect.Min.X, rect.Min.Y, rect.Max.X, rect.Max.Y)
 		ocrText := OCRText{
-			Text: ocrResult.Text,
-			Rect: rect,
+			Text:    ocrResult.Text,
+			Rect:    rect,
+			RectStr: rectStr,
 		}
 		ocrTexts = append(ocrTexts, ocrText)
 	}
@@ -67,8 +70,9 @@ func (o OCRResults) ToOCRTexts() (ocrTexts OCRTexts) {
 }
 
 type OCRText struct {
-	Text string
-	Rect image.Rectangle
+	Text    string          `json:"text"`
+	RectStr string          `json:"rect"`
+	Rect    image.Rectangle `json:"-"`
 }
 
 func (t OCRText) Size() Size {

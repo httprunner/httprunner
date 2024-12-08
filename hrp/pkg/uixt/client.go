@@ -80,7 +80,7 @@ type DriverResult struct {
 	Success          bool   `json:"success"`
 	ResponseStatus   int    `json:"response_status"`
 	ResponseDuration int64  `json:"response_duration(ms)"` // ms
-	ResponseBody     string `json:"response_body,omitempty"`
+	ResponseBody     string `json:"response_body"`
 	Error            string `json:"error,omitempty"`
 }
 
