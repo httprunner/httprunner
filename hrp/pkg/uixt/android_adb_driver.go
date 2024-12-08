@@ -68,12 +68,15 @@ func (ad *adbDriver) runShellCommand(cmd string, args ...string) (output string,
 	if cmd == "screencap" {
 		resp, err := ad.adbClient.ScreenCap()
 		if err == nil {
+			driverResult.ResponseBody = "OMITTED"
 			return string(resp), nil
 		}
 		return "", errors.Wrap(err, "adb screencap failed")
 	}
 
-	return ad.adbClient.RunShellCommand(cmd, args...)
+	output, err = ad.adbClient.RunShellCommand(cmd, args...)
+	driverResult.ResponseBody = strings.TrimSpace(output)
+	return output, err
 }
 
 func (ad *adbDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
