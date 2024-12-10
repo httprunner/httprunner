@@ -85,9 +85,9 @@ type MobileAction struct {
 
 func (ma MobileAction) GetOptions() []ActionOption {
 	var actionOptionList []ActionOption
+	// Notice: merge options from ma.Options and ma.ActionOptions
 	if ma.Options != nil {
 		actionOptionList = append(actionOptionList, ma.Options.Options()...)
-		return actionOptionList
 	}
 	actionOptionList = append(actionOptionList, ma.ActionOptions.Options()...)
 	return actionOptionList
