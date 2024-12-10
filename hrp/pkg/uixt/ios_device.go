@@ -430,7 +430,6 @@ func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, 
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to init Stub driver")
 		}
-
 	} else {
 		driver, err = dev.NewHTTPDriver(capabilities)
 		if err != nil {
@@ -774,6 +773,20 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDrive
 	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
+
+	// check WDA server status
+	status, err := wd.Status()
+	if err != nil {
+		return nil, errors.Wrapf(code.DeviceHTTPDriverError,
+			"get WDA server status failed: %s", err.Error())
+	}
+	log.Info().Interface("status", status).Msg("get WDA server status")
+	if status.State != "success" {
+		return nil, errors.Wrap(code.DeviceHTTPDriverError,
+			"WDA server status is not success")
+	}
+
+	// create new session
 	var sessionInfo SessionInfo
 	if sessionInfo, err = wd.NewSession(capabilities); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())

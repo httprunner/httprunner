@@ -6,6 +6,7 @@ import (
 	builtinJSON "encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -559,10 +560,10 @@ func (wd *wdaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 	toY += actionOptions.getRandomOffset()
 
 	data := map[string]interface{}{
-		"fromX": fromX,
-		"fromY": fromY,
-		"toX":   toX,
-		"toY":   toY,
+		"fromX": math.Round(fromX*10) / 10,
+		"fromY": math.Round(fromY*10) / 10,
+		"toX":   math.Round(toX*10) / 10,
+		"toY":   math.Round(toY*10) / 10,
 	}
 	if actionOptions.PressDuration > 0 {
 		data["pressDuration"] = actionOptions.PressDuration
