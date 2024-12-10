@@ -362,7 +362,8 @@ func (dev *AndroidDevice) StopPcap() string {
 }
 
 func (dev *AndroidDevice) Uninstall(packageName string) error {
-	return myexec.RunCommand("adb", "-s", dev.SerialNumber, "uninstall", packageName)
+	_, err := dev.d.RunShellCommand("uninstall", packageName)
+	return err
 }
 
 func (dev *AndroidDevice) Install(apkPath string, options ...InstallOption) error {
@@ -689,6 +690,7 @@ func (l *AdbLogcat) CatchLogcat(filter string) (err error) {
 		return nil
 	}
 
+	// FIXME: replace with gadb shell command
 	// clear logcat
 	if err = myexec.RunCommand("adb", "-s", l.serial, "shell", "logcat", "-c"); err != nil {
 		return

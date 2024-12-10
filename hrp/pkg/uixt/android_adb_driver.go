@@ -17,7 +17,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -797,7 +796,7 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 		log.Info().Msg("action log is null, use action file >>>")
 		logFilePathPrefix := fmt.Sprintf("%v/data", config.ActionLogFilePath)
 		files := []string{}
-		myexec.RunCommand("adb", "-s", ad.adbClient.Serial(), "pull", config.DeviceActionLogFilePath, config.ActionLogFilePath)
+		ad.adbClient.RunShellCommand("pull", config.DeviceActionLogFilePath, config.ActionLogFilePath)
 		err = filepath.Walk(config.ActionLogFilePath, func(path string, info fs.FileInfo, err error) error {
 			// 只是需要日志文件
 			if ok := strings.Contains(path, logFilePathPrefix); ok {
