@@ -191,7 +191,7 @@ func (dev *AndroidDevice) Options() (deviceOptions []AndroidDeviceOption) {
 }
 
 func (dev *AndroidDevice) Init() error {
-	dev.d.RunShellCommand("ime", "enable", "io.appium.settings/.UnicodeIME")
+	dev.d.RunShellCommand("ime", "enable", UnicodeImePackageName)
 	dev.d.RunShellCommand("rm", "-r", config.DeviceActionLogFilePath)
 	// Notice: brighten should be executed before unlock
 	// brighten android device screen
