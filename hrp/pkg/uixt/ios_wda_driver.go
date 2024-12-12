@@ -55,12 +55,22 @@ func (wd *wdaDriver) httpRequest(method string, rawURL string, rawBody []byte) (
 		if err == nil {
 			return
 		}
-		// TODO: polling WDA to check if resumed automatically
+
+		// check WDA server status
+		status, err := wd.Status()
+		if err != nil {
+			log.Err(err).Msg("get WDA server status failed")
+		} else if status.State != "success" {
+			log.Warn().Interface("status", status).Msg("WDA server status is not success")
+		} else {
+			log.Info().Interface("status", status).Msg("get WDA server status")
+		}
+
 		retryInterval = retryInterval * 2
 		time.Sleep(retryInterval)
 		oldSessionID := wd.session.ID
 		if err2 := wd.resetSession(); err2 != nil {
-			log.Err(err2).Msgf("failed to reset wda driver, retry count: %v", retryCount)
+			log.Err(err2).Msgf("failed to reset wda driver session, retry count: %v", retryCount)
 			continue
 		}
 		log.Debug().Str("new session", wd.session.ID).Str("old session", oldSessionID).
@@ -104,7 +114,7 @@ func (wd *wdaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 	}
 
 	var rawResp rawResponse
-	if rawResp, err = wd.Driver.httpPOST(data, "/session"); err != nil {
+	if rawResp, err = wd.httpPOST(data, "/session"); err != nil {
 		return SessionInfo{}, err
 	}
 	if sessionInfo, err = rawResp.valueConvertToSessionInfo(); err != nil {

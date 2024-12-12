@@ -636,18 +636,18 @@ func (dev *IOSDevice) MountImage(imagePath string) (err error) {
 func (dev *IOSDevice) AutoMountImage(basedir string) (err error) {
 	imagePath, err := imagemounter.DownloadImageFor(dev.d, basedir)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to auto mount image")
+		log.Error().Err(err).Msg("failed to download ios developer image")
 		return
 	}
 	conn, err := imagemounter.NewImageMounter(dev.d)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to auto mount image")
+		log.Error().Err(err).Msg("failed to init image mounter")
 		return
 	}
 	defer conn.Close()
 	err = conn.MountImage(imagePath)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to auto mount image")
+		log.Error().Err(err).Msg("failed to mount ios developer image")
 		return
 	}
 	return nil
@@ -772,18 +772,6 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDrive
 	host := "localhost"
 	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
-	}
-
-	// check WDA server status
-	status, err := wd.Status()
-	if err != nil {
-		return nil, errors.Wrapf(code.DeviceHTTPDriverError,
-			"get WDA server status failed: %s", err.Error())
-	}
-	log.Info().Interface("status", status).Msg("get WDA server status")
-	if status.State != "success" {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError,
-			"WDA server status is not success")
 	}
 
 	// create new session
