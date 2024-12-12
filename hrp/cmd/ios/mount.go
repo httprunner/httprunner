@@ -31,7 +31,7 @@ var mountCmd = &cobra.Command{
 			return err
 		}
 
-		images, errImage := device.ListImage()
+		images, errImage := device.ListImages()
 		if err != nil {
 			return fmt.Errorf("list device images failed: %v", err)
 		}
@@ -43,7 +43,7 @@ var mountCmd = &cobra.Command{
 		}
 
 		if errImage == nil && len(images) > 0 {
-			log.Info().Msg("ios developer image is already mounted")
+			log.Info().Strs("images", images).Msg("ios developer image is already mounted")
 			return nil
 		}
 
@@ -53,7 +53,7 @@ var mountCmd = &cobra.Command{
 			return fmt.Errorf("developer disk image directory not exist: %s", developerDiskImageDir)
 		}
 
-		if err = device.MountImage(developerDiskImageDir); err != nil {
+		if err = device.AutoMountImage(developerDiskImageDir); err != nil {
 			return fmt.Errorf("mount developer disk image failed: %s", err)
 		}
 
@@ -71,7 +71,7 @@ var (
 
 func init() {
 	mountCmd.Flags().BoolVar(&listDeveloperDiskImage, "list", false, "list developer disk images")
-	mountCmd.Flags().StringVarP(&developerDiskImageDir, "dir", "d", defaultDeveloperDiskImageDir, "specify DeveloperDiskImage directory")
+	mountCmd.Flags().StringVarP(&developerDiskImageDir, "dir", "d", defaultDeveloperDiskImageDir, "specify developer disk image directory")
 	mountCmd.Flags().StringVarP(&udid, "udid", "u", "", "specify device by udid")
 	iosRootCmd.AddCommand(mountCmd)
 }

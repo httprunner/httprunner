@@ -331,7 +331,7 @@ const (
 )
 
 func (dev *IOSDevice) Init() error {
-	images, err := dev.ListImage()
+	images, err := dev.ListImages()
 	if err != nil {
 		return err
 	}
@@ -340,38 +340,13 @@ func (dev *IOSDevice) Init() error {
 		return err
 	}
 	if len(images) == 0 && version.LessThan(ios.IOS17()) {
+		// Notice: iOS 17.0+ does not need to mount developer image
 		err = dev.AutoMountImage(os.TempDir())
 		if err != nil {
 			return err
 		}
 	}
 
-	if version.GreaterThan(semver.MustParse("17.4.0")) && dev.STUB {
-		info, err := tunnel.TunnelInfoForDevice(
-			dev.d.Properties.SerialNumber,
-			ios.HttpApiHost(), ios.HttpApiPort())
-		if err != nil {
-			return err
-		}
-		dev.d.UserspaceTUNPort = info.UserspaceTUNPort
-		dev.d.UserspaceTUN = info.UserspaceTUN
-		rsdService, err := ios.NewWithAddrPortDevice(info.Address, info.RsdPort, dev.d)
-		if err != nil {
-			return err
-		}
-		defer rsdService.Close()
-		rsdProvider, err := rsdService.Handshake()
-		if err != nil {
-			return err
-		}
-		device, err := ios.GetDeviceWithAddress(dev.d.Properties.SerialNumber, info.Address, rsdProvider)
-		if err != nil {
-			return err
-		}
-		device.UserspaceTUN = dev.d.UserspaceTUN
-		device.UserspaceTUNPort = dev.d.UserspaceTUNPort
-		dev.d = device
-	}
 	return nil
 }
 
@@ -599,19 +574,17 @@ func (dev *IOSDevice) GetAppInfo(packageName string) (appInfo installationproxy.
 	return installationproxy.AppInfo{}, nil
 }
 
-func (dev *IOSDevice) ListImage() (images []string, err error) {
+func (dev *IOSDevice) ListImages() (images []string, err error) {
 	conn, err := imagemounter.NewImageMounter(dev.d)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to list image")
-		return
+		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
 	defer conn.Close()
+
 	signatures, err := conn.ListImages()
 	if err != nil {
-		log.Error().Err(err).Msg("failed to list image")
-		return
+		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
-
 	for _, sig := range signatures {
 		images = append(images, fmt.Sprintf("%x", sig))
 	}
@@ -619,38 +592,30 @@ func (dev *IOSDevice) ListImage() (images []string, err error) {
 }
 
 func (dev *IOSDevice) MountImage(imagePath string) (err error) {
+	log.Info().Str("imagePath", imagePath).Msg("mount ios developer image")
 	conn, err := imagemounter.NewImageMounter(dev.d)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to mount image")
-		return
+		return errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
 	defer conn.Close()
+
 	err = conn.MountImage(imagePath)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to mount image")
-		return
+		return errors.Wrapf(code.DeviceConnectionError,
+			"mount ios developer image failed: %v", err)
 	}
+	log.Info().Str("imagePath", imagePath).Msg("mount ios developer image success")
 	return nil
 }
 
-func (dev *IOSDevice) AutoMountImage(basedir string) (err error) {
-	imagePath, err := imagemounter.DownloadImageFor(dev.d, basedir)
+func (dev *IOSDevice) AutoMountImage(baseDir string) (err error) {
+	log.Info().Str("baseDir", baseDir).Msg("auto mount ios developer image")
+	imagePath, err := imagemounter.DownloadImageFor(dev.d, baseDir)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to download ios developer image")
-		return
+		return errors.Wrapf(code.DeviceConnectionError,
+			"download ios developer image failed: %v", err)
 	}
-	conn, err := imagemounter.NewImageMounter(dev.d)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to init image mounter")
-		return
-	}
-	defer conn.Close()
-	err = conn.MountImage(imagePath)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to mount ios developer image")
-		return
-	}
-	return nil
+	return dev.MountImage(imagePath)
 }
 
 func (dev *IOSDevice) RunXCTest(ctx context.Context, bundleID, testRunnerBundleID, xctestConfig string) (err error) {
@@ -691,6 +656,7 @@ func (dev *IOSDevice) getVersion() (version *semver.Version, err error) {
 		log.Error().Err(err).Msg("failed to get version")
 		return nil, err
 	}
+	log.Info().Str("version", version.String()).Msg("get ios device version")
 	return version, nil
 }
 
