@@ -48,21 +48,23 @@ func (wd *wdaDriver) resetSession() error {
 	return nil
 }
 
-func (wd *wdaDriver) httpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (rawResp rawResponse, err error) {
-	disableRetryBool := len(disableRetry) > 0 && disableRetry[0]
-	for retryCount := 1; retryCount <= 2; retryCount++ {
+func (wd *wdaDriver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
+	retryInterval := 3 * time.Second
+	for retryCount := 1; retryCount <= 3; retryCount++ {
 		rawResp, err = wd.Driver.httpRequest(method, rawURL, rawBody)
-		if err == nil || disableRetryBool {
+		if err == nil {
 			return
 		}
 		// TODO: polling WDA to check if resumed automatically
-		time.Sleep(5 * time.Second)
+		retryInterval = retryInterval * 2
+		time.Sleep(retryInterval)
 		oldSessionID := wd.session.ID
 		if err2 := wd.resetSession(); err2 != nil {
 			log.Err(err2).Msgf("failed to reset wda driver, retry count: %v", retryCount)
 			continue
 		}
-		log.Debug().Str("new session", wd.session.ID).Str("old session", oldSessionID).Msgf("successful to reset wda driver, retry count: %v", retryCount)
+		log.Debug().Str("new session", wd.session.ID).Str("old session", oldSessionID).
+			Msgf("reset wda driver session successfully, retry count: %v", retryCount)
 		if oldSessionID != "" {
 			rawURL = strings.Replace(rawURL, oldSessionID, wd.session.ID, 1)
 		}
@@ -72,10 +74,6 @@ func (wd *wdaDriver) httpRequest(method string, rawURL string, rawBody []byte, d
 
 func (wd *wdaDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
 	return wd.httpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
-}
-
-func (wd *wdaDriver) httpGETWithRetry(pathElem ...string) (rawResp rawResponse, err error) {
-	return wd.httpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil, true)
 }
 
 func (wd *wdaDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
