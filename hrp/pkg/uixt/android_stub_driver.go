@@ -72,7 +72,7 @@ func (sad *stubAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse, 
 		return nil, fmt.Errorf("adb forward: %w", err)
 	}
 	sad.client = convertToHTTPClient(conn)
-	return sad.httpRequest(http.MethodGet, sad.concatURL(nil, pathElem...), nil)
+	return sad.Request(http.MethodGet, sad.concatURL(nil, pathElem...), nil)
 }
 
 func (sad *stubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
@@ -97,7 +97,7 @@ func (sad *stubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (ra
 			return nil, err
 		}
 	}
-	return sad.httpRequest(http.MethodPost, sad.concatURL(nil, pathElem...), bsJSON)
+	return sad.Request(http.MethodPost, sad.concatURL(nil, pathElem...), bsJSON)
 }
 
 func (sad *stubAndroidDriver) NewSession(capabilities Capabilities) (SessionInfo, error) {

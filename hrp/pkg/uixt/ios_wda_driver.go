@@ -51,7 +51,7 @@ func (wd *wdaDriver) resetSession() error {
 func (wd *wdaDriver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
 	retryInterval := 3 * time.Second
 	for retryCount := 1; retryCount <= 3; retryCount++ {
-		rawResp, err = wd.Driver.httpRequest(method, rawURL, rawBody)
+		rawResp, err = wd.Driver.Request(method, rawURL, rawBody)
 		if err == nil {
 			return
 		}
@@ -139,7 +139,8 @@ func (wd *wdaDriver) DeleteSession() (err error) {
 func (wd *wdaDriver) Status() (deviceStatus DeviceStatus, err error) {
 	// [[FBRoute GET:@"/status"].withoutSession respondWithTarget:self action:@selector(handleGetStatus:)]
 	var rawResp rawResponse
-	if rawResp, err = wd.httpGET("/status"); err != nil {
+	// Notice: use Driver.GET instead of httpGET to avoid loop calling
+	if rawResp, err = wd.Driver.GET("/status"); err != nil {
 		return DeviceStatus{}, err
 	}
 	reply := new(struct{ Value struct{ DeviceStatus } })

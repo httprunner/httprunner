@@ -94,25 +94,25 @@ func (wd *Driver) concatURL(u *url.URL, elem ...string) string {
 	return tmp.String()
 }
 
-func (wd *Driver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
-	return wd.httpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
+func (wd *Driver) GET(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.Request(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *Driver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+func (wd *Driver) POST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
 			return nil, err
 		}
 	}
-	return wd.httpRequest(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
+	return wd.Request(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
 }
 
-func (wd *Driver) httpDELETE(pathElem ...string) (rawResp rawResponse, err error) {
-	return wd.httpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
+func (wd *Driver) DELETE(pathElem ...string) (rawResp rawResponse, err error) {
+	return wd.Request(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *Driver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
+func (wd *Driver) Request(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
 	driverResult := &DriverResult{
 		RequestMethod: method,
 		RequestUrl:    rawURL,

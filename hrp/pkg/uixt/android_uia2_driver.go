@@ -94,11 +94,10 @@ func (ud *uiaDriver) resetDriver() error {
 	return nil
 }
 
-func (ud *uiaDriver) httpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (rawResp rawResponse, err error) {
-	disableRetryBool := len(disableRetry) > 0 && disableRetry[0]
+func (ud *uiaDriver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
 	for retryCount := 1; retryCount <= 5; retryCount++ {
-		rawResp, err = ud.Driver.httpRequest(method, rawURL, rawBody)
-		if err == nil || disableRetryBool {
+		rawResp, err = ud.Driver.Request(method, rawURL, rawBody)
+		if err == nil {
 			return
 		}
 		// wait for UIA2 server to resume automatically
@@ -118,10 +117,6 @@ func (ud *uiaDriver) httpRequest(method string, rawURL string, rawBody []byte, d
 
 func (ud *uiaDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
 	return ud.httpRequest(http.MethodGet, ud.concatURL(nil, pathElem...), nil)
-}
-
-func (ud *uiaDriver) httpGETWithRetry(pathElem ...string) (rawResp rawResponse, err error) {
-	return ud.httpRequest(http.MethodGet, ud.concatURL(nil, pathElem...), nil, true)
 }
 
 func (ud *uiaDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
@@ -147,7 +142,7 @@ func (ud *uiaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 	} else {
 		data["capabilities"] = map[string]interface{}{"alwaysMatch": capabilities}
 	}
-	if rawResp, err = ud.Driver.httpPOST(data, "/session"); err != nil {
+	if rawResp, err = ud.Driver.POST(data, "/session"); err != nil {
 		return SessionInfo{SessionId: ""}, err
 	}
 	reply := new(struct{ Value struct{ SessionId string } })
@@ -175,7 +170,8 @@ func (ud *uiaDriver) DeleteSession() (err error) {
 func (ud *uiaDriver) Status() (deviceStatus DeviceStatus, err error) {
 	// register(getHandler, new Status("/wd/hub/status"))
 	var rawResp rawResponse
-	if rawResp, err = ud.httpGET("/status"); err != nil {
+	// Notice: use Driver.GET instead of httpGET to avoid loop calling
+	if rawResp, err = ud.Driver.GET("/status"); err != nil {
 		return DeviceStatus{Ready: false}, err
 	}
 	reply := new(struct {

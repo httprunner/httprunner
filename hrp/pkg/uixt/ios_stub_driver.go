@@ -448,7 +448,7 @@ func (s *stubIOSDriver) GetDriverResults() []*DriverResult {
 }
 
 func (s *stubIOSDriver) Source(srcOpt ...SourceOption) (string, error) {
-	resp, err := s.Driver.httpRequest(http.MethodGet, fmt.Sprintf("%s/source?format=json&onlyWeb=false", s.bightInsightPrefix), []byte{})
+	resp, err := s.Driver.Request(http.MethodGet, fmt.Sprintf("%s/source?format=json&onlyWeb=false", s.bightInsightPrefix), []byte{})
 	if err != nil {
 		return "", err
 	}
@@ -470,7 +470,7 @@ func (s *stubIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, pa
 	if err != nil {
 		return info, err
 	}
-	resp, err := s.Driver.httpRequest(http.MethodPost, fmt.Sprintf("%s/host/login/account/", s.serverPrefix), bsJSON)
+	resp, err := s.Driver.Request(http.MethodPost, fmt.Sprintf("%s/host/login/account/", s.serverPrefix), bsJSON)
 	if err != nil {
 		return info, err
 	}
@@ -494,7 +494,7 @@ func (s *stubIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, pa
 }
 
 func (s *stubIOSDriver) LogoutNoneUI(packageName string) error {
-	resp, err := s.Driver.httpRequest(http.MethodGet, fmt.Sprintf("%s/host/loginout/", s.serverPrefix), []byte{})
+	resp, err := s.Driver.Request(http.MethodGet, fmt.Sprintf("%s/host/loginout/", s.serverPrefix), []byte{})
 	if err != nil {
 		return err
 	}
@@ -518,7 +518,7 @@ func (s *stubIOSDriver) TearDown() error {
 }
 
 func (s *stubIOSDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {
-	resp, err := s.Driver.httpRequest(http.MethodGet, fmt.Sprintf("%s/host/app/info/", s.serverPrefix), []byte{})
+	resp, err := s.Driver.Request(http.MethodGet, fmt.Sprintf("%s/host/app/info/", s.serverPrefix), []byte{})
 	if err != nil {
 		return info, err
 	}
