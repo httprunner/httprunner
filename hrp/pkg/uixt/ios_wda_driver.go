@@ -40,10 +40,22 @@ func (wd *wdaDriver) resetSession() error {
 	capabilities := NewCapabilities()
 	capabilities.WithDefaultAlertAction(AlertActionAccept)
 
-	sessionInfo, err := wd.NewSession(capabilities)
+	data := map[string]interface{}{
+		"capabilities": map[string]interface{}{
+			"alwaysMatch": capabilities,
+		},
+	}
+
+	// Notice: use Driver.POST instead of httpPOST to avoid loop calling
+	rawResp, err := wd.Driver.POST(data, "/session")
 	if err != nil {
 		return err
 	}
+	sessionInfo, err := rawResp.valueConvertToSessionInfo()
+	if err != nil {
+		return err
+	}
+	// update session ID
 	wd.session.ID = sessionInfo.SessionId
 	return nil
 }
@@ -110,7 +122,9 @@ func (wd *wdaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionI
 	if len(capabilities) == 0 {
 		data["capabilities"] = make(map[string]interface{})
 	} else {
-		data["capabilities"] = map[string]interface{}{"alwaysMatch": capabilities}
+		data["capabilities"] = map[string]interface{}{
+			"alwaysMatch": capabilities,
+		}
 	}
 
 	var rawResp rawResponse
