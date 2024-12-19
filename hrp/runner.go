@@ -426,6 +426,9 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err != nil {
 			return nil, err
 		}
+		if err := driver.Init(); err != nil {
+			return nil, err
+		}
 		r.uixtDrivers[device.SerialNumber] = driver
 	}
 	// parse iOS devices config
@@ -446,6 +449,9 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err != nil {
 			return nil, err
 		}
+		if err := driver.Init(); err != nil {
+			return nil, err
+		}
 		r.uixtDrivers[device.UDID] = driver
 	}
 	// parse harmony devices config
@@ -464,6 +470,9 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		}
 		driver, err := device.NewDriver()
 		if err != nil {
+			return nil, err
+		}
+		if err := driver.Init(); err != nil {
 			return nil, err
 		}
 		r.uixtDrivers[device.ConnectKey] = driver

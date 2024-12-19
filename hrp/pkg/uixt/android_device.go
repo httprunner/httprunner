@@ -193,13 +193,6 @@ func (dev *AndroidDevice) Options() (deviceOptions []AndroidDeviceOption) {
 func (dev *AndroidDevice) Init() error {
 	dev.d.RunShellCommand("ime", "enable", UnicodeImePackageName)
 	dev.d.RunShellCommand("rm", "-r", config.DeviceActionLogFilePath)
-	// Notice: brighten should be executed before unlock
-	// brighten android device screen
-	dev.d.RunShellCommand("input", "keyevent", fmt.Sprintf("%d", KCWakeup))
-	// unlock android device screen
-	dev.d.RunShellCommand("input", "keyevent", fmt.Sprintf("%d", KCMenu))
-	// swipe up to unlock
-	dev.d.RunShellCommand("input", "swipe", "540", "1000", "540", "500")
 
 	if dev.UIA2 {
 		// uiautomator2 server must be started before

@@ -53,6 +53,17 @@ func newDriverExt(device IDevice, driver IWebDriver, options ...DriverOption) (d
 	return dExt, nil
 }
 
+func (dExt *DriverExt) Init() error {
+	// unlock device screen
+	err := dExt.Driver.Unlock()
+	if err != nil {
+		log.Error().Err(err).Msg("unlock device screen failed")
+		return err
+	}
+
+	return nil
+}
+
 func (dExt *DriverExt) assertOCR(text, assert string) error {
 	var options []ActionOption
 	options = append(options, WithScreenShotFileName(fmt.Sprintf("assert_ocr_%s", text)))
