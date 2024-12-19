@@ -227,3 +227,16 @@ func GetErrorCode(err error) (errCode int) {
 	}
 	return
 }
+
+func GetErrorByCode(errCode int) (error) {
+	if errCode < 0 {
+		return nil
+	}
+	for key, value := range errorsMap {
+		if value == errCode {
+			return key
+		}
+	}
+	return nil
+}
+

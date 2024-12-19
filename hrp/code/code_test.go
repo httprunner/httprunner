@@ -10,3 +10,9 @@ func TestGetErrorCode(t *testing.T) {
 	code := GetErrorCode(err)
 	fmt.Println(code)
 }
+
+func TestGetErrorByCode(t *testing.T) {
+	code := 0
+	err := GetErrorByCode(code)
+	fmt.Println("[TestGetErrorByCode]:err:",err)
+}
