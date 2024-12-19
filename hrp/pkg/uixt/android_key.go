@@ -5,32 +5,32 @@ package uixt
 type KeyMeta int
 
 const (
-	KMEmpty     KeyMeta = 0     // As a `null`
-	KMCapLocked KeyMeta = 0x100 // SHIFT key locked in CAPS mode.
-	KMAltLocked KeyMeta = 0x200 // ALT key locked.
-	KMSymLocked KeyMeta = 0x400 // SYM key locked.
-	KMSelecting KeyMeta = 0x800 // Text is in selection mode.
-	// KMAltOn        KeyMeta = 0x02     // This mask is used to check whether one of the ALT meta keys is pressed.
-	// KMAltLeftOn    KeyMeta = 0x10     // This mask is used to check whether the left ALT meta key is pressed.
-	// KMAltRightOn   KeyMeta = 0x20     // This mask is used to check whether the right the ALT meta key is pressed.
-	// KMShiftOn      KeyMeta = 0x1      // This mask is used to check whether one of the SHIFT meta keys is pressed.
-	// KMShiftLeftOn  KeyMeta = 0x40     // This mask is used to check whether the left SHIFT meta key is pressed.
-	// KMShiftRightOn KeyMeta = 0x80     // This mask is used to check whether the right SHIFT meta key is pressed.
-	// KMSymOn        KeyMeta = 0x4      // This mask is used to check whether the SYM meta key is pressed.
-	// KMFunctionOn   KeyMeta = 0x8      // This mask is used to check whether the FUNCTION meta key is pressed.
-	// KMCtrlOn       KeyMeta = 0x1000   // This mask is used to check whether one of the CTRL meta keys is pressed.
-	// KMCtrlLeftOn   KeyMeta = 0x2000   // This mask is used to check whether the left CTRL meta key is pressed.
-	// KMCtrlRightOn  KeyMeta = 0x4000   // This mask is used to check whether the right CTRL meta key is pressed.
-	// KMMetaOn       KeyMeta = 0x10000  // This mask is used to check whether one of the META meta keys is pressed.
-	// KMMetaLeftOn   KeyMeta = 0x20000  // This mask is used to check whether the left META meta key is pressed.
-	// KMMetaRightOn  KeyMeta = 0x40000  // This mask is used to check whether the right META meta key is pressed.
-	// KMCapsLockOn   KeyMeta = 0x100000 // This mask is used to check whether the CAPS LOCK meta key is on.
-	// KMNumLockOn    KeyMeta = 0x200000 // This mask is used to check whether the NUM LOCK meta key is on.
-	// KMScrollLockOn KeyMeta = 0x400000 // This mask is used to check whether the SCROLL LOCK meta key is on.
-	// KMShiftMask            = KMShiftOn | KMShiftLeftOn | KMShiftRightOn
-	// KMAltMask              = KMAltOn | KMAltLeftOn | KMAltRightOn
-	// KMCtrlMask             = KMCtrlOn | KMCtrlLeftOn | KMCtrlRightOn
-	// KMMetaMask             = KMMetaOn | KMMetaLeftOn | KMMetaRightOn
+	KMEmpty        KeyMeta = 0        // As a `null`
+	KMCapLocked    KeyMeta = 0x100    // SHIFT key locked in CAPS mode.
+	KMAltLocked    KeyMeta = 0x200    // ALT key locked.
+	KMSymLocked    KeyMeta = 0x400    // SYM key locked.
+	KMSelecting    KeyMeta = 0x800    // Text is in selection mode.
+	KMAltOn        KeyMeta = 0x02     // This mask is used to check whether one of the ALT meta keys is pressed.
+	KMAltLeftOn    KeyMeta = 0x10     // This mask is used to check whether the left ALT meta key is pressed.
+	KMAltRightOn   KeyMeta = 0x20     // This mask is used to check whether the right the ALT meta key is pressed.
+	KMShiftOn      KeyMeta = 0x1      // This mask is used to check whether one of the SHIFT meta keys is pressed.
+	KMShiftLeftOn  KeyMeta = 0x40     // This mask is used to check whether the left SHIFT meta key is pressed.
+	KMShiftRightOn KeyMeta = 0x80     // This mask is used to check whether the right SHIFT meta key is pressed.
+	KMSymOn        KeyMeta = 0x4      // This mask is used to check whether the SYM meta key is pressed.
+	KMFunctionOn   KeyMeta = 0x8      // This mask is used to check whether the FUNCTION meta key is pressed.
+	KMCtrlOn       KeyMeta = 0x1000   // This mask is used to check whether one of the CTRL meta keys is pressed.
+	KMCtrlLeftOn   KeyMeta = 0x2000   // This mask is used to check whether the left CTRL meta key is pressed.
+	KMCtrlRightOn  KeyMeta = 0x4000   // This mask is used to check whether the right CTRL meta key is pressed.
+	KMMetaOn       KeyMeta = 0x10000  // This mask is used to check whether one of the META meta keys is pressed.
+	KMMetaLeftOn   KeyMeta = 0x20000  // This mask is used to check whether the left META meta key is pressed.
+	KMMetaRightOn  KeyMeta = 0x40000  // This mask is used to check whether the right META meta key is pressed.
+	KMCapsLockOn   KeyMeta = 0x100000 // This mask is used to check whether the CAPS LOCK meta key is on.
+	KMNumLockOn    KeyMeta = 0x200000 // This mask is used to check whether the NUM LOCK meta key is on.
+	KMScrollLockOn KeyMeta = 0x400000 // This mask is used to check whether the SCROLL LOCK meta key is on.
+	KMShiftMask            = KMShiftOn | KMShiftLeftOn | KMShiftRightOn
+	KMAltMask              = KMAltOn | KMAltLeftOn | KMAltRightOn
+	KMCtrlMask             = KMCtrlOn | KMCtrlLeftOn | KMCtrlRightOn
+	KMMetaMask             = KMMetaOn | KMMetaLeftOn | KMMetaRightOn
 )
 
 type KeyFlag int

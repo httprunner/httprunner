@@ -279,7 +279,18 @@ func (ad *adbDriver) Homescreen() (err error) {
 }
 
 func (ad *adbDriver) Unlock() (err error) {
-	return ad.PressKeyCodes(KCMenu, KMEmpty)
+	// Notice: brighten should be executed before unlock
+	// brighten android device screen
+	if err := ad.PressKeyCodes(KCWakeup, KMEmpty); err != nil {
+		log.Error().Err(err).Msg("brighten android device screen failed")
+	}
+	// unlock android device screen
+	if err := ad.PressKeyCodes(KCMenu, KMEmpty); err != nil {
+		log.Error().Err(err).Msg("press menu key to unlock screen failed")
+	}
+
+	// swipe up to unlock
+	return ad.Swipe(500, 1500, 500, 500)
 }
 
 func (ad *adbDriver) Backspace(count int, options ...ActionOption) (err error) {
@@ -287,12 +298,12 @@ func (ad *adbDriver) Backspace(count int, options ...ActionOption) (err error) {
 		return nil
 	}
 	if count == 1 {
-		return ad.PressKeyCode(67)
+		return ad.PressKeyCode(KCDel)
 	}
 	keyArray := make([]KeyCode, count)
 
 	for i := range keyArray {
-		keyArray[i] = KeyCode(67)
+		keyArray[i] = KCDel
 	}
 	return ad.combinationKey(keyArray)
 }
@@ -315,9 +326,18 @@ func (ad *adbDriver) PressKeyCode(keyCode KeyCode) (err error) {
 }
 
 func (ad *adbDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta) (err error) {
-	// adb shell input keyevent <keyCode>
-	_, err = ad.runShellCommand(
-		"input", "keyevent", fmt.Sprintf("%d", keyCode))
+	// adb shell input keyevent [--longpress] KEYCODE [METASTATE]
+	if metaState != KMEmpty {
+		// press key with metastate, e.g. KMShiftOn/KMCtrlOn
+		_, err = ad.runShellCommand(
+			"input", "keyevent", "--longpress",
+			fmt.Sprintf("%d", keyCode),
+			fmt.Sprintf("%d", metaState))
+	} else {
+		_, err = ad.runShellCommand(
+			"input", "keyevent",
+			fmt.Sprintf("%d", keyCode))
+	}
 	return
 }
 
