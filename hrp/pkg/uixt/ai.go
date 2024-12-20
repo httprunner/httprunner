@@ -125,6 +125,8 @@ func (t OCRTexts) FilterScope(scope AbsScope) (results OCRTexts) {
 	return
 }
 
+// FindText returns matched text with options
+// Notice: filter scope should be specified with WithAbsScope
 func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText, err error) {
 	actionOptions := NewActionOptions(options...)
 
