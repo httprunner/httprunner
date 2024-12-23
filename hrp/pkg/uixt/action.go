@@ -35,6 +35,7 @@ const (
 	ACTION_SetIme           ActionMethod = "set_ime"
 	ACTION_GetSource        ActionMethod = "get_source"
 	ACTION_GetForegroundApp ActionMethod = "get_foreground_app"
+	ACTION_CallFunction     ActionMethod = "call_function"
 
 	// UI handling
 	ACTION_Home        ActionMethod = "home"
@@ -79,6 +80,7 @@ const (
 type MobileAction struct {
 	Method  ActionMethod   `json:"method,omitempty" yaml:"method,omitempty"`
 	Params  interface{}    `json:"params,omitempty" yaml:"params,omitempty"`
+	Fn      func()         `json:"-" yaml:"-"` // only used for function action, not serialized
 	Options *ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
 	ActionOptions
 }
@@ -778,6 +780,10 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 	case ACTION_EndToEndDelay:
 		CollectEndToEndDelay(dExt, action.GetOptions()...)
 		return nil
+	case ACTION_CallFunction:
+		log.Info().Interface("name", action.Params).Msg("call function")
+		fn := action.Fn
+		fn()
 	}
 	return nil
 }

@@ -401,6 +401,16 @@ func (s *StepMobile) ClosePopups(options ...uixt.ActionOption) *StepMobile {
 	return s
 }
 
+func (s *StepMobile) CallFunc(name string, fn func()) *StepMobile {
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
+		Method:  uixt.ACTION_CallFunction,
+		Params:  name,
+		Fn:      fn,
+		Options: nil,
+	})
+	return s
+}
+
 // Validate switches to step validation.
 func (s *StepMobile) Validate() *StepMobileUIValidation {
 	return &StepMobileUIValidation{
