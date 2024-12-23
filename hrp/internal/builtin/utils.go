@@ -380,8 +380,18 @@ func ConvertToFloat64(val interface{}) (float64, error) {
 		return float64(v), nil
 	case int64:
 		return float64(v), nil
+	case string:
+		f, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			log.Error().Err(err).Str("value", v).
+				Msg("convert string to float64 failed")
+			return 0, err
+		}
+		return f, nil
 	default:
-		return 0, fmt.Errorf("invalid type for conversion to float64: %T, value: %+v", val, val)
+		log.Error().Interface("value", val).Type("type", val).
+			Msg("convert float64 failed")
+		return 0, errors.New("convert float64 error")
 	}
 }
 
@@ -396,7 +406,7 @@ func ConvertToFloat64Slice(val interface{}) ([]float64, error) {
 	for i, v := range paramsSlice {
 		float64Slice[i], err = ConvertToFloat64(v)
 		if err != nil {
-			return nil, errors.New("val is not float64 slice")
+			return nil, err
 		}
 	}
 	return float64Slice, nil
