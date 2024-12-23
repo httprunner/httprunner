@@ -374,12 +374,9 @@ func (dev *IOSDevice) getAppInfo(packageName string) (appInfo AppInfo, err error
 		if app.CFBundleIdentifier == packageName {
 			appInfo.BundleId = app.CFBundleIdentifier
 			appInfo.AppName = app.CFBundleName
-			appInfo.VersionName = app.CFBundleShortVersionString
 			appInfo.PackageName = app.CFBundleIdentifier
-			versionCode, err := strconv.Atoi(app.CFBundleVersion)
-			if err == nil {
-				appInfo.VersionCode = versionCode
-			}
+			appInfo.VersionName = app.CFBundleShortVersionString
+			appInfo.VersionCode = app.CFBundleVersion
 			return appInfo, err
 		}
 	}
@@ -799,5 +796,34 @@ func (dev *IOSDevice) GetCurrentWindow() (WindowInfo, error) {
 }
 
 func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
-	return AppInfo{}, nil
+	svc, err := installationproxy.New(dev.d)
+	if err != nil {
+		return AppInfo{}, err
+	}
+	defer svc.Close()
+
+	apps, err := svc.BrowseAllApps()
+	if err != nil {
+		return AppInfo{}, err
+	}
+
+	for _, app := range apps {
+		if app.CFBundleIdentifier != packageName {
+			continue
+		}
+
+		return AppInfo{
+			Name: app.CFBundleName,
+			AppBaseInfo: AppBaseInfo{
+				BundleId:    app.CFBundleIdentifier,
+				PackageName: app.CFBundleIdentifier,
+				VersionName: app.CFBundleShortVersionString,
+				VersionCode: app.CFBundleVersion,
+				AppName:     app.CFBundleDisplayName,
+				AppPath:     app.Path,
+			},
+		}, nil
+	}
+	return AppInfo{}, errors.Wrap(code.DeviceGetInfoError,
+		fmt.Sprintf("%s not found", packageName))
 }

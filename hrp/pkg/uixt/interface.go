@@ -270,7 +270,7 @@ type AppBaseInfo struct {
 	PackageName    string `json:"packageName,omitempty"`    // android package name
 	Activity       string `json:"activity,omitempty"`       // android activity
 	VersionName    string `json:"versionName,omitempty"`
-	VersionCode    int    `json:"versionCode,omitempty"`
+	VersionCode    string `json:"versionCode,omitempty"`
 	AppName        string `json:"appName,omitempty"`
 	AppPath        string `json:"appPath,omitempty"`
 	AppMD5         string `json:"appMD5,omitempty"`

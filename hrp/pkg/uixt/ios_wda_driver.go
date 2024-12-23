@@ -14,7 +14,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -478,10 +477,7 @@ func (wd *wdaDriver) GetForegroundApp() (appInfo AppInfo, err error) {
 			appInfo.BundleId = app.CFBundleIdentifier
 			appInfo.PackageName = app.CFBundleIdentifier
 			appInfo.VersionName = app.CFBundleShortVersionString
-			versionCode, err := strconv.Atoi(app.CFBundleVersion)
-			if err == nil {
-				appInfo.VersionCode = versionCode
-			}
+			appInfo.VersionCode = app.CFBundleVersion
 			return appInfo, err
 		}
 	}

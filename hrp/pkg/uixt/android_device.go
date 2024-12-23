@@ -518,7 +518,7 @@ func (dev *AndroidDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 		appInfo.AppBaseInfo.VersionName = appVersion
 	} else {
 		log.Warn().Msg("failed to get package version")
-		return appInfo, err
+		return appInfo, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 
 	// get package path
@@ -527,7 +527,7 @@ func (dev *AndroidDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 		appInfo.AppBaseInfo.AppPath = packagePath
 	} else {
 		log.Warn().Msg("failed to get package path")
-		return appInfo, err
+		return appInfo, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 
 	// get package md5
@@ -536,7 +536,7 @@ func (dev *AndroidDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 		appInfo.AppBaseInfo.AppMD5 = packageMD5
 	} else {
 		log.Warn().Msg("failed to get package md5")
-		return appInfo, err
+		return appInfo, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 
 	return appInfo, nil

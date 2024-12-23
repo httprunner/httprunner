@@ -73,7 +73,7 @@ func TestNewIOSDevice(t *testing.T) {
 func TestIOSDevice_GetPackageInfo(t *testing.T) {
 	device, err := NewIOSDevice(WithWDAPort(8700))
 	checkErr(t, err)
-	appInfo, err := device.GetPackageInfo("com.apple.Preferences")
+	appInfo, err := device.GetPackageInfo("com.ss.iphone.ugc.Aweme")
 	checkErr(t, err)
 	t.Log(appInfo)
 }
