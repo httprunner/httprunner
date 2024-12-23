@@ -1,6 +1,8 @@
 package hrp
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -172,6 +174,44 @@ func TestRunCaseWithShell(t *testing.T) {
 	r := NewRunner(t)
 	err := r.Run(testcase1)
 	if err != nil {
+		t.Fatal()
+	}
+}
+
+func TestRunCaseWithFunction(t *testing.T) {
+	fn1 := func() {
+		fmt.Println("call function1 without return")
+	}
+	num := 0
+	fn2 := func() {
+		num++
+		fmt.Println("call function2 with return value")
+	}
+	var err3 error
+	fn3 := func() {
+		num++
+		err3 = errors.New("func3 error")
+		fmt.Println("call function3 with return value and error")
+	}
+	testcase1 := &TestCase{
+		Config: NewConfig("call function"),
+		TestSteps: []IStep{
+			NewStep("fn1").Function(fn1),
+			NewStep("fn2").Function(fn2),
+			NewStep("fn3").Function(fn3),
+		},
+	}
+
+	r := NewRunner(t)
+	err := r.Run(testcase1)
+	if err != nil {
+		t.Fatal()
+	}
+
+	if !assert.Equal(t, num, 2) {
+		t.Fatal()
+	}
+	if !assert.NotNil(t, err3) {
 		t.Fatal()
 	}
 }

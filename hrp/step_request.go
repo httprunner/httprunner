@@ -811,6 +811,14 @@ func (s *StepRequest) Shell(content string) *StepShell {
 	}
 }
 
+// Function creates a new function step session
+func (s *StepRequest) Function(fn func()) *StepFunction {
+	return &StepFunction{
+		StepConfig: s.StepConfig,
+		Fn:         fn,
+	}
+}
+
 // StepRequestWithOptionalArgs implements IStep interface.
 type StepRequestWithOptionalArgs struct {
 	*StepRequest

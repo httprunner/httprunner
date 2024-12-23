@@ -16,6 +16,7 @@ const (
 	stepTypeHarmony     StepType = "harmony"
 	stepTypeIOS         StepType = "ios"
 	stepTypeShell       StepType = "shell"
+	stepTypeFunction    StepType = "function"
 
 	stepTypeSuffixExtraction StepType = "_extraction"
 	stepTypeSuffixValidation StepType = "_validation"
