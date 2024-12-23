@@ -69,6 +69,7 @@ var (
 	DeviceConnectionError = errors.New("device general connection error") // 50
 	DeviceHTTPDriverError = errors.New("device HTTP driver error")        // 51
 	DeviceUSBDriverError  = errors.New("device USB driver error")         // 52
+	DeviceAppNotInstalled = errors.New("device app not installed")        // 59
 	DeviceGetInfoError    = errors.New("device get info error")           // 60
 	DeviceConfigureError  = errors.New("device configure error")          // 61
 	DeviceShellExecError  = errors.New("device shell exec error")         // 62
@@ -168,6 +169,7 @@ var errorsMap = map[error]int{
 	DeviceConnectionError: 50,
 	DeviceHTTPDriverError: 51,
 	DeviceUSBDriverError:  52,
+	DeviceAppNotInstalled: 59,
 	DeviceGetInfoError:    60,
 	DeviceConfigureError:  61,
 	DeviceShellExecError:  62,
@@ -228,7 +230,7 @@ func GetErrorCode(err error) (errCode int) {
 	return
 }
 
-func GetErrorByCode(errCode int) (error) {
+func GetErrorByCode(errCode int) error {
 	if errCode < 0 {
 		return nil
 	}
@@ -239,4 +241,3 @@ func GetErrorByCode(errCode int) (error) {
 	}
 	return nil
 }
-

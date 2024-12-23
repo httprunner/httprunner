@@ -798,13 +798,13 @@ func (dev *IOSDevice) GetCurrentWindow() (WindowInfo, error) {
 func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 	svc, err := installationproxy.New(dev.d)
 	if err != nil {
-		return AppInfo{}, err
+		return AppInfo{}, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 	defer svc.Close()
 
 	apps, err := svc.BrowseAllApps()
 	if err != nil {
-		return AppInfo{}, err
+		return AppInfo{}, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 
 	for _, app := range apps {
@@ -824,6 +824,6 @@ func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 			},
 		}, nil
 	}
-	return AppInfo{}, errors.Wrap(code.DeviceGetInfoError,
+	return AppInfo{}, errors.Wrap(code.DeviceAppNotInstalled,
 		fmt.Sprintf("%s not found", packageName))
 }
