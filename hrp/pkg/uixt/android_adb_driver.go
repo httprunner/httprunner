@@ -876,7 +876,6 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	if err != nil {
 		return app, err
 	}
-	log.Info().Msg(packageInfo)
 	err = json.Unmarshal([]byte(strings.TrimSpace(packageInfo)), &app)
 	if err != nil {
 		log.Error().Err(err).Str("packageInfo", packageInfo).Msg("get foreground app failed")

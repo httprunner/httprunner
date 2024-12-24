@@ -264,16 +264,16 @@ type WindowInfo struct {
 }
 
 type AppBaseInfo struct {
-	Pid            int    `json:"pid,omitempty"`
-	BundleId       string `json:"bundleId,omitempty"`       // ios package name
-	ViewController string `json:"viewController,omitempty"` // ios view controller
-	PackageName    string `json:"packageName,omitempty"`    // android package name
-	Activity       string `json:"activity,omitempty"`       // android activity
-	VersionName    string `json:"versionName,omitempty"`
-	VersionCode    string `json:"versionCode,omitempty"`
-	AppName        string `json:"appName,omitempty"`
-	AppPath        string `json:"appPath,omitempty"`
-	AppMD5         string `json:"appMD5,omitempty"`
+	Pid            int         `json:"pid,omitempty"`
+	BundleId       string      `json:"bundleId,omitempty"`       // ios package name
+	ViewController string      `json:"viewController,omitempty"` // ios view controller
+	PackageName    string      `json:"packageName,omitempty"`    // android package name
+	Activity       string      `json:"activity,omitempty"`       // android activity
+	VersionName    string      `json:"versionName,omitempty"`
+	VersionCode    interface{} `json:"versionCode,omitempty"` // int or string
+	AppName        string      `json:"appName,omitempty"`
+	AppPath        string      `json:"appPath,omitempty"`
+	AppMD5         string      `json:"appMD5,omitempty"`
 	// AppIcon        string `json:"appIcon,omitempty"`
 }
 
