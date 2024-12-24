@@ -718,21 +718,8 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		stepResult.Elapsed = time.Since(start).Milliseconds()
 	}()
 
-	// prepare actions
-	var actions []uixt.MobileAction
-	if mobileStep.Actions == nil {
-		actions = []uixt.MobileAction{
-			{
-				Method: mobileStep.Method,
-				Params: mobileStep.Params,
-			},
-		}
-	} else {
-		actions = mobileStep.Actions
-	}
-
 	// run actions
-	for _, action := range actions {
+	for _, action := range mobileStep.Actions {
 		select {
 		case <-s.caseRunner.hrpRunner.caseTimeoutTimer.C:
 			log.Warn().Msg("timeout in mobile UI runner")
