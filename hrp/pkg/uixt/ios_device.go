@@ -812,7 +812,7 @@ func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 			continue
 		}
 
-		return AppInfo{
+		appInfo := AppInfo{
 			Name: app.CFBundleName,
 			AppBaseInfo: AppBaseInfo{
 				BundleId:    app.CFBundleIdentifier,
@@ -822,7 +822,9 @@ func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 				AppName:     app.CFBundleDisplayName,
 				AppPath:     app.Path,
 			},
-		}, nil
+		}
+		log.Info().Interface("appInfo", appInfo).Msg("get package info")
+		return appInfo, nil
 	}
 	return AppInfo{}, errors.Wrap(code.DeviceAppNotInstalled,
 		fmt.Sprintf("%s not found", packageName))

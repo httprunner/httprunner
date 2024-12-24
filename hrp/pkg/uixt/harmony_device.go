@@ -154,6 +154,7 @@ func (dev *HarmonyDevice) Uninstall(packageName string) error {
 }
 
 func (dev *HarmonyDevice) GetPackageInfo(packageName string) (AppInfo, error) {
+	log.Warn().Msg("get package info not implemented for harmony device, skip")
 	return AppInfo{}, nil
 }
 

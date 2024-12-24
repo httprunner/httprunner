@@ -539,6 +539,7 @@ func (dev *AndroidDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 		return appInfo, errors.Wrap(code.DeviceAppNotInstalled, err.Error())
 	}
 
+	log.Info().Interface("appInfo", appInfo).Msg("get package info")
 	return appInfo, nil
 }
 
