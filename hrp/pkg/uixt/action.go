@@ -781,7 +781,6 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		CollectEndToEndDelay(dExt, action.GetOptions()...)
 		return nil
 	case ACTION_CallFunction:
-		log.Info().Interface("name", action.Params).Msg("call function")
 		fn := action.Fn
 		fn()
 	}

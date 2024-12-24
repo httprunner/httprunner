@@ -401,10 +401,10 @@ func (s *StepMobile) ClosePopups(options ...uixt.ActionOption) *StepMobile {
 	return s
 }
 
-func (s *StepMobile) CallFunc(name string, fn func()) *StepMobile {
+func (s *StepMobile) Call(name string, fn func()) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_CallFunction,
-		Params:  name,
+		Params:  name, // function description
 		Fn:      fn,
 		Options: nil,
 	})
@@ -675,18 +675,38 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			attachments["error"] = err.Error()
 
 			// save foreground app
+			startTime := time.Now()
+			actionResult := &ActionResult{
+				MobileAction: uixt.MobileAction{
+					Method: uixt.ACTION_GetForegroundApp,
+					Params: "[ForDebug] check foreground app",
+				},
+				StartTime: startTime.Unix(),
+			}
 			if app, err1 := uiDriver.Driver.GetForegroundApp(); err1 == nil {
 				attachments["foreground_app"] = app.AppBaseInfo
 			} else {
 				log.Warn().Err(err1).Msg("save foreground app failed, ignore")
 			}
+			actionResult.Elapsed = time.Since(startTime).Milliseconds()
+			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
 		// automatic handling of pop-up windows on each step finished
 		if !ignorePopup && !s.caseRunner.Config.Get().IgnorePopup {
+			startTime := time.Now()
+			actionResult := &ActionResult{
+				MobileAction: uixt.MobileAction{
+					Method: uixt.ACTION_ClosePopups,
+					Params: "[ForDebug] close popups handler",
+				},
+				StartTime: startTime.Unix(),
+			}
 			if err2 := uiDriver.ClosePopupsHandler(); err2 != nil {
 				log.Error().Err(err2).Str("step", step.Name()).Msg("auto handle popup failed")
 			}
+			actionResult.Elapsed = time.Since(startTime).Milliseconds()
+			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
 		// save attachments
