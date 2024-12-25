@@ -396,6 +396,9 @@ func ConvertToFloat64(val interface{}) (float64, error) {
 }
 
 func ConvertToFloat64Slice(val interface{}) ([]float64, error) {
+	if paramsSlice, ok := val.([]float64); ok {
+		return paramsSlice, nil
+	}
 	paramsSlice, ok := val.([]interface{})
 	if !ok {
 		return nil, errors.New("val is not slice")
