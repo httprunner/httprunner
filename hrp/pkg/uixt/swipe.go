@@ -162,10 +162,6 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, options ...ActionOption) 
 			dExt.ParseActionOptions(optionsWithoutIdentifier...)...)
 		if err != nil {
 			log.Error().Err(err).Strs("texts", texts).Msg("find texts failed")
-			// target texts not found, try to auto handle popup
-			if e := dExt.ClosePopupsHandler(); e != nil {
-				log.Error().Err(e).Msg("run popup handler failed")
-			}
 			return err
 		}
 		log.Info().Strs("texts", texts).Interface("results", points).Msg("swipeToTapTexts successful")
