@@ -25,6 +25,15 @@ func LoadTestCases(tests ...ITestCase) ([]*TestCase, error) {
 			continue
 		}
 
+		if testcase, ok := iTestCase.(*TestCaseJSON); ok {
+			tc, err := testcase.GetTestCase()
+			if err != nil {
+				return nil, err
+			}
+			testCases = append(testCases, tc)
+			continue
+		}
+
 		// iTestCase should be a TestCasePath, file path or folder path
 		tcPath, ok := iTestCase.(*TestCasePath)
 		if !ok {

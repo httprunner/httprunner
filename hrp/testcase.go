@@ -10,10 +10,11 @@ import (
 
 	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v4/hrp/internal/json"
 )
 
 // ITestCase represents interface for testcases,
-// includes TestCase and TestCasePath.
+// includes TestCase, TestCasePath and TestCaseJSON
 type ITestCase interface {
 	GetTestCase() (*TestCase, error)
 }
@@ -39,6 +40,19 @@ func (path *TestCasePath) GetTestCase() (*TestCase, error) {
 	}
 	tc.Config.Path = casePath
 	return tc.loadISteps()
+}
+
+// TestCaseJSON implements ITestCase interface.
+type TestCaseJSON string
+
+// GetTestCase unmarshal json string and convert to *TestCase
+func (tc *TestCaseJSON) GetTestCase() (*TestCase, error) {
+	var testCaseDef TestCaseDef
+	err := json.Unmarshal([]byte(*tc), &testCaseDef)
+	if err != nil {
+		return nil, errors.Wrap(err, "unmarshal TestCaseJSON failed")
+	}
+	return testCaseDef.loadISteps()
 }
 
 // TestCase is a container for one testcase, which is used for testcase runner.

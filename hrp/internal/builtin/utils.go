@@ -351,7 +351,7 @@ func sha256HMAC(key []byte, data []byte) []byte {
 	return []byte(fmt.Sprintf("%x", mac.Sum(nil)))
 }
 
-// ver: auth-v1or auth-v2
+// ver: auth-v1 or auth-v2
 func Sign(ver string, ak string, sk string, body []byte) string {
 	expiration := 1800
 	signKeyInfo := fmt.Sprintf("%s/%s/%d/%d", ver, ak, time.Now().Unix(), expiration)

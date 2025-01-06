@@ -48,6 +48,23 @@ func TestLoadTestCases(t *testing.T) {
 	if !assert.Equal(t, len(testCases), 1) {
 		t.Fatal()
 	}
+
+	// load test cases from TestCaseJSON
+	testcaseJSON := TestCaseJSON(`
+	{
+		"config":{"name":"TestCaseJSON"},
+		"teststeps":[
+			{"name": "step1", "request":{"url": "https://httpbin.org/get"}},
+			{"name": "step2", "shell":{"string": "ls -l"}}
+		]
+	}`)
+	testCases, err = LoadTestCases(&testcaseJSON)
+	if !assert.Nil(t, err) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, len(testCases), 1) {
+		t.Fatal()
+	}
 }
 
 func TestLoadCase(t *testing.T) {
