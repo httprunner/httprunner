@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 )
 
@@ -783,6 +784,11 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 	case ACTION_CallFunction:
 		fn := action.Fn
 		fn()
+		return nil
+	default:
+		log.Warn().Str("action", string(action.Method)).Msg("action not implemented")
+		return errors.Wrapf(code.InvalidCaseError,
+			"UI action %v not implemented", action.Method)
 	}
 	return nil
 }
@@ -792,8 +798,6 @@ type SleepConfig struct {
 	Seconds      float64   `json:"seconds,omitempty"`
 	Milliseconds int64     `json:"milliseconds,omitempty"`
 }
-
-var errActionNotImplemented = errors.New("UI action not implemented")
 
 // getSimulationDuration returns simulation duration by given params (in seconds)
 func getSimulationDuration(params []float64) (milliseconds int64) {
