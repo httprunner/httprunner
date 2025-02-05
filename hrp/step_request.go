@@ -282,7 +282,7 @@ func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err e
 	start := time.Now()
 	stepResult = &StepResult{
 		Name:        stepRequest.StepName,
-		StepType:    stepTypeRequest,
+		StepType:    StepTypeRequest,
 		Success:     false,
 		ContentSize: 0,
 		StartTime:   start.Unix(),
@@ -707,7 +707,7 @@ func (s *StepRequest) StartTransaction(name string) *StepTransaction {
 		StepConfig: s.StepConfig,
 		Transaction: &Transaction{
 			Name: name,
-			Type: transactionStart,
+			Type: TransactionStart,
 		},
 	}
 }
@@ -718,7 +718,7 @@ func (s *StepRequest) EndTransaction(name string) *StepTransaction {
 		StepConfig: s.StepConfig,
 		Transaction: &Transaction{
 			Name: name,
-			Type: transactionEnd,
+			Type: TransactionEnd,
 		},
 	}
 }

@@ -9,14 +9,14 @@ import (
 
 type Transaction struct {
 	Name string          `json:"name" yaml:"name"`
-	Type transactionType `json:"type" yaml:"type"`
+	Type TransactionType `json:"type" yaml:"type"`
 }
 
-type transactionType string
+type TransactionType string
 
 const (
-	transactionStart transactionType = "start"
-	transactionEnd   transactionType = "end"
+	TransactionStart TransactionType = "start"
+	TransactionEnd   TransactionType = "end"
 )
 
 // StepTransaction implements IStep interface.
@@ -33,7 +33,7 @@ func (s *StepTransaction) Name() string {
 }
 
 func (s *StepTransaction) Type() StepType {
-	return stepTypeTransaction
+	return StepTypeTransaction
 }
 
 func (s *StepTransaction) Config() *StepConfig {
@@ -49,7 +49,7 @@ func (s *StepTransaction) Run(r *SessionRunner) (*StepResult, error) {
 
 	stepResult := &StepResult{
 		Name:        transaction.Name,
-		StepType:    stepTypeTransaction,
+		StepType:    StepTypeTransaction,
 		Success:     true,
 		Elapsed:     0,
 		ContentSize: 0, // TODO: record transaction total response length
@@ -57,25 +57,25 @@ func (s *StepTransaction) Run(r *SessionRunner) (*StepResult, error) {
 
 	// create transaction if not exists
 	if _, ok := r.transactions[transaction.Name]; !ok {
-		r.transactions[transaction.Name] = make(map[transactionType]time.Time)
+		r.transactions[transaction.Name] = make(map[TransactionType]time.Time)
 	}
 
 	// record transaction start time, override if already exists
-	if transaction.Type == transactionStart {
-		r.transactions[transaction.Name][transactionStart] = time.Now()
+	if transaction.Type == TransactionStart {
+		r.transactions[transaction.Name][TransactionStart] = time.Now()
 	}
 	// record transaction end time, override if already exists
-	if transaction.Type == transactionEnd {
-		r.transactions[transaction.Name][transactionEnd] = time.Now()
+	if transaction.Type == TransactionEnd {
+		r.transactions[transaction.Name][TransactionEnd] = time.Now()
 
 		// if transaction start time not exists, use testcase start time instead
-		if _, ok := r.transactions[transaction.Name][transactionStart]; !ok {
-			r.transactions[transaction.Name][transactionStart] = r.summary.Time.StartAt
+		if _, ok := r.transactions[transaction.Name][TransactionStart]; !ok {
+			r.transactions[transaction.Name][TransactionStart] = r.summary.Time.StartAt
 		}
 
 		// calculate transaction duration
-		duration := r.transactions[transaction.Name][transactionEnd].Sub(
-			r.transactions[transaction.Name][transactionStart])
+		duration := r.transactions[transaction.Name][TransactionEnd].Sub(
+			r.transactions[transaction.Name][TransactionStart])
 		stepResult.Elapsed = duration.Milliseconds()
 		log.Info().Str("name", transaction.Name).Dur("elapsed", duration).Msg("transaction")
 	}

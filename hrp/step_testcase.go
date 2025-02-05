@@ -38,7 +38,7 @@ func (s *StepTestCaseWithOptionalArgs) Name() string {
 }
 
 func (s *StepTestCaseWithOptionalArgs) Type() StepType {
-	return stepTypeTestCase
+	return StepTypeTestCase
 }
 
 func (s *StepTestCaseWithOptionalArgs) Config() *StepConfig {
@@ -49,7 +49,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	start := time.Now()
 	stepResult = &StepResult{
 		Name:      s.StepName,
-		StepType:  stepTypeTestCase,
+		StepType:  StepTypeTestCase,
 		Success:   false,
 		StartTime: start.Unix(),
 	}

@@ -294,7 +294,7 @@ func TestSessionRunner(t *testing.T) {
 		t.Fatal()
 	}
 
-	err := sessionRunner.parseStepStruct(step)
+	err := sessionRunner.ParseStep(step)
 	if err != nil {
 		t.Fatal()
 	}

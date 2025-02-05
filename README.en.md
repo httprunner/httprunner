@@ -88,7 +88,6 @@ Usage:
 
 Available Commands:
   adb          simple utils for android device management
-  boom         run load test with boomer
   build        build plugin for testing
   completion   Generate the autocompletion script for the specified shell
   convert      convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases
@@ -96,6 +95,7 @@ Available Commands:
   ios          simple utils for ios device management
   pytest       run API test with pytest
   run          run API test with go engine
+  server       start hrp server
   startproject create a scaffold project
   wiki         visit https://httprunner.com
 

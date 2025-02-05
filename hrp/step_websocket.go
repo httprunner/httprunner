@@ -276,7 +276,7 @@ func runStepWebSocket(r *SessionRunner, step IStep) (stepResult *StepResult, err
 	start := time.Now()
 	stepResult = &StepResult{
 		Name:        step.Name(),
-		StepType:    stepTypeWebSocket,
+		StepType:    StepTypeWebSocket,
 		Success:     false,
 		ContentSize: 0,
 		StartTime:   start.Unix(),
@@ -703,7 +703,7 @@ func getContentSize(resp interface{}) int64 {
 	}
 }
 
-func (r *SessionRunner) releaseResources() {
+func (r *SessionRunner) ReleaseResources() {
 	// close websocket connections
 	for _, wsConn := range r.ws.wsConnMap {
 		if wsConn != nil {

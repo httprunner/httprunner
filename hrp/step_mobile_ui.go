@@ -39,15 +39,15 @@ func (s *StepMobile) obj() *MobileUI {
 
 	if s.IOS != nil {
 		s.cache = s.IOS
-		s.cache.OSType = string(stepTypeIOS)
+		s.cache.OSType = string(StepTypeIOS)
 		return s.cache
 	} else if s.Harmony != nil {
 		s.cache = s.Harmony
-		s.cache.OSType = string(stepTypeHarmony)
+		s.cache.OSType = string(StepTypeHarmony)
 		return s.cache
 	} else if s.Android != nil {
 		s.cache = s.Android
-		s.cache.OSType = string(stepTypeAndroid)
+		s.cache.OSType = string(StepTypeAndroid)
 		return s.cache
 	} else if s.Mobile != nil {
 		s.cache = s.Mobile

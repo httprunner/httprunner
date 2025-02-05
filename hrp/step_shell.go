@@ -26,7 +26,7 @@ func (s *StepShell) Name() string {
 }
 
 func (s *StepShell) Type() StepType {
-	return stepTypeShell
+	return StepTypeShell
 }
 
 func (s *StepShell) Config() *StepConfig {
@@ -59,7 +59,7 @@ func (s *StepShellValidation) Name() string {
 }
 
 func (s *StepShellValidation) Type() StepType {
-	return stepTypeShell + stepTypeSuffixValidation
+	return StepTypeShell + stepTypeSuffixValidation
 }
 
 func (s *StepShellValidation) Config() *StepConfig {
@@ -91,14 +91,14 @@ func runStepShell(r *SessionRunner, step IStep) (stepResult *StepResult, err err
 
 	log.Info().
 		Str("name", step.Name()).
-		Str("type", string(stepTypeShell)).
+		Str("type", string(StepTypeShell)).
 		Str("content", shell.String).
 		Msg("run shell string")
 
 	start := time.Now()
 	stepResult = &StepResult{
 		Name:        step.Name(),
-		StepType:    stepTypeShell,
+		StepType:    StepTypeShell,
 		Success:     false,
 		ContentSize: 0,
 		StartTime:   start.Unix(),

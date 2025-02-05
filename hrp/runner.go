@@ -291,7 +291,7 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "init plugin failed")
 		}
-		caseRunner.parser.plugin = plugin
+		caseRunner.parser.Plugin = plugin
 
 		// load plugin info to testcase config
 		pluginPath := plugin.Path()
@@ -337,6 +337,14 @@ type CaseRunner struct {
 
 	// UI automation clients for iOS and Android, key is udid/serial
 	uixtDrivers map[string]*uixt.DriverExt
+}
+
+func (r *CaseRunner) GetParametersIterator() *ParametersIterator {
+	return r.parametersIterator
+}
+
+func (r *CaseRunner) GetParser() *Parser {
+	return r.parser
 }
 
 // parseConfig parses testcase config, stores to parsedConfig.
@@ -541,7 +549,7 @@ func (r *CaseRunner) NewSession() *SessionRunner {
 		sessionVariables: make(map[string]interface{}),
 		summary:          NewCaseSummary(),
 
-		transactions: make(map[string]map[transactionType]time.Time),
+		transactions: make(map[string]map[TransactionType]time.Time),
 		ws:           newWSSession(),
 	}
 	return sessionRunner
@@ -557,7 +565,7 @@ type SessionRunner struct {
 
 	// transactions stores transaction timing info.
 	// key is transaction name, value is map of transaction type and time, e.g. start time and end time.
-	transactions map[string]map[transactionType]time.Time
+	transactions map[string]map[TransactionType]time.Time
 
 	// websocket session
 	ws *wsSession
@@ -573,11 +581,11 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 	log.Info().Str("testcase", config.Name).Msg("run testcase start")
 
 	// update config variables with given variables
-	r.initWithParameters(givenVars)
+	r.InitWithParameters(givenVars)
 
 	defer func() {
 		// release session resources
-		r.releaseResources()
+		r.ReleaseResources()
 
 		summary = r.summary
 		summary.Name = config.Name
@@ -645,7 +653,7 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 
 func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) {
 	// parse step struct
-	if err = r.parseStepStruct(step); err != nil {
+	if err = r.ParseStep(step); err != nil {
 		log.Error().Err(err).Msg("parse step struct failed")
 		if r.caseRunner.hrpRunner.failfast {
 			return nil, errors.Wrap(err, "parse step struct failed")
@@ -714,7 +722,7 @@ func (r *SessionRunner) GetSummary() *TestCaseSummary {
 	return r.summary
 }
 
-func (r *SessionRunner) parseStepStruct(step IStep) error {
+func (r *SessionRunner) ParseStep(step IStep) error {
 	caseConfig := r.caseRunner.TestCase.Config.Get()
 	stepConfig := step.Config()
 
@@ -770,9 +778,9 @@ func (r *SessionRunner) parseStepStruct(step IStep) error {
 	return nil
 }
 
-// initWithParameters updates session variables with given parameters.
+// InitWithParameters updates session variables with given parameters.
 // this is used for data driven
-func (r *SessionRunner) initWithParameters(parameters map[string]interface{}) {
+func (r *SessionRunner) InitWithParameters(parameters map[string]interface{}) {
 	if len(parameters) == 0 {
 		return
 	}
@@ -781,4 +789,12 @@ func (r *SessionRunner) initWithParameters(parameters map[string]interface{}) {
 	for k, v := range parameters {
 		r.sessionVariables[k] = v
 	}
+}
+
+func (r *SessionRunner) GetSessionVariables() map[string]interface{} {
+	return r.sessionVariables
+}
+
+func (r *SessionRunner) GetTransactions() map[string]map[TransactionType]time.Time {
+	return r.transactions
 }

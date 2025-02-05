@@ -10,8 +10,6 @@
 
 `HttpRunner` 是一个开源的 API 测试工具，支持 HTTP(S)/HTTP2/WebSocket/RPC 等网络协议，涵盖接口测试、性能测试、数字体验监测等测试类型。简单易用，功能强大，具有丰富的插件化机制和高度的可扩展能力。
 
-> HttpRunner [用户调研问卷][survey] 持续收集中，我们将基于用户反馈动态调整产品特性和需求优先级。
-
 ![flow chart](https://httprunner.com/image/hrp-flow.jpg)
 
 [版本发布日志] | [English]
@@ -81,7 +79,6 @@ Usage:
 
 Available Commands:
   adb          simple utils for android device management
-  boom         run load test with boomer
   build        build plugin for testing
   completion   Generate the autocompletion script for the specified shell
   convert      convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases
@@ -89,6 +86,7 @@ Available Commands:
   ios          simple utils for ios device management
   pytest       run API test with pytest
   run          run API test with go engine
+  server       start hrp server
   startproject create a scaffold project
   wiki         visit https://httprunner.com
 
@@ -108,13 +106,6 @@ Use "hrp [command] --help" for more information about a command.
 <a href="https://httprunner.com/docs/cases/youmi"><img src="https://httprunner.com/image/logo/youmi.png" title="有米科技 - 基于 HttpRunner 建设自动化测试平台" width="60"></a>
 <a href="https://httprunner.com/docs/cases/umcare"><img src="https://httprunner.com/image/logo/umcare.png" title="通用环球医疗 - 使用 HttpRunner 实践接口自动化测试" width="100"></a>
 <a href="https://httprunner.com/docs/cases/mihoyo"><img src="https://httprunner.com/image/logo/miHoYo.png" title="米哈游 - 基于 HttpRunner 搭建接口自动化测试体系" width="100"></a>
-
-
-## 赞助商
-
-[<img src="https://testing-studio.com/img/icon.png" alt="霍格沃兹测试开发学社" width="500">](https://qrcode.testing-studio.com/f?from=HttpRunner&url=https://testing-studio.com/)
-
-> 霍格沃兹测试开发学社是中国软件测试开发高端教育品牌，产品由国内顶尖软件测试开发技术专家携手打造，为企业与个人提供专业的技能培训与咨询、测试工具与测试平台、测试外包与测试众包服务。领域涵盖 App/Web 自动化测试、接口自动化测试、性能测试、安全测试、持续交付/DevOps、测试左移、测试右移、精准测试、测试平台开发、测试管理等方向。-> [**联系我们**](http://qrcode.testing-studio.com/f?from=HttpRunner&url=https://ceshiren.com/t/topic/23745)
 
 ## Subscribe
 

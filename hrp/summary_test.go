@@ -17,7 +17,7 @@ func TestGenHTMLReport(t *testing.T) {
 	caseSummary2 := NewCaseSummary()
 	stepResult2 := &StepResult{
 		Name:        "Test",
-		StepType:    stepTypeRequest,
+		StepType:    StepTypeRequest,
 		Success:     false,
 		ContentSize: 0,
 		Attachments: "err",
@@ -40,7 +40,7 @@ func TestTestCaseSummary_AddStepResult(t *testing.T) {
 	caseSummary := NewCaseSummary()
 	stepResult1 := &StepResult{
 		Name:        "Test1",
-		StepType:    stepTypeRequest,
+		StepType:    StepTypeRequest,
 		Success:     true,
 		ContentSize: 0,
 		Attachments: "err",
@@ -48,7 +48,7 @@ func TestTestCaseSummary_AddStepResult(t *testing.T) {
 	caseSummary.AddStepResult(stepResult1)
 	stepResult2 := &StepResult{
 		Name:        "Test2",
-		StepType:    stepTypeTestCase,
+		StepType:    StepTypeTestCase,
 		Success:     false,
 		ContentSize: 0,
 		Attachments: "err",

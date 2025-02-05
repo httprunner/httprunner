@@ -90,7 +90,7 @@ func (s *StepAPIWithOptionalArgs) Name() string {
 }
 
 func (s *StepAPIWithOptionalArgs) Type() StepType {
-	return stepTypeAPI
+	return StepTypeAPI
 }
 
 func (s *StepAPIWithOptionalArgs) Config() *StepConfig {
@@ -99,7 +99,7 @@ func (s *StepAPIWithOptionalArgs) Config() *StepConfig {
 
 func (s *StepAPIWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepResult, err error) {
 	defer func() {
-		stepResult.StepType = stepTypeAPI
+		stepResult.StepType = StepTypeAPI
 	}()
 	// extend request with referenced API
 	api, _ := s.API.(*API)

@@ -180,7 +180,7 @@ func (iter *ParametersIterator) Next() map[string]interface{} {
 	return selectedParameters
 }
 
-func (iter *ParametersIterator) outParameters() map[string]interface{} {
+func (iter *ParametersIterator) Data() map[string]interface{} {
 	res := map[string]interface{}{}
 	for key, params := range iter.data {
 		res[key] = params

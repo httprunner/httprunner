@@ -21,7 +21,7 @@ func (s *StepFunction) Name() string {
 }
 
 func (s *StepFunction) Type() StepType {
-	return stepTypeFunction
+	return StepTypeFunction
 }
 
 func (s *StepFunction) Config() *StepConfig {
@@ -46,13 +46,13 @@ func runStepFunction(r *SessionRunner, step IStep) (stepResult *StepResult, err 
 
 	log.Info().
 		Str("name", step.Name()).
-		Str("type", string(stepTypeFunction)).
+		Str("type", string(StepTypeFunction)).
 		Msg("run function")
 
 	start := time.Now()
 	stepResult = &StepResult{
 		Name:        step.Name(),
-		StepType:    stepTypeFunction,
+		StepType:    StepTypeFunction,
 		Success:     false,
 		ContentSize: 0,
 		StartTime:   start.Unix(),

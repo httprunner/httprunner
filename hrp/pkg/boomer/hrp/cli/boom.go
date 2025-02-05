@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"strings"
@@ -12,6 +12,7 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
 	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer"
+	hrpboomer "github.com/httprunner/httprunner/v4/hrp/pkg/boomer/hrp"
 )
 
 // boomCmd represents the boom command
@@ -25,11 +26,9 @@ var boomCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(0),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		boomer.SetUlimit(10240) // ulimit -n 10240
-		if !strings.EqualFold(logLevel, "DEBUG") {
-			// disable info logs for load testing
-			log.Info().Msg("Set global log level to WARN for load testing")
-			zerolog.SetGlobalLevel(zerolog.WarnLevel)
-		}
+		// disable info logs for load testing
+		log.Info().Msg("Set global log level to WARN for load testing")
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	},
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		startTime := time.Now()
@@ -57,13 +56,13 @@ var boomCmd = &cobra.Command{
 		}
 
 		// init boomer
-		var hrpBoomer *hrp.HRPBoomer
+		var hrpBoomer *hrpboomer.HRPBoomer
 		if boomArgs.master {
-			hrpBoomer = hrp.NewMasterBoomer(boomArgs.masterBindHost, boomArgs.masterBindPort)
+			hrpBoomer = hrpboomer.NewMasterBoomer(boomArgs.masterBindHost, boomArgs.masterBindPort)
 		} else if boomArgs.worker {
-			hrpBoomer = hrp.NewWorkerBoomer(boomArgs.masterHost, boomArgs.masterPort)
+			hrpBoomer = hrpboomer.NewWorkerBoomer(boomArgs.masterHost, boomArgs.masterPort)
 		} else {
-			hrpBoomer = hrp.NewStandaloneBoomer(boomArgs.SpawnCount, boomArgs.SpawnRate)
+			hrpBoomer = hrpboomer.NewStandaloneBoomer(boomArgs.SpawnCount, boomArgs.SpawnRate)
 		}
 		hrpBoomer.SetProfile(&boomArgs.Profile)
 		ctx := hrpBoomer.EnableGracefulQuit(context.Background())
@@ -93,9 +92,6 @@ var boomCmd = &cobra.Command{
 			go hrpBoomer.PollTasks(ctx)
 			hrpBoomer.RunWorker()
 		case "standalone":
-			if venv != "" {
-				hrpBoomer.SetPython3Venv(venv)
-			}
 			hrpBoomer.InitBoomer()
 			hrpBoomer.Run(paths...)
 		}
@@ -122,8 +118,6 @@ type BoomArgs struct {
 var boomArgs BoomArgs
 
 func init() {
-	rootCmd.AddCommand(boomCmd)
-
 	boomCmd.Flags().Int64Var(&boomArgs.MaxRPS, "max-rps", 0, "Max RPS that boomer can generate, disabled by default.")
 	boomCmd.Flags().StringVar(&boomArgs.RequestIncreaseRate, "request-increase-rate", "-1", "Request increase rate, disabled by default.")
 	boomCmd.Flags().Int64Var(&boomArgs.SpawnCount, "spawn-count", 1, "The number of users to spawn for load testing")
@@ -150,23 +144,4 @@ func init() {
 	boomCmd.Flags().BoolVar(&boomArgs.autoStart, "auto-start", false, "Starts the test immediately. Use --spawn-count and --spawn-rate to control user count and increase rate")
 	boomCmd.Flags().IntVar(&boomArgs.expectWorkers, "expect-workers", 1, "How many workers master should expect to connect before starting the test (only when --autostart is used)")
 	boomCmd.Flags().IntVar(&boomArgs.expectWorkersMaxWait, "expect-workers-max-wait", 120, "How many workers master should expect to connect before starting the test (only when --autostart is used")
-}
-
-func makeHRPBoomer() (*hrp.HRPBoomer, error) {
-	// if set profile, the priority is higher than the other commands
-	if boomArgs.profile != "" {
-		err := hrp.LoadFileObject(boomArgs.profile, &boomArgs)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to load profile")
-			return nil, err
-		}
-	}
-	hrpBoomer := hrp.NewStandaloneBoomer(boomArgs.SpawnCount, boomArgs.SpawnRate)
-	if venv != "" {
-		hrpBoomer.SetPython3Venv(venv)
-	}
-	hrpBoomer.SetProfile(&boomArgs.Profile)
-	hrpBoomer.EnableGracefulQuit(context.Background())
-	hrpBoomer.InitBoomer()
-	return hrpBoomer, nil
 }

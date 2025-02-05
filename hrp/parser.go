@@ -25,7 +25,7 @@ func newParser() *Parser {
 }
 
 type Parser struct {
-	plugin funplugin.IPlugin // plugin is used to call functions
+	Plugin funplugin.IPlugin // plugin is used to call functions
 }
 
 func buildURL(baseURL, stepURL string, queryParams url.Values) (fullUrl *url.URL) {
@@ -279,13 +279,13 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 // only support return at most one result value
 func (p *Parser) callFunc(funcName string, arguments ...interface{}) (interface{}, error) {
 	// call with plugin function
-	if p.plugin != nil {
-		if p.plugin.Has(funcName) {
-			return p.plugin.Call(funcName, arguments...)
+	if p.Plugin != nil {
+		if p.Plugin.Has(funcName) {
+			return p.Plugin.Call(funcName, arguments...)
 		}
 		commonName := fungo.ConvertCommonName(funcName)
-		if p.plugin.Has(commonName) {
-			return p.plugin.Call(commonName, arguments...)
+		if p.Plugin.Has(commonName) {
+			return p.Plugin.Call(commonName, arguments...)
 		}
 	}
 

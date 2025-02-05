@@ -1,4 +1,4 @@
-package hrp
+package hrpboomer
 
 import (
 	"fmt"
@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/context"
 
+	"github.com/httprunner/httprunner/v4/hrp"
 	"github.com/httprunner/httprunner/v4/hrp/code"
 	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
 	"github.com/httprunner/httprunner/v4/hrp/internal/json"
@@ -19,13 +20,15 @@ import (
 	"github.com/httprunner/httprunner/v4/hrp/pkg/boomer"
 )
 
+var pluginMap sync.Map // used for reusing plugin instance
+
 func NewStandaloneBoomer(spawnCount int64, spawnRate float64) *HRPBoomer {
 	b := &HRPBoomer{
 		Boomer:       boomer.NewStandaloneBoomer(spawnCount, spawnRate),
 		pluginsMutex: new(sync.RWMutex),
 	}
 
-	b.hrpRunner = NewRunner(nil)
+	b.hrpRunner = hrp.NewRunner(nil)
 	return b
 }
 
@@ -34,7 +37,7 @@ func NewMasterBoomer(masterBindHost string, masterBindPort int) *HRPBoomer {
 		Boomer:       boomer.NewMasterBoomer(masterBindHost, masterBindPort),
 		pluginsMutex: new(sync.RWMutex),
 	}
-	b.hrpRunner = NewRunner(nil)
+	b.hrpRunner = hrp.NewRunner(nil)
 	return b
 }
 
@@ -44,7 +47,7 @@ func NewWorkerBoomer(masterHost string, masterPort int) *HRPBoomer {
 		pluginsMutex: new(sync.RWMutex),
 	}
 
-	b.hrpRunner = NewRunner(nil)
+	b.hrpRunner = hrp.NewRunner(nil)
 	// set client transport for high concurrency load testing
 	b.hrpRunner.SetClientTransport(b.GetSpawnCount(), b.GetDisableKeepAlive(), b.GetDisableCompression())
 	return b
@@ -52,7 +55,7 @@ func NewWorkerBoomer(masterHost string, masterPort int) *HRPBoomer {
 
 type HRPBoomer struct {
 	*boomer.Boomer
-	hrpRunner    *HRPRunner
+	hrpRunner    *hrp.HRPRunner
 	plugins      []funplugin.IPlugin // each task has its own plugin process
 	pluginsMutex *sync.RWMutex       // avoid data race
 }
@@ -91,7 +94,7 @@ func (b *HRPBoomer) SetPython3Venv(venv string) *HRPBoomer {
 }
 
 // Run starts to run load test for one or multiple testcases.
-func (b *HRPBoomer) Run(testcases ...ITestCase) {
+func (b *HRPBoomer) Run(testcases ...hrp.ITestCase) {
 	startTime := time.Now()
 	defer func() {
 		// report boom event
@@ -113,25 +116,25 @@ func (b *HRPBoomer) Run(testcases ...ITestCase) {
 	b.Boomer.Run(taskSlice...)
 }
 
-func (b *HRPBoomer) ConvertTestCasesToBoomerTasks(testcases ...ITestCase) (taskSlice []*boomer.Task) {
+func (b *HRPBoomer) ConvertTestCasesToBoomerTasks(testcases ...hrp.ITestCase) (taskSlice []*boomer.Task) {
 	// load all testcases
-	testCases, err := LoadTestCases(testcases...)
+	testCases, err := hrp.LoadTestCases(testcases...)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcases")
 		os.Exit(code.GetErrorCode(err))
 	}
 
 	for _, testcase := range testCases {
-		rendezvousList := initRendezvous(testcase, int64(b.GetSpawnCount()))
+		rendezvousList := hrp.InitRendezvous(testcase, int64(b.GetSpawnCount()))
 		task := b.convertBoomerTask(testcase, rendezvousList)
 		taskSlice = append(taskSlice, task)
-		waitRendezvous(rendezvousList, b)
+		hrp.WaitRendezvous(rendezvousList, b)
 	}
 	return taskSlice
 }
 
-func (b *HRPBoomer) ParseTestCases(testCases []*TestCase) []*TestCase {
-	var parsedTestCases []*TestCase
+func (b *HRPBoomer) ParseTestCases(testCases []*hrp.TestCase) []*hrp.TestCase {
+	var parsedTestCases []*hrp.TestCase
 	for _, tc := range testCases {
 		caseRunner, err := b.hrpRunner.NewCaseRunner(*tc)
 		if err != nil {
@@ -139,8 +142,8 @@ func (b *HRPBoomer) ParseTestCases(testCases []*TestCase) []*TestCase {
 			os.Exit(code.GetErrorCode(err))
 		}
 		caseConfig := caseRunner.TestCase.Config.Get()
-		caseConfig.Parameters = caseRunner.parametersIterator.outParameters()
-		parsedTestCases = append(parsedTestCases, &TestCase{
+		caseConfig.Parameters = caseRunner.GetParametersIterator().Data()
+		parsedTestCases = append(parsedTestCases, &hrp.TestCase{
 			Config:    caseConfig,
 			TestSteps: caseRunner.TestSteps,
 		})
@@ -148,9 +151,9 @@ func (b *HRPBoomer) ParseTestCases(testCases []*TestCase) []*TestCase {
 	return parsedTestCases
 }
 
-func (b *HRPBoomer) TestCasesToBytes(testcases ...ITestCase) []byte {
+func (b *HRPBoomer) TestCasesToBytes(testcases ...hrp.ITestCase) []byte {
 	// load all testcases
-	testCases, err := LoadTestCases(testcases...)
+	testCases, err := hrp.LoadTestCases(testcases...)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcases")
 		os.Exit(code.GetErrorCode(err))
@@ -163,8 +166,8 @@ func (b *HRPBoomer) TestCasesToBytes(testcases ...ITestCase) []byte {
 	return testCasesBytes
 }
 
-func (b *HRPBoomer) BytesToTCases(testCasesBytes []byte) []*TestCase {
-	var testcase []*TestCase
+func (b *HRPBoomer) BytesToTCases(testCasesBytes []byte) []*hrp.TestCase {
+	var testcase []*hrp.TestCase
 	err := json.Unmarshal(testCasesBytes, &testcase)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to unmarshal testcases")
@@ -176,7 +179,7 @@ func (b *HRPBoomer) Quit() {
 	b.Boomer.Quit()
 }
 
-func (b *HRPBoomer) parseTCases(testCases []*TestCase) (testcases []ITestCase) {
+func (b *HRPBoomer) parseTCases(testCases []*hrp.TestCase) (testcases []hrp.ITestCase) {
 	for _, tc := range testCases {
 		// create temp dir to save testcase
 		tempDir, err := os.MkdirTemp("", "hrp_testcases")
@@ -289,9 +292,9 @@ func (b *HRPBoomer) PollTestCases(ctx context.Context) {
 	for {
 		select {
 		case <-b.Boomer.ParseTestCasesChan():
-			var tcs []ITestCase
+			var tcs []hrp.ITestCase
 			for _, tc := range b.GetTestCasesPath() {
-				tcp := TestCasePath(tc)
+				tcp := hrp.TestCasePath(tc)
 				tcs = append(tcs, &tcp)
 			}
 			b.TestCaseBytesChan() <- b.TestCasesToBytes(tcs...)
@@ -304,7 +307,7 @@ func (b *HRPBoomer) PollTestCases(ctx context.Context) {
 	}
 }
 
-func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rendezvous) *boomer.Task {
+func (b *HRPBoomer) convertBoomerTask(testcase *hrp.TestCase, rendezvousList []*hrp.Rendezvous) *boomer.Task {
 	// init case runner for testcase
 	// this runner is shared by multiple session runners
 	caseRunner, err := b.hrpRunner.NewCaseRunner(*testcase)
@@ -312,9 +315,10 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 		log.Error().Err(err).Msg("failed to create runner")
 		os.Exit(code.GetErrorCode(err))
 	}
-	if caseRunner.parser.plugin != nil {
+	plugin := caseRunner.GetParser().Plugin
+	if plugin != nil {
 		b.pluginsMutex.Lock()
-		b.plugins = append(b.plugins, caseRunner.parser.plugin)
+		b.plugins = append(b.plugins, plugin)
 		b.pluginsMutex.Unlock()
 	}
 
@@ -322,12 +326,12 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 	go func() {
 		<-b.GetSpawnDoneChan()
 		for _, rendezvous := range rendezvousList {
-			rendezvous.setSpawnDone()
+			rendezvous.SetSpawnDone()
 		}
 	}()
 
 	// set paramters mode for load testing
-	parametersIterator := caseRunner.parametersIterator
+	parametersIterator := caseRunner.GetParametersIterator()
 	parametersIterator.SetUnlimitedMode()
 
 	// reset start time only once
@@ -348,18 +352,18 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 
 			mutex.Lock()
 			if parametersIterator.HasNext() {
-				sessionRunner.initWithParameters(parametersIterator.Next())
+				sessionRunner.InitWithParameters(parametersIterator.Next())
 			}
 			mutex.Unlock()
 
 			defer func() {
-				sessionRunner.releaseResources()
+				sessionRunner.ReleaseResources()
 			}()
 
 			startTime := time.Now()
 			for _, step := range testcase.TestSteps {
 				// parse step struct
-				err = sessionRunner.parseStepStruct(step)
+				err = sessionRunner.ParseStep(step)
 				if err != nil {
 					log.Error().Err(err).Msg("parse step struct failed")
 				}
@@ -372,9 +376,9 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 				// update step result name with parsed step name
 				stepResult.Name = step.Name()
 				// record requests result of the step if step type is testcase
-				if stepResult.StepType == stepTypeTestCase && stepResult.Data != nil {
+				if stepResult.StepType == hrp.StepTypeTestCase && stepResult.Data != nil {
 					// record requests of testcase step
-					for _, result := range stepResult.Data.([]*StepResult) {
+					for _, result := range stepResult.Data.([]*hrp.StepResult) {
 						if result.Success {
 							b.RecordSuccess(string(result.StepType), result.Name, result.Elapsed, result.ContentSize)
 						} else {
@@ -396,26 +400,22 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					testcaseSuccess = false
 					transactionSuccess = false
 
-					if b.hrpRunner.failfast {
-						log.Error().Err(err).Msg("abort running due to failfast setting")
-						break
-					}
 					log.Warn().Err(err).Msg("run step failed, continue next step")
 					continue
 				}
 
 				// record step success
-				if stepResult.StepType == stepTypeTransaction {
+				if stepResult.StepType == hrp.StepTypeTransaction {
 					// transaction
 					// FIXME: support nested transactions
-					stepTransaction := step.(*StepTransaction)
-					if stepTransaction.Transaction.Type == transactionEnd { // only record when transaction ends
+					stepTransaction := step.(*hrp.StepTransaction)
+					if stepTransaction.Transaction.Type == hrp.TransactionEnd { // only record when transaction ends
 						b.RecordTransaction(stepTransaction.Name(), transactionSuccess, stepResult.Elapsed, 0)
 						transactionSuccess = true // reset flag for next transaction
 					}
-				} else if stepResult.StepType == stepTypeRendezvous {
+				} else if stepResult.StepType == hrp.StepTypeRendezvous {
 					// rendezvous
-				} else if stepResult.StepType == stepTypeThinkTime {
+				} else if stepResult.StepType == hrp.StepTypeThinkTime {
 					// think time
 					// no record required
 				} else {
@@ -423,17 +423,17 @@ func (b *HRPBoomer) convertBoomerTask(testcase *TestCase, rendezvousList []*Rend
 					b.RecordSuccess(string(step.Type()), stepResult.Name, stepResult.Elapsed, stepResult.ContentSize)
 					// update extracted variables
 					for k, v := range stepResult.ExportVars {
-						sessionRunner.sessionVariables[k] = v
+						sessionRunner.GetSessionVariables()[k] = v
 					}
 				}
 			}
 			endTime := time.Now()
 
 			// report duration for transaction without end
-			for name, transaction := range sessionRunner.transactions {
+			for name, transaction := range sessionRunner.GetTransactions() {
 				if len(transaction) == 1 {
 					// if transaction end time not exists, use testcase end time instead
-					duration := endTime.Sub(transaction[transactionStart])
+					duration := endTime.Sub(transaction[hrp.TransactionStart])
 					b.RecordTransaction(name, transactionSuccess, duration.Milliseconds(), 0)
 				}
 			}

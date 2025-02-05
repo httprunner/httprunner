@@ -22,7 +22,7 @@ func (s *StepRendezvous) Name() string {
 }
 
 func (s *StepRendezvous) Type() StepType {
-	return stepTypeRendezvous
+	return StepTypeRendezvous
 }
 
 func (s *StepRendezvous) Config() *StepConfig {
@@ -43,7 +43,7 @@ func (s *StepRendezvous) Run(r *SessionRunner) (*StepResult, error) {
 
 	stepResult := &StepResult{
 		Name:     rendezvous.Name,
-		StepType: stepTypeRendezvous,
+		StepType: StepTypeRendezvous,
 		Success:  true,
 	}
 
@@ -75,7 +75,7 @@ func (s *StepRendezvous) Run(r *SessionRunner) (*StepResult, error) {
 
 func isPreRendezvousAllReleased(rendezvous *Rendezvous, testCase *TestCase) bool {
 	for _, step := range testCase.TestSteps {
-		if step.Type() != stepTypeRendezvous {
+		if step.Type() != StepTypeRendezvous {
 			continue
 		}
 		preRendezvous := step.(*StepRendezvous).Rendezvous
@@ -149,7 +149,7 @@ func (r *Rendezvous) isSpawnDone() bool {
 	return atomic.LoadUint32(&r.spawnDoneFlag) == 1
 }
 
-func (r *Rendezvous) setSpawnDone() {
+func (r *Rendezvous) SetSpawnDone() {
 	atomic.StoreUint32(&r.spawnDoneFlag, 1)
 }
 
@@ -161,7 +161,11 @@ func (r *Rendezvous) setReleased() {
 	atomic.StoreUint32(&r.releasedFlag, 1)
 }
 
-func initRendezvous(testcase *TestCase, total int64) []*Rendezvous {
+func (r *Rendezvous) updateRendezvousNumber(number int64) {
+	atomic.StoreInt64(&r.Number, int64(float32(number)*r.Percent))
+}
+
+func InitRendezvous(testcase *TestCase, total int64) []*Rendezvous {
 	var rendezvousList []*Rendezvous
 	for _, s := range testcase.TestSteps {
 		step := s.(*StepRendezvous)
@@ -195,11 +199,7 @@ func initRendezvous(testcase *TestCase, total int64) []*Rendezvous {
 	return rendezvousList
 }
 
-func (r *Rendezvous) updateRendezvousNumber(number int64) {
-	atomic.StoreInt64(&r.Number, int64(float32(number)*r.Percent))
-}
-
-func waitRendezvous(rendezvousList []*Rendezvous, b *HRPBoomer) {
+func WaitRendezvous(rendezvousList []*Rendezvous, b IBoomer) {
 	if rendezvousList != nil {
 		lastRendezvous := rendezvousList[len(rendezvousList)-1]
 		for _, rendezvous := range rendezvousList {
@@ -208,7 +208,7 @@ func waitRendezvous(rendezvousList []*Rendezvous, b *HRPBoomer) {
 	}
 }
 
-func waitSingleRendezvous(rendezvous *Rendezvous, rendezvousList []*Rendezvous, lastRendezvous *Rendezvous, b *HRPBoomer) {
+func waitSingleRendezvous(rendezvous *Rendezvous, rendezvousList []*Rendezvous, lastRendezvous *Rendezvous, b IBoomer) {
 	for {
 		// cycle start: block current checking until current rendezvous activated
 		<-rendezvous.activateChan
@@ -259,4 +259,8 @@ func waitSingleRendezvous(rendezvous *Rendezvous, rendezvousList []*Rendezvous, 
 			<-lastRendezvous.releaseChan
 		}
 	}
+}
+
+type IBoomer interface {
+	GetSpawnCount() int
 }

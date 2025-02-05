@@ -1,4 +1,4 @@
-package hrp
+package hrpboomer
 
 import (
 	"context"

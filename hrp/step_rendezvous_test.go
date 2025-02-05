@@ -55,7 +55,7 @@ func TestRunCaseWithRendezvous(t *testing.T) {
 		{number: 100, percent: 1, timeout: 5000},
 	}
 
-	rendezvousList := initRendezvous(rendezvousBoundaryTestcase, 100)
+	rendezvousList := InitRendezvous(rendezvousBoundaryTestcase, 100)
 
 	for i, r := range rendezvousList {
 		if r.Number != expectedRendezvousParams[i].number {

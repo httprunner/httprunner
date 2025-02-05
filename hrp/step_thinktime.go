@@ -23,7 +23,7 @@ func (s *StepThinkTime) Name() string {
 }
 
 func (s *StepThinkTime) Type() StepType {
-	return stepTypeThinkTime
+	return StepTypeThinkTime
 }
 
 func (s *StepThinkTime) Config() *StepConfig {
@@ -36,7 +36,7 @@ func (s *StepThinkTime) Run(r *SessionRunner) (*StepResult, error) {
 
 	stepResult := &StepResult{
 		Name:     s.StepName,
-		StepType: stepTypeThinkTime,
+		StepType: StepTypeThinkTime,
 		Success:  true,
 	}
 

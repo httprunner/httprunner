@@ -193,7 +193,7 @@ type TestCaseSummary struct {
 // AddStepResult updates summary of StepResult.
 func (s *TestCaseSummary) AddStepResult(stepResult *StepResult) {
 	switch stepResult.StepType {
-	case stepTypeTestCase:
+	case StepTypeTestCase:
 		// record requests of testcase step
 		records, ok := stepResult.Data.([]*StepResult)
 		if !ok {
