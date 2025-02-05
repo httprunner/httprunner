@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/code"
+	"github.com/httprunner/httprunner/v5/hrp/code"
 )
 
 const (

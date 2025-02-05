@@ -1,6 +1,6 @@
 package convert
 
-import "github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+import "github.com/httprunner/httprunner/v5/hrp/internal/builtin"
 
 // convert TCase to JSON case
 func (c *TCaseConverter) toJSON() (string, error) {

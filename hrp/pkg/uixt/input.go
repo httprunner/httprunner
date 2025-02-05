@@ -3,7 +3,7 @@ package uixt
 import (
 	"github.com/pkg/errors"
 
-	"github.com/httprunner/httprunner/v4/hrp/code"
+	"github.com/httprunner/httprunner/v5/hrp/code"
 )
 
 func (dExt *DriverExt) Input(text string) (err error) {

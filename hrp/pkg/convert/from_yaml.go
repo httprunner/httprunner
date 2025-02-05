@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v5/hrp"
 )
 
 func LoadYAMLCase(path string) (*hrp.TestCaseDef, error) {

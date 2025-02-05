@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/httprunner/httprunner/v4/hrp/code"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/hrp/code"
+	"github.com/httprunner/httprunner/v5/hrp/pkg/uixt"
 	"github.com/rs/zerolog/log"
 )
 

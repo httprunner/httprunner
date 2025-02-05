@@ -20,10 +20,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/code"
-	"github.com/httprunner/httprunner/v4/hrp/internal/config"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/utf7"
+	"github.com/httprunner/httprunner/v5/hrp/code"
+	"github.com/httprunner/httprunner/v5/hrp/internal/config"
+	"github.com/httprunner/httprunner/v5/hrp/pkg/gadb"
+	"github.com/httprunner/httprunner/v5/hrp/pkg/utf7"
 )
 
 const (

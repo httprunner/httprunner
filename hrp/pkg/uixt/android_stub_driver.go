@@ -12,7 +12,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+	"github.com/httprunner/httprunner/v5/hrp/internal/json"
 )
 
 type stubAndroidDriver struct {

@@ -3,8 +3,8 @@ package hrp
 import (
 	"reflect"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v5/hrp/pkg/uixt"
 )
 
 type IConfig interface {

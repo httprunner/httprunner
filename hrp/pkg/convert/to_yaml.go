@@ -1,6 +1,6 @@
 package convert
 
-import "github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+import "github.com/httprunner/httprunner/v5/hrp/internal/builtin"
 
 // convert TCase to YAML case
 func (c *TCaseConverter) toYAML() (string, error) {

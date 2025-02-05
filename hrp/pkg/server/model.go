@@ -1,6 +1,6 @@
 package server
 
-import "github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
+import "github.com/httprunner/httprunner/v5/hrp/pkg/uixt"
 
 type HttpResponse struct {
 	Code    int         `json:"code"`

@@ -3,11 +3,11 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/cmd/adb"
-	"github.com/httprunner/httprunner/v4/hrp/cmd/ios"
-	"github.com/httprunner/httprunner/v4/hrp/code"
-	"github.com/httprunner/httprunner/v4/hrp/internal/version"
+	"github.com/httprunner/httprunner/v5/hrp"
+	"github.com/httprunner/httprunner/v5/hrp/cmd/adb"
+	"github.com/httprunner/httprunner/v5/hrp/cmd/ios"
+	"github.com/httprunner/httprunner/v5/hrp/code"
+	"github.com/httprunner/httprunner/v5/hrp/internal/version"
 )
 
 // rootCmd represents the base command when called without any subcommands

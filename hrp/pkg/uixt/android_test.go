@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v5/hrp/internal/builtin"
 )
 
 var (

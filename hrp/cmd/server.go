@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v4/hrp/pkg/server"
+	"github.com/httprunner/httprunner/v5/hrp/pkg/server"
 )
 
 // serverCmd represents the server command

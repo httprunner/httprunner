@@ -5,7 +5,7 @@ package main
 import (
 	"testing"
 
-	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v5/hrp"
 )
 
 func TestMain(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/httprunner/httprunner/v4/hrp/code"
+	"github.com/httprunner/httprunner/v5/hrp/code"
 )
 
 func (dExt *DriverExt) TapAbsXY(x, y float64, options ...ActionOption) error {

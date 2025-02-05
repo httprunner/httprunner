@@ -11,8 +11,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
 
-	"github.com/httprunner/httprunner/v4/hrp/code"
-	"github.com/httprunner/httprunner/v4/hrp/internal/json"
+	"github.com/httprunner/httprunner/v5/hrp/code"
+	"github.com/httprunner/httprunner/v5/hrp/internal/json"
 )
 
 // LoadTestCases load testcases from TestCasePath or TestCase

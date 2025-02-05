@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v5/hrp"
 )
 
 var harPath = "../../../examples/data/har/demo.har"

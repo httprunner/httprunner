@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/hrp/pkg/uixt"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )

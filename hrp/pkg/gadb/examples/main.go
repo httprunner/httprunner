@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/httprunner/httprunner/v4/hrp/pkg/gadb"
+	"github.com/httprunner/httprunner/v5/hrp/pkg/gadb"
 )
 
 func main() {

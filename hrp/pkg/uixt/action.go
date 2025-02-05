@@ -10,8 +10,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/code"
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v5/hrp/code"
+	"github.com/httprunner/httprunner/v5/hrp/internal/builtin"
 )
 
 type ActionMethod string

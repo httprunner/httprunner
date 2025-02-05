@@ -6,7 +6,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 
-	"github.com/httprunner/httprunner/v4/hrp/cmd"
+	"github.com/httprunner/httprunner/v5/hrp/cmd"
 )
 
 func main() {

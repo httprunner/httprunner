@@ -3,7 +3,7 @@ package uixt
 import (
 	"fmt"
 
-	"github.com/httprunner/httprunner/v4/hrp/code"
+	"github.com/httprunner/httprunner/v5/hrp/code"
 	"github.com/pkg/errors"
 )
 

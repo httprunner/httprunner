@@ -4,7 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp"
+	"github.com/httprunner/httprunner/v5/hrp"
 )
 
 func LoadJSONCase(path string) (*hrp.TestCaseDef, error) {

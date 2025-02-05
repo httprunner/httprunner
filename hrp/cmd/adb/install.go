@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/sdk"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/hrp/internal/sdk"
+	"github.com/httprunner/httprunner/v5/hrp/pkg/uixt"
 )
 
 var (

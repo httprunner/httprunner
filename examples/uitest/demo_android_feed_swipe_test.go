@@ -5,8 +5,8 @@ package uitest
 import (
 	"testing"
 
-	"github.com/httprunner/httprunner/v4/hrp"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/hrp"
+	"github.com/httprunner/httprunner/v5/hrp/pkg/uixt"
 )
 
 func TestAndroidDouyinFeedTest(t *testing.T) {

@@ -12,10 +12,10 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v4/hrp/internal/builtin"
-	"github.com/httprunner/httprunner/v4/hrp/internal/config"
-	"github.com/httprunner/httprunner/v4/hrp/internal/version"
-	"github.com/httprunner/httprunner/v4/hrp/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/hrp/internal/builtin"
+	"github.com/httprunner/httprunner/v5/hrp/internal/config"
+	"github.com/httprunner/httprunner/v5/hrp/internal/version"
+	"github.com/httprunner/httprunner/v5/hrp/pkg/uixt"
 )
 
 func NewSummary() *Summary {

@@ -1,4 +1,4 @@
-module github.com/httprunner/httprunner/v4
+module github.com/httprunner/httprunner/v5
 
 go 1.22.0
 

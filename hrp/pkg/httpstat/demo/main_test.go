@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/httprunner/httprunner/v4/hrp/pkg/httpstat"
+	"github.com/httprunner/httprunner/v5/hrp/pkg/httpstat"
 )
 
 func TestMain(t *testing.T) {
