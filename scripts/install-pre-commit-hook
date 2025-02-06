@@ -41,7 +41,7 @@ do
 done
 
 # bump hrp version
-version_file=hrp/internal/version/VERSION
+version_file=internal/version/VERSION
 
 # get current date
 current_date=$(date +"%y%m%d%H%M")

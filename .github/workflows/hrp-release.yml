@@ -42,7 +42,7 @@ jobs:
           access-key-secret: ${{ secrets.ALIYUN_ACCESSKEY_SECRET }}
       - name: Upload artifacts to aliyun OSS
         run: |
-          ossutil cp -rf hrp/internal/version/VERSION oss://httprunner/
+          ossutil cp -rf internal/version/VERSION oss://httprunner/
           ossutil cp -rf scripts/install.sh oss://httprunner/
           ossutil cp -rf ${{ env.ASSET_PATH }} oss://httprunner/
       - name: Test install.sh
