@@ -3,14 +3,14 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v5/pkg/server"
+	"github.com/httprunner/httprunner/v5/server"
 )
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:   "server start",
 	Short: "start hrp server",
-	Long:  `start hrp server. exec automation by http`,
+	Long:  `start hrp server, call httprunner by HTTP`,
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return server.NewServer(port)
