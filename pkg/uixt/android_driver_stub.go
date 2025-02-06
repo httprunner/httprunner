@@ -102,7 +102,7 @@ func (sad *stubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (ra
 }
 
 func (sad *stubAndroidDriver) NewSession(capabilities option.Capabilities) (SessionInfo, error) {
-	sad.Driver.session.Reset()
+	sad.DriverClient.session.Reset()
 	return SessionInfo{}, errDriverNotImplemented
 }
 

@@ -220,19 +220,6 @@ func (d *DriverSession) Get(withReset bool) Attachments {
 	return data
 }
 
-type Driver struct {
-	urlPrefix *url.URL
-	client    *http.Client
-
-	// cache to avoid repeated query
-	scale         float64
-	windowSize    Size
-	driverResults []*DriverResult
-
-	// cache session data
-	session DriverSession
-}
-
 type DriverResult struct {
 	RequestMethod string    `json:"request_method"`
 	RequestUrl    string    `json:"request_url"`
@@ -246,7 +233,20 @@ type DriverResult struct {
 	Error            string `json:"error,omitempty"`
 }
 
-func (wd *Driver) concatURL(u *url.URL, elem ...string) string {
+type DriverClient struct {
+	urlPrefix *url.URL
+	client    *http.Client
+
+	// cache to avoid repeated query
+	scale         float64
+	windowSize    Size
+	driverResults []*DriverResult
+
+	// cache session data
+	session DriverSession
+}
+
+func (wd *DriverClient) concatURL(u *url.URL, elem ...string) string {
 	var tmp *url.URL
 	if u == nil {
 		u = wd.urlPrefix
@@ -256,11 +256,11 @@ func (wd *Driver) concatURL(u *url.URL, elem ...string) string {
 	return tmp.String()
 }
 
-func (wd *Driver) GET(pathElem ...string) (rawResp rawResponse, err error) {
+func (wd *DriverClient) GET(pathElem ...string) (rawResp rawResponse, err error) {
 	return wd.Request(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *Driver) POST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+func (wd *DriverClient) POST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
@@ -270,11 +270,11 @@ func (wd *Driver) POST(data interface{}, pathElem ...string) (rawResp rawRespons
 	return wd.Request(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
 }
 
-func (wd *Driver) DELETE(pathElem ...string) (rawResp rawResponse, err error) {
+func (wd *DriverClient) DELETE(pathElem ...string) (rawResp rawResponse, err error) {
 	return wd.Request(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *Driver) Request(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
+func (wd *DriverClient) Request(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
 	driverResult := &DriverResult{
 		RequestMethod: method,
 		RequestUrl:    rawURL,

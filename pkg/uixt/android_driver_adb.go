@@ -33,7 +33,7 @@ const (
 )
 
 type adbDriver struct {
-	Driver
+	DriverClient
 
 	adbClient *gadb.Device
 	logcat    *AdbLogcat
@@ -80,7 +80,7 @@ func (ad *adbDriver) runShellCommand(cmd string, args ...string) (output string,
 }
 
 func (ad *adbDriver) NewSession(capabilities option.Capabilities) (sessionInfo SessionInfo, err error) {
-	ad.Driver.session.Reset()
+	ad.DriverClient.session.Reset()
 	err = errDriverNotImplemented
 	return
 }
@@ -863,7 +863,7 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 }
 
 func (ad *adbDriver) GetSession() *DriverSession {
-	return &ad.Driver.session
+	return &ad.DriverClient.session
 }
 
 func (ad *adbDriver) GetDriverResults() []*DriverResult {

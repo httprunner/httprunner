@@ -28,7 +28,7 @@ import (
 )
 
 type wdaDriver struct {
-	Driver
+	DriverClient
 	udid          string
 	device        *IOSDevice
 	mjpegHTTPConn net.Conn // via HTTP
@@ -47,7 +47,7 @@ func (wd *wdaDriver) resetSession() error {
 	}
 
 	// Notice: use Driver.POST instead of httpPOST to avoid loop calling
-	rawResp, err := wd.Driver.POST(data, "/session")
+	rawResp, err := wd.DriverClient.POST(data, "/session")
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (wd *wdaDriver) resetSession() error {
 func (wd *wdaDriver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
 	retryInterval := 3 * time.Second
 	for retryCount := 1; retryCount <= 3; retryCount++ {
-		rawResp, err = wd.Driver.Request(method, rawURL, rawBody)
+		rawResp, err = wd.DriverClient.Request(method, rawURL, rawBody)
 		if err == nil {
 			return
 		}
@@ -154,7 +154,7 @@ func (wd *wdaDriver) Status() (deviceStatus DeviceStatus, err error) {
 	// [[FBRoute GET:@"/status"].withoutSession respondWithTarget:self action:@selector(handleGetStatus:)]
 	var rawResp rawResponse
 	// Notice: use Driver.GET instead of httpGET to avoid loop calling
-	if rawResp, err = wd.Driver.GET("/status"); err != nil {
+	if rawResp, err = wd.DriverClient.GET("/status"); err != nil {
 		return DeviceStatus{}, err
 	}
 	reply := new(struct{ Value struct{ DeviceStatus } })
@@ -1009,14 +1009,14 @@ func (wd *wdaDriver) StopCaptureLog() (result interface{}, err error) {
 }
 
 func (wd *wdaDriver) GetSession() *DriverSession {
-	return &wd.Driver.session
+	return &wd.DriverClient.session
 }
 
 func (wd *wdaDriver) GetDriverResults() []*DriverResult {
 	defer func() {
-		wd.Driver.driverResults = nil
+		wd.DriverClient.driverResults = nil
 	}()
-	return wd.Driver.driverResults
+	return wd.DriverClient.driverResults
 }
 
 func (wd *wdaDriver) TearDown() error {

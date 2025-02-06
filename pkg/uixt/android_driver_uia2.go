@@ -97,7 +97,7 @@ func (ud *uiaDriver) resetDriver() error {
 
 func (ud *uiaDriver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
 	for retryCount := 1; retryCount <= 5; retryCount++ {
-		rawResp, err = ud.Driver.Request(method, rawURL, rawBody)
+		rawResp, err = ud.DriverClient.Request(method, rawURL, rawBody)
 		if err == nil {
 			return
 		}
@@ -143,7 +143,7 @@ func (ud *uiaDriver) NewSession(capabilities option.Capabilities) (sessionInfo S
 	} else {
 		data["capabilities"] = map[string]interface{}{"alwaysMatch": capabilities}
 	}
-	if rawResp, err = ud.Driver.POST(data, "/session"); err != nil {
+	if rawResp, err = ud.DriverClient.POST(data, "/session"); err != nil {
 		return SessionInfo{SessionId: ""}, err
 	}
 	reply := new(struct{ Value struct{ SessionId string } })
@@ -151,8 +151,8 @@ func (ud *uiaDriver) NewSession(capabilities option.Capabilities) (sessionInfo S
 		return SessionInfo{SessionId: ""}, err
 	}
 	sessionID := reply.Value.SessionId
-	ud.Driver.session.Reset()
-	ud.Driver.session.ID = sessionID
+	ud.DriverClient.session.Reset()
+	ud.DriverClient.session.ID = sessionID
 	// d.sessionIdCache[sessionID] = true
 	return SessionInfo{SessionId: sessionID}, nil
 }
@@ -172,7 +172,7 @@ func (ud *uiaDriver) Status() (deviceStatus DeviceStatus, err error) {
 	// register(getHandler, new Status("/wd/hub/status"))
 	var rawResp rawResponse
 	// Notice: use Driver.GET instead of httpGET to avoid loop calling
-	if rawResp, err = ud.Driver.GET("/status"); err != nil {
+	if rawResp, err = ud.DriverClient.GET("/status"); err != nil {
 		return DeviceStatus{Ready: false}, err
 	}
 	reply := new(struct {
@@ -650,7 +650,7 @@ func (ud *uiaDriver) TapByTexts(actions ...TapTextAction) error {
 
 func (ud *uiaDriver) GetDriverResults() []*DriverResult {
 	defer func() {
-		ud.Driver.driverResults = nil
+		ud.DriverClient.driverResults = nil
 	}()
-	return ud.Driver.driverResults
+	return ud.DriverClient.driverResults
 }
