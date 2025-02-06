@@ -3,8 +3,8 @@ package uitest
 import (
 	"testing"
 
-	"github.com/httprunner/httprunner/v5/hrp"
-	"github.com/httprunner/httprunner/v5/hrp/pkg/uixt"
+	hrp "github.com/httprunner/httprunner/v5"
+	"github.com/httprunner/httprunner/v5/pkg/uixt"
 )
 
 func TestAndroidDouyinE2E(t *testing.T) {

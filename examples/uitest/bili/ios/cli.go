@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/hrp/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt"
 )
 
 var (

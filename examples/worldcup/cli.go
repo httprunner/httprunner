@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v5/hrp/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt"
 )
 
 var rootCmd = &cobra.Command{
