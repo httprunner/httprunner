@@ -8,53 +8,47 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/utf7"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var errDriverNotImplemented = errors.New("driver method not implemented")
 
-type UIA2Driver struct {
-	ADBDriver
-}
+const forwardToPrefix = "forward-to-"
 
-func NewUIADriver(capabilities option.Capabilities, urlPrefix string) (driver *UIA2Driver, err error) {
-	log.Info().Msg("init uiautomator2 driver")
-	if capabilities == nil {
-		capabilities = option.NewCapabilities()
-		capabilities.WithWaitForIdleTimeout(0)
-	}
-	driver = new(UIA2Driver)
-	if driver.urlPrefix, err = url.Parse(urlPrefix); err != nil {
-		return nil, err
-	}
-	var localPort int
-	{
-		tmpURL, _ := url.Parse(driver.urlPrefix.String())
-		hostname := tmpURL.Hostname()
-		if strings.HasPrefix(hostname, forwardToPrefix) {
-			localPort, _ = strconv.Atoi(strings.TrimPrefix(hostname, forwardToPrefix))
-		}
+func NewUIA2Driver(device *AndroidDevice, opts ...option.DriverOption) (*UIA2Driver, error) {
+	log.Info().Interface("device", device).Msg("init android UIA2 driver")
+	localPort, err := device.d.Forward(device.UIA2Port)
+	if err != nil {
+		return nil, errors.Wrap(code.DeviceConnectionError,
+			fmt.Sprintf("forward port %d->%d failed: %v",
+				localPort, device.UIA2Port, err))
 	}
 	conn, err := net.Dial("tcp", fmt.Sprintf(":%d", localPort))
 	if err != nil {
 		return nil, fmt.Errorf("adb forward: %w", err)
 	}
+	driver := new(UIA2Driver)
 	driver.client = convertToHTTPClient(conn)
+	driver.adbClient = device.d
+	driver.logcat = device.logcat
 
-	_, err = driver.NewSession(capabilities)
+	_, err = driver.NewSession(nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "create UIAutomator session failed")
+		return nil, errors.Wrap(err, "create UIA2 session failed")
 	}
 	return driver, nil
+}
+
+type UIA2Driver struct {
+	ADBDriver
 }
 
 type BatteryStatus int
@@ -86,12 +80,11 @@ func (bs BatteryStatus) String() string {
 }
 
 func (ud *UIA2Driver) resetDriver() error {
-	newUIADriver, err := NewUIADriver(option.NewCapabilities(), ud.urlPrefix.String())
+	session, err := ud.NewSession(option.NewCapabilities())
 	if err != nil {
 		return err
 	}
-	ud.client = newUIADriver.client
-	ud.session.ID = newUIADriver.session.ID
+	ud.session.ID = session.SessionId
 	return nil
 }
 

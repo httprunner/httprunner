@@ -12,10 +12,7 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-var (
-	uiaServerURL = "http://forward-to-6790:6790/wd/hub"
-	driverExt    *DriverExt
-)
+var driverExt *DriverExt
 
 func setupAndroidAdbDriver(t *testing.T) {
 	device, err := NewAndroidDevice()
@@ -51,66 +48,20 @@ func TestAndroidDevice_GetCurrentWindow(t *testing.T) {
 	t.Logf("packageName: %s\tactivityName: %s", windowInfo.PackageName, windowInfo.Activity)
 }
 
-func TestDriver_NewSession(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	firstMatchEntry := make(map[string]interface{})
-	firstMatchEntry["package"] = "com.android.settings"
-	firstMatchEntry["activity"] = "com.android.settings/.Settings"
-	caps := option.Capabilities{
-		"firstMatch":  []interface{}{firstMatchEntry},
-		"alwaysMatch": struct{}{},
-	}
-	session, err := driver.NewSession(caps)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(session.SessionId) == 0 {
-		t.Fatal("should not be empty")
-	}
-}
-
-func TestNewDriver(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(driver.session.ID)
-}
-
 func TestDriver_Quit(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err = driver.DeleteSession(); err != nil {
+	if err := driver.DeleteSession(); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDriver_Status(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = driver.Status()
+	_, err := driver.Status()
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDriver_Screenshot(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	screenshot, err := driver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
@@ -120,11 +71,6 @@ func TestDriver_Screenshot(t *testing.T) {
 }
 
 func TestDriver_Rotation(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	rotation, err := driver.Rotation()
 	if err != nil {
 		t.Fatal(err)
@@ -134,11 +80,6 @@ func TestDriver_Rotation(t *testing.T) {
 }
 
 func TestDriver_DeviceSize(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	deviceSize, err := driver.WindowSize()
 	if err != nil {
 		t.Fatal(err)
@@ -159,23 +100,13 @@ func TestDriver_Source(t *testing.T) {
 }
 
 func TestDriver_TapByText(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.TapByText("安装")
+	err := driver.TapByText("安装")
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDriver_BatteryInfo(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	batteryInfo, err := driver.BatteryInfo()
 	if err != nil {
 		t.Fatal(err)
@@ -185,11 +116,6 @@ func TestDriver_BatteryInfo(t *testing.T) {
 }
 
 func TestDriver_GetAppiumSettings(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	appiumSettings, err := driver.GetAppiumSettings()
 	if err != nil {
 		t.Fatal(err)
@@ -202,11 +128,6 @@ func TestDriver_GetAppiumSettings(t *testing.T) {
 }
 
 func TestDriver_DeviceInfo(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	devInfo, err := driver.DeviceInfo()
 	if err != nil {
 		t.Fatal(err)
@@ -255,12 +176,7 @@ func TestDriver_Swipe_Relative(t *testing.T) {
 }
 
 func TestDriver_Drag(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.Drag(400, 260, 400, 500)
+	err := driver.Drag(400, 260, 400, 500)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -298,25 +214,15 @@ func TestDriver_SendKeys(t *testing.T) {
 }
 
 func TestDriver_PressBack(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.PressBack()
+	err := driver.PressBack()
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDriver_SetRotation(t *testing.T) {
-	driver, err := NewUIADriver(nil, uiaServerURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	// err = driver.SetRotation(Rotation{Z: 0})
-	err = driver.SetRotation(Rotation{Z: 270})
+	err := driver.SetRotation(Rotation{Z: 270})
 	if err != nil {
 		t.Fatal(err)
 	}

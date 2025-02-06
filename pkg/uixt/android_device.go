@@ -47,8 +47,6 @@ var (
 //go:embed evalite
 var evalite embed.FS
 
-const forwardToPrefix = "forward-to-"
-
 func NewAndroidDevice(opts ...option.AndroidDeviceOption) (device *AndroidDevice, err error) {
 	androidOptions := &option.AndroidDeviceConfig{
 		UIA2IP:   UIA2ServerHost,
@@ -179,7 +177,7 @@ func (dev *AndroidDevice) NewDriver(opts ...option.DriverOption) (driverExt *Dri
 
 	var driver IWebDriver
 	if dev.UIA2 || dev.LogOn {
-		driver, err = dev.NewUSBDriver(options.Capabilities)
+		driver, err = NewUIA2Driver(dev, opts...)
 	} else if dev.STUB {
 		driver, err = dev.NewStubDriver(options.Capabilities)
 	} else {
@@ -204,28 +202,6 @@ func (dev *AndroidDevice) NewDriver(opts ...option.DriverOption) (driverExt *Dri
 	return driverExt, nil
 }
 
-// NewUSBDriver creates new client via USB connected device, this will also start a new session.
-func (dev *AndroidDevice) NewUSBDriver(capabilities option.Capabilities) (driver IWebDriver, err error) {
-	localPort, err := dev.d.Forward(dev.UIA2Port)
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceConnectionError,
-			fmt.Sprintf("forward port %d->%d failed: %v",
-				localPort, dev.UIA2Port, err))
-	}
-
-	rawURL := fmt.Sprintf("http://%s%d:%d/wd/hub",
-		forwardToPrefix, localPort, dev.UIA2Port)
-	uiaDriver, err := NewUIADriver(capabilities, rawURL)
-	if err != nil {
-		_ = dev.d.ForwardKill(localPort)
-		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
-	}
-	uiaDriver.adbClient = dev.d
-	uiaDriver.logcat = dev.logcat
-
-	return uiaDriver, nil
-}
-
 func (dev *AndroidDevice) NewStubDriver(capabilities option.Capabilities) (driver *StubAndroidDriver, err error) {
 	socketLocalPort, err := dev.d.Forward(StubSocketName)
 	if err != nil {
@@ -241,8 +217,8 @@ func (dev *AndroidDevice) NewStubDriver(capabilities option.Capabilities) (drive
 				serverLocalPort, DouyinServerPort, err))
 	}
 
-	rawURL := fmt.Sprintf("http://%s%d:%d",
-		forwardToPrefix, serverLocalPort, DouyinServerPort)
+	rawURL := fmt.Sprintf("http://forward-to-%d:%d",
+		serverLocalPort, DouyinServerPort)
 
 	stubDriver, err := newStubAndroidDriver(fmt.Sprintf("127.0.0.1:%d", socketLocalPort), rawURL)
 	if err != nil {
@@ -254,19 +230,6 @@ func (dev *AndroidDevice) NewStubDriver(capabilities option.Capabilities) (drive
 	stubDriver.logcat = dev.logcat
 
 	return stubDriver, nil
-}
-
-// NewHTTPDriver creates new remote HTTP client, this will also start a new session.
-func (dev *AndroidDevice) NewHTTPDriver(capabilities option.Capabilities) (driver IWebDriver, err error) {
-	rawURL := fmt.Sprintf("http://%s:%d/wd/hub", dev.UIA2IP, dev.UIA2Port)
-	uiaDriver, err := NewUIADriver(capabilities, rawURL)
-	if err != nil {
-		return nil, err
-	}
-
-	uiaDriver.adbClient = dev.d
-	uiaDriver.logcat = dev.logcat
-	return uiaDriver, nil
 }
 
 func (dev *AndroidDevice) StartPerf() error {

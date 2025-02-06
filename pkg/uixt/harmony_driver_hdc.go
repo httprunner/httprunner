@@ -335,3 +335,13 @@ func (hd *hdcDriver) RecordScreen(folderPath string, duration time.Duration) (vi
 func (hd *hdcDriver) TearDown() error {
 	return nil
 }
+
+func (hd *hdcDriver) Rotation() (rotation Rotation, err error) {
+	err = errDriverNotImplemented
+	return
+}
+
+func (hd *hdcDriver) SetRotation(rotation Rotation) (err error) {
+	err = errDriverNotImplemented
+	return
+}

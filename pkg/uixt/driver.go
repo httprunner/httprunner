@@ -89,6 +89,9 @@ type IWebDriver interface {
 
 	Orientation() (orientation Orientation, err error)
 
+	SetRotation(rotation Rotation) (err error)
+	Rotation() (rotation Rotation, err error)
+
 	// Tap Sends a tap event at the coordinate.
 	Tap(x, y float64, opts ...option.ActionOption) error
 
