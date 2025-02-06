@@ -25,6 +25,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/httpstat"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 type HTTPMethod string
@@ -773,11 +774,8 @@ func (s *StepRequest) Android(options ...uixt.AndroidDeviceOption) *StepMobile {
 }
 
 // IOS creates a new ios step session
-func (s *StepRequest) IOS(options ...uixt.IOSDeviceOption) *StepMobile {
-	iosOptions := &uixt.IOSDevice{}
-	for _, option := range options {
-		option(iosOptions)
-	}
+func (s *StepRequest) IOS(opts ...options.IOSDeviceOption) *StepMobile {
+	iosOptions := options.NewIOSDeviceConfig(opts...)
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		IOS: &MobileUI{

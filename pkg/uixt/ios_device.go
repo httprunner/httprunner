@@ -28,6 +28,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 const (
@@ -53,62 +54,6 @@ const (
 )
 
 var tunnelManager *tunnel.TunnelManager = nil
-
-type IOSDeviceOption func(*IOSDevice)
-
-func WithUDID(udid string) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.UDID = udid
-	}
-}
-
-func WithWDAPort(port int) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.Port = port
-	}
-}
-
-func WithWDAMjpegPort(port int) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.MjpegPort = port
-	}
-}
-
-func WithWDALogOn(logOn bool) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.LogOn = logOn
-	}
-}
-
-func WithIOSStub(stub bool) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.STUB = stub
-	}
-}
-
-func WithResetHomeOnStartup(reset bool) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.ResetHomeOnStartup = reset
-	}
-}
-
-func WithSnapshotMaxDepth(depth int) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.SnapshotMaxDepth = depth
-	}
-}
-
-func WithAcceptAlertButtonSelector(selector string) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.AcceptAlertButtonSelector = selector
-	}
-}
-
-func WithDismissAlertButtonSelector(selector string) IOSDeviceOption {
-	return func(device *IOSDevice) {
-		device.DismissAlertButtonSelector = selector
-	}
-}
 
 func GetIOSDevices(udid ...string) (deviceList []ios.DeviceEntry, err error) {
 	devices, err := ios.ListDevices()
@@ -143,34 +88,6 @@ func GetIOSDevices(udid ...string) (deviceList []ios.DeviceEntry, err error) {
 		return nil, err
 	}
 	return deviceList, nil
-}
-
-func GetIOSDeviceOptions(dev *IOSDevice) (deviceOptions []IOSDeviceOption) {
-	if dev.UDID != "" {
-		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
-	}
-	if dev.Port != 0 {
-		deviceOptions = append(deviceOptions, WithWDAPort(dev.Port))
-	}
-	if dev.MjpegPort != 0 {
-		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
-	}
-	if dev.LogOn {
-		deviceOptions = append(deviceOptions, WithWDALogOn(true))
-	}
-	if dev.ResetHomeOnStartup {
-		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
-	}
-	if dev.SnapshotMaxDepth != 0 {
-		deviceOptions = append(deviceOptions, WithSnapshotMaxDepth(dev.SnapshotMaxDepth))
-	}
-	if dev.AcceptAlertButtonSelector != "" {
-		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.AcceptAlertButtonSelector))
-	}
-	if dev.DismissAlertButtonSelector != "" {
-		deviceOptions = append(deviceOptions, WithDismissAlertButtonSelector(dev.DismissAlertButtonSelector))
-	}
-	return
 }
 
 func StartTunnel(recordsPath string, tunnelInfoPort int, userspaceTUN bool) (err error) {
@@ -208,8 +125,8 @@ func RebootTunnel() (err error) {
 	return StartTunnel(os.TempDir(), ios.HttpApiPort(), true)
 }
 
-func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
-	device = &IOSDevice{
+func NewIOSDevice(opts ...options.IOSDeviceOption) (device *IOSDevice, err error) {
+	deviceOptions := &options.IOSDeviceConfig{
 		Port:                       defaultWDAPort,
 		MjpegPort:                  defaultMjpegPort,
 		SnapshotMaxDepth:           snapshotMaxDepth,
@@ -218,32 +135,35 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 		// switch to iOS springboard before init WDA session
 		// avoid getting stuck when some super app is active such as douyin or wexin
 		ResetHomeOnStartup: true,
-		listeners:          make(map[int]*forward.ConnListener),
 	}
-	for _, option := range options {
-		option(device)
+	for _, option := range opts {
+		option(deviceOptions)
 	}
 
-	deviceList, err := GetIOSDevices(device.UDID)
+	deviceList, err := GetIOSDevices(deviceOptions.UDID)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
 
-	if device.UDID == "" && len(deviceList) > 1 {
+	if deviceOptions.UDID == "" && len(deviceList) > 1 {
 		return nil, errors.Wrap(code.DeviceConnectionError, "more than one device connected, please specify the udid")
 	}
 
 	dev := deviceList[0]
 	udid := dev.Properties.SerialNumber
 
-	if device.UDID == "" {
-		device.UDID = udid
+	if deviceOptions.UDID == "" {
+		deviceOptions.UDID = udid
 		log.Warn().
 			Str("udid", udid).
 			Msg("ios UDID is not specified, select the first one")
 	}
 
-	device.d = dev
+	device = &IOSDevice{
+		IOSDeviceConfig: deviceOptions,
+		listeners:       make(map[int]*forward.ConnListener),
+		d:               dev,
+	}
 	log.Info().Str("udid", device.UDID).Msg("init ios device")
 	err = device.Init()
 	if err != nil {
@@ -254,52 +174,9 @@ func NewIOSDevice(options ...IOSDeviceOption) (device *IOSDevice, err error) {
 }
 
 type IOSDevice struct {
+	*options.IOSDeviceConfig
 	d         ios.DeviceEntry
 	listeners map[int]*forward.ConnListener
-	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
-	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
-	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
-	STUB      bool   `json:"stub,omitempty" yaml:"stub,omitempty"`             // use stub
-	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
-
-	// switch to iOS springboard before init WDA session
-	ResetHomeOnStartup bool `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
-
-	// config appium settings
-	SnapshotMaxDepth           int    `json:"snapshot_max_depth,omitempty" yaml:"snapshot_max_depth,omitempty"`
-	AcceptAlertButtonSelector  string `json:"accept_alert_button_selector,omitempty" yaml:"accept_alert_button_selector,omitempty"`
-	DismissAlertButtonSelector string `json:"dismiss_alert_button_selector,omitempty" yaml:"dismiss_alert_button_selector,omitempty"`
-}
-
-func (dev *IOSDevice) Options() (deviceOptions []IOSDeviceOption) {
-	if dev.UDID != "" {
-		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
-	}
-	if dev.Port != 0 {
-		deviceOptions = append(deviceOptions, WithWDAPort(dev.Port))
-	}
-	if dev.MjpegPort != 0 {
-		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
-	}
-	if dev.STUB {
-		deviceOptions = append(deviceOptions, WithIOSStub(true))
-	}
-	if dev.LogOn {
-		deviceOptions = append(deviceOptions, WithWDALogOn(true))
-	}
-	if dev.ResetHomeOnStartup {
-		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
-	}
-	if dev.SnapshotMaxDepth != 0 {
-		deviceOptions = append(deviceOptions, WithSnapshotMaxDepth(dev.SnapshotMaxDepth))
-	}
-	if dev.AcceptAlertButtonSelector != "" {
-		deviceOptions = append(deviceOptions, WithAcceptAlertButtonSelector(dev.AcceptAlertButtonSelector))
-	}
-	if dev.DismissAlertButtonSelector != "" {
-		deviceOptions = append(deviceOptions, WithDismissAlertButtonSelector(dev.DismissAlertButtonSelector))
-	}
-	return
 }
 
 type DeviceDetail struct {

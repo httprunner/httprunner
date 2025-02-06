@@ -9,12 +9,14 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 func TestIOSDemo(t *testing.T) {
 	device, err := uixt.NewIOSDevice(
-		uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800),
-		uixt.WithResetHomeOnStartup(false), // not reset home on startup
+		options.WithWDAPort(8700),
+		options.WithWDAMjpegPort(8800),
+		options.WithResetHomeOnStartup(false), // not reset home on startup
 	)
 	if err != nil {
 		t.Fatal(err)

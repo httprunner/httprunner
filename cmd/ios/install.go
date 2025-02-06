@@ -9,6 +9,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 var installCmd = &cobra.Command{
@@ -29,7 +30,7 @@ var installCmd = &cobra.Command{
 			return err
 		}
 
-		device, err := uixt.NewIOSDevice(uixt.WithUDID(udid))
+		device, err := uixt.NewIOSDevice(options.WithUDID(udid))
 		if err != nil {
 			fmt.Println(err)
 			return err

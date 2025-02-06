@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,7 +19,10 @@ var (
 )
 
 func setup(t *testing.T) {
-	device, err := NewIOSDevice(WithWDAPort(8700), WithWDAMjpegPort(8800), WithWDALogOn(true))
+	device, err := NewIOSDevice(
+		options.WithWDAPort(8700),
+		options.WithWDAMjpegPort(8800),
+		options.WithWDALogOn(true))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,29 +53,36 @@ func TestInstall(t *testing.T) {
 }
 
 func TestNewIOSDevice(t *testing.T) {
-	device, _ := NewIOSDevice(WithWDAPort(8700), WithWDAMjpegPort(8800))
+	device, _ := NewIOSDevice(
+		options.WithWDAPort(8700),
+		options.WithWDAMjpegPort(8800))
 	if device != nil {
 		t.Log(device)
 	}
 
-	device, _ = NewIOSDevice(WithUDID("xxxx"))
+	device, _ = NewIOSDevice(options.WithUDID("xxxx"))
 	if device != nil {
 		t.Log(device)
 	}
 
-	device, _ = NewIOSDevice(WithWDAPort(8700), WithWDAMjpegPort(8800))
+	device, _ = NewIOSDevice(
+		options.WithWDAPort(8700),
+		options.WithWDAMjpegPort(8800))
 	if device != nil {
 		t.Log(device)
 	}
 
-	device, _ = NewIOSDevice(WithUDID("xxxx"), WithWDAPort(8700), WithWDAMjpegPort(8800))
+	device, _ = NewIOSDevice(
+		options.WithUDID("xxxx"),
+		options.WithWDAPort(8700),
+		options.WithWDAMjpegPort(8800))
 	if device != nil {
 		t.Log(device)
 	}
 }
 
 func TestIOSDevice_GetPackageInfo(t *testing.T) {
-	device, err := NewIOSDevice(WithWDAPort(8700))
+	device, err := NewIOSDevice(options.WithWDAPort(8700))
 	checkErr(t, err)
 	appInfo, err := device.GetPackageInfo("com.ss.iphone.ugc.Aweme")
 	checkErr(t, err)

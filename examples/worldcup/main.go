@@ -16,6 +16,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 func convertTimeToSeconds(timeStr string) (int, error) {
@@ -38,9 +39,9 @@ func convertTimeToSeconds(timeStr string) (int, error) {
 
 func initIOSDevice(uuid string) uixt.IDevice {
 	device, err := uixt.NewIOSDevice(
-		uixt.WithUDID(uuid),
-		uixt.WithWDAPort(8700), uixt.WithWDAMjpegPort(8800),
-		uixt.WithResetHomeOnStartup(false), // not reset home on startup
+		options.WithUDID(uuid),
+		options.WithWDAPort(8700), options.WithWDAMjpegPort(8800),
+		options.WithResetHomeOnStartup(false), // not reset home on startup
 
 	)
 	if err != nil {

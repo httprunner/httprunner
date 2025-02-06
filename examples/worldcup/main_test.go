@@ -9,6 +9,7 @@ import (
 
 	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 func TestConvertTimeToSeconds(t *testing.T) {
@@ -55,10 +56,10 @@ func TestIOSDouyinWorldCupLive(t *testing.T) {
 				"appBundleID": "com.ss.iphone.ugc.Aweme",
 			}).
 			SetIOS(
-				uixt.WithUDID(uuid),
-				uixt.WithWDALogOn(true),
-				uixt.WithWDAPort(8700),
-				uixt.WithWDAMjpegPort(8800),
+				options.WithUDID(uuid),
+				options.WithWDALogOn(true),
+				options.WithWDAPort(8700),
+				options.WithWDAMjpegPort(8800),
 			),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").

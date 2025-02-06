@@ -5,6 +5,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 type IConfig interface {
@@ -117,23 +118,23 @@ func (c *TConfig) SetWebSocket(times, interval, timeout, size int64) *TConfig {
 	return c
 }
 
-func (c *TConfig) SetIOS(options ...uixt.IOSDeviceOption) *TConfig {
-	wdaOptions := &uixt.IOSDevice{}
-	for _, option := range options {
-		option(wdaOptions)
+func (c *TConfig) SetIOS(opts ...options.IOSDeviceOption) *TConfig {
+	iosOptions := options.NewIOSDeviceConfig(opts...)
+	device := &uixt.IOSDevice{
+		IOSDeviceConfig: iosOptions,
 	}
 
 	// each device can have its own settings
-	if wdaOptions.UDID != "" {
-		c.IOS = append(c.IOS, wdaOptions)
+	if iosOptions.UDID != "" {
+		c.IOS = append(c.IOS, device)
 		return c
 	}
 
 	// device UDID is not specified, settings will be shared
 	if len(c.IOS) == 0 {
-		c.IOS = append(c.IOS, wdaOptions)
+		c.IOS = append(c.IOS, device)
 	} else {
-		c.IOS[0] = wdaOptions
+		c.IOS[0] = device
 	}
 	return c
 }

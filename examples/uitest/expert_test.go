@@ -5,6 +5,7 @@ import (
 
 	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 func TestAndroidExpertTest(t *testing.T) {
@@ -151,10 +152,10 @@ func TestIOSExpertTest(t *testing.T) {
 				"app_name":  "抖音",
 			}).
 			SetIOS(
-				uixt.WithUDID("$device"),
-				uixt.WithWDALogOn(true),
-				uixt.WithWDAPort(8700),
-				uixt.WithWDAMjpegPort(8800),
+				options.WithUDID("$device"),
+				options.WithWDALogOn(true),
+				options.WithWDAPort(8700),
+				options.WithWDAMjpegPort(8800),
 			),
 		TestSteps: []hrp.IStep{
 			// 温启动

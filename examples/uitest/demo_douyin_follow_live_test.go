@@ -7,6 +7,7 @@ import (
 
 	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 func TestIOSDouyinFollowLive(t *testing.T) {
@@ -16,9 +17,9 @@ func TestIOSDouyinFollowLive(t *testing.T) {
 				"app_name": "抖音",
 			}).
 			SetIOS(
-				uixt.WithWDALogOn(true),
-				uixt.WithWDAPort(8700),
-				uixt.WithWDAMjpegPort(8800),
+				options.WithWDALogOn(true),
+				options.WithWDAPort(8700),
+				options.WithWDAMjpegPort(8800),
 			),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
