@@ -11,6 +11,7 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 type MobileUI struct {
@@ -103,11 +104,11 @@ func (s *StepMobile) Home() *StepMobile {
 }
 
 // TapXY taps the point {X,Y}, X & Y is percentage of coordinates
-func (s *StepMobile) TapXY(x, y float64, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) TapXY(x, y float64, opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_TapXY,
 		Params:  []float64{x, y},
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
@@ -115,11 +116,11 @@ func (s *StepMobile) TapXY(x, y float64, options ...uixt.ActionOption) *StepMobi
 }
 
 // TapAbsXY taps the point {X,Y}, X & Y is absolute coordinates
-func (s *StepMobile) TapAbsXY(x, y float64, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) TapAbsXY(x, y float64, opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_TapAbsXY,
 		Params:  []float64{x, y},
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
@@ -127,11 +128,11 @@ func (s *StepMobile) TapAbsXY(x, y float64, options ...uixt.ActionOption) *StepM
 }
 
 // Tap taps on the target element
-func (s *StepMobile) Tap(params string, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) Tap(params string, opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_Tap,
 		Params:  params,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
@@ -139,11 +140,11 @@ func (s *StepMobile) Tap(params string, options ...uixt.ActionOption) *StepMobil
 }
 
 // TapByOCR taps on the target element by OCR recognition
-func (s *StepMobile) TapByOCR(ocrText string, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) TapByOCR(ocrText string, opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_TapByOCR,
 		Params:  ocrText,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
@@ -151,11 +152,11 @@ func (s *StepMobile) TapByOCR(ocrText string, options ...uixt.ActionOption) *Ste
 }
 
 // TapByCV taps on the target element by CV recognition
-func (s *StepMobile) TapByCV(imagePath string, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) TapByCV(imagePath string, opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_TapByCV,
 		Params:  imagePath,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
@@ -163,10 +164,10 @@ func (s *StepMobile) TapByCV(imagePath string, options ...uixt.ActionOption) *St
 }
 
 // TapByUITypes taps on the target element specified by uiTypes, the higher the uiTypes, the higher the priority
-func (s *StepMobile) TapByUITypes(options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) TapByUITypes(opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_TapByCV,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
@@ -174,31 +175,31 @@ func (s *StepMobile) TapByUITypes(options ...uixt.ActionOption) *StepMobile {
 }
 
 // DoubleTapXY double taps the point {X,Y}, X & Y is percentage of coordinates
-func (s *StepMobile) DoubleTapXY(x, y float64, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) DoubleTapXY(x, y float64, opts ...options.ActionOption) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_DoubleTapXY,
 		Params:  []float64{x, y},
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	})
 	return s
 }
 
-func (s *StepMobile) DoubleTap(params string, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) DoubleTap(params string, opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_DoubleTap,
 		Params:  params,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
 
-func (s *StepMobile) Back(options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) Back(opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_Back,
 		Params:  nil,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
@@ -206,99 +207,99 @@ func (s *StepMobile) Back(options ...uixt.ActionOption) *StepMobile {
 }
 
 // Swipe drags from [sx, sy] to [ex, ey]
-func (s *StepMobile) Swipe(sx, sy, ex, ey float64, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) Swipe(sx, sy, ex, ey float64, opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_Swipe,
 		Params:  []float64{sx, sy, ex, ey},
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
 
-func (s *StepMobile) SwipeUp(options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) SwipeUp(opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_Swipe,
 		Params:  "up",
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
 
-func (s *StepMobile) SwipeDown(options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) SwipeDown(opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_Swipe,
 		Params:  "down",
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
 
-func (s *StepMobile) SwipeLeft(options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) SwipeLeft(opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_Swipe,
 		Params:  "left",
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
 
-func (s *StepMobile) SwipeRight(options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) SwipeRight(opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_Swipe,
 		Params:  "right",
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
 
-func (s *StepMobile) SwipeToTapApp(appName string, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) SwipeToTapApp(appName string, opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_SwipeToTapApp,
 		Params:  appName,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
 
-func (s *StepMobile) SwipeToTapText(text string, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) SwipeToTapText(text string, opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_SwipeToTapText,
 		Params:  text,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
 
-func (s *StepMobile) SwipeToTapTexts(texts interface{}, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) SwipeToTapTexts(texts interface{}, opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_SwipeToTapTexts,
 		Params:  texts,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
 
-func (s *StepMobile) Input(text string, options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) Input(text string, opts ...options.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_Input,
 		Params:  text,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
@@ -351,20 +352,20 @@ func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 	return s
 }
 
-func (s *StepMobile) EndToEndDelay(options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) EndToEndDelay(opts ...options.ActionOption) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_EndToEndDelay,
 		Params:  nil,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	})
 	return s
 }
 
-func (s *StepMobile) ScreenShot(options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) ScreenShot(opts ...options.ActionOption) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_ScreenShot,
 		Params:  nil,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	})
 	return s
 }
@@ -392,11 +393,11 @@ func (s *StepMobile) DisableAutoPopupHandler() *StepMobile {
 	return s
 }
 
-func (s *StepMobile) ClosePopups(options ...uixt.ActionOption) *StepMobile {
+func (s *StepMobile) ClosePopups(opts ...options.ActionOption) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_ClosePopups,
 		Params:  nil,
-		Options: uixt.NewActionOptions(options...),
+		Options: options.NewActionOptions(opts...),
 	})
 	return s
 }

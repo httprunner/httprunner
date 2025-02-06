@@ -15,9 +15,9 @@ func (dev *HarmonyDeviceConfig) Options() (deviceOptions []HarmonyDeviceOption) 
 	return
 }
 
-func NewHarmonyDeviceConfig(options ...HarmonyDeviceOption) (device *HarmonyDeviceConfig) {
+func NewHarmonyDeviceConfig(opts ...HarmonyDeviceOption) (device *HarmonyDeviceConfig) {
 	device = &HarmonyDeviceConfig{}
-	for _, option := range options {
+	for _, option := range opts {
 		option(device)
 	}
 	return

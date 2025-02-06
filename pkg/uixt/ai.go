@@ -11,11 +11,12 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 type IImageService interface {
 	// GetImage returns image result including ocr texts, uploaded image url, etc
-	GetImage(imageBuf *bytes.Buffer, options ...ActionOption) (imageResult *ImageResult, err error)
+	GetImage(imageBuf *bytes.Buffer, opts ...options.ActionOption) (imageResult *ImageResult, err error)
 }
 
 type ImageResult struct {
@@ -105,7 +106,7 @@ func (t OCRTexts) texts() (texts []string) {
 	return texts
 }
 
-func (t OCRTexts) FilterScope(scope AbsScope) (results OCRTexts) {
+func (t OCRTexts) FilterScope(scope options.AbsScope) (results OCRTexts) {
 	for _, ocrText := range t {
 		rect := ocrText.Rect
 
@@ -127,8 +128,8 @@ func (t OCRTexts) FilterScope(scope AbsScope) (results OCRTexts) {
 
 // FindText returns matched text with options
 // Notice: filter scope should be specified with WithAbsScope
-func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText, err error) {
-	actionOptions := NewActionOptions(options...)
+func (t OCRTexts) FindText(text string, opts ...options.ActionOption) (result OCRText, err error) {
+	actionOptions := options.NewActionOptions(opts...)
 
 	var results []OCRText
 	for _, ocrText := range t.FilterScope(actionOptions.AbsScope) {
@@ -172,10 +173,10 @@ func (t OCRTexts) FindText(text string, options ...ActionOption) (result OCRText
 	return results[idx], nil
 }
 
-func (t OCRTexts) FindTexts(texts []string, options ...ActionOption) (results OCRTexts, err error) {
-	actionOptions := NewActionOptions(options...)
+func (t OCRTexts) FindTexts(texts []string, opts ...options.ActionOption) (results OCRTexts, err error) {
+	actionOptions := options.NewActionOptions(opts...)
 	for _, text := range texts {
-		ocrText, err := t.FindText(text, options...)
+		ocrText, err := t.FindText(text, opts...)
 		if err != nil {
 			continue
 		}
@@ -239,7 +240,7 @@ func (box Box) Center() PointF {
 
 type UIResults []UIResult
 
-func (u UIResults) FilterScope(scope AbsScope) (results UIResults) {
+func (u UIResults) FilterScope(scope options.AbsScope) (results UIResults) {
 	for _, uiResult := range u {
 		rect := image.Rectangle{
 			Min: image.Point{
@@ -267,8 +268,8 @@ func (u UIResults) FilterScope(scope AbsScope) (results UIResults) {
 	return
 }
 
-func (u UIResults) GetUIResult(options ...ActionOption) (UIResult, error) {
-	actionOptions := NewActionOptions(options...)
+func (u UIResults) GetUIResult(opts ...options.ActionOption) (UIResult, error) {
+	actionOptions := options.NewActionOptions(opts...)
 
 	uiResults := u.FilterScope(actionOptions.AbsScope)
 	if len(uiResults) == 0 {

@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 	"github.com/pkg/errors"
 )
 
-func (dExt *DriverExt) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
+func (dExt *DriverExt) Drag(fromX, fromY, toX, toY float64, opts ...options.ActionOption) (err error) {
 	windowSize, err := dExt.Driver.WindowSize()
 	if err != nil {
 		return errors.Wrap(code.DeviceGetInfoError, err.Error())
@@ -25,5 +26,5 @@ func (dExt *DriverExt) Drag(fromX, fromY, toX, toY float64, options ...ActionOpt
 	toX = float64(width) * toX
 	toY = float64(height) * toY
 
-	return dExt.Driver.Drag(fromX, fromY, toX, toY, options...)
+	return dExt.Driver.Drag(fromX, fromY, toX, toY, opts...)
 }

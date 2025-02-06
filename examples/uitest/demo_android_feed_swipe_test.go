@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
@@ -27,7 +26,7 @@ func TestAndroidDouyinFeedTest(t *testing.T) {
 				AssertAppInForeground("com.ss.android.ugc.aweme"),
 			hrp.NewStep("处理青少年弹窗").
 				Android().
-				TapByOCR("我知道了", uixt.WithIgnoreNotFoundError(true)),
+				TapByOCR("我知道了", options.WithIgnoreNotFoundError(true)),
 			hrp.NewStep("滑动 Feed 3 次，随机间隔 0-5s").
 				Loop(3).
 				Android().

@@ -59,7 +59,7 @@ func launchAppDriver(pkgName string) (driver *uixt.DriverExt, err error) {
 	}
 
 	// 进入推荐页
-	err = driver.TapByOCR("推荐", uixt.WithScope(0, 0, 1, 0.3))
+	err = driver.TapByOCR("推荐", options.WithScope(0, 0, 1, 0.3))
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func watchVideo(driver *uixt.DriverExt) (err error) {
 
 	// 切换横屏
 	err = driver.TapByUIDetection(
-		uixt.WithScreenShotUITypes("fullScreen"))
+		options.WithScreenShotUITypes("fullScreen"))
 	if err != nil {
 		// 未找到横屏图标，该页面可能不是横版视频（直播|广告|Feed）
 		// 退出回到推荐页

@@ -250,7 +250,7 @@ func (ud *uiaDriver) WindowSize() (size Size, err error) {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (ud *uiaDriver) PressBack(options ...ActionOption) (err error) {
+func (ud *uiaDriver) PressBack(opts ...options.ActionOption) (err error) {
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	_, err = ud.httpPOST(nil, "/session", ud.session.ID, "back")
 	return
@@ -293,7 +293,7 @@ func (ud *uiaDriver) Orientation() (orientation Orientation, err error) {
 	return
 }
 
-func (ud *uiaDriver) DoubleTap(x, y float64, options ...ActionOption) error {
+func (ud *uiaDriver) DoubleTap(x, y float64, opts ...options.ActionOption) error {
 	return ud.DoubleFloatTap(x, y)
 }
 
@@ -319,16 +319,16 @@ func (ud *uiaDriver) DoubleFloatTap(x, y float64) error {
 	return err
 }
 
-func (ud *uiaDriver) Tap(x, y float64, options ...ActionOption) (err error) {
+func (ud *uiaDriver) Tap(x, y float64, opts ...options.ActionOption) (err error) {
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
-	actionOptions := NewActionOptions(options...)
+	actionOptions := options.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 2 {
 		x += float64(actionOptions.Offset[0])
 		y += float64(actionOptions.Offset[1])
 	}
-	x += actionOptions.getRandomOffset()
-	y += actionOptions.getRandomOffset()
+	x += actionOptions.GetRandomOffset()
+	y += actionOptions.GetRandomOffset()
 
 	duration := 100.0
 	if actionOptions.PressDuration > 0 {
@@ -351,15 +351,15 @@ func (ud *uiaDriver) Tap(x, y float64, options ...ActionOption) (err error) {
 	}
 
 	// update data options in post data for extra uiautomator configurations
-	actionOptions.updateData(data)
+	actionOptions.UpdateData(data)
 
 	_, err = ud.httpPOST(data, "/session", ud.session.ID, "actions/tap")
 	return err
 }
 
-func (ud *uiaDriver) TouchAndHold(x, y float64, options ...ActionOption) (err error) {
-	opts := NewActionOptions(options...)
-	duration := opts.Duration
+func (ud *uiaDriver) TouchAndHold(x, y float64, opts ...options.ActionOption) (err error) {
+	actionOpts := options.NewActionOptions(opts...)
+	duration := actionOpts.Duration
 	if duration == 0 {
 		duration = 1.0
 	}
@@ -379,18 +379,18 @@ func (ud *uiaDriver) TouchAndHold(x, y float64, options ...ActionOption) (err er
 // the smoothness and speed of the swipe by specifying the number of steps.
 // Each step execution is throttled to 5 milliseconds per step, so for a 100
 // steps, the swipe will take around 0.5 seconds to complete.
-func (ud *uiaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
-	actionOptions := NewActionOptions(options...)
+func (ud *uiaDriver) Drag(fromX, fromY, toX, toY float64, opts ...options.ActionOption) (err error) {
+	actionOptions := options.NewActionOptions(opts...)
 	if len(actionOptions.Offset) == 4 {
 		fromX += float64(actionOptions.Offset[0])
 		fromY += float64(actionOptions.Offset[1])
 		toX += float64(actionOptions.Offset[2])
 		toY += float64(actionOptions.Offset[3])
 	}
-	fromX += actionOptions.getRandomOffset()
-	fromY += actionOptions.getRandomOffset()
-	toX += actionOptions.getRandomOffset()
-	toY += actionOptions.getRandomOffset()
+	fromX += actionOptions.GetRandomOffset()
+	fromY += actionOptions.GetRandomOffset()
+	toX += actionOptions.GetRandomOffset()
+	toY += actionOptions.GetRandomOffset()
 
 	data := map[string]interface{}{
 		"startX": fromX,
@@ -400,7 +400,7 @@ func (ud *uiaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 	}
 
 	// update data options in post data for extra uiautomator configurations
-	actionOptions.updateData(data)
+	actionOptions.UpdateData(data)
 
 	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
 	_, err = ud.httpPOST(data, "/session", ud.session.ID, "touch/drag")
@@ -412,19 +412,19 @@ func (ud *uiaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 // per step. So for a 100 steps, the swipe will take about 1/2 second to complete.
 //
 //	`steps` is the number of move steps sent to the system
-func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY float64, options ...ActionOption) error {
+func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error {
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
-	actionOptions := NewActionOptions(options...)
+	actionOptions := options.NewActionOptions(opts...)
 	if len(actionOptions.Offset) == 4 {
 		fromX += float64(actionOptions.Offset[0])
 		fromY += float64(actionOptions.Offset[1])
 		toX += float64(actionOptions.Offset[2])
 		toY += float64(actionOptions.Offset[3])
 	}
-	fromX += actionOptions.getRandomOffset()
-	fromY += actionOptions.getRandomOffset()
-	toX += actionOptions.getRandomOffset()
-	toY += actionOptions.getRandomOffset()
+	fromX += actionOptions.GetRandomOffset()
+	fromY += actionOptions.GetRandomOffset()
+	toX += actionOptions.GetRandomOffset()
+	toY += actionOptions.GetRandomOffset()
 
 	duration := 200.0
 	if actionOptions.PressDuration > 0 {
@@ -447,7 +447,7 @@ func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY float64, options ...ActionOpti
 	}
 
 	// update data options in post data for extra uiautomator configurations
-	actionOptions.updateData(data)
+	actionOptions.UpdateData(data)
 
 	_, err := ud.httpPOST(data, "/session", ud.session.ID, "actions/swipe")
 	return err
@@ -497,25 +497,25 @@ func (ud *uiaDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 }
 
 // SendKeys Android input does not support setting frequency.
-func (ud *uiaDriver) SendKeys(text string, options ...ActionOption) (err error) {
+func (ud *uiaDriver) SendKeys(text string, opts ...options.ActionOption) (err error) {
 	// register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/keys"))
 	// https://github.com/appium/appium-uiautomator2-server/blob/master/app/src/main/java/io/appium/uiautomator2/handler/SendKeysToElement.java#L76-L85
-	actionOptions := NewActionOptions(options...)
-	err = ud.SendUnicodeKeys(text, options...)
+	actionOptions := options.NewActionOptions(opts...)
+	err = ud.SendUnicodeKeys(text, opts...)
 	if err != nil {
 		data := map[string]interface{}{
 			"text": text,
 		}
 
 		// new data options in post data for extra uiautomator configurations
-		actionOptions.updateData(data)
+		actionOptions.UpdateData(data)
 
 		_, err = ud.httpPOST(data, "/session", ud.session.ID, "/keys")
 	}
 	return
 }
 
-func (ud *uiaDriver) SendUnicodeKeys(text string, options ...ActionOption) (err error) {
+func (ud *uiaDriver) SendUnicodeKeys(text string, opts ...options.ActionOption) (err error) {
 	// If the Unicode IME is not installed, fall back to the old interface.
 	// There might be differences in the tracking schemes across different phones, and it is pending further verification.
 	// In release version: without the Unicode IME installed, the test cannot execute.
@@ -541,12 +541,12 @@ func (ud *uiaDriver) SendUnicodeKeys(text string, options ...ActionOption) (err 
 		log.Warn().Err(err).Msgf("encode text with modified utf7 failed")
 		return
 	}
-	err = ud.SendActionKey(encodedStr, options...)
+	err = ud.SendActionKey(encodedStr, opts...)
 	return
 }
 
-func (ud *uiaDriver) SendActionKey(text string, options ...ActionOption) (err error) {
-	actionOptions := NewActionOptions(options...)
+func (ud *uiaDriver) SendActionKey(text string, opts ...options.ActionOption) (err error) {
+	actionOptions := options.NewActionOptions(opts...)
 	var actions []interface{}
 	for i, c := range text {
 		actions = append(actions, map[string]interface{}{"type": "keyDown", "value": string(c)},
@@ -567,13 +567,13 @@ func (ud *uiaDriver) SendActionKey(text string, options ...ActionOption) (err er
 	}
 
 	// new data options in post data for extra uiautomator configurations
-	actionOptions.updateData(data)
+	actionOptions.UpdateData(data)
 	_, err = ud.httpPOST(data, "/session", ud.session.ID, "/actions/keys")
 	return
 }
 
-func (ud *uiaDriver) Input(text string, options ...ActionOption) (err error) {
-	return ud.SendKeys(text, options...)
+func (ud *uiaDriver) Input(text string, opts ...options.ActionOption) (err error) {
+	return ud.SendKeys(text, opts...)
 }
 
 func (ud *uiaDriver) Rotation() (rotation Rotation, err error) {
@@ -625,12 +625,12 @@ func (ud *uiaDriver) sourceTree(srcOpt ...SourceOption) (sourceTree *Hierarchy, 
 	return
 }
 
-func (ud *uiaDriver) TapByText(text string, options ...ActionOption) error {
+func (ud *uiaDriver) TapByText(text string, opts ...options.ActionOption) error {
 	sourceTree, err := ud.sourceTree()
 	if err != nil {
 		return err
 	}
-	return ud.tapByTextUsingHierarchy(sourceTree, text, options...)
+	return ud.tapByTextUsingHierarchy(sourceTree, text, opts...)
 }
 
 func (ud *uiaDriver) TapByTexts(actions ...TapTextAction) error {

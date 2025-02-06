@@ -18,6 +18,7 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 type ScreenResult struct {
@@ -36,21 +37,21 @@ func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) OCRTexts {
 		log.Warn().Msg("x1, y1, x2, y2 should be in percentage, skip filter scope")
 		return s.Texts
 	}
-	return s.Texts.FilterScope(AbsScope{
+	return s.Texts.FilterScope(options.AbsScope{
 		int(float64(s.Resolution.Width) * x1), int(float64(s.Resolution.Height) * y1),
 		int(float64(s.Resolution.Width) * x2), int(float64(s.Resolution.Height) * y2),
 	})
 }
 
 // GetScreenResult takes a screenshot, returns the image recognition result
-func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *ScreenResult, err error) {
-	actionOptions := NewActionOptions(options...)
+func (dExt *DriverExt) GetScreenResult(opts ...options.ActionOption) (screenResult *ScreenResult, err error) {
+	actionOptions := options.NewActionOptions(opts...)
 	if actionOptions.MaxRetryTimes == 0 {
 		actionOptions.MaxRetryTimes = 1
 	}
 
 	var fileName string
-	screenshotActions := actionOptions.screenshotActions()
+	screenshotActions := actionOptions.ScreenshotActions()
 	if actionOptions.ScreenShotFileName != "" {
 		fileName = builtin.GenNameWithTimestamp("%d_" + actionOptions.ScreenShotFileName)
 	} else if len(screenshotActions) != 0 {
@@ -86,7 +87,7 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 			Tags:       nil,
 			Resolution: windowSize,
 		}
-		imageResult, err = dExt.ImageService.GetImage(bufSource, options...)
+		imageResult, err = dExt.ImageService.GetImage(bufSource, opts...)
 		if err != nil {
 			log.Error().Err(err).Msg("GetImage from ImageService failed")
 			lastErr = err
@@ -129,40 +130,40 @@ func (dExt *DriverExt) GetScreenResult(options ...ActionOption) (screenResult *S
 	return screenResult, nil
 }
 
-func (dExt *DriverExt) GetScreenTexts(options ...ActionOption) (ocrTexts OCRTexts, err error) {
-	actionOptions := NewActionOptions(options...)
+func (dExt *DriverExt) GetScreenTexts(opts ...options.ActionOption) (ocrTexts OCRTexts, err error) {
+	actionOptions := options.NewActionOptions(opts...)
 	if actionOptions.ScreenShotFileName == "" {
-		options = append(options, WithScreenShotFileName("get_screen_texts"))
+		opts = append(opts, options.WithScreenShotFileName("get_screen_texts"))
 	}
-	options = append(options, WithScreenShotOCR(true), WithScreenShotUpload(true))
-	screenResult, err := dExt.GetScreenResult(options...)
+	opts = append(opts, options.WithScreenShotOCR(true), options.WithScreenShotUpload(true))
+	screenResult, err := dExt.GetScreenResult(opts...)
 	if err != nil {
 		return
 	}
 	return screenResult.Texts, nil
 }
 
-func (dExt *DriverExt) FindUIRectInUIKit(search string, options ...ActionOption) (point PointF, err error) {
+func (dExt *DriverExt) FindUIRectInUIKit(search string, opts ...options.ActionOption) (point PointF, err error) {
 	// find text using OCR
 	if !builtin.IsPathExists(search) {
-		return dExt.FindScreenText(search, options...)
+		return dExt.FindScreenText(search, opts...)
 	}
 	// TODO: find image using CV
 	err = errors.New("ocr text not found")
 	return
 }
 
-func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (point PointF, err error) {
-	actionOptions := NewActionOptions(options...)
+func (dExt *DriverExt) FindScreenText(text string, opts ...options.ActionOption) (point PointF, err error) {
+	actionOptions := options.NewActionOptions(opts...)
 	if actionOptions.ScreenShotFileName == "" {
-		options = append(options, WithScreenShotFileName(fmt.Sprintf("find_screen_text_%s", text)))
+		opts = append(opts, options.WithScreenShotFileName(fmt.Sprintf("find_screen_text_%s", text)))
 	}
-	ocrTexts, err := dExt.GetScreenTexts(options...)
+	ocrTexts, err := dExt.GetScreenTexts(opts...)
 	if err != nil {
 		return
 	}
 
-	result, err := ocrTexts.FindText(text, dExt.ParseActionOptions(options...)...)
+	result, err := ocrTexts.FindText(text, dExt.ParseActionOptions(opts...)...)
 	if err != nil {
 		log.Warn().Msgf("FindText failed: %s", err.Error())
 		return
@@ -174,14 +175,14 @@ func (dExt *DriverExt) FindScreenText(text string, options ...ActionOption) (poi
 	return
 }
 
-func (dExt *DriverExt) FindUIResult(options ...ActionOption) (point PointF, err error) {
-	actionOptions := NewActionOptions(options...)
+func (dExt *DriverExt) FindUIResult(opts ...options.ActionOption) (point PointF, err error) {
+	actionOptions := options.NewActionOptions(opts...)
 	if actionOptions.ScreenShotFileName == "" {
-		options = append(options, WithScreenShotFileName(
+		opts = append(opts, options.WithScreenShotFileName(
 			fmt.Sprintf("find_ui_result_%s", strings.Join(actionOptions.ScreenShotWithUITypes, "_"))))
 	}
 
-	screenResult, err := dExt.GetScreenResult(options...)
+	screenResult, err := dExt.GetScreenResult(opts...)
 	if err != nil {
 		return
 	}
@@ -190,7 +191,7 @@ func (dExt *DriverExt) FindUIResult(options ...ActionOption) (point PointF, err 
 	if err != nil {
 		return
 	}
-	uiResult, err := uiResults.GetUIResult(dExt.ParseActionOptions(options...)...)
+	uiResult, err := uiResults.GetUIResult(dExt.ParseActionOptions(opts...)...)
 	point = uiResult.Center()
 
 	log.Info().Interface("text", actionOptions.ScreenShotWithUITypes).

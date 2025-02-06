@@ -193,7 +193,7 @@ func (ad *adbDriver) GetTimestamp() (timestamp int64, err error) {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (ad *adbDriver) PressBack(options ...ActionOption) (err error) {
+func (ad *adbDriver) PressBack(opts ...options.ActionOption) (err error) {
 	// adb shell input keyevent 4
 	_, err = ad.runShellCommand("input", "keyevent", fmt.Sprintf("%d", KCBack))
 	if err != nil {
@@ -294,7 +294,7 @@ func (ad *adbDriver) Unlock() (err error) {
 	return ad.Swipe(500, 1500, 500, 500)
 }
 
-func (ad *adbDriver) Backspace(count int, options ...ActionOption) (err error) {
+func (ad *adbDriver) Backspace(count int, opts ...options.ActionOption) (err error) {
 	if count == 0 {
 		return nil
 	}
@@ -370,15 +370,15 @@ func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err erro
 	return true, nil
 }
 
-func (ad *adbDriver) Tap(x, y float64, options ...ActionOption) error {
-	actionOptions := NewActionOptions(options...)
+func (ad *adbDriver) Tap(x, y float64, opts ...options.ActionOption) error {
+	actionOptions := options.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 2 {
 		x += float64(actionOptions.Offset[0])
 		y += float64(actionOptions.Offset[1])
 	}
-	x += actionOptions.getRandomOffset()
-	y += actionOptions.getRandomOffset()
+	x += actionOptions.GetRandomOffset()
+	y += actionOptions.GetRandomOffset()
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
@@ -391,7 +391,7 @@ func (ad *adbDriver) Tap(x, y float64, options ...ActionOption) error {
 	return nil
 }
 
-func (ad *adbDriver) DoubleTap(x, y float64, options ...ActionOption) error {
+func (ad *adbDriver) DoubleTap(x, y float64, opts ...options.ActionOption) error {
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
@@ -409,15 +409,15 @@ func (ad *adbDriver) DoubleTap(x, y float64, options ...ActionOption) error {
 	return nil
 }
 
-func (ad *adbDriver) TouchAndHold(x, y float64, options ...ActionOption) (err error) {
-	actionOptions := NewActionOptions(options...)
+func (ad *adbDriver) TouchAndHold(x, y float64, opts ...options.ActionOption) (err error) {
+	actionOptions := options.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 2 {
 		x += float64(actionOptions.Offset[0])
 		y += float64(actionOptions.Offset[1])
 	}
-	x += actionOptions.getRandomOffset()
-	y += actionOptions.getRandomOffset()
+	x += actionOptions.GetRandomOffset()
+	y += actionOptions.GetRandomOffset()
 	duration := 1000.0
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration * 1000
@@ -435,8 +435,8 @@ func (ad *adbDriver) TouchAndHold(x, y float64, options ...ActionOption) (err er
 	return nil
 }
 
-func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
-	actionOptions := NewActionOptions(options...)
+func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, opts ...options.ActionOption) (err error) {
+	actionOptions := options.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 4 {
 		fromX += float64(actionOptions.Offset[0])
@@ -444,10 +444,10 @@ func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 		toX += float64(actionOptions.Offset[2])
 		toY += float64(actionOptions.Offset[3])
 	}
-	fromX += actionOptions.getRandomOffset()
-	fromY += actionOptions.getRandomOffset()
-	toX += actionOptions.getRandomOffset()
-	toY += actionOptions.getRandomOffset()
+	fromX += actionOptions.GetRandomOffset()
+	fromY += actionOptions.GetRandomOffset()
+	toX += actionOptions.GetRandomOffset()
+	toY += actionOptions.GetRandomOffset()
 	duration := 200.0
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration * 1000
@@ -469,8 +469,8 @@ func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 	return nil
 }
 
-func (ad *adbDriver) Swipe(fromX, fromY, toX, toY float64, options ...ActionOption) error {
-	actionOptions := NewActionOptions(options...)
+func (ad *adbDriver) Swipe(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error {
+	actionOptions := options.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 4 {
 		fromX += float64(actionOptions.Offset[0])
@@ -478,10 +478,10 @@ func (ad *adbDriver) Swipe(fromX, fromY, toX, toY float64, options ...ActionOpti
 		toX += float64(actionOptions.Offset[2])
 		toY += float64(actionOptions.Offset[3])
 	}
-	fromX += actionOptions.getRandomOffset()
-	fromY += actionOptions.getRandomOffset()
-	toX += actionOptions.getRandomOffset()
-	toY += actionOptions.getRandomOffset()
+	fromX += actionOptions.GetRandomOffset()
+	fromY += actionOptions.GetRandomOffset()
+	toX += actionOptions.GetRandomOffset()
+	toY += actionOptions.GetRandomOffset()
 
 	// adb shell input swipe fromX fromY toX toY
 	_, err := ad.runShellCommand(
@@ -514,16 +514,16 @@ func (ad *adbDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 	return
 }
 
-func (ad *adbDriver) SendKeys(text string, options ...ActionOption) (err error) {
-	err = ad.SendUnicodeKeys(text, options...)
+func (ad *adbDriver) SendKeys(text string, opts ...options.ActionOption) (err error) {
+	err = ad.SendUnicodeKeys(text, opts...)
 	if err == nil {
 		return
 	}
-	err = ad.InputText(text, options...)
+	err = ad.InputText(text, opts...)
 	return
 }
 
-func (ad *adbDriver) InputText(text string, options ...ActionOption) error {
+func (ad *adbDriver) InputText(text string, opts ...options.ActionOption) error {
 	// adb shell input text <text>
 	_, err := ad.runShellCommand("input", "text", text)
 	if err != nil {
@@ -532,7 +532,7 @@ func (ad *adbDriver) InputText(text string, options ...ActionOption) error {
 	return nil
 }
 
-func (ad *adbDriver) SendUnicodeKeys(text string, options ...ActionOption) (err error) {
+func (ad *adbDriver) SendUnicodeKeys(text string, opts ...options.ActionOption) (err error) {
 	// If the Unicode IME is not installed, fall back to the old interface.
 	// There might be differences in the tracking schemes across different phones, and it is pending further verification.
 	// In release version: without the Unicode IME installed, the test cannot execute.
@@ -558,7 +558,7 @@ func (ad *adbDriver) SendUnicodeKeys(text string, options ...ActionOption) (err 
 		log.Warn().Err(err).Msgf("encode text with modified utf7 failed")
 		return
 	}
-	err = ad.InputText("\""+strings.ReplaceAll(encodedStr, "\"", "\\\"")+"\"", options...)
+	err = ad.InputText("\""+strings.ReplaceAll(encodedStr, "\"", "\\\"")+"\"", opts...)
 	return
 }
 
@@ -619,8 +619,8 @@ func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 	return
 }
 
-func (ad *adbDriver) Input(text string, options ...ActionOption) (err error) {
-	return ad.SendKeys(text, options...)
+func (ad *adbDriver) Input(text string, opts ...options.ActionOption) (err error) {
+	return ad.SendKeys(text, opts...)
 }
 
 func (ad *adbDriver) Clear(packageName string) error {
@@ -694,17 +694,17 @@ func (ad *adbDriver) sourceTree(srcOpt ...SourceOption) (sourceTree *Hierarchy, 
 	return
 }
 
-func (ad *adbDriver) TapByText(text string, options ...ActionOption) error {
+func (ad *adbDriver) TapByText(text string, opts ...options.ActionOption) error {
 	sourceTree, err := ad.sourceTree()
 	if err != nil {
 		return err
 	}
-	return ad.tapByTextUsingHierarchy(sourceTree, text, options...)
+	return ad.tapByTextUsingHierarchy(sourceTree, text, opts...)
 }
 
-func (ad *adbDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, options ...ActionOption) error {
-	bounds := ad.searchNodes(hierarchy.Layout, text, options...)
-	actionOptions := NewActionOptions(options...)
+func (ad *adbDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, opts ...options.ActionOption) error {
+	bounds := ad.searchNodes(hierarchy.Layout, text, opts...)
+	actionOptions := options.NewActionOptions(opts...)
 	if len(bounds) == 0 {
 		if actionOptions.IgnoreNotFoundError {
 			log.Info().Msg("not found element by text " + text)
@@ -714,7 +714,7 @@ func (ad *adbDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, 
 	}
 	for _, bound := range bounds {
 		width, height := bound.Center()
-		err := ad.Tap(width, height, options...)
+		err := ad.Tap(width, height, opts...)
 		if err != nil {
 			return err
 		}
@@ -737,11 +737,11 @@ func (ad *adbDriver) TapByTexts(actions ...TapTextAction) error {
 	return nil
 }
 
-func (ad *adbDriver) searchNodes(nodes []Layout, text string, options ...ActionOption) []Bounds {
-	actionOptions := NewActionOptions(options...)
+func (ad *adbDriver) searchNodes(nodes []Layout, text string, opts ...options.ActionOption) []Bounds {
+	actionOptions := options.NewActionOptions(opts...)
 	var results []Bounds
 	for _, node := range nodes {
-		result := ad.searchNodes(node.Layout, text, options...)
+		result := ad.searchNodes(node.Layout, text, opts...)
 		results = append(results, result...)
 		if actionOptions.Regex {
 			// regex on, check if match regex
@@ -751,7 +751,7 @@ func (ad *adbDriver) searchNodes(nodes []Layout, text string, options ...ActionO
 		} else {
 			// regex off, check if match exactly
 			if node.Text != text {
-				ad.searchNodes(node.Layout, text, options...)
+				ad.searchNodes(node.Layout, text, opts...)
 				continue
 			}
 		}

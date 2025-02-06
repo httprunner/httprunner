@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
@@ -26,8 +25,8 @@ func TestHarmonyDouyinE2E(t *testing.T) {
 				Home().
 				SwipeToTapApp(
 					"抖音",
-					uixt.WithMaxRetryTimes(5),
-					uixt.WithTapOffset(0, -50),
+					options.WithMaxRetryTimes(5),
+					options.WithTapOffset(0, -50),
 				).
 				Sleep(20).
 				Validate().
@@ -48,11 +47,11 @@ func TestHarmonyDouyinE2E(t *testing.T) {
 				Harmony().
 				TapByOCR(
 					"直播中",
-					uixt.WithIgnoreNotFoundError(true),
-					uixt.WithIndex(-1),
+					options.WithIgnoreNotFoundError(true),
+					options.WithIndex(-1),
 				).
-				EndToEndDelay(uixt.WithInterval(5), uixt.WithTimeout(120)).
-				TapByUITypes(uixt.WithScreenShotUITypes("close")),
+				EndToEndDelay(options.WithInterval(5), options.WithTimeout(120)).
+				TapByUITypes(options.WithScreenShotUITypes("close")),
 		},
 	}
 

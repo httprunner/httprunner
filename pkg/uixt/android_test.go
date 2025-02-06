@@ -220,7 +220,9 @@ func TestDriver_DeviceInfo(t *testing.T) {
 func TestDriver_Tap(t *testing.T) {
 	setupAndroidUIA2Driver(t)
 	driverExt.Driver.StartCaptureLog("")
-	err := driverExt.TapXY(0.5, 0.5, WithIdentifier("test"), WithPressDuration(4))
+	err := driverExt.TapXY(0.5, 0.5,
+		options.WithIdentifier("test"),
+		options.WithPressDuration(4))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,7 +239,8 @@ func TestDriver_Tap(t *testing.T) {
 
 func TestDriver_Swipe(t *testing.T) {
 	setupAndroidUIA2Driver(t)
-	err := driverExt.Driver.Swipe(400, 1000, 400, 500, WithPressDuration(0.5))
+	err := driverExt.Driver.Swipe(400, 1000, 400, 500,
+		options.WithPressDuration(0.5))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -273,7 +276,8 @@ func TestDriver_Drag(t *testing.T) {
 func TestDriver_SendKeys(t *testing.T) {
 	setupAndroidUIA2Driver(t)
 
-	err := driverExt.Driver.SendKeys("辽宁省沈阳市新民市民族街36-4", WithIdentifier("test"))
+	err := driverExt.Driver.SendKeys("辽宁省沈阳市新民市民族街36-4",
+		options.WithIdentifier("test"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -494,9 +498,29 @@ func TestDriver_ShellInputUnicode(t *testing.T) {
 func TestTapTexts(t *testing.T) {
 	setupAndroidUIA2Driver(t)
 	actions := []TapTextAction{
-		{Text: "^.*无视风险安装$", Options: []ActionOption{WithTapOffset(100, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
-		{Text: "已了解此应用未经检测.*", Options: []ActionOption{WithTapOffset(-450, 0), WithRegex(true), WithIgnoreNotFoundError(true)}},
-		{Text: "^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|安装|授权本次安装|继续安装|重新安装)$", Options: []ActionOption{WithRegex(true), WithIgnoreNotFoundError(true)}},
+		{
+			Text: "^.*无视风险安装$",
+			Options: []options.ActionOption{
+				options.WithTapOffset(100, 0),
+				options.WithRegex(true),
+				options.WithIgnoreNotFoundError(true),
+			},
+		},
+		{
+			Text: "已了解此应用未经检测.*",
+			Options: []options.ActionOption{
+				options.WithTapOffset(-450, 0),
+				options.WithRegex(true),
+				options.WithIgnoreNotFoundError(true),
+			},
+		},
+		{
+			Text: "^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|安装|授权本次安装|继续安装|重新安装)$",
+			Options: []options.ActionOption{
+				options.WithRegex(true),
+				options.WithIgnoreNotFoundError(true),
+			},
+		},
 	}
 	err := driverExt.Driver.TapByTexts(actions...)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 	"github.com/rs/zerolog/log"
 )
 
@@ -28,8 +29,8 @@ type EndToEndDelay struct {
 	Timelines []timeLog `json:"timelines"`
 }
 
-func CollectEndToEndDelay(dExt *DriverExt, options ...ActionOption) {
-	dataOptions := NewActionOptions(options...)
+func CollectEndToEndDelay(dExt *DriverExt, opts ...options.ActionOption) {
+	dataOptions := options.NewActionOptions(opts...)
 	startTime := time.Now()
 
 	if dataOptions.Interval == 0 {

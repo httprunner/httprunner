@@ -1,6 +1,8 @@
 package server
 
-import "github.com/httprunner/httprunner/v5/pkg/uixt"
+import (
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+)
 
 type HttpResponse struct {
 	Code    int         `json:"code"`
@@ -13,7 +15,7 @@ type TapRequest struct {
 	Y    float64 `json:"y"`
 	Text string  `json:"text"`
 
-	Options *uixt.ActionOptions `json:"options,omitempty"`
+	Options *options.ActionOptions `json:"options,omitempty"`
 }
 
 type DragRequest struct {
@@ -22,7 +24,7 @@ type DragRequest struct {
 	ToX   float64 `json:"to_x"`
 	ToY   float64 `json:"to_y"`
 
-	Options *uixt.ActionOptions `json:"options,omitempty"`
+	Options *options.ActionOptions `json:"options,omitempty"`
 }
 
 type InputRequest struct {
@@ -31,7 +33,7 @@ type InputRequest struct {
 }
 
 type ScreenRequest struct {
-	Options *uixt.ActionOptions `json:"options,omitempty"`
+	Options *options.ActionOptions `json:"options,omitempty"`
 }
 
 type KeycodeRequest struct {

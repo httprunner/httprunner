@@ -508,9 +508,9 @@ func (wd *wdaDriver) AssertForegroundApp(bundleId string, viewControllerType ...
 	return nil
 }
 
-func (wd *wdaDriver) Tap(x, y float64, options ...ActionOption) (err error) {
+func (wd *wdaDriver) Tap(x, y float64, opts ...options.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
-	actionOptions := NewActionOptions(options...)
+	actionOptions := options.NewActionOptions(opts...)
 
 	x = wd.toScale(x)
 	y = wd.toScale(y)
@@ -518,31 +518,31 @@ func (wd *wdaDriver) Tap(x, y float64, options ...ActionOption) (err error) {
 		x += float64(actionOptions.Offset[0])
 		y += float64(actionOptions.Offset[1])
 	}
-	x += actionOptions.getRandomOffset()
-	y += actionOptions.getRandomOffset()
+	x += actionOptions.GetRandomOffset()
+	y += actionOptions.GetRandomOffset()
 
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
 	}
 	// update data options in post data for extra WDA configurations
-	actionOptions.updateData(data)
+	actionOptions.UpdateData(data)
 
 	_, err = wd.httpPOST(data, "/session", wd.session.ID, "/wda/tap/0")
 	return
 }
 
-func (wd *wdaDriver) DoubleTap(x, y float64, options ...ActionOption) (err error) {
+func (wd *wdaDriver) DoubleTap(x, y float64, opts ...options.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
-	actionOptions := NewActionOptions(options...)
+	actionOptions := options.NewActionOptions(opts...)
 	x = wd.toScale(x)
 	y = wd.toScale(y)
 	if len(actionOptions.Offset) == 2 {
 		x += float64(actionOptions.Offset[0])
 		y += float64(actionOptions.Offset[1])
 	}
-	x += actionOptions.getRandomOffset()
-	y += actionOptions.getRandomOffset()
+	x += actionOptions.GetRandomOffset()
+	y += actionOptions.GetRandomOffset()
 
 	data := map[string]interface{}{
 		"x": x,
@@ -552,17 +552,17 @@ func (wd *wdaDriver) DoubleTap(x, y float64, options ...ActionOption) (err error
 	return
 }
 
-func (wd *wdaDriver) TouchAndHold(x, y float64, options ...ActionOption) (err error) {
-	actionOptions := NewActionOptions(options...)
+func (wd *wdaDriver) TouchAndHold(x, y float64, opts ...options.ActionOption) (err error) {
+	actionOptions := options.NewActionOptions(opts...)
 	if actionOptions.Duration == 0 {
-		options = append(options, WithDuration(1))
+		opts = append(opts, options.WithDuration(1))
 	}
-	return wd.Tap(x, y, options...)
+	return wd.Tap(x, y, opts...)
 }
 
-func (wd *wdaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) (err error) {
+func (wd *wdaDriver) Drag(fromX, fromY, toX, toY float64, opts ...options.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
-	actionOptions := NewActionOptions(options...)
+	actionOptions := options.NewActionOptions(opts...)
 
 	fromX = wd.toScale(fromX)
 	fromY = wd.toScale(fromY)
@@ -574,10 +574,10 @@ func (wd *wdaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 		toX += float64(actionOptions.Offset[2])
 		toY += float64(actionOptions.Offset[3])
 	}
-	fromX += actionOptions.getRandomOffset()
-	fromY += actionOptions.getRandomOffset()
-	toX += actionOptions.getRandomOffset()
-	toY += actionOptions.getRandomOffset()
+	fromX += actionOptions.GetRandomOffset()
+	fromY += actionOptions.GetRandomOffset()
+	toX += actionOptions.GetRandomOffset()
+	toY += actionOptions.GetRandomOffset()
 
 	data := map[string]interface{}{
 		"fromX": math.Round(fromX*10) / 10,
@@ -590,15 +590,15 @@ func (wd *wdaDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOptio
 	}
 
 	// update data options in post data for extra WDA configurations
-	actionOptions.updateData(data)
+	actionOptions.UpdateData(data)
 	// wda 43 version
 	_, err = wd.httpPOST(data, "/session", wd.session.ID, "/wda/dragfromtoforduration")
 	// _, err = wd.httpPOST(data, "/session", wd.session.ID, "/wda/drag")
 	return
 }
 
-func (wd *wdaDriver) Swipe(fromX, fromY, toX, toY float64, options ...ActionOption) error {
-	return wd.Drag(fromX, fromY, toX, toY, options...)
+func (wd *wdaDriver) Swipe(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error {
+	return wd.Drag(fromX, fromY, toX, toY, opts...)
 }
 
 func (wd *wdaDriver) SetPasteboard(contentType PasteboardType, content string) (err error) {
@@ -632,34 +632,34 @@ func (wd *wdaDriver) PressKeyCode(keyCode KeyCode) (err error) {
 	return errDriverNotImplemented
 }
 
-func (wd *wdaDriver) SendKeys(text string, options ...ActionOption) (err error) {
+func (wd *wdaDriver) SendKeys(text string, opts ...options.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
-	actionOptions := NewActionOptions(options...)
+	actionOptions := options.NewActionOptions(opts...)
 	data := map[string]interface{}{"value": strings.Split(text, "")}
 
 	// new data options in post data for extra WDA configurations
-	actionOptions.updateData(data)
+	actionOptions.UpdateData(data)
 
 	_, err = wd.httpPOST(data, "/session", wd.session.ID, "/wda/keys")
 	return
 }
 
-func (wd *wdaDriver) Backspace(count int, options ...ActionOption) (err error) {
+func (wd *wdaDriver) Backspace(count int, opts ...options.ActionOption) (err error) {
 	if count == 0 {
 		return nil
 	}
-	actionOptions := NewActionOptions(options...)
+	actionOptions := options.NewActionOptions(opts...)
 	data := map[string]interface{}{"count": count}
 
 	// new data options in post data for extra WDA configurations
-	actionOptions.updateData(data)
+	actionOptions.UpdateData(data)
 
 	_, err = wd.httpPOST(data, "/gtf/interaction/input/backspace")
 	return
 }
 
-func (wd *wdaDriver) Input(text string, options ...ActionOption) (err error) {
-	return wd.SendKeys(text, options...)
+func (wd *wdaDriver) Input(text string, opts ...options.ActionOption) (err error) {
+	return wd.SendKeys(text, opts...)
 }
 
 func (wd *wdaDriver) Clear(packageName string) error {
@@ -667,8 +667,8 @@ func (wd *wdaDriver) Clear(packageName string) error {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (wd *wdaDriver) PressBack(options ...ActionOption) (err error) {
-	actionOptions := NewActionOptions(options...)
+func (wd *wdaDriver) PressBack(opts ...options.ActionOption) (err error) {
+	actionOptions := options.NewActionOptions(opts...)
 
 	windowSize, err := wd.WindowSize()
 	if err != nil {
@@ -684,10 +684,10 @@ func (wd *wdaDriver) PressBack(options ...ActionOption) (err error) {
 		toX += float64(actionOptions.Offset[2])
 		toY += float64(actionOptions.Offset[3])
 	}
-	fromX += actionOptions.getRandomOffset()
-	fromY += actionOptions.getRandomOffset()
-	toX += actionOptions.getRandomOffset()
-	toY += actionOptions.getRandomOffset()
+	fromX += actionOptions.GetRandomOffset()
+	fromY += actionOptions.GetRandomOffset()
+	toX += actionOptions.GetRandomOffset()
+	toY += actionOptions.GetRandomOffset()
 
 	data := map[string]interface{}{
 		"fromX": fromX,
@@ -697,7 +697,7 @@ func (wd *wdaDriver) PressBack(options ...ActionOption) (err error) {
 	}
 
 	// update data options in post data for extra WDA configurations
-	actionOptions.updateData(data)
+	actionOptions.UpdateData(data)
 
 	_, err = wd.httpPOST(data, "/session", wd.session.ID, "/wda/dragfromtoforduration")
 	return
@@ -826,7 +826,7 @@ func (wd *wdaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 	return
 }
 
-func (wd *wdaDriver) TapByText(text string, options ...ActionOption) error {
+func (wd *wdaDriver) TapByText(text string, opts ...options.ActionOption) error {
 	return errDriverNotImplemented
 }
 

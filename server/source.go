@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 	"github.com/rs/zerolog/log"
 )
 
@@ -51,7 +52,7 @@ func screenResultHandler(c *gin.Context) {
 		return
 	}
 
-	var actionOptions []uixt.ActionOption
+	var actionOptions []options.ActionOption
 	if screenReq.Options != nil {
 		actionOptions = screenReq.Options.Options()
 	}

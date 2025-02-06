@@ -297,7 +297,8 @@ func Test_remoteWD_Drag(t *testing.T) {
 	setup(t)
 
 	// err := driver.Drag(200, 300, 200, 500, WithDataPressDuration(0.5))
-	err := driver.Drag(200, 300, 200, 500, WithPressDuration(2), WithDuration(3))
+	err := driver.Drag(200, 300, 200, 500,
+		options.WithPressDuration(2), options.WithDuration(3))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -352,7 +353,7 @@ func Test_remoteWD_GetPasteboard(t *testing.T) {
 func Test_remoteWD_SendKeys(t *testing.T) {
 	setup(t)
 	// driver.StartCaptureLog("hrp_wda_log")
-	err := driver.SendKeys("test", WithIdentifier("test"))
+	err := driver.SendKeys("test", options.WithIdentifier("test"))
 	// result, _ := driver.StopCaptureLog()
 	// err := driver.SendKeys("App Store", WithFrequency(3))
 	if err != nil {

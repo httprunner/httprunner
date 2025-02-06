@@ -16,6 +16,7 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 var client = &http.Client{
@@ -46,9 +47,9 @@ func newVEDEMImageService() (*veDEMImageService, error) {
 //	ui - get ui position by type(s)
 type veDEMImageService struct{}
 
-func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, options ...ActionOption) (imageResult *ImageResult, err error) {
-	actionOptions := NewActionOptions(options...)
-	screenshotActions := actionOptions.screenshotActions()
+func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, opts ...options.ActionOption) (imageResult *ImageResult, err error) {
+	actionOptions := options.NewActionOptions(opts...)
+	screenshotActions := actionOptions.ScreenshotActions()
 	if len(screenshotActions) == 0 {
 		// skip
 		return nil, nil

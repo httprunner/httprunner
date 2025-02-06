@@ -79,7 +79,8 @@ func TestDoubleTap(t *testing.T) {
 
 func TestLongPress(t *testing.T) {
 	setupStubDriver(t)
-	err := androidStubDriver.Swipe(1036, 1076, 1036, 1076, WithDuration(3))
+	err := androidStubDriver.Swipe(1036, 1076, 1036, 1076,
+		options.WithDuration(3))
 	if err != nil {
 		t.Fatal(err)
 	}

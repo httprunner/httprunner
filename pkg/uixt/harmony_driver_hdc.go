@@ -155,16 +155,16 @@ func (hd *hdcDriver) Orientation() (orientation Orientation, err error) {
 	return OrientationPortrait, nil
 }
 
-func (hd *hdcDriver) Tap(x, y float64, options ...ActionOption) error {
-	actionOptions := NewActionOptions(options...)
+func (hd *hdcDriver) Tap(x, y float64, opts ...options.ActionOption) error {
+	actionOptions := options.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 2 {
 		x += float64(actionOptions.Offset[0])
 		y += float64(actionOptions.Offset[1])
 	}
 
-	x += actionOptions.getRandomOffset()
-	y += actionOptions.getRandomOffset()
+	x += actionOptions.GetRandomOffset()
+	y += actionOptions.GetRandomOffset()
 	if actionOptions.Identifier != "" {
 		startTime := int(time.Now().UnixMilli())
 		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
@@ -172,31 +172,31 @@ func (hd *hdcDriver) Tap(x, y float64, options ...ActionOption) error {
 	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
 }
 
-func (hd *hdcDriver) DoubleTap(x, y float64, options ...ActionOption) error {
+func (hd *hdcDriver) DoubleTap(x, y float64, opts ...options.ActionOption) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) TouchAndHold(x, y float64, options ...ActionOption) (err error) {
+func (hd *hdcDriver) TouchAndHold(x, y float64, opts ...options.ActionOption) (err error) {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) error {
+func (hd *hdcDriver) Drag(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error {
 	return errDriverNotImplemented
 }
 
 // Swipe works like Drag, but `pressForDuration` value is 0
-func (hd *hdcDriver) Swipe(fromX, fromY, toX, toY float64, options ...ActionOption) error {
-	actionOptions := NewActionOptions(options...)
+func (hd *hdcDriver) Swipe(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error {
+	actionOptions := options.NewActionOptions(opts...)
 	if len(actionOptions.Offset) == 4 {
 		fromX += float64(actionOptions.Offset[0])
 		fromY += float64(actionOptions.Offset[1])
 		toX += float64(actionOptions.Offset[2])
 		toY += float64(actionOptions.Offset[3])
 	}
-	fromX += actionOptions.getRandomOffset()
-	fromY += actionOptions.getRandomOffset()
-	toX += actionOptions.getRandomOffset()
-	toY += actionOptions.getRandomOffset()
+	fromX += actionOptions.GetRandomOffset()
+	fromY += actionOptions.GetRandomOffset()
+	toX += actionOptions.GetRandomOffset()
+	toY += actionOptions.GetRandomOffset()
 
 	duration := 200
 	if actionOptions.PressDuration > 0 {
@@ -221,11 +221,11 @@ func (hd *hdcDriver) SetIme(ime string) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) SendKeys(text string, options ...ActionOption) error {
+func (hd *hdcDriver) SendKeys(text string, opts ...options.ActionOption) error {
 	return hd.uiDriver.InputText(text)
 }
 
-func (hd *hdcDriver) Input(text string, options ...ActionOption) error {
+func (hd *hdcDriver) Input(text string, opts ...options.ActionOption) error {
 	return hd.uiDriver.InputText(text)
 }
 
@@ -237,11 +237,11 @@ func (hd *hdcDriver) PressButton(devBtn DeviceButton) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) PressBack(options ...ActionOption) error {
+func (hd *hdcDriver) PressBack(opts ...options.ActionOption) error {
 	return hd.uiDriver.PressBack()
 }
 
-func (hd *hdcDriver) Backspace(count int, options ...ActionOption) (err error) {
+func (hd *hdcDriver) Backspace(count int, opts ...options.ActionOption) (err error) {
 	return nil
 }
 
@@ -286,7 +286,7 @@ func (hd *hdcDriver) LogoutNoneUI(packageName string) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) TapByText(text string, options ...ActionOption) error {
+func (hd *hdcDriver) TapByText(text string, opts ...options.ActionOption) error {
 	return errDriverNotImplemented
 }
 

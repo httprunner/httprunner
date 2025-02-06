@@ -301,20 +301,20 @@ func (dev *AndroidDevice) Uninstall(packageName string) error {
 	return err
 }
 
-func (dev *AndroidDevice) Install(apkPath string, options ...InstallOption) error {
-	opts := NewInstallOptions(options...)
+func (dev *AndroidDevice) Install(apkPath string, opts ...InstallOption) error {
+	installOpts := NewInstallOptions(opts...)
 	brand, err := dev.d.Brand()
 	if err != nil {
 		return err
 	}
 	args := []string{}
-	if opts.Reinstall {
+	if installOpts.Reinstall {
 		args = append(args, "-r")
 	}
-	if opts.GrantPermission {
+	if installOpts.GrantPermission {
 		args = append(args, "-g")
 	}
-	if opts.Downgrade {
+	if installOpts.Downgrade {
 		args = append(args, "-d")
 	}
 	switch strings.ToLower(brand) {

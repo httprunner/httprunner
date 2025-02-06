@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
@@ -26,22 +25,34 @@ func TestIOSDouyinFollowLive(t *testing.T) {
 				IOS().
 				Home().
 				AppTerminate("com.ss.iphone.ugc.Aweme"). // 关闭已运行的抖音
-				SwipeToTapApp("$app_name", uixt.WithMaxRetryTimes(5), uixt.WithIdentifier("启动抖音")).Sleep(5).
+				SwipeToTapApp("$app_name",
+					options.WithMaxRetryTimes(5),
+					options.WithIdentifier("启动抖音")).
+				Sleep(5).
 				Validate().
 				AssertOCRExists("推荐", "抖音启动失败，「推荐」不存在"),
 			hrp.NewStep("处理青少年弹窗").
 				IOS().
-				TapByOCR("我知道了", uixt.WithIgnoreNotFoundError(true)),
+				TapByOCR("我知道了", options.WithIgnoreNotFoundError(true)),
 			hrp.NewStep("点击首页").
 				IOS().
-				TapByOCR("首页", uixt.WithIndex(-1)).Sleep(10),
+				TapByOCR("首页", options.WithIndex(-1)).Sleep(10),
 			hrp.NewStep("点击关注页").
 				IOS().
-				TapByOCR("关注", uixt.WithIndex(1)).Sleep(10),
+				TapByOCR("关注", options.WithIndex(1)).Sleep(10),
 			hrp.NewStep("向上滑动 2 次").
-				IOS().SwipeToTapTexts([]string{"理肤泉", "婉宝"}, uixt.WithCustomDirection(0.6, 0.2, 0.2, 0.2), uixt.WithIdentifier("click_live")).Sleep(10).
-				Swipe(0.9, 0.7, 0.9, 0.3, uixt.WithIdentifier("slide_in_live"), uixt.WithOffsetRandomRange(-10, 10)).Sleep(10).ScreenShot(). // 上划 1 次，等待 10s，截图保存
-				Swipe(0.9, 0.7, 0.9, 0.3, uixt.WithIdentifier("slide_in_live"), uixt.WithOffsetRandomRange(-10, 10)).Sleep(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
+				IOS().
+				SwipeToTapTexts([]string{"理肤泉", "婉宝"},
+					options.WithCustomDirection(0.6, 0.2, 0.2, 0.2),
+					options.WithIdentifier("click_live")).Sleep(10).
+				Swipe(0.9, 0.7, 0.9, 0.3,
+							options.WithIdentifier("slide_in_live"),
+							options.WithOffsetRandomRange(-10, 10)).
+				Sleep(10).ScreenShot(). // 上划 1 次，等待 10s，截图保存
+				Swipe(0.9, 0.7, 0.9, 0.3,
+							options.WithIdentifier("slide_in_live"),
+							options.WithOffsetRandomRange(-10, 10)).
+				Sleep(10).ScreenShot(), // 再上划 1 次，等待 10s，截图保存
 		},
 	}
 

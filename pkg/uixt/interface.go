@@ -359,7 +359,7 @@ type IDevice interface {
 	// TODO: add ctx to NewDriver
 	NewDriver(...options.DriverOption) (driverExt *DriverExt, err error)
 
-	Install(appPath string, options ...InstallOption) error
+	Install(appPath string, opts ...InstallOption) error
 	Uninstall(packageName string) error
 
 	GetPackageInfo(packageName string) (AppInfo, error)
@@ -438,21 +438,21 @@ type IWebDriver interface {
 	Orientation() (orientation Orientation, err error)
 
 	// Tap Sends a tap event at the coordinate.
-	Tap(x, y float64, options ...ActionOption) error
+	Tap(x, y float64, opts ...options.ActionOption) error
 
 	// DoubleTap Sends a double tap event at the coordinate.
-	DoubleTap(x, y float64, options ...ActionOption) error
+	DoubleTap(x, y float64, opts ...options.ActionOption) error
 
 	// TouchAndHold Initiates a long-press gesture at the coordinate, holding for the specified duration.
 	//  second: The default value is 1
-	TouchAndHold(x, y float64, options ...ActionOption) error
+	TouchAndHold(x, y float64, opts ...options.ActionOption) error
 
 	// Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
 	// WithPressDurationOption option can be used to set pressForDuration (default to 1 second).
-	Drag(fromX, fromY, toX, toY float64, options ...ActionOption) error
+	Drag(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error
 
 	// Swipe works like Drag, but `pressForDuration` value is 0
-	Swipe(fromX, fromY, toX, toY float64, options ...ActionOption) error
+	Swipe(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error
 
 	// SetPasteboard Sets data to the general pasteboard
 	SetPasteboard(contentType PasteboardType, content string) error
@@ -465,10 +465,10 @@ type IWebDriver interface {
 	// SendKeys Types a string into active element. There must be element with keyboard focus,
 	// otherwise an error is raised.
 	// WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
-	SendKeys(text string, options ...ActionOption) error
+	SendKeys(text string, opts ...options.ActionOption) error
 
 	// Input works like SendKeys
-	Input(text string, options ...ActionOption) error
+	Input(text string, opts ...options.ActionOption) error
 
 	Clear(packageName string) error
 
@@ -476,11 +476,11 @@ type IWebDriver interface {
 	PressButton(devBtn DeviceButton) error
 
 	// PressBack Presses the back button
-	PressBack(options ...ActionOption) error
+	PressBack(opts ...options.ActionOption) error
 
 	PressKeyCode(keyCode KeyCode) (err error)
 
-	Backspace(count int, options ...ActionOption) (err error)
+	Backspace(count int, opts ...options.ActionOption) (err error)
 
 	Screenshot() (*bytes.Buffer, error)
 
@@ -490,7 +490,7 @@ type IWebDriver interface {
 	LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error)
 	LogoutNoneUI(packageName string) error
 
-	TapByText(text string, options ...ActionOption) error
+	TapByText(text string, opts ...options.ActionOption) error
 	TapByTexts(actions ...TapTextAction) error
 
 	// AccessibleSource Return application elements accessibility tree

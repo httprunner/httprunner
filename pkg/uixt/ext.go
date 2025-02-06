@@ -63,29 +63,29 @@ func (dExt *DriverExt) Init() error {
 }
 
 func (dExt *DriverExt) assertOCR(text, assert string) error {
-	var options []ActionOption
-	options = append(options, WithScreenShotFileName(fmt.Sprintf("assert_ocr_%s", text)))
+	var opts []options.ActionOption
+	opts = append(opts, options.WithScreenShotFileName(fmt.Sprintf("assert_ocr_%s", text)))
 
 	switch assert {
 	case AssertionEqual:
-		_, err := dExt.FindScreenText(text, options...)
+		_, err := dExt.FindScreenText(text, opts...)
 		if err != nil {
 			return errors.Wrap(err, "assert ocr equal failed")
 		}
 	case AssertionNotEqual:
-		_, err := dExt.FindScreenText(text, options...)
+		_, err := dExt.FindScreenText(text, opts...)
 		if err == nil {
 			return errors.New("assert ocr not equal failed")
 		}
 	case AssertionExists:
-		options = append(options, WithRegex(true))
-		_, err := dExt.FindScreenText(text, options...)
+		opts = append(opts, options.WithRegex(true))
+		_, err := dExt.FindScreenText(text, opts...)
 		if err != nil {
 			return errors.Wrap(err, "assert ocr exists failed")
 		}
 	case AssertionNotExists:
-		options = append(options, WithRegex(true))
-		_, err := dExt.FindScreenText(text, options...)
+		opts = append(opts, options.WithRegex(true))
+		_, err := dExt.FindScreenText(text, opts...)
 		if err == nil {
 			return errors.New("assert ocr not exists failed")
 		}

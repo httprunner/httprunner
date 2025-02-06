@@ -323,9 +323,9 @@ func (dev *IOSDevice) NewDriver(opts ...options.DriverOption) (driverExt *Driver
 	return driverExt, nil
 }
 
-func (dev *IOSDevice) Install(appPath string, options ...InstallOption) (err error) {
-	opts := NewInstallOptions(options...)
-	for i := 0; i <= opts.RetryTimes; i++ {
+func (dev *IOSDevice) Install(appPath string, opts ...InstallOption) (err error) {
+	installOpts := NewInstallOptions(opts...)
+	for i := 0; i <= installOpts.RetryTimes; i++ {
 		var conn *zipconduit.Connection
 		conn, err = zipconduit.New(dev.d)
 		if err != nil {
@@ -343,12 +343,12 @@ func (dev *IOSDevice) Install(appPath string, options ...InstallOption) (err err
 	return err
 }
 
-func (dev *IOSDevice) InstallByUrl(url string, options ...InstallOption) (err error) {
+func (dev *IOSDevice) InstallByUrl(url string, opts ...InstallOption) (err error) {
 	appPath, err := builtin.DownloadFileByUrl(url)
 	if err != nil {
 		return err
 	}
-	err = dev.Install(appPath, options...)
+	err = dev.Install(appPath, opts...)
 	if err != nil {
 		return err
 	}

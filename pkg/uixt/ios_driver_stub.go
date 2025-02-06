@@ -220,42 +220,42 @@ func (s *stubIOSDriver) Orientation() (orientation Orientation, err error) {
 }
 
 // Tap Sends a tap event at the coordinate.
-func (s *stubIOSDriver) Tap(x, y float64, options ...ActionOption) error {
+func (s *stubIOSDriver) Tap(x, y float64, opts ...options.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.Tap(x, y, options...)
+	return s.wdaDriver.Tap(x, y, opts...)
 }
 
 // DoubleTap Sends a double tap event at the coordinate.
-func (s *stubIOSDriver) DoubleTap(x, y float64, options ...ActionOption) error {
+func (s *stubIOSDriver) DoubleTap(x, y float64, opts ...options.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.DoubleTap(x, y, options...)
+	return s.wdaDriver.DoubleTap(x, y, opts...)
 }
 
 // TouchAndHold Initiates a long-press gesture at the coordinate, holding for the specified duration.
 //
 //	second: The default value is 1
-func (s *stubIOSDriver) TouchAndHold(x, y float64, options ...ActionOption) error {
+func (s *stubIOSDriver) TouchAndHold(x, y float64, opts ...options.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.TouchAndHold(x, y, options...)
+	return s.wdaDriver.TouchAndHold(x, y, opts...)
 }
 
 // Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
 // WithPressDurationOption option can be used to set pressForDuration (default to 1 second).
-func (s *stubIOSDriver) Drag(fromX, fromY, toX, toY float64, options ...ActionOption) error {
+func (s *stubIOSDriver) Drag(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.Drag(fromX, fromY, toX, toY, options...)
+	return s.wdaDriver.Drag(fromX, fromY, toX, toY, opts...)
 }
 
 // SetPasteboard Sets data to the general pasteboard
@@ -289,21 +289,21 @@ func (s *stubIOSDriver) SetIme(ime string) error {
 // SendKeys Types a string into active element. There must be element with keyboard focus,
 // otherwise an error is raised.
 // WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
-func (s *stubIOSDriver) SendKeys(text string, options ...ActionOption) error {
+func (s *stubIOSDriver) SendKeys(text string, opts ...options.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.SendKeys(text, options...)
+	return s.wdaDriver.SendKeys(text, opts...)
 }
 
 // Input works like SendKeys
-func (s *stubIOSDriver) Input(text string, options ...ActionOption) error {
+func (s *stubIOSDriver) Input(text string, opts ...options.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.Input(text, options...)
+	return s.wdaDriver.Input(text, opts...)
 }
 
 func (s *stubIOSDriver) Clear(packageName string) error {
@@ -324,12 +324,12 @@ func (s *stubIOSDriver) PressButton(devBtn DeviceButton) error {
 }
 
 // PressBack Presses the back button
-func (s *stubIOSDriver) PressBack(options ...ActionOption) error {
+func (s *stubIOSDriver) PressBack(opts ...options.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.PressBack(options...)
+	return s.wdaDriver.PressBack(opts...)
 }
 
 func (s *stubIOSDriver) PressKeyCode(keyCode KeyCode) (err error) {
@@ -361,12 +361,12 @@ func (s *stubIOSDriver) Screenshot() (*bytes.Buffer, error) {
 	//return bytes.NewBuffer(imageBytes), nil
 }
 
-func (s *stubIOSDriver) TapByText(text string, options ...ActionOption) error {
+func (s *stubIOSDriver) TapByText(text string, opts ...options.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.TapByText(text, options...)
+	return s.wdaDriver.TapByText(text, opts...)
 }
 
 func (s *stubIOSDriver) TapByTexts(actions ...TapTextAction) error {
