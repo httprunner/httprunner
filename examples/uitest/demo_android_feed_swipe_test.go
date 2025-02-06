@@ -7,6 +7,7 @@ import (
 
 	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 func TestAndroidDouyinFeedTest(t *testing.T) {
@@ -15,7 +16,7 @@ func TestAndroidDouyinFeedTest(t *testing.T) {
 			WithVariables(map[string]interface{}{
 				"device": "${ENV(SerialNumber)}",
 			}).
-			SetAndroid(uixt.WithSerialNumber("$device")),
+			SetAndroid(options.WithSerialNumber("$device")),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				Android().

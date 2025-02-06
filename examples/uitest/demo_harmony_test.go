@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 func TestHamonyDouyinFeedTest(t *testing.T) {
@@ -16,7 +16,7 @@ func TestHamonyDouyinFeedTest(t *testing.T) {
 				"device": "a38c2c5c",
 				"query":  "${ENV(query)}",
 			}).
-			SetAndroid(uixt.WithSerialNumber("$device")),
+			SetAndroid(options.WithSerialNumber("$device")),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				Android().

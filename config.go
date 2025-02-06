@@ -160,23 +160,23 @@ func (c *TConfig) SetHarmony(options ...uixt.HarmonyDeviceOption) *TConfig {
 	return c
 }
 
-func (c *TConfig) SetAndroid(options ...uixt.AndroidDeviceOption) *TConfig {
-	uiaOptions := &uixt.AndroidDevice{}
-	for _, option := range options {
-		option(uiaOptions)
+func (c *TConfig) SetAndroid(opts ...options.AndroidDeviceOption) *TConfig {
+	uiaOptions := options.NewAndroidDeviceConfig(opts...)
+	device := &uixt.AndroidDevice{
+		AndroidDeviceConfig: uiaOptions,
 	}
 
 	// each device can have its own settings
 	if uiaOptions.SerialNumber != "" {
-		c.Android = append(c.Android, uiaOptions)
+		c.Android = append(c.Android, device)
 		return c
 	}
 
 	// device UDID is not specified, settings will be shared
 	if len(c.Android) == 0 {
-		c.Android = append(c.Android, uiaOptions)
+		c.Android = append(c.Android, device)
 	} else {
-		c.Android[0] = uiaOptions
+		c.Android[0] = device
 	}
 	return c
 }

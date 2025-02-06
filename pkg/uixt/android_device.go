@@ -24,6 +24,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/gadb"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 var (
@@ -48,58 +49,20 @@ var evalite embed.FS
 
 const forwardToPrefix = "forward-to-"
 
-type AndroidDeviceOption func(*AndroidDevice)
-
-func WithSerialNumber(serial string) AndroidDeviceOption {
-	return func(device *AndroidDevice) {
-		device.SerialNumber = serial
-	}
-}
-
-func WithUIA2(uia2On bool) AndroidDeviceOption {
-	return func(device *AndroidDevice) {
-		device.UIA2 = uia2On
-	}
-}
-
-func WithStub(stubOn bool) AndroidDeviceOption {
-	return func(device *AndroidDevice) {
-		device.STUB = stubOn
-	}
-}
-
-func WithUIA2IP(ip string) AndroidDeviceOption {
-	return func(device *AndroidDevice) {
-		device.UIA2IP = ip
-	}
-}
-
-func WithUIA2Port(port int) AndroidDeviceOption {
-	return func(device *AndroidDevice) {
-		device.UIA2Port = port
-	}
-}
-
-func WithAdbLogOn(logOn bool) AndroidDeviceOption {
-	return func(device *AndroidDevice) {
-		device.LogOn = logOn
-	}
-}
-
-func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, err error) {
-	device = &AndroidDevice{
+func NewAndroidDevice(opts ...options.AndroidDeviceOption) (device *AndroidDevice, err error) {
+	androidOptions := &options.AndroidDeviceConfig{
 		UIA2IP:   UIA2ServerHost,
 		UIA2Port: UIA2ServerPort,
 	}
-	for _, option := range options {
-		option(device)
+	for _, option := range opts {
+		option(androidOptions)
 	}
-	deviceList, err := GetAndroidDevices(device.SerialNumber)
+	deviceList, err := GetAndroidDevices(androidOptions.SerialNumber)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
 
-	if device.SerialNumber == "" && len(deviceList) > 1 {
+	if androidOptions.SerialNumber == "" && len(deviceList) > 1 {
 		return nil, errors.Wrap(code.DeviceConnectionError, "more than one device connected, please specify the serial")
 	}
 
@@ -113,8 +76,12 @@ func NewAndroidDevice(options ...AndroidDeviceOption) (device *AndroidDevice, er
 			Msg("android SerialNumber is not specified, select the first one")
 	}
 
-	device.d = dev
-	device.logcat = NewAdbLogcat(device.SerialNumber)
+	device = &AndroidDevice{
+		AndroidDeviceConfig: androidOptions,
+		d:                   dev,
+		logcat:              NewAdbLogcat(device.SerialNumber),
+	}
+
 	evalToolRaw, err := evalite.ReadFile("evalite")
 	if err != nil {
 		return nil, errors.Wrap(code.LoadFileError, err.Error())
@@ -161,33 +128,9 @@ func GetAndroidDevices(serial ...string) (devices []*gadb.Device, err error) {
 }
 
 type AndroidDevice struct {
-	d            *gadb.Device
-	logcat       *AdbLogcat
-	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
-	STUB         bool   `json:"stub,omitempty" yaml:"stub,omitempty"`           // use stub
-	UIA2         bool   `json:"uia2,omitempty" yaml:"uia2,omitempty"`           // use uiautomator2
-	UIA2IP       string `json:"uia2_ip,omitempty" yaml:"uia2_ip,omitempty"`     // uiautomator2 server ip
-	UIA2Port     int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
-	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
-}
-
-func (dev *AndroidDevice) Options() (deviceOptions []AndroidDeviceOption) {
-	if dev.SerialNumber != "" {
-		deviceOptions = append(deviceOptions, WithSerialNumber(dev.SerialNumber))
-	}
-	if dev.UIA2 {
-		deviceOptions = append(deviceOptions, WithUIA2(true))
-	}
-	if dev.UIA2IP != "" {
-		deviceOptions = append(deviceOptions, WithUIA2IP(dev.UIA2IP))
-	}
-	if dev.UIA2Port != 0 {
-		deviceOptions = append(deviceOptions, WithUIA2Port(dev.UIA2Port))
-	}
-	if dev.LogOn {
-		deviceOptions = append(deviceOptions, WithAdbLogOn(true))
-	}
-	return
+	*options.AndroidDeviceConfig
+	d      *gadb.Device
+	logcat *AdbLogcat
 }
 
 func (dev *AndroidDevice) Init() error {

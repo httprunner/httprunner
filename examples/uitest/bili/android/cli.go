@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 var (
@@ -28,7 +29,7 @@ func init() {
 }
 
 func launchAppDriver(pkgName string) (driver *uixt.DriverExt, err error) {
-	device, _ := uixt.NewAndroidDevice(uixt.WithSerialNumber(serial))
+	device, _ := uixt.NewAndroidDevice(options.WithSerialNumber(serial))
 	driver, err = device.NewDriver()
 	if err != nil {
 		return nil, err

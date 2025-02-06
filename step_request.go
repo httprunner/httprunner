@@ -760,11 +760,8 @@ func (s *StepRequest) MobileUI() *StepMobile {
 }
 
 // Android creates a new android step session
-func (s *StepRequest) Android(options ...uixt.AndroidDeviceOption) *StepMobile {
-	androidOptions := &uixt.AndroidDevice{}
-	for _, option := range options {
-		option(androidOptions)
-	}
+func (s *StepRequest) Android(opts ...options.AndroidDeviceOption) *StepMobile {
+	androidOptions := options.NewAndroidDeviceConfig(opts...)
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		Android: &MobileUI{

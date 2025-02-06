@@ -9,6 +9,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 var (
@@ -35,7 +36,7 @@ var installCmd = &cobra.Command{
 			return err
 		}
 
-		device, err := uixt.NewAndroidDevice(uixt.WithSerialNumber(serial))
+		device, err := uixt.NewAndroidDevice(options.WithSerialNumber(serial))
 		if err != nil {
 			fmt.Println(err)
 			return err

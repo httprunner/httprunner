@@ -5,6 +5,7 @@ import (
 
 	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 func TestAndroidDouyinE2E(t *testing.T) {
@@ -14,7 +15,9 @@ func TestAndroidDouyinE2E(t *testing.T) {
 				"device": "${ENV(SerialNumber)}",
 				"ups":    "${ENV(LIVEUPLIST)}",
 			}).
-			SetAndroid(uixt.WithSerialNumber("$device"), uixt.WithAdbLogOn(true)),
+			SetAndroid(
+				options.WithSerialNumber("$device"),
+				options.WithAdbLogOn(true)),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				Android().

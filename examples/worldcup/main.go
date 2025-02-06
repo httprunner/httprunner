@@ -51,7 +51,7 @@ func initIOSDevice(uuid string) uixt.IDevice {
 }
 
 func initAndroidDevice(uuid string) uixt.IDevice {
-	device, err := uixt.NewAndroidDevice(uixt.WithSerialNumber(uuid))
+	device, err := uixt.NewAndroidDevice(options.WithSerialNumber(uuid))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init android device")
 	}

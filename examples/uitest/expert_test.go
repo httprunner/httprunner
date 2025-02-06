@@ -18,9 +18,9 @@ func TestAndroidExpertTest(t *testing.T) {
 				"app_name":  "抖音",
 			}).
 			SetAndroid(
-				uixt.WithSerialNumber("$device"),
-				uixt.WithAdbLogOn(true),
-				uixt.WithUIA2(true),
+				options.WithSerialNumber("$device"),
+				options.WithAdbLogOn(true),
+				options.WithUIA2(true),
 			),
 		TestSteps: []hrp.IStep{
 			// 温启动

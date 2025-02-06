@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 	"github.com/rs/zerolog/log"
 )
 
@@ -35,7 +36,9 @@ func handleDeviceContext() gin.HandlerFunc {
 
 		switch strings.ToLower(platform) {
 		case "android":
-			device, err := uixt.NewAndroidDevice(uixt.WithSerialNumber(serial), uixt.WithStub(true))
+			device, err := uixt.NewAndroidDevice(
+				options.WithSerialNumber(serial),
+				options.WithStub(true))
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).
 					Msg("device not found")

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 func checkOCR(buff *bytes.Buffer) error {
@@ -53,7 +55,7 @@ func TestOCRWithLocalFile(t *testing.T) {
 
 func TestTapUIWithScreenshot(t *testing.T) {
 	serialNumber := os.Getenv("SERIAL_NUMBER")
-	device, _ := NewAndroidDevice(WithSerialNumber(serialNumber))
+	device, _ := NewAndroidDevice(options.WithSerialNumber(serialNumber))
 	driver, err := device.NewDriver()
 	if err != nil {
 		t.Fatal(err)
