@@ -32,21 +32,23 @@ const (
 	UnicodeImePackageName  = "io.appium.settings/.UnicodeIME"
 )
 
-type adbDriver struct {
+func NewADBDriver(device *AndroidDevice, opts ...option.DriverOption) (*ADBDriver, error) {
+	log.Info().Interface("device", device).Msg("init android adb driver")
+	driver := &ADBDriver{}
+	driver.NewSession(nil)
+	driver.adbClient = device.d
+	driver.logcat = device.logcat
+	return driver, nil
+}
+
+type ADBDriver struct {
 	DriverClient
 
 	adbClient *gadb.Device
 	logcat    *AdbLogcat
 }
 
-func NewAdbDriver() *adbDriver {
-	log.Info().Msg("init adb driver")
-	driver := &adbDriver{}
-	driver.NewSession(nil)
-	return driver
-}
-
-func (ad *adbDriver) runShellCommand(cmd string, args ...string) (output string, err error) {
+func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string, err error) {
 	driverResult := &DriverResult{
 		RequestMethod: "adb",
 		RequestUrl:    cmd,
@@ -79,37 +81,37 @@ func (ad *adbDriver) runShellCommand(cmd string, args ...string) (output string,
 	return output, err
 }
 
-func (ad *adbDriver) NewSession(capabilities option.Capabilities) (sessionInfo SessionInfo, err error) {
+func (ad *ADBDriver) NewSession(capabilities option.Capabilities) (sessionInfo SessionInfo, err error) {
 	ad.DriverClient.session.Reset()
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) DeleteSession() (err error) {
+func (ad *ADBDriver) DeleteSession() (err error) {
 	return errDriverNotImplemented
 }
 
-func (ad *adbDriver) Status() (deviceStatus DeviceStatus, err error) {
+func (ad *ADBDriver) Status() (deviceStatus DeviceStatus, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) DeviceInfo() (deviceInfo DeviceInfo, err error) {
+func (ad *ADBDriver) DeviceInfo() (deviceInfo DeviceInfo, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) Location() (location Location, err error) {
+func (ad *ADBDriver) Location() (location Location, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
+func (ad *ADBDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) getWindowSize() (size Size, err error) {
+func (ad *ADBDriver) getWindowSize() (size Size, err error) {
 	// adb shell wm size
 	output, err := ad.runShellCommand("wm", "size")
 	if err != nil {
@@ -142,7 +144,7 @@ func (ad *adbDriver) getWindowSize() (size Size, err error) {
 	return
 }
 
-func (ad *adbDriver) WindowSize() (size Size, err error) {
+func (ad *ADBDriver) WindowSize() (size Size, err error) {
 	if !ad.windowSize.IsNil() {
 		// use cached window size
 		return ad.windowSize, nil
@@ -168,16 +170,16 @@ func (ad *adbDriver) WindowSize() (size Size, err error) {
 	return size, nil
 }
 
-func (ad *adbDriver) Screen() (screen Screen, err error) {
+func (ad *ADBDriver) Screen() (screen Screen, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) Scale() (scale float64, err error) {
+func (ad *ADBDriver) Scale() (scale float64, err error) {
 	return 1, nil
 }
 
-func (ad *adbDriver) GetTimestamp() (timestamp int64, err error) {
+func (ad *ADBDriver) GetTimestamp() (timestamp int64, err error) {
 	// adb shell date +%s
 	output, err := ad.runShellCommand("date", "+%s")
 	if err != nil {
@@ -193,7 +195,7 @@ func (ad *adbDriver) GetTimestamp() (timestamp int64, err error) {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (ad *adbDriver) PressBack(opts ...option.ActionOption) (err error) {
+func (ad *ADBDriver) PressBack(opts ...option.ActionOption) (err error) {
 	// adb shell input keyevent 4
 	_, err = ad.runShellCommand("input", "keyevent", fmt.Sprintf("%d", KCBack))
 	if err != nil {
@@ -202,7 +204,7 @@ func (ad *adbDriver) PressBack(opts ...option.ActionOption) (err error) {
 	return nil
 }
 
-func (ad *adbDriver) StartCamera() (err error) {
+func (ad *ADBDriver) StartCamera() (err error) {
 	if _, err = ad.runShellCommand("rm", "-r", "/sdcard/DCIM/Camera"); err != nil {
 		return errors.Wrap(err, "remove /sdcard/DCIM/Camera failed")
 	}
@@ -236,7 +238,7 @@ func (ad *adbDriver) StartCamera() (err error) {
 	}
 }
 
-func (ad *adbDriver) StopCamera() (err error) {
+func (ad *ADBDriver) StopCamera() (err error) {
 	err = ad.PressBack()
 	if err != nil {
 		return err
@@ -257,7 +259,7 @@ func (ad *adbDriver) StopCamera() (err error) {
 	return
 }
 
-func (ad *adbDriver) Orientation() (orientation Orientation, err error) {
+func (ad *ADBDriver) Orientation() (orientation Orientation, err error) {
 	output, err := ad.runShellCommand("dumpsys", "input", "|", "grep", "'SurfaceOrientation'")
 	if err != nil {
 		return
@@ -275,11 +277,11 @@ func (ad *adbDriver) Orientation() (orientation Orientation, err error) {
 	return
 }
 
-func (ad *adbDriver) Homescreen() (err error) {
+func (ad *ADBDriver) Homescreen() (err error) {
 	return ad.PressKeyCodes(KCHome, KMEmpty)
 }
 
-func (ad *adbDriver) Unlock() (err error) {
+func (ad *ADBDriver) Unlock() (err error) {
 	// Notice: brighten should be executed before unlock
 	// brighten android device screen
 	if err := ad.PressKeyCodes(KCWakeup, KMEmpty); err != nil {
@@ -294,7 +296,7 @@ func (ad *adbDriver) Unlock() (err error) {
 	return ad.Swipe(500, 1500, 500, 500)
 }
 
-func (ad *adbDriver) Backspace(count int, opts ...option.ActionOption) (err error) {
+func (ad *ADBDriver) Backspace(count int, opts ...option.ActionOption) (err error) {
 	if count == 0 {
 		return nil
 	}
@@ -309,7 +311,7 @@ func (ad *adbDriver) Backspace(count int, opts ...option.ActionOption) (err erro
 	return ad.combinationKey(keyArray)
 }
 
-func (ad *adbDriver) combinationKey(keyCodes []KeyCode) (err error) {
+func (ad *ADBDriver) combinationKey(keyCodes []KeyCode) (err error) {
 	if len(keyCodes) == 1 {
 		return ad.PressKeyCode(keyCodes[0])
 	}
@@ -322,11 +324,11 @@ func (ad *adbDriver) combinationKey(keyCodes []KeyCode) (err error) {
 	return
 }
 
-func (ad *adbDriver) PressKeyCode(keyCode KeyCode) (err error) {
+func (ad *ADBDriver) PressKeyCode(keyCode KeyCode) (err error) {
 	return ad.PressKeyCodes(keyCode, KMEmpty)
 }
 
-func (ad *adbDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta) (err error) {
+func (ad *ADBDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta) (err error) {
 	// adb shell input keyevent [--longpress] KEYCODE [METASTATE]
 	if metaState != KMEmpty {
 		// press key with metastate, e.g. KMShiftOn/KMCtrlOn
@@ -342,7 +344,7 @@ func (ad *adbDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta) (err erro
 	return
 }
 
-func (ad *adbDriver) AppLaunch(packageName string) (err error) {
+func (ad *ADBDriver) AppLaunch(packageName string) (err error) {
 	// 不指定 Activity 名称启动（启动主 Activity）
 	// adb shell monkey -p <packagename> -c android.intent.category.LAUNCHER 1
 	sOutput, err := ad.runShellCommand(
@@ -359,7 +361,7 @@ func (ad *adbDriver) AppLaunch(packageName string) (err error) {
 	return nil
 }
 
-func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err error) {
+func (ad *ADBDriver) AppTerminate(packageName string) (successful bool, err error) {
 	// 强制停止应用，停止 <packagename> 相关的进程
 	// adb shell am force-stop <packagename>
 	_, err = ad.runShellCommand("am", "force-stop", packageName)
@@ -370,7 +372,7 @@ func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err erro
 	return true, nil
 }
 
-func (ad *adbDriver) Tap(x, y float64, opts ...option.ActionOption) error {
+func (ad *ADBDriver) Tap(x, y float64, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 2 {
@@ -391,7 +393,7 @@ func (ad *adbDriver) Tap(x, y float64, opts ...option.ActionOption) error {
 	return nil
 }
 
-func (ad *adbDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
@@ -409,7 +411,7 @@ func (ad *adbDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	return nil
 }
 
-func (ad *adbDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
+func (ad *ADBDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
 	actionOptions := option.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 2 {
@@ -435,7 +437,7 @@ func (ad *adbDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 	return nil
 }
 
-func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
+func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
 	actionOptions := option.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 4 {
@@ -469,7 +471,7 @@ func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	return nil
 }
 
-func (ad *adbDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 4 {
@@ -495,26 +497,26 @@ func (ad *adbDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	return nil
 }
 
-func (ad *adbDriver) ForceTouch(x, y int, pressure float64, second ...float64) error {
+func (ad *ADBDriver) ForceTouch(x, y int, pressure float64, second ...float64) error {
 	return ad.ForceTouchFloat(float64(x), float64(y), pressure, second...)
 }
 
-func (ad *adbDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) (err error) {
+func (ad *ADBDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) (err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) SetPasteboard(contentType PasteboardType, content string) (err error) {
+func (ad *ADBDriver) SetPasteboard(contentType PasteboardType, content string) (err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error) {
+func (ad *ADBDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) SendKeys(text string, opts ...option.ActionOption) (err error) {
+func (ad *ADBDriver) SendKeys(text string, opts ...option.ActionOption) (err error) {
 	err = ad.SendUnicodeKeys(text, opts...)
 	if err == nil {
 		return
@@ -523,7 +525,7 @@ func (ad *adbDriver) SendKeys(text string, opts ...option.ActionOption) (err err
 	return
 }
 
-func (ad *adbDriver) InputText(text string, opts ...option.ActionOption) error {
+func (ad *ADBDriver) InputText(text string, opts ...option.ActionOption) error {
 	// adb shell input text <text>
 	_, err := ad.runShellCommand("input", "text", text)
 	if err != nil {
@@ -532,7 +534,7 @@ func (ad *adbDriver) InputText(text string, opts ...option.ActionOption) error {
 	return nil
 }
 
-func (ad *adbDriver) SendUnicodeKeys(text string, opts ...option.ActionOption) (err error) {
+func (ad *ADBDriver) SendUnicodeKeys(text string, opts ...option.ActionOption) (err error) {
 	// If the Unicode IME is not installed, fall back to the old interface.
 	// There might be differences in the tracking schemes across different phones, and it is pending further verification.
 	// In release version: without the Unicode IME installed, the test cannot execute.
@@ -562,7 +564,7 @@ func (ad *adbDriver) SendUnicodeKeys(text string, opts ...option.ActionOption) (
 	return
 }
 
-func (ad *adbDriver) IsAdbKeyBoardInstalled() bool {
+func (ad *ADBDriver) IsAdbKeyBoardInstalled() bool {
 	output, err := ad.runShellCommand("ime", "list", "-a")
 	if err != nil {
 		return false
@@ -570,7 +572,7 @@ func (ad *adbDriver) IsAdbKeyBoardInstalled() bool {
 	return strings.Contains(output, AdbKeyBoardPackageName)
 }
 
-func (ad *adbDriver) IsUnicodeIMEInstalled() bool {
+func (ad *ADBDriver) IsUnicodeIMEInstalled() bool {
 	output, err := ad.runShellCommand("ime", "list", "-s")
 	if err != nil {
 		return false
@@ -578,7 +580,7 @@ func (ad *adbDriver) IsUnicodeIMEInstalled() bool {
 	return strings.Contains(output, UnicodeImePackageName)
 }
 
-func (ad *adbDriver) ListIme() []string {
+func (ad *ADBDriver) ListIme() []string {
 	output, err := ad.runShellCommand("ime", "list", "-s")
 	if err != nil {
 		return []string{}
@@ -586,7 +588,7 @@ func (ad *adbDriver) ListIme() []string {
 	return strings.Split(output, "\n")
 }
 
-func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
+func (ad *ADBDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 	defer func() {
 		// Reset to default, don't care which keyboard was chosen before switch:
 		if _, resetErr := ad.runShellCommand("ime", "reset"); resetErr != nil {
@@ -619,11 +621,11 @@ func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 	return
 }
 
-func (ad *adbDriver) Input(text string, opts ...option.ActionOption) (err error) {
+func (ad *ADBDriver) Input(text string, opts ...option.ActionOption) (err error) {
 	return ad.SendKeys(text, opts...)
 }
 
-func (ad *adbDriver) Clear(packageName string) error {
+func (ad *ADBDriver) Clear(packageName string) error {
 	if _, err := ad.runShellCommand("pm", "clear", packageName); err != nil {
 		log.Error().Str("packageName", packageName).Err(err).Msg("failed to clear package cache")
 		return err
@@ -632,22 +634,22 @@ func (ad *adbDriver) Clear(packageName string) error {
 	return nil
 }
 
-func (ad *adbDriver) PressButton(devBtn DeviceButton) (err error) {
+func (ad *ADBDriver) PressButton(devBtn DeviceButton) (err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) Rotation() (rotation Rotation, err error) {
+func (ad *ADBDriver) Rotation() (rotation Rotation, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) SetRotation(rotation Rotation) (err error) {
+func (ad *ADBDriver) SetRotation(rotation Rotation) (err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
+func (ad *ADBDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	resp, err := ad.runShellCommand("screencap", "-p")
 	if err != nil {
 		return nil, errors.Wrap(err, "adb screencap failed")
@@ -656,7 +658,7 @@ func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	return bytes.NewBuffer([]byte(resp)), nil
 }
 
-func (ad *adbDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
+func (ad *ADBDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	_, err = ad.runShellCommand("rm", "-rf", "/sdcard/window_dump.xml")
 	if err != nil {
 		return
@@ -673,15 +675,15 @@ func (ad *adbDriver) Source(srcOpt ...option.SourceOption) (source string, err e
 	return
 }
 
-func (ad *adbDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+func (ad *ADBDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
 	return info, errDriverNotImplemented
 }
 
-func (ad *adbDriver) LogoutNoneUI(packageName string) error {
+func (ad *ADBDriver) LogoutNoneUI(packageName string) error {
 	return errDriverNotImplemented
 }
 
-func (ad *adbDriver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hierarchy, err error) {
+func (ad *ADBDriver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hierarchy, err error) {
 	source, err := ad.Source()
 	if err != nil {
 		return
@@ -694,7 +696,7 @@ func (ad *adbDriver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hier
 	return
 }
 
-func (ad *adbDriver) TapByText(text string, opts ...option.ActionOption) error {
+func (ad *ADBDriver) TapByText(text string, opts ...option.ActionOption) error {
 	sourceTree, err := ad.sourceTree()
 	if err != nil {
 		return err
@@ -702,7 +704,7 @@ func (ad *adbDriver) TapByText(text string, opts ...option.ActionOption) error {
 	return ad.tapByTextUsingHierarchy(sourceTree, text, opts...)
 }
 
-func (ad *adbDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, opts ...option.ActionOption) error {
+func (ad *ADBDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, opts ...option.ActionOption) error {
 	bounds := ad.searchNodes(hierarchy.Layout, text, opts...)
 	actionOptions := option.NewActionOptions(opts...)
 	if len(bounds) == 0 {
@@ -722,7 +724,7 @@ func (ad *adbDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, 
 	return nil
 }
 
-func (ad *adbDriver) TapByTexts(actions ...TapTextAction) error {
+func (ad *ADBDriver) TapByTexts(actions ...TapTextAction) error {
 	sourceTree, err := ad.sourceTree()
 	if err != nil {
 		return err
@@ -737,7 +739,7 @@ func (ad *adbDriver) TapByTexts(actions ...TapTextAction) error {
 	return nil
 }
 
-func (ad *adbDriver) searchNodes(nodes []Layout, text string, opts ...option.ActionOption) []Bounds {
+func (ad *ADBDriver) searchNodes(nodes []Layout, text string, opts ...option.ActionOption) []Bounds {
 	actionOptions := option.NewActionOptions(opts...)
 	var results []Bounds
 	for _, node := range nodes {
@@ -762,32 +764,32 @@ func (ad *adbDriver) searchNodes(nodes []Layout, text string, opts ...option.Act
 	return results
 }
 
-func (ad *adbDriver) AccessibleSource() (source string, err error) {
+func (ad *ADBDriver) AccessibleSource() (source string, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) HealthCheck() (err error) {
+func (ad *ADBDriver) HealthCheck() (err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) GetAppiumSettings() (settings map[string]interface{}, err error) {
+func (ad *ADBDriver) GetAppiumSettings() (settings map[string]interface{}, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) SetAppiumSettings(settings map[string]interface{}) (ret map[string]interface{}, err error) {
+func (ad *ADBDriver) SetAppiumSettings(settings map[string]interface{}) (ret map[string]interface{}, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) IsHealthy() (healthy bool, err error) {
+func (ad *ADBDriver) IsHealthy() (healthy bool, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *adbDriver) StartCaptureLog(identifier ...string) (err error) {
+func (ad *ADBDriver) StartCaptureLog(identifier ...string) (err error) {
 	log.Info().Msg("start adb log recording")
 	// start logcat
 	err = ad.logcat.CatchLogcat("iesqaMonitor:V")
@@ -799,7 +801,7 @@ func (ad *adbDriver) StartCaptureLog(identifier ...string) (err error) {
 	return nil
 }
 
-func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
+func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 	defer func() {
 		log.Info().Msg("stop adb log recording")
 		err = ad.logcat.Stop()
@@ -862,15 +864,15 @@ func (ad *adbDriver) StopCaptureLog() (result interface{}, err error) {
 	return pointRes, nil
 }
 
-func (ad *adbDriver) GetSession() *DriverSession {
+func (ad *ADBDriver) GetSession() *DriverSession {
 	return &ad.DriverClient.session
 }
 
-func (ad *adbDriver) GetDriverResults() []*DriverResult {
+func (ad *ADBDriver) GetDriverResults() []*DriverResult {
 	return nil
 }
 
-func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
+func (ad *ADBDriver) GetForegroundApp() (app AppInfo, err error) {
 	packageInfo, err := ad.runShellCommand(
 		"CLASSPATH=/data/local/tmp/evalite", "app_process", "/",
 		"com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
@@ -884,7 +886,7 @@ func (ad *adbDriver) GetForegroundApp() (app AppInfo, err error) {
 	return
 }
 
-func (ad *adbDriver) SetIme(imeRegx string) error {
+func (ad *ADBDriver) SetIme(imeRegx string) error {
 	imeList := ad.ListIme()
 	ime := ""
 	for _, imeName := range imeList {
@@ -930,7 +932,7 @@ func (ad *adbDriver) SetIme(imeRegx string) error {
 	return nil
 }
 
-func (ad *adbDriver) GetIme() (ime string, err error) {
+func (ad *ADBDriver) GetIme() (ime string, err error) {
 	currentIme, err := ad.runShellCommand("settings", "get", "secure", "default_input_method")
 	if err != nil {
 		log.Warn().Err(err).Msgf("get default ime failed")
@@ -940,7 +942,7 @@ func (ad *adbDriver) GetIme() (ime string, err error) {
 	return currentIme, nil
 }
 
-func (ad *adbDriver) AssertForegroundApp(packageName string, activityType ...string) error {
+func (ad *ADBDriver) AssertForegroundApp(packageName string, activityType ...string) error {
 	log.Debug().Str("package_name", packageName).
 		Strs("activity_type", activityType).
 		Msg("assert android foreground package and activity")
@@ -1036,7 +1038,7 @@ var androidActivities = map[string]map[string][]string{
 	// TODO: SPH, XHS
 }
 
-func (ad *adbDriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
+func (ad *ADBDriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
 	// 获取当前时间戳
 	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
 	// 创建文件名
@@ -1093,6 +1095,6 @@ func (ad *adbDriver) RecordScreen(folderPath string, duration time.Duration) (vi
 	return filepath.Abs(fileName)
 }
 
-func (ad *adbDriver) TearDown() error {
+func (ad *ADBDriver) TearDown() error {
 	return nil
 }

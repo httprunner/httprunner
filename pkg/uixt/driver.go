@@ -376,20 +376,20 @@ type DriverExt struct {
 }
 
 func newDriverExt(device IDevice, driver IWebDriver, opts ...option.DriverOption) (dExt *DriverExt, err error) {
-	driverOptions := option.NewDriverOptions(opts...)
+	options := option.NewDriverOptions(opts...)
 
 	dExt = &DriverExt{
 		Device: device,
 		Driver: driver,
-		plugin: driverOptions.Plugin,
+		plugin: options.Plugin,
 	}
 
-	if driverOptions.WithImageService {
+	if options.WithImageService {
 		if dExt.ImageService, err = newVEDEMImageService(); err != nil {
 			return nil, err
 		}
 	}
-	if driverOptions.WithResultFolder {
+	if options.WithResultFolder {
 		// create results directory
 		if err = builtin.EnsureFolderExists(config.ResultsPath); err != nil {
 			return nil, errors.Wrap(err, "create results directory failed")

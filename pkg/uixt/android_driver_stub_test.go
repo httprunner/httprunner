@@ -8,7 +8,7 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-var androidStubDriver *stubAndroidDriver
+var androidStubDriver *StubAndroidDriver
 
 func setupStubDriver(t *testing.T) {
 	device, err := NewAndroidDevice()

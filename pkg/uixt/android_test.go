@@ -477,7 +477,7 @@ func TestConvertPoints(t *testing.T) {
 
 func TestDriver_ShellInputUnicode(t *testing.T) {
 	device, _ := NewAndroidDevice()
-	driver, err := device.NewAdbDriver()
+	driver, err := NewADBDriver(device)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -530,7 +530,7 @@ func TestTapTexts(t *testing.T) {
 
 func TestRecordVideo(t *testing.T) {
 	setupAndroidAdbDriver(t)
-	path, err := driverExt.Driver.(*adbDriver).RecordScreen("", 5*time.Second)
+	path, err := driverExt.Driver.(*ADBDriver).RecordScreen("", 5*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}

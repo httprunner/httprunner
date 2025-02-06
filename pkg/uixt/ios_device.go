@@ -261,10 +261,10 @@ func (dev *IOSDevice) getAppInfo(packageName string) (appInfo AppInfo, err error
 }
 
 func (dev *IOSDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverExt, err error) {
-	driverOptions := option.NewDriverOptions()
+	options := option.NewDriverOptions()
 
 	// init WDA driver
-	capabilities := driverOptions.Capabilities
+	capabilities := options.Capabilities
 	if capabilities == nil {
 		capabilities = option.NewCapabilities()
 		capabilities.WithDefaultAlertAction(option.AlertActionAccept)

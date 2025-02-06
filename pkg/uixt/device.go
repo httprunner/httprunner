@@ -21,3 +21,7 @@ type IDevice interface {
 
 	// Teardown() error
 }
+
+func NewDriver(device IDevice, opts ...option.DriverOption) (driver IWebDriver, err error) {
+	return
+}

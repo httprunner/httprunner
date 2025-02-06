@@ -16,11 +16,11 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-type stubAndroidDriver struct {
+type StubAndroidDriver struct {
 	socket  net.Conn
 	seq     int
 	timeout time.Duration
-	adbDriver
+	ADBDriver
 }
 
 const StubSocketName = "com.bytest.device"
@@ -33,7 +33,7 @@ type AppLoginInfo struct {
 
 // newStubAndroidDriver
 // 创建stub Driver address为forward后的端口格式127.0.0.1:${port}
-func newStubAndroidDriver(address string, urlPrefix string, readTimeout ...time.Duration) (*stubAndroidDriver, error) {
+func newStubAndroidDriver(address string, urlPrefix string, readTimeout ...time.Duration) (*StubAndroidDriver, error) {
 	timeout := 10 * time.Second
 	if len(readTimeout) > 0 {
 		timeout = readTimeout[0]
@@ -45,7 +45,7 @@ func newStubAndroidDriver(address string, urlPrefix string, readTimeout ...time.
 		return nil, err
 	}
 
-	driver := &stubAndroidDriver{
+	driver := &StubAndroidDriver{
 		socket:  conn,
 		timeout: timeout,
 	}
@@ -58,7 +58,7 @@ func newStubAndroidDriver(address string, urlPrefix string, readTimeout ...time.
 	return driver, nil
 }
 
-func (sad *stubAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
+func (sad *StubAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
 	var localPort int
 	{
 		tmpURL, _ := url.Parse(sad.urlPrefix.String())
@@ -76,7 +76,7 @@ func (sad *stubAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse, 
 	return sad.Request(http.MethodGet, sad.concatURL(nil, pathElem...), nil)
 }
 
-func (sad *stubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+func (sad *StubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
 	var localPort int
 	{
 		tmpURL, _ := url.Parse(sad.urlPrefix.String())
@@ -101,12 +101,12 @@ func (sad *stubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (ra
 	return sad.Request(http.MethodPost, sad.concatURL(nil, pathElem...), bsJSON)
 }
 
-func (sad *stubAndroidDriver) NewSession(capabilities option.Capabilities) (SessionInfo, error) {
+func (sad *StubAndroidDriver) NewSession(capabilities option.Capabilities) (SessionInfo, error) {
 	sad.DriverClient.session.Reset()
 	return SessionInfo{}, errDriverNotImplemented
 }
 
-func (sad *stubAndroidDriver) sendCommand(packageName string, cmdType string, params map[string]interface{}, readTimeout ...time.Duration) (interface{}, error) {
+func (sad *StubAndroidDriver) sendCommand(packageName string, cmdType string, params map[string]interface{}, readTimeout ...time.Duration) (interface{}, error) {
 	sad.seq++
 	packet := map[string]interface{}{
 		"Seq": sad.seq,
@@ -139,18 +139,18 @@ func (sad *stubAndroidDriver) sendCommand(packageName string, cmdType string, pa
 	return resultMap["Result"], nil
 }
 
-func (sad *stubAndroidDriver) DeleteSession() error {
+func (sad *StubAndroidDriver) DeleteSession() error {
 	return sad.close()
 }
 
-func (sad *stubAndroidDriver) close() error {
+func (sad *StubAndroidDriver) close() error {
 	if sad.socket != nil {
 		return sad.socket.Close()
 	}
 	return nil
 }
 
-func (sad *stubAndroidDriver) Status() (DeviceStatus, error) {
+func (sad *StubAndroidDriver) Status() (DeviceStatus, error) {
 	app, err := sad.GetForegroundApp()
 	if err != nil {
 		return DeviceStatus{}, err
@@ -163,7 +163,7 @@ func (sad *stubAndroidDriver) Status() (DeviceStatus, error) {
 	return DeviceStatus{}, nil
 }
 
-func (sad *stubAndroidDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
+func (sad *StubAndroidDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	app, err := sad.GetForegroundApp()
 	if err != nil {
 		return "", err
@@ -181,7 +181,7 @@ func (sad *stubAndroidDriver) Source(srcOpt ...option.SourceOption) (source stri
 	return res.(string), nil
 }
 
-func (sad *stubAndroidDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+func (sad *StubAndroidDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
 	params := map[string]interface{}{
 		"phone": phoneNumber,
 	}
@@ -214,7 +214,7 @@ func (sad *stubAndroidDriver) LoginNoneUI(packageName, phoneNumber string, captc
 	return info, nil
 }
 
-func (sad *stubAndroidDriver) LogoutNoneUI(packageName string) error {
+func (sad *StubAndroidDriver) LogoutNoneUI(packageName string) error {
 	resp, err := sad.httpGET("/host", "/logout")
 	if err != nil {
 		return err
@@ -237,7 +237,7 @@ func (sad *stubAndroidDriver) LogoutNoneUI(packageName string) error {
 	return nil
 }
 
-func (sad *stubAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber string, captcha string) error {
+func (sad *StubAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber string, captcha string) error {
 	params := map[string]interface{}{
 		"ClassName": "qe.python.test.LoginUtil",
 		"Method":    "loginSync",
@@ -252,7 +252,7 @@ func (sad *stubAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber string
 	return nil
 }
 
-func (sad *stubAndroidDriver) SetHDTStatus(status bool) error {
+func (sad *StubAndroidDriver) SetHDTStatus(status bool) error {
 	_, err := sad.adbClient.RunShellCommand("settings", "put", "global", "feedbacker_sso_bypass_token", "default_sso_bypass_token")
 	if err != nil {
 		log.Warn().Msg(fmt.Sprintf("failed to disable sso, error: %v", err))
@@ -271,7 +271,7 @@ func (sad *stubAndroidDriver) SetHDTStatus(status bool) error {
 	return nil
 }
 
-func (sad *stubAndroidDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {
+func (sad *StubAndroidDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {
 	resp, err := sad.httpGET("/host", "/app", "/info")
 	if err != nil {
 		return info, err

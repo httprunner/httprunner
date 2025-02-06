@@ -22,17 +22,17 @@ import (
 
 var errDriverNotImplemented = errors.New("driver method not implemented")
 
-type uiaDriver struct {
-	adbDriver
+type UIA2Driver struct {
+	ADBDriver
 }
 
-func NewUIADriver(capabilities option.Capabilities, urlPrefix string) (driver *uiaDriver, err error) {
+func NewUIADriver(capabilities option.Capabilities, urlPrefix string) (driver *UIA2Driver, err error) {
 	log.Info().Msg("init uiautomator2 driver")
 	if capabilities == nil {
 		capabilities = option.NewCapabilities()
 		capabilities.WithWaitForIdleTimeout(0)
 	}
-	driver = new(uiaDriver)
+	driver = new(UIA2Driver)
 	if driver.urlPrefix, err = url.Parse(urlPrefix); err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (bs BatteryStatus) String() string {
 	}
 }
 
-func (ud *uiaDriver) resetDriver() error {
+func (ud *UIA2Driver) resetDriver() error {
 	newUIADriver, err := NewUIADriver(option.NewCapabilities(), ud.urlPrefix.String())
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func (ud *uiaDriver) resetDriver() error {
 	return nil
 }
 
-func (ud *uiaDriver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
+func (ud *UIA2Driver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
 	for retryCount := 1; retryCount <= 5; retryCount++ {
 		rawResp, err = ud.DriverClient.Request(method, rawURL, rawBody)
 		if err == nil {
@@ -116,11 +116,11 @@ func (ud *uiaDriver) httpRequest(method string, rawURL string, rawBody []byte) (
 	return
 }
 
-func (ud *uiaDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
+func (ud *UIA2Driver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
 	return ud.httpRequest(http.MethodGet, ud.concatURL(nil, pathElem...), nil)
 }
 
-func (ud *uiaDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+func (ud *UIA2Driver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
@@ -130,11 +130,11 @@ func (ud *uiaDriver) httpPOST(data interface{}, pathElem ...string) (rawResp raw
 	return ud.httpRequest(http.MethodPost, ud.concatURL(nil, pathElem...), bsJSON)
 }
 
-func (ud *uiaDriver) httpDELETE(pathElem ...string) (rawResp rawResponse, err error) {
+func (ud *UIA2Driver) httpDELETE(pathElem ...string) (rawResp rawResponse, err error) {
 	return ud.httpRequest(http.MethodDelete, ud.concatURL(nil, pathElem...), nil)
 }
 
-func (ud *uiaDriver) NewSession(capabilities option.Capabilities) (sessionInfo SessionInfo, err error) {
+func (ud *UIA2Driver) NewSession(capabilities option.Capabilities) (sessionInfo SessionInfo, err error) {
 	// register(postHandler, new NewSession("/wd/hub/session"))
 	var rawResp rawResponse
 	data := make(map[string]interface{})
@@ -157,7 +157,7 @@ func (ud *uiaDriver) NewSession(capabilities option.Capabilities) (sessionInfo S
 	return SessionInfo{SessionId: sessionID}, nil
 }
 
-func (ud *uiaDriver) DeleteSession() (err error) {
+func (ud *UIA2Driver) DeleteSession() (err error) {
 	if ud.session.ID == "" {
 		return nil
 	}
@@ -168,7 +168,7 @@ func (ud *uiaDriver) DeleteSession() (err error) {
 	return err
 }
 
-func (ud *uiaDriver) Status() (deviceStatus DeviceStatus, err error) {
+func (ud *UIA2Driver) Status() (deviceStatus DeviceStatus, err error) {
 	// register(getHandler, new Status("/wd/hub/status"))
 	var rawResp rawResponse
 	// Notice: use Driver.GET instead of httpGET to avoid loop calling
@@ -187,7 +187,7 @@ func (ud *uiaDriver) Status() (deviceStatus DeviceStatus, err error) {
 	return DeviceStatus{Ready: true}, nil
 }
 
-func (ud *uiaDriver) DeviceInfo() (deviceInfo DeviceInfo, err error) {
+func (ud *UIA2Driver) DeviceInfo() (deviceInfo DeviceInfo, err error) {
 	// register(getHandler, new GetDeviceInfo("/wd/hub/session/:sessionId/appium/device/info"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.session.ID, "appium/device/info"); err != nil {
@@ -201,7 +201,7 @@ func (ud *uiaDriver) DeviceInfo() (deviceInfo DeviceInfo, err error) {
 	return
 }
 
-func (ud *uiaDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
+func (ud *UIA2Driver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 	// register(getHandler, new GetBatteryInfo("/wd/hub/session/:sessionId/appium/device/battery_info"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.session.ID, "appium/device/battery_info"); err != nil {
@@ -218,7 +218,7 @@ func (ud *uiaDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 	return
 }
 
-func (ud *uiaDriver) WindowSize() (size Size, err error) {
+func (ud *UIA2Driver) WindowSize() (size Size, err error) {
 	// register(getHandler, new GetDeviceSize("/wd/hub/session/:sessionId/window/:windowHandle/size"))
 	if !ud.windowSize.IsNil() {
 		// use cached window size
@@ -250,21 +250,21 @@ func (ud *uiaDriver) WindowSize() (size Size, err error) {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (ud *uiaDriver) PressBack(opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) PressBack(opts ...option.ActionOption) (err error) {
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	_, err = ud.httpPOST(nil, "/session", ud.session.ID, "back")
 	return
 }
 
-func (ud *uiaDriver) Homescreen() (err error) {
+func (ud *UIA2Driver) Homescreen() (err error) {
 	return ud.PressKeyCodes(KCHome, KMEmpty)
 }
 
-func (ud *uiaDriver) PressKeyCode(keyCode KeyCode) (err error) {
+func (ud *UIA2Driver) PressKeyCode(keyCode KeyCode) (err error) {
 	return ud.PressKeyCodes(keyCode, KMEmpty)
 }
 
-func (ud *uiaDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
+func (ud *UIA2Driver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
 	// register(postHandler, new PressKeyCodeAsync("/wd/hub/session/:sessionId/appium/device/press_keycode"))
 	data := map[string]interface{}{
 		"keycode": keyCode,
@@ -279,7 +279,7 @@ func (ud *uiaDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta, flags ...
 	return
 }
 
-func (ud *uiaDriver) Orientation() (orientation Orientation, err error) {
+func (ud *UIA2Driver) Orientation() (orientation Orientation, err error) {
 	// [[FBRoute GET:@"/orientation"] respondWithTarget:self action:@selector(handleGetOrientation:)]
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.session.ID, "/orientation"); err != nil {
@@ -293,11 +293,11 @@ func (ud *uiaDriver) Orientation() (orientation Orientation, err error) {
 	return
 }
 
-func (ud *uiaDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	return ud.DoubleFloatTap(x, y)
 }
 
-func (ud *uiaDriver) DoubleFloatTap(x, y float64) error {
+func (ud *UIA2Driver) DoubleFloatTap(x, y float64) error {
 	data := map[string]interface{}{
 		"actions": []interface{}{
 			map[string]interface{}{
@@ -319,7 +319,7 @@ func (ud *uiaDriver) DoubleFloatTap(x, y float64) error {
 	return err
 }
 
-func (ud *uiaDriver) Tap(x, y float64, opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) Tap(x, y float64, opts ...option.ActionOption) (err error) {
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
 	actionOptions := option.NewActionOptions(opts...)
 
@@ -357,7 +357,7 @@ func (ud *uiaDriver) Tap(x, y float64, opts ...option.ActionOption) (err error) 
 	return err
 }
 
-func (ud *uiaDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
 	actionOpts := option.NewActionOptions(opts...)
 	duration := actionOpts.Duration
 	if duration == 0 {
@@ -379,7 +379,7 @@ func (ud *uiaDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 // the smoothness and speed of the swipe by specifying the number of steps.
 // Each step execution is throttled to 5 milliseconds per step, so for a 100
 // steps, the swipe will take around 0.5 seconds to complete.
-func (ud *uiaDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
 	actionOptions := option.NewActionOptions(opts...)
 	if len(actionOptions.Offset) == 4 {
 		fromX += float64(actionOptions.Offset[0])
@@ -412,7 +412,7 @@ func (ud *uiaDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 // per step. So for a 100 steps, the swipe will take about 1/2 second to complete.
 //
 //	`steps` is the number of move steps sent to the system
-func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
 	actionOptions := option.NewActionOptions(opts...)
 	if len(actionOptions.Offset) == 4 {
@@ -453,7 +453,7 @@ func (ud *uiaDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	return err
 }
 
-func (ud *uiaDriver) SetPasteboard(contentType PasteboardType, content string) (err error) {
+func (ud *UIA2Driver) SetPasteboard(contentType PasteboardType, content string) (err error) {
 	lbl := content
 
 	const defaultLabelLen = 10
@@ -471,7 +471,7 @@ func (ud *uiaDriver) SetPasteboard(contentType PasteboardType, content string) (
 	return
 }
 
-func (ud *uiaDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error) {
+func (ud *UIA2Driver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error) {
 	if len(contentType) == 0 {
 		contentType = PasteboardTypePlaintext
 	}
@@ -497,7 +497,7 @@ func (ud *uiaDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 }
 
 // SendKeys Android input does not support setting frequency.
-func (ud *uiaDriver) SendKeys(text string, opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) SendKeys(text string, opts ...option.ActionOption) (err error) {
 	// register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/keys"))
 	// https://github.com/appium/appium-uiautomator2-server/blob/master/app/src/main/java/io/appium/uiautomator2/handler/SendKeysToElement.java#L76-L85
 	actionOptions := option.NewActionOptions(opts...)
@@ -515,22 +515,22 @@ func (ud *uiaDriver) SendKeys(text string, opts ...option.ActionOption) (err err
 	return
 }
 
-func (ud *uiaDriver) SendUnicodeKeys(text string, opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) SendUnicodeKeys(text string, opts ...option.ActionOption) (err error) {
 	// If the Unicode IME is not installed, fall back to the old interface.
 	// There might be differences in the tracking schemes across different phones, and it is pending further verification.
 	// In release version: without the Unicode IME installed, the test cannot execute.
 	if !ud.IsUnicodeIMEInstalled() {
 		return fmt.Errorf("appium unicode ime not installed")
 	}
-	currentIme, err := ud.adbDriver.GetIme()
+	currentIme, err := ud.ADBDriver.GetIme()
 	if err != nil {
 		return
 	}
 	if currentIme != UnicodeImePackageName {
 		defer func() {
-			_ = ud.adbDriver.SetIme(currentIme)
+			_ = ud.ADBDriver.SetIme(currentIme)
 		}()
-		err = ud.adbDriver.SetIme(UnicodeImePackageName)
+		err = ud.ADBDriver.SetIme(UnicodeImePackageName)
 		if err != nil {
 			log.Warn().Err(err).Msgf("set Unicode Ime failed")
 			return
@@ -545,7 +545,7 @@ func (ud *uiaDriver) SendUnicodeKeys(text string, opts ...option.ActionOption) (
 	return
 }
 
-func (ud *uiaDriver) SendActionKey(text string, opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) SendActionKey(text string, opts ...option.ActionOption) (err error) {
 	actionOptions := option.NewActionOptions(opts...)
 	var actions []interface{}
 	for i, c := range text {
@@ -572,11 +572,11 @@ func (ud *uiaDriver) SendActionKey(text string, opts ...option.ActionOption) (er
 	return
 }
 
-func (ud *uiaDriver) Input(text string, opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) Input(text string, opts ...option.ActionOption) (err error) {
 	return ud.SendKeys(text, opts...)
 }
 
-func (ud *uiaDriver) Rotation() (rotation Rotation, err error) {
+func (ud *UIA2Driver) Rotation() (rotation Rotation, err error) {
 	// register(getHandler, new GetRotation("/wd/hub/session/:sessionId/rotation"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.session.ID, "rotation"); err != nil {
@@ -591,13 +591,13 @@ func (ud *uiaDriver) Rotation() (rotation Rotation, err error) {
 	return
 }
 
-func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {
+func (ud *UIA2Driver) Screenshot() (raw *bytes.Buffer, err error) {
 	// https://bytedance.larkoffice.com/docx/C8qEdmSHnoRvMaxZauocMiYpnLh
 	// ui2截图受内存影响，改为adb截图
-	return ud.adbDriver.Screenshot()
+	return ud.ADBDriver.Screenshot()
 }
 
-func (ud *uiaDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
+func (ud *UIA2Driver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	// register(getHandler, new Source("/wd/hub/session/:sessionId/source"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.session.ID, "source"); err != nil {
@@ -612,7 +612,7 @@ func (ud *uiaDriver) Source(srcOpt ...option.SourceOption) (source string, err e
 	return
 }
 
-func (ud *uiaDriver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hierarchy, err error) {
+func (ud *UIA2Driver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hierarchy, err error) {
 	source, err := ud.Source()
 	if err != nil {
 		return
@@ -625,7 +625,7 @@ func (ud *uiaDriver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hier
 	return
 }
 
-func (ud *uiaDriver) TapByText(text string, opts ...option.ActionOption) error {
+func (ud *UIA2Driver) TapByText(text string, opts ...option.ActionOption) error {
 	sourceTree, err := ud.sourceTree()
 	if err != nil {
 		return err
@@ -633,7 +633,7 @@ func (ud *uiaDriver) TapByText(text string, opts ...option.ActionOption) error {
 	return ud.tapByTextUsingHierarchy(sourceTree, text, opts...)
 }
 
-func (ud *uiaDriver) TapByTexts(actions ...TapTextAction) error {
+func (ud *UIA2Driver) TapByTexts(actions ...TapTextAction) error {
 	sourceTree, err := ud.sourceTree()
 	if err != nil {
 		return err
@@ -648,7 +648,7 @@ func (ud *uiaDriver) TapByTexts(actions ...TapTextAction) error {
 	return nil
 }
 
-func (ud *uiaDriver) GetDriverResults() []*DriverResult {
+func (ud *UIA2Driver) GetDriverResults() []*DriverResult {
 	defer func() {
 		ud.DriverClient.driverResults = nil
 	}()

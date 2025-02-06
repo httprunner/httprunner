@@ -38,6 +38,12 @@ func NewAndroidDeviceConfig(opts ...AndroidDeviceOption) *AndroidDeviceConfig {
 
 type AndroidDeviceOption func(*AndroidDeviceConfig)
 
+func WithDriverTypeADB() AndroidDeviceOption {
+	return func(device *AndroidDeviceConfig) {
+		device.STUB = false
+	}
+}
+
 func WithSerialNumber(serial string) AndroidDeviceOption {
 	return func(device *AndroidDeviceConfig) {
 		device.SerialNumber = serial

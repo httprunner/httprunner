@@ -175,15 +175,15 @@ func (dev *AndroidDevice) LogEnabled() bool {
 }
 
 func (dev *AndroidDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverExt, err error) {
-	driverOptions := option.NewDriverOptions(opts...)
+	options := option.NewDriverOptions(opts...)
 
 	var driver IWebDriver
 	if dev.UIA2 || dev.LogOn {
-		driver, err = dev.NewUSBDriver(driverOptions.Capabilities)
+		driver, err = dev.NewUSBDriver(options.Capabilities)
 	} else if dev.STUB {
-		driver, err = dev.NewStubDriver(driverOptions.Capabilities)
+		driver, err = dev.NewStubDriver(options.Capabilities)
 	} else {
-		driver, err = dev.NewAdbDriver()
+		driver, err = NewADBDriver(dev)
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init UIA driver")
@@ -226,7 +226,7 @@ func (dev *AndroidDevice) NewUSBDriver(capabilities option.Capabilities) (driver
 	return uiaDriver, nil
 }
 
-func (dev *AndroidDevice) NewStubDriver(capabilities option.Capabilities) (driver *stubAndroidDriver, err error) {
+func (dev *AndroidDevice) NewStubDriver(capabilities option.Capabilities) (driver *StubAndroidDriver, err error) {
 	socketLocalPort, err := dev.d.Forward(StubSocketName)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
@@ -267,13 +267,6 @@ func (dev *AndroidDevice) NewHTTPDriver(capabilities option.Capabilities) (drive
 	uiaDriver.adbClient = dev.d
 	uiaDriver.logcat = dev.logcat
 	return uiaDriver, nil
-}
-
-func (dev *AndroidDevice) NewAdbDriver() (driver IWebDriver, err error) {
-	adbDriver := NewAdbDriver()
-	adbDriver.adbClient = dev.d
-	adbDriver.logcat = dev.logcat
-	return adbDriver, nil
 }
 
 func (dev *AndroidDevice) StartPerf() error {
