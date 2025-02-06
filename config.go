@@ -5,7 +5,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 type IConfig interface {
@@ -118,8 +118,8 @@ func (c *TConfig) SetWebSocket(times, interval, timeout, size int64) *TConfig {
 	return c
 }
 
-func (c *TConfig) SetIOS(opts ...options.IOSDeviceOption) *TConfig {
-	iosOptions := options.NewIOSDeviceConfig(opts...)
+func (c *TConfig) SetIOS(opts ...option.IOSDeviceOption) *TConfig {
+	iosOptions := option.NewIOSDeviceConfig(opts...)
 	device := &uixt.IOSDevice{
 		IOSDeviceConfig: iosOptions,
 	}
@@ -139,8 +139,8 @@ func (c *TConfig) SetIOS(opts ...options.IOSDeviceOption) *TConfig {
 	return c
 }
 
-func (c *TConfig) SetHarmony(opts ...options.HarmonyDeviceOption) *TConfig {
-	harmonyOptions := options.NewHarmonyDeviceConfig(opts...)
+func (c *TConfig) SetHarmony(opts ...option.HarmonyDeviceOption) *TConfig {
+	harmonyOptions := option.NewHarmonyDeviceConfig(opts...)
 	device := &uixt.HarmonyDevice{
 		HarmonyDeviceConfig: harmonyOptions,
 	}
@@ -160,8 +160,8 @@ func (c *TConfig) SetHarmony(opts ...options.HarmonyDeviceOption) *TConfig {
 	return c
 }
 
-func (c *TConfig) SetAndroid(opts ...options.AndroidDeviceOption) *TConfig {
-	uiaOptions := options.NewAndroidDeviceConfig(opts...)
+func (c *TConfig) SetAndroid(opts ...option.AndroidDeviceOption) *TConfig {
+	uiaOptions := option.NewAndroidDeviceConfig(opts...)
 	device := &uixt.AndroidDevice{
 		AndroidDeviceConfig: uiaOptions,
 	}

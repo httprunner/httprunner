@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var (
@@ -357,9 +357,9 @@ type IDevice interface {
 	LogEnabled() bool
 
 	// TODO: add ctx to NewDriver
-	NewDriver(...options.DriverOption) (driverExt *DriverExt, err error)
+	NewDriver(...option.DriverOption) (driverExt *DriverExt, err error)
 
-	Install(appPath string, opts ...options.InstallOption) error
+	Install(appPath string, opts ...option.InstallOption) error
 	Uninstall(packageName string) error
 
 	GetPackageInfo(packageName string) (AppInfo, error)
@@ -376,7 +376,7 @@ type ForegroundApp struct {
 // IWebDriver defines methods supported by IWebDriver drivers.
 type IWebDriver interface {
 	// NewSession starts a new session and returns the SessionInfo.
-	NewSession(capabilities options.Capabilities) (SessionInfo, error)
+	NewSession(capabilities option.Capabilities) (SessionInfo, error)
 
 	// DeleteSession Kills application associated with that session and removes session
 	//  1) alertsMonitor disable
@@ -438,21 +438,21 @@ type IWebDriver interface {
 	Orientation() (orientation Orientation, err error)
 
 	// Tap Sends a tap event at the coordinate.
-	Tap(x, y float64, opts ...options.ActionOption) error
+	Tap(x, y float64, opts ...option.ActionOption) error
 
 	// DoubleTap Sends a double tap event at the coordinate.
-	DoubleTap(x, y float64, opts ...options.ActionOption) error
+	DoubleTap(x, y float64, opts ...option.ActionOption) error
 
 	// TouchAndHold Initiates a long-press gesture at the coordinate, holding for the specified duration.
 	//  second: The default value is 1
-	TouchAndHold(x, y float64, opts ...options.ActionOption) error
+	TouchAndHold(x, y float64, opts ...option.ActionOption) error
 
 	// Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
 	// WithPressDurationOption option can be used to set pressForDuration (default to 1 second).
-	Drag(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error
+	Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
 
 	// Swipe works like Drag, but `pressForDuration` value is 0
-	Swipe(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error
+	Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
 
 	// SetPasteboard Sets data to the general pasteboard
 	SetPasteboard(contentType PasteboardType, content string) error
@@ -465,10 +465,10 @@ type IWebDriver interface {
 	// SendKeys Types a string into active element. There must be element with keyboard focus,
 	// otherwise an error is raised.
 	// WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
-	SendKeys(text string, opts ...options.ActionOption) error
+	SendKeys(text string, opts ...option.ActionOption) error
 
 	// Input works like SendKeys
-	Input(text string, opts ...options.ActionOption) error
+	Input(text string, opts ...option.ActionOption) error
 
 	Clear(packageName string) error
 
@@ -476,11 +476,11 @@ type IWebDriver interface {
 	PressButton(devBtn DeviceButton) error
 
 	// PressBack Presses the back button
-	PressBack(opts ...options.ActionOption) error
+	PressBack(opts ...option.ActionOption) error
 
 	PressKeyCode(keyCode KeyCode) (err error)
 
-	Backspace(count int, opts ...options.ActionOption) (err error)
+	Backspace(count int, opts ...option.ActionOption) (err error)
 
 	Screenshot() (*bytes.Buffer, error)
 
@@ -490,7 +490,7 @@ type IWebDriver interface {
 	LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error)
 	LogoutNoneUI(packageName string) error
 
-	TapByText(text string, opts ...options.ActionOption) error
+	TapByText(text string, opts ...option.ActionOption) error
 	TapByTexts(actions ...TapTextAction) error
 
 	// AccessibleSource Return application elements accessibility tree

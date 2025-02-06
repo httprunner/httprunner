@@ -1,4 +1,4 @@
-package options
+package option
 
 type IOSDeviceConfig struct {
 	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`

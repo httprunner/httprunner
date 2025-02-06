@@ -8,8 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var (
@@ -20,14 +21,14 @@ var (
 
 func setup(t *testing.T) {
 	device, err := NewIOSDevice(
-		options.WithWDAPort(8700),
-		options.WithWDAMjpegPort(8800),
-		options.WithWDALogOn(true))
+		option.WithWDAPort(8700),
+		option.WithWDAMjpegPort(8800),
+		option.WithWDALogOn(true))
 	if err != nil {
 		t.Fatal(err)
 	}
-	capabilities := options.NewCapabilities()
-	capabilities.WithDefaultAlertAction(options.AlertActionAccept)
+	capabilities := option.NewCapabilities()
+	capabilities.WithDefaultAlertAction(option.AlertActionAccept)
 	driver, err = device.NewHTTPDriver(capabilities)
 	if err != nil {
 		t.Fatal(err)
@@ -46,7 +47,7 @@ func TestViaUSB(t *testing.T) {
 func TestInstall(t *testing.T) {
 	setup(t)
 	err := iOSDriverExt.Install("xxx.ipa",
-		options.WithRetryTimes(5))
+		option.WithRetryTimes(5))
 	log.Error().Err(err)
 	if err != nil {
 		t.Fatal(err)
@@ -55,35 +56,35 @@ func TestInstall(t *testing.T) {
 
 func TestNewIOSDevice(t *testing.T) {
 	device, _ := NewIOSDevice(
-		options.WithWDAPort(8700),
-		options.WithWDAMjpegPort(8800))
+		option.WithWDAPort(8700),
+		option.WithWDAMjpegPort(8800))
 	if device != nil {
 		t.Log(device)
 	}
 
-	device, _ = NewIOSDevice(options.WithUDID("xxxx"))
-	if device != nil {
-		t.Log(device)
-	}
-
-	device, _ = NewIOSDevice(
-		options.WithWDAPort(8700),
-		options.WithWDAMjpegPort(8800))
+	device, _ = NewIOSDevice(option.WithUDID("xxxx"))
 	if device != nil {
 		t.Log(device)
 	}
 
 	device, _ = NewIOSDevice(
-		options.WithUDID("xxxx"),
-		options.WithWDAPort(8700),
-		options.WithWDAMjpegPort(8800))
+		option.WithWDAPort(8700),
+		option.WithWDAMjpegPort(8800))
+	if device != nil {
+		t.Log(device)
+	}
+
+	device, _ = NewIOSDevice(
+		option.WithUDID("xxxx"),
+		option.WithWDAPort(8700),
+		option.WithWDAMjpegPort(8800))
 	if device != nil {
 		t.Log(device)
 	}
 }
 
 func TestIOSDevice_GetPackageInfo(t *testing.T) {
-	device, err := NewIOSDevice(options.WithWDAPort(8700))
+	device, err := NewIOSDevice(option.WithWDAPort(8700))
 	checkErr(t, err)
 	appInfo, err := device.GetPackageInfo("com.ss.iphone.ugc.Aweme")
 	checkErr(t, err)
@@ -299,7 +300,7 @@ func Test_remoteWD_Drag(t *testing.T) {
 
 	// err := driver.Drag(200, 300, 200, 500, WithDataPressDuration(0.5))
 	err := driver.Drag(200, 300, 200, 500,
-		options.WithPressDuration(2), options.WithDuration(3))
+		option.WithPressDuration(2), option.WithDuration(3))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -354,7 +355,7 @@ func Test_remoteWD_GetPasteboard(t *testing.T) {
 func Test_remoteWD_SendKeys(t *testing.T) {
 	setup(t)
 	// driver.StartCaptureLog("hrp_wda_log")
-	err := driver.SendKeys("test", options.WithIdentifier("test"))
+	err := driver.SendKeys("test", option.WithIdentifier("test"))
 	// result, _ := driver.StopCaptureLog()
 	// err := driver.SendKeys("App Store", WithFrequency(3))
 	if err != nil {

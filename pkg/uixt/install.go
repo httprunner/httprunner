@@ -9,7 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 type InstallResult struct {
@@ -18,7 +18,7 @@ type InstallResult struct {
 	ErrorMsg  string `json:"errorMsg"`
 }
 
-func (dExt *DriverExt) InstallByUrl(url string, opts ...options.InstallOption) error {
+func (dExt *DriverExt) InstallByUrl(url string, opts ...option.InstallOption) error {
 	// 获取当前目录
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -41,7 +41,7 @@ func (dExt *DriverExt) InstallByUrl(url string, opts ...options.InstallOption) e
 	return nil
 }
 
-func (dExt *DriverExt) Install(filePath string, opts ...options.InstallOption) error {
+func (dExt *DriverExt) Install(filePath string, opts ...option.InstallOption) error {
 	if _, ok := dExt.Device.(*AndroidDevice); ok {
 		stopChan := make(chan struct{})
 		go func() {
@@ -54,18 +54,18 @@ func (dExt *DriverExt) Install(filePath string, opts ...options.InstallOption) e
 					actions := []TapTextAction{
 						{
 							Text: "^.*无视风险安装$",
-							Options: []options.ActionOption{
-								options.WithTapOffset(100, 0),
-								options.WithRegex(true),
-								options.WithIgnoreNotFoundError(true),
+							Options: []option.ActionOption{
+								option.WithTapOffset(100, 0),
+								option.WithRegex(true),
+								option.WithIgnoreNotFoundError(true),
 							},
 						},
 						{
 							Text: "^已了解此应用未经检测.*",
-							Options: []options.ActionOption{
-								options.WithTapOffset(-450, 0),
-								options.WithRegex(true),
-								options.WithIgnoreNotFoundError(true),
+							Options: []option.ActionOption{
+								option.WithTapOffset(-450, 0),
+								option.WithRegex(true),
+								option.WithIgnoreNotFoundError(true),
 							},
 						},
 					}
@@ -73,8 +73,8 @@ func (dExt *DriverExt) Install(filePath string, opts ...options.InstallOption) e
 
 					_ = dExt.TapByOCR(
 						"^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|授权本次安装|稍后提醒|继续安装|重新安装|安装)$",
-						options.WithRegex(true),
-						options.WithIgnoreNotFoundError(true),
+						option.WithRegex(true),
+						option.WithIgnoreNotFoundError(true),
 					)
 				case <-stopChan:
 					log.Info().Msg("Ticker stopped")
@@ -90,8 +90,8 @@ func (dExt *DriverExt) Install(filePath string, opts ...options.InstallOption) e
 	return dExt.Device.Install(filePath, opts...)
 }
 
-func (dExt *DriverExt) Uninstall(packageName string, opts ...options.ActionOption) error {
-	actionOptions := options.NewActionOptions(opts...)
+func (dExt *DriverExt) Uninstall(packageName string, opts ...option.ActionOption) error {
+	actionOptions := option.NewActionOptions(opts...)
 	err := dExt.Device.Uninstall(packageName)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to uninstall")

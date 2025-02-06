@@ -9,7 +9,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var uninstallCmd = &cobra.Command{
@@ -34,7 +34,7 @@ var uninstallCmd = &cobra.Command{
 			return err
 		}
 
-		device, err := uixt.NewIOSDevice(options.WithUDID(udid))
+		device, err := uixt.NewIOSDevice(option.WithUDID(udid))
 		if err != nil {
 			fmt.Println(err)
 			return err

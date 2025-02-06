@@ -5,9 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func tapHandler(c *gin.Context) {
@@ -22,7 +23,7 @@ func tapHandler(c *gin.Context) {
 		return
 	}
 
-	var actionOptions []options.ActionOption
+	var actionOptions []option.ActionOption
 	if tapReq.Options != nil {
 		actionOptions = tapReq.Options.Options()
 	}
@@ -82,7 +83,7 @@ func dragHandler(c *gin.Context) {
 		return
 	}
 
-	var actionOptions []options.ActionOption
+	var actionOptions []option.ActionOption
 	if dragReq.Options != nil {
 		actionOptions = dragReq.Options.Options()
 	}
@@ -140,7 +141,7 @@ func inputHandler(c *gin.Context) {
 	}
 
 	err = dExt.Driver.SendKeys(inputReq.Text,
-		options.WithFrequency(inputReq.Frequency))
+		option.WithFrequency(inputReq.Frequency))
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to input text %s", c.HandlerName(), inputReq.Text))
 		c.JSON(http.StatusInternalServerError,

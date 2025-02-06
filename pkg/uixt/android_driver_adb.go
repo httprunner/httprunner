@@ -24,7 +24,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/utf7"
 	"github.com/httprunner/httprunner/v5/pkg/gadb"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 const (
@@ -79,7 +79,7 @@ func (ad *adbDriver) runShellCommand(cmd string, args ...string) (output string,
 	return output, err
 }
 
-func (ad *adbDriver) NewSession(capabilities options.Capabilities) (sessionInfo SessionInfo, err error) {
+func (ad *adbDriver) NewSession(capabilities option.Capabilities) (sessionInfo SessionInfo, err error) {
 	ad.Driver.session.Reset()
 	err = errDriverNotImplemented
 	return
@@ -193,7 +193,7 @@ func (ad *adbDriver) GetTimestamp() (timestamp int64, err error) {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (ad *adbDriver) PressBack(opts ...options.ActionOption) (err error) {
+func (ad *adbDriver) PressBack(opts ...option.ActionOption) (err error) {
 	// adb shell input keyevent 4
 	_, err = ad.runShellCommand("input", "keyevent", fmt.Sprintf("%d", KCBack))
 	if err != nil {
@@ -294,7 +294,7 @@ func (ad *adbDriver) Unlock() (err error) {
 	return ad.Swipe(500, 1500, 500, 500)
 }
 
-func (ad *adbDriver) Backspace(count int, opts ...options.ActionOption) (err error) {
+func (ad *adbDriver) Backspace(count int, opts ...option.ActionOption) (err error) {
 	if count == 0 {
 		return nil
 	}
@@ -370,8 +370,8 @@ func (ad *adbDriver) AppTerminate(packageName string) (successful bool, err erro
 	return true, nil
 }
 
-func (ad *adbDriver) Tap(x, y float64, opts ...options.ActionOption) error {
-	actionOptions := options.NewActionOptions(opts...)
+func (ad *adbDriver) Tap(x, y float64, opts ...option.ActionOption) error {
+	actionOptions := option.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 2 {
 		x += float64(actionOptions.Offset[0])
@@ -391,7 +391,7 @@ func (ad *adbDriver) Tap(x, y float64, opts ...options.ActionOption) error {
 	return nil
 }
 
-func (ad *adbDriver) DoubleTap(x, y float64, opts ...options.ActionOption) error {
+func (ad *adbDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
@@ -409,8 +409,8 @@ func (ad *adbDriver) DoubleTap(x, y float64, opts ...options.ActionOption) error
 	return nil
 }
 
-func (ad *adbDriver) TouchAndHold(x, y float64, opts ...options.ActionOption) (err error) {
-	actionOptions := options.NewActionOptions(opts...)
+func (ad *adbDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
+	actionOptions := option.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 2 {
 		x += float64(actionOptions.Offset[0])
@@ -435,8 +435,8 @@ func (ad *adbDriver) TouchAndHold(x, y float64, opts ...options.ActionOption) (e
 	return nil
 }
 
-func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, opts ...options.ActionOption) (err error) {
-	actionOptions := options.NewActionOptions(opts...)
+func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
+	actionOptions := option.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 4 {
 		fromX += float64(actionOptions.Offset[0])
@@ -469,8 +469,8 @@ func (ad *adbDriver) Drag(fromX, fromY, toX, toY float64, opts ...options.Action
 	return nil
 }
 
-func (ad *adbDriver) Swipe(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error {
-	actionOptions := options.NewActionOptions(opts...)
+func (ad *adbDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	actionOptions := option.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 4 {
 		fromX += float64(actionOptions.Offset[0])
@@ -514,7 +514,7 @@ func (ad *adbDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffe
 	return
 }
 
-func (ad *adbDriver) SendKeys(text string, opts ...options.ActionOption) (err error) {
+func (ad *adbDriver) SendKeys(text string, opts ...option.ActionOption) (err error) {
 	err = ad.SendUnicodeKeys(text, opts...)
 	if err == nil {
 		return
@@ -523,7 +523,7 @@ func (ad *adbDriver) SendKeys(text string, opts ...options.ActionOption) (err er
 	return
 }
 
-func (ad *adbDriver) InputText(text string, opts ...options.ActionOption) error {
+func (ad *adbDriver) InputText(text string, opts ...option.ActionOption) error {
 	// adb shell input text <text>
 	_, err := ad.runShellCommand("input", "text", text)
 	if err != nil {
@@ -532,7 +532,7 @@ func (ad *adbDriver) InputText(text string, opts ...options.ActionOption) error 
 	return nil
 }
 
-func (ad *adbDriver) SendUnicodeKeys(text string, opts ...options.ActionOption) (err error) {
+func (ad *adbDriver) SendUnicodeKeys(text string, opts ...option.ActionOption) (err error) {
 	// If the Unicode IME is not installed, fall back to the old interface.
 	// There might be differences in the tracking schemes across different phones, and it is pending further verification.
 	// In release version: without the Unicode IME installed, the test cannot execute.
@@ -619,7 +619,7 @@ func (ad *adbDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 	return
 }
 
-func (ad *adbDriver) Input(text string, opts ...options.ActionOption) (err error) {
+func (ad *adbDriver) Input(text string, opts ...option.ActionOption) (err error) {
 	return ad.SendKeys(text, opts...)
 }
 
@@ -694,7 +694,7 @@ func (ad *adbDriver) sourceTree(srcOpt ...SourceOption) (sourceTree *Hierarchy, 
 	return
 }
 
-func (ad *adbDriver) TapByText(text string, opts ...options.ActionOption) error {
+func (ad *adbDriver) TapByText(text string, opts ...option.ActionOption) error {
 	sourceTree, err := ad.sourceTree()
 	if err != nil {
 		return err
@@ -702,9 +702,9 @@ func (ad *adbDriver) TapByText(text string, opts ...options.ActionOption) error 
 	return ad.tapByTextUsingHierarchy(sourceTree, text, opts...)
 }
 
-func (ad *adbDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, opts ...options.ActionOption) error {
+func (ad *adbDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, opts ...option.ActionOption) error {
 	bounds := ad.searchNodes(hierarchy.Layout, text, opts...)
-	actionOptions := options.NewActionOptions(opts...)
+	actionOptions := option.NewActionOptions(opts...)
 	if len(bounds) == 0 {
 		if actionOptions.IgnoreNotFoundError {
 			log.Info().Msg("not found element by text " + text)
@@ -737,8 +737,8 @@ func (ad *adbDriver) TapByTexts(actions ...TapTextAction) error {
 	return nil
 }
 
-func (ad *adbDriver) searchNodes(nodes []Layout, text string, opts ...options.ActionOption) []Bounds {
-	actionOptions := options.NewActionOptions(opts...)
+func (ad *adbDriver) searchNodes(nodes []Layout, text string, opts ...option.ActionOption) []Bounds {
+	actionOptions := option.NewActionOptions(opts...)
 	var results []Bounds
 	for _, node := range nodes {
 		result := ad.searchNodes(node.Layout, text, opts...)

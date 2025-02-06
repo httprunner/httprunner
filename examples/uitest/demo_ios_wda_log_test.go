@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func TestWDALog(t *testing.T) {
@@ -16,9 +16,9 @@ func TestWDALog(t *testing.T) {
 				"app_name": "抖音",
 			}).
 			SetIOS(
-				options.WithWDALogOn(true),
-				options.WithWDAPort(8700),
-				options.WithWDAMjpegPort(8800),
+				option.WithWDALogOn(true),
+				option.WithWDAPort(8700),
+				option.WithWDAMjpegPort(8800),
 			),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
@@ -26,24 +26,24 @@ func TestWDALog(t *testing.T) {
 				Home().
 				AppTerminate("com.ss.iphone.ugc.Aweme"). // 关闭已运行的抖音
 				SwipeToTapApp("$app_name",
-					options.WithMaxRetryTimes(5),
-					options.WithIdentifier("启动抖音")).Sleep(5).
+					option.WithMaxRetryTimes(5),
+					option.WithIdentifier("启动抖音")).Sleep(5).
 				Validate().
 				AssertOCRExists("推荐", "抖音启动失败，「推荐」不存在"),
 			hrp.NewStep("处理青少年弹窗").
 				IOS().
-				TapByOCR("我知道了", options.WithIgnoreNotFoundError(true)),
+				TapByOCR("我知道了", option.WithIgnoreNotFoundError(true)),
 			hrp.NewStep("进入购物页").
-				IOS().TapByOCR("商城", options.WithIdentifier("点击商城")).Sleep(5),
+				IOS().TapByOCR("商城", option.WithIdentifier("点击商城")).Sleep(5),
 			hrp.NewStep("进入推荐页").
-				IOS().TapByOCR("推荐", options.WithIdentifier("点击推荐")).Sleep(5),
+				IOS().TapByOCR("推荐", option.WithIdentifier("点击推荐")).Sleep(5),
 			hrp.NewStep("向上滑动 2 次").
 				IOS().
-				SwipeUp(options.WithIdentifier("第 1 次上划")).Sleep(2).
-				SwipeUp(options.WithIdentifier("第 2 次上划")).Sleep(2).
-				SwipeUp(options.WithIdentifier("第 3 次上划")).Sleep(2).
-				TapXY(0.9, 0.1, options.WithIdentifier("点击进入搜索框")).Sleep(2).
-				Input("httprunner", options.WithIdentifier("输入搜索关键词")),
+				SwipeUp(option.WithIdentifier("第 1 次上划")).Sleep(2).
+				SwipeUp(option.WithIdentifier("第 2 次上划")).Sleep(2).
+				SwipeUp(option.WithIdentifier("第 3 次上划")).Sleep(2).
+				TapXY(0.9, 0.1, option.WithIdentifier("点击进入搜索框")).Sleep(2).
+				Input("httprunner", option.WithIdentifier("输入搜索关键词")),
 		},
 	}
 

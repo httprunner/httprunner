@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func TestAndroidLiveSwipeTest(t *testing.T) {
@@ -15,7 +15,7 @@ func TestAndroidLiveSwipeTest(t *testing.T) {
 			WithVariables(map[string]interface{}{
 				"device": "${ENV(SerialNumber)}",
 			}).
-			SetAndroid(options.WithSerialNumber("$device")),
+			SetAndroid(option.WithSerialNumber("$device")),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				Android().
@@ -26,10 +26,10 @@ func TestAndroidLiveSwipeTest(t *testing.T) {
 				AssertAppInForeground("com.ss.android.ugc.aweme"),
 			hrp.NewStep("处理青少年弹窗").
 				Android().
-				TapByOCR("我知道了", options.WithIgnoreNotFoundError(true)),
+				TapByOCR("我知道了", option.WithIgnoreNotFoundError(true)),
 			hrp.NewStep("在推荐页上划，直到出现「点击进入直播间」").
 				Android().
-				SwipeToTapText("点击进入直播间", options.WithMaxRetryTimes(10), options.WithIdentifier("进入直播间")),
+				SwipeToTapText("点击进入直播间", option.WithMaxRetryTimes(10), option.WithIdentifier("进入直播间")),
 			hrp.NewStep("滑动 Feed 5 次，60% 随机间隔 0-5s，40% 随机间隔 5-10s").
 				Loop(5).
 				Android().
@@ -37,8 +37,8 @@ func TestAndroidLiveSwipeTest(t *testing.T) {
 				SleepRandom(0, 5, 0.6, 5, 10, 0.4),
 			hrp.NewStep("向上滑动，等待 10s").
 				Android().
-				SwipeUp(options.WithIdentifier("第一次上划")).Sleep(5).ScreenShot(). // 上划 1 次，等待 5s，截图保存
-				SwipeUp(options.WithIdentifier("第二次上划")).Sleep(5).ScreenShot(), // 再上划 1 次，等待 5s，截图保存
+				SwipeUp(option.WithIdentifier("第一次上划")).Sleep(5).ScreenShot(). // 上划 1 次，等待 5s，截图保存
+				SwipeUp(option.WithIdentifier("第二次上划")).Sleep(5).ScreenShot(), // 再上划 1 次，等待 5s，截图保存
 			hrp.NewStep("exit").
 				Android().
 				AppTerminate("com.ss.android.ugc.aweme").

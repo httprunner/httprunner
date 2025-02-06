@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var (
@@ -60,7 +60,7 @@ func TestDriver_NewSession(t *testing.T) {
 	firstMatchEntry := make(map[string]interface{})
 	firstMatchEntry["package"] = "com.android.settings"
 	firstMatchEntry["activity"] = "com.android.settings/.Settings"
-	caps := options.Capabilities{
+	caps := option.Capabilities{
 		"firstMatch":  []interface{}{firstMatchEntry},
 		"alwaysMatch": struct{}{},
 	}
@@ -221,8 +221,8 @@ func TestDriver_Tap(t *testing.T) {
 	setupAndroidUIA2Driver(t)
 	driverExt.Driver.StartCaptureLog("")
 	err := driverExt.TapXY(0.5, 0.5,
-		options.WithIdentifier("test"),
-		options.WithPressDuration(4))
+		option.WithIdentifier("test"),
+		option.WithPressDuration(4))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -240,7 +240,7 @@ func TestDriver_Tap(t *testing.T) {
 func TestDriver_Swipe(t *testing.T) {
 	setupAndroidUIA2Driver(t)
 	err := driverExt.Driver.Swipe(400, 1000, 400, 500,
-		options.WithPressDuration(0.5))
+		option.WithPressDuration(0.5))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -277,7 +277,7 @@ func TestDriver_SendKeys(t *testing.T) {
 	setupAndroidUIA2Driver(t)
 
 	err := driverExt.Driver.SendKeys("辽宁省沈阳市新民市民族街36-4",
-		options.WithIdentifier("test"))
+		option.WithIdentifier("test"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -500,25 +500,25 @@ func TestTapTexts(t *testing.T) {
 	actions := []TapTextAction{
 		{
 			Text: "^.*无视风险安装$",
-			Options: []options.ActionOption{
-				options.WithTapOffset(100, 0),
-				options.WithRegex(true),
-				options.WithIgnoreNotFoundError(true),
+			Options: []option.ActionOption{
+				option.WithTapOffset(100, 0),
+				option.WithRegex(true),
+				option.WithIgnoreNotFoundError(true),
 			},
 		},
 		{
 			Text: "已了解此应用未经检测.*",
-			Options: []options.ActionOption{
-				options.WithTapOffset(-450, 0),
-				options.WithRegex(true),
-				options.WithIgnoreNotFoundError(true),
+			Options: []option.ActionOption{
+				option.WithTapOffset(-450, 0),
+				option.WithRegex(true),
+				option.WithIgnoreNotFoundError(true),
 			},
 		},
 		{
 			Text: "^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|安装|授权本次安装|继续安装|重新安装)$",
-			Options: []options.ActionOption{
-				options.WithRegex(true),
-				options.WithIgnoreNotFoundError(true),
+			Options: []option.ActionOption{
+				option.WithRegex(true),
+				option.WithIgnoreNotFoundError(true),
 			},
 		},
 	}

@@ -1,4 +1,4 @@
-package options
+package option
 
 type AndroidDeviceConfig struct {
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`

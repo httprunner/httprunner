@@ -1,4 +1,4 @@
-package options
+package option
 
 type AlertAction string
 

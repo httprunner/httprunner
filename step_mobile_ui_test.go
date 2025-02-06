@@ -5,13 +5,13 @@ package hrp
 import (
 	"testing"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func TestIOSSettingsAction(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("ios ui action on Settings").
-			SetIOS(options.WithWDAPort(8700), options.WithWDAMjpegPort(8800)),
+			SetIOS(option.WithWDAPort(8700), option.WithWDAMjpegPort(8800)),
 		TestSteps: []IStep{
 			NewStep("launch Settings").
 				IOS().Home().Tap("设置").
@@ -50,7 +50,7 @@ func TestIOSSearchApp(t *testing.T) {
 func TestIOSAppLaunch(t *testing.T) {
 	testCase := &TestCase{
 		Config: NewConfig("启动 & 关闭 App").
-			SetIOS(options.WithWDAPort(8700), options.WithWDAMjpegPort(8800)),
+			SetIOS(option.WithWDAPort(8700), option.WithWDAMjpegPort(8800)),
 		TestSteps: []IStep{
 			NewStep("终止今日头条").
 				IOS().AppTerminate("com.ss.iphone.article.News"),

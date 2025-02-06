@@ -9,22 +9,22 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func TestIOSDemo(t *testing.T) {
 	device, err := uixt.NewIOSDevice(
-		options.WithWDAPort(8700),
-		options.WithWDAMjpegPort(8800),
-		options.WithResetHomeOnStartup(false), // not reset home on startup
+		option.WithWDAPort(8700),
+		option.WithWDAMjpegPort(8800),
+		option.WithResetHomeOnStartup(false), // not reset home on startup
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	capabilities := options.NewCapabilities()
-	capabilities.WithDefaultAlertAction(options.AlertActionAccept) // or uixt.AlertActionDismiss
-	driverExt, err := device.NewDriver(options.WithDriverCapabilities(capabilities))
+	capabilities := option.NewCapabilities()
+	capabilities.WithDefaultAlertAction(option.AlertActionAccept) // or uixt.AlertActionDismiss
+	driverExt, err := device.NewDriver(option.WithDriverCapabilities(capabilities))
 	if err != nil {
 		t.Fatal(err)
 	}

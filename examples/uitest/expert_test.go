@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func TestAndroidExpertTest(t *testing.T) {
@@ -17,9 +17,9 @@ func TestAndroidExpertTest(t *testing.T) {
 				"app_name":  "抖音",
 			}).
 			SetAndroid(
-				options.WithSerialNumber("$device"),
-				options.WithAdbLogOn(true),
-				options.WithUIA2(true),
+				option.WithSerialNumber("$device"),
+				option.WithAdbLogOn(true),
+				option.WithUIA2(true),
 			),
 		TestSteps: []hrp.IStep{
 			// 温启动
@@ -44,11 +44,11 @@ func TestAndroidExpertTest(t *testing.T) {
 				Android().
 				SwipeToTapTexts(
 					[]string{"直播", "直播中", "点击进入直播间"},
-					options.WithCustomDirection(0.5, 0.7, 0.5, 0.3),
-					options.WithScope(0.2, 0.2, 1, 0.8),
-					options.WithMaxRetryTimes(50),
-					options.WithWaitTime(1.5),
-					options.WithIdentifier("click_live"),
+					option.WithCustomDirection(0.5, 0.7, 0.5, 0.3),
+					option.WithScope(0.2, 0.2, 1, 0.8),
+					option.WithMaxRetryTimes(50),
+					option.WithWaitTime(1.5),
+					option.WithIdentifier("click_live"),
 				),
 			hrp.NewStep("sleep 10s").
 				Android().
@@ -57,7 +57,7 @@ func TestAndroidExpertTest(t *testing.T) {
 				Android().
 				Swipe(
 					0.5, 0.7, 0.5, 0.3,
-					options.WithIdentifier("slide_in_live"),
+					option.WithIdentifier("slide_in_live"),
 				).
 				Sleep(5).
 				Back().
@@ -67,22 +67,22 @@ func TestAndroidExpertTest(t *testing.T) {
 				Android().
 				TapXY(
 					0.9, 0.08,
-					options.WithIdentifier("click_search_in_middle_page"),
+					option.WithIdentifier("click_search_in_middle_page"),
 				).
 				Sleep(5),
 			hrp.NewStep("【搜索】输入query词 input").
 				Android().
 				Input(
 					"$query",
-					options.WithIdentifier("input_query"),
+					option.WithIdentifier("input_query"),
 				).
 				Sleep(5),
 			hrp.NewStep("【搜索】点击搜索按钮 tap_ocr 自定义配置").
 				Android().
 				TapByOCR(
 					"搜索",
-					options.WithIdentifier("click_search_after_input_query"),
-					options.WithIndex(0),
+					option.WithIdentifier("click_search_after_input_query"),
+					option.WithIndex(0),
 				).
 				Sleep(5),
 			hrp.NewStep("选择直播页签 tap_ocr 默认配置").
@@ -97,8 +97,8 @@ func TestAndroidExpertTest(t *testing.T) {
 			hrp.NewStep("【生活服务】点击货架商品 tap_ocr 自定义配置").
 				Android().
 				TapByUITypes(
-					options.WithScreenShotUITypes("dyhouse", "shoppingbag"),
-					options.WithIdentifier("click_sales_rack"),
+					option.WithScreenShotUITypes("dyhouse", "shoppingbag"),
+					option.WithIdentifier("click_sales_rack"),
 				).
 				Sleep(5),
 			// 冷启动
@@ -111,13 +111,13 @@ func TestAndroidExpertTest(t *testing.T) {
 			hrp.NewStep("home 以及 swipe_to_tap_app 自定义配置").
 				Android().
 				Home().
-				SwipeToTapApp("$app_name", options.WithMaxRetryTimes(5), options.WithInterval(1), options.WithTapOffset(0, -50)).
+				SwipeToTapApp("$app_name", option.WithMaxRetryTimes(5), option.WithInterval(1), option.WithTapOffset(0, -50)).
 				Sleep(10),
 			hrp.NewStep("处理弹窗 close_popups 自定义配置 以及 ui_ocr exists 断言").
 				Android().
 				ClosePopups(
-					options.WithMaxRetryTimes(3),
-					options.WithInterval(2),
+					option.WithMaxRetryTimes(3),
+					option.WithInterval(2),
 				).
 				Validate().
 				AssertOCRExists("推荐", "进入抖音失败"),
@@ -127,7 +127,7 @@ func TestAndroidExpertTest(t *testing.T) {
 				Home().
 				AppTerminate("$bundle_id").
 				Sleep(3).
-				SwipeToTapApp("local", options.WithMaxRetryTimes(5)).Sleep(10),
+				SwipeToTapApp("local", option.WithMaxRetryTimes(5)).Sleep(10),
 			hrp.NewStep("screeshot 以及 sleep_random").
 				Loop(3).
 				Android().
@@ -151,10 +151,10 @@ func TestIOSExpertTest(t *testing.T) {
 				"app_name":  "抖音",
 			}).
 			SetIOS(
-				options.WithUDID("$device"),
-				options.WithWDALogOn(true),
-				options.WithWDAPort(8700),
-				options.WithWDAMjpegPort(8800),
+				option.WithUDID("$device"),
+				option.WithWDALogOn(true),
+				option.WithWDAPort(8700),
+				option.WithWDAMjpegPort(8800),
 			),
 		TestSteps: []hrp.IStep{
 			// 温启动
@@ -178,11 +178,11 @@ func TestIOSExpertTest(t *testing.T) {
 				IOS().
 				SwipeToTapTexts(
 					[]string{"直播", "直播中", "点击进入直播间"},
-					options.WithCustomDirection(0.5, 0.7, 0.5, 0.3),
-					options.WithScope(0.2, 0.2, 1, 0.8),
-					options.WithMaxRetryTimes(50),
-					options.WithWaitTime(1.5),
-					options.WithIdentifier("click_live"),
+					option.WithCustomDirection(0.5, 0.7, 0.5, 0.3),
+					option.WithScope(0.2, 0.2, 1, 0.8),
+					option.WithMaxRetryTimes(50),
+					option.WithWaitTime(1.5),
+					option.WithIdentifier("click_live"),
 				),
 			hrp.NewStep("sleep 10s").
 				IOS().
@@ -191,7 +191,7 @@ func TestIOSExpertTest(t *testing.T) {
 				IOS().
 				Swipe(
 					0.5, 0.7, 0.5, 0.3,
-					options.WithIdentifier("slide_in_live"),
+					option.WithIdentifier("slide_in_live"),
 				).
 				Sleep(5).
 				Back().
@@ -201,22 +201,22 @@ func TestIOSExpertTest(t *testing.T) {
 				IOS().
 				TapXY(
 					0.9, 0.075,
-					options.WithIdentifier("click_search_in_middle_page"),
+					option.WithIdentifier("click_search_in_middle_page"),
 				).
 				Sleep(5),
 			hrp.NewStep("【搜索】输入query词 input").
 				IOS().
 				Input(
 					"$query",
-					options.WithIdentifier("input_query"),
+					option.WithIdentifier("input_query"),
 				).
 				Sleep(5),
 			hrp.NewStep("【搜索】点击搜索按钮 tap_ocr 自定义配置").
 				IOS().
 				TapByOCR(
 					"搜索",
-					options.WithIdentifier("click_search_after_input_query"),
-					options.WithIndex(0),
+					option.WithIdentifier("click_search_after_input_query"),
+					option.WithIndex(0),
 				).
 				Sleep(5),
 			// 生活服务赛道
@@ -231,8 +231,8 @@ func TestIOSExpertTest(t *testing.T) {
 			hrp.NewStep("【生活服务】点击货架商品 tap_ocr 自定义配置").
 				IOS().
 				TapByUITypes(
-					options.WithScreenShotUITypes("dyhouse", "shoppingbag"),
-					options.WithIdentifier("click_sales_rack"),
+					option.WithScreenShotUITypes("dyhouse", "shoppingbag"),
+					option.WithIdentifier("click_sales_rack"),
 				).
 				Sleep(5),
 			// 冷启动
@@ -244,13 +244,13 @@ func TestIOSExpertTest(t *testing.T) {
 			hrp.NewStep("home 以及 swipe_to_tap_app 自定义配置").
 				IOS().
 				Home().
-				SwipeToTapApp("$app_name", options.WithMaxRetryTimes(5), options.WithInterval(1), options.WithTapOffset(0, -50)).
+				SwipeToTapApp("$app_name", option.WithMaxRetryTimes(5), option.WithInterval(1), option.WithTapOffset(0, -50)).
 				Sleep(10),
 			hrp.NewStep("处理弹窗 close_popups 自定义配置 以及 ui_ocr exists 断言").
 				IOS().
 				ClosePopups(
-					options.WithMaxRetryTimes(3),
-					options.WithInterval(2),
+					option.WithMaxRetryTimes(3),
+					option.WithInterval(2),
 				).
 				Validate().
 				AssertOCRExists("推荐", "进入抖音失败"),
@@ -260,7 +260,7 @@ func TestIOSExpertTest(t *testing.T) {
 				Home().
 				AppTerminate("$bundle_id").
 				Sleep(3).
-				SwipeToTapApp("local", options.WithMaxRetryTimes(5)).Sleep(10),
+				SwipeToTapApp("local", option.WithMaxRetryTimes(5)).Sleep(10),
 			hrp.NewStep("screeshot 以及 sleep_random").
 				Loop(3).
 				IOS().

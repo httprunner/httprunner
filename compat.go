@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
-	"github.com/pkg/errors"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 // ConvertCaseCompatibility converts TestCase compatible with Golang engine style
@@ -135,7 +136,7 @@ func convertCompatMobileStep(mobileUI *MobileUI) {
 	}
 	for i := 0; i < len(mobileUI.Actions); i++ {
 		ma := mobileUI.Actions[i]
-		actionOptions := options.NewActionOptions(ma.GetOptions()...)
+		actionOptions := option.NewActionOptions(ma.GetOptions()...)
 		// append tap_cv params to screenshot_with_ui_types option
 		if ma.Method == uixt.ACTION_TapByCV {
 			uiTypes, _ := builtin.ConvertToStringSlice(ma.Params)

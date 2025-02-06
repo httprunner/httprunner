@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 type stubIOSDriver struct {
@@ -38,8 +39,8 @@ func newStubIOSDriver(bightInsightAddr, serverAddr string, dev *IOSDevice, readT
 
 func (s *stubIOSDriver) setUpWda() (err error) {
 	if s.wdaDriver == nil {
-		capabilities := options.NewCapabilities()
-		capabilities.WithDefaultAlertAction(options.AlertActionAccept)
+		capabilities := option.NewCapabilities()
+		capabilities.WithDefaultAlertAction(option.AlertActionAccept)
 		driver, err := s.device.NewHTTPDriver(capabilities)
 		if err != nil {
 			log.Error().Err(err).Msg("stub driver failed to init wda driver")
@@ -51,7 +52,7 @@ func (s *stubIOSDriver) setUpWda() (err error) {
 }
 
 // NewSession starts a new session and returns the SessionInfo.
-func (s *stubIOSDriver) NewSession(capabilities options.Capabilities) (SessionInfo, error) {
+func (s *stubIOSDriver) NewSession(capabilities option.Capabilities) (SessionInfo, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return SessionInfo{}, err
@@ -220,7 +221,7 @@ func (s *stubIOSDriver) Orientation() (orientation Orientation, err error) {
 }
 
 // Tap Sends a tap event at the coordinate.
-func (s *stubIOSDriver) Tap(x, y float64, opts ...options.ActionOption) error {
+func (s *stubIOSDriver) Tap(x, y float64, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -229,7 +230,7 @@ func (s *stubIOSDriver) Tap(x, y float64, opts ...options.ActionOption) error {
 }
 
 // DoubleTap Sends a double tap event at the coordinate.
-func (s *stubIOSDriver) DoubleTap(x, y float64, opts ...options.ActionOption) error {
+func (s *stubIOSDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -240,7 +241,7 @@ func (s *stubIOSDriver) DoubleTap(x, y float64, opts ...options.ActionOption) er
 // TouchAndHold Initiates a long-press gesture at the coordinate, holding for the specified duration.
 //
 //	second: The default value is 1
-func (s *stubIOSDriver) TouchAndHold(x, y float64, opts ...options.ActionOption) error {
+func (s *stubIOSDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -250,7 +251,7 @@ func (s *stubIOSDriver) TouchAndHold(x, y float64, opts ...options.ActionOption)
 
 // Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
 // WithPressDurationOption option can be used to set pressForDuration (default to 1 second).
-func (s *stubIOSDriver) Drag(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error {
+func (s *stubIOSDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -289,7 +290,7 @@ func (s *stubIOSDriver) SetIme(ime string) error {
 // SendKeys Types a string into active element. There must be element with keyboard focus,
 // otherwise an error is raised.
 // WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
-func (s *stubIOSDriver) SendKeys(text string, opts ...options.ActionOption) error {
+func (s *stubIOSDriver) SendKeys(text string, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -298,7 +299,7 @@ func (s *stubIOSDriver) SendKeys(text string, opts ...options.ActionOption) erro
 }
 
 // Input works like SendKeys
-func (s *stubIOSDriver) Input(text string, opts ...options.ActionOption) error {
+func (s *stubIOSDriver) Input(text string, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -324,7 +325,7 @@ func (s *stubIOSDriver) PressButton(devBtn DeviceButton) error {
 }
 
 // PressBack Presses the back button
-func (s *stubIOSDriver) PressBack(opts ...options.ActionOption) error {
+func (s *stubIOSDriver) PressBack(opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -361,7 +362,7 @@ func (s *stubIOSDriver) Screenshot() (*bytes.Buffer, error) {
 	//return bytes.NewBuffer(imageBytes), nil
 }
 
-func (s *stubIOSDriver) TapByText(text string, opts ...options.ActionOption) error {
+func (s *stubIOSDriver) TapByText(text string, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err

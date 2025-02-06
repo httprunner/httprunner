@@ -24,7 +24,7 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/json"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 type wdaDriver struct {
@@ -37,8 +37,8 @@ type wdaDriver struct {
 }
 
 func (wd *wdaDriver) resetSession() error {
-	capabilities := options.NewCapabilities()
-	capabilities.WithDefaultAlertAction(options.AlertActionAccept)
+	capabilities := option.NewCapabilities()
+	capabilities.WithDefaultAlertAction(option.AlertActionAccept)
 
 	data := map[string]interface{}{
 		"capabilities": map[string]interface{}{
@@ -116,7 +116,7 @@ func (wd *wdaDriver) GetMjpegClient() *http.Client {
 	return wd.mjpegClient
 }
 
-func (wd *wdaDriver) NewSession(capabilities options.Capabilities) (sessionInfo SessionInfo, err error) {
+func (wd *wdaDriver) NewSession(capabilities option.Capabilities) (sessionInfo SessionInfo, err error) {
 	// [[FBRoute POST:@"/session"].withoutSession respondWithTarget:self action:@selector(handleCreateSession:)]
 	data := make(map[string]interface{})
 	if len(capabilities) == 0 {
@@ -508,9 +508,9 @@ func (wd *wdaDriver) AssertForegroundApp(bundleId string, viewControllerType ...
 	return nil
 }
 
-func (wd *wdaDriver) Tap(x, y float64, opts ...options.ActionOption) (err error) {
+func (wd *wdaDriver) Tap(x, y float64, opts ...option.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
-	actionOptions := options.NewActionOptions(opts...)
+	actionOptions := option.NewActionOptions(opts...)
 
 	x = wd.toScale(x)
 	y = wd.toScale(y)
@@ -532,9 +532,9 @@ func (wd *wdaDriver) Tap(x, y float64, opts ...options.ActionOption) (err error)
 	return
 }
 
-func (wd *wdaDriver) DoubleTap(x, y float64, opts ...options.ActionOption) (err error) {
+func (wd *wdaDriver) DoubleTap(x, y float64, opts ...option.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
-	actionOptions := options.NewActionOptions(opts...)
+	actionOptions := option.NewActionOptions(opts...)
 	x = wd.toScale(x)
 	y = wd.toScale(y)
 	if len(actionOptions.Offset) == 2 {
@@ -552,17 +552,17 @@ func (wd *wdaDriver) DoubleTap(x, y float64, opts ...options.ActionOption) (err 
 	return
 }
 
-func (wd *wdaDriver) TouchAndHold(x, y float64, opts ...options.ActionOption) (err error) {
-	actionOptions := options.NewActionOptions(opts...)
+func (wd *wdaDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
+	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.Duration == 0 {
-		opts = append(opts, options.WithDuration(1))
+		opts = append(opts, option.WithDuration(1))
 	}
 	return wd.Tap(x, y, opts...)
 }
 
-func (wd *wdaDriver) Drag(fromX, fromY, toX, toY float64, opts ...options.ActionOption) (err error) {
+func (wd *wdaDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
-	actionOptions := options.NewActionOptions(opts...)
+	actionOptions := option.NewActionOptions(opts...)
 
 	fromX = wd.toScale(fromX)
 	fromY = wd.toScale(fromY)
@@ -597,7 +597,7 @@ func (wd *wdaDriver) Drag(fromX, fromY, toX, toY float64, opts ...options.Action
 	return
 }
 
-func (wd *wdaDriver) Swipe(fromX, fromY, toX, toY float64, opts ...options.ActionOption) error {
+func (wd *wdaDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	return wd.Drag(fromX, fromY, toX, toY, opts...)
 }
 
@@ -632,9 +632,9 @@ func (wd *wdaDriver) PressKeyCode(keyCode KeyCode) (err error) {
 	return errDriverNotImplemented
 }
 
-func (wd *wdaDriver) SendKeys(text string, opts ...options.ActionOption) (err error) {
+func (wd *wdaDriver) SendKeys(text string, opts ...option.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
-	actionOptions := options.NewActionOptions(opts...)
+	actionOptions := option.NewActionOptions(opts...)
 	data := map[string]interface{}{"value": strings.Split(text, "")}
 
 	// new data options in post data for extra WDA configurations
@@ -644,11 +644,11 @@ func (wd *wdaDriver) SendKeys(text string, opts ...options.ActionOption) (err er
 	return
 }
 
-func (wd *wdaDriver) Backspace(count int, opts ...options.ActionOption) (err error) {
+func (wd *wdaDriver) Backspace(count int, opts ...option.ActionOption) (err error) {
 	if count == 0 {
 		return nil
 	}
-	actionOptions := options.NewActionOptions(opts...)
+	actionOptions := option.NewActionOptions(opts...)
 	data := map[string]interface{}{"count": count}
 
 	// new data options in post data for extra WDA configurations
@@ -658,7 +658,7 @@ func (wd *wdaDriver) Backspace(count int, opts ...options.ActionOption) (err err
 	return
 }
 
-func (wd *wdaDriver) Input(text string, opts ...options.ActionOption) (err error) {
+func (wd *wdaDriver) Input(text string, opts ...option.ActionOption) (err error) {
 	return wd.SendKeys(text, opts...)
 }
 
@@ -667,8 +667,8 @@ func (wd *wdaDriver) Clear(packageName string) error {
 }
 
 // PressBack simulates a short press on the BACK button.
-func (wd *wdaDriver) PressBack(opts ...options.ActionOption) (err error) {
-	actionOptions := options.NewActionOptions(opts...)
+func (wd *wdaDriver) PressBack(opts ...option.ActionOption) (err error) {
+	actionOptions := option.NewActionOptions(opts...)
 
 	windowSize, err := wd.WindowSize()
 	if err != nil {
@@ -826,7 +826,7 @@ func (wd *wdaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 	return
 }
 
-func (wd *wdaDriver) TapByText(text string, opts ...options.ActionOption) error {
+func (wd *wdaDriver) TapByText(text string, opts ...option.ActionOption) error {
 	return errDriverNotImplemented
 }
 

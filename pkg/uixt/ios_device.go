@@ -28,7 +28,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 const (
@@ -125,8 +125,8 @@ func RebootTunnel() (err error) {
 	return StartTunnel(os.TempDir(), ios.HttpApiPort(), true)
 }
 
-func NewIOSDevice(opts ...options.IOSDeviceOption) (device *IOSDevice, err error) {
-	deviceOptions := &options.IOSDeviceConfig{
+func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error) {
+	deviceOptions := &option.IOSDeviceConfig{
 		Port:                       defaultWDAPort,
 		MjpegPort:                  defaultMjpegPort,
 		SnapshotMaxDepth:           snapshotMaxDepth,
@@ -174,7 +174,7 @@ func NewIOSDevice(opts ...options.IOSDeviceOption) (device *IOSDevice, err error
 }
 
 type IOSDevice struct {
-	*options.IOSDeviceConfig
+	*option.IOSDeviceConfig
 	d         ios.DeviceEntry
 	listeners map[int]*forward.ConnListener
 }
@@ -260,14 +260,14 @@ func (dev *IOSDevice) getAppInfo(packageName string) (appInfo AppInfo, err error
 	return AppInfo{}, fmt.Errorf("not found App by bundle id: %s", packageName)
 }
 
-func (dev *IOSDevice) NewDriver(opts ...options.DriverOption) (driverExt *DriverExt, err error) {
-	driverOptions := options.NewDriverOptions()
+func (dev *IOSDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverExt, err error) {
+	driverOptions := option.NewDriverOptions()
 
 	// init WDA driver
 	capabilities := driverOptions.Capabilities
 	if capabilities == nil {
-		capabilities = options.NewCapabilities()
-		capabilities.WithDefaultAlertAction(options.AlertActionAccept)
+		capabilities = option.NewCapabilities()
+		capabilities.WithDefaultAlertAction(option.AlertActionAccept)
 	}
 
 	var driver IWebDriver
@@ -323,8 +323,8 @@ func (dev *IOSDevice) NewDriver(opts ...options.DriverOption) (driverExt *Driver
 	return driverExt, nil
 }
 
-func (dev *IOSDevice) Install(appPath string, opts ...options.InstallOption) (err error) {
-	installOpts := options.NewInstallOptions(opts...)
+func (dev *IOSDevice) Install(appPath string, opts ...option.InstallOption) (err error) {
+	installOpts := option.NewInstallOptions(opts...)
 	for i := 0; i <= installOpts.RetryTimes; i++ {
 		var conn *zipconduit.Connection
 		conn, err = zipconduit.New(dev.d)
@@ -343,7 +343,7 @@ func (dev *IOSDevice) Install(appPath string, opts ...options.InstallOption) (er
 	return err
 }
 
-func (dev *IOSDevice) InstallByUrl(url string, opts ...options.InstallOption) (err error) {
+func (dev *IOSDevice) InstallByUrl(url string, opts ...option.InstallOption) (err error) {
 	appPath, err := builtin.DownloadFileByUrl(url)
 	if err != nil {
 		return err
@@ -561,7 +561,7 @@ func (dev *IOSDevice) Reboot() error {
 }
 
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
-func (dev *IOSDevice) NewHTTPDriver(capabilities options.Capabilities) (driver IWebDriver, err error) {
+func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver IWebDriver, err error) {
 	var localPort int
 	localPort, err = strconv.Atoi(os.Getenv("WDA_LOCAL_PORT"))
 	if err != nil {

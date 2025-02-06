@@ -6,10 +6,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
-	"github.com/rs/zerolog/log"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var uiClients = make(map[string]*uixt.DriverExt) // UI automation clients for iOS and Android, key is udid/serial
@@ -37,8 +38,8 @@ func handleDeviceContext() gin.HandlerFunc {
 		switch strings.ToLower(platform) {
 		case "android":
 			device, err := uixt.NewAndroidDevice(
-				options.WithSerialNumber(serial),
-				options.WithStub(true))
+				option.WithSerialNumber(serial),
+				option.WithStub(true))
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).
 					Msg("device not found")
@@ -54,8 +55,8 @@ func handleDeviceContext() gin.HandlerFunc {
 			device.Init()
 
 			driver, err := device.NewDriver(
-				options.WithDriverImageService(true),
-				options.WithDriverResultFolder(true))
+				option.WithDriverImageService(true),
+				option.WithDriverResultFolder(true))
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).
 					Msg("failed to init driver")

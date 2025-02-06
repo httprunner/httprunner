@@ -24,7 +24,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/gadb"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var (
@@ -49,8 +49,8 @@ var evalite embed.FS
 
 const forwardToPrefix = "forward-to-"
 
-func NewAndroidDevice(opts ...options.AndroidDeviceOption) (device *AndroidDevice, err error) {
-	androidOptions := &options.AndroidDeviceConfig{
+func NewAndroidDevice(opts ...option.AndroidDeviceOption) (device *AndroidDevice, err error) {
+	androidOptions := &option.AndroidDeviceConfig{
 		UIA2IP:   UIA2ServerHost,
 		UIA2Port: UIA2ServerPort,
 	}
@@ -68,18 +68,18 @@ func NewAndroidDevice(opts ...options.AndroidDeviceOption) (device *AndroidDevic
 
 	dev := deviceList[0]
 
-	if device.SerialNumber == "" {
+	if androidOptions.SerialNumber == "" {
 		selectSerial := dev.Serial()
-		device.SerialNumber = selectSerial
+		androidOptions.SerialNumber = selectSerial
 		log.Warn().
-			Str("serial", device.SerialNumber).
+			Str("serial", androidOptions.SerialNumber).
 			Msg("android SerialNumber is not specified, select the first one")
 	}
 
 	device = &AndroidDevice{
 		AndroidDeviceConfig: androidOptions,
 		d:                   dev,
-		logcat:              NewAdbLogcat(device.SerialNumber),
+		logcat:              NewAdbLogcat(androidOptions.SerialNumber),
 	}
 
 	evalToolRaw, err := evalite.ReadFile("evalite")
@@ -128,7 +128,7 @@ func GetAndroidDevices(serial ...string) (devices []*gadb.Device, err error) {
 }
 
 type AndroidDevice struct {
-	*options.AndroidDeviceConfig
+	*option.AndroidDeviceConfig
 	d      *gadb.Device
 	logcat *AdbLogcat
 }
@@ -174,8 +174,8 @@ func (dev *AndroidDevice) LogEnabled() bool {
 	return dev.LogOn
 }
 
-func (dev *AndroidDevice) NewDriver(opts ...options.DriverOption) (driverExt *DriverExt, err error) {
-	driverOptions := options.NewDriverOptions(opts...)
+func (dev *AndroidDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverExt, err error) {
+	driverOptions := option.NewDriverOptions(opts...)
 
 	var driver IWebDriver
 	if dev.UIA2 || dev.LogOn {
@@ -205,7 +205,7 @@ func (dev *AndroidDevice) NewDriver(opts ...options.DriverOption) (driverExt *Dr
 }
 
 // NewUSBDriver creates new client via USB connected device, this will also start a new session.
-func (dev *AndroidDevice) NewUSBDriver(capabilities options.Capabilities) (driver IWebDriver, err error) {
+func (dev *AndroidDevice) NewUSBDriver(capabilities option.Capabilities) (driver IWebDriver, err error) {
 	localPort, err := dev.d.Forward(dev.UIA2Port)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
@@ -226,7 +226,7 @@ func (dev *AndroidDevice) NewUSBDriver(capabilities options.Capabilities) (drive
 	return uiaDriver, nil
 }
 
-func (dev *AndroidDevice) NewStubDriver(capabilities options.Capabilities) (driver *stubAndroidDriver, err error) {
+func (dev *AndroidDevice) NewStubDriver(capabilities option.Capabilities) (driver *stubAndroidDriver, err error) {
 	socketLocalPort, err := dev.d.Forward(StubSocketName)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
@@ -257,7 +257,7 @@ func (dev *AndroidDevice) NewStubDriver(capabilities options.Capabilities) (driv
 }
 
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
-func (dev *AndroidDevice) NewHTTPDriver(capabilities options.Capabilities) (driver IWebDriver, err error) {
+func (dev *AndroidDevice) NewHTTPDriver(capabilities option.Capabilities) (driver IWebDriver, err error) {
 	rawURL := fmt.Sprintf("http://%s:%d/wd/hub", dev.UIA2IP, dev.UIA2Port)
 	uiaDriver, err := NewUIADriver(capabilities, rawURL)
 	if err != nil {
@@ -301,8 +301,8 @@ func (dev *AndroidDevice) Uninstall(packageName string) error {
 	return err
 }
 
-func (dev *AndroidDevice) Install(apkPath string, opts ...options.InstallOption) error {
-	installOpts := options.NewInstallOptions(opts...)
+func (dev *AndroidDevice) Install(apkPath string, opts ...option.InstallOption) error {
+	installOpts := option.NewInstallOptions(opts...)
 	brand, err := dev.d.Brand()
 	if err != nil {
 		return err

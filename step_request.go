@@ -24,7 +24,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/httpstat"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 type HTTPMethod string
@@ -759,8 +759,8 @@ func (s *StepRequest) MobileUI() *StepMobile {
 }
 
 // Android creates a new android step session
-func (s *StepRequest) Android(opts ...options.AndroidDeviceOption) *StepMobile {
-	androidOptions := options.NewAndroidDeviceConfig(opts...)
+func (s *StepRequest) Android(opts ...option.AndroidDeviceOption) *StepMobile {
+	androidOptions := option.NewAndroidDeviceConfig(opts...)
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		Android: &MobileUI{
@@ -770,8 +770,8 @@ func (s *StepRequest) Android(opts ...options.AndroidDeviceOption) *StepMobile {
 }
 
 // IOS creates a new ios step session
-func (s *StepRequest) IOS(opts ...options.IOSDeviceOption) *StepMobile {
-	iosOptions := options.NewIOSDeviceConfig(opts...)
+func (s *StepRequest) IOS(opts ...option.IOSDeviceOption) *StepMobile {
+	iosOptions := option.NewIOSDeviceConfig(opts...)
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		IOS: &MobileUI{
@@ -781,8 +781,8 @@ func (s *StepRequest) IOS(opts ...options.IOSDeviceOption) *StepMobile {
 }
 
 // Harmony creates a new harmony step session
-func (s *StepRequest) Harmony(opts ...options.HarmonyDeviceOption) *StepMobile {
-	harmonyOptions := options.NewHarmonyDeviceConfig(opts...)
+func (s *StepRequest) Harmony(opts ...option.HarmonyDeviceOption) *StepMobile {
+	harmonyOptions := option.NewHarmonyDeviceConfig(opts...)
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		Harmony: &MobileUI{

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var (
@@ -18,9 +18,9 @@ var (
 func setupiOSStubDriver(t *testing.T) {
 	var err error
 	iOSDevice, err = NewIOSDevice(
-		options.WithWDAPort(8700),
-		options.WithWDAMjpegPort(8800),
-		options.WithIOSStub(false))
+		option.WithWDAPort(8700),
+		option.WithWDAMjpegPort(8800),
+		option.WithIOSStub(false))
 	checkErr(t, err)
 	iOSStubDriver, err = iOSDevice.NewStubDriver()
 	checkErr(t, err)

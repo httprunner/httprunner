@@ -1,4 +1,4 @@
-package options
+package option
 
 type InstallOptions struct {
 	Reinstall       bool

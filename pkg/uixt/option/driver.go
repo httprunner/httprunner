@@ -1,4 +1,4 @@
-package options
+package option
 
 import "github.com/httprunner/funplugin"
 

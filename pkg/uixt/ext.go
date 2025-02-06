@@ -12,7 +12,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 type DriverExt struct {
@@ -25,8 +25,8 @@ type DriverExt struct {
 	plugin funplugin.IPlugin
 }
 
-func newDriverExt(device IDevice, driver IWebDriver, opts ...options.DriverOption) (dExt *DriverExt, err error) {
-	driverOptions := options.NewDriverOptions(opts...)
+func newDriverExt(device IDevice, driver IWebDriver, opts ...option.DriverOption) (dExt *DriverExt, err error) {
+	driverOptions := option.NewDriverOptions(opts...)
 
 	dExt = &DriverExt{
 		Device: device,
@@ -63,8 +63,8 @@ func (dExt *DriverExt) Init() error {
 }
 
 func (dExt *DriverExt) assertOCR(text, assert string) error {
-	var opts []options.ActionOption
-	opts = append(opts, options.WithScreenShotFileName(fmt.Sprintf("assert_ocr_%s", text)))
+	var opts []option.ActionOption
+	opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("assert_ocr_%s", text)))
 
 	switch assert {
 	case AssertionEqual:
@@ -78,13 +78,13 @@ func (dExt *DriverExt) assertOCR(text, assert string) error {
 			return errors.New("assert ocr not equal failed")
 		}
 	case AssertionExists:
-		opts = append(opts, options.WithRegex(true))
+		opts = append(opts, option.WithRegex(true))
 		_, err := dExt.FindScreenText(text, opts...)
 		if err != nil {
 			return errors.Wrap(err, "assert ocr exists failed")
 		}
 	case AssertionNotExists:
-		opts = append(opts, options.WithRegex(true))
+		opts = append(opts, option.WithRegex(true))
 		_, err := dExt.FindScreenText(text, opts...)
 		if err == nil {
 			return errors.New("assert ocr not exists failed")

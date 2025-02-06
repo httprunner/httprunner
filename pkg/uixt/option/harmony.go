@@ -1,4 +1,4 @@
-package options
+package option
 
 type HarmonyDeviceConfig struct {
 	ConnectKey string `json:"connect_key,omitempty" yaml:"connect_key,omitempty"`

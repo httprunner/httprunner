@@ -6,10 +6,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
-	"github.com/rs/zerolog/log"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func screenshotHandler(c *gin.Context) {
@@ -52,7 +53,7 @@ func screenResultHandler(c *gin.Context) {
 		return
 	}
 
-	var actionOptions []options.ActionOption
+	var actionOptions []option.ActionOption
 	if screenReq.Options != nil {
 		actionOptions = screenReq.Options.Options()
 	}

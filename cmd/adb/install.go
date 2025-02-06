@@ -9,7 +9,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var (
@@ -36,7 +36,7 @@ var installCmd = &cobra.Command{
 			return err
 		}
 
-		device, err := uixt.NewAndroidDevice(options.WithSerialNumber(serial))
+		device, err := uixt.NewAndroidDevice(option.WithSerialNumber(serial))
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -48,9 +48,9 @@ var installCmd = &cobra.Command{
 		}
 
 		err = driverExt.Install(args[0],
-			options.WithReinstall(replace),
-			options.WithDowngrade(downgrade),
-			options.WithGrantPermission(grant),
+			option.WithReinstall(replace),
+			option.WithDowngrade(downgrade),
+			option.WithGrantPermission(grant),
 		)
 		if err != nil {
 			fmt.Println(err)

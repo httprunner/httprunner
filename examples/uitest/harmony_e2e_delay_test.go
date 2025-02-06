@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func TestHarmonyDouyinE2E(t *testing.T) {
@@ -15,8 +15,8 @@ func TestHarmonyDouyinE2E(t *testing.T) {
 				"ups":    "${ENV(LIVEUPLIST)}",
 			}).
 			SetHarmony(
-				options.WithConnectKey("$device"),
-				options.WithLogOn(true)),
+				option.WithConnectKey("$device"),
+				option.WithLogOn(true)),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				Harmony().
@@ -25,8 +25,8 @@ func TestHarmonyDouyinE2E(t *testing.T) {
 				Home().
 				SwipeToTapApp(
 					"抖音",
-					options.WithMaxRetryTimes(5),
-					options.WithTapOffset(0, -50),
+					option.WithMaxRetryTimes(5),
+					option.WithTapOffset(0, -50),
 				).
 				Sleep(20).
 				Validate().
@@ -47,11 +47,11 @@ func TestHarmonyDouyinE2E(t *testing.T) {
 				Harmony().
 				TapByOCR(
 					"直播中",
-					options.WithIgnoreNotFoundError(true),
-					options.WithIndex(-1),
+					option.WithIgnoreNotFoundError(true),
+					option.WithIndex(-1),
 				).
-				EndToEndDelay(options.WithInterval(5), options.WithTimeout(120)).
-				TapByUITypes(options.WithScreenShotUITypes("close")),
+				EndToEndDelay(option.WithInterval(5), option.WithTimeout(120)).
+				TapByUITypes(option.WithScreenShotUITypes("close")),
 		},
 	}
 

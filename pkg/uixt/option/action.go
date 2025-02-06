@@ -1,4 +1,4 @@
-package options
+package option
 
 import (
 	"math/rand/v2"

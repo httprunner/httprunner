@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var (
@@ -17,12 +17,12 @@ var (
 )
 
 type HarmonyDevice struct {
-	*options.HarmonyDeviceConfig
+	*option.HarmonyDeviceConfig
 	d *ghdc.Device
 }
 
-func NewHarmonyDevice(opts ...options.HarmonyDeviceOption) (device *HarmonyDevice, err error) {
-	deviceConfig := options.NewHarmonyDeviceConfig(opts...)
+func NewHarmonyDevice(opts ...option.HarmonyDeviceOption) (device *HarmonyDevice, err error) {
+	deviceConfig := option.NewHarmonyDeviceConfig(opts...)
 
 	deviceList, err := GetHarmonyDevices(deviceConfig.ConnectKey)
 	if err != nil {
@@ -95,7 +95,7 @@ func (dev *HarmonyDevice) LogEnabled() bool {
 	return dev.LogOn
 }
 
-func (dev *HarmonyDevice) NewDriver(opts ...options.DriverOption) (driverExt *DriverExt, err error) {
+func (dev *HarmonyDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverExt, err error) {
 	driver, err := newHarmonyDriver(dev.d)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to new harmony driver")
@@ -110,7 +110,7 @@ func (dev *HarmonyDevice) NewDriver(opts ...options.DriverOption) (driverExt *Dr
 	return driverExt, nil
 }
 
-func (dev *HarmonyDevice) NewUSBDriver(opts ...options.DriverOption) (driver IWebDriver, err error) {
+func (dev *HarmonyDevice) NewUSBDriver(opts ...option.DriverOption) (driver IWebDriver, err error) {
 	harmonyDriver, err := newHarmonyDriver(dev.d)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to new harmony driver")
@@ -120,7 +120,7 @@ func (dev *HarmonyDevice) NewUSBDriver(opts ...options.DriverOption) (driver IWe
 	return harmonyDriver, nil
 }
 
-func (dev *HarmonyDevice) Install(appPath string, opts ...options.InstallOption) error {
+func (dev *HarmonyDevice) Install(appPath string, opts ...option.InstallOption) error {
 	return nil
 }
 

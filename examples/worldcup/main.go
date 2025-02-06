@@ -16,7 +16,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func convertTimeToSeconds(timeStr string) (int, error) {
@@ -39,9 +39,9 @@ func convertTimeToSeconds(timeStr string) (int, error) {
 
 func initIOSDevice(uuid string) uixt.IDevice {
 	device, err := uixt.NewIOSDevice(
-		options.WithUDID(uuid),
-		options.WithWDAPort(8700), options.WithWDAMjpegPort(8800),
-		options.WithResetHomeOnStartup(false), // not reset home on startup
+		option.WithUDID(uuid),
+		option.WithWDAPort(8700), option.WithWDAMjpegPort(8800),
+		option.WithResetHomeOnStartup(false), // not reset home on startup
 
 	)
 	if err != nil {
@@ -51,7 +51,7 @@ func initIOSDevice(uuid string) uixt.IDevice {
 }
 
 func initAndroidDevice(uuid string) uixt.IDevice {
-	device, err := uixt.NewAndroidDevice(options.WithSerialNumber(uuid))
+	device, err := uixt.NewAndroidDevice(option.WithSerialNumber(uuid))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init android device")
 	}

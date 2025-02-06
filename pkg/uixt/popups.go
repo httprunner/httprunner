@@ -5,7 +5,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 // TODO: add more popup texts
@@ -31,7 +31,7 @@ func findTextPopup(screenTexts OCRTexts) (closePoint *OCRText) {
 			continue
 		}
 
-		points, err := screenTexts.FindTexts([]string{popup[0], popup[1]}, options.WithRegex(true))
+		points, err := screenTexts.FindTexts([]string{popup[0], popup[1]}, option.WithRegex(true))
 		if err == nil {
 			log.Warn().Interface("popup", popup).
 				Interface("texts", screenTexts).Msg("text popup found")
@@ -64,9 +64,9 @@ func (dExt *DriverExt) AutoPopupHandler() error {
 
 	// check popup by screenshot
 	screenResult, err := dExt.GetScreenResult(
-		options.WithScreenShotOCR(true),
-		options.WithScreenShotUpload(true),
-		options.WithScreenShotFileName("check_popup"),
+		option.WithScreenShotOCR(true),
+		option.WithScreenShotUpload(true),
+		option.WithScreenShotFileName("check_popup"),
 	)
 	if err != nil {
 		return errors.Wrap(err, "get screen result failed for popup handler")
@@ -99,9 +99,9 @@ func (p *PopupInfo) ClosePoint() *PointF {
 
 func (dExt *DriverExt) CheckPopup() (popup *PopupInfo, err error) {
 	screenResult, err := dExt.GetScreenResult(
-		options.WithScreenShotUpload(true),
-		options.WithScreenShotClosePopups(true), // get popup area and close area
-		options.WithScreenShotFileName("check_popup"),
+		option.WithScreenShotUpload(true),
+		option.WithScreenShotClosePopups(true), // get popup area and close area
+		option.WithScreenShotFileName("check_popup"),
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "get screen result failed for popup handler")

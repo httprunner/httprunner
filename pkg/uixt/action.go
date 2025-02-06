@@ -12,7 +12,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 type ActionMethod string
@@ -80,15 +80,15 @@ const (
 )
 
 type MobileAction struct {
-	Method  ActionMethod           `json:"method,omitempty" yaml:"method,omitempty"`
-	Params  interface{}            `json:"params,omitempty" yaml:"params,omitempty"`
-	Fn      func()                 `json:"-" yaml:"-"` // only used for function action, not serialized
-	Options *options.ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
-	options.ActionOptions
+	Method  ActionMethod          `json:"method,omitempty" yaml:"method,omitempty"`
+	Params  interface{}           `json:"params,omitempty" yaml:"params,omitempty"`
+	Fn      func()                `json:"-" yaml:"-"` // only used for function action, not serialized
+	Options *option.ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
+	option.ActionOptions
 }
 
-func (ma MobileAction) GetOptions() []options.ActionOption {
-	var actionOptionList []options.ActionOption
+func (ma MobileAction) GetOptions() []option.ActionOption {
+	var actionOptionList []option.ActionOption
 	// Notice: merge options from ma.Options and ma.ActionOptions
 	if ma.Options != nil {
 		actionOptionList = append(actionOptionList, ma.Options.Options()...)
@@ -99,11 +99,11 @@ func (ma MobileAction) GetOptions() []options.ActionOption {
 
 type TapTextAction struct {
 	Text    string
-	Options []options.ActionOption
+	Options []option.ActionOption
 }
 
-func (dExt *DriverExt) ParseActionOptions(opts ...options.ActionOption) []options.ActionOption {
-	actionOptions := options.NewActionOptions(opts...)
+func (dExt *DriverExt) ParseActionOptions(opts ...option.ActionOption) []option.ActionOption {
+	actionOptions := option.NewActionOptions(opts...)
 
 	// convert relative scope to absolute scope
 	if len(actionOptions.AbsScope) != 4 && len(actionOptions.Scope) == 4 {
@@ -115,14 +115,14 @@ func (dExt *DriverExt) ParseActionOptions(opts ...options.ActionOption) []option
 	return actionOptions.Options()
 }
 
-func (dExt *DriverExt) GenAbsScope(x1, y1, x2, y2 float64) options.AbsScope {
+func (dExt *DriverExt) GenAbsScope(x1, y1, x2, y2 float64) option.AbsScope {
 	// convert relative scope to absolute scope
 	windowSize, _ := dExt.Driver.WindowSize()
 	absX1 := int(x1 * float64(windowSize.Width))
 	absY1 := int(y1 * float64(windowSize.Height))
 	absX2 := int(x2 * float64(windowSize.Width))
 	absY2 := int(y2 * float64(windowSize.Height))
-	return options.AbsScope{absX1, absY1, absX2, absY2}
+	return option.AbsScope{absX1, absY1, absX2, absY2}
 }
 
 func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
@@ -145,7 +145,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 	case ACTION_AppInstall:
 		if appUrl, ok := action.Params.(string); ok {
 			if err = dExt.InstallByUrl(appUrl,
-				options.WithRetryTimes(action.MaxRetryTimes)); err != nil {
+				option.WithRetryTimes(action.MaxRetryTimes)); err != nil {
 				return errors.Wrap(err, "failed to install app")
 			}
 		}
@@ -258,7 +258,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByOCR, action.Params)
 	case ACTION_TapByCV:
-		actionOptions := options.NewActionOptions(action.GetOptions()...)
+		actionOptions := option.NewActionOptions(action.GetOptions()...)
 		if len(actionOptions.ScreenShotWithUITypes) > 0 {
 			return dExt.TapByUIDetection(action.GetOptions()...)
 		}

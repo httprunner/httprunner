@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var iosRootCmd = &cobra.Command{
@@ -13,7 +13,7 @@ var iosRootCmd = &cobra.Command{
 }
 
 func getDevice(udid string) (*uixt.IOSDevice, error) {
-	device, err := uixt.NewIOSDevice(options.WithUDID(udid))
+	device, err := uixt.NewIOSDevice(option.WithUDID(udid))
 	if err != nil {
 		return nil, err
 	}

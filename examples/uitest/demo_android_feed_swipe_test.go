@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func TestAndroidDouyinFeedTest(t *testing.T) {
@@ -15,7 +15,7 @@ func TestAndroidDouyinFeedTest(t *testing.T) {
 			WithVariables(map[string]interface{}{
 				"device": "${ENV(SerialNumber)}",
 			}).
-			SetAndroid(options.WithSerialNumber("$device")),
+			SetAndroid(option.WithSerialNumber("$device")),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				Android().
@@ -26,7 +26,7 @@ func TestAndroidDouyinFeedTest(t *testing.T) {
 				AssertAppInForeground("com.ss.android.ugc.aweme"),
 			hrp.NewStep("处理青少年弹窗").
 				Android().
-				TapByOCR("我知道了", options.WithIgnoreNotFoundError(true)),
+				TapByOCR("我知道了", option.WithIgnoreNotFoundError(true)),
 			hrp.NewStep("滑动 Feed 3 次，随机间隔 0-5s").
 				Loop(3).
 				Android().
