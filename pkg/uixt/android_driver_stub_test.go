@@ -14,7 +14,7 @@ func setupStubDriver(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
 	device.STUB = true
-	androidStubDriver, err = device.NewStubDriver(option.Capabilities{})
+	androidStubDriver, err = NewStubDriver(device)
 	checkErr(t, err)
 }
 

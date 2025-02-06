@@ -173,15 +173,13 @@ func (dev *AndroidDevice) LogEnabled() bool {
 }
 
 func (dev *AndroidDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverExt, err error) {
-	options := option.NewDriverOptions(opts...)
-
 	var driver IWebDriver
 	if dev.UIA2 || dev.LogOn {
 		driver, err = NewUIA2Driver(dev, opts...)
 	} else if dev.STUB {
-		driver, err = dev.NewStubDriver(options.Capabilities)
+		driver, err = NewStubDriver(dev, opts...)
 	} else {
-		driver, err = NewADBDriver(dev)
+		driver, err = NewADBDriver(dev, opts...)
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init UIA driver")
@@ -200,36 +198,6 @@ func (dev *AndroidDevice) NewDriver(opts ...option.DriverOption) (driverExt *Dri
 	}
 
 	return driverExt, nil
-}
-
-func (dev *AndroidDevice) NewStubDriver(capabilities option.Capabilities) (driver *StubAndroidDriver, err error) {
-	socketLocalPort, err := dev.d.Forward(StubSocketName)
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceConnectionError,
-			fmt.Sprintf("forward port %d->%s failed: %v",
-				socketLocalPort, StubSocketName, err))
-	}
-
-	serverLocalPort, err := dev.d.Forward(DouyinServerPort)
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceConnectionError,
-			fmt.Sprintf("forward port %d->%d failed: %v",
-				serverLocalPort, DouyinServerPort, err))
-	}
-
-	rawURL := fmt.Sprintf("http://forward-to-%d:%d",
-		serverLocalPort, DouyinServerPort)
-
-	stubDriver, err := newStubAndroidDriver(fmt.Sprintf("127.0.0.1:%d", socketLocalPort), rawURL)
-	if err != nil {
-		_ = dev.d.ForwardKill(socketLocalPort)
-		_ = dev.d.ForwardKill(serverLocalPort)
-		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
-	}
-	stubDriver.adbClient = dev.d
-	stubDriver.logcat = dev.logcat
-
-	return stubDriver, nil
 }
 
 func (dev *AndroidDevice) StartPerf() error {

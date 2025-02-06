@@ -1,7 +1,6 @@
 package uixt
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -10,11 +9,54 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
+
+const StubSocketName = "com.bytest.device"
+
+func NewStubDriver(device *AndroidDevice, opts ...option.DriverOption) (driver *StubAndroidDriver, err error) {
+	socketLocalPort, err := device.d.Forward(StubSocketName)
+	if err != nil {
+		return nil, errors.Wrap(code.DeviceConnectionError,
+			fmt.Sprintf("forward port %d->%s failed: %v",
+				socketLocalPort, StubSocketName, err))
+	}
+
+	serverLocalPort, err := device.d.Forward(DouyinServerPort)
+	if err != nil {
+		return nil, errors.Wrap(code.DeviceConnectionError,
+			fmt.Sprintf("forward port %d->%d failed: %v",
+				serverLocalPort, DouyinServerPort, err))
+	}
+
+	address := fmt.Sprintf("127.0.0.1:%d", socketLocalPort)
+	conn, err := net.Dial("tcp", address)
+	if err != nil {
+		log.Err(err).Msg(fmt.Sprintf("failed to connect %s", address))
+		return nil, err
+	}
+
+	driver = &StubAndroidDriver{
+		socket:  conn,
+		timeout: 10 * time.Second,
+	}
+
+	rawURL := fmt.Sprintf("http://forward-to-%d:%d",
+		serverLocalPort, DouyinServerPort)
+	if driver.urlPrefix, err = url.Parse(rawURL); err != nil {
+		return nil, err
+	}
+
+	driver.NewSession(nil)
+	driver.adbClient = device.d
+	driver.logcat = device.logcat
+	return driver, nil
+}
 
 type StubAndroidDriver struct {
 	socket  net.Conn
@@ -23,39 +65,10 @@ type StubAndroidDriver struct {
 	ADBDriver
 }
 
-const StubSocketName = "com.bytest.device"
-
 type AppLoginInfo struct {
 	Did     string `json:"did,omitempty" yaml:"did,omitempty"`
 	Uid     string `json:"uid,omitempty" yaml:"uid,omitempty"`
 	IsLogin bool   `json:"is_login,omitempty" yaml:"is_login,omitempty"`
-}
-
-// newStubAndroidDriver
-// 创建stub Driver address为forward后的端口格式127.0.0.1:${port}
-func newStubAndroidDriver(address string, urlPrefix string, readTimeout ...time.Duration) (*StubAndroidDriver, error) {
-	timeout := 10 * time.Second
-	if len(readTimeout) > 0 {
-		timeout = readTimeout[0]
-	}
-
-	conn, err := net.Dial("tcp", address)
-	if err != nil {
-		log.Err(err).Msg(fmt.Sprintf("failed to connect %s", address))
-		return nil, err
-	}
-
-	driver := &StubAndroidDriver{
-		socket:  conn,
-		timeout: timeout,
-	}
-
-	if driver.urlPrefix, err = url.Parse(urlPrefix); err != nil {
-		return nil, err
-	}
-
-	driver.NewSession(nil)
-	return driver, nil
 }
 
 func (sad *StubAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
