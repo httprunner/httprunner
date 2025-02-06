@@ -301,8 +301,8 @@ func (dev *AndroidDevice) Uninstall(packageName string) error {
 	return err
 }
 
-func (dev *AndroidDevice) Install(apkPath string, opts ...InstallOption) error {
-	installOpts := NewInstallOptions(opts...)
+func (dev *AndroidDevice) Install(apkPath string, opts ...options.InstallOption) error {
+	installOpts := options.NewInstallOptions(opts...)
 	brand, err := dev.d.Brand()
 	if err != nil {
 		return err

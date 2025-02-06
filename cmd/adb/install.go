@@ -48,9 +48,9 @@ var installCmd = &cobra.Command{
 		}
 
 		err = driverExt.Install(args[0],
-			uixt.WithReinstall(replace),
-			uixt.WithDowngrade(downgrade),
-			uixt.WithGrantPermission(grant),
+			options.WithReinstall(replace),
+			options.WithDowngrade(downgrade),
+			options.WithGrantPermission(grant),
 		)
 		if err != nil {
 			fmt.Println(err)

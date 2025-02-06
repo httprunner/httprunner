@@ -120,7 +120,7 @@ func (dev *HarmonyDevice) NewUSBDriver(opts ...options.DriverOption) (driver IWe
 	return harmonyDriver, nil
 }
 
-func (dev *HarmonyDevice) Install(appPath string, opts ...InstallOption) error {
+func (dev *HarmonyDevice) Install(appPath string, opts ...options.InstallOption) error {
 	return nil
 }
 

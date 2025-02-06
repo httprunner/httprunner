@@ -359,7 +359,7 @@ type IDevice interface {
 	// TODO: add ctx to NewDriver
 	NewDriver(...options.DriverOption) (driverExt *DriverExt, err error)
 
-	Install(appPath string, opts ...InstallOption) error
+	Install(appPath string, opts ...options.InstallOption) error
 	Uninstall(packageName string) error
 
 	GetPackageInfo(packageName string) (AppInfo, error)
