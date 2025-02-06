@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/internal/pytest"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 )
 
@@ -35,10 +34,15 @@ var pytestCmd = &cobra.Command{
 			log.Error().Err(err).Msg("python3 venv is not ready")
 			return errors.Wrap(code.InvalidPython3Venv, err.Error())
 		}
-		return pytest.RunPytest(args)
+		return runPytest(args)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(pytestCmd)
+}
+
+func runPytest(args []string) error {
+	args = append([]string{"run"}, args...)
+	return myexec.ExecPython3Command("httprunner", args...)
 }
