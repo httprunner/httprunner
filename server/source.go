@@ -9,7 +9,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -97,7 +96,7 @@ func sourceHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	source, err := dExt.Driver.Source(uixt.NewSourceOption().WithProcessName(app.PackageName))
+	source, err := dExt.Driver.Source(option.NewSourceOption().WithProcessName(app.PackageName))
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get source %s", c.HandlerName(), app.PackageName))
 		c.JSON(http.StatusInternalServerError,

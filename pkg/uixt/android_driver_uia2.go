@@ -597,7 +597,7 @@ func (ud *uiaDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	return ud.adbDriver.Screenshot()
 }
 
-func (ud *uiaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
+func (ud *uiaDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	// register(getHandler, new Source("/wd/hub/session/:sessionId/source"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.session.ID, "source"); err != nil {
@@ -612,7 +612,7 @@ func (ud *uiaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
 	return
 }
 
-func (ud *uiaDriver) sourceTree(srcOpt ...SourceOption) (sourceTree *Hierarchy, err error) {
+func (ud *uiaDriver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hierarchy, err error) {
 	source, err := ud.Source()
 	if err != nil {
 		return

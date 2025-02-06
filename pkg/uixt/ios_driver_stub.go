@@ -450,7 +450,7 @@ func (s *stubIOSDriver) GetDriverResults() []*DriverResult {
 	return s.wdaDriver.GetDriverResults()
 }
 
-func (s *stubIOSDriver) Source(srcOpt ...SourceOption) (string, error) {
+func (s *stubIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	resp, err := s.DriverClient.Request(http.MethodGet, fmt.Sprintf("%s/source?format=json&onlyWeb=false", s.bightInsightPrefix), []byte{})
 	if err != nil {
 		return "", err

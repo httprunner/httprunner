@@ -79,7 +79,7 @@ func NewAndroidDevice(opts ...option.AndroidDeviceOption) (device *AndroidDevice
 	device = &AndroidDevice{
 		AndroidDeviceConfig: androidOptions,
 		d:                   dev,
-		logcat:              NewAdbLogcat(androidOptions.SerialNumber),
+		logcat:              NewAdbLogcat(device.SerialNumber),
 	}
 
 	evalToolRaw, err := evalite.ReadFile("evalite")

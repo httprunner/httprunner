@@ -274,7 +274,7 @@ func (hd *hdcDriver) Screenshot() (*bytes.Buffer, error) {
 	return bytes.NewBuffer(raw), nil
 }
 
-func (hd *hdcDriver) Source(srcOpt ...SourceOption) (string, error) {
+func (hd *hdcDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	return "", nil
 }
 

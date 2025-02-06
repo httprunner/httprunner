@@ -792,7 +792,7 @@ func (wd *wdaDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	return
 }
 
-func (wd *wdaDriver) Source(srcOpt ...SourceOption) (source string, err error) {
+func (wd *wdaDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	// [[FBRoute GET:@"/source"] respondWithTarget:self action:@selector(handleGetSourceCommand:)]
 	// [[FBRoute GET:@"/source"].withoutSession
 	tmp, _ := url.Parse(wd.concatURL(nil, "/session", wd.session.ID))

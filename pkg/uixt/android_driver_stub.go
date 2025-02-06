@@ -163,7 +163,7 @@ func (sad *stubAndroidDriver) Status() (DeviceStatus, error) {
 	return DeviceStatus{}, nil
 }
 
-func (sad *stubAndroidDriver) Source(srcOpt ...SourceOption) (source string, err error) {
+func (sad *stubAndroidDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	app, err := sad.GetForegroundApp()
 	if err != nil {
 		return "", err

@@ -137,7 +137,7 @@ type IWebDriver interface {
 	Screenshot() (*bytes.Buffer, error)
 
 	// Source Return application elements tree
-	Source(srcOpt ...SourceOption) (string, error)
+	Source(srcOpt ...option.SourceOption) (string, error)
 
 	LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error)
 	LogoutNoneUI(packageName string) error

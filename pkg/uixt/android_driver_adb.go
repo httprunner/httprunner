@@ -656,7 +656,7 @@ func (ad *adbDriver) Screenshot() (raw *bytes.Buffer, err error) {
 	return bytes.NewBuffer([]byte(resp)), nil
 }
 
-func (ad *adbDriver) Source(srcOpt ...SourceOption) (source string, err error) {
+func (ad *adbDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	_, err = ad.runShellCommand("rm", "-rf", "/sdcard/window_dump.xml")
 	if err != nil {
 		return
@@ -681,7 +681,7 @@ func (ad *adbDriver) LogoutNoneUI(packageName string) error {
 	return errDriverNotImplemented
 }
 
-func (ad *adbDriver) sourceTree(srcOpt ...SourceOption) (sourceTree *Hierarchy, err error) {
+func (ad *adbDriver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hierarchy, err error) {
 	source, err := ad.Source()
 	if err != nil {
 		return
