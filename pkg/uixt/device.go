@@ -1,28 +1,11 @@
 package uixt
 
 import (
-	"bytes"
 	"math"
 	"strings"
-	"time"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
-
-var (
-	DefaultWaitTimeout  = 60 * time.Second
-	DefaultWaitInterval = 400 * time.Millisecond
-)
-
-type SessionInfo struct {
-	SessionId    string `json:"sessionId"`
-	Capabilities struct {
-		Device             string `json:"device"`
-		BrowserName        string `json:"browserName"`
-		SdkVersion         string `json:"sdkVersion"`
-		CFBundleIdentifier string `json:"CFBundleIdentifier"`
-	} `json:"capabilities"`
-}
 
 type DeviceStatus struct {
 	Message string `json:"message"`
@@ -217,12 +200,6 @@ const (
 	TextDelete    string = "\u007F"
 )
 
-// type KeyboardKeyLabel string
-//
-// const (
-// 	KeyboardKeyReturn = "return"
-// )
-
 // DeviceButton A physical button on an iOS device.
 type DeviceButton string
 
@@ -323,13 +300,6 @@ const (
 	DirectionRight Direction = "right"
 )
 
-type PickerWheelOrder string
-
-const (
-	PickerWheelOrderNext     PickerWheelOrder = "next"
-	PickerWheelOrderPrevious PickerWheelOrder = "previous"
-)
-
 type Point struct {
 	X int `json:"x"` // upper left X coordinate of selected element
 	Y int `json:"y"` // upper left Y coordinate of selected element
@@ -343,11 +313,6 @@ type PointF struct {
 func (p PointF) IsIdentical(p2 PointF) bool {
 	// set the coordinate precision to 1 pixel
 	return math.Abs(p.X-p2.X) < 1 && math.Abs(p.Y-p2.Y) < 1
-}
-
-type Rect struct {
-	Point
-	Size
 }
 
 // current implemeted device: IOSDevice, AndroidDevice, HarmonyDevice
@@ -366,152 +331,4 @@ type IDevice interface {
 	GetCurrentWindow() (windowInfo WindowInfo, err error)
 
 	// Teardown() error
-}
-
-type ForegroundApp struct {
-	PackageName string
-	Activity    string
-}
-
-// IWebDriver defines methods supported by IWebDriver drivers.
-type IWebDriver interface {
-	// NewSession starts a new session and returns the SessionInfo.
-	NewSession(capabilities option.Capabilities) (SessionInfo, error)
-
-	// DeleteSession Kills application associated with that session and removes session
-	//  1) alertsMonitor disable
-	//  2) testedApplicationBundleId terminate
-	DeleteSession() error
-
-	// GetSession returns session cache, including requests, screenshots, etc.
-	GetSession() *DriverSession
-
-	Status() (DeviceStatus, error)
-
-	DeviceInfo() (DeviceInfo, error)
-
-	// Location Returns device location data.
-	//
-	// It requires to configure location access permission by manual.
-	// The response of 'latitude', 'longitude' and 'altitude' are always zero (0) without authorization.
-	// 'authorizationStatus' indicates current authorization status. '3' is 'Always'.
-	// https://developer.apple.com/documentation/corelocation/clauthorizationstatus
-	//
-	//  Settings -> Privacy -> Location Service -> WebDriverAgent-Runner -> Always
-	//
-	// The return value could be zero even if the permission is set to 'Always'
-	// since the location service needs some time to update the location data.
-	Location() (Location, error)
-	BatteryInfo() (BatteryInfo, error)
-
-	// WindowSize Return the width and height in portrait mode.
-	// when getting the window size in wda/ui2/adb, if the device is in landscape mode,
-	// the width and height will be reversed.
-	WindowSize() (Size, error)
-	Screen() (Screen, error)
-	Scale() (float64, error)
-
-	// GetTimestamp returns the timestamp of the mobile device
-	GetTimestamp() (timestamp int64, err error)
-
-	// Homescreen Forces the device under test to switch to the home screen
-	Homescreen() error
-
-	Unlock() (err error)
-
-	// AppLaunch Launch an application with given bundle identifier in scope of current session.
-	// !This method is only available since Xcode9 SDK
-	AppLaunch(packageName string) error
-	// AppTerminate Terminate an application with the given package name.
-	// Either `true` if the app has been successfully terminated or `false` if it was not running
-	AppTerminate(packageName string) (bool, error)
-	// GetForegroundApp returns current foreground app package name and activity name
-	GetForegroundApp() (app AppInfo, err error)
-	// AssertForegroundApp returns nil if the given package and activity are in foreground
-	AssertForegroundApp(packageName string, activityType ...string) error
-
-	// StartCamera Starts a new camera for recording
-	StartCamera() error
-	// StopCamera Stops the camera for recording
-	StopCamera() error
-
-	Orientation() (orientation Orientation, err error)
-
-	// Tap Sends a tap event at the coordinate.
-	Tap(x, y float64, opts ...option.ActionOption) error
-
-	// DoubleTap Sends a double tap event at the coordinate.
-	DoubleTap(x, y float64, opts ...option.ActionOption) error
-
-	// TouchAndHold Initiates a long-press gesture at the coordinate, holding for the specified duration.
-	//  second: The default value is 1
-	TouchAndHold(x, y float64, opts ...option.ActionOption) error
-
-	// Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
-	// WithPressDurationOption option can be used to set pressForDuration (default to 1 second).
-	Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
-
-	// Swipe works like Drag, but `pressForDuration` value is 0
-	Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
-
-	// SetPasteboard Sets data to the general pasteboard
-	SetPasteboard(contentType PasteboardType, content string) error
-	// GetPasteboard Gets the data contained in the general pasteboard.
-	//  It worked when `WDA` was foreground. https://github.com/appium/WebDriverAgent/issues/330
-	GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error)
-
-	SetIme(ime string) error
-
-	// SendKeys Types a string into active element. There must be element with keyboard focus,
-	// otherwise an error is raised.
-	// WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
-	SendKeys(text string, opts ...option.ActionOption) error
-
-	// Input works like SendKeys
-	Input(text string, opts ...option.ActionOption) error
-
-	Clear(packageName string) error
-
-	// PressButton Presses the corresponding hardware button on the device
-	PressButton(devBtn DeviceButton) error
-
-	// PressBack Presses the back button
-	PressBack(opts ...option.ActionOption) error
-
-	PressKeyCode(keyCode KeyCode) (err error)
-
-	Backspace(count int, opts ...option.ActionOption) (err error)
-
-	Screenshot() (*bytes.Buffer, error)
-
-	// Source Return application elements tree
-	Source(srcOpt ...SourceOption) (string, error)
-
-	LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error)
-	LogoutNoneUI(packageName string) error
-
-	TapByText(text string, opts ...option.ActionOption) error
-	TapByTexts(actions ...TapTextAction) error
-
-	// AccessibleSource Return application elements accessibility tree
-	AccessibleSource() (string, error)
-
-	// HealthCheck Health check might modify simulator state so it should only be called in-between testing sessions
-	//  Checks health of XCTest by:
-	//  1) Querying application for some elements,
-	//  2) Triggering some device events.
-	HealthCheck() error
-	GetAppiumSettings() (map[string]interface{}, error)
-	SetAppiumSettings(settings map[string]interface{}) (map[string]interface{}, error)
-
-	IsHealthy() (bool, error)
-
-	// triggers the log capture and returns the log entries
-	StartCaptureLog(identifier ...string) (err error)
-	StopCaptureLog() (result interface{}, err error)
-
-	GetDriverResults() []*DriverResult
-	RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error)
-
-	TearDown() error
 }
