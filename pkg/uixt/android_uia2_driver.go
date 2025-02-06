@@ -16,7 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v5/pkg/utf7"
+	"github.com/httprunner/httprunner/v5/internal/utf7"
 )
 
 var errDriverNotImplemented = errors.New("driver method not implemented")
