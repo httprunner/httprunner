@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 var (
@@ -16,61 +17,35 @@ var (
 )
 
 type HarmonyDevice struct {
-	d          *ghdc.Device
-	ConnectKey string `json:"connect_key,omitempty" yaml:"connect_key,omitempty"`
-	LogOn      bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	*options.HarmonyDeviceConfig
+	d *ghdc.Device
 }
 
-func (dev *HarmonyDevice) Options() (deviceOptions []HarmonyDeviceOption) {
-	if dev.ConnectKey != "" {
-		deviceOptions = append(deviceOptions, WithConnectKey(dev.ConnectKey))
-	}
-	if dev.LogOn {
-		deviceOptions = append(deviceOptions, WithLogOn(true))
-	}
-	return
-}
+func NewHarmonyDevice(opts ...options.HarmonyDeviceOption) (device *HarmonyDevice, err error) {
+	deviceConfig := options.NewHarmonyDeviceConfig(opts...)
 
-type HarmonyDeviceOption func(*HarmonyDevice)
-
-func WithConnectKey(connectKey string) HarmonyDeviceOption {
-	return func(device *HarmonyDevice) {
-		device.ConnectKey = connectKey
-	}
-}
-
-func WithLogOn(logOn bool) HarmonyDeviceOption {
-	return func(device *HarmonyDevice) {
-		device.LogOn = logOn
-	}
-}
-
-func NewHarmonyDevice(options ...HarmonyDeviceOption) (device *HarmonyDevice, err error) {
-	device = &HarmonyDevice{}
-	for _, option := range options {
-		option(device)
-	}
-
-	deviceList, err := GetHarmonyDevices(device.ConnectKey)
+	deviceList, err := GetHarmonyDevices(deviceConfig.ConnectKey)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
 
-	if device.ConnectKey == "" && len(deviceList) > 1 {
+	if deviceConfig.ConnectKey == "" && len(deviceList) > 1 {
 		return nil, errors.Wrap(code.DeviceConnectionError, "more than one device connected, please specify the serial")
 	}
 
 	dev := deviceList[0]
-
-	if device.ConnectKey == "" {
+	if deviceConfig.ConnectKey == "" {
 		selectSerial := dev.Serial()
-		device.ConnectKey = selectSerial
+		deviceConfig.ConnectKey = selectSerial
 		log.Warn().
-			Str("connectKey", device.ConnectKey).
+			Str("connectKey", deviceConfig.ConnectKey).
 			Msg("harmony ConnectKey is not specified, select the first one")
 	}
 
-	device.d = dev
+	device = &HarmonyDevice{
+		HarmonyDeviceConfig: deviceConfig,
+		d:                   dev,
+	}
 	log.Info().Str("connectKey", device.ConnectKey).Msg("init harmony device")
 	return device, nil
 }

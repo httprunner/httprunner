@@ -139,23 +139,23 @@ func (c *TConfig) SetIOS(opts ...options.IOSDeviceOption) *TConfig {
 	return c
 }
 
-func (c *TConfig) SetHarmony(options ...uixt.HarmonyDeviceOption) *TConfig {
-	harmonyOptions := &uixt.HarmonyDevice{}
-	for _, option := range options {
-		option(harmonyOptions)
+func (c *TConfig) SetHarmony(opts ...options.HarmonyDeviceOption) *TConfig {
+	harmonyOptions := options.NewHarmonyDeviceConfig(opts...)
+	device := &uixt.HarmonyDevice{
+		HarmonyDeviceConfig: harmonyOptions,
 	}
 
 	// each device can have its own settings
 	if harmonyOptions.ConnectKey != "" {
-		c.Harmony = append(c.Harmony, harmonyOptions)
+		c.Harmony = append(c.Harmony, device)
 		return c
 	}
 
 	// device UDID is not specified, settings will be shared
 	if len(c.Harmony) == 0 {
-		c.Harmony = append(c.Harmony, harmonyOptions)
+		c.Harmony = append(c.Harmony, device)
 	} else {
-		c.Harmony[0] = harmonyOptions
+		c.Harmony[0] = device
 	}
 	return c
 }

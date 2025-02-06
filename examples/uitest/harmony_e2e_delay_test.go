@@ -5,6 +5,7 @@ import (
 
 	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 func TestHarmonyDouyinE2E(t *testing.T) {
@@ -14,7 +15,9 @@ func TestHarmonyDouyinE2E(t *testing.T) {
 				"device": "${ENV(SerialNumber)}",
 				"ups":    "${ENV(LIVEUPLIST)}",
 			}).
-			SetHarmony(uixt.WithConnectKey("$device"), uixt.WithLogOn(true)),
+			SetHarmony(
+				options.WithConnectKey("$device"),
+				options.WithLogOn(true)),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				Harmony().

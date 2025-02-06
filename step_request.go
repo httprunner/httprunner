@@ -24,7 +24,6 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/httpstat"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
@@ -782,11 +781,8 @@ func (s *StepRequest) IOS(opts ...options.IOSDeviceOption) *StepMobile {
 }
 
 // Harmony creates a new harmony step session
-func (s *StepRequest) Harmony(options ...uixt.HarmonyDeviceOption) *StepMobile {
-	harmonyOptions := &uixt.HarmonyDevice{}
-	for _, option := range options {
-		option(harmonyOptions)
-	}
+func (s *StepRequest) Harmony(opts ...options.HarmonyDeviceOption) *StepMobile {
+	harmonyOptions := options.NewHarmonyDeviceConfig(opts...)
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		Harmony: &MobileUI{
