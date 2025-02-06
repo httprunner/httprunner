@@ -12,6 +12,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 type DriverExt struct {
@@ -24,24 +25,21 @@ type DriverExt struct {
 	plugin funplugin.IPlugin
 }
 
-func newDriverExt(device IDevice, driver IWebDriver, options ...DriverOption) (dExt *DriverExt, err error) {
-	driverOptions := NewDriverOptions()
-	for _, option := range options {
-		option(driverOptions)
-	}
+func newDriverExt(device IDevice, driver IWebDriver, opts ...options.DriverOption) (dExt *DriverExt, err error) {
+	driverOptions := options.NewDriverOptions(opts...)
 
 	dExt = &DriverExt{
 		Device: device,
 		Driver: driver,
-		plugin: driverOptions.plugin,
+		plugin: driverOptions.Plugin,
 	}
 
-	if driverOptions.withImageService {
+	if driverOptions.WithImageService {
 		if dExt.ImageService, err = newVEDEMImageService(); err != nil {
 			return nil, err
 		}
 	}
-	if driverOptions.withResultFolder {
+	if driverOptions.WithResultFolder {
 		// create results directory
 		if err = builtin.EnsureFolderExists(config.ResultsPath); err != nil {
 			return nil, errors.Wrap(err, "create results directory failed")

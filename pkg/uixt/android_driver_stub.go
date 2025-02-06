@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 type stubAndroidDriver struct {
@@ -100,7 +101,7 @@ func (sad *stubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (ra
 	return sad.Request(http.MethodPost, sad.concatURL(nil, pathElem...), bsJSON)
 }
 
-func (sad *stubAndroidDriver) NewSession(capabilities Capabilities) (SessionInfo, error) {
+func (sad *stubAndroidDriver) NewSession(capabilities options.Capabilities) (SessionInfo, error) {
 	sad.Driver.session.Reset()
 	return SessionInfo{}, errDriverNotImplemented
 }

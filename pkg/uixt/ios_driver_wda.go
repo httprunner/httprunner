@@ -24,6 +24,7 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 type wdaDriver struct {
@@ -36,8 +37,8 @@ type wdaDriver struct {
 }
 
 func (wd *wdaDriver) resetSession() error {
-	capabilities := NewCapabilities()
-	capabilities.WithDefaultAlertAction(AlertActionAccept)
+	capabilities := options.NewCapabilities()
+	capabilities.WithDefaultAlertAction(options.AlertActionAccept)
 
 	data := map[string]interface{}{
 		"capabilities": map[string]interface{}{
@@ -115,7 +116,7 @@ func (wd *wdaDriver) GetMjpegClient() *http.Client {
 	return wd.mjpegClient
 }
 
-func (wd *wdaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
+func (wd *wdaDriver) NewSession(capabilities options.Capabilities) (sessionInfo SessionInfo, err error) {
 	// [[FBRoute POST:@"/session"].withoutSession respondWithTarget:self action:@selector(handleCreateSession:)]
 	data := make(map[string]interface{})
 	if len(capabilities) == 0 {

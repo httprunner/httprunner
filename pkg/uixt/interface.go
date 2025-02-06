@@ -6,108 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/httprunner/funplugin"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 var (
 	DefaultWaitTimeout  = 60 * time.Second
 	DefaultWaitInterval = 400 * time.Millisecond
 )
-
-type AlertAction string
-
-const (
-	AlertActionAccept  AlertAction = "accept"
-	AlertActionDismiss AlertAction = "dismiss"
-)
-
-type Capabilities map[string]interface{}
-
-func NewCapabilities() Capabilities {
-	return make(Capabilities)
-}
-
-// WithDefaultAlertAction
-func (caps Capabilities) WithDefaultAlertAction(alertAction AlertAction) Capabilities {
-	caps["defaultAlertAction"] = alertAction
-	return caps
-}
-
-// WithMaxTypingFrequency
-//
-//	Defaults to `60`.
-func (caps Capabilities) WithMaxTypingFrequency(n int) Capabilities {
-	if n <= 0 {
-		n = 60
-	}
-	caps["maxTypingFrequency"] = n
-	return caps
-}
-
-// WithWaitForIdleTimeout
-//
-//	Defaults to `10`
-func (caps Capabilities) WithWaitForIdleTimeout(second float64) Capabilities {
-	caps["waitForIdleTimeout"] = second
-	return caps
-}
-
-// WithShouldUseTestManagerForVisibilityDetection If set to YES will ask TestManagerDaemon for element visibility
-//
-//	Defaults to  `false`
-func (caps Capabilities) WithShouldUseTestManagerForVisibilityDetection(b bool) Capabilities {
-	caps["shouldUseTestManagerForVisibilityDetection"] = b
-	return caps
-}
-
-// WithShouldUseCompactResponses If set to YES will use compact (standards-compliant) & faster responses
-//
-//	Defaults to `true`
-func (caps Capabilities) WithShouldUseCompactResponses(b bool) Capabilities {
-	caps["shouldUseCompactResponses"] = b
-	return caps
-}
-
-// WithElementResponseAttributes If shouldUseCompactResponses == NO,
-// is the comma-separated list of fields to return with each element.
-//
-//	Defaults to `type,label`.
-func (caps Capabilities) WithElementResponseAttributes(s string) Capabilities {
-	caps["elementResponseAttributes"] = s
-	return caps
-}
-
-// WithShouldUseSingletonTestManager
-//
-//	Defaults to `true`
-func (caps Capabilities) WithShouldUseSingletonTestManager(b bool) Capabilities {
-	caps["shouldUseSingletonTestManager"] = b
-	return caps
-}
-
-// WithDisableAutomaticScreenshots
-//
-//	Defaults to `true`
-func (caps Capabilities) WithDisableAutomaticScreenshots(b bool) Capabilities {
-	caps["disableAutomaticScreenshots"] = b
-	return caps
-}
-
-// WithShouldTerminateApp
-//
-//	Defaults to `true`
-func (caps Capabilities) WithShouldTerminateApp(b bool) Capabilities {
-	caps["shouldTerminateApp"] = b
-	return caps
-}
-
-// WithEventloopIdleDelaySec
-// Delays the invocation of '-[XCUIApplicationProcess setEventLoopHasIdled:]' by the timer interval passed.
-// which is skipped on setting it to zero.
-func (caps Capabilities) WithEventloopIdleDelaySec(second float64) Capabilities {
-	caps["eventloopIdleDelaySec"] = second
-	return caps
-}
 
 type SessionInfo struct {
 	SessionId    string `json:"sessionId"`
@@ -445,54 +350,6 @@ type Rect struct {
 	Size
 }
 
-type DriverOptions struct {
-	capabilities     Capabilities
-	plugin           funplugin.IPlugin
-	withImageService bool
-	withResultFolder bool
-	withUIAction     bool
-}
-
-func NewDriverOptions() *DriverOptions {
-	return &DriverOptions{
-		withImageService: true,
-		withResultFolder: true,
-		withUIAction:     true,
-	}
-}
-
-type DriverOption func(*DriverOptions)
-
-func WithDriverCapabilities(capabilities Capabilities) DriverOption {
-	return func(options *DriverOptions) {
-		options.capabilities = capabilities
-	}
-}
-
-func WithDriverImageService(withImageService bool) DriverOption {
-	return func(options *DriverOptions) {
-		options.withImageService = withImageService
-	}
-}
-
-func WithDriverResultFolder(withResultFolder bool) DriverOption {
-	return func(options *DriverOptions) {
-		options.withResultFolder = withResultFolder
-	}
-}
-
-func WithUIAction(withUIAction bool) DriverOption {
-	return func(options *DriverOptions) {
-		options.withUIAction = withUIAction
-	}
-}
-
-func WithDriverPlugin(plugin funplugin.IPlugin) DriverOption {
-	return func(options *DriverOptions) {
-		options.plugin = plugin
-	}
-}
-
 // current implemeted device: IOSDevice, AndroidDevice, HarmonyDevice
 type IDevice interface {
 	Init() error  // init android device
@@ -500,7 +357,7 @@ type IDevice interface {
 	LogEnabled() bool
 
 	// TODO: add ctx to NewDriver
-	NewDriver(...DriverOption) (driverExt *DriverExt, err error)
+	NewDriver(...options.DriverOption) (driverExt *DriverExt, err error)
 
 	Install(appPath string, options ...InstallOption) error
 	Uninstall(packageName string) error
@@ -519,7 +376,7 @@ type ForegroundApp struct {
 // IWebDriver defines methods supported by IWebDriver drivers.
 type IWebDriver interface {
 	// NewSession starts a new session and returns the SessionInfo.
-	NewSession(capabilities Capabilities) (SessionInfo, error)
+	NewSession(capabilities options.Capabilities) (SessionInfo, error)
 
 	// DeleteSession Kills application associated with that session and removes session
 	//  1) alertsMonitor disable

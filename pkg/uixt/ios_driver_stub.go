@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 	"github.com/rs/zerolog/log"
 )
 
@@ -37,8 +38,8 @@ func newStubIOSDriver(bightInsightAddr, serverAddr string, dev *IOSDevice, readT
 
 func (s *stubIOSDriver) setUpWda() (err error) {
 	if s.wdaDriver == nil {
-		capabilities := NewCapabilities()
-		capabilities.WithDefaultAlertAction(AlertActionAccept)
+		capabilities := options.NewCapabilities()
+		capabilities.WithDefaultAlertAction(options.AlertActionAccept)
 		driver, err := s.device.NewHTTPDriver(capabilities)
 		if err != nil {
 			log.Error().Err(err).Msg("stub driver failed to init wda driver")
@@ -50,7 +51,7 @@ func (s *stubIOSDriver) setUpWda() (err error) {
 }
 
 // NewSession starts a new session and returns the SessionInfo.
-func (s *stubIOSDriver) NewSession(capabilities Capabilities) (SessionInfo, error) {
+func (s *stubIOSDriver) NewSession(capabilities options.Capabilities) (SessionInfo, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return SessionInfo{}, err

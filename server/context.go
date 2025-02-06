@@ -53,7 +53,9 @@ func handleDeviceContext() gin.HandlerFunc {
 			}
 			device.Init()
 
-			driver, err := device.NewDriver(uixt.WithDriverImageService(true), uixt.WithDriverResultFolder(true))
+			driver, err := device.NewDriver(
+				options.WithDriverImageService(true),
+				options.WithDriverResultFolder(true))
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).
 					Msg("failed to init driver")

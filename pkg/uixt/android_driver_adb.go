@@ -24,6 +24,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/utf7"
 	"github.com/httprunner/httprunner/v5/pkg/gadb"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 const (
@@ -78,7 +79,7 @@ func (ad *adbDriver) runShellCommand(cmd string, args ...string) (output string,
 	return output, err
 }
 
-func (ad *adbDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
+func (ad *adbDriver) NewSession(capabilities options.Capabilities) (sessionInfo SessionInfo, err error) {
 	ad.Driver.session.Reset()
 	err = errDriverNotImplemented
 	return

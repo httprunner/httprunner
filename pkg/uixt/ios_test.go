@@ -26,8 +26,8 @@ func setup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	capabilities := NewCapabilities()
-	capabilities.WithDefaultAlertAction(AlertActionAccept)
+	capabilities := options.NewCapabilities()
+	capabilities.WithDefaultAlertAction(options.AlertActionAccept)
 	driver, err = device.NewHTTPDriver(capabilities)
 	if err != nil {
 		t.Fatal(err)

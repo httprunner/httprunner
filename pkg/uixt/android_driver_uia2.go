@@ -17,6 +17,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/internal/utf7"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 var errDriverNotImplemented = errors.New("driver method not implemented")
@@ -25,10 +26,10 @@ type uiaDriver struct {
 	adbDriver
 }
 
-func NewUIADriver(capabilities Capabilities, urlPrefix string) (driver *uiaDriver, err error) {
+func NewUIADriver(capabilities options.Capabilities, urlPrefix string) (driver *uiaDriver, err error) {
 	log.Info().Msg("init uiautomator2 driver")
 	if capabilities == nil {
-		capabilities = NewCapabilities()
+		capabilities = options.NewCapabilities()
 		capabilities.WithWaitForIdleTimeout(0)
 	}
 	driver = new(uiaDriver)
@@ -85,7 +86,7 @@ func (bs BatteryStatus) String() string {
 }
 
 func (ud *uiaDriver) resetDriver() error {
-	newUIADriver, err := NewUIADriver(NewCapabilities(), ud.urlPrefix.String())
+	newUIADriver, err := NewUIADriver(options.NewCapabilities(), ud.urlPrefix.String())
 	if err != nil {
 		return err
 	}
@@ -133,7 +134,7 @@ func (ud *uiaDriver) httpDELETE(pathElem ...string) (rawResp rawResponse, err er
 	return ud.httpRequest(http.MethodDelete, ud.concatURL(nil, pathElem...), nil)
 }
 
-func (ud *uiaDriver) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
+func (ud *uiaDriver) NewSession(capabilities options.Capabilities) (sessionInfo SessionInfo, err error) {
 	// register(postHandler, new NewSession("/wd/hub/session"))
 	var rawResp rawResponse
 	data := make(map[string]interface{})

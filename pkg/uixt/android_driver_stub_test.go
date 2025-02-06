@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 var androidStubDriver *stubAndroidDriver
@@ -12,7 +14,7 @@ func setupStubDriver(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
 	device.STUB = true
-	androidStubDriver, err = device.NewStubDriver(Capabilities{})
+	androidStubDriver, err = device.NewStubDriver(options.Capabilities{})
 	checkErr(t, err)
 }
 

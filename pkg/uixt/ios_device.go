@@ -260,17 +260,14 @@ func (dev *IOSDevice) getAppInfo(packageName string) (appInfo AppInfo, err error
 	return AppInfo{}, fmt.Errorf("not found App by bundle id: %s", packageName)
 }
 
-func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, err error) {
-	driverOptions := NewDriverOptions()
-	for _, option := range options {
-		option(driverOptions)
-	}
+func (dev *IOSDevice) NewDriver(opts ...options.DriverOption) (driverExt *DriverExt, err error) {
+	driverOptions := options.NewDriverOptions()
 
 	// init WDA driver
-	capabilities := driverOptions.capabilities
+	capabilities := driverOptions.Capabilities
 	if capabilities == nil {
-		capabilities = NewCapabilities()
-		capabilities.WithDefaultAlertAction(AlertActionAccept)
+		capabilities = options.NewCapabilities()
+		capabilities.WithDefaultAlertAction(options.AlertActionAccept)
 	}
 
 	var driver IWebDriver
@@ -302,7 +299,7 @@ func (dev *IOSDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, 
 		}
 	}
 
-	driverExt, err = newDriverExt(dev, driver, options...)
+	driverExt, err = newDriverExt(dev, driver, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -564,7 +561,7 @@ func (dev *IOSDevice) Reboot() error {
 }
 
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
-func (dev *IOSDevice) NewHTTPDriver(capabilities Capabilities) (driver IWebDriver, err error) {
+func (dev *IOSDevice) NewHTTPDriver(capabilities options.Capabilities) (driver IWebDriver, err error) {
 	var localPort int
 	localPort, err = strconv.Atoi(os.Getenv("WDA_LOCAL_PORT"))
 	if err != nil {

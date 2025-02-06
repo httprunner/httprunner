@@ -95,14 +95,14 @@ func (dev *HarmonyDevice) LogEnabled() bool {
 	return dev.LogOn
 }
 
-func (dev *HarmonyDevice) NewDriver(options ...DriverOption) (driverExt *DriverExt, err error) {
+func (dev *HarmonyDevice) NewDriver(opts ...options.DriverOption) (driverExt *DriverExt, err error) {
 	driver, err := newHarmonyDriver(dev.d)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to new harmony driver")
 		return nil, err
 	}
 
-	driverExt, err = newDriverExt(dev, driver, options...)
+	driverExt, err = newDriverExt(dev, driver, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (dev *HarmonyDevice) NewDriver(options ...DriverOption) (driverExt *DriverE
 	return driverExt, nil
 }
 
-func (dev *HarmonyDevice) NewUSBDriver(options ...DriverOption) (driver IWebDriver, err error) {
+func (dev *HarmonyDevice) NewUSBDriver(opts ...options.DriverOption) (driver IWebDriver, err error) {
 	harmonyDriver, err := newHarmonyDriver(dev.d)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to new harmony driver")

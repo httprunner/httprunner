@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 )
 
 var (
@@ -59,7 +60,7 @@ func TestDriver_NewSession(t *testing.T) {
 	firstMatchEntry := make(map[string]interface{})
 	firstMatchEntry["package"] = "com.android.settings"
 	firstMatchEntry["activity"] = "com.android.settings/.Settings"
-	caps := Capabilities{
+	caps := options.Capabilities{
 		"firstMatch":  []interface{}{firstMatchEntry},
 		"alwaysMatch": struct{}{},
 	}

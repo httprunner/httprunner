@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"code.byted.org/iesqa/ghdc"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/options"
 	"github.com/rs/zerolog/log"
 )
 
@@ -39,7 +40,7 @@ func newHarmonyDriver(device *ghdc.Device) (driver *hdcDriver, err error) {
 	return
 }
 
-func (hd *hdcDriver) NewSession(capabilities Capabilities) (SessionInfo, error) {
+func (hd *hdcDriver) NewSession(capabilities options.Capabilities) (SessionInfo, error) {
 	hd.Driver.session.Reset()
 	hd.Unlock()
 	return SessionInfo{}, errDriverNotImplemented
