@@ -1,11 +1,11 @@
 package option
 
-type HarmonyDeviceConfig struct {
+type HarmonyDeviceOptions struct {
 	ConnectKey string `json:"connect_key,omitempty" yaml:"connect_key,omitempty"`
 	LogOn      bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
 
-func (dev *HarmonyDeviceConfig) Options() (deviceOptions []HarmonyDeviceOption) {
+func (dev *HarmonyDeviceOptions) Options() (deviceOptions []HarmonyDeviceOption) {
 	if dev.ConnectKey != "" {
 		deviceOptions = append(deviceOptions, WithConnectKey(dev.ConnectKey))
 	}
@@ -15,24 +15,24 @@ func (dev *HarmonyDeviceConfig) Options() (deviceOptions []HarmonyDeviceOption) 
 	return
 }
 
-func NewHarmonyDeviceConfig(opts ...HarmonyDeviceOption) (device *HarmonyDeviceConfig) {
-	device = &HarmonyDeviceConfig{}
+func NewHarmonyDeviceOptions(opts ...HarmonyDeviceOption) (device *HarmonyDeviceOptions) {
+	device = &HarmonyDeviceOptions{}
 	for _, option := range opts {
 		option(device)
 	}
 	return
 }
 
-type HarmonyDeviceOption func(*HarmonyDeviceConfig)
+type HarmonyDeviceOption func(*HarmonyDeviceOptions)
 
 func WithConnectKey(connectKey string) HarmonyDeviceOption {
-	return func(device *HarmonyDeviceConfig) {
+	return func(device *HarmonyDeviceOptions) {
 		device.ConnectKey = connectKey
 	}
 }
 
 func WithLogOn(logOn bool) HarmonyDeviceOption {
-	return func(device *HarmonyDeviceConfig) {
+	return func(device *HarmonyDeviceOptions) {
 		device.LogOn = logOn
 	}
 }

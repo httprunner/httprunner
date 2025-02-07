@@ -52,7 +52,7 @@ func handleDeviceContext() gin.HandlerFunc {
 				c.Abort()
 				return
 			}
-			device.Init()
+			device.Setup()
 
 			driver, err := device.NewDriver(
 				option.WithDriverImageService(true),

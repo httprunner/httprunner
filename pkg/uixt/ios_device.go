@@ -31,28 +31,6 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-const (
-	defaultWDAPort          = 8100
-	defaultMjpegPort        = 9100
-	defaultBightInsightPort = 8000
-	defaultDouyinServerPort = 32921
-)
-
-const (
-	// Changes the value of maximum depth for traversing elements source tree.
-	// It may help to prevent out of memory or timeout errors while getting the elements source tree,
-	// but it might restrict the depth of source tree.
-	// A part of elements source tree might be lost if the value was too small. Defaults to 50
-	snapshotMaxDepth = 10
-	// Allows to customize accept/dismiss alert button selector.
-	// It helps you to handle an arbitrary element as accept button in accept alert command.
-	// The selector should be a valid class chain expression, where the search root is the alert element itself.
-	// The default button location algorithm is used if the provided selector is wrong or does not match any element.
-	// e.g. **/XCUIElementTypeButton[`label CONTAINS[c] ‘accept’`]
-	acceptAlertButtonSelector  = "**/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','稍后再说'}`]"
-	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
-)
-
 var tunnelManager *tunnel.TunnelManager = nil
 
 func GetIOSDevices(udid ...string) (deviceList []ios.DeviceEntry, err error) {
@@ -126,20 +104,7 @@ func RebootTunnel() (err error) {
 }
 
 func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error) {
-	deviceOptions := &option.IOSDeviceConfig{
-		Port:                       defaultWDAPort,
-		MjpegPort:                  defaultMjpegPort,
-		SnapshotMaxDepth:           snapshotMaxDepth,
-		AcceptAlertButtonSelector:  acceptAlertButtonSelector,
-		DismissAlertButtonSelector: dismissAlertButtonSelector,
-		// switch to iOS springboard before init WDA session
-		// avoid getting stuck when some super app is active such as douyin or wexin
-		ResetHomeOnStartup: true,
-	}
-	for _, option := range opts {
-		option(deviceOptions)
-	}
-
+	deviceOptions := option.NewIOSDeviceOptions(opts...)
 	deviceList, err := GetIOSDevices(deviceOptions.UDID)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
@@ -160,12 +125,12 @@ func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error)
 	}
 
 	device = &IOSDevice{
-		IOSDeviceConfig: deviceOptions,
-		listeners:       make(map[int]*forward.ConnListener),
-		d:               dev,
+		IOSDeviceOptions: deviceOptions,
+		listeners:        make(map[int]*forward.ConnListener),
+		d:                dev,
 	}
 	log.Info().Str("udid", device.UDID).Msg("init ios device")
-	err = device.Init()
+	err = device.Setup()
 	if err != nil {
 		_ = device.Teardown()
 		return nil, err
@@ -174,7 +139,7 @@ func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error)
 }
 
 type IOSDevice struct {
-	*option.IOSDeviceConfig
+	*option.IOSDeviceOptions
 	d         ios.DeviceEntry
 	listeners map[int]*forward.ConnListener
 }
@@ -207,7 +172,7 @@ const (
 	ApplicationTypeAny      ApplicationType = "Any"
 )
 
-func (dev *IOSDevice) Init() error {
+func (dev *IOSDevice) Setup() error {
 	images, err := dev.ListImages()
 	if err != nil {
 		return err
@@ -270,7 +235,7 @@ func (dev *IOSDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverE
 		capabilities.WithDefaultAlertAction(option.AlertActionAccept)
 	}
 
-	var driver IWebDriver
+	var driver IDriver
 	if dev.STUB {
 		driver, err = dev.NewStubDriver()
 		if err != nil {
@@ -561,7 +526,7 @@ func (dev *IOSDevice) Reboot() error {
 }
 
 // NewHTTPDriver creates new remote HTTP client, this will also start a new session.
-func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver IWebDriver, err error) {
+func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver IDriver, err error) {
 	var localPort int
 	localPort, err = strconv.Atoi(os.Getenv("WDA_LOCAL_PORT"))
 	if err != nil {
@@ -570,7 +535,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver IW
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("get free port failed: %v", err))
 		}
-		if err = dev.forward(localPort, dev.Port); err != nil {
+		if err = dev.forward(localPort, dev.WDAPort); err != nil {
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
@@ -586,7 +551,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver IW
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("get free port failed: %v", err))
 		}
-		if err = dev.forward(localMjpegPort, dev.MjpegPort); err != nil {
+		if err = dev.forward(localMjpegPort, dev.WDAMjpegPort); err != nil {
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
@@ -600,9 +565,9 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver IW
 		Msg("init WDA HTTP driver")
 
 	wd := new(wdaDriver)
-	wd.device = dev
+	wd.IOSDevice = dev
 	wd.udid = dev.UDID
-	wd.client = &http.Client{
+	wd.Client = &http.Client{
 		Timeout: time.Second * 10, // 设置超时时间为 10 秒
 	}
 
@@ -634,7 +599,12 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver IW
 	return wd, nil
 }
 
-func (dev *IOSDevice) NewStubDriver() (driver IWebDriver, err error) {
+const (
+	defaultBightInsightPort = 8000
+	defaultDouyinServerPort = 32921
+)
+
+func (dev *IOSDevice) NewStubDriver() (driver IDriver, err error) {
 	localStubPort, err := builtin.GetFreePort()
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError,

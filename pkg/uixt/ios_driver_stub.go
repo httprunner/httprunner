@@ -14,7 +14,6 @@ import (
 
 type stubIOSDriver struct {
 	*wdaDriver
-	DriverClient
 
 	bightInsightPrefix string
 	serverPrefix       string
@@ -32,7 +31,7 @@ func newStubIOSDriver(bightInsightAddr, serverAddr string, dev *IOSDevice, readT
 	driver.bightInsightPrefix = bightInsightAddr
 	driver.serverPrefix = serverAddr
 	driver.timeout = timeout
-	driver.DriverClient.client = &http.Client{
+	driver.DriverClient.Client = &http.Client{
 		Timeout: time.Second * 10, // 设置超时时间为 10 秒
 	}
 	return driver, nil
@@ -516,7 +515,7 @@ func (s *stubIOSDriver) LogoutNoneUI(packageName string) error {
 }
 
 func (s *stubIOSDriver) TearDown() error {
-	s.DriverClient.client.CloseIdleConnections()
+	s.DriverClient.Client.CloseIdleConnections()
 	return nil
 }
 

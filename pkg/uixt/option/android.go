@@ -1,17 +1,30 @@
 package option
 
-type AndroidDeviceConfig struct {
+import "github.com/httprunner/httprunner/v5/pkg/gadb"
+
+type AndroidDeviceOptions struct {
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
-	STUB         bool   `json:"stub,omitempty" yaml:"stub,omitempty"`           // use stub
-	UIA2         bool   `json:"uia2,omitempty" yaml:"uia2,omitempty"`           // use uiautomator2
-	UIA2IP       string `json:"uia2_ip,omitempty" yaml:"uia2_ip,omitempty"`     // uiautomator2 server ip
-	UIA2Port     int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
+	STUB         bool   `json:"stub,omitempty" yaml:"stub,omitempty"` // use stub
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+
+	// adb
+	AdbServerHost string `json:"adb_server_host,omitempty" yaml:"adb_server_host,omitempty"`
+	AdbServerPort int    `json:"adb_server_port,omitempty" yaml:"adb_server_port,omitempty"`
+
+	// uiautomator2
+	UIA2                      bool   `json:"uia2,omitempty" yaml:"uia2,omitempty"`           // use uiautomator2
+	UIA2IP                    string `json:"uia2_ip,omitempty" yaml:"uia2_ip,omitempty"`     // uiautomator2 server ip
+	UIA2Port                  int    `json:"uia2_port,omitempty" yaml:"uia2_port,omitempty"` // uiautomator2 server port
+	UIA2ServerPackageName     string `json:"uia2_server_package_name,omitempty" yaml:"uia2_server_package_name,omitempty"`
+	UIA2ServerTestPackageName string `json:"uia2_server_test_package_name,omitempty" yaml:"uia2_server_test_package_name,omitempty"`
 }
 
-func (dev *AndroidDeviceConfig) Options() (deviceOptions []AndroidDeviceOption) {
+func (dev *AndroidDeviceOptions) Options() (deviceOptions []AndroidDeviceOption) {
 	if dev.SerialNumber != "" {
 		deviceOptions = append(deviceOptions, WithSerialNumber(dev.SerialNumber))
+	}
+	if dev.STUB {
+		deviceOptions = append(deviceOptions, WithStub(true))
 	}
 	if dev.UIA2 {
 		deviceOptions = append(deviceOptions, WithUIA2(true))
@@ -28,54 +41,87 @@ func (dev *AndroidDeviceConfig) Options() (deviceOptions []AndroidDeviceOption) 
 	return
 }
 
-func NewAndroidDeviceConfig(opts ...AndroidDeviceOption) *AndroidDeviceConfig {
-	config := &AndroidDeviceConfig{}
+const (
+	// adb server
+	defaultAdbServerHost = "localhost"
+	defaultAdbServerPort = gadb.AdbServerPort // 5037
+
+	// uiautomator2 server
+	defaultUIA2ServerHost            = "localhost"
+	defaultUIA2ServerPort            = 6790
+	defaultUIA2ServerPackageName     = "io.appium.uiautomator2.server"
+	defaultUIA2ServerTestPackageName = "io.appium.uiautomator2.server.test"
+)
+
+func NewAndroidDeviceOptions(opts ...AndroidDeviceOption) *AndroidDeviceOptions {
+	config := &AndroidDeviceOptions{}
 	for _, opt := range opts {
 		opt(config)
+	}
+
+	// set default
+	if config.AdbServerHost == "" {
+		config.AdbServerHost = defaultAdbServerHost
+	}
+	if config.AdbServerPort == 0 {
+		config.AdbServerPort = defaultAdbServerPort
+	}
+
+	if config.UIA2 {
+		if config.UIA2IP == "" && config.UIA2Port == 0 {
+			config.UIA2IP = defaultUIA2ServerHost
+			config.UIA2Port = defaultUIA2ServerPort
+		}
+		if config.UIA2ServerPackageName == "" {
+			config.UIA2ServerPackageName = defaultUIA2ServerPackageName
+		}
+		if config.UIA2ServerTestPackageName == "" {
+			config.UIA2ServerTestPackageName = defaultUIA2ServerTestPackageName
+		}
 	}
 	return config
 }
 
-type AndroidDeviceOption func(*AndroidDeviceConfig)
+type AndroidDeviceOption func(*AndroidDeviceOptions)
 
 func WithDriverTypeADB() AndroidDeviceOption {
-	return func(device *AndroidDeviceConfig) {
+	return func(device *AndroidDeviceOptions) {
 		device.STUB = false
 	}
 }
 
 func WithSerialNumber(serial string) AndroidDeviceOption {
-	return func(device *AndroidDeviceConfig) {
+	return func(device *AndroidDeviceOptions) {
 		device.SerialNumber = serial
 	}
 }
 
 func WithUIA2(uia2On bool) AndroidDeviceOption {
-	return func(device *AndroidDeviceConfig) {
+	return func(device *AndroidDeviceOptions) {
 		device.UIA2 = uia2On
 	}
 }
 
 func WithStub(stubOn bool) AndroidDeviceOption {
-	return func(device *AndroidDeviceConfig) {
+	return func(device *AndroidDeviceOptions) {
 		device.STUB = stubOn
 	}
 }
 
 func WithUIA2IP(ip string) AndroidDeviceOption {
-	return func(device *AndroidDeviceConfig) {
+	return func(device *AndroidDeviceOptions) {
 		device.UIA2IP = ip
 	}
 }
 
 func WithUIA2Port(port int) AndroidDeviceOption {
-	return func(device *AndroidDeviceConfig) {
+	return func(device *AndroidDeviceOptions) {
 		device.UIA2Port = port
 	}
 }
 
 func WithAdbLogOn(logOn bool) AndroidDeviceOption {
-	return func(device *AndroidDeviceConfig) {
+	return func(device *AndroidDeviceOptions) {
 		device.LogOn = logOn
 	}
 }

@@ -6,11 +6,13 @@ import (
 
 // current implemeted device: IOSDevice, AndroidDevice, HarmonyDevice
 type IDevice interface {
-	Init() error  // init android device
+	Setup() error
+	Teardown() error
+
 	UUID() string // ios udid or android serial
 	LogEnabled() bool
 
-	// TODO: add ctx to NewDriver
+	// TODO: remove
 	NewDriver(...option.DriverOption) (driverExt *DriverExt, err error)
 
 	Install(appPath string, opts ...option.InstallOption) error
@@ -18,10 +20,4 @@ type IDevice interface {
 
 	GetPackageInfo(packageName string) (AppInfo, error)
 	GetCurrentWindow() (windowInfo WindowInfo, err error)
-
-	// Teardown() error
-}
-
-func NewDriver(device IDevice, opts ...option.DriverOption) (driver IWebDriver, err error) {
-	return
 }

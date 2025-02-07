@@ -25,8 +25,8 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-// IWebDriver defines methods supported by IWebDriver drivers.
-type IWebDriver interface {
+// current implemeted driver: ADBDriver, UIA2Driver, WDADriver, HDCDriver
+type IDriver interface {
 	// NewSession starts a new session and returns the SessionInfo.
 	NewSession(capabilities option.Capabilities) (SessionInfo, error)
 
@@ -238,7 +238,7 @@ type DriverResult struct {
 
 type DriverClient struct {
 	urlPrefix *url.URL
-	client    *http.Client
+	Client    *http.Client
 
 	// cache to avoid repeated query
 	scale         float64
@@ -323,7 +323,7 @@ func (wd *DriverClient) Request(method string, rawURL string, rawBody []byte) (r
 
 	driverResult.RequestTime = time.Now()
 	var resp *http.Response
-	if resp, err = wd.client.Do(req); err != nil {
+	if resp, err = wd.Client.Do(req); err != nil {
 		return nil, err
 	}
 	defer func() {
@@ -371,14 +371,14 @@ func convertToHTTPClient(conn net.Conn) *http.Client {
 type DriverExt struct {
 	Ctx          context.Context
 	Device       IDevice
-	Driver       IWebDriver
+	Driver       IDriver
 	ImageService IImageService // used to extract image data
 
 	// funplugin
 	plugin funplugin.IPlugin
 }
 
-func newDriverExt(device IDevice, driver IWebDriver, opts ...option.DriverOption) (dExt *DriverExt, err error) {
+func newDriverExt(device IDevice, driver IDriver, opts ...option.DriverOption) (dExt *DriverExt, err error) {
 	options := option.NewDriverOptions(opts...)
 
 	dExt = &DriverExt{
@@ -404,7 +404,7 @@ func newDriverExt(device IDevice, driver IWebDriver, opts ...option.DriverOption
 	return dExt, nil
 }
 
-func (dExt *DriverExt) Init() error {
+func (dExt *DriverExt) Setup() error {
 	// unlock device screen
 	err := dExt.Driver.Unlock()
 	if err != nil {

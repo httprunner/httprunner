@@ -14,9 +14,9 @@ import (
 )
 
 type hdcDriver struct {
-	points []ExportPoint
-	DriverClient
-	device   *ghdc.Device
+	*HarmonyDevice
+	*DriverClient
+	points   []ExportPoint
 	uiDriver *ghdc.UIDriver
 }
 
@@ -30,7 +30,7 @@ const (
 
 func newHarmonyDriver(device *ghdc.Device) (driver *hdcDriver, err error) {
 	driver = new(hdcDriver)
-	driver.device = device
+	driver.Device = device
 	uiDriver, err := ghdc.NewUIDriver(*device)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to new harmony ui driver")
@@ -100,7 +100,7 @@ func (hd *hdcDriver) Homescreen() error {
 
 func (hd *hdcDriver) Unlock() (err error) {
 	// Todo 检查是否锁屏 hdc shell hidumper -s RenderService -a screen
-	screenInfo, err := hd.device.RunShellCommand("hidumper", "-s", "RenderService", "-a", "screen")
+	screenInfo, err := hd.RunShellCommand("hidumper", "-s", "RenderService", "-a", "screen")
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (hd *hdcDriver) AppLaunch(packageName string) error {
 }
 
 func (hd *hdcDriver) AppTerminate(packageName string) (bool, error) {
-	_, err := hd.device.RunShellCommand("aa", "force-stop", packageName)
+	_, err := hd.RunShellCommand("aa", "force-stop", packageName)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to terminal app")
 		return false, err

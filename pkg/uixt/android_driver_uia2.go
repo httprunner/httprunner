@@ -23,9 +23,9 @@ var errDriverNotImplemented = errors.New("driver method not implemented")
 
 const forwardToPrefix = "forward-to-"
 
-func NewUIA2Driver(device *AndroidDevice, opts ...option.DriverOption) (*UIA2Driver, error) {
+func NewUIA2Driver(device *AndroidDevice) (*UIA2Driver, error) {
 	log.Info().Interface("device", device).Msg("init android UIA2 driver")
-	localPort, err := device.d.Forward(device.UIA2Port)
+	localPort, err := device.Forward(device.UIA2Port)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("forward port %d->%d failed: %v",
@@ -36,9 +36,9 @@ func NewUIA2Driver(device *AndroidDevice, opts ...option.DriverOption) (*UIA2Dri
 		return nil, fmt.Errorf("adb forward: %w", err)
 	}
 	driver := new(UIA2Driver)
-	driver.client = convertToHTTPClient(conn)
-	driver.adbClient = device.d
-	driver.logcat = device.logcat
+	driver.Client = convertToHTTPClient(conn)
+	driver.Device = device.Device
+	driver.Logcat = device.Logcat
 
 	_, err = driver.NewSession(nil)
 	if err != nil {
@@ -48,35 +48,7 @@ func NewUIA2Driver(device *AndroidDevice, opts ...option.DriverOption) (*UIA2Dri
 }
 
 type UIA2Driver struct {
-	ADBDriver
-}
-
-type BatteryStatus int
-
-const (
-	_                                  = iota
-	BatteryStatusUnknown BatteryStatus = iota
-	BatteryStatusCharging
-	BatteryStatusDischarging
-	BatteryStatusNotCharging
-	BatteryStatusFull
-)
-
-func (bs BatteryStatus) String() string {
-	switch bs {
-	case BatteryStatusUnknown:
-		return "unknown"
-	case BatteryStatusCharging:
-		return "charging"
-	case BatteryStatusDischarging:
-		return "discharging"
-	case BatteryStatusNotCharging:
-		return "not charging"
-	case BatteryStatusFull:
-		return "full"
-	default:
-		return fmt.Sprintf("unknown status code (%d)", bs)
-	}
+	*ADBDriver
 }
 
 func (ud *UIA2Driver) resetDriver() error {

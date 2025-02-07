@@ -23,7 +23,6 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/utf7"
-	"github.com/httprunner/httprunner/v5/pkg/gadb"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -32,20 +31,18 @@ const (
 	UnicodeImePackageName  = "io.appium.settings/.UnicodeIME"
 )
 
-func NewADBDriver(device *AndroidDevice, opts ...option.DriverOption) (*ADBDriver, error) {
+func NewADBDriver(device *AndroidDevice) (*ADBDriver, error) {
 	log.Info().Interface("device", device).Msg("init android adb driver")
 	driver := &ADBDriver{}
 	driver.NewSession(nil)
-	driver.adbClient = device.d
-	driver.logcat = device.logcat
+	driver.Device = device.Device
+	driver.Logcat = device.Logcat
 	return driver, nil
 }
 
 type ADBDriver struct {
-	DriverClient
-
-	adbClient *gadb.Device
-	logcat    *AdbLogcat
+	*AndroidDevice
+	*DriverClient
 }
 
 func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string, err error) {
@@ -68,7 +65,7 @@ func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string,
 
 	// adb shell screencap -p
 	if cmd == "screencap" {
-		resp, err := ad.adbClient.ScreenCap()
+		resp, err := ad.Device.ScreenCap()
 		if err == nil {
 			driverResult.ResponseBody = "OMITTED"
 			return string(resp), nil
@@ -76,7 +73,7 @@ func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string,
 		return "", errors.Wrap(err, "adb screencap failed")
 	}
 
-	output, err = ad.adbClient.RunShellCommand(cmd, args...)
+	output, err = ad.Device.RunShellCommand(cmd, args...)
 	driverResult.ResponseBody = strings.TrimSpace(output)
 	return output, err
 }
@@ -792,7 +789,7 @@ func (ad *ADBDriver) IsHealthy() (healthy bool, err error) {
 func (ad *ADBDriver) StartCaptureLog(identifier ...string) (err error) {
 	log.Info().Msg("start adb log recording")
 	// start logcat
-	err = ad.logcat.CatchLogcat("iesqaMonitor:V")
+	err = ad.Logcat.CatchLogcat("iesqaMonitor:V")
 	if err != nil {
 		err = errors.Wrap(code.DeviceCaptureLogError,
 			fmt.Sprintf("start adb log recording failed: %v", err))
@@ -804,7 +801,7 @@ func (ad *ADBDriver) StartCaptureLog(identifier ...string) (err error) {
 func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 	defer func() {
 		log.Info().Msg("stop adb log recording")
-		err = ad.logcat.Stop()
+		err = ad.Logcat.Stop()
 		if err != nil {
 			log.Error().Err(err).Msg("failed to get adb log recording")
 		}
@@ -812,14 +809,14 @@ func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 	if err != nil {
 		log.Error().Err(err).Msg("failed to close adb log writer")
 	}
-	pointRes := ConvertPoints(ad.logcat.logs)
+	pointRes := ConvertPoints(ad.Logcat.logs)
 
 	// 没有解析到打点日志，走兜底逻辑
 	if len(pointRes) == 0 {
 		log.Info().Msg("action log is null, use action file >>>")
 		logFilePathPrefix := fmt.Sprintf("%v/data", config.ActionLogFilePath)
 		files := []string{}
-		ad.adbClient.RunShellCommand("pull", config.DeviceActionLogFilePath, config.ActionLogFilePath)
+		ad.Device.RunShellCommand("pull", config.DeviceActionLogFilePath, config.ActionLogFilePath)
 		err = filepath.Walk(config.ActionLogFilePath, func(path string, info fs.FileInfo, err error) error {
 			// 只是需要日志文件
 			if ok := strings.Contains(path, logFilePathPrefix); ok {
@@ -898,7 +895,7 @@ func (ad *ADBDriver) SetIme(imeRegx string) error {
 	if ime == "" {
 		return fmt.Errorf("failed to set ime by %s, ime list: %v", imeRegx, imeList)
 	}
-	brand, _ := ad.adbClient.Brand()
+	brand, _ := ad.Device.Brand()
 	packageName := strings.Split(ime, "/")[0]
 	res, err := ad.runShellCommand("ime", "set", ime)
 	log.Info().Str("funcName", "SetIme").Interface("ime", ime).
@@ -1061,7 +1058,7 @@ func (ad *ADBDriver) RecordScreen(folderPath string, duration time.Duration) (vi
 	// scrcpy -s 7d21bb91 --record=file.mp4 -N
 	cmd := exec.Command(
 		"scrcpy",
-		"-s", ad.adbClient.Serial(),
+		"-s", ad.Device.Serial(),
 		fmt.Sprintf("--record=%s", fileName),
 		"-N",
 	)

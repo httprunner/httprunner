@@ -760,7 +760,7 @@ func (s *StepRequest) MobileUI() *StepMobile {
 
 // Android creates a new android step session
 func (s *StepRequest) Android(opts ...option.AndroidDeviceOption) *StepMobile {
-	androidOptions := option.NewAndroidDeviceConfig(opts...)
+	androidOptions := option.NewAndroidDeviceOptions(opts...)
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		Android: &MobileUI{
@@ -771,7 +771,7 @@ func (s *StepRequest) Android(opts ...option.AndroidDeviceOption) *StepMobile {
 
 // IOS creates a new ios step session
 func (s *StepRequest) IOS(opts ...option.IOSDeviceOption) *StepMobile {
-	iosOptions := option.NewIOSDeviceConfig(opts...)
+	iosOptions := option.NewIOSDeviceOptions(opts...)
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		IOS: &MobileUI{
@@ -782,7 +782,7 @@ func (s *StepRequest) IOS(opts ...option.IOSDeviceOption) *StepMobile {
 
 // Harmony creates a new harmony step session
 func (s *StepRequest) Harmony(opts ...option.HarmonyDeviceOption) *StepMobile {
-	harmonyOptions := option.NewHarmonyDeviceConfig(opts...)
+	harmonyOptions := option.NewHarmonyDeviceOptions(opts...)
 	return &StepMobile{
 		StepConfig: s.StepConfig,
 		Harmony: &MobileUI{

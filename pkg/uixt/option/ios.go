@@ -1,11 +1,11 @@
 package option
 
-type IOSDeviceConfig struct {
-	UDID      string `json:"udid,omitempty" yaml:"udid,omitempty"`
-	Port      int    `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
-	MjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
-	STUB      bool   `json:"stub,omitempty" yaml:"stub,omitempty"`             // use stub
-	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+type IOSDeviceOptions struct {
+	UDID         string `json:"udid,omitempty" yaml:"udid,omitempty"`
+	WDAPort      int    `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
+	WDAMjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
+	STUB         bool   `json:"stub,omitempty" yaml:"stub,omitempty"`             // use stub
+	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 
 	// switch to iOS springboard before init WDA session
 	ResetHomeOnStartup bool `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
@@ -16,15 +16,15 @@ type IOSDeviceConfig struct {
 	DismissAlertButtonSelector string `json:"dismiss_alert_button_selector,omitempty" yaml:"dismiss_alert_button_selector,omitempty"`
 }
 
-func (dev *IOSDeviceConfig) Options() (deviceOptions []IOSDeviceOption) {
+func (dev *IOSDeviceOptions) Options() (deviceOptions []IOSDeviceOption) {
 	if dev.UDID != "" {
 		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
 	}
-	if dev.Port != 0 {
-		deviceOptions = append(deviceOptions, WithWDAPort(dev.Port))
+	if dev.WDAPort != 0 {
+		deviceOptions = append(deviceOptions, WithWDAPort(dev.WDAPort))
 	}
-	if dev.MjpegPort != 0 {
-		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.MjpegPort))
+	if dev.WDAMjpegPort != 0 {
+		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.WDAMjpegPort))
 	}
 	if dev.STUB {
 		deviceOptions = append(deviceOptions, WithIOSStub(true))
@@ -47,66 +47,108 @@ func (dev *IOSDeviceConfig) Options() (deviceOptions []IOSDeviceOption) {
 	return
 }
 
-func NewIOSDeviceConfig(opts ...IOSDeviceOption) *IOSDeviceConfig {
-	config := &IOSDeviceConfig{}
+const (
+	defaultWDAPort   = 8100
+	defaultMjpegPort = 9100
+)
+
+const (
+	// Changes the value of maximum depth for traversing elements source tree.
+	// It may help to prevent out of memory or timeout errors while getting the elements source tree,
+	// but it might restrict the depth of source tree.
+	// A part of elements source tree might be lost if the value was too small. Defaults to 50
+	defaultSnapshotMaxDepth = 10
+	// Allows to customize accept/dismiss alert button selector.
+	// It helps you to handle an arbitrary element as accept button in accept alert command.
+	// The selector should be a valid class chain expression, where the search root is the alert element itself.
+	// The default button location algorithm is used if the provided selector is wrong or does not match any element.
+	// e.g. **/XCUIElementTypeButton[`label CONTAINS[c] ‘accept’`]
+	acceptAlertButtonSelector  = "**/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','稍后再说'}`]"
+	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
+)
+
+func NewIOSDeviceOptions(opts ...IOSDeviceOption) *IOSDeviceOptions {
+	config := &IOSDeviceOptions{}
 	for _, opt := range opts {
 		opt(config)
 	}
+
+	if config.WDAPort == 0 {
+		config.WDAPort = defaultWDAPort
+	}
+	if config.WDAMjpegPort == 0 {
+		config.WDAMjpegPort = defaultMjpegPort
+	}
+
+	if config.SnapshotMaxDepth == 0 {
+		config.SnapshotMaxDepth = defaultSnapshotMaxDepth
+	}
+	if config.AcceptAlertButtonSelector == "" {
+		config.AcceptAlertButtonSelector = acceptAlertButtonSelector
+	}
+	if config.DismissAlertButtonSelector == "" {
+		config.DismissAlertButtonSelector = dismissAlertButtonSelector
+	}
+
+	// switch to iOS springboard before init WDA session
+	// avoid getting stuck when some super app is active such as douyin or wexin
+	config.ResetHomeOnStartup = true
+
 	return config
 }
 
-type IOSDeviceOption func(*IOSDeviceConfig)
+type IOSDeviceOption func(*IOSDeviceOptions)
 
 func WithUDID(udid string) IOSDeviceOption {
-	return func(device *IOSDeviceConfig) {
+	return func(device *IOSDeviceOptions) {
 		device.UDID = udid
 	}
 }
 
 func WithWDAPort(port int) IOSDeviceOption {
-	return func(device *IOSDeviceConfig) {
-		device.Port = port
+	return func(device *IOSDeviceOptions) {
+		device.WDAPort = port
 	}
 }
 
 func WithWDAMjpegPort(port int) IOSDeviceOption {
-	return func(device *IOSDeviceConfig) {
-		device.MjpegPort = port
+	return func(device *IOSDeviceOptions) {
+		device.WDAMjpegPort = port
 	}
 }
 
 func WithWDALogOn(logOn bool) IOSDeviceOption {
-	return func(device *IOSDeviceConfig) {
+	return func(device *IOSDeviceOptions) {
 		device.LogOn = logOn
 	}
 }
 
 func WithIOSStub(stub bool) IOSDeviceOption {
-	return func(device *IOSDeviceConfig) {
+	return func(device *IOSDeviceOptions) {
 		device.STUB = stub
 	}
 }
 
 func WithResetHomeOnStartup(reset bool) IOSDeviceOption {
-	return func(device *IOSDeviceConfig) {
+	return func(device *IOSDeviceOptions) {
 		device.ResetHomeOnStartup = reset
 	}
 }
 
 func WithSnapshotMaxDepth(depth int) IOSDeviceOption {
-	return func(device *IOSDeviceConfig) {
+	return func(device *IOSDeviceOptions) {
 		device.SnapshotMaxDepth = depth
 	}
 }
 
 func WithAcceptAlertButtonSelector(selector string) IOSDeviceOption {
-	return func(device *IOSDeviceConfig) {
+	return func(device *IOSDeviceOptions) {
 		device.AcceptAlertButtonSelector = selector
 	}
 }
 
 func WithDismissAlertButtonSelector(selector string) IOSDeviceOption {
-	return func(device *IOSDeviceConfig) {
+	return func(device *IOSDeviceOptions) {
 		device.DismissAlertButtonSelector = selector
 	}
 }

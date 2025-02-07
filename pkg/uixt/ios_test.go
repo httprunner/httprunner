@@ -15,7 +15,7 @@ import (
 
 var (
 	bundleId     = "com.apple.Preferences"
-	driver       IWebDriver
+	driver       IDriver
 	iOSDriverExt *DriverExt
 )
 

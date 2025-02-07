@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	iOSStubDriver IWebDriver
+	iOSStubDriver IDriver
 	iOSDevice     *IOSDevice
 )
 

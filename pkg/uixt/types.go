@@ -1,6 +1,9 @@
 package uixt
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 type DeviceStatus struct {
 	Message string `json:"message"`
@@ -122,6 +125,34 @@ func (v BatteryState) String() string {
 	}
 }
 
+type BatteryStatus int
+
+const (
+	_                                  = iota
+	BatteryStatusUnknown BatteryStatus = iota
+	BatteryStatusCharging
+	BatteryStatusDischarging
+	BatteryStatusNotCharging
+	BatteryStatusFull
+)
+
+func (bs BatteryStatus) String() string {
+	switch bs {
+	case BatteryStatusUnknown:
+		return "unknown"
+	case BatteryStatusCharging:
+		return "charging"
+	case BatteryStatusDischarging:
+		return "discharging"
+	case BatteryStatusNotCharging:
+		return "not charging"
+	case BatteryStatusFull:
+		return "full"
+	default:
+		return fmt.Sprintf("unknown status code (%d)", bs)
+	}
+}
+
 type Size struct {
 	Width  int `json:"width"`
 	Height int `json:"height"`
@@ -233,7 +264,7 @@ type Rotation struct {
 	Z int `json:"z"`
 }
 
-type Condition func(wd IWebDriver) (bool, error)
+type Condition func(wd IDriver) (bool, error)
 
 type Direction string
 

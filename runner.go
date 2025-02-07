@@ -427,14 +427,14 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "init android device failed")
 		}
-		if err := device.Init(); err != nil {
+		if err := device.Setup(); err != nil {
 			return nil, err
 		}
 		driver, err := device.NewDriver()
 		if err != nil {
 			return nil, err
 		}
-		if err := driver.Init(); err != nil {
+		if err := driver.Setup(); err != nil {
 			return nil, err
 		}
 		r.uixtDrivers[device.SerialNumber] = driver
@@ -450,14 +450,14 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "init ios device failed")
 		}
-		if err := device.Init(); err != nil {
+		if err := device.Setup(); err != nil {
 			return nil, err
 		}
 		driver, err := device.NewDriver()
 		if err != nil {
 			return nil, err
 		}
-		if err := driver.Init(); err != nil {
+		if err := driver.Setup(); err != nil {
 			return nil, err
 		}
 		r.uixtDrivers[device.UDID] = driver
@@ -473,14 +473,14 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "init harmony device failed")
 		}
-		if err := device.Init(); err != nil {
+		if err := device.Setup(); err != nil {
 			return nil, err
 		}
 		driver, err := device.NewDriver()
 		if err != nil {
 			return nil, err
 		}
-		if err := driver.Init(); err != nil {
+		if err := driver.Setup(); err != nil {
 			return nil, err
 		}
 		r.uixtDrivers[device.ConnectKey] = driver

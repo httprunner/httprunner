@@ -1,6 +1,7 @@
-package uixt
+package uixt_ext
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -22,7 +24,7 @@ const (
 	DouyinServerPort = 32316
 )
 
-func NewStubDriver(device *AndroidDevice) (driver *StubAndroidDriver, err error) {
+func NewStubDriver(device *uixt.AndroidDevice, opts ...option.DriverOption) (driver *StubAndroidDriver, err error) {
 	socketLocalPort, err := device.Forward(StubSocketName)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
@@ -55,14 +57,13 @@ func NewStubDriver(device *AndroidDevice) (driver *StubAndroidDriver, err error)
 		return nil, err
 	}
 
-	driver.NewSession(nil)
 	driver.Device = device.Device
 	driver.Logcat = device.Logcat
 	return driver, nil
 }
 
 type StubAndroidDriver struct {
-	*ADBDriver
+	uixt.ADBDriver
 	socket  net.Conn
 	seq     int
 	timeout time.Duration
@@ -117,11 +118,6 @@ func (sad *StubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (ra
 	return sad.Request(http.MethodPost, sad.concatURL(nil, pathElem...), bsJSON)
 }
 
-func (sad *StubAndroidDriver) NewSession(capabilities option.Capabilities) (SessionInfo, error) {
-	sad.DriverClient.session.Reset()
-	return SessionInfo{}, errDriverNotImplemented
-}
-
 func (sad *StubAndroidDriver) sendCommand(packageName string, cmdType string, params map[string]interface{}, readTimeout ...time.Duration) (interface{}, error) {
 	sad.seq++
 	packet := map[string]interface{}{
@@ -166,17 +162,17 @@ func (sad *StubAndroidDriver) close() error {
 	return nil
 }
 
-func (sad *StubAndroidDriver) Status() (DeviceStatus, error) {
+func (sad *StubAndroidDriver) Status() (uixt.DeviceStatus, error) {
 	app, err := sad.GetForegroundApp()
 	if err != nil {
-		return DeviceStatus{}, err
+		return uixt.DeviceStatus{}, err
 	}
 	res, err := sad.sendCommand(app.PackageName, "Hello", nil)
 	if err != nil {
-		return DeviceStatus{}, err
+		return uixt.DeviceStatus{}, err
 	}
 	log.Info().Msg(fmt.Sprintf("ping stub result :%v", res))
-	return DeviceStatus{}, nil
+	return uixt.DeviceStatus{}, nil
 }
 
 func (sad *StubAndroidDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
@@ -308,4 +304,15 @@ func (sad *StubAndroidDriver) getLoginAppInfo(packageName string) (info AppLogin
 		return
 	}
 	return info, nil
+}
+
+func convertToHTTPClient(conn net.Conn) *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return conn, nil
+			},
+		},
+		Timeout: 30 * time.Second,
+	}
 }

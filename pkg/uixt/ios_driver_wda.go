@@ -28,9 +28,9 @@ import (
 )
 
 type wdaDriver struct {
-	DriverClient
+	*IOSDevice
+	*DriverClient
 	udid          string
-	device        *IOSDevice
 	mjpegHTTPConn net.Conn // via HTTP
 	mjpegClient   *http.Client
 	mjpegUrl      string
@@ -467,7 +467,7 @@ func (wd *wdaDriver) GetForegroundApp() (appInfo AppInfo, err error) {
 	if err != nil {
 		return appInfo, err
 	}
-	apps, err := wd.device.ListApps(ApplicationTypeAny)
+	apps, err := wd.ListApps(ApplicationTypeAny)
 	if err != nil {
 		return appInfo, err
 	}
@@ -1021,7 +1021,7 @@ func (wd *wdaDriver) GetDriverResults() []*DriverResult {
 
 func (wd *wdaDriver) TearDown() error {
 	wd.mjpegClient.CloseIdleConnections()
-	wd.client.CloseIdleConnections()
+	wd.Client.CloseIdleConnections()
 	return nil
 }
 

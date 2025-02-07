@@ -17,13 +17,12 @@ var (
 )
 
 type HarmonyDevice struct {
-	*option.HarmonyDeviceConfig
-	d *ghdc.Device
+	*ghdc.Device
+	*option.HarmonyDeviceOptions
 }
 
 func NewHarmonyDevice(opts ...option.HarmonyDeviceOption) (device *HarmonyDevice, err error) {
-	deviceConfig := option.NewHarmonyDeviceConfig(opts...)
-
+	deviceConfig := option.NewHarmonyDeviceOptions(opts...)
 	deviceList, err := GetHarmonyDevices(deviceConfig.ConnectKey)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
@@ -43,8 +42,8 @@ func NewHarmonyDevice(opts ...option.HarmonyDeviceOption) (device *HarmonyDevice
 	}
 
 	device = &HarmonyDevice{
-		HarmonyDeviceConfig: deviceConfig,
-		d:                   dev,
+		HarmonyDeviceOptions: deviceConfig,
+		Device:               dev,
 	}
 	log.Info().Str("connectKey", device.ConnectKey).Msg("init harmony device")
 	return device, nil
@@ -83,7 +82,11 @@ func GetHarmonyDevices(serial ...string) (devices []*ghdc.Device, err error) {
 	return devices, nil
 }
 
-func (dev *HarmonyDevice) Init() error {
+func (dev *HarmonyDevice) Setup() error {
+	return nil
+}
+
+func (dev *HarmonyDevice) Teardown() error {
 	return nil
 }
 
@@ -96,7 +99,7 @@ func (dev *HarmonyDevice) LogEnabled() bool {
 }
 
 func (dev *HarmonyDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverExt, err error) {
-	driver, err := newHarmonyDriver(dev.d)
+	driver, err := newHarmonyDriver(dev.Device)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to new harmony driver")
 		return nil, err
@@ -110,8 +113,8 @@ func (dev *HarmonyDevice) NewDriver(opts ...option.DriverOption) (driverExt *Dri
 	return driverExt, nil
 }
 
-func (dev *HarmonyDevice) NewUSBDriver(opts ...option.DriverOption) (driver IWebDriver, err error) {
-	harmonyDriver, err := newHarmonyDriver(dev.d)
+func (dev *HarmonyDevice) NewUSBDriver(opts ...option.DriverOption) (driver IDriver, err error) {
+	harmonyDriver, err := newHarmonyDriver(dev.Device)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to new harmony driver")
 		return nil, err

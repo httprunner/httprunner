@@ -27,18 +27,10 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-var (
-	DouyinServerPort = 32316
-
+const (
 	// adb server
 	AdbServerHost = "localhost"
 	AdbServerPort = gadb.AdbServerPort // 5037
-
-	// uiautomator2 server
-	UIA2ServerHost            = "localhost"
-	UIA2ServerPort            = 6790
-	UIA2ServerPackageName     = "io.appium.uiautomator2.server"
-	UIA2ServerTestPackageName = "io.appium.uiautomator2.server.test"
 
 	EvalInstallerPackageName   = "sogou.mobile.explorer"
 	InstallViaInstallerCommand = "am start -S -n sogou.mobile.explorer/.PackageInstallerActivity -d"
@@ -48,13 +40,8 @@ var (
 var evalite embed.FS
 
 func NewAndroidDevice(opts ...option.AndroidDeviceOption) (device *AndroidDevice, err error) {
-	androidOptions := &option.AndroidDeviceConfig{
-		UIA2IP:   UIA2ServerHost,
-		UIA2Port: UIA2ServerPort,
-	}
-	for _, option := range opts {
-		option(androidOptions)
-	}
+	androidOptions := option.NewAndroidDeviceOptions(opts...)
+
 	deviceList, err := GetAndroidDevices(androidOptions.SerialNumber)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
@@ -75,9 +62,9 @@ func NewAndroidDevice(opts ...option.AndroidDeviceOption) (device *AndroidDevice
 	}
 
 	device = &AndroidDevice{
-		AndroidDeviceConfig: androidOptions,
-		d:                   dev,
-		logcat:              NewAdbLogcat(device.SerialNumber),
+		Device:               dev,
+		AndroidDeviceOptions: androidOptions,
+		Logcat:               NewAdbLogcat(androidOptions.SerialNumber),
 	}
 
 	evalToolRaw, err := evalite.ReadFile("evalite")
@@ -126,30 +113,30 @@ func GetAndroidDevices(serial ...string) (devices []*gadb.Device, err error) {
 }
 
 type AndroidDevice struct {
-	*option.AndroidDeviceConfig
-	d      *gadb.Device
-	logcat *AdbLogcat
+	*gadb.Device
+	*option.AndroidDeviceOptions
+	Logcat *AdbLogcat
 }
 
-func (dev *AndroidDevice) Init() error {
-	dev.d.RunShellCommand("ime", "enable", UnicodeImePackageName)
-	dev.d.RunShellCommand("rm", "-r", config.DeviceActionLogFilePath)
+func (dev *AndroidDevice) Setup() error {
+	dev.RunShellCommand("ime", "enable", UnicodeImePackageName)
+	dev.RunShellCommand("rm", "-r", config.DeviceActionLogFilePath)
 
 	if dev.UIA2 {
 		// uiautomator2 server must be started before
 
 		// check uiautomator server package installed
-		if !dev.d.IsPackageInstalled(UIA2ServerPackageName) {
+		if !dev.IsPackageInstalled(dev.UIA2ServerPackageName) {
 			return errors.Wrapf(code.MobileUIDriverAppNotInstalled,
-				"%s not installed", UIA2ServerPackageName)
+				"%s not installed", dev.UIA2ServerPackageName)
 		}
-		if !dev.d.IsPackageInstalled(UIA2ServerTestPackageName) {
+		if !dev.IsPackageInstalled(dev.UIA2ServerTestPackageName) {
 			return errors.Wrapf(code.MobileUIDriverAppNotInstalled,
-				"%s not installed", UIA2ServerTestPackageName)
+				"%s not installed", dev.UIA2ServerTestPackageName)
 		}
 
 		// TODO: check uiautomator server package running
-		// if dev.d.IsPackageRunning(UIA2ServerPackageName) {
+		// if dev.IsPackageRunning(UIA2ServerPackageName) {
 		// 	return nil
 		// }
 
@@ -164,6 +151,10 @@ func (dev *AndroidDevice) Init() error {
 	return nil
 }
 
+func (dev *AndroidDevice) Teardown() error {
+	return nil
+}
+
 func (dev *AndroidDevice) UUID() string {
 	return dev.SerialNumber
 }
@@ -173,13 +164,13 @@ func (dev *AndroidDevice) LogEnabled() bool {
 }
 
 func (dev *AndroidDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverExt, err error) {
-	var driver IWebDriver
+	var driver IDriver
 	if dev.UIA2 || dev.LogOn {
-		driver, err = NewUIA2Driver(dev, opts...)
+		driver, err = NewUIA2Driver(dev)
 	} else if dev.STUB {
-		driver, err = NewStubDriver(dev, opts...)
+		driver, err = NewStubDriver(dev)
 	} else {
-		driver, err = NewADBDriver(dev, opts...)
+		driver, err = NewADBDriver(dev)
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init UIA driver")
@@ -221,13 +212,13 @@ func (dev *AndroidDevice) StopPcap() string {
 }
 
 func (dev *AndroidDevice) Uninstall(packageName string) error {
-	_, err := dev.d.RunShellCommand("uninstall", packageName)
+	_, err := dev.RunShellCommand("uninstall", packageName)
 	return err
 }
 
 func (dev *AndroidDevice) Install(apkPath string, opts ...option.InstallOption) error {
 	installOpts := option.NewInstallOptions(opts...)
-	brand, err := dev.d.Brand()
+	brand, err := dev.Brand()
 	if err != nil {
 		return err
 	}
@@ -245,7 +236,7 @@ func (dev *AndroidDevice) Install(apkPath string, opts ...option.InstallOption) 
 	case "vivo":
 		return dev.installVivoSilent(apkPath, args...)
 	case "oppo", "realme", "oneplus":
-		if dev.d.IsPackageInstalled(EvalInstallerPackageName) {
+		if dev.IsPackageInstalled(EvalInstallerPackageName) {
 			return dev.installViaInstaller(apkPath, args...)
 		}
 		log.Warn().Msg("oppo not install eval installer")
@@ -263,13 +254,13 @@ func (dev *AndroidDevice) installVivoSilent(apkPath string, args ...string) erro
 	verifyCode = verifyCode[:8]
 	verifyCode = "-V" + verifyCode
 	args = append([]string{verifyCode}, args...)
-	_, err := dev.d.InstallAPK(apkPath, args...)
+	_, err := dev.InstallAPK(apkPath, args...)
 	return err
 }
 
 func (dev *AndroidDevice) installViaInstaller(apkPath string, args ...string) error {
 	appRemotePath := "/data/local/tmp/" + strconv.FormatInt(time.Now().UnixMilli(), 10) + ".apk"
-	err := dev.d.PushFile(apkPath, appRemotePath, time.Now())
+	err := dev.PushFile(apkPath, appRemotePath, time.Now())
 	if err != nil {
 		return err
 	}
@@ -277,7 +268,7 @@ func (dev *AndroidDevice) installViaInstaller(apkPath string, args ...string) er
 	defer func() {
 		close(done)
 	}()
-	logcat := NewAdbLogcatWithCallback(dev.d.Serial(), func(line string) {
+	logcat := NewAdbLogcatWithCallback(dev.Serial(), func(line string) {
 		re := regexp.MustCompile(`\{.*?}`)
 		match := re.FindString(line)
 		if match == "" {
@@ -307,7 +298,7 @@ func (dev *AndroidDevice) installViaInstaller(apkPath string, args ...string) er
 	// 需要监听是否完成安装
 	command := strings.Split(InstallViaInstallerCommand, " ")
 	args = append(command, appRemotePath)
-	_, err = dev.d.RunShellCommand("am", args[1:]...)
+	_, err = dev.RunShellCommand("am", args[1:]...)
 	if err != nil {
 		return err
 	}
@@ -322,13 +313,13 @@ func (dev *AndroidDevice) installViaInstaller(apkPath string, args ...string) er
 }
 
 func (dev *AndroidDevice) installCommon(apkPath string, args ...string) error {
-	_, err := dev.d.InstallAPK(apkPath, args...)
+	_, err := dev.InstallAPK(apkPath, args...)
 	return err
 }
 
 func (dev *AndroidDevice) GetCurrentWindow() (windowInfo WindowInfo, err error) {
 	// adb shell dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'
-	output, err := dev.d.RunShellCommand("dumpsys", "window", "|", "grep", "-E", "'mCurrentFocus|mFocusedApp'")
+	output, err := dev.RunShellCommand("dumpsys", "window", "|", "grep", "-E", "'mCurrentFocus|mFocusedApp'")
 	if err != nil {
 		return WindowInfo{}, errors.Wrap(err, "get current window failed")
 	}
@@ -354,7 +345,7 @@ func (dev *AndroidDevice) GetCurrentWindow() (windowInfo WindowInfo, err error) 
 	}
 
 	// adb shell dumpsys activity activities | grep mResumedActivity
-	output, err = dev.d.RunShellCommand("dumpsys", "activity", "activities", "|", "grep", "mResumedActivity")
+	output, err = dev.RunShellCommand("dumpsys", "activity", "activities", "|", "grep", "mResumedActivity")
 	if err != nil {
 		return WindowInfo{}, errors.Wrap(err, "get current activity failed")
 	}
@@ -408,7 +399,7 @@ func (dev *AndroidDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 }
 
 func (dev *AndroidDevice) getPackageVersion(packageName string) (string, error) {
-	output, err := dev.d.RunShellCommand("dumpsys", "package", packageName, "|", "grep", "versionName")
+	output, err := dev.RunShellCommand("dumpsys", "package", packageName, "|", "grep", "versionName")
 	if err != nil {
 		return "", errors.Wrap(err, "get package version failed")
 	}
@@ -423,7 +414,7 @@ func (dev *AndroidDevice) getPackageVersion(packageName string) (string, error) 
 }
 
 func (dev *AndroidDevice) getPackagePath(packageName string) (string, error) {
-	output, err := dev.d.RunShellCommand("pm", "path", packageName)
+	output, err := dev.RunShellCommand("pm", "path", packageName)
 	if err != nil {
 		return "", errors.Wrap(err, "get package path failed")
 	}
@@ -436,7 +427,7 @@ func (dev *AndroidDevice) getPackagePath(packageName string) (string, error) {
 }
 
 func (dev *AndroidDevice) getPackageMD5(packagePath string) (string, error) {
-	output, err := dev.d.RunShellCommand("md5sum", packagePath)
+	output, err := dev.RunShellCommand("md5sum", packagePath)
 	if err != nil {
 		return "", errors.Wrap(err, "get package md5 failed")
 	}
@@ -450,12 +441,12 @@ func (dev *AndroidDevice) getPackageMD5(packagePath string) (string, error) {
 func (dev *AndroidDevice) startUIA2Server() error {
 	const maxRetries = 3
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		log.Info().Str("package", UIA2ServerTestPackageName).
+		log.Info().Str("package", dev.UIA2ServerTestPackageName).
 			Int("attempt", attempt).Msg("start uiautomator server")
 		// $ adb shell am instrument -w $UIA2ServerTestPackageName
 		// -w: wait for instrumentation to finish before returning.
 		// Required for test runners.
-		out, err := dev.d.RunShellCommand("am", "instrument", "-w", UIA2ServerTestPackageName)
+		out, err := dev.RunShellCommand("am", "instrument", "-w", dev.UIA2ServerTestPackageName)
 		if err != nil {
 			return errors.Wrap(err, "start uiautomator server failed")
 		}
@@ -469,7 +460,7 @@ func (dev *AndroidDevice) startUIA2Server() error {
 }
 
 func (dev *AndroidDevice) stopUIA2Server() error {
-	_, err := dev.d.RunShellCommand("am", "force-stop", UIA2ServerPackageName)
+	_, err := dev.RunShellCommand("am", "force-stop", dev.UIA2ServerPackageName)
 	return err
 }
 
