@@ -31,7 +31,7 @@ func newStubIOSDriver(bightInsightAddr, serverAddr string, dev *IOSDevice, readT
 	driver.bightInsightPrefix = bightInsightAddr
 	driver.serverPrefix = serverAddr
 	driver.timeout = timeout
-	driver.Client = &http.Client{
+	driver.client = &http.Client{
 		Timeout: time.Second * 10, // 设置超时时间为 10 秒
 	}
 	return driver, nil
@@ -51,11 +51,11 @@ func (s *stubIOSDriver) setUpWda() (err error) {
 	return nil
 }
 
-// NewSession starts a new session and returns the SessionInfo.
-func (s *stubIOSDriver) NewSession(capabilities option.Capabilities) (SessionInfo, error) {
+// NewSession starts a new session and returns the DriverSession.
+func (s *stubIOSDriver) NewSession(capabilities option.Capabilities) (Session, error) {
 	err := s.setUpWda()
 	if err != nil {
-		return SessionInfo{}, err
+		return Session{}, err
 	}
 	return s.wdaDriver.NewSession(capabilities)
 }
@@ -515,7 +515,7 @@ func (s *stubIOSDriver) LogoutNoneUI(packageName string) error {
 }
 
 func (s *stubIOSDriver) TearDown() error {
-	s.Client.CloseIdleConnections()
+	s.client.CloseIdleConnections()
 	return nil
 }
 
@@ -541,6 +541,6 @@ func (s *stubIOSDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, 
 	return info, nil
 }
 
-func (s *stubIOSDriver) GetSession() *DriverSession {
-	return s.DriverSession
+func (s *stubIOSDriver) GetSession() *Session {
+	return s.Session
 }

@@ -30,7 +30,7 @@ func NewADBDriver(device *AndroidDevice) (*ADBDriver, error) {
 	log.Info().Interface("device", device).Msg("init android adb driver")
 	driver := &ADBDriver{
 		AndroidDevice: device,
-		DriverSession: &DriverSession{},
+		Session:       &Session{},
 	}
 	driver.NewSession(nil)
 	return driver, nil
@@ -38,7 +38,7 @@ func NewADBDriver(device *AndroidDevice) (*ADBDriver, error) {
 
 type ADBDriver struct {
 	*AndroidDevice
-	*DriverSession
+	*Session
 }
 
 func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string, err error) {
@@ -74,7 +74,7 @@ func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string,
 	return output, err
 }
 
-func (ad *ADBDriver) NewSession(capabilities option.Capabilities) (sessionInfo SessionInfo, err error) {
+func (ad *ADBDriver) NewSession(capabilities option.Capabilities) (sessionInfo Session, err error) {
 	ad.Reset()
 	err = errDriverNotImplemented
 	return
@@ -857,8 +857,8 @@ func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 	return pointRes, nil
 }
 
-func (ad *ADBDriver) GetSession() *DriverSession {
-	return ad.DriverSession
+func (ad *ADBDriver) GetSession() *Session {
+	return ad.Session
 }
 
 func (ad *ADBDriver) GetDriverResults() []*DriverRequests {

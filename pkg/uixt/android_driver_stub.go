@@ -51,7 +51,7 @@ func NewStubDriver(device *AndroidDevice) (driver *StubAndroidDriver, err error)
 
 	rawURL := fmt.Sprintf("http://forward-to-%d:%d",
 		serverLocalPort, DouyinServerPort)
-	if driver.urlPrefix, err = url.Parse(rawURL); err != nil {
+	if driver.baseURL, err = url.Parse(rawURL); err != nil {
 		return nil, err
 	}
 
@@ -77,7 +77,7 @@ type AppLoginInfo struct {
 func (sad *StubAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
 	var localPort int
 	{
-		tmpURL, _ := url.Parse(sad.urlPrefix.String())
+		tmpURL, _ := url.Parse(sad.baseURL.String())
 		hostname := tmpURL.Hostname()
 		if strings.HasPrefix(hostname, forwardToPrefix) {
 			localPort, _ = strconv.Atoi(strings.TrimPrefix(hostname, forwardToPrefix))
@@ -88,14 +88,14 @@ func (sad *StubAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse, 
 	if err != nil {
 		return nil, fmt.Errorf("adb forward: %w", err)
 	}
-	sad.Client = convertToHTTPClient(conn)
+	sad.client = convertToHTTPClient(conn)
 	return sad.Request(http.MethodGet, sad.concatURL(nil, pathElem...), nil)
 }
 
 func (sad *StubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
 	var localPort int
 	{
-		tmpURL, _ := url.Parse(sad.urlPrefix.String())
+		tmpURL, _ := url.Parse(sad.baseURL.String())
 		hostname := tmpURL.Hostname()
 		if strings.HasPrefix(hostname, forwardToPrefix) {
 			localPort, _ = strconv.Atoi(strings.TrimPrefix(hostname, forwardToPrefix))
@@ -106,7 +106,7 @@ func (sad *StubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (ra
 	if err != nil {
 		return nil, fmt.Errorf("adb forward: %w", err)
 	}
-	sad.Client = convertToHTTPClient(conn)
+	sad.client = convertToHTTPClient(conn)
 
 	var bsJSON []byte = nil
 	if data != nil {
@@ -117,9 +117,9 @@ func (sad *StubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (ra
 	return sad.Request(http.MethodPost, sad.concatURL(nil, pathElem...), bsJSON)
 }
 
-func (sad *StubAndroidDriver) NewSession(capabilities option.Capabilities) (SessionInfo, error) {
+func (sad *StubAndroidDriver) NewSession(capabilities option.Capabilities) (Session, error) {
 	sad.Reset()
-	return SessionInfo{}, errDriverNotImplemented
+	return Session{}, errDriverNotImplemented
 }
 
 func (sad *StubAndroidDriver) sendCommand(packageName string, cmdType string, params map[string]interface{}, readTimeout ...time.Duration) (interface{}, error) {

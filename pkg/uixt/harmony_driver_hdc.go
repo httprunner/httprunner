@@ -15,7 +15,7 @@ import (
 
 type hdcDriver struct {
 	*HarmonyDevice
-	*DriverSession
+	*Session
 	points   []ExportPoint
 	uiDriver *ghdc.UIDriver
 }
@@ -41,18 +41,18 @@ func newHarmonyDriver(device *ghdc.Device) (driver *hdcDriver, err error) {
 	return
 }
 
-func (hd *hdcDriver) NewSession(capabilities option.Capabilities) (SessionInfo, error) {
+func (hd *hdcDriver) NewSession(capabilities option.Capabilities) (Session, error) {
 	hd.Reset()
 	hd.Unlock()
-	return SessionInfo{}, errDriverNotImplemented
+	return Session{}, errDriverNotImplemented
 }
 
 func (hd *hdcDriver) DeleteSession() error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) GetSession() *DriverSession {
-	return hd.DriverSession
+func (hd *hdcDriver) GetSession() *Session {
+	return hd.Session
 }
 
 func (hd *hdcDriver) Status() (DeviceStatus, error) {

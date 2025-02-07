@@ -2,32 +2,27 @@ package uixt
 
 import (
 	"bytes"
-	"context"
-	"encoding/json"
+	"encoding/base64"
+	builtinJSON "encoding/json"
 	"fmt"
 	_ "image/gif"
 	_ "image/png"
-	"io"
-	"net"
-	"net/http"
-	"net/url"
-	"path"
-	"strings"
+	"regexp"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
+	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 // current implemeted driver: ADBDriver, UIA2Driver, WDADriver, HDCDriver
 type IDriver interface {
-	// NewSession starts a new session and returns the SessionInfo.
-	NewSession(capabilities option.Capabilities) (SessionInfo, error)
+	// NewSession starts a new session and returns the DriverSession.
+	NewSession(capabilities option.Capabilities) (Session, error)
 
 	// DeleteSession Kills application associated with that session and removes session
 	//  1) alertsMonitor disable
@@ -35,7 +30,7 @@ type IDriver interface {
 	DeleteSession() error
 
 	// GetSession returns session cache, including requests, screenshots, etc.
-	GetSession() *DriverSession
+	GetSession() *Session
 
 	Status() (DeviceStatus, error)
 
@@ -170,199 +165,6 @@ type IDriver interface {
 	TearDown() error
 }
 
-type SessionInfo struct {
-	SessionId    string `json:"sessionId"`
-	Capabilities struct {
-		Device             string `json:"device"`
-		BrowserName        string `json:"browserName"`
-		SdkVersion         string `json:"sdkVersion"`
-		CFBundleIdentifier string `json:"CFBundleIdentifier"`
-	} `json:"capabilities"`
-}
-
-type DriverSession struct {
-	// ctx       context.Context
-	SessionID string
-	urlPrefix *url.URL
-	Client    *http.Client
-
-	// cache to avoid repeated query
-	scale      float64
-	windowSize Size
-
-	// cache uia2/wda request and response
-	requests []*DriverRequests
-	// cache screenshot ocr results
-	screenResults []*ScreenResult
-	// cache e2e delay
-	e2eDelay []timeLog
-}
-
-func (d *DriverSession) addScreenResult(screenResult *ScreenResult) {
-	d.screenResults = append(d.screenResults, screenResult)
-}
-
-func (d *DriverSession) addRequestResult(driverResult *DriverRequests) {
-	d.requests = append(d.requests, driverResult)
-}
-
-func (d *DriverSession) Reset() {
-	d.screenResults = make([]*ScreenResult, 0)
-	d.requests = make([]*DriverRequests, 0)
-	d.e2eDelay = nil
-}
-
-type Attachments map[string]interface{}
-
-func (d *DriverSession) Get(withReset bool) Attachments {
-	data := Attachments{
-		"screen_results": d.screenResults,
-	}
-	if len(d.requests) != 0 {
-		data["requests"] = d.requests
-	}
-	if d.e2eDelay != nil {
-		data["e2e_results"] = d.e2eDelay
-	}
-	if withReset {
-		d.Reset()
-	}
-	return data
-}
-
-type DriverRequests struct {
-	RequestMethod string    `json:"request_method"`
-	RequestUrl    string    `json:"request_url"`
-	RequestBody   string    `json:"request_body,omitempty"`
-	RequestTime   time.Time `json:"request_time"`
-
-	ResponseStatus   int    `json:"response_status"`
-	ResponseDuration int64  `json:"response_duration(ms)"` // ms
-	ResponseBody     string `json:"response_body"`
-
-	Success bool   `json:"success"`
-	Error   string `json:"error,omitempty"`
-}
-
-func (wd *DriverSession) concatURL(u *url.URL, elem ...string) string {
-	var tmp *url.URL
-	if u == nil {
-		u = wd.urlPrefix
-	}
-	tmp, _ = url.Parse(u.String())
-	tmp.Path = path.Join(append([]string{u.Path}, elem...)...)
-	return tmp.String()
-}
-
-func (wd *DriverSession) GET(pathElem ...string) (rawResp rawResponse, err error) {
-	return wd.Request(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
-}
-
-func (wd *DriverSession) POST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
-	var bsJSON []byte = nil
-	if data != nil {
-		if bsJSON, err = json.Marshal(data); err != nil {
-			return nil, err
-		}
-	}
-	return wd.Request(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
-}
-
-func (wd *DriverSession) DELETE(pathElem ...string) (rawResp rawResponse, err error) {
-	return wd.Request(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
-}
-
-func (wd *DriverSession) Request(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
-	driverResult := &DriverRequests{
-		RequestMethod: method,
-		RequestUrl:    rawURL,
-		RequestBody:   string(rawBody),
-	}
-
-	defer func() {
-		wd.addRequestResult(driverResult)
-
-		var logger *zerolog.Event
-		if err != nil {
-			driverResult.Success = false
-			driverResult.Error = err.Error()
-			logger = log.Error().Bool("success", false).Err(err)
-		} else {
-			driverResult.Success = true
-			logger = log.Debug().Bool("success", true)
-		}
-
-		logger = logger.Str("request_method", method).Str("request_url", rawURL).
-			Str("request_body", string(rawBody))
-		if !driverResult.RequestTime.IsZero() {
-			logger = logger.Int64("request_time", driverResult.RequestTime.UnixMilli())
-		}
-		if driverResult.ResponseStatus != 0 {
-			logger = logger.
-				Int("response_status", driverResult.ResponseStatus).
-				Int64("response_duration(ms)", driverResult.ResponseDuration).
-				Str("response_body", driverResult.ResponseBody)
-		}
-		logger.Msg("request uixt driver")
-	}()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	var req *http.Request
-	if req, err = http.NewRequestWithContext(ctx, method, rawURL, bytes.NewBuffer(rawBody)); err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json;charset=UTF-8")
-	req.Header.Set("Accept", "application/json")
-
-	driverResult.RequestTime = time.Now()
-	var resp *http.Response
-	if resp, err = wd.Client.Do(req); err != nil {
-		return nil, err
-	}
-	defer func() {
-		// https://github.com/etcd-io/etcd/blob/v3.3.25/pkg/httputil/httputil.go#L16-L22
-		_, _ = io.Copy(io.Discard, resp.Body)
-		_ = resp.Body.Close()
-	}()
-
-	rawResp, err = io.ReadAll(resp.Body)
-	duration := time.Since(driverResult.RequestTime)
-	driverResult.ResponseDuration = duration.Milliseconds()
-	driverResult.ResponseStatus = resp.StatusCode
-
-	if strings.HasSuffix(rawURL, "screenshot") {
-		// avoid printing screenshot data
-		driverResult.ResponseBody = "OMITTED"
-	} else {
-		driverResult.ResponseBody = string(rawResp)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	if err = rawResp.checkErr(); err != nil {
-		if resp.StatusCode == http.StatusOK {
-			return rawResp, nil
-		}
-		return nil, err
-	}
-
-	return
-}
-
-func convertToHTTPClient(conn net.Conn) *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return conn, nil
-			},
-		},
-		Timeout: 30 * time.Second,
-	}
-}
-
 type DriverExt struct {
 	Device       IDevice
 	Driver       IDriver
@@ -474,4 +276,86 @@ func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...s
 
 	log.Info().Str("assert", assert).Str("expect", expected).Msg("validate success")
 	return nil
+}
+
+type rawResponse []byte
+
+func (r rawResponse) checkErr() (err error) {
+	reply := new(struct {
+		Value struct {
+			Err        string `json:"error"`
+			Message    string `json:"message"`
+			Traceback  string `json:"traceback"`  // wda
+			Stacktrace string `json:"stacktrace"` // uia
+		}
+	})
+	if err = json.Unmarshal(r, reply); err != nil {
+		return err
+	}
+	if reply.Value.Err != "" {
+		errText := reply.Value.Message
+		re := regexp.MustCompile(`{.+?=(.+?)}`)
+		if re.MatchString(reply.Value.Message) {
+			subMatch := re.FindStringSubmatch(reply.Value.Message)
+			errText = subMatch[len(subMatch)-1]
+		}
+		return fmt.Errorf("%s: %s", reply.Value.Err, errText)
+	}
+	return
+}
+
+func (r rawResponse) valueConvertToString() (s string, err error) {
+	reply := new(struct{ Value string })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return "", errors.Wrapf(err, "json.Unmarshal failed, rawResponse: %s", string(r))
+	}
+	s = reply.Value
+	return
+}
+
+func (r rawResponse) valueConvertToBool() (b bool, err error) {
+	reply := new(struct{ Value bool })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return false, err
+	}
+	b = reply.Value
+	return
+}
+
+func (r rawResponse) valueConvertToSessionInfo() (sessionInfo Session, err error) {
+	reply := new(struct{ Value struct{ Session } })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return Session{}, err
+	}
+	sessionInfo = reply.Value.Session
+	return
+}
+
+func (r rawResponse) valueConvertToJsonRawMessage() (raw builtinJSON.RawMessage, err error) {
+	reply := new(struct{ Value builtinJSON.RawMessage })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return nil, err
+	}
+	raw = reply.Value
+	return
+}
+
+func (r rawResponse) valueConvertToJsonObject() (obj map[string]interface{}, err error) {
+	if err = json.Unmarshal(r, &obj); err != nil {
+		return nil, err
+	}
+	return
+}
+
+func (r rawResponse) valueDecodeAsBase64() (raw *bytes.Buffer, err error) {
+	str, err := r.valueConvertToString()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert value to string")
+	}
+	decodeString, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode base64 string")
+	}
+	raw = bytes.NewBuffer(decodeString)
+	return
 }

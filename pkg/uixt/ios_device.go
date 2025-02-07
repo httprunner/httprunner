@@ -567,21 +567,21 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 	wd := new(wdaDriver)
 	wd.IOSDevice = dev
 	wd.udid = dev.UDID
-	wd.Client = &http.Client{
+	wd.client = &http.Client{
 		Timeout: time.Second * 10, // 设置超时时间为 10 秒
 	}
 
 	host := "localhost"
-	if wd.urlPrefix, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
+	if wd.baseURL, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
 
 	// create new session
-	var sessionInfo SessionInfo
+	var sessionInfo Session
 	if sessionInfo, err = wd.NewSession(capabilities); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
-	wd.SessionID = sessionInfo.SessionId
+	wd.sessionID = sessionInfo.sessionID
 
 	if wd.mjpegHTTPConn, err = net.Dial(
 		"tcp",

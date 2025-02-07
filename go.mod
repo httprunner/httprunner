@@ -1,6 +1,6 @@
 module github.com/httprunner/httprunner/v5
 
-go 1.22.0
+go 1.23.0
 
 require (
 	code.byted.org/iesqa/ghdc v0.0.0-20241009025217-ecb76cf5bd27
