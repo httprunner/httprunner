@@ -19,5 +19,4 @@ type IDevice interface {
 	Uninstall(packageName string) error
 
 	GetPackageInfo(packageName string) (AppInfo, error)
-	GetCurrentWindow() (windowInfo WindowInfo, err error)
 }

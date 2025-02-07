@@ -308,18 +308,6 @@ func (dev *IOSDevice) Install(appPath string, opts ...option.InstallOption) (err
 	return err
 }
 
-func (dev *IOSDevice) InstallByUrl(url string, opts ...option.InstallOption) (err error) {
-	appPath, err := builtin.DownloadFileByUrl(url)
-	if err != nil {
-		return err
-	}
-	err = dev.Install(appPath, opts...)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (dev *IOSDevice) Uninstall(bundleId string) error {
 	svc, err := installationproxy.New(dev.d)
 	if err != nil {
@@ -633,10 +621,6 @@ func (dev *IOSDevice) NewStubDriver() (driver IDriver, err error) {
 		return nil, err
 	}
 	return stubDriver, nil
-}
-
-func (dev *IOSDevice) GetCurrentWindow() (WindowInfo, error) {
-	return WindowInfo{}, nil
 }
 
 func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {

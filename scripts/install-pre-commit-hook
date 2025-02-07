@@ -29,7 +29,7 @@ do
     echo "(gofumpt) $file"
     gofumpt -w "$file"
     echo "(goimports-reviser) $file"
-    goimports-reviser -file-path "$file" -rm-unused
+    goimports-reviser -file-path "$file" -rm-unused -format
     git add "$file"
 done
 

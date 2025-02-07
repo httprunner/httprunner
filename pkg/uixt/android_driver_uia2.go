@@ -118,7 +118,6 @@ func (ud *UIA2Driver) NewSession(capabilities option.Capabilities) (sessionInfo 
 	sessionID := reply.Value.SessionId
 	ud.Reset()
 	ud.sessionID = sessionID
-	// d.sessionIdCache[sessionID] = true
 	return Session{sessionID: sessionID}, nil
 }
 
