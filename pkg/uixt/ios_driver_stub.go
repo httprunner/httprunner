@@ -31,7 +31,7 @@ func newStubIOSDriver(bightInsightAddr, serverAddr string, dev *IOSDevice, readT
 	driver.bightInsightPrefix = bightInsightAddr
 	driver.serverPrefix = serverAddr
 	driver.timeout = timeout
-	driver.DriverClient.Client = &http.Client{
+	driver.Client = &http.Client{
 		Timeout: time.Second * 10, // 设置超时时间为 10 秒
 	}
 	return driver, nil
@@ -441,7 +441,7 @@ func (s *stubIOSDriver) StopCaptureLog() (result interface{}, err error) {
 	return s.wdaDriver.StopCaptureLog()
 }
 
-func (s *stubIOSDriver) GetDriverResults() []*DriverResult {
+func (s *stubIOSDriver) GetDriverResults() []*DriverRequests {
 	err := s.setUpWda()
 	if err != nil {
 		return nil
@@ -450,7 +450,7 @@ func (s *stubIOSDriver) GetDriverResults() []*DriverResult {
 }
 
 func (s *stubIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {
-	resp, err := s.DriverClient.Request(http.MethodGet, fmt.Sprintf("%s/source?format=json&onlyWeb=false", s.bightInsightPrefix), []byte{})
+	resp, err := s.Request(http.MethodGet, fmt.Sprintf("%s/source?format=json&onlyWeb=false", s.bightInsightPrefix), []byte{})
 	if err != nil {
 		return "", err
 	}
@@ -472,7 +472,7 @@ func (s *stubIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, pa
 	if err != nil {
 		return info, err
 	}
-	resp, err := s.DriverClient.Request(http.MethodPost, fmt.Sprintf("%s/host/login/account/", s.serverPrefix), bsJSON)
+	resp, err := s.Request(http.MethodPost, fmt.Sprintf("%s/host/login/account/", s.serverPrefix), bsJSON)
 	if err != nil {
 		return info, err
 	}
@@ -496,7 +496,7 @@ func (s *stubIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, pa
 }
 
 func (s *stubIOSDriver) LogoutNoneUI(packageName string) error {
-	resp, err := s.DriverClient.Request(http.MethodGet, fmt.Sprintf("%s/host/loginout/", s.serverPrefix), []byte{})
+	resp, err := s.Request(http.MethodGet, fmt.Sprintf("%s/host/loginout/", s.serverPrefix), []byte{})
 	if err != nil {
 		return err
 	}
@@ -515,12 +515,12 @@ func (s *stubIOSDriver) LogoutNoneUI(packageName string) error {
 }
 
 func (s *stubIOSDriver) TearDown() error {
-	s.DriverClient.Client.CloseIdleConnections()
+	s.Client.CloseIdleConnections()
 	return nil
 }
 
 func (s *stubIOSDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {
-	resp, err := s.DriverClient.Request(http.MethodGet, fmt.Sprintf("%s/host/app/info/", s.serverPrefix), []byte{})
+	resp, err := s.Request(http.MethodGet, fmt.Sprintf("%s/host/app/info/", s.serverPrefix), []byte{})
 	if err != nil {
 		return info, err
 	}
@@ -542,5 +542,5 @@ func (s *stubIOSDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, 
 }
 
 func (s *stubIOSDriver) GetSession() *DriverSession {
-	return &s.DriverClient.session
+	return s.DriverSession
 }

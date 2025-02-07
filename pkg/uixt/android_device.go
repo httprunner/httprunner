@@ -93,7 +93,7 @@ type AndroidDevice struct {
 }
 
 func (dev *AndroidDevice) Setup() error {
-	dev.RunShellCommand("ime", "enable", UnicodeImePackageName)
+	dev.RunShellCommand("ime", "enable", option.UnicodeImePackageName)
 	dev.RunShellCommand("rm", "-r", config.DeviceActionLogFilePath)
 
 	// setup evalite

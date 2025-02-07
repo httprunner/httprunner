@@ -26,27 +26,23 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-const (
-	AdbKeyBoardPackageName = "com.android.adbkeyboard/.AdbIME"
-	UnicodeImePackageName  = "io.appium.settings/.UnicodeIME"
-)
-
 func NewADBDriver(device *AndroidDevice) (*ADBDriver, error) {
 	log.Info().Interface("device", device).Msg("init android adb driver")
-	driver := &ADBDriver{}
+	driver := &ADBDriver{
+		AndroidDevice: device,
+		DriverSession: &DriverSession{},
+	}
 	driver.NewSession(nil)
-	driver.Device = device.Device
-	driver.Logcat = device.Logcat
 	return driver, nil
 }
 
 type ADBDriver struct {
 	*AndroidDevice
-	*DriverClient
+	*DriverSession
 }
 
 func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string, err error) {
-	driverResult := &DriverResult{
+	driverResult := &DriverRequests{
 		RequestMethod: "adb",
 		RequestUrl:    cmd,
 		RequestBody:   strings.Join(args, " "),
@@ -60,7 +56,7 @@ func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string,
 		} else {
 			driverResult.Success = true
 		}
-		ad.session.addRequestResult(driverResult)
+		ad.addRequestResult(driverResult)
 	}()
 
 	// adb shell screencap -p
@@ -79,7 +75,7 @@ func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string,
 }
 
 func (ad *ADBDriver) NewSession(capabilities option.Capabilities) (sessionInfo SessionInfo, err error) {
-	ad.DriverClient.session.Reset()
+	ad.Reset()
 	err = errDriverNotImplemented
 	return
 }
@@ -542,11 +538,11 @@ func (ad *ADBDriver) SendUnicodeKeys(text string, opts ...option.ActionOption) (
 	if err != nil {
 		return
 	}
-	if currentIme != UnicodeImePackageName {
+	if currentIme != option.UnicodeImePackageName {
 		defer func() {
 			_ = ad.SetIme(currentIme)
 		}()
-		err = ad.SetIme(UnicodeImePackageName)
+		err = ad.SetIme(option.UnicodeImePackageName)
 		if err != nil {
 			log.Warn().Err(err).Msgf("set Unicode Ime failed")
 			return
@@ -566,7 +562,7 @@ func (ad *ADBDriver) IsAdbKeyBoardInstalled() bool {
 	if err != nil {
 		return false
 	}
-	return strings.Contains(output, AdbKeyBoardPackageName)
+	return strings.Contains(output, option.AdbKeyBoardPackageName)
 }
 
 func (ad *ADBDriver) IsUnicodeIMEInstalled() bool {
@@ -574,7 +570,7 @@ func (ad *ADBDriver) IsUnicodeIMEInstalled() bool {
 	if err != nil {
 		return false
 	}
-	return strings.Contains(output, UnicodeImePackageName)
+	return strings.Contains(output, option.UnicodeImePackageName)
 }
 
 func (ad *ADBDriver) ListIme() []string {
@@ -594,12 +590,12 @@ func (ad *ADBDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 	}()
 
 	// Enable ADBKeyBoard from adb
-	if _, err = ad.runShellCommand("ime", "enable", AdbKeyBoardPackageName); err != nil {
+	if _, err = ad.runShellCommand("ime", "enable", option.AdbKeyBoardPackageName); err != nil {
 		log.Error().Err(err).Msg("failed to enable adbKeyBoard")
 		return
 	}
 	// Switch to ADBKeyBoard from adb
-	if _, err = ad.runShellCommand("ime", "set", AdbKeyBoardPackageName); err != nil {
+	if _, err = ad.runShellCommand("ime", "set", option.AdbKeyBoardPackageName); err != nil {
 		log.Error().Err(err).Msg("failed to set adbKeyBoard")
 		return
 	}
@@ -862,10 +858,10 @@ func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 }
 
 func (ad *ADBDriver) GetSession() *DriverSession {
-	return &ad.DriverClient.session
+	return ad.DriverSession
 }
 
-func (ad *ADBDriver) GetDriverResults() []*DriverResult {
+func (ad *ADBDriver) GetDriverResults() []*DriverRequests {
 	return nil
 }
 
@@ -910,7 +906,7 @@ func (ad *ADBDriver) SetIme(imeRegx string) error {
 		if strings.TrimSpace(pid) == "" {
 			appInfo, err := ad.GetForegroundApp()
 			_ = ad.AppLaunch(packageName)
-			if err == nil && packageName != UnicodeImePackageName {
+			if err == nil && packageName != option.UnicodeImePackageName {
 				time.Sleep(10 * time.Second)
 				nextAppInfo, err := ad.GetForegroundApp()
 				log.Info().Str("beforeFocusedPackage", appInfo.PackageName).Str("afterFocusedPackage", nextAppInfo.PackageName).Msg("")

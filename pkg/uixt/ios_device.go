@@ -581,7 +581,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 	if sessionInfo, err = wd.NewSession(capabilities); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
-	wd.session.ID = sessionInfo.SessionId
+	wd.SessionID = sessionInfo.SessionId
 
 	if wd.mjpegHTTPConn, err = net.Dial(
 		"tcp",

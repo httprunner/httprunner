@@ -51,6 +51,9 @@ const (
 	defaultUIA2ServerPort            = 6790
 	defaultUIA2ServerPackageName     = "io.appium.uiautomator2.server"
 	defaultUIA2ServerTestPackageName = "io.appium.uiautomator2.server.test"
+
+	AdbKeyBoardPackageName = "com.android.adbkeyboard/.AdbIME"
+	UnicodeImePackageName  = "io.appium.settings/.UnicodeIME"
 )
 
 func NewAndroidDeviceOptions(opts ...AndroidDeviceOption) *AndroidDeviceOptions {

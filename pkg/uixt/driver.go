@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/httprunner/funplugin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -165,7 +164,7 @@ type IDriver interface {
 	StartCaptureLog(identifier ...string) (err error)
 	StopCaptureLog() (result interface{}, err error)
 
-	GetDriverResults() []*DriverResult
+	GetDriverResults() []*DriverRequests
 	RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error)
 
 	TearDown() error
@@ -182,11 +181,19 @@ type SessionInfo struct {
 }
 
 type DriverSession struct {
-	ID string
+	// ctx       context.Context
+	SessionID string
+	urlPrefix *url.URL
+	Client    *http.Client
+
+	// cache to avoid repeated query
+	scale      float64
+	windowSize Size
+
 	// cache uia2/wda request and response
-	requests []*DriverResult
+	requests []*DriverRequests
 	// cache screenshot ocr results
-	screenResults []*ScreenResult // list of actions
+	screenResults []*ScreenResult
 	// cache e2e delay
 	e2eDelay []timeLog
 }
@@ -195,13 +202,13 @@ func (d *DriverSession) addScreenResult(screenResult *ScreenResult) {
 	d.screenResults = append(d.screenResults, screenResult)
 }
 
-func (d *DriverSession) addRequestResult(driverResult *DriverResult) {
+func (d *DriverSession) addRequestResult(driverResult *DriverRequests) {
 	d.requests = append(d.requests, driverResult)
 }
 
 func (d *DriverSession) Reset() {
 	d.screenResults = make([]*ScreenResult, 0)
-	d.requests = make([]*DriverResult, 0)
+	d.requests = make([]*DriverRequests, 0)
 	d.e2eDelay = nil
 }
 
@@ -223,33 +230,21 @@ func (d *DriverSession) Get(withReset bool) Attachments {
 	return data
 }
 
-type DriverResult struct {
+type DriverRequests struct {
 	RequestMethod string    `json:"request_method"`
 	RequestUrl    string    `json:"request_url"`
 	RequestBody   string    `json:"request_body,omitempty"`
 	RequestTime   time.Time `json:"request_time"`
 
-	Success          bool   `json:"success"`
 	ResponseStatus   int    `json:"response_status"`
 	ResponseDuration int64  `json:"response_duration(ms)"` // ms
 	ResponseBody     string `json:"response_body"`
-	Error            string `json:"error,omitempty"`
+
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
 }
 
-type DriverClient struct {
-	urlPrefix *url.URL
-	Client    *http.Client
-
-	// cache to avoid repeated query
-	scale         float64
-	windowSize    Size
-	driverResults []*DriverResult
-
-	// cache session data
-	session DriverSession
-}
-
-func (wd *DriverClient) concatURL(u *url.URL, elem ...string) string {
+func (wd *DriverSession) concatURL(u *url.URL, elem ...string) string {
 	var tmp *url.URL
 	if u == nil {
 		u = wd.urlPrefix
@@ -259,11 +254,11 @@ func (wd *DriverClient) concatURL(u *url.URL, elem ...string) string {
 	return tmp.String()
 }
 
-func (wd *DriverClient) GET(pathElem ...string) (rawResp rawResponse, err error) {
+func (wd *DriverSession) GET(pathElem ...string) (rawResp rawResponse, err error) {
 	return wd.Request(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *DriverClient) POST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+func (wd *DriverSession) POST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
@@ -273,19 +268,19 @@ func (wd *DriverClient) POST(data interface{}, pathElem ...string) (rawResp rawR
 	return wd.Request(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
 }
 
-func (wd *DriverClient) DELETE(pathElem ...string) (rawResp rawResponse, err error) {
+func (wd *DriverSession) DELETE(pathElem ...string) (rawResp rawResponse, err error) {
 	return wd.Request(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *DriverClient) Request(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
-	driverResult := &DriverResult{
+func (wd *DriverSession) Request(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
+	driverResult := &DriverRequests{
 		RequestMethod: method,
 		RequestUrl:    rawURL,
 		RequestBody:   string(rawBody),
 	}
 
 	defer func() {
-		wd.session.addRequestResult(driverResult)
+		wd.addRequestResult(driverResult)
 
 		var logger *zerolog.Event
 		if err != nil {
@@ -369,13 +364,9 @@ func convertToHTTPClient(conn net.Conn) *http.Client {
 }
 
 type DriverExt struct {
-	Ctx          context.Context
 	Device       IDevice
 	Driver       IDriver
 	ImageService IImageService // used to extract image data
-
-	// funplugin
-	plugin funplugin.IPlugin
 }
 
 func newDriverExt(device IDevice, driver IDriver, opts ...option.DriverOption) (dExt *DriverExt, err error) {
@@ -384,7 +375,6 @@ func newDriverExt(device IDevice, driver IDriver, opts ...option.DriverOption) (
 	dExt = &DriverExt{
 		Device: device,
 		Driver: driver,
-		plugin: options.Plugin,
 	}
 
 	if options.WithImageService {
