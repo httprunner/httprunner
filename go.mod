@@ -2,8 +2,6 @@ module github.com/httprunner/httprunner/v5
 
 go 1.22.0
 
-toolchain go1.22.7
-
 require (
 	code.byted.org/iesqa/ghdc v0.0.0-20241009025217-ecb76cf5bd27
 	github.com/BurntSushi/locker v0.0.0-20171006230638-a6e239ea1c69
