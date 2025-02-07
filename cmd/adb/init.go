@@ -1,13 +1,13 @@
 package adb
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v5/pkg/gadb"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
+
+var serial string
 
 var androidRootCmd = &cobra.Command{
 	Use:              "adb",
@@ -15,15 +15,12 @@ var androidRootCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 }
 
-func getDevice(serial string) (*gadb.Device, error) {
-	devices, err := uixt.GetAndroidDevices(serial)
+func getDevice(serial string) (*uixt.AndroidDevice, error) {
+	device, err := uixt.NewAndroidDevice(option.WithSerialNumber(serial))
 	if err != nil {
 		return nil, err
 	}
-	if len(devices) > 1 {
-		return nil, fmt.Errorf("found multiple attached devices, please specify android serial")
-	}
-	return devices[0], nil
+	return device, nil
 }
 
 func Init(rootCmd *cobra.Command) {

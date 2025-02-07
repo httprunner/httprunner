@@ -10,13 +10,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v5/internal/sdk"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/gadb"
 )
-
-func format(data map[string]string) string {
-	result, _ := json.MarshalIndent(data, "", "\t")
-	return string(result)
-}
 
 var listAndroidDevicesCmd = &cobra.Command{
 	Use:   "devices",
@@ -31,34 +26,36 @@ var listAndroidDevicesCmd = &cobra.Command{
 			})
 		}()
 
-		deviceList, err := uixt.GetAndroidDevices(serial)
+		deviceList, err := getAndroidDevices()
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(0)
+			os.Exit(1)
 		}
 
 		for _, d := range deviceList {
-			if isDetail {
-				fmt.Println(format(d.DeviceInfo()))
-			} else {
-				if usb, err := d.Usb(); err != nil {
-					fmt.Println(d.Serial())
-				} else {
-					fmt.Println(d.Serial(), usb)
-				}
-			}
+			fmt.Println(format(d.DeviceInfo()))
 		}
 		return nil
 	},
 }
 
-var (
-	serial   string
-	isDetail bool
-)
+func format(data map[string]string) string {
+	result, _ := json.MarshalIndent(data, "", "\t")
+	return string(result)
+}
+
+func getAndroidDevices() (devices []*gadb.Device, err error) {
+	var adbClient gadb.Client
+	if adbClient, err = gadb.NewClient(); err != nil {
+		return nil, err
+	}
+
+	if devices, err = adbClient.DeviceList(); err != nil {
+		return nil, err
+	}
+	return devices, nil
+}
 
 func init() {
-	listAndroidDevicesCmd.Flags().StringVarP(&serial, "serial", "s", "", "filter by device's serial")
-	listAndroidDevicesCmd.Flags().BoolVarP(&isDetail, "detail", "d", false, "print device's detail")
 	androidRootCmd.AddCommand(listAndroidDevicesCmd)
 }
