@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/pkg/ai"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -24,7 +25,7 @@ type Session struct {
 
 	// cache to avoid repeated query
 	scale      float64
-	windowSize Size
+	windowSize ai.Size
 
 	// cache uia2/wda request and response
 	requests []*DriverRequests

@@ -552,7 +552,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 		Int("localPort", localPort).Int("localMjpegPort", localMjpegPort).
 		Msg("init WDA HTTP driver")
 
-	wd := new(wdaDriver)
+	wd := new(WDADriver)
 	wd.IOSDevice = dev
 	wd.udid = dev.UDID
 	wd.client = &http.Client{

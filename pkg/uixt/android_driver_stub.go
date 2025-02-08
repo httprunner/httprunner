@@ -22,7 +22,7 @@ const (
 	DouyinServerPort = 32316
 )
 
-func NewStubDriver(device *AndroidDevice) (driver *StubAndroidDriver, err error) {
+func NewStubAndroidDriver(device *AndroidDevice) (driver *StubAndroidDriver, err error) {
 	socketLocalPort, err := device.Forward(StubSocketName)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,

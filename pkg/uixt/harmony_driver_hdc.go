@@ -10,12 +10,15 @@ import (
 	"code.byted.org/iesqa/ghdc"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v5/pkg/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-type hdcDriver struct {
+type HDCDriver struct {
 	*HarmonyDevice
 	*Session
+	IDriver
+	*DriverExt
 	points   []ExportPoint
 	uiDriver *ghdc.UIDriver
 }
@@ -28,10 +31,10 @@ const (
 	POWER_STATUS_ON      PowerStatus = "POWER_STATUS_ON"
 )
 
-func newHarmonyDriver(device *ghdc.Device) (driver *hdcDriver, err error) {
-	driver = new(hdcDriver)
-	driver.Device = device
-	uiDriver, err := ghdc.NewUIDriver(*device)
+func NewHDCDriver(device *HarmonyDevice) (driver *HDCDriver, err error) {
+	driver = new(HDCDriver)
+	driver.HarmonyDevice = device
+	uiDriver, err := ghdc.NewUIDriver(*device.Device)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to new harmony ui driver")
 		return nil, err
@@ -41,64 +44,64 @@ func newHarmonyDriver(device *ghdc.Device) (driver *hdcDriver, err error) {
 	return
 }
 
-func (hd *hdcDriver) NewSession(capabilities option.Capabilities) (Session, error) {
+func (hd *HDCDriver) NewSession(capabilities option.Capabilities) (Session, error) {
 	hd.Reset()
 	hd.Unlock()
 	return Session{}, errDriverNotImplemented
 }
 
-func (hd *hdcDriver) DeleteSession() error {
+func (hd *HDCDriver) DeleteSession() error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) GetSession() *Session {
+func (hd *HDCDriver) GetSession() *Session {
 	return hd.Session
 }
 
-func (hd *hdcDriver) Status() (DeviceStatus, error) {
+func (hd *HDCDriver) Status() (DeviceStatus, error) {
 	return DeviceStatus{}, errDriverNotImplemented
 }
 
-func (hd *hdcDriver) DeviceInfo() (DeviceInfo, error) {
+func (hd *HDCDriver) GetDevice() IDevice {
+	return hd.HarmonyDevice
+}
+
+func (hd *HDCDriver) DeviceInfo() (DeviceInfo, error) {
 	return DeviceInfo{}, errDriverNotImplemented
 }
 
-func (hd *hdcDriver) Location() (Location, error) {
+func (hd *HDCDriver) Location() (Location, error) {
 	return Location{}, errDriverNotImplemented
 }
 
-func (hd *hdcDriver) BatteryInfo() (BatteryInfo, error) {
+func (hd *HDCDriver) BatteryInfo() (BatteryInfo, error) {
 	return BatteryInfo{}, errDriverNotImplemented
 }
 
-func (hd *hdcDriver) WindowSize() (size Size, err error) {
+func (hd *HDCDriver) WindowSize() (size ai.Size, err error) {
 	display, err := hd.uiDriver.GetDisplaySize()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get window size")
-		return Size{}, err
+		return ai.Size{}, err
 	}
 	size.Width = display.Width
 	size.Height = display.Height
 	return size, err
 }
 
-func (hd *hdcDriver) Screen() (Screen, error) {
-	return Screen{}, errDriverNotImplemented
+func (hd *HDCDriver) Screen() (ai.Screen, error) {
+	return ai.Screen{}, errDriverNotImplemented
 }
 
-func (hd *hdcDriver) Scale() (float64, error) {
+func (hd *HDCDriver) Scale() (float64, error) {
 	return 1, nil
 }
 
-func (hd *hdcDriver) GetTimestamp() (timestamp int64, err error) {
-	return 0, errDriverNotImplemented
-}
-
-func (hd *hdcDriver) Homescreen() error {
+func (hd *HDCDriver) Homescreen() error {
 	return hd.uiDriver.PressKey(ghdc.KEYCODE_HOME)
 }
 
-func (hd *hdcDriver) Unlock() (err error) {
+func (hd *HDCDriver) Unlock() (err error) {
 	// Todo 检查是否锁屏 hdc shell hidumper -s RenderService -a screen
 	screenInfo, err := hd.RunShellCommand("hidumper", "-s", "RenderService", "-a", "screen")
 	if err != nil {
@@ -120,12 +123,12 @@ func (hd *hdcDriver) Unlock() (err error) {
 	return hd.Swipe(500, 1500, 500, 500)
 }
 
-func (hd *hdcDriver) AppLaunch(packageName string) error {
+func (hd *HDCDriver) AppLaunch(packageName string) error {
 	// Todo
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) AppTerminate(packageName string) (bool, error) {
+func (hd *HDCDriver) AppTerminate(packageName string) (bool, error) {
 	_, err := hd.RunShellCommand("aa", "force-stop", packageName)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to terminal app")
@@ -134,29 +137,29 @@ func (hd *hdcDriver) AppTerminate(packageName string) (bool, error) {
 	return true, nil
 }
 
-func (hd *hdcDriver) GetForegroundApp() (app AppInfo, err error) {
+func (hd *HDCDriver) GetForegroundApp() (app AppInfo, err error) {
 	// Todo
 	return AppInfo{}, errDriverNotImplemented
 }
 
-func (hd *hdcDriver) AssertForegroundApp(packageName string, activityType ...string) error {
+func (hd *HDCDriver) AssertForegroundApp(packageName string, activityType ...string) error {
 	// Todo
 	return nil
 }
 
-func (hd *hdcDriver) StartCamera() error {
+func (hd *HDCDriver) StartCamera() error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) StopCamera() error {
+func (hd *HDCDriver) StopCamera() error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) Orientation() (orientation Orientation, err error) {
+func (hd *HDCDriver) Orientation() (orientation Orientation, err error) {
 	return OrientationPortrait, nil
 }
 
-func (hd *hdcDriver) Tap(x, y float64, opts ...option.ActionOption) error {
+func (hd *HDCDriver) Tap(x, y float64, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 2 {
@@ -173,20 +176,20 @@ func (hd *hdcDriver) Tap(x, y float64, opts ...option.ActionOption) error {
 	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
 }
 
-func (hd *hdcDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+func (hd *HDCDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
+func (hd *HDCDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+func (hd *HDCDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	return errDriverNotImplemented
 }
 
 // Swipe works like Drag, but `pressForDuration` value is 0
-func (hd *hdcDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 	if len(actionOptions.Offset) == 4 {
 		fromX += float64(actionOptions.Offset[0])
@@ -210,51 +213,51 @@ func (hd *hdcDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(fromX), Y: int(fromY)}).MoveTo(ghdc.Point{X: int(toX), Y: int(toY)}, duration))
 }
 
-func (hd *hdcDriver) SetPasteboard(contentType PasteboardType, content string) error {
+func (hd *HDCDriver) SetPasteboard(contentType PasteboardType, content string) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error) {
+func (hd *HDCDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error) {
 	return nil, errDriverNotImplemented
 }
 
-func (hd *hdcDriver) SetIme(ime string) error {
+func (hd *HDCDriver) SetIme(ime string) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) SendKeys(text string, opts ...option.ActionOption) error {
+func (hd *HDCDriver) SendKeys(text string, opts ...option.ActionOption) error {
 	return hd.uiDriver.InputText(text)
 }
 
-func (hd *hdcDriver) Input(text string, opts ...option.ActionOption) error {
+func (hd *HDCDriver) Input(text string, opts ...option.ActionOption) error {
 	return hd.uiDriver.InputText(text)
 }
 
-func (hd *hdcDriver) Clear(packageName string) error {
+func (hd *HDCDriver) Clear(packageName string) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) PressButton(devBtn DeviceButton) error {
+func (hd *HDCDriver) PressButton(devBtn DeviceButton) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) PressBack(opts ...option.ActionOption) error {
+func (hd *HDCDriver) PressBack(opts ...option.ActionOption) error {
 	return hd.uiDriver.PressBack()
 }
 
-func (hd *hdcDriver) Backspace(count int, opts ...option.ActionOption) (err error) {
+func (hd *HDCDriver) Backspace(count int, opts ...option.ActionOption) (err error) {
 	return nil
 }
 
-func (hd *hdcDriver) PressKeyCode(keyCode KeyCode) (err error) {
+func (hd *HDCDriver) PressKeyCode(keyCode KeyCode) (err error) {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) PressHarmonyKeyCode(keyCode ghdc.KeyCode) (err error) {
+func (hd *HDCDriver) PressHarmonyKeyCode(keyCode ghdc.KeyCode) (err error) {
 	return hd.uiDriver.PressKey(keyCode)
 }
 
-func (hd *hdcDriver) Screenshot() (*bytes.Buffer, error) {
+func (hd *HDCDriver) Screenshot() (*bytes.Buffer, error) {
 	tempDir := os.TempDir()
 	screenshotPath := fmt.Sprintf("%s/screenshot_%d.png", tempDir, time.Now().Unix())
 	err := hd.uiDriver.Screenshot(screenshotPath)
@@ -274,74 +277,78 @@ func (hd *hdcDriver) Screenshot() (*bytes.Buffer, error) {
 	return bytes.NewBuffer(raw), nil
 }
 
-func (hd *hdcDriver) Source(srcOpt ...option.SourceOption) (string, error) {
+func (hd *HDCDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	return "", nil
 }
 
-func (hd *hdcDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+func (hd *HDCDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (hd *hdcDriver) LogoutNoneUI(packageName string) error {
+func (hd *HDCDriver) LogoutNoneUI(packageName string) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) TapByText(text string, opts ...option.ActionOption) error {
+func (hd *HDCDriver) TapByText(text string, opts ...option.ActionOption) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) TapByTexts(actions ...TapTextAction) error {
+func (hd *HDCDriver) TapByTexts(actions ...TapTextAction) error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) AccessibleSource() (string, error) {
+func (hd *HDCDriver) AccessibleSource() (string, error) {
 	return "", errDriverNotImplemented
 }
 
-func (hd *hdcDriver) HealthCheck() error {
+func (hd *HDCDriver) HealthCheck() error {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) GetAppiumSettings() (map[string]interface{}, error) {
+func (hd *HDCDriver) GetAppiumSettings() (map[string]interface{}, error) {
 	return nil, errDriverNotImplemented
 }
 
-func (hd *hdcDriver) SetAppiumSettings(settings map[string]interface{}) (map[string]interface{}, error) {
+func (hd *HDCDriver) SetAppiumSettings(settings map[string]interface{}) (map[string]interface{}, error) {
 	return nil, errDriverNotImplemented
 }
 
-func (hd *hdcDriver) IsHealthy() (bool, error) {
+func (hd *HDCDriver) IsHealthy() (bool, error) {
 	return false, errDriverNotImplemented
 }
 
-func (hd *hdcDriver) StartCaptureLog(identifier ...string) (err error) {
+func (hd *HDCDriver) StartCaptureLog(identifier ...string) (err error) {
 	return errDriverNotImplemented
 }
 
-func (hd *hdcDriver) StopCaptureLog() (result interface{}, err error) {
+func (hd *HDCDriver) StopCaptureLog() (result interface{}, err error) {
 	// defer clear(hd.points)
 	return hd.points, nil
 }
 
-func (hd *hdcDriver) GetDriverResults() []*DriverRequests {
+func (hd *HDCDriver) GetDriverResults() []*DriverRequests {
 	return nil
 }
 
-func (hd *hdcDriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
+func (hd *HDCDriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
 	return "", nil
 }
 
-func (hd *hdcDriver) TearDown() error {
+func (hd *HDCDriver) Setup() error {
 	return nil
 }
 
-func (hd *hdcDriver) Rotation() (rotation Rotation, err error) {
+func (hd *HDCDriver) TearDown() error {
+	return nil
+}
+
+func (hd *HDCDriver) Rotation() (rotation Rotation, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (hd *hdcDriver) SetRotation(rotation Rotation) (err error) {
+func (hd *HDCDriver) SetRotation(rotation Rotation) (err error) {
 	err = errDriverNotImplemented
 	return
 }

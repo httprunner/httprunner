@@ -5,6 +5,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/pkg/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -25,7 +26,7 @@ var popups = [][]string{
 	{"管理使用时间", ".*忽略.*"},
 }
 
-func findTextPopup(screenTexts OCRTexts) (closePoint *OCRText) {
+func findTextPopup(screenTexts ai.OCRTexts) (closePoint *ai.OCRText) {
 	for _, popup := range popups {
 		if len(popup) != 2 {
 			continue
@@ -42,7 +43,7 @@ func findTextPopup(screenTexts OCRTexts) (closePoint *OCRText) {
 	return
 }
 
-func (dExt *DriverExt) handleTextPopup(screenTexts OCRTexts) error {
+func (dExt *DriverExt) handleTextPopup(screenTexts ai.OCRTexts) error {
 	closePoint := findTextPopup(screenTexts)
 	if closePoint == nil {
 		// no popup found
@@ -76,13 +77,13 @@ func (dExt *DriverExt) AutoPopupHandler() error {
 }
 
 type PopupInfo struct {
-	*ClosePopupsResult
-	ClosePoints []PointF `json:"close_points,omitempty"` // CV 识别的所有关闭按钮（仅关闭按钮，可能存在多个）
-	PicName     string   `json:"pic_name"`
-	PicURL      string   `json:"pic_url"`
+	*ai.ClosePopupsResult
+	ClosePoints []ai.PointF `json:"close_points,omitempty"` // CV 识别的所有关闭按钮（仅关闭按钮，可能存在多个）
+	PicName     string      `json:"pic_name"`
+	PicURL      string      `json:"pic_url"`
 }
 
-func (p *PopupInfo) ClosePoint() *PointF {
+func (p *PopupInfo) ClosePoint() *ai.PointF {
 	closeResult := p.ClosePopupsResult
 	if closeResult == nil {
 		return nil

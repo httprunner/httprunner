@@ -16,7 +16,15 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/pkg/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+)
+
+var (
+	_ IDriver = (*ADBDriver)(nil)
+	_ IDriver = (*UIA2Driver)(nil)
+	_ IDriver = (*WDADriver)(nil)
+	_ IDriver = (*HDCDriver)(nil)
 )
 
 // current implemeted driver: ADBDriver, UIA2Driver, WDADriver, HDCDriver
@@ -34,6 +42,7 @@ type IDriver interface {
 
 	Status() (DeviceStatus, error)
 
+	GetDevice() IDevice
 	DeviceInfo() (DeviceInfo, error)
 
 	// Location Returns device location data.
@@ -53,12 +62,9 @@ type IDriver interface {
 	// WindowSize Return the width and height in portrait mode.
 	// when getting the window size in wda/ui2/adb, if the device is in landscape mode,
 	// the width and height will be reversed.
-	WindowSize() (Size, error)
-	Screen() (Screen, error)
+	WindowSize() (ai.Size, error)
+	Screen() (ai.Screen, error)
 	Scale() (float64, error)
-
-	// GetTimestamp returns the timestamp of the mobile device
-	GetTimestamp() (timestamp int64, err error)
 
 	// Homescreen Forces the device under test to switch to the home screen
 	Homescreen() error
@@ -162,38 +168,64 @@ type IDriver interface {
 	GetDriverResults() []*DriverRequests
 	RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error)
 
+	Setup() error
 	TearDown() error
 }
 
+type IDriverExt interface {
+	GetDriver() IDriver // get original driver
+
+	GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error)
+	GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error)
+
+	// swipe
+	SwipeRelative(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
+	SwipeUp(opts ...option.ActionOption) error
+	SwipeDown(opts ...option.ActionOption) error
+	SwipeLeft(opts ...option.ActionOption) error
+	SwipeRight(opts ...option.ActionOption) error
+}
+
+func NewDriverExt(driver IDriver, opts ...ai.AIServiceOption) (IDriverExt, error) {
+	services := ai.NewAIService(opts...)
+	driverExt := &DriverExt{
+		Driver:       driver,
+		ImageService: services.ImageService,
+	}
+	// create results directory
+	if err := builtin.EnsureFolderExists(config.ResultsPath); err != nil {
+		return nil, errors.Wrap(err, "create results directory failed")
+	}
+	if err := builtin.EnsureFolderExists(config.ScreenShotsPath); err != nil {
+		return nil, errors.Wrap(err, "create screenshots directory failed")
+	}
+	return driverExt, nil
+}
+
 type DriverExt struct {
-	Device       IDevice
 	Driver       IDriver
-	ImageService IImageService // used to extract image data
+	ImageService ai.IImageService // used to extract image data
 }
 
 func newDriverExt(device IDevice, driver IDriver, opts ...option.DriverOption) (dExt *DriverExt, err error) {
 	options := option.NewDriverOptions(opts...)
 
 	dExt = &DriverExt{
-		Device: device,
 		Driver: driver,
 	}
 
 	if options.WithImageService {
-		if dExt.ImageService, err = newVEDEMImageService(); err != nil {
+		if dExt.ImageService, err = ai.NewVEDEMImageService(); err != nil {
 			return nil, err
 		}
 	}
 	if options.WithResultFolder {
-		// create results directory
-		if err = builtin.EnsureFolderExists(config.ResultsPath); err != nil {
-			return nil, errors.Wrap(err, "create results directory failed")
-		}
-		if err = builtin.EnsureFolderExists(config.ScreenShotsPath); err != nil {
-			return nil, errors.Wrap(err, "create screenshots directory failed")
-		}
 	}
 	return dExt, nil
+}
+
+func (dExt *DriverExt) GetDriver() IDriver {
+	return dExt.Driver
 }
 
 func (dExt *DriverExt) Setup() error {

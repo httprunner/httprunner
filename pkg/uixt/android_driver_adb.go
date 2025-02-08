@@ -23,6 +23,7 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/utf7"
+	"github.com/httprunner/httprunner/v5/pkg/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -39,6 +40,7 @@ func NewADBDriver(device *AndroidDevice) (*ADBDriver, error) {
 type ADBDriver struct {
 	*AndroidDevice
 	*Session
+	// DriverExt
 }
 
 func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string, err error) {
@@ -89,6 +91,10 @@ func (ad *ADBDriver) Status() (deviceStatus DeviceStatus, err error) {
 	return
 }
 
+func (ad *ADBDriver) GetDevice() IDevice {
+	return ad.AndroidDevice
+}
+
 func (ad *ADBDriver) DeviceInfo() (deviceInfo DeviceInfo, err error) {
 	err = errDriverNotImplemented
 	return
@@ -104,7 +110,7 @@ func (ad *ADBDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 	return
 }
 
-func (ad *ADBDriver) getWindowSize() (size Size, err error) {
+func (ad *ADBDriver) getWindowSize() (size ai.Size, err error) {
 	// adb shell wm size
 	output, err := ad.runShellCommand("wm", "size")
 	if err != nil {
@@ -130,14 +136,14 @@ func (ad *ADBDriver) getWindowSize() (size Size, err error) {
 			ss := strings.Split(resolution, "x")
 			width, _ := strconv.Atoi(ss[0])
 			height, _ := strconv.Atoi(ss[1])
-			return Size{Width: width, Height: height}, nil
+			return ai.Size{Width: width, Height: height}, nil
 		}
 	}
 	err = errors.New("physical window size not found by adb")
 	return
 }
 
-func (ad *ADBDriver) WindowSize() (size Size, err error) {
+func (ad *ADBDriver) WindowSize() (size ai.Size, err error) {
 	if !ad.windowSize.IsNil() {
 		// use cached window size
 		return ad.windowSize, nil
@@ -163,28 +169,13 @@ func (ad *ADBDriver) WindowSize() (size Size, err error) {
 	return size, nil
 }
 
-func (ad *ADBDriver) Screen() (screen Screen, err error) {
+func (ad *ADBDriver) Screen() (screen ai.Screen, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
 func (ad *ADBDriver) Scale() (scale float64, err error) {
 	return 1, nil
-}
-
-func (ad *ADBDriver) GetTimestamp() (timestamp int64, err error) {
-	// adb shell date +%s
-	output, err := ad.runShellCommand("date", "+%s")
-	if err != nil {
-		return 0, errors.Wrap(err, "failed to get timestamp by adb")
-	}
-
-	timestamp, err = strconv.ParseInt(strings.TrimSpace(output), 10, 64)
-	if err != nil {
-		return 0, errors.Wrap(err, "convert timestamp failed")
-	}
-
-	return timestamp, nil
 }
 
 // PressBack simulates a short press on the BACK button.
@@ -1086,6 +1077,10 @@ func (ad *ADBDriver) RecordScreen(folderPath string, duration time.Duration) (vi
 		}
 	}
 	return filepath.Abs(fileName)
+}
+
+func (ad *ADBDriver) Setup() error {
+	return nil
 }
 
 func (ad *ADBDriver) TearDown() error {

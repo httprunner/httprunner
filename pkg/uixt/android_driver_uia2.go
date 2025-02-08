@@ -16,6 +16,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/utf7"
+	"github.com/httprunner/httprunner/v5/pkg/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -182,7 +183,7 @@ func (ud *UIA2Driver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 	return
 }
 
-func (ud *UIA2Driver) WindowSize() (size Size, err error) {
+func (ud *UIA2Driver) WindowSize() (size ai.Size, err error) {
 	// register(getHandler, new GetDeviceSize("/wd/hub/session/:sessionId/window/:windowHandle/size"))
 	if !ud.windowSize.IsNil() {
 		// use cached window size
@@ -191,11 +192,11 @@ func (ud *UIA2Driver) WindowSize() (size Size, err error) {
 
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionID, "window/:windowHandle/size"); err != nil {
-		return Size{}, errors.Wrap(err, "get window size failed by UIA2 request")
+		return ai.Size{}, errors.Wrap(err, "get window size failed by UIA2 request")
 	}
-	reply := new(struct{ Value struct{ Size } })
+	reply := new(struct{ Value struct{ ai.Size } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return Size{}, errors.Wrap(err, "get window size failed by UIA2 response")
+		return ai.Size{}, errors.Wrap(err, "get window size failed by UIA2 response")
 	}
 	size = reply.Value.Size
 

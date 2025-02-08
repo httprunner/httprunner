@@ -6,17 +6,16 @@ import (
 
 // current implemeted device: IOSDevice, AndroidDevice, HarmonyDevice
 type IDevice interface {
+	UUID() string // ios udid or android serial
+
 	Setup() error
 	Teardown() error
-
-	UUID() string // ios udid or android serial
-	LogEnabled() bool
-
-	// TODO: remove
-	NewDriver(...option.DriverOption) (driverExt *DriverExt, err error)
 
 	Install(appPath string, opts ...option.InstallOption) error
 	Uninstall(packageName string) error
 
 	GetPackageInfo(packageName string) (AppInfo, error)
+
+	// TODO: remove?
+	LogEnabled() bool
 }

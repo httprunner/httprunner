@@ -260,6 +260,9 @@ func NewActionOptions(opts ...ActionOption) *ActionOptions {
 	for _, option := range opts {
 		option(actionOptions)
 	}
+	if actionOptions.MaxRetryTimes == 0 {
+		actionOptions.MaxRetryTimes = 1
+	}
 	return actionOptions
 }
 

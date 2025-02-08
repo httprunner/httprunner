@@ -471,7 +471,7 @@ func Test_remoteWD_AccessibleSource(t *testing.T) {
 
 func TestRecord(t *testing.T) {
 	setup(t)
-	path, err := driver.(*wdaDriver).RecordScreen("", 5*time.Second)
+	path, err := driver.(*WDADriver).RecordScreen("", 5*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}

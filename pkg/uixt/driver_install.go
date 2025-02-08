@@ -42,7 +42,7 @@ func (dExt *DriverExt) InstallByUrl(url string, opts ...option.InstallOption) er
 }
 
 func (dExt *DriverExt) Install(filePath string, opts ...option.InstallOption) error {
-	if _, ok := dExt.Device.(*AndroidDevice); ok {
+	if _, ok := dExt.Driver.GetDevice().(*AndroidDevice); ok {
 		stopChan := make(chan struct{})
 		go func() {
 			ticker := time.NewTicker(5 * time.Second)
@@ -87,12 +87,12 @@ func (dExt *DriverExt) Install(filePath string, opts ...option.InstallOption) er
 		}()
 	}
 
-	return dExt.Device.Install(filePath, opts...)
+	return dExt.Driver.GetDevice().Install(filePath, opts...)
 }
 
 func (dExt *DriverExt) Uninstall(packageName string, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
-	err := dExt.Device.Uninstall(packageName)
+	err := dExt.Driver.GetDevice().Uninstall(packageName)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to uninstall")
 	}

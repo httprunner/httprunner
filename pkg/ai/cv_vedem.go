@@ -1,4 +1,4 @@
-package uixt
+package ai
 
 import (
 	"bytes"
@@ -16,7 +16,6 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/json"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var client = &http.Client{
@@ -24,19 +23,19 @@ var client = &http.Client{
 }
 
 type APIResponseImage struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Result  ImageResult `json:"result"`
+	Code    int      `json:"code"`
+	Message string   `json:"message"`
+	Result  CVResult `json:"result"`
 }
 
-func newVEDEMImageService() (*veDEMImageService, error) {
+func NewVEDEMImageService() (*vedemCVService, error) {
 	if err := checkEnv(); err != nil {
 		return nil, err
 	}
-	return &veDEMImageService{}, nil
+	return &vedemCVService{}, nil
 }
 
-// veDEMImageService implements IImageService interface
+// vedemCVService implements IImageService interface
 // actions:
 //
 //	ocr - get ocr texts
@@ -45,11 +44,24 @@ func newVEDEMImageService() (*veDEMImageService, error) {
 //	popup - get popup windows
 //	close - get close popup
 //	ui - get ui position by type(s)
-type veDEMImageService struct{}
+type vedemCVService struct{}
 
-func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, opts ...option.ActionOption) (imageResult *ImageResult, err error) {
-	actionOptions := option.NewActionOptions(opts...)
-	screenshotActions := actionOptions.ScreenshotActions()
+func (s *vedemCVService) ReadFromPath(imagePath string, opts ...ScreenShotOption) (
+	imageResult *CVResult, err error) {
+	imageBuf, err := os.ReadFile(imagePath)
+	if err != nil {
+		err = errors.Wrap(code.CVRequestError,
+			fmt.Sprintf("read image file error: %v", err))
+		return
+	}
+	imageResult, err = s.ReadFromBuffer(bytes.NewBuffer(imageBuf), opts...)
+	return
+}
+
+func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...ScreenShotOption) (
+	imageResult *CVResult, err error) {
+	actionOptions := NewScreenShotOptions(opts...)
+	screenshotActions := actionOptions.List()
 	if len(screenshotActions) == 0 {
 		// skip
 		return nil, nil
@@ -98,11 +110,7 @@ func (s *veDEMImageService) GetImage(imageBuf *bytes.Buffer, opts ...option.Acti
 		bodyWriter.WriteField("ocrCluster", actionOptions.ScreenShotWithOCRCluster)
 	}
 
-	if actionOptions.Timeout > 0 {
-		bodyWriter.WriteField("timeout", fmt.Sprintf("%v", actionOptions.Timeout))
-	} else {
-		bodyWriter.WriteField("timeout", fmt.Sprintf("%v", 10))
-	}
+	bodyWriter.WriteField("timeout", fmt.Sprintf("%v", 10))
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {

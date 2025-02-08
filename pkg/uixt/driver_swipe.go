@@ -10,6 +10,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/pkg/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -146,7 +147,7 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, opts ...option.ActionOpti
 	actionOptions := option.NewActionOptions(opts...)
 	actionOptions.Identifier = ""
 	optionsWithoutIdentifier := actionOptions.Options()
-	var point PointF
+	var point ai.PointF
 	findTexts := func(d *DriverExt) error {
 		var err error
 		screenResult, err := d.GetScreenResult(

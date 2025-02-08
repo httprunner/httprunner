@@ -9,11 +9,12 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v5/pkg/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 type stubIOSDriver struct {
-	*wdaDriver
+	*WDADriver
 
 	bightInsightPrefix string
 	serverPrefix       string
@@ -38,7 +39,7 @@ func newStubIOSDriver(bightInsightAddr, serverAddr string, dev *IOSDevice, readT
 }
 
 func (s *stubIOSDriver) setUpWda() (err error) {
-	if s.wdaDriver == nil {
+	if s.WDADriver == nil {
 		capabilities := option.NewCapabilities()
 		capabilities.WithDefaultAlertAction(option.AlertActionAccept)
 		driver, err := s.device.NewHTTPDriver(capabilities)
@@ -46,7 +47,7 @@ func (s *stubIOSDriver) setUpWda() (err error) {
 			log.Error().Err(err).Msg("stub driver failed to init wda driver")
 			return err
 		}
-		s.wdaDriver = driver.(*wdaDriver)
+		s.WDADriver = driver.(*WDADriver)
 	}
 	return nil
 }
@@ -57,7 +58,7 @@ func (s *stubIOSDriver) NewSession(capabilities option.Capabilities) (Session, e
 	if err != nil {
 		return Session{}, err
 	}
-	return s.wdaDriver.NewSession(capabilities)
+	return s.WDADriver.NewSession(capabilities)
 }
 
 // DeleteSession Kills application associated with that session and removes session
@@ -68,7 +69,7 @@ func (s *stubIOSDriver) DeleteSession() error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.DeleteSession()
+	return s.WDADriver.DeleteSession()
 }
 
 func (s *stubIOSDriver) Status() (DeviceStatus, error) {
@@ -76,7 +77,7 @@ func (s *stubIOSDriver) Status() (DeviceStatus, error) {
 	if err != nil {
 		return DeviceStatus{}, err
 	}
-	return s.wdaDriver.Status()
+	return s.WDADriver.Status()
 }
 
 func (s *stubIOSDriver) DeviceInfo() (DeviceInfo, error) {
@@ -84,7 +85,7 @@ func (s *stubIOSDriver) DeviceInfo() (DeviceInfo, error) {
 	if err != nil {
 		return DeviceInfo{}, err
 	}
-	return s.wdaDriver.DeviceInfo()
+	return s.WDADriver.DeviceInfo()
 }
 
 func (s *stubIOSDriver) Location() (Location, error) {
@@ -92,7 +93,7 @@ func (s *stubIOSDriver) Location() (Location, error) {
 	if err != nil {
 		return Location{}, err
 	}
-	return s.wdaDriver.Location()
+	return s.WDADriver.Location()
 }
 
 func (s *stubIOSDriver) BatteryInfo() (BatteryInfo, error) {
@@ -100,26 +101,26 @@ func (s *stubIOSDriver) BatteryInfo() (BatteryInfo, error) {
 	if err != nil {
 		return BatteryInfo{}, err
 	}
-	return s.wdaDriver.BatteryInfo()
+	return s.WDADriver.BatteryInfo()
 }
 
 // WindowSize Return the width and height in portrait mode.
 // when getting the window size in wda/ui2/adb, if the device is in landscape mode,
 // the width and height will be reversed.
-func (s *stubIOSDriver) WindowSize() (Size, error) {
+func (s *stubIOSDriver) WindowSize() (ai.Size, error) {
 	err := s.setUpWda()
 	if err != nil {
-		return Size{}, err
+		return ai.Size{}, err
 	}
-	return s.wdaDriver.WindowSize()
+	return s.WDADriver.WindowSize()
 }
 
-func (s *stubIOSDriver) Screen() (Screen, error) {
+func (s *stubIOSDriver) Screen() (ai.Screen, error) {
 	err := s.setUpWda()
 	if err != nil {
-		return Screen{}, err
+		return ai.Screen{}, err
 	}
-	return s.wdaDriver.Screen()
+	return s.WDADriver.Screen()
 }
 
 func (s *stubIOSDriver) Scale() (float64, error) {
@@ -127,16 +128,7 @@ func (s *stubIOSDriver) Scale() (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	return s.wdaDriver.Scale()
-}
-
-// GetTimestamp returns the timestamp of the mobile device
-func (s *stubIOSDriver) GetTimestamp() (timestamp int64, err error) {
-	err = s.setUpWda()
-	if err != nil {
-		return 0, err
-	}
-	return s.wdaDriver.GetTimestamp()
+	return s.WDADriver.Scale()
 }
 
 // Homescreen Forces the device under test to switch to the home screen
@@ -145,7 +137,7 @@ func (s *stubIOSDriver) Homescreen() error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.Homescreen()
+	return s.WDADriver.Homescreen()
 }
 
 func (s *stubIOSDriver) Unlock() (err error) {
@@ -153,7 +145,7 @@ func (s *stubIOSDriver) Unlock() (err error) {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.Unlock()
+	return s.WDADriver.Unlock()
 }
 
 // AppLaunch Launch an application with given bundle identifier in scope of current session.
@@ -163,7 +155,7 @@ func (s *stubIOSDriver) AppLaunch(packageName string) error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.AppLaunch(packageName)
+	return s.WDADriver.AppLaunch(packageName)
 }
 
 // AppTerminate Terminate an application with the given package name.
@@ -173,7 +165,7 @@ func (s *stubIOSDriver) AppTerminate(packageName string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return s.wdaDriver.AppTerminate(packageName)
+	return s.WDADriver.AppTerminate(packageName)
 }
 
 // GetForegroundApp returns current foreground app package name and activity name
@@ -182,16 +174,7 @@ func (s *stubIOSDriver) GetForegroundApp() (app AppInfo, err error) {
 	if err != nil {
 		return AppInfo{}, err
 	}
-	return s.wdaDriver.GetForegroundApp()
-}
-
-// AssertForegroundApp returns nil if the given package and activity are in foreground
-func (s *stubIOSDriver) AssertForegroundApp(packageName string, activityType ...string) error {
-	err := s.setUpWda()
-	if err != nil {
-		return err
-	}
-	return s.wdaDriver.AssertForegroundApp(packageName, activityType...)
+	return s.WDADriver.GetForegroundApp()
 }
 
 // StartCamera Starts a new camera for recording
@@ -200,7 +183,7 @@ func (s *stubIOSDriver) StartCamera() error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.StartCamera()
+	return s.WDADriver.StartCamera()
 }
 
 // StopCamera Stops the camera for recording
@@ -209,7 +192,7 @@ func (s *stubIOSDriver) StopCamera() error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.StopCamera()
+	return s.WDADriver.StopCamera()
 }
 
 func (s *stubIOSDriver) Orientation() (orientation Orientation, err error) {
@@ -217,7 +200,7 @@ func (s *stubIOSDriver) Orientation() (orientation Orientation, err error) {
 	if err != nil {
 		return OrientationPortrait, err
 	}
-	return s.wdaDriver.Orientation()
+	return s.WDADriver.Orientation()
 }
 
 // Tap Sends a tap event at the coordinate.
@@ -226,7 +209,7 @@ func (s *stubIOSDriver) Tap(x, y float64, opts ...option.ActionOption) error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.Tap(x, y, opts...)
+	return s.WDADriver.Tap(x, y, opts...)
 }
 
 // DoubleTap Sends a double tap event at the coordinate.
@@ -235,7 +218,7 @@ func (s *stubIOSDriver) DoubleTap(x, y float64, opts ...option.ActionOption) err
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.DoubleTap(x, y, opts...)
+	return s.WDADriver.DoubleTap(x, y, opts...)
 }
 
 // TouchAndHold Initiates a long-press gesture at the coordinate, holding for the specified duration.
@@ -246,7 +229,7 @@ func (s *stubIOSDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) 
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.TouchAndHold(x, y, opts...)
+	return s.WDADriver.TouchAndHold(x, y, opts...)
 }
 
 // Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
@@ -256,7 +239,7 @@ func (s *stubIOSDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.Acti
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.Drag(fromX, fromY, toX, toY, opts...)
+	return s.WDADriver.Drag(fromX, fromY, toX, toY, opts...)
 }
 
 // SetPasteboard Sets data to the general pasteboard
@@ -265,7 +248,7 @@ func (s *stubIOSDriver) SetPasteboard(contentType PasteboardType, content string
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.SetPasteboard(contentType, content)
+	return s.WDADriver.SetPasteboard(contentType, content)
 }
 
 // GetPasteboard Gets the data contained in the general pasteboard.
@@ -276,7 +259,7 @@ func (s *stubIOSDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Bu
 	if err != nil {
 		return nil, err
 	}
-	return s.wdaDriver.GetPasteboard(contentType)
+	return s.WDADriver.GetPasteboard(contentType)
 }
 
 func (s *stubIOSDriver) SetIme(ime string) error {
@@ -284,7 +267,7 @@ func (s *stubIOSDriver) SetIme(ime string) error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.SetIme(ime)
+	return s.WDADriver.SetIme(ime)
 }
 
 // SendKeys Types a string into active element. There must be element with keyboard focus,
@@ -295,7 +278,7 @@ func (s *stubIOSDriver) SendKeys(text string, opts ...option.ActionOption) error
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.SendKeys(text, opts...)
+	return s.WDADriver.SendKeys(text, opts...)
 }
 
 // Input works like SendKeys
@@ -304,7 +287,7 @@ func (s *stubIOSDriver) Input(text string, opts ...option.ActionOption) error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.Input(text, opts...)
+	return s.WDADriver.Input(text, opts...)
 }
 
 func (s *stubIOSDriver) Clear(packageName string) error {
@@ -312,7 +295,7 @@ func (s *stubIOSDriver) Clear(packageName string) error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.Clear(packageName)
+	return s.WDADriver.Clear(packageName)
 }
 
 // PressButton Presses the corresponding hardware button on the device
@@ -321,7 +304,7 @@ func (s *stubIOSDriver) PressButton(devBtn DeviceButton) error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.PressButton(devBtn)
+	return s.WDADriver.PressButton(devBtn)
 }
 
 // PressBack Presses the back button
@@ -330,7 +313,7 @@ func (s *stubIOSDriver) PressBack(opts ...option.ActionOption) error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.PressBack(opts...)
+	return s.WDADriver.PressBack(opts...)
 }
 
 func (s *stubIOSDriver) PressKeyCode(keyCode KeyCode) (err error) {
@@ -338,7 +321,7 @@ func (s *stubIOSDriver) PressKeyCode(keyCode KeyCode) (err error) {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.PressKeyCode(keyCode)
+	return s.WDADriver.PressKeyCode(keyCode)
 }
 
 func (s *stubIOSDriver) Screenshot() (*bytes.Buffer, error) {
@@ -346,7 +329,7 @@ func (s *stubIOSDriver) Screenshot() (*bytes.Buffer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return s.wdaDriver.Screenshot()
+	return s.WDADriver.Screenshot()
 	//screenshotService, err := instruments.NewScreenshotService(s.device.d)
 	//if err != nil {
 	//	log.Error().Err(err).Msg("Starting screenshot service failed")
@@ -367,7 +350,7 @@ func (s *stubIOSDriver) TapByText(text string, opts ...option.ActionOption) erro
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.TapByText(text, opts...)
+	return s.WDADriver.TapByText(text, opts...)
 }
 
 func (s *stubIOSDriver) TapByTexts(actions ...TapTextAction) error {
@@ -375,7 +358,7 @@ func (s *stubIOSDriver) TapByTexts(actions ...TapTextAction) error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.TapByTexts(actions...)
+	return s.WDADriver.TapByTexts(actions...)
 }
 
 // AccessibleSource Return application elements accessibility tree
@@ -384,7 +367,7 @@ func (s *stubIOSDriver) AccessibleSource() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return s.wdaDriver.AccessibleSource()
+	return s.WDADriver.AccessibleSource()
 }
 
 // HealthCheck Health check might modify simulator state so it should only be called in-between testing sessions
@@ -397,7 +380,7 @@ func (s *stubIOSDriver) HealthCheck() error {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.HealthCheck()
+	return s.WDADriver.HealthCheck()
 }
 
 func (s *stubIOSDriver) GetAppiumSettings() (map[string]interface{}, error) {
@@ -405,7 +388,7 @@ func (s *stubIOSDriver) GetAppiumSettings() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return s.wdaDriver.GetAppiumSettings()
+	return s.WDADriver.GetAppiumSettings()
 }
 
 func (s *stubIOSDriver) SetAppiumSettings(settings map[string]interface{}) (map[string]interface{}, error) {
@@ -413,7 +396,7 @@ func (s *stubIOSDriver) SetAppiumSettings(settings map[string]interface{}) (map[
 	if err != nil {
 		return nil, err
 	}
-	return s.wdaDriver.SetAppiumSettings(settings)
+	return s.WDADriver.SetAppiumSettings(settings)
 }
 
 func (s *stubIOSDriver) IsHealthy() (bool, error) {
@@ -421,7 +404,7 @@ func (s *stubIOSDriver) IsHealthy() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return s.wdaDriver.IsHealthy()
+	return s.WDADriver.IsHealthy()
 }
 
 // triggers the log capture and returns the log entries
@@ -430,7 +413,7 @@ func (s *stubIOSDriver) StartCaptureLog(identifier ...string) (err error) {
 	if err != nil {
 		return err
 	}
-	return s.wdaDriver.StartCaptureLog(identifier...)
+	return s.WDADriver.StartCaptureLog(identifier...)
 }
 
 func (s *stubIOSDriver) StopCaptureLog() (result interface{}, err error) {
@@ -438,7 +421,7 @@ func (s *stubIOSDriver) StopCaptureLog() (result interface{}, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return s.wdaDriver.StopCaptureLog()
+	return s.WDADriver.StopCaptureLog()
 }
 
 func (s *stubIOSDriver) GetDriverResults() []*DriverRequests {
@@ -446,7 +429,7 @@ func (s *stubIOSDriver) GetDriverResults() []*DriverRequests {
 	if err != nil {
 		return nil
 	}
-	return s.wdaDriver.GetDriverResults()
+	return s.WDADriver.GetDriverResults()
 }
 
 func (s *stubIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {

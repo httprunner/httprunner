@@ -2,7 +2,6 @@ package uixt
 
 import (
 	"fmt"
-	"math"
 )
 
 type DeviceStatus struct {
@@ -153,20 +152,6 @@ func (bs BatteryStatus) String() string {
 	}
 }
 
-type Size struct {
-	Width  int `json:"width"`
-	Height int `json:"height"`
-}
-
-func (s Size) IsNil() bool {
-	return s.Width == 0 && s.Height == 0
-}
-
-type Screen struct {
-	StatusBarSize Size    `json:"statusBarSize"`
-	Scale         float64 `json:"scale"`
-}
-
 type AppInfo struct {
 	Name string `json:"name,omitempty"`
 	AppBaseInfo
@@ -274,18 +259,3 @@ const (
 	DirectionLeft  Direction = "left"
 	DirectionRight Direction = "right"
 )
-
-type Point struct {
-	X int `json:"x"` // upper left X coordinate of selected element
-	Y int `json:"y"` // upper left Y coordinate of selected element
-}
-
-type PointF struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-}
-
-func (p PointF) IsIdentical(p2 PointF) bool {
-	// set the coordinate precision to 1 pixel
-	return math.Abs(p.X-p2.X) < 1 && math.Abs(p.Y-p2.Y) < 1
-}

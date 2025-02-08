@@ -1,6 +1,8 @@
 package option
 
-import "github.com/httprunner/funplugin"
+import (
+	"github.com/httprunner/funplugin"
+)
 
 type DriverOptions struct {
 	Capabilities     Capabilities

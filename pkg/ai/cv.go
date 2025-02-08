@@ -1,4 +1,4 @@
-package uixt
+package ai
 
 import (
 	"bytes"
@@ -7,19 +7,18 @@ import (
 	"math"
 	"regexp"
 
-	"github.com/pkg/errors"
-
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/pkg/errors"
 )
 
-type IImageService interface {
-	// GetImage returns image result including ocr texts, uploaded image url, etc
-	GetImage(imageBuf *bytes.Buffer, opts ...option.ActionOption) (imageResult *ImageResult, err error)
+type ICVService interface {
+	// returns CV result including ocr texts, uploaded image url, etc
+	ReadFromBuffer(imageBuf *bytes.Buffer, opts ...ScreenShotOption) (*CVResult, error)
+	ReadFromPath(imagePath string, opts ...ScreenShotOption) (*CVResult, error)
 }
 
-type ImageResult struct {
+type CVResult struct {
 	URL       string     `json:"url,omitempty"`       // image uploaded url
 	OCRResult OCRResults `json:"ocrResult,omitempty"` // OCR texts
 	// NoLive（非直播间）
@@ -106,7 +105,7 @@ func (t OCRTexts) texts() (texts []string) {
 	return texts
 }
 
-func (t OCRTexts) FilterScope(scope option.AbsScope) (results OCRTexts) {
+func (t OCRTexts) FilterScope(scope AbsScope) (results OCRTexts) {
 	for _, ocrText := range t {
 		rect := ocrText.Rect
 
@@ -128,12 +127,12 @@ func (t OCRTexts) FilterScope(scope option.AbsScope) (results OCRTexts) {
 
 // FindText returns matched text with options
 // Notice: filter scope should be specified with WithAbsScope
-func (t OCRTexts) FindText(text string, opts ...option.ActionOption) (result OCRText, err error) {
-	actionOptions := option.NewActionOptions(opts...)
+func (t OCRTexts) FindText(text string, opts ...ScreenFilterOption) (result OCRText, err error) {
+	options := NewScreenFilterOptions(opts...)
 
 	var results []OCRText
-	for _, ocrText := range t.FilterScope(actionOptions.AbsScope) {
-		if actionOptions.Regex {
+	for _, ocrText := range t.FilterScope(options.AbsScope) {
+		if options.Regex {
 			// regex on, check if match regex
 			if !regexp.MustCompile(text).MatchString(ocrText.Text) {
 				continue
@@ -148,7 +147,7 @@ func (t OCRTexts) FindText(text string, opts ...option.ActionOption) (result OCR
 		results = append(results, ocrText)
 
 		// return the first one matched exactly when index not specified
-		if ocrText.Text == text && actionOptions.Index == 0 {
+		if ocrText.Text == text && options.Index == 0 {
 			return ocrText, nil
 		}
 	}
@@ -159,7 +158,7 @@ func (t OCRTexts) FindText(text string, opts ...option.ActionOption) (result OCR
 	}
 
 	// get index
-	idx := actionOptions.Index
+	idx := options.Index
 	if idx < 0 {
 		idx = len(results) + idx
 	}
@@ -173,8 +172,8 @@ func (t OCRTexts) FindText(text string, opts ...option.ActionOption) (result OCR
 	return results[idx], nil
 }
 
-func (t OCRTexts) FindTexts(texts []string, opts ...option.ActionOption) (results OCRTexts, err error) {
-	actionOptions := option.NewActionOptions(opts...)
+func (t OCRTexts) FindTexts(texts []string, opts ...ScreenFilterOption) (results OCRTexts, err error) {
+	options := NewScreenFilterOptions(opts...)
 	for _, text := range texts {
 		ocrText, err := t.FindText(text, opts...)
 		if err != nil {
@@ -183,7 +182,7 @@ func (t OCRTexts) FindTexts(texts []string, opts ...option.ActionOption) (result
 		results = append(results, ocrText)
 
 		// found one, skip searching and return
-		if actionOptions.MatchOne {
+		if options.MatchOne {
 			return results, nil
 		}
 	}
@@ -240,7 +239,7 @@ func (box Box) Center() PointF {
 
 type UIResults []UIResult
 
-func (u UIResults) FilterScope(scope option.AbsScope) (results UIResults) {
+func (u UIResults) FilterScope(scope AbsScope) (results UIResults) {
 	for _, uiResult := range u {
 		rect := image.Rectangle{
 			Min: image.Point{
@@ -268,16 +267,15 @@ func (u UIResults) FilterScope(scope option.AbsScope) (results UIResults) {
 	return
 }
 
-func (u UIResults) GetUIResult(opts ...option.ActionOption) (UIResult, error) {
-	actionOptions := option.NewActionOptions(opts...)
-
-	uiResults := u.FilterScope(actionOptions.AbsScope)
+func (u UIResults) GetUIResult(opts ...ScreenFilterOption) (UIResult, error) {
+	options := NewScreenFilterOptions(opts...)
+	uiResults := u.FilterScope(options.AbsScope)
 	if len(uiResults) == 0 {
 		return UIResult{}, errors.Wrap(code.CVResultNotFoundError,
 			"ui types not found in scope")
 	}
 	// get index
-	idx := actionOptions.Index
+	idx := options.Index
 	if idx < 0 {
 		idx = len(uiResults) + idx
 	}
@@ -300,4 +298,33 @@ type ClosePopupsResult struct {
 
 func (c ClosePopupsResult) IsEmpty() bool {
 	return c.PopupArea.IsEmpty() && c.CloseArea.IsEmpty()
+}
+
+type Point struct {
+	X int `json:"x"` // upper left X coordinate of selected element
+	Y int `json:"y"` // upper left Y coordinate of selected element
+}
+
+type PointF struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+func (p PointF) IsIdentical(p2 PointF) bool {
+	// set the coordinate precision to 1 pixel
+	return math.Abs(p.X-p2.X) < 1 && math.Abs(p.Y-p2.Y) < 1
+}
+
+type Size struct {
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
+func (s Size) IsNil() bool {
+	return s.Width == 0 && s.Height == 0
+}
+
+type Screen struct {
+	StatusBarSize Size    `json:"statusBarSize"`
+	Scale         float64 `json:"scale"`
 }

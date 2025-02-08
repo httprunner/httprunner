@@ -7,18 +7,14 @@ import (
 	"testing"
 )
 
-var harmonyDriverExt *DriverExt
+var hdcDriver *HDCDriver
 
 func setupHarmonyDevice(t *testing.T) {
 	device, err := NewHarmonyDevice()
 	if err != nil {
 		t.Fatal(err)
 	}
-	driver, err = device.NewUSBDriver()
-	if err != nil {
-		t.Fatal(err)
-	}
-	harmonyDriverExt, err = newDriverExt(device, driver)
+	hdcDriver, err = NewHDCDriver(device)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +31,7 @@ func TestWindowSize(t *testing.T) {
 
 func TestHarmonyTap(t *testing.T) {
 	setupHarmonyDevice(t)
-	err := harmonyDriverExt.TapAbsXY(200, 2000)
+	err := hdcDriver.TapAbsXY(200, 2000)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +39,7 @@ func TestHarmonyTap(t *testing.T) {
 
 func TestHarmonySwipe(t *testing.T) {
 	setupHarmonyDevice(t)
-	err := harmonyDriverExt.SwipeLeft()
+	err := hdcDriver.SwipeLeft()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +47,7 @@ func TestHarmonySwipe(t *testing.T) {
 
 func TestHarmonyInput(t *testing.T) {
 	setupHarmonyDevice(t)
-	err := harmonyDriverExt.Input("test")
+	err := hdcDriver.Input("test")
 	if err != nil {
 		t.Fatal(err)
 	}
