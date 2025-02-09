@@ -18,14 +18,15 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
-	"github.com/httprunner/httprunner/v5/pkg/ai"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 type ScreenResult struct {
 	bufSource   *bytes.Buffer  // raw image buffer bytes
 	ImagePath   string         `json:"image_path"` // image file path
-	Resolution  ai.Size        `json:"resolution"`
+	Resolution  types.Size     `json:"resolution"`
 	UploadedURL string         `json:"uploaded_url"` // uploaded image url
 	Texts       ai.OCRTexts    `json:"texts"`        // dumped raw OCRTexts
 	Icons       ai.UIResultMap `json:"icons"`        // CV 识别的图标
@@ -46,26 +47,26 @@ func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) ai.OCRTexts {
 
 // GetScreenResult takes a screenshot, returns the image recognition result
 func (dExt *DriverExt) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
-	actionOptions := option.NewActionOptions(opts...)
+	screenshotOptions := option.NewActionOptions(opts...)
 
 	var fileName string
-	screenshotActions := actionOptions.ScreenshotActions()
-	if actionOptions.ScreenShotFileName != "" {
-		fileName = builtin.GenNameWithTimestamp("%d_" + actionOptions.ScreenShotFileName)
-	} else if len(screenshotActions) != 0 {
-		fileName = builtin.GenNameWithTimestamp("%d_" + strings.Join(screenshotActions, "_"))
+	optionsList := screenshotOptions.List()
+	if screenshotOptions.ScreenShotFileName != "" {
+		fileName = builtin.GenNameWithTimestamp("%d_" + screenshotOptions.ScreenShotFileName)
+	} else if len(optionsList) != 0 {
+		fileName = builtin.GenNameWithTimestamp("%d_" + strings.Join(optionsList, "_"))
 	} else {
 		fileName = builtin.GenNameWithTimestamp("%d_screenshot")
 	}
 
 	var bufSource *bytes.Buffer
-	var imageResult *ai.ImageResult
+	var imageResult *ai.CVResult
 	var imagePath string
-	var windowSize ai.Size
+	var windowSize types.Size
 	var lastErr error
 
 	// get screenshot info with retry
-	for i := 0; i <= actionOptions.MaxRetryTimes; i++ {
+	for i := 0; i < 3; i++ {
 		bufSource, imagePath, err = dExt.GetScreenShot(fileName)
 		if err != nil {
 			lastErr = err
@@ -85,9 +86,9 @@ func (dExt *DriverExt) GetScreenResult(opts ...option.ActionOption) (screenResul
 			Tags:       nil,
 			Resolution: windowSize,
 		}
-		imageResult, err = dExt.ImageService.GetImageFromBuffer(bufSource, opts...)
+		imageResult, err = dExt.CVService.ReadFromBuffer(bufSource, opts...)
 		if err != nil {
-			log.Error().Err(err).Msg("GetImageFromBuffer from ImageService failed")
+			log.Error().Err(err).Msg("ReadFromBuffer from ImageService failed")
 			lastErr = err
 			continue
 		}
@@ -107,7 +108,7 @@ func (dExt *DriverExt) GetScreenResult(opts ...option.ActionOption) (screenResul
 		screenResult.UploadedURL = imageResult.URL
 		screenResult.Icons = imageResult.UIResult
 
-		if actionOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
+		if screenshotOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
 			screenResult.Popup = &PopupInfo{
 				ClosePopupsResult: imageResult.ClosePopupsResult,
 				PicName:           imagePath,
@@ -129,8 +130,8 @@ func (dExt *DriverExt) GetScreenResult(opts ...option.ActionOption) (screenResul
 }
 
 func (dExt *DriverExt) GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error) {
-	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.ScreenShotFileName == "" {
+	options := option.NewActionOptions(opts...)
+	if options.ScreenShotFileName == "" {
 		opts = append(opts, option.WithScreenShotFileName("get_screen_texts"))
 	}
 	opts = append(opts, option.WithScreenShotOCR(true), option.WithScreenShotUpload(true))
@@ -152,8 +153,8 @@ func (dExt *DriverExt) FindUIRectInUIKit(search string, opts ...option.ActionOpt
 }
 
 func (dExt *DriverExt) FindScreenText(text string, opts ...option.ActionOption) (point ai.PointF, err error) {
-	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.ScreenShotFileName == "" {
+	options := option.NewActionOptions(opts...)
+	if options.ScreenShotFileName == "" {
 		opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("find_screen_text_%s", text)))
 	}
 	ocrTexts, err := dExt.GetScreenTexts(opts...)
@@ -161,7 +162,7 @@ func (dExt *DriverExt) FindScreenText(text string, opts ...option.ActionOption) 
 		return
 	}
 
-	result, err := ocrTexts.FindText(text, dExt.ParseActionOptions(opts...)...)
+	result, err := ocrTexts.FindText(text, opts...)
 	if err != nil {
 		log.Warn().Msgf("FindText failed: %s", err.Error())
 		return
@@ -174,10 +175,10 @@ func (dExt *DriverExt) FindScreenText(text string, opts ...option.ActionOption) 
 }
 
 func (dExt *DriverExt) FindUIResult(opts ...option.ActionOption) (point ai.PointF, err error) {
-	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.ScreenShotFileName == "" {
+	options := option.NewActionOptions(opts...)
+	if options.ScreenShotFileName == "" {
 		opts = append(opts, option.WithScreenShotFileName(
-			fmt.Sprintf("find_ui_result_%s", strings.Join(actionOptions.ScreenShotWithUITypes, "_"))))
+			fmt.Sprintf("find_ui_result_%s", strings.Join(options.ScreenShotWithUITypes, "_"))))
 	}
 
 	screenResult, err := dExt.GetScreenResult(opts...)
@@ -185,14 +186,14 @@ func (dExt *DriverExt) FindUIResult(opts ...option.ActionOption) (point ai.Point
 		return
 	}
 
-	uiResults, err := screenResult.Icons.FilterUIResults(actionOptions.ScreenShotWithUITypes)
+	uiResults, err := screenResult.Icons.FilterUIResults(options.ScreenShotWithUITypes)
 	if err != nil {
 		return
 	}
-	uiResult, err := uiResults.GetUIResult(dExt.ParseActionOptions(opts...)...)
+	uiResult, err := uiResults.GetUIResult(opts...)
 	point = uiResult.Center()
 
-	log.Info().Interface("text", actionOptions.ScreenShotWithUITypes).
+	log.Info().Interface("text", options.ScreenShotWithUITypes).
 		Interface("point", point).Msg("FindUIResult success")
 	return
 }

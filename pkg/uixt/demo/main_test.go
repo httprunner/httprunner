@@ -22,16 +22,14 @@ func TestIOSDemo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	capabilities := option.NewCapabilities()
-	capabilities.WithDefaultAlertAction(option.AlertActionAccept) // or uixt.AlertActionDismiss
-	driverExt, err := device.NewDriver(option.WithDriverCapabilities(capabilities))
+	driverExt, err := device.NewDriver()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// release session
 	defer func() {
-		driverExt.Driver.DeleteSession()
+		driverExt.GetDriver().DeleteSession()
 	}()
 
 	// 持续监测手机屏幕，直到出现青少年模式弹窗后，点击「我知道了」

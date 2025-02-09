@@ -16,6 +16,7 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var client = &http.Client{
@@ -46,7 +47,7 @@ func NewVEDEMImageService() (*vedemCVService, error) {
 //	ui - get ui position by type(s)
 type vedemCVService struct{}
 
-func (s *vedemCVService) ReadFromPath(imagePath string, opts ...ScreenShotOption) (
+func (s *vedemCVService) ReadFromPath(imagePath string, opts ...option.ActionOption) (
 	imageResult *CVResult, err error) {
 	imageBuf, err := os.ReadFile(imagePath)
 	if err != nil {
@@ -58,9 +59,9 @@ func (s *vedemCVService) ReadFromPath(imagePath string, opts ...ScreenShotOption
 	return
 }
 
-func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...ScreenShotOption) (
+func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.ActionOption) (
 	imageResult *CVResult, err error) {
-	actionOptions := NewScreenShotOptions(opts...)
+	actionOptions := option.NewActionOptions(opts...)
 	screenshotActions := actionOptions.List()
 	if len(screenshotActions) == 0 {
 		// skip

@@ -28,7 +28,9 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 var tunnelManager *tunnel.TunnelManager = nil
@@ -207,10 +209,10 @@ func (dev *IOSDevice) LogEnabled() bool {
 	return dev.LogOn
 }
 
-func (dev *IOSDevice) getAppInfo(packageName string) (appInfo AppInfo, err error) {
+func (dev *IOSDevice) getAppInfo(packageName string) (appInfo types.AppInfo, err error) {
 	apps, err := dev.ListApps(ApplicationTypeAny)
 	if err != nil {
-		return AppInfo{}, err
+		return types.AppInfo{}, err
 	}
 	for _, app := range apps {
 		if app.CFBundleIdentifier == packageName {
@@ -222,27 +224,18 @@ func (dev *IOSDevice) getAppInfo(packageName string) (appInfo AppInfo, err error
 			return appInfo, err
 		}
 	}
-	return AppInfo{}, fmt.Errorf("not found App by bundle id: %s", packageName)
+	return types.AppInfo{}, fmt.Errorf("not found App by bundle id: %s", packageName)
 }
 
-func (dev *IOSDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverExt, err error) {
-	options := option.NewDriverOptions()
-
-	// init WDA driver
-	capabilities := options.Capabilities
-	if capabilities == nil {
-		capabilities = option.NewCapabilities()
-		capabilities.WithDefaultAlertAction(option.AlertActionAccept)
-	}
-
+func (dev *IOSDevice) NewDriver() (driverExt IDriverExt, err error) {
 	var driver IDriver
 	if dev.STUB {
-		driver, err = dev.NewStubDriver()
+		driver, err = NewStubIOSDriver(dev)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to init Stub driver")
 		}
 	} else {
-		driver, err = dev.NewHTTPDriver(capabilities)
+		driver, err := NewWDADriver(dev)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to init WDA driver")
 		}
@@ -264,12 +257,7 @@ func (dev *IOSDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverE
 		}
 	}
 
-	driverExt, err = newDriverExt(dev, driver, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	settings, err := driverExt.Driver.SetAppiumSettings(map[string]interface{}{
+	settings, err := driver.SetAppiumSettings(map[string]interface{}{
 		"snapshotMaxDepth":          dev.SnapshotMaxDepth,
 		"acceptAlertButtonSelector": dev.AcceptAlertButtonSelector,
 	})
@@ -279,10 +267,20 @@ func (dev *IOSDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverE
 	log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
 
 	if dev.LogOn {
-		err = driverExt.Driver.StartCaptureLog("hrp_wda_log")
+		err = driver.StartCaptureLog("hrp_wda_log")
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	driverExt, err = NewDriverExt(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
+	if err != nil {
+		return nil, errors.Wrap(err, "init ios driver ext failed")
+	}
+
+	// setup driver
+	if err := driverExt.GetDriver().Setup(); err != nil {
+		return nil, err
 	}
 
 	return driverExt, nil
@@ -587,52 +585,16 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 	return wd, nil
 }
 
-const (
-	defaultBightInsightPort = 8000
-	defaultDouyinServerPort = 32921
-)
-
-func (dev *IOSDevice) NewStubDriver() (driver IDriver, err error) {
-	localStubPort, err := builtin.GetFreePort()
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError,
-			fmt.Sprintf("get free port failed: %v", err))
-	}
-
-	if err = dev.forward(localStubPort, defaultBightInsightPort); err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError,
-			fmt.Sprintf("forward tcp port failed: %v", err))
-	}
-
-	localServerPort, err := builtin.GetFreePort()
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError,
-			fmt.Sprintf("get free port failed: %v", err))
-	}
-	if err = dev.forward(localServerPort, defaultDouyinServerPort); err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError,
-			fmt.Sprintf("forward tcp port failed: %v", err))
-	}
-	host := "localhost"
-	stubDriver, err := newStubIOSDriver(
-		fmt.Sprintf("http://%s:%d", host, localStubPort),
-		fmt.Sprintf("http://%s:%d", host, localServerPort), dev)
-	if err != nil {
-		return nil, err
-	}
-	return stubDriver, nil
-}
-
-func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
+func (dev *IOSDevice) GetPackageInfo(packageName string) (types.AppInfo, error) {
 	svc, err := installationproxy.New(dev.d)
 	if err != nil {
-		return AppInfo{}, errors.Wrap(code.DeviceGetInfoError, err.Error())
+		return types.AppInfo{}, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 	defer svc.Close()
 
 	apps, err := svc.BrowseAllApps()
 	if err != nil {
-		return AppInfo{}, errors.Wrap(code.DeviceGetInfoError, err.Error())
+		return types.AppInfo{}, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 
 	for _, app := range apps {
@@ -640,9 +602,9 @@ func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 			continue
 		}
 
-		appInfo := AppInfo{
+		appInfo := types.AppInfo{
 			Name: app.CFBundleName,
-			AppBaseInfo: AppBaseInfo{
+			AppBaseInfo: types.AppBaseInfo{
 				BundleId:    app.CFBundleIdentifier,
 				PackageName: app.CFBundleIdentifier,
 				VersionName: app.CFBundleShortVersionString,
@@ -654,6 +616,6 @@ func (dev *IOSDevice) GetPackageInfo(packageName string) (AppInfo, error) {
 		log.Info().Interface("appInfo", appInfo).Msg("get package info")
 		return appInfo, nil
 	}
-	return AppInfo{}, errors.Wrap(code.DeviceAppNotInstalled,
+	return types.AppInfo{}, errors.Wrap(code.DeviceAppNotInstalled,
 		fmt.Sprintf("%s not found", packageName))
 }

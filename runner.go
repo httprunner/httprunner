@@ -235,7 +235,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 		// release UI driver session
 		defer func() {
 			for _, client := range caseRunner.uixtDrivers {
-				client.Driver.DeleteSession()
+				client.GetDriver().DeleteSession()
 			}
 		}()
 
@@ -281,7 +281,7 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 		TestCase:    testcase,
 		hrpRunner:   r,
 		parser:      newParser(),
-		uixtDrivers: make(map[string]*uixt.DriverExt),
+		uixtDrivers: make(map[string]uixt.IDriverExt),
 	}
 	config := testcase.Config.Get()
 
@@ -336,7 +336,7 @@ type CaseRunner struct {
 	parametersIterator *ParametersIterator
 
 	// UI automation clients for iOS and Android, key is udid/serial
-	uixtDrivers map[string]*uixt.DriverExt
+	uixtDrivers map[string]uixt.IDriverExt
 }
 
 func (r *CaseRunner) GetParametersIterator() *ParametersIterator {
@@ -428,16 +428,14 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(err, "init android device failed")
 		}
 		if err := device.Setup(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "setup android device failed")
 		}
-		driver, err := device.NewDriver()
+		driverExt, err := device.NewDriver()
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "init android driver failed")
 		}
-		if err := driver.Setup(); err != nil {
-			return nil, err
-		}
-		r.uixtDrivers[device.SerialNumber] = driver
+
+		r.uixtDrivers[androidDevice.SerialNumber] = driverExt
 	}
 	// parse iOS devices config
 	for _, iosDevice := range parsedConfig.IOS {
@@ -446,21 +444,20 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse ios config failed: %v", err))
 		}
+
 		device, err := uixt.NewIOSDevice(iosDevice.Options()...)
 		if err != nil {
 			return nil, errors.Wrap(err, "init ios device failed")
 		}
 		if err := device.Setup(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "setup ios device failed")
 		}
-		driver, err := device.NewDriver()
+		driverExt, err := device.NewDriver()
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "init ios driver failed")
 		}
-		if err := driver.Setup(); err != nil {
-			return nil, err
-		}
-		r.uixtDrivers[device.UDID] = driver
+
+		r.uixtDrivers[iosDevice.UDID] = driverExt
 	}
 	// parse harmony devices config
 	for _, harmonyDevice := range parsedConfig.Harmony {
@@ -469,21 +466,20 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse harmony config failed: %v", err))
 		}
+
 		device, err := uixt.NewHarmonyDevice(harmonyDevice.Options()...)
 		if err != nil {
 			return nil, errors.Wrap(err, "init harmony device failed")
 		}
 		if err := device.Setup(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "setup harmony device failed")
 		}
-		driver, err := device.NewDriver()
+		driverExt, err := device.NewDriver()
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "init harmony driver failed")
 		}
-		if err := driver.Setup(); err != nil {
-			return nil, err
-		}
-		r.uixtDrivers[device.ConnectKey] = driver
+
+		r.uixtDrivers[harmonyDevice.ConnectKey] = driverExt
 	}
 
 	return parsedConfig, nil
@@ -525,7 +521,7 @@ func (r *CaseRunner) parseDeviceConfig(device interface{}, configVariables map[s
 	return nil
 }
 
-func (r *CaseRunner) GetUIXTDriver(serial string) (driver *uixt.DriverExt, err error) {
+func (r *CaseRunner) GetUIXTDriver(serial string) (driver uixt.IDriverExt, err error) {
 	for key, driver := range r.uixtDrivers {
 		// return the driver with the same serial
 		if key == serial {
@@ -604,8 +600,8 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 				"uuid": uuid,
 			}
 
-			if client.Device.LogEnabled() {
-				log, err1 := client.Driver.StopCaptureLog()
+			if client.GetDriver().GetDevice().LogEnabled() {
+				log, err1 := client.GetDriver().StopCaptureLog()
 				if err1 != nil {
 					if err == nil {
 						err = errors.Wrap(err1, "stop capture log failed")

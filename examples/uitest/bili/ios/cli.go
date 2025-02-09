@@ -28,7 +28,7 @@ func init() {
 	fmt.Printf("=== start running cases, serial=%s, runTimes=%d ===\n", serial, runTimes)
 }
 
-func launchAppDriver(pkgName string) (driver *uixt.DriverExt, err error) {
+func launchAppDriver(pkgName string) (driver uixt.IDriverExt, err error) {
 	device, _ := uixt.NewIOSDevice(option.WithUDID(serial))
 	driver, err = device.NewDriver()
 	if err != nil {
@@ -67,7 +67,7 @@ func launchAppDriver(pkgName string) (driver *uixt.DriverExt, err error) {
 	return driver, nil
 }
 
-func watchVideo(driver *uixt.DriverExt) (err error) {
+func watchVideo(driver uixt.IDriverExt) (err error) {
 	time.Sleep(3 * time.Second)
 	err = driver.SwipeRelative(0.7, 0.7, 0.7, 0.2)
 	if err != nil {
@@ -96,7 +96,7 @@ func watchVideo(driver *uixt.DriverExt) (err error) {
 	if err != nil {
 		// 未找到横屏图标，该页面可能不是横版视频（直播|广告|Feed）
 		// 退出回到推荐页
-		driver.Driver.PressBack()
+		driver.GetDriver().PressBack()
 		return nil
 	}
 
@@ -104,7 +104,7 @@ func watchVideo(driver *uixt.DriverExt) (err error) {
 	time.Sleep(10 * time.Second)
 
 	// 返回视频页面
-	err = driver.Driver.PressBack()
+	err = driver.GetDriver().PressBack()
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func watchVideo(driver *uixt.DriverExt) (err error) {
 	time.Sleep(1 * time.Second)
 
 	// 返回推荐页
-	err = driver.Driver.PressBack()
+	err = driver.GetDriver().PressBack()
 	if err != nil {
 		return err
 	}

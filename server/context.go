@@ -13,7 +13,7 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-var uiClients = make(map[string]*uixt.DriverExt) // UI automation clients for iOS and Android, key is udid/serial
+var uiClients = make(map[string]uixt.IDriverExt) // UI automation clients for iOS and Android, key is udid/serial
 
 func handleDeviceContext() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -54,9 +54,7 @@ func handleDeviceContext() gin.HandlerFunc {
 			}
 			device.Setup()
 
-			driver, err := device.NewDriver(
-				option.WithDriverImageService(true),
-				option.WithDriverResultFolder(true))
+			driver, err := device.NewDriver()
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).
 					Msg("failed to init driver")

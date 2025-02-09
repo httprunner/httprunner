@@ -13,6 +13,7 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 type ActionMethod string
@@ -169,7 +170,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 			ACTION_AppLaunch, action.Params)
 	case ACTION_SwipeToTapApp:
 		if appName, ok := action.Params.(string); ok {
-			return dExt.swipeToTapApp(appName, action.GetOptions()...)
+			return dExt.SwipeToTapApp(appName, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params, should be app name(string), got %v",
 			ACTION_SwipeToTapApp, action.Params)
@@ -201,7 +202,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
 	case ACTION_SetClipboard:
 		if text, ok := action.Params.(string); ok {
-			err := dExt.Driver.SetPasteboard(PasteboardTypePlaintext, text)
+			err := dExt.Driver.SetPasteboard(types.PasteboardTypePlaintext, text)
 			if err != nil {
 				return errors.Wrap(err, "failed to set clipboard")
 			}
@@ -280,7 +281,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTap, action.Params)
 	case ACTION_Swipe:
 		params := action.Params
-		swipeAction := dExt.prepareSwipeAction(params, action.GetOptions()...)
+		swipeAction := prepareSwipeAction(dExt, params, action.GetOptions()...)
 		return swipeAction(dExt)
 	case ACTION_Input:
 		// input text on current active element
@@ -328,7 +329,7 @@ func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
 	case ACTION_ScreenShot:
 		// take screenshot
 		log.Info().Msg("take screenshot for current screen")
-		_, err := dExt.GetScreenResult(action.GetOptions()...)
+		_, err := dExt.GetScreenResult(action.GetScreenOptions()...)
 		return err
 	case ACTION_StartCamera:
 		return dExt.Driver.StartCamera()

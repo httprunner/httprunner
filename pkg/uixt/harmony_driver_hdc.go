@@ -10,8 +10,9 @@ import (
 	"code.byted.org/iesqa/ghdc"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v5/pkg/ai"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 type HDCDriver struct {
@@ -58,31 +59,31 @@ func (hd *HDCDriver) GetSession() *Session {
 	return hd.Session
 }
 
-func (hd *HDCDriver) Status() (DeviceStatus, error) {
-	return DeviceStatus{}, errDriverNotImplemented
+func (hd *HDCDriver) Status() (types.DeviceStatus, error) {
+	return types.DeviceStatus{}, errDriverNotImplemented
 }
 
 func (hd *HDCDriver) GetDevice() IDevice {
 	return hd.HarmonyDevice
 }
 
-func (hd *HDCDriver) DeviceInfo() (DeviceInfo, error) {
-	return DeviceInfo{}, errDriverNotImplemented
+func (hd *HDCDriver) DeviceInfo() (types.DeviceInfo, error) {
+	return types.DeviceInfo{}, errDriverNotImplemented
 }
 
-func (hd *HDCDriver) Location() (Location, error) {
-	return Location{}, errDriverNotImplemented
+func (hd *HDCDriver) Location() (types.Location, error) {
+	return types.Location{}, errDriverNotImplemented
 }
 
-func (hd *HDCDriver) BatteryInfo() (BatteryInfo, error) {
-	return BatteryInfo{}, errDriverNotImplemented
+func (hd *HDCDriver) BatteryInfo() (types.BatteryInfo, error) {
+	return types.BatteryInfo{}, errDriverNotImplemented
 }
 
-func (hd *HDCDriver) WindowSize() (size ai.Size, err error) {
+func (hd *HDCDriver) WindowSize() (size types.Size, err error) {
 	display, err := hd.uiDriver.GetDisplaySize()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get window size")
-		return ai.Size{}, err
+		return types.Size{}, err
 	}
 	size.Width = display.Width
 	size.Height = display.Height
@@ -137,9 +138,9 @@ func (hd *HDCDriver) AppTerminate(packageName string) (bool, error) {
 	return true, nil
 }
 
-func (hd *HDCDriver) GetForegroundApp() (app AppInfo, err error) {
+func (hd *HDCDriver) GetForegroundApp() (app types.AppInfo, err error) {
 	// Todo
-	return AppInfo{}, errDriverNotImplemented
+	return types.AppInfo{}, errDriverNotImplemented
 }
 
 func (hd *HDCDriver) AssertForegroundApp(packageName string, activityType ...string) error {
@@ -155,8 +156,8 @@ func (hd *HDCDriver) StopCamera() error {
 	return errDriverNotImplemented
 }
 
-func (hd *HDCDriver) Orientation() (orientation Orientation, err error) {
-	return OrientationPortrait, nil
+func (hd *HDCDriver) Orientation() (orientation types.Orientation, err error) {
+	return types.OrientationPortrait, nil
 }
 
 func (hd *HDCDriver) Tap(x, y float64, opts ...option.ActionOption) error {
@@ -213,11 +214,11 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(fromX), Y: int(fromY)}).MoveTo(ghdc.Point{X: int(toX), Y: int(toY)}, duration))
 }
 
-func (hd *HDCDriver) SetPasteboard(contentType PasteboardType, content string) error {
+func (hd *HDCDriver) SetPasteboard(contentType types.PasteboardType, content string) error {
 	return errDriverNotImplemented
 }
 
-func (hd *HDCDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error) {
+func (hd *HDCDriver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
 	return nil, errDriverNotImplemented
 }
 
@@ -237,7 +238,7 @@ func (hd *HDCDriver) Clear(packageName string) error {
 	return errDriverNotImplemented
 }
 
-func (hd *HDCDriver) PressButton(devBtn DeviceButton) error {
+func (hd *HDCDriver) PressButton(devBtn types.DeviceButton) error {
 	return errDriverNotImplemented
 }
 
@@ -343,12 +344,12 @@ func (hd *HDCDriver) TearDown() error {
 	return nil
 }
 
-func (hd *HDCDriver) Rotation() (rotation Rotation, err error) {
+func (hd *HDCDriver) Rotation() (rotation types.Rotation, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (hd *HDCDriver) SetRotation(rotation Rotation) (err error) {
+func (hd *HDCDriver) SetRotation(rotation types.Rotation) (err error) {
 	err = errDriverNotImplemented
 	return
 }

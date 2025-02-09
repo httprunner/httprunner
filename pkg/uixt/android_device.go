@@ -24,7 +24,9 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/gadb"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 const (
@@ -147,7 +149,7 @@ func (dev *AndroidDevice) LogEnabled() bool {
 	return dev.LogOn
 }
 
-func (dev *AndroidDevice) NewDriver(opts ...option.DriverOption) (driverExt *DriverExt, err error) {
+func (dev *AndroidDevice) NewDriver() (driverExt IDriverExt, err error) {
 	var driver IDriver
 	if dev.UIA2 || dev.LogOn {
 		driver, err = NewUIA2Driver(dev)
@@ -160,18 +162,21 @@ func (dev *AndroidDevice) NewDriver(opts ...option.DriverOption) (driverExt *Dri
 		return nil, errors.Wrap(err, "failed to init UIA driver")
 	}
 
-	driverExt, err = newDriverExt(dev, driver, opts...)
-	if err != nil {
-		return nil, err
-	}
-
 	if dev.LogOn {
-		err = driverExt.Driver.StartCaptureLog("hrp_adb_log")
+		err = driver.StartCaptureLog("hrp_adb_log")
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	driverExt, err = NewDriverExt(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
+	if err != nil {
+		return nil, errors.Wrap(err, "init android driver ext failed")
+	}
+	// setup driver
+	if err := driverExt.GetDriver().Setup(); err != nil {
+		return nil, err
+	}
 	return driverExt, nil
 }
 
@@ -301,17 +306,17 @@ func (dev *AndroidDevice) Uninstall(packageName string) error {
 	return err
 }
 
-func (dev *AndroidDevice) GetCurrentWindow() (windowInfo WindowInfo, err error) {
+func (dev *AndroidDevice) GetCurrentWindow() (windowInfo types.WindowInfo, err error) {
 	// adb shell dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'
 	output, err := dev.RunShellCommand("dumpsys", "window", "|", "grep", "-E", "'mCurrentFocus|mFocusedApp'")
 	if err != nil {
-		return WindowInfo{}, errors.Wrap(err, "get current window failed")
+		return types.WindowInfo{}, errors.Wrap(err, "get current window failed")
 	}
 	// mCurrentFocus=Window{a33bc55 u0 com.miui.home/com.miui.home.launcher.Launcher}
 	reFocus := regexp.MustCompile(`mCurrentFocus=Window{.*? (\S+)/(\S+)}`)
 	matches := reFocus.FindStringSubmatch(output)
 	if len(matches) == 3 {
-		windowInfo = WindowInfo{
+		windowInfo = types.WindowInfo{
 			PackageName: matches[1],
 			Activity:    matches[2],
 		}
@@ -321,7 +326,7 @@ func (dev *AndroidDevice) GetCurrentWindow() (windowInfo WindowInfo, err error) 
 	reApp := regexp.MustCompile(`mFocusedApp=ActivityRecord{.*? (\S+)/(\S+?)\s`)
 	matches = reApp.FindStringSubmatch(output)
 	if len(matches) == 3 {
-		windowInfo = WindowInfo{
+		windowInfo = types.WindowInfo{
 			PackageName: matches[1],
 			Activity:    matches[2],
 		}
@@ -331,24 +336,24 @@ func (dev *AndroidDevice) GetCurrentWindow() (windowInfo WindowInfo, err error) 
 	// adb shell dumpsys activity activities | grep mResumedActivity
 	output, err = dev.RunShellCommand("dumpsys", "activity", "activities", "|", "grep", "mResumedActivity")
 	if err != nil {
-		return WindowInfo{}, errors.Wrap(err, "get current activity failed")
+		return types.WindowInfo{}, errors.Wrap(err, "get current activity failed")
 	}
 	// mResumedActivity: ActivityRecord{2db504f u0 com.miui.home/.launcher.Launcher t2}
 	reActivity := regexp.MustCompile(`mResumedActivity: ActivityRecord{.*? (\S+)/(\S+?)\s`)
 	matches = reActivity.FindStringSubmatch(output)
 	if len(matches) == 3 {
-		windowInfo = WindowInfo{
+		windowInfo = types.WindowInfo{
 			PackageName: matches[1],
 			Activity:    matches[2],
 		}
 		return windowInfo, nil
 	}
 
-	return WindowInfo{}, errors.New("failed to extract current window")
+	return types.WindowInfo{}, errors.New("failed to extract current window")
 }
 
-func (dev *AndroidDevice) GetPackageInfo(packageName string) (AppInfo, error) {
-	appInfo := AppInfo{
+func (dev *AndroidDevice) GetPackageInfo(packageName string) (types.AppInfo, error) {
+	appInfo := types.AppInfo{
 		Name: packageName,
 	}
 	// get package version

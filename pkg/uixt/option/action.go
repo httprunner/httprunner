@@ -6,54 +6,24 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 )
 
-// (x1, y1) is the top left corner, (x2, y2) is the bottom right corner
-// [x1, y1, x2, y2] in percentage of the screen
-type Scope []float64
-
-// [x1, y1, x2, y2] in absolute pixels
-type AbsScope []int
-
-func (s AbsScope) Option() ActionOption {
-	return WithAbsScope(s[0], s[1], s[2], s[3])
-}
-
 type ActionOptions struct {
 	// log
 	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"` // used to identify the action in log
 
 	// control related
-	MaxRetryTimes       int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"`           // max retry times
-	IgnoreNotFoundError bool        `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found
-	Interval            float64     `json:"interval,omitempty" yaml:"interval,omitempty"`                         // interval between retries in seconds
-	Duration            float64     `json:"duration,omitempty" yaml:"duration,omitempty"`                         // used to set duration of ios swipe action
-	PressDuration       float64     `json:"press_duration,omitempty" yaml:"press_duration,omitempty"`             // used to set duration of ios swipe action
-	Steps               int         `json:"steps,omitempty" yaml:"steps,omitempty"`                               // used to set steps of android swipe action
-	Direction           interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`                       // used by swipe to tap text or app
-	Timeout             int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                           // TODO: wait timeout in seconds for mobile action
-	Frequency           int         `json:"frequency,omitempty" yaml:"frequency,omitempty"`
+	MaxRetryTimes int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"` // max retry times
+	Interval      float64     `json:"interval,omitempty" yaml:"interval,omitempty"`               // interval between retries in seconds
+	Duration      float64     `json:"duration,omitempty" yaml:"duration,omitempty"`               // used to set duration of ios swipe action
+	PressDuration float64     `json:"press_duration,omitempty" yaml:"press_duration,omitempty"`   // used to set duration of ios swipe action
+	Steps         int         `json:"steps,omitempty" yaml:"steps,omitempty"`                     // used to set steps of android swipe action
+	Direction     interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`             // used by swipe to tap text or app
+	Timeout       int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                 // TODO: wait timeout in seconds for mobile action
+	Frequency     int         `json:"frequency,omitempty" yaml:"frequency,omitempty"`
 
-	// scope related
-	Scope    Scope    `json:"scope,omitempty" yaml:"scope,omitempty"`
-	AbsScope AbsScope `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"`
-
-	Regex             bool  `json:"regex,omitempty" yaml:"regex,omitempty"`                             // use regex to match text
-	Offset            []int `json:"offset,omitempty" yaml:"offset,omitempty"`                           // used to tap offset of point
-	OffsetRandomRange []int `json:"offset_random_range,omitempty" yaml:"offset_random_range,omitempty"` // set random range [min, max] for tap/swipe points
-	Index             int   `json:"index,omitempty" yaml:"index,omitempty"`                             // index of the target element
-	MatchOne          bool  `json:"match_one,omitempty" yaml:"match_one,omitempty"`                     // match one of the targets if existed
+	ScreenOptions
 
 	// set custiom options such as textview, id, description
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
-
-	// screenshot related
-	ScreenShotWithOCR            bool     `json:"screenshot_with_ocr,omitempty" yaml:"screenshot_with_ocr,omitempty"`
-	ScreenShotWithUpload         bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
-	ScreenShotWithLiveType       bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
-	ScreenShotWithLivePopularity bool     `json:"screenshot_with_live_popularity,omitempty" yaml:"screenshot_with_live_popularity,omitempty"`
-	ScreenShotWithUITypes        []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
-	ScreenShotWithClosePopups    bool     `json:"screenshot_with_close_popups,omitempty" yaml:"screenshot_with_close_popups,omitempty"`
-	ScreenShotWithOCRCluster     string   `json:"screenshot_with_ocr_cluster,omitempty" yaml:"screenshot_with_ocr_cluster,omitempty"`
-	ScreenShotFileName           string   `json:"screenshot_file_name,omitempty" yaml:"screenshot_file_name,omitempty"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -150,57 +120,11 @@ func (o *ActionOptions) Options() []ActionOption {
 		}
 	}
 
-	// screenshot options
-	if o.ScreenShotWithOCR {
-		options = append(options, WithScreenShotOCR(true))
-	}
-	if o.ScreenShotWithUpload {
-		options = append(options, WithScreenShotUpload(true))
-	}
-	if o.ScreenShotWithLiveType {
-		options = append(options, WithScreenShotLiveType(true))
-	}
-	if o.ScreenShotWithLivePopularity {
-		options = append(options, WithScreenShotLivePopularity(true))
-	}
-	if len(o.ScreenShotWithUITypes) > 0 {
-		options = append(options, WithScreenShotUITypes(o.ScreenShotWithUITypes...))
-	}
-	if o.ScreenShotWithClosePopups {
-		options = append(options, WithScreenShotClosePopups(true))
-	}
-	if o.ScreenShotWithOCRCluster != "" {
-		options = append(options, WithScreenOCRCluster(o.ScreenShotWithOCRCluster))
-	}
-	if o.ScreenShotFileName != "" {
-		options = append(options, WithScreenShotFileName(o.ScreenShotFileName))
-	}
-
 	return options
 }
 
-func (o *ActionOptions) ScreenshotActions() []string {
-	actions := []string{}
-	if o.ScreenShotWithUpload {
-		actions = append(actions, "upload")
-	}
-	if o.ScreenShotWithOCR {
-		actions = append(actions, "ocr")
-	}
-	if o.ScreenShotWithLiveType {
-		actions = append(actions, "liveType")
-	}
-	if o.ScreenShotWithLivePopularity {
-		actions = append(actions, "livePopularity")
-	}
-	// UI detection
-	if len(o.ScreenShotWithUITypes) > 0 {
-		actions = append(actions, "ui")
-	}
-	if o.ScreenShotWithClosePopups {
-		actions = append(actions, "close")
-	}
-	return actions
+func (o *ActionOptions) GetScreenOptions() []ActionOption {
+	return o.ScreenOptions.Options()
 }
 
 func (o *ActionOptions) GetRandomOffset() float64 {
@@ -283,12 +207,6 @@ func WithIdentifier(identifier string) ActionOption {
 	}
 }
 
-func WithIndex(index int) ActionOption {
-	return func(o *ActionOptions) {
-		o.Index = index
-	}
-}
-
 // set alias for compatibility
 var WithWaitTime = WithInterval
 
@@ -330,32 +248,6 @@ func WithCustomDirection(sx, sy, ex, ey float64) ActionOption {
 	}
 }
 
-// WithScope inputs area of [(x1,y1), (x2,y2)]
-// x1, y1, x2, y2 are all in [0, 1], which means the relative position of the screen
-func WithScope(x1, y1, x2, y2 float64) ActionOption {
-	return func(o *ActionOptions) {
-		o.Scope = Scope{x1, y1, x2, y2}
-	}
-}
-
-// WithAbsScope inputs area of [(x1,y1), (x2,y2)]
-// x1, y1, x2, y2 are all absolute position of the screen
-func WithAbsScope(x1, y1, x2, y2 int) ActionOption {
-	return func(o *ActionOptions) {
-		o.AbsScope = AbsScope{x1, y1, x2, y2}
-	}
-}
-
-// Deprecated: use WithTapOffset instead
-func WithOffset(offsetX, offsetY int) ActionOption {
-	return func(o *ActionOptions) {
-		o.Offset = []int{offsetX, offsetY}
-	}
-}
-
-// tap [x, y] with offset [offsetX, offsetY]
-var WithTapOffset = WithOffset
-
 // swipe [fromX, fromY, toX, toY] with offset [offsetFromX, offsetFromY, offsetToX, offsetToY]
 func WithSwipeOffset(offsetFromX, offsetFromY, offsetToX, offsetToY int) ActionOption {
 	return func(o *ActionOptions) {
@@ -366,18 +258,6 @@ func WithSwipeOffset(offsetFromX, offsetFromY, offsetToX, offsetToY int) ActionO
 func WithOffsetRandomRange(min, max int) ActionOption {
 	return func(o *ActionOptions) {
 		o.OffsetRandomRange = []int{min, max}
-	}
-}
-
-func WithRegex(regex bool) ActionOption {
-	return func(o *ActionOptions) {
-		o.Regex = regex
-	}
-}
-
-func WithMatchOne(matchOne bool) ActionOption {
-	return func(o *ActionOptions) {
-		o.MatchOne = matchOne
 	}
 }
 
@@ -402,53 +282,5 @@ func WithTimeout(timeout int) ActionOption {
 func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
 	return func(o *ActionOptions) {
 		o.IgnoreNotFoundError = ignoreError
-	}
-}
-
-func WithScreenShotOCR(ocrOn bool) ActionOption {
-	return func(o *ActionOptions) {
-		o.ScreenShotWithOCR = ocrOn
-	}
-}
-
-func WithScreenShotUpload(uploadOn bool) ActionOption {
-	return func(o *ActionOptions) {
-		o.ScreenShotWithUpload = uploadOn
-	}
-}
-
-func WithScreenShotLiveType(liveTypeOn bool) ActionOption {
-	return func(o *ActionOptions) {
-		o.ScreenShotWithLiveType = liveTypeOn
-	}
-}
-
-func WithScreenShotLivePopularity(livePopularityOn bool) ActionOption {
-	return func(o *ActionOptions) {
-		o.ScreenShotWithLivePopularity = livePopularityOn
-	}
-}
-
-func WithScreenShotUITypes(uiTypes ...string) ActionOption {
-	return func(o *ActionOptions) {
-		o.ScreenShotWithUITypes = uiTypes
-	}
-}
-
-func WithScreenShotClosePopups(closeOn bool) ActionOption {
-	return func(o *ActionOptions) {
-		o.ScreenShotWithClosePopups = closeOn
-	}
-}
-
-func WithScreenOCRCluster(ocrCluster string) ActionOption {
-	return func(o *ActionOptions) {
-		o.ScreenShotWithOCRCluster = ocrCluster
-	}
-}
-
-func WithScreenShotFileName(fileName string) ActionOption {
-	return func(o *ActionOptions) {
-		o.ScreenShotFileName = fileName
 	}
 }

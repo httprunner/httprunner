@@ -37,7 +37,7 @@ func convertTimeToSeconds(timeStr string) (int, error) {
 	return seconds, nil
 }
 
-func initIOSDevice(uuid string) uixt.IDevice {
+func initIOSDriver(uuid string) uixt.IDriverExt {
 	device, err := uixt.NewIOSDevice(
 		option.WithUDID(uuid),
 		option.WithWDAPort(8700), option.WithWDAMjpegPort(8800),
@@ -47,15 +47,17 @@ func initIOSDevice(uuid string) uixt.IDevice {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init ios device")
 	}
-	return device
+	driver, _ := device.NewDriver()
+	return driver
 }
 
-func initAndroidDevice(uuid string) uixt.IDevice {
+func initAndroidDriver(uuid string) uixt.IDriverExt {
 	device, err := uixt.NewAndroidDevice(option.WithSerialNumber(uuid))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init android device")
 	}
-	return device
+	driver, _ := device.NewDriver()
+	return driver
 }
 
 type timeLog struct {
@@ -66,10 +68,9 @@ type timeLog struct {
 }
 
 type WorldCupLive struct {
-	driver    *uixt.DriverExt
+	driver    uixt.IDriverExt
 	file      *os.File
 	resultDir string
-	UUID      string    `json:"uuid"`
 	MatchName string    `json:"matchName"`
 	BundleID  string    `json:"bundleID"`
 	StartTime string    `json:"startTime"`
@@ -80,12 +81,7 @@ type WorldCupLive struct {
 	PerfFile  string    `json:"perf"`
 }
 
-func NewWorldCupLive(device uixt.IDevice, matchName, bundleID string, duration, interval int) *WorldCupLive {
-	driverExt, err := device.NewDriver()
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to init driver")
-	}
-
+func NewWorldCupLive(driver uixt.IDriverExt, matchName, bundleID string, duration, interval int) *WorldCupLive {
 	if matchName == "" {
 		matchName = "unknown-match"
 	}
@@ -94,7 +90,7 @@ func NewWorldCupLive(device uixt.IDevice, matchName, bundleID string, duration, 
 	matchName = fmt.Sprintf("%s-%s", startTime.Format("2006-01-02"), matchName)
 	resultDir := filepath.Join("worldcuplive", matchName, startTime.Format("15:04:05"))
 
-	if err = os.MkdirAll(filepath.Join(resultDir, "screenshot"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(resultDir, "screenshot"), 0o755); err != nil {
 		log.Fatal().Err(err).Msg("failed to create result dir")
 	}
 
@@ -104,7 +100,7 @@ func NewWorldCupLive(device uixt.IDevice, matchName, bundleID string, duration, 
 		log.Fatal().Err(err).Msg("failed to open file")
 	}
 	// write title
-	f.WriteString(fmt.Sprintf("%s\t%s\t%s\n", matchName, device.UUID(), bundleID))
+	f.WriteString(fmt.Sprintf("%s\t%s\t%s\n", matchName, driver.GetDriver().GetDevice().UUID(), bundleID))
 	f.WriteString("utc_time\tutc_timestamp\tlive_time\tlive_seconds\n")
 
 	if interval == 0 {
@@ -115,10 +111,9 @@ func NewWorldCupLive(device uixt.IDevice, matchName, bundleID string, duration, 
 	}
 
 	return &WorldCupLive{
-		driver:    driverExt,
+		driver:    driver,
 		file:      f,
 		resultDir: resultDir,
-		UUID:      device.UUID(),
 		BundleID:  bundleID,
 		Duration:  duration,
 		Interval:  interval,
@@ -177,13 +172,13 @@ func (wc *WorldCupLive) EnterLive(bundleID string) error {
 	log.Info().Msg("enter world cup live")
 
 	// kill app
-	_, err := wc.driver.Driver.AppTerminate(bundleID)
+	_, err := wc.driver.GetDriver().AppTerminate(bundleID)
 	if err != nil {
 		log.Error().Err(err).Msg("terminate app failed")
 	}
 
 	// launch app
-	err = wc.driver.Driver.AppLaunch(bundleID)
+	err = wc.driver.GetDriver().AppLaunch(bundleID)
 	if err != nil {
 		log.Error().Err(err).Msg("launch app failed")
 		return err

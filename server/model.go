@@ -1,6 +1,8 @@
 package server
 
-import "github.com/httprunner/httprunner/v5/pkg/uixt/option"
+import (
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+)
 
 type HttpResponse struct {
 	Code    int         `json:"code"`
@@ -31,7 +33,7 @@ type InputRequest struct {
 }
 
 type ScreenRequest struct {
-	Options *option.ActionOptions `json:"options,omitempty"`
+	Options *option.ScreenOptions `json:"options,omitempty"`
 }
 
 type KeycodeRequest struct {

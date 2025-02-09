@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	iOSStubDriver IDriver
+	iOSStubDriver IDriverExt
 	iOSDevice     *IOSDevice
 )
 
@@ -22,56 +22,56 @@ func setupiOSStubDriver(t *testing.T) {
 		option.WithWDAMjpegPort(8800),
 		option.WithIOSStub(false))
 	checkErr(t, err)
-	iOSStubDriver, err = iOSDevice.NewStubDriver()
+	iOSStubDriver, err = iOSDevice.NewDriver()
 	checkErr(t, err)
 }
 
 func TestIOSLogin(t *testing.T) {
 	setupiOSStubDriver(t)
-	info, err := iOSStubDriver.LoginNoneUI("", "12342316231", "8517", "")
+	info, err := iOSStubDriver.GetDriver().LoginNoneUI("", "12342316231", "8517", "")
 	checkErr(t, err)
 	t.Log(info)
 }
 
 func TestIOSLogout(t *testing.T) {
 	setupiOSStubDriver(t)
-	err := iOSStubDriver.LogoutNoneUI("")
+	err := iOSStubDriver.GetDriver().LogoutNoneUI("")
 	checkErr(t, err)
 }
 
 func TestIOSIsLogin(t *testing.T) {
 	setupiOSStubDriver(t)
-	err := iOSStubDriver.LogoutNoneUI("")
+	err := iOSStubDriver.GetDriver().LogoutNoneUI("")
 	checkErr(t, err)
 }
 
 func TestIOSSource(t *testing.T) {
 	setupiOSStubDriver(t)
-	source, err := iOSStubDriver.Source()
+	source, err := iOSStubDriver.GetDriver().Source()
 	checkErr(t, err)
 	t.Log(source)
 }
 
 func TestIOSForeground(t *testing.T) {
 	setupiOSStubDriver(t)
-	app, err := iOSStubDriver.GetForegroundApp()
+	app, err := iOSStubDriver.GetDriver().GetForegroundApp()
 	checkErr(t, err)
 	t.Log(app)
 }
 
 func TestIOSSwipe(t *testing.T) {
 	setupiOSStubDriver(t)
-	iOSStubDriver.Swipe(540, 0, 540, 1000)
+	iOSStubDriver.GetDriver().Swipe(540, 0, 540, 1000)
 }
 
 func TestIOSSave(t *testing.T) {
 	setupiOSStubDriver(t)
-	raw, err := iOSStubDriver.Screenshot()
+	raw, err := iOSStubDriver.GetDriver().Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	source, err := iOSStubDriver.Source()
+	source, err := iOSStubDriver.GetDriver().Source()
 	if err != nil {
 		t.Fatal(err)
 	}

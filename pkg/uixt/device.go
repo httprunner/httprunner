@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 // current implemeted device: IOSDevice, AndroidDevice, HarmonyDevice
@@ -14,7 +15,7 @@ type IDevice interface {
 	Install(appPath string, opts ...option.InstallOption) error
 	Uninstall(packageName string) error
 
-	GetPackageInfo(packageName string) (AppInfo, error)
+	GetPackageInfo(packageName string) (types.AppInfo, error)
 
 	// TODO: remove?
 	LogEnabled() bool

@@ -1,5 +1,12 @@
 package option
 
+import "code.byted.org/iesqa/ghdc"
+
+const (
+	HdcServerHost = "localhost"
+	HdcServerPort = ghdc.HdcServerPort // 5037
+)
+
 type HarmonyDeviceOptions struct {
 	ConnectKey string `json:"connect_key,omitempty" yaml:"connect_key,omitempty"`
 	LogOn      bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`

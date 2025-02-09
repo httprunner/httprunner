@@ -47,7 +47,7 @@ var installCmd = &cobra.Command{
 			return err
 		}
 
-		err = driverExt.Install(args[0],
+		err = driverExt.GetDriver().GetDevice().Install(args[0],
 			option.WithReinstall(replace),
 			option.WithDowngrade(downgrade),
 			option.WithGrantPermission(grant),

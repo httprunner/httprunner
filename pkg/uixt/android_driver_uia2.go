@@ -16,8 +16,8 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/utf7"
-	"github.com/httprunner/httprunner/v5/pkg/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 var errDriverNotImplemented = errors.New("driver method not implemented")
@@ -133,12 +133,12 @@ func (ud *UIA2Driver) DeleteSession() (err error) {
 	return err
 }
 
-func (ud *UIA2Driver) Status() (deviceStatus DeviceStatus, err error) {
+func (ud *UIA2Driver) Status() (deviceStatus types.DeviceStatus, err error) {
 	// register(getHandler, new Status("/wd/hub/status"))
 	var rawResp rawResponse
 	// Notice: use Driver.GET instead of httpGET to avoid loop calling
 	if rawResp, err = ud.GET("/status"); err != nil {
-		return DeviceStatus{Ready: false}, err
+		return types.DeviceStatus{Ready: false}, err
 	}
 	reply := new(struct {
 		Value struct {
@@ -147,34 +147,34 @@ func (ud *UIA2Driver) Status() (deviceStatus DeviceStatus, err error) {
 		}
 	})
 	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return DeviceStatus{Ready: false}, err
+		return types.DeviceStatus{Ready: false}, err
 	}
-	return DeviceStatus{Ready: true}, nil
+	return types.DeviceStatus{Ready: true}, nil
 }
 
-func (ud *UIA2Driver) DeviceInfo() (deviceInfo DeviceInfo, err error) {
+func (ud *UIA2Driver) DeviceInfo() (deviceInfo types.DeviceInfo, err error) {
 	// register(getHandler, new GetDeviceInfo("/wd/hub/session/:sessionId/appium/device/info"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionID, "appium/device/info"); err != nil {
-		return DeviceInfo{}, err
+		return types.DeviceInfo{}, err
 	}
-	reply := new(struct{ Value struct{ DeviceInfo } })
+	reply := new(struct{ Value struct{ types.DeviceInfo } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return DeviceInfo{}, err
+		return types.DeviceInfo{}, err
 	}
 	deviceInfo = reply.Value.DeviceInfo
 	return
 }
 
-func (ud *UIA2Driver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
+func (ud *UIA2Driver) BatteryInfo() (batteryInfo types.BatteryInfo, err error) {
 	// register(getHandler, new GetBatteryInfo("/wd/hub/session/:sessionId/appium/device/battery_info"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionID, "appium/device/battery_info"); err != nil {
-		return BatteryInfo{}, err
+		return types.BatteryInfo{}, err
 	}
-	reply := new(struct{ Value struct{ BatteryInfo } })
+	reply := new(struct{ Value struct{ types.BatteryInfo } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return BatteryInfo{}, err
+		return types.BatteryInfo{}, err
 	}
 	if reply.Value.Level == -1 || reply.Value.Status == -1 {
 		return reply.Value.BatteryInfo, errors.New("cannot be retrieved from the system")
@@ -183,7 +183,7 @@ func (ud *UIA2Driver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 	return
 }
 
-func (ud *UIA2Driver) WindowSize() (size ai.Size, err error) {
+func (ud *UIA2Driver) WindowSize() (size types.Size, err error) {
 	// register(getHandler, new GetDeviceSize("/wd/hub/session/:sessionId/window/:windowHandle/size"))
 	if !ud.windowSize.IsNil() {
 		// use cached window size
@@ -192,11 +192,11 @@ func (ud *UIA2Driver) WindowSize() (size ai.Size, err error) {
 
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionID, "window/:windowHandle/size"); err != nil {
-		return ai.Size{}, errors.Wrap(err, "get window size failed by UIA2 request")
+		return types.Size{}, errors.Wrap(err, "get window size failed by UIA2 request")
 	}
-	reply := new(struct{ Value struct{ ai.Size } })
+	reply := new(struct{ Value struct{ types.Size } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return ai.Size{}, errors.Wrap(err, "get window size failed by UIA2 response")
+		return types.Size{}, errors.Wrap(err, "get window size failed by UIA2 response")
 	}
 	size = reply.Value.Size
 
@@ -204,9 +204,9 @@ func (ud *UIA2Driver) WindowSize() (size ai.Size, err error) {
 	orientation, err := ud.Orientation()
 	if err != nil {
 		log.Warn().Err(err).Msgf("window size get orientation failed, use default orientation")
-		orientation = OrientationPortrait
+		orientation = types.OrientationPortrait
 	}
-	if orientation != OrientationPortrait {
+	if orientation != types.OrientationPortrait {
 		size.Width, size.Height = size.Height, size.Width
 	}
 
@@ -244,13 +244,13 @@ func (ud *UIA2Driver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta, flags ..
 	return
 }
 
-func (ud *UIA2Driver) Orientation() (orientation Orientation, err error) {
+func (ud *UIA2Driver) Orientation() (orientation types.Orientation, err error) {
 	// [[FBRoute GET:@"/orientation"] respondWithTarget:self action:@selector(handleGetOrientation:)]
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionID, "/orientation"); err != nil {
 		return "", err
 	}
-	reply := new(struct{ Value Orientation })
+	reply := new(struct{ Value types.Orientation })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return "", err
 	}
@@ -418,7 +418,7 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 	return err
 }
 
-func (ud *UIA2Driver) SetPasteboard(contentType PasteboardType, content string) (err error) {
+func (ud *UIA2Driver) SetPasteboard(contentType types.PasteboardType, content string) (err error) {
 	lbl := content
 
 	const defaultLabelLen = 10
@@ -436,9 +436,9 @@ func (ud *UIA2Driver) SetPasteboard(contentType PasteboardType, content string) 
 	return
 }
 
-func (ud *UIA2Driver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error) {
+func (ud *UIA2Driver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
 	if len(contentType) == 0 {
-		contentType = PasteboardTypePlaintext
+		contentType = types.PasteboardTypePlaintext
 	}
 	// register(postHandler, new GetClipboard("/wd/hub/session/:sessionId/appium/device/get_clipboard"))
 	data := map[string]interface{}{
@@ -541,15 +541,15 @@ func (ud *UIA2Driver) Input(text string, opts ...option.ActionOption) (err error
 	return ud.SendKeys(text, opts...)
 }
 
-func (ud *UIA2Driver) Rotation() (rotation Rotation, err error) {
+func (ud *UIA2Driver) Rotation() (rotation types.Rotation, err error) {
 	// register(getHandler, new GetRotation("/wd/hub/session/:sessionId/rotation"))
 	var rawResp rawResponse
 	if rawResp, err = ud.httpGET("/session", ud.sessionID, "rotation"); err != nil {
-		return Rotation{}, err
+		return types.Rotation{}, err
 	}
-	reply := new(struct{ Value Rotation })
+	reply := new(struct{ Value types.Rotation })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return Rotation{}, err
+		return types.Rotation{}, err
 	}
 
 	rotation = reply.Value

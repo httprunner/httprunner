@@ -33,17 +33,17 @@ func TestConvertTimeToSeconds(t *testing.T) {
 
 func TestMainIOS(t *testing.T) {
 	uuid := "00008030-00194DA421C1802E"
-	device := initIOSDevice(uuid)
+	driver := initIOSDriver(uuid)
 	bundleID := "com.ss.iphone.ugc.Aweme"
-	wc := NewWorldCupLive(device, "", bundleID, 30, 10)
+	wc := NewWorldCupLive(driver, "", bundleID, 30, 10)
 	wc.EnterLive(bundleID)
 	wc.Start()
 }
 
 func TestMainAndroid(t *testing.T) {
-	device := initAndroidDevice(uuid)
+	driver := initAndroidDriver(uuid)
 	bundleID := "com.ss.android.ugc.aweme"
-	wc := NewWorldCupLive(device, "", bundleID, 30, 10)
+	wc := NewWorldCupLive(driver, "", bundleID, 30, 10)
 	wc.EnterLive(bundleID)
 	wc.Start()
 }

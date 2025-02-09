@@ -10,9 +10,10 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
-var driverExt *DriverExt
+var driverExt IDriverExt
 
 func setupAndroidAdbDriver(t *testing.T) {
 	device, err := NewAndroidDevice()
@@ -91,7 +92,7 @@ func TestDriver_DeviceSize(t *testing.T) {
 func TestDriver_Source(t *testing.T) {
 	setupAndroidUIA2Driver(t)
 
-	source, err := driverExt.Driver.Source()
+	source, err := driverExt.GetDriver().Source()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,7 +141,7 @@ func TestDriver_DeviceInfo(t *testing.T) {
 
 func TestDriver_Tap(t *testing.T) {
 	setupAndroidUIA2Driver(t)
-	driverExt.Driver.StartCaptureLog("")
+	driverExt.GetDriver().StartCaptureLog("")
 	err := driverExt.TapXY(0.5, 0.5,
 		option.WithIdentifier("test"),
 		option.WithPressDuration(4))
@@ -149,18 +150,18 @@ func TestDriver_Tap(t *testing.T) {
 	}
 	//time.Sleep(time.Second)
 	//
-	//err = driverExt.Driver.Tap(60.5, 125.5, WithIdentifier("test"))
+	//err = driverExt.GetDriver().Tap(60.5, 125.5, WithIdentifier("test"))
 	//if err != nil {
 	//	t.Fatal(err)
 	//}
 	//time.Sleep(time.Second)
-	//result, _ := driverExt.Driver.StopCaptureLog()
+	//result, _ := driverExt.GetDriver().StopCaptureLog()
 	//t.Log(result)
 }
 
 func TestDriver_Swipe(t *testing.T) {
 	setupAndroidUIA2Driver(t)
-	err := driverExt.Driver.Swipe(400, 1000, 400, 500,
+	err := driverExt.GetDriver().Swipe(400, 1000, 400, 500,
 		option.WithPressDuration(0.5))
 	if err != nil {
 		t.Fatal(err)
@@ -192,7 +193,7 @@ func TestDriver_Drag(t *testing.T) {
 func TestDriver_SendKeys(t *testing.T) {
 	setupAndroidUIA2Driver(t)
 
-	err := driverExt.Driver.SendKeys("辽宁省沈阳市新民市民族街36-4",
+	err := driverExt.GetDriver().SendKeys("辽宁省沈阳市新民市民族街36-4",
 		option.WithIdentifier("test"))
 	if err != nil {
 		t.Fatal(err)
@@ -222,7 +223,7 @@ func TestDriver_PressBack(t *testing.T) {
 
 func TestDriver_SetRotation(t *testing.T) {
 	// err = driver.SetRotation(Rotation{Z: 0})
-	err := driver.SetRotation(Rotation{Z: 270})
+	err := driver.SetRotation(types.Rotation{Z: 270})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -230,10 +231,10 @@ func TestDriver_SetRotation(t *testing.T) {
 
 func TestDriver_GetOrientation(t *testing.T) {
 	setupAndroidUIA2Driver(t)
-	_, _ = driverExt.Driver.AppTerminate("com.quark.browser")
-	_ = driverExt.Driver.AppLaunch("com.quark.browser")
+	_, _ = driverExt.GetDriver().AppTerminate("com.quark.browser")
+	_ = driverExt.GetDriver().AppLaunch("com.quark.browser")
 	time.Sleep(2 * time.Second)
-	_ = driverExt.Driver.Homescreen()
+	_ = driverExt.GetDriver().Homescreen()
 }
 
 func Test_getFreePort(t *testing.T) {
@@ -251,12 +252,12 @@ func TestDriver_AppLaunch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = driver.Driver.AppLaunch("com.android.settings")
+	err = driver.GetDriver().AppLaunch("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	raw, err := driver.Driver.Screenshot()
+	raw, err := driver.GetDriver().Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -268,10 +269,10 @@ func TestDriver_IsAppInForeground(t *testing.T) {
 	setupAndroidUIA2Driver(t)
 	// setupAndroidAdbDriver(t)
 
-	err := driverExt.Driver.AppLaunch("com.android.settings")
+	err := driverExt.GetDriver().AppLaunch("com.android.settings")
 	checkErr(t, err)
 
-	app, err := driverExt.Driver.GetForegroundApp()
+	app, err := driverExt.GetDriver().GetForegroundApp()
 	checkErr(t, err)
 	if app.PackageName != "com.android.settings" {
 		t.FailNow()
@@ -280,18 +281,18 @@ func TestDriver_IsAppInForeground(t *testing.T) {
 		t.FailNow()
 	}
 
-	err = driverExt.Driver.AssertForegroundApp("com.android.settings")
+	err = driverExt.GetDriver().AssertForegroundApp("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(2 * time.Second)
-	_, err = driverExt.Driver.AppTerminate("com.android.settings")
+	_, err = driverExt.GetDriver().AppTerminate("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = driverExt.Driver.AssertForegroundApp("com.android.settings")
+	err = driverExt.GetDriver().AssertForegroundApp("com.android.settings")
 	if err == nil {
 		t.Fatal(err)
 	}
@@ -304,19 +305,19 @@ func TestDriver_KeepAlive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = driver.Driver.AppLaunch("com.android.settings")
+	err = driver.GetDriver().AppLaunch("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = driver.Driver.Screenshot()
+	_, err = driver.GetDriver().Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(60 * time.Second)
 
-	_, err = driver.Driver.Screenshot()
+	_, err = driver.GetDriver().Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -329,7 +330,7 @@ func TestDriver_AppTerminate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = driver.Driver.AppTerminate("tv.danmaku.bili")
+	_, err = driver.GetDriver().AppTerminate("tv.danmaku.bili")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -391,7 +392,7 @@ func TestTapTexts(t *testing.T) {
 			},
 		},
 	}
-	err := driverExt.Driver.TapByTexts(actions...)
+	err := driverExt.GetDriver().TapByTexts(actions...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -399,7 +400,7 @@ func TestTapTexts(t *testing.T) {
 
 func TestRecordVideo(t *testing.T) {
 	setupAndroidAdbDriver(t)
-	path, err := driverExt.Driver.(*ADBDriver).RecordScreen("", 5*time.Second)
+	path, err := driverExt.GetDriver().(*ADBDriver).RecordScreen("", 5*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -409,7 +410,7 @@ func TestRecordVideo(t *testing.T) {
 func Test_Android_Backspace(t *testing.T) {
 	setupAndroidAdbDriver(t)
 
-	err := driverExt.Driver.Backspace(1)
+	err := driverExt.GetDriver().Backspace(1)
 	if err != nil {
 		t.Fatal(err)
 	}

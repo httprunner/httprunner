@@ -15,6 +15,7 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 const (
@@ -166,17 +167,17 @@ func (sad *StubAndroidDriver) close() error {
 	return nil
 }
 
-func (sad *StubAndroidDriver) Status() (DeviceStatus, error) {
+func (sad *StubAndroidDriver) Status() (types.DeviceStatus, error) {
 	app, err := sad.GetForegroundApp()
 	if err != nil {
-		return DeviceStatus{}, err
+		return types.DeviceStatus{}, err
 	}
 	res, err := sad.sendCommand(app.PackageName, "Hello", nil)
 	if err != nil {
-		return DeviceStatus{}, err
+		return types.DeviceStatus{}, err
 	}
 	log.Info().Msg(fmt.Sprintf("ping stub result :%v", res))
-	return DeviceStatus{}, nil
+	return types.DeviceStatus{}, nil
 }
 
 func (sad *StubAndroidDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {

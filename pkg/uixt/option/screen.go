@@ -1,11 +1,10 @@
-package ai
+package option
 
-func NewScreenShotOptions(opts ...ScreenShotOption) *ScreenShotOptions {
-	options := &ScreenShotOptions{}
-	for _, option := range opts {
-		option(options)
-	}
-	return options
+import "github.com/httprunner/httprunner/v5/pkg/uixt/types"
+
+type ScreenOptions struct {
+	ScreenShotOptions
+	ScreenFilterOptions
 }
 
 type ScreenShotOptions struct {
@@ -19,8 +18,8 @@ type ScreenShotOptions struct {
 	ScreenShotFileName           string   `json:"screenshot_file_name,omitempty" yaml:"screenshot_file_name,omitempty"`
 }
 
-func (o *ScreenShotOptions) Options() []ScreenShotOption {
-	options := make([]ScreenShotOption, 0)
+func (o *ScreenShotOptions) Options() []ActionOption {
+	options := make([]ActionOption, 0)
 	if o == nil {
 		return options
 	}
@@ -78,52 +77,50 @@ func (o *ScreenShotOptions) List() []string {
 	return options
 }
 
-type ScreenShotOption func(o *ScreenShotOptions)
-
-func WithScreenShotOCR(ocrOn bool) ScreenShotOption {
-	return func(o *ScreenShotOptions) {
+func WithScreenShotOCR(ocrOn bool) ActionOption {
+	return func(o *ActionOptions) {
 		o.ScreenShotWithOCR = ocrOn
 	}
 }
 
-func WithScreenShotUpload(uploadOn bool) ScreenShotOption {
-	return func(o *ScreenShotOptions) {
+func WithScreenShotUpload(uploadOn bool) ActionOption {
+	return func(o *ActionOptions) {
 		o.ScreenShotWithUpload = uploadOn
 	}
 }
 
-func WithScreenShotLiveType(liveTypeOn bool) ScreenShotOption {
-	return func(o *ScreenShotOptions) {
+func WithScreenShotLiveType(liveTypeOn bool) ActionOption {
+	return func(o *ActionOptions) {
 		o.ScreenShotWithLiveType = liveTypeOn
 	}
 }
 
-func WithScreenShotLivePopularity(livePopularityOn bool) ScreenShotOption {
-	return func(o *ScreenShotOptions) {
+func WithScreenShotLivePopularity(livePopularityOn bool) ActionOption {
+	return func(o *ActionOptions) {
 		o.ScreenShotWithLivePopularity = livePopularityOn
 	}
 }
 
-func WithScreenShotUITypes(uiTypes ...string) ScreenShotOption {
-	return func(o *ScreenShotOptions) {
+func WithScreenShotUITypes(uiTypes ...string) ActionOption {
+	return func(o *ActionOptions) {
 		o.ScreenShotWithUITypes = uiTypes
 	}
 }
 
-func WithScreenShotClosePopups(closeOn bool) ScreenShotOption {
-	return func(o *ScreenShotOptions) {
+func WithScreenShotClosePopups(closeOn bool) ActionOption {
+	return func(o *ActionOptions) {
 		o.ScreenShotWithClosePopups = closeOn
 	}
 }
 
-func WithScreenOCRCluster(ocrCluster string) ScreenShotOption {
-	return func(o *ScreenShotOptions) {
+func WithScreenOCRCluster(ocrCluster string) ActionOption {
+	return func(o *ActionOptions) {
 		o.ScreenShotWithOCRCluster = ocrCluster
 	}
 }
 
-func WithScreenShotFileName(fileName string) ScreenShotOption {
-	return func(o *ScreenShotOptions) {
+func WithScreenShotFileName(fileName string) ActionOption {
+	return func(o *ActionOptions) {
 		o.ScreenShotFileName = fileName
 	}
 }
@@ -132,7 +129,7 @@ func WithScreenShotFileName(fileName string) ScreenShotOption {
 // [x1, y1, x2, y2] in percentage of the screen
 type Scope []float64
 
-func (s Scope) ToAbs(windowSize Size) AbsScope {
+func (s Scope) ToAbs(windowSize types.Size) AbsScope {
 	x1, y1, x2, y2 := s[0], s[1], s[2], s[3]
 	// convert relative scope to absolute scope
 	absX1 := int(x1 * float64(windowSize.Width))
@@ -145,12 +142,12 @@ func (s Scope) ToAbs(windowSize Size) AbsScope {
 // [x1, y1, x2, y2] in absolute pixels
 type AbsScope []int
 
-func (s AbsScope) Option() ScreenFilterOption {
+func (s AbsScope) Option() ActionOption {
 	return WithAbsScope(s[0], s[1], s[2], s[3])
 }
 
-func NewScreenFilterOptions(opts ...ScreenFilterOption) *ScreenFilterOptions {
-	options := &ScreenFilterOptions{}
+func NewScreenFilterOptions(opts ...ActionOption) *ActionOptions {
+	options := &ActionOptions{}
 	for _, option := range opts {
 		option(options)
 	}
@@ -162,52 +159,51 @@ type ScreenFilterOptions struct {
 	Scope    Scope    `json:"scope,omitempty" yaml:"scope,omitempty"`
 	AbsScope AbsScope `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"`
 
-	Regex             bool  `json:"regex,omitempty" yaml:"regex,omitempty"`                             // use regex to match text
-	Offset            []int `json:"offset,omitempty" yaml:"offset,omitempty"`                           // used to tap offset of point
-	OffsetRandomRange []int `json:"offset_random_range,omitempty" yaml:"offset_random_range,omitempty"` // set random range [min, max] for tap/swipe points
-	Index             int   `json:"index,omitempty" yaml:"index,omitempty"`                             // index of the target element
-	MatchOne          bool  `json:"match_one,omitempty" yaml:"match_one,omitempty"`                     // match one of the targets if existed
+	Regex               bool  `json:"regex,omitempty" yaml:"regex,omitempty"`                             // use regex to match text
+	Offset              []int `json:"offset,omitempty" yaml:"offset,omitempty"`                           // used to tap offset of point
+	OffsetRandomRange   []int `json:"offset_random_range,omitempty" yaml:"offset_random_range,omitempty"` // set random range [min, max] for tap/swipe points
+	Index               int   `json:"index,omitempty" yaml:"index,omitempty"`                             // index of the target element
+	MatchOne            bool  `json:"match_one,omitempty" yaml:"match_one,omitempty"`
+	IgnoreNotFoundError bool  `json:"ignore_NotFoundError,omitempty" yaml:"ignore_NotFoundError,omitempty"` // ignore error if target element not found                  // match one of the targets if existed
 }
-
-type ScreenFilterOption func(o *ScreenFilterOptions)
 
 // WithScope inputs area of [(x1,y1), (x2,y2)]
 // x1, y1, x2, y2 are all in [0, 1], which means the relative position of the screen
-func WithScope(x1, y1, x2, y2 float64) ScreenFilterOption {
-	return func(o *ScreenFilterOptions) {
+func WithScope(x1, y1, x2, y2 float64) ActionOption {
+	return func(o *ActionOptions) {
 		o.Scope = Scope{x1, y1, x2, y2}
 	}
 }
 
 // WithAbsScope inputs area of [(x1,y1), (x2,y2)]
 // x1, y1, x2, y2 are all absolute position of the screen
-func WithAbsScope(x1, y1, x2, y2 int) ScreenFilterOption {
-	return func(o *ScreenFilterOptions) {
+func WithAbsScope(x1, y1, x2, y2 int) ActionOption {
+	return func(o *ActionOptions) {
 		o.AbsScope = AbsScope{x1, y1, x2, y2}
 	}
 }
 
 // tap [x, y] with offset [offsetX, offsetY]
-func WithTapOffset(offsetX, offsetY int) ScreenFilterOption {
-	return func(o *ScreenFilterOptions) {
+func WithTapOffset(offsetX, offsetY int) ActionOption {
+	return func(o *ActionOptions) {
 		o.Offset = []int{offsetX, offsetY}
 	}
 }
 
-func WithRegex(regex bool) ScreenFilterOption {
-	return func(o *ScreenFilterOptions) {
+func WithRegex(regex bool) ActionOption {
+	return func(o *ActionOptions) {
 		o.Regex = regex
 	}
 }
 
-func WithMatchOne(matchOne bool) ScreenFilterOption {
-	return func(o *ScreenFilterOptions) {
+func WithMatchOne(matchOne bool) ActionOption {
+	return func(o *ActionOptions) {
 		o.MatchOne = matchOne
 	}
 }
 
-func WithIndex(index int) ScreenFilterOption {
-	return func(o *ScreenFilterOptions) {
+func WithIndex(index int) ActionOption {
+	return func(o *ActionOptions) {
 		o.Index = index
 	}
 }

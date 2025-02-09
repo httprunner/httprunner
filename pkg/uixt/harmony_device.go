@@ -1,19 +1,14 @@
 package uixt
 
 import (
-	"fmt"
-
 	"code.byted.org/iesqa/ghdc"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
-)
-
-var (
-	HdcServerHost = "localhost"
-	HdcServerPort = ghdc.HdcServerPort // 5037
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 type HarmonyDevice struct {
@@ -23,63 +18,51 @@ type HarmonyDevice struct {
 
 func NewHarmonyDevice(opts ...option.HarmonyDeviceOption) (device *HarmonyDevice, err error) {
 	deviceConfig := option.NewHarmonyDeviceOptions(opts...)
-	deviceList, err := GetHarmonyDevices(deviceConfig.ConnectKey)
+
+	// get all attached android devices
+	hdcClient, err := ghdc.NewClientWith(option.HdcServerHost, option.HdcServerPort)
 	if err != nil {
-		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
+		return nil, err
+	}
+	devices, err := hdcClient.DeviceList()
+	if err != nil {
+		return nil, err
+	}
+	if len(devices) == 0 {
+		return nil, errors.Wrapf(code.DeviceConnectionError,
+			"no attached harmony devices")
 	}
 
-	if deviceConfig.ConnectKey == "" && len(deviceList) > 1 {
-		return nil, errors.Wrap(code.DeviceConnectionError, "more than one device connected, please specify the serial")
-	}
-
-	dev := deviceList[0]
+	// filter device by serial
+	var harmonyDevice *ghdc.Device
 	if deviceConfig.ConnectKey == "" {
-		selectSerial := dev.Serial()
-		deviceConfig.ConnectKey = selectSerial
-		log.Warn().
-			Str("connectKey", deviceConfig.ConnectKey).
-			Msg("harmony ConnectKey is not specified, select the first one")
+		if len(devices) > 1 {
+			return nil, errors.Wrap(code.DeviceConnectionError,
+				"more than one device connected, please specify the serial")
+		}
+		harmonyDevice = &devices[0]
+		deviceConfig.ConnectKey = harmonyDevice.Serial()
+		log.Warn().Str("serial", deviceConfig.ConnectKey).
+			Msg("harmony ConnectKey is not specified, select the attached one")
+	} else {
+		for _, d := range devices {
+			if d.Serial() == deviceConfig.ConnectKey {
+				harmonyDevice = &d
+				break
+			}
+		}
+		if harmonyDevice == nil {
+			return nil, errors.Wrapf(code.DeviceConnectionError,
+				"harmony device %s not attached", harmonyDevice.Serial())
+		}
 	}
 
 	device = &HarmonyDevice{
 		HarmonyDeviceOptions: deviceConfig,
-		Device:               dev,
+		Device:               harmonyDevice,
 	}
 	log.Info().Str("connectKey", device.ConnectKey).Msg("init harmony device")
 	return device, nil
-}
-
-func GetHarmonyDevices(serial ...string) (devices []*ghdc.Device, err error) {
-	var hdcClient ghdc.Client
-	if hdcClient, err = ghdc.NewClientWith(HdcServerHost, HdcServerPort); err != nil {
-		return nil, err
-	}
-	var deviceList []ghdc.Device
-
-	if deviceList, err = hdcClient.DeviceList(); err != nil {
-		return nil, err
-	}
-
-	// filter by serial
-	for _, d := range deviceList {
-		for _, s := range serial {
-			if s != "" && s != d.Serial() {
-				continue
-			}
-			devices = append(devices, &d)
-		}
-	}
-
-	if len(devices) == 0 {
-		var err error
-		if serial == nil || (len(serial) == 1 && serial[0] == "") {
-			err = fmt.Errorf("no harmony device found")
-		} else {
-			err = fmt.Errorf("no harmony device found for serial %v", serial)
-		}
-		return nil, err
-	}
-	return devices, nil
 }
 
 func (dev *HarmonyDevice) Setup() error {
@@ -106,7 +89,26 @@ func (dev *HarmonyDevice) Uninstall(packageName string) error {
 	return nil
 }
 
-func (dev *HarmonyDevice) GetPackageInfo(packageName string) (AppInfo, error) {
+func (dev *HarmonyDevice) GetPackageInfo(packageName string) (types.AppInfo, error) {
 	log.Warn().Msg("get package info not implemented for harmony device, skip")
-	return AppInfo{}, nil
+	return types.AppInfo{}, nil
+}
+
+func (dev *HarmonyDevice) NewDriver() (IDriverExt, error) {
+	// init harmony driver
+	driver, err := NewHDCDriver(dev)
+	if err != nil {
+		return nil, errors.Wrap(err, "init harmony driver failed")
+	}
+	driverExt, err := NewDriverExt(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
+	if err != nil {
+		return nil, errors.Wrap(err, "init harmony driver ext failed")
+	}
+
+	// setup driver
+	if err := driverExt.GetDriver().Setup(); err != nil {
+		return nil, err
+	}
+
+	return driverExt, nil
 }

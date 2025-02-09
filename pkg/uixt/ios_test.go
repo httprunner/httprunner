@@ -11,12 +11,13 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 var (
 	bundleId     = "com.apple.Preferences"
 	driver       IDriver
-	iOSDriverExt *DriverExt
+	iOSDriverExt IDriverExt
 )
 
 func setup(t *testing.T) {
@@ -29,11 +30,7 @@ func setup(t *testing.T) {
 	}
 	capabilities := option.NewCapabilities()
 	capabilities.WithDefaultAlertAction(option.AlertActionAccept)
-	driver, err = device.NewHTTPDriver(capabilities)
-	if err != nil {
-		t.Fatal(err)
-	}
-	iOSDriverExt, err = newDriverExt(device, driver)
+	iOSDriverExt, err = device.NewDriver()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +43,7 @@ func TestViaUSB(t *testing.T) {
 
 func TestInstall(t *testing.T) {
 	setup(t)
-	err := iOSDriverExt.Install("xxx.ipa",
+	err := iOSDriverExt.GetDriver().GetDevice().Install("xxx.ipa",
 		option.WithRetryTimes(5))
 	log.Error().Err(err)
 	if err != nil {
@@ -320,7 +317,7 @@ func Test_remoteWD_SetPasteboard(t *testing.T) {
 	setup(t)
 
 	// err := driver.SetPasteboard(PasteboardTypePlaintext, "gwda")
-	err := driver.SetPasteboard(PasteboardTypeUrl, "Clock-stopwatch://")
+	err := driver.SetPasteboard(types.PasteboardTypeUrl, "Clock-stopwatch://")
 	// userHomeDir, _ := os.UserHomeDir()
 	// bytesImg, _ := ioutil.ReadFile(userHomeDir + "/Pictures/IMG_0806.jpg")
 	// err := driver.SetPasteboard(PasteboardTypeImage, string(bytesImg))
@@ -335,7 +332,7 @@ func Test_remoteWD_GetPasteboard(t *testing.T) {
 	var buffer *bytes.Buffer
 	var err error
 
-	buffer, err = driver.GetPasteboard(PasteboardTypePlaintext)
+	buffer, err = driver.GetPasteboard(types.PasteboardTypePlaintext)
 	// buffer, err = driver.GetPasteboard(PasteboardTypeUrl)
 	if err != nil {
 		t.Fatal(err)
@@ -367,17 +364,17 @@ func Test_remoteWD_SendKeys(t *testing.T) {
 func Test_remoteWD_PressButton(t *testing.T) {
 	setup(t)
 
-	err := driver.PressButton(DeviceButtonVolumeUp)
+	err := driver.PressButton(types.DeviceButtonVolumeUp)
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Second * 1)
-	err = driver.PressButton(DeviceButtonVolumeDown)
+	err = driver.PressButton(types.DeviceButtonVolumeDown)
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Second * 1)
-	err = driver.PressButton(DeviceButtonHome)
+	err = driver.PressButton(types.DeviceButtonHome)
 	if err != nil {
 		t.Fatal(err)
 	}

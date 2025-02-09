@@ -10,7 +10,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/ai"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -86,7 +86,7 @@ func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, 
 		fmt.Sprintf("loop %d times, match find condition failed", maxRetryTimes))
 }
 
-func (dExt *DriverExt) prepareSwipeAction(params interface{}, opts ...option.ActionOption) func(d *DriverExt) error {
+func prepareSwipeAction(dExt *DriverExt, params interface{}, opts ...option.ActionOption) func(d *DriverExt) error {
 	actionOptions := option.NewActionOptions(opts...)
 
 	var swipeDirection interface{}
@@ -177,11 +177,11 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, opts ...option.ActionOpti
 		return d.TapAbsXY(point.X, point.Y, opts...)
 	}
 
-	findAction := dExt.prepareSwipeAction(nil, optionsWithoutIdentifier...)
+	findAction := prepareSwipeAction(dExt, nil, optionsWithoutIdentifier...)
 	return dExt.LoopUntil(findAction, findTexts, foundTextAction, optionsWithoutIdentifier...)
 }
 
-func (dExt *DriverExt) swipeToTapApp(appName string, opts ...option.ActionOption) error {
+func (dExt *DriverExt) SwipeToTapApp(appName string, opts ...option.ActionOption) error {
 	// go to home screen
 	if err := dExt.Driver.Homescreen(); err != nil {
 		return errors.Wrap(err, "go to home screen failed")

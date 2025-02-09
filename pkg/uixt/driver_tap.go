@@ -51,11 +51,11 @@ func (dExt *DriverExt) TapByOCR(ocrText string, opts ...option.ActionOption) err
 }
 
 func (dExt *DriverExt) TapByUIDetection(opts ...option.ActionOption) error {
-	actionOptions := option.NewActionOptions(opts...)
+	options := option.NewActionOptions(opts...)
 
 	point, err := dExt.FindUIResult(opts...)
 	if err != nil {
-		if actionOptions.IgnoreNotFoundError {
+		if options.IgnoreNotFoundError {
 			return nil
 		}
 		return err
@@ -69,11 +69,11 @@ func (dExt *DriverExt) Tap(param string, opts ...option.ActionOption) error {
 }
 
 func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, opts ...option.ActionOption) (err error) {
-	actionOptions := option.NewActionOptions(opts...)
+	options := option.NewActionOptions(opts...)
 
 	point, err := dExt.FindUIRectInUIKit(param, opts...)
 	if err != nil {
-		if actionOptions.IgnoreNotFoundError {
+		if options.IgnoreNotFoundError {
 			return nil
 		}
 		return err

@@ -23,8 +23,9 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/utf7"
-	"github.com/httprunner/httprunner/v5/pkg/ai"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 func NewADBDriver(device *AndroidDevice) (*ADBDriver, error) {
@@ -86,7 +87,7 @@ func (ad *ADBDriver) DeleteSession() (err error) {
 	return errDriverNotImplemented
 }
 
-func (ad *ADBDriver) Status() (deviceStatus DeviceStatus, err error) {
+func (ad *ADBDriver) Status() (deviceStatus types.DeviceStatus, err error) {
 	err = errDriverNotImplemented
 	return
 }
@@ -95,22 +96,22 @@ func (ad *ADBDriver) GetDevice() IDevice {
 	return ad.AndroidDevice
 }
 
-func (ad *ADBDriver) DeviceInfo() (deviceInfo DeviceInfo, err error) {
+func (ad *ADBDriver) DeviceInfo() (deviceInfo types.DeviceInfo, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *ADBDriver) Location() (location Location, err error) {
+func (ad *ADBDriver) Location() (location types.Location, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *ADBDriver) BatteryInfo() (batteryInfo BatteryInfo, err error) {
+func (ad *ADBDriver) BatteryInfo() (batteryInfo types.BatteryInfo, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *ADBDriver) getWindowSize() (size ai.Size, err error) {
+func (ad *ADBDriver) getWindowSize() (size types.Size, err error) {
 	// adb shell wm size
 	output, err := ad.runShellCommand("wm", "size")
 	if err != nil {
@@ -136,14 +137,14 @@ func (ad *ADBDriver) getWindowSize() (size ai.Size, err error) {
 			ss := strings.Split(resolution, "x")
 			width, _ := strconv.Atoi(ss[0])
 			height, _ := strconv.Atoi(ss[1])
-			return ai.Size{Width: width, Height: height}, nil
+			return types.Size{Width: width, Height: height}, nil
 		}
 	}
 	err = errors.New("physical window size not found by adb")
 	return
 }
 
-func (ad *ADBDriver) WindowSize() (size ai.Size, err error) {
+func (ad *ADBDriver) WindowSize() (size types.Size, err error) {
 	if !ad.windowSize.IsNil() {
 		// use cached window size
 		return ad.windowSize, nil
@@ -157,11 +158,11 @@ func (ad *ADBDriver) WindowSize() (size ai.Size, err error) {
 	orientation, err2 := ad.Orientation()
 	if err2 != nil {
 		// Notice: do not return err if get window orientation failed
-		orientation = OrientationPortrait
+		orientation = types.OrientationPortrait
 		log.Warn().Err(err2).Msgf(
 			"get window orientation failed, use default %s", orientation)
 	}
-	if orientation != OrientationPortrait {
+	if orientation != types.OrientationPortrait {
 		size.Width, size.Height = size.Height, size.Width
 	}
 
@@ -243,7 +244,7 @@ func (ad *ADBDriver) StopCamera() (err error) {
 	return
 }
 
-func (ad *ADBDriver) Orientation() (orientation Orientation, err error) {
+func (ad *ADBDriver) Orientation() (orientation types.Orientation, err error) {
 	output, err := ad.runShellCommand("dumpsys", "input", "|", "grep", "'SurfaceOrientation'")
 	if err != nil {
 		return
@@ -252,9 +253,9 @@ func (ad *ADBDriver) Orientation() (orientation Orientation, err error) {
 	matches := re.FindStringSubmatch(output)
 	if len(matches) > 1 { // 确保找到了匹配项
 		if matches[1] == "0" || matches[1] == "2" {
-			return OrientationPortrait, nil
+			return types.OrientationPortrait, nil
 		} else if matches[1] == "1" || matches[1] == "3" {
-			return OrientationLandscapeLeft, nil
+			return types.OrientationLandscapeLeft, nil
 		}
 	}
 	err = fmt.Errorf("not found SurfaceOrientation value")
@@ -490,12 +491,12 @@ func (ad *ADBDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) 
 	return
 }
 
-func (ad *ADBDriver) SetPasteboard(contentType PasteboardType, content string) (err error) {
+func (ad *ADBDriver) SetPasteboard(contentType types.PasteboardType, content string) (err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *ADBDriver) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error) {
+func (ad *ADBDriver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
 	err = errDriverNotImplemented
 	return
 }
@@ -618,17 +619,17 @@ func (ad *ADBDriver) Clear(packageName string) error {
 	return nil
 }
 
-func (ad *ADBDriver) PressButton(devBtn DeviceButton) (err error) {
+func (ad *ADBDriver) PressButton(devBtn types.DeviceButton) (err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *ADBDriver) Rotation() (rotation Rotation, err error) {
+func (ad *ADBDriver) Rotation() (rotation types.Rotation, err error) {
 	err = errDriverNotImplemented
 	return
 }
 
-func (ad *ADBDriver) SetRotation(rotation Rotation) (err error) {
+func (ad *ADBDriver) SetRotation(rotation types.Rotation) (err error) {
 	err = errDriverNotImplemented
 	return
 }
@@ -856,7 +857,7 @@ func (ad *ADBDriver) GetDriverResults() []*DriverRequests {
 	return nil
 }
 
-func (ad *ADBDriver) GetForegroundApp() (app AppInfo, err error) {
+func (ad *ADBDriver) GetForegroundApp() (app types.AppInfo, err error) {
 	packageInfo, err := ad.runShellCommand(
 		"CLASSPATH=/data/local/tmp/evalite", "app_process", "/",
 		"com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")

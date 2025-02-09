@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var rootCmd = &cobra.Command{
@@ -15,21 +17,36 @@ var rootCmd = &cobra.Command{
 	Short:   "Monitor FIFA World Cup Live",
 	Version: "2022.12.03.0018",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var device uixt.IDevice
+		var driver uixt.IDriver
 		var bundleID string
 		if iosApp != "" {
 			log.Info().Str("bundleID", iosApp).Msg("init ios device")
-			device = initIOSDevice(uuid)
+			device, err := uixt.NewIOSDevice(option.WithUDID(uuid))
+			if err != nil {
+				log.Fatal().Err(err).Msg("failed to init ios device")
+			}
+			driver, _ = uixt.NewWDADriver(device)
 			bundleID = iosApp
 		} else if androidApp != "" {
 			log.Info().Str("bundleID", androidApp).Msg("init android device")
-			device = initAndroidDevice(uuid)
+			device, err := uixt.NewAndroidDevice(option.WithSerialNumber(uuid))
+			if err != nil {
+				log.Fatal().Err(err).Msg("failed to init android device")
+			}
+			driver, _ = uixt.NewADBDriver(device)
 			bundleID = androidApp
 		} else {
 			return errors.New("android or ios app bundldID is required")
 		}
 
-		wc := NewWorldCupLive(device, matchName, bundleID, duration, interval)
+		driverExt, err := uixt.NewDriverExt(driver,
+			ai.WithCVService(ai.CVServiceTypeVEDEM),
+		)
+		if err != nil {
+			return err
+		}
+
+		wc := NewWorldCupLive(driverExt, matchName, bundleID, duration, interval)
 
 		if auto {
 			wc.EnterLive(bundleID)

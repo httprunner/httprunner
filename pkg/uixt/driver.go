@@ -16,8 +16,9 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
-	"github.com/httprunner/httprunner/v5/pkg/ai"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 var (
@@ -40,10 +41,10 @@ type IDriver interface {
 	// GetSession returns session cache, including requests, screenshots, etc.
 	GetSession() *Session
 
-	Status() (DeviceStatus, error)
+	Status() (types.DeviceStatus, error)
 
 	GetDevice() IDevice
-	DeviceInfo() (DeviceInfo, error)
+	DeviceInfo() (types.DeviceInfo, error)
 
 	// Location Returns device location data.
 	//
@@ -56,13 +57,13 @@ type IDriver interface {
 	//
 	// The return value could be zero even if the permission is set to 'Always'
 	// since the location service needs some time to update the location data.
-	Location() (Location, error)
-	BatteryInfo() (BatteryInfo, error)
+	Location() (types.Location, error)
+	BatteryInfo() (types.BatteryInfo, error)
 
 	// WindowSize Return the width and height in portrait mode.
 	// when getting the window size in wda/ui2/adb, if the device is in landscape mode,
 	// the width and height will be reversed.
-	WindowSize() (ai.Size, error)
+	WindowSize() (types.Size, error)
 	Screen() (ai.Screen, error)
 	Scale() (float64, error)
 
@@ -78,7 +79,7 @@ type IDriver interface {
 	// Either `true` if the app has been successfully terminated or `false` if it was not running
 	AppTerminate(packageName string) (bool, error)
 	// GetForegroundApp returns current foreground app package name and activity name
-	GetForegroundApp() (app AppInfo, err error)
+	GetForegroundApp() (app types.AppInfo, err error)
 	// AssertForegroundApp returns nil if the given package and activity are in foreground
 	AssertForegroundApp(packageName string, activityType ...string) error
 
@@ -87,10 +88,10 @@ type IDriver interface {
 	// StopCamera Stops the camera for recording
 	StopCamera() error
 
-	Orientation() (orientation Orientation, err error)
+	Orientation() (orientation types.Orientation, err error)
 
-	SetRotation(rotation Rotation) (err error)
-	Rotation() (rotation Rotation, err error)
+	SetRotation(rotation types.Rotation) (err error)
+	Rotation() (rotation types.Rotation, err error)
 
 	// Tap Sends a tap event at the coordinate.
 	Tap(x, y float64, opts ...option.ActionOption) error
@@ -110,10 +111,10 @@ type IDriver interface {
 	Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
 
 	// SetPasteboard Sets data to the general pasteboard
-	SetPasteboard(contentType PasteboardType, content string) error
+	SetPasteboard(contentType types.PasteboardType, content string) error
 	// GetPasteboard Gets the data contained in the general pasteboard.
 	//  It worked when `WDA` was foreground. https://github.com/appium/WebDriverAgent/issues/330
-	GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer, err error)
+	GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error)
 
 	SetIme(ime string) error
 
@@ -128,7 +129,7 @@ type IDriver interface {
 	Clear(packageName string) error
 
 	// PressButton Presses the corresponding hardware button on the device
-	PressButton(devBtn DeviceButton) error
+	PressButton(devBtn types.DeviceButton) error
 
 	// PressBack Presses the back button
 	PressBack(opts ...option.ActionOption) error
@@ -177,6 +178,13 @@ type IDriverExt interface {
 
 	GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error)
 	GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error)
+	GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error)
+
+	TapByOCR(ocrText string, opts ...option.ActionOption) error
+	TapXY(x, y float64, opts ...option.ActionOption) error
+	TapAbsXY(x, y float64, opts ...option.ActionOption) error
+	TapOffset(param string, xOffset, yOffset float64, opts ...option.ActionOption) (err error)
+	TapByUIDetection(opts ...option.ActionOption) error
 
 	// swipe
 	SwipeRelative(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
@@ -184,15 +192,25 @@ type IDriverExt interface {
 	SwipeDown(opts ...option.ActionOption) error
 	SwipeLeft(opts ...option.ActionOption) error
 	SwipeRight(opts ...option.ActionOption) error
+
+	SwipeToTapApp(appName string, opts ...option.ActionOption) error
+
+	CheckPopup() (popup *PopupInfo, err error)
+	ClosePopupsHandler() error
+
+	DoAction(action MobileAction) (err error)
+	DoValidation(check, assert, expected string, message ...string) (err error)
 }
 
 func NewDriverExt(driver IDriver, opts ...ai.AIServiceOption) (IDriverExt, error) {
 	services := ai.NewAIService(opts...)
 	driverExt := &DriverExt{
-		Driver:       driver,
-		ImageService: services.ImageService,
+		Driver:     driver,
+		CVService:  services.ICVService,
+		LLMService: services.ILLMService,
 	}
 	// create results directory
+	// TODO: move to setup
 	if err := builtin.EnsureFolderExists(config.ResultsPath); err != nil {
 		return nil, errors.Wrap(err, "create results directory failed")
 	}
@@ -203,25 +221,9 @@ func NewDriverExt(driver IDriver, opts ...ai.AIServiceOption) (IDriverExt, error
 }
 
 type DriverExt struct {
-	Driver       IDriver
-	ImageService ai.IImageService // used to extract image data
-}
-
-func newDriverExt(device IDevice, driver IDriver, opts ...option.DriverOption) (dExt *DriverExt, err error) {
-	options := option.NewDriverOptions(opts...)
-
-	dExt = &DriverExt{
-		Driver: driver,
-	}
-
-	if options.WithImageService {
-		if dExt.ImageService, err = ai.NewVEDEMImageService(); err != nil {
-			return nil, err
-		}
-	}
-	if options.WithResultFolder {
-	}
-	return dExt, nil
+	Driver     IDriver
+	CVService  ai.ICVService  // OCR/CV
+	LLMService ai.ILLMService // LLM
 }
 
 func (dExt *DriverExt) GetDriver() IDriver {
