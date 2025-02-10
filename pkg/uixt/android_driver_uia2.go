@@ -29,14 +29,14 @@ func NewUIA2Driver(device *AndroidDevice) (*UIA2Driver, error) {
 	}
 	driver := &UIA2Driver{
 		ADBDriver: &ADBDriver{
-			AndroidDevice: device,
+			Device: device,
 		},
 	}
 	err = driver.Session.InitConnection(localPort)
 	if err != nil {
 		return nil, err
 	}
-	driver.Logcat = device.Logcat
+	driver.Device.Logcat = device.Logcat
 
 	err = driver.InitSession(nil)
 	if err != nil {

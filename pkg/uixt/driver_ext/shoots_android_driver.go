@@ -34,12 +34,16 @@ func NewShootsAndroidDriver(device *uixt.AndroidDevice) (driver *ShootsAndroidDr
 		log.Err(err).Msg(fmt.Sprintf("failed to connect %s", address))
 		return nil, err
 	}
+	adbDriver, err := uixt.NewADBDriver(device)
+	if err != nil {
+		return nil, err
+	}
 	driver = &ShootsAndroidDriver{
-		socket:  conn,
-		timeout: 10 * time.Second,
+		ADBDriver: adbDriver,
+		socket:    conn,
+		timeout:   10 * time.Second,
 	}
 
-	driver.InitSession(nil)
 	serverLocalPort, err := device.Device.Forward(douyinServerPort)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
@@ -50,8 +54,6 @@ func NewShootsAndroidDriver(device *uixt.AndroidDevice) (driver *ShootsAndroidDr
 		serverLocalPort, douyinServerPort)
 	driver.Session.Init(rawURL)
 
-	driver.Device = device.Device
-	driver.Logcat = device.Logcat
 	return driver, nil
 }
 

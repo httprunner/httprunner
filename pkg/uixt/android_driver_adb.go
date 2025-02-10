@@ -31,15 +31,15 @@ import (
 func NewADBDriver(device *AndroidDevice) (*ADBDriver, error) {
 	log.Info().Interface("device", device).Msg("init android adb driver")
 	driver := &ADBDriver{
-		AndroidDevice: device,
-		Session:       &Session{},
+		Device:  device,
+		Session: &Session{},
 	}
 	driver.InitSession(nil)
 	return driver, nil
 }
 
 type ADBDriver struct {
-	*AndroidDevice
+	Device  *AndroidDevice
 	Session *Session
 }
 
@@ -92,7 +92,7 @@ func (ad *ADBDriver) Status() (deviceStatus types.DeviceStatus, err error) {
 }
 
 func (ad *ADBDriver) GetDevice() IDevice {
-	return ad.AndroidDevice
+	return ad.Device
 }
 
 func (ad *ADBDriver) DeviceInfo() (deviceInfo types.DeviceInfo, err error) {
@@ -768,7 +768,7 @@ func (ad *ADBDriver) IsHealthy() (healthy bool, err error) {
 func (ad *ADBDriver) StartCaptureLog(identifier ...string) (err error) {
 	log.Info().Msg("start adb log recording")
 	// start logcat
-	err = ad.Logcat.CatchLogcat("iesqaMonitor:V")
+	err = ad.Device.Logcat.CatchLogcat("iesqaMonitor:V")
 	if err != nil {
 		err = errors.Wrap(code.DeviceCaptureLogError,
 			fmt.Sprintf("start adb log recording failed: %v", err))
@@ -780,7 +780,7 @@ func (ad *ADBDriver) StartCaptureLog(identifier ...string) (err error) {
 func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 	defer func() {
 		log.Info().Msg("stop adb log recording")
-		err = ad.Logcat.Stop()
+		err = ad.Device.Logcat.Stop()
 		if err != nil {
 			log.Error().Err(err).Msg("failed to get adb log recording")
 		}
@@ -788,7 +788,7 @@ func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 	if err != nil {
 		log.Error().Err(err).Msg("failed to close adb log writer")
 	}
-	pointRes := ConvertPoints(ad.Logcat.logs)
+	pointRes := ConvertPoints(ad.Device.Logcat.logs)
 
 	// 没有解析到打点日志，走兜底逻辑
 	if len(pointRes) == 0 {
