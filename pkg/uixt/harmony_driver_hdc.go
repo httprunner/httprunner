@@ -15,33 +15,28 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
-type HDCDriver struct {
-	*HarmonyDevice
-	*Session
-	*DriverExt
-	points   []ExportPoint
-	uiDriver *ghdc.UIDriver
-}
+func NewHDCDriver(device *HarmonyDevice) (*HDCDriver, error) {
+	driver := &HDCDriver{
+		Device: device,
+	}
+	driver.InitSession(nil)
 
-type PowerStatus string
-
-const (
-	POWER_STATUS_SUSPEND PowerStatus = "POWER_STATUS_SUSPEND"
-	POWER_STATUS_OFF     PowerStatus = "POWER_STATUS_OFF"
-	POWER_STATUS_ON      PowerStatus = "POWER_STATUS_ON"
-)
-
-func NewHDCDriver(device *HarmonyDevice) (driver *HDCDriver, err error) {
-	driver = new(HDCDriver)
-	driver.HarmonyDevice = device
 	uiDriver, err := ghdc.NewUIDriver(*device.Device)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to new harmony ui driver")
 		return nil, err
 	}
 	driver.uiDriver = uiDriver
-	driver.InitSession(nil)
-	return
+
+	return driver, nil
+}
+
+type HDCDriver struct {
+	Device  *HarmonyDevice
+	Session *Session
+
+	points   []ExportPoint
+	uiDriver *ghdc.UIDriver
 }
 
 func (hd *HDCDriver) InitSession(capabilities option.Capabilities) error {
@@ -64,7 +59,7 @@ func (hd *HDCDriver) Status() (types.DeviceStatus, error) {
 }
 
 func (hd *HDCDriver) GetDevice() IDevice {
-	return hd.HarmonyDevice
+	return hd.Device
 }
 
 func (hd *HDCDriver) DeviceInfo() (types.DeviceInfo, error) {
@@ -98,9 +93,17 @@ func (hd *HDCDriver) Homescreen() error {
 	return hd.uiDriver.PressKey(ghdc.KEYCODE_HOME)
 }
 
+type PowerStatus string
+
+const (
+	POWER_STATUS_SUSPEND PowerStatus = "POWER_STATUS_SUSPEND"
+	POWER_STATUS_OFF     PowerStatus = "POWER_STATUS_OFF"
+	POWER_STATUS_ON      PowerStatus = "POWER_STATUS_ON"
+)
+
 func (hd *HDCDriver) Unlock() (err error) {
 	// Todo 检查是否锁屏 hdc shell hidumper -s RenderService -a screen
-	screenInfo, err := hd.RunShellCommand("hidumper", "-s", "RenderService", "-a", "screen")
+	screenInfo, err := hd.Device.RunShellCommand("hidumper", "-s", "RenderService", "-a", "screen")
 	if err != nil {
 		return err
 	}
@@ -126,7 +129,7 @@ func (hd *HDCDriver) AppLaunch(packageName string) error {
 }
 
 func (hd *HDCDriver) AppTerminate(packageName string) (bool, error) {
-	_, err := hd.RunShellCommand("aa", "force-stop", packageName)
+	_, err := hd.Device.RunShellCommand("aa", "force-stop", packageName)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to terminal app")
 		return false, err
