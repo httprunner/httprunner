@@ -1,12 +1,8 @@
-package uixt
+package driver_ext
 
 import (
 	"fmt"
 	"net"
-	"net/http"
-	"net/url"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -14,116 +10,59 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 const (
-	StubSocketName   = "com.bytest.device"
-	DouyinServerPort = 32316
+	shootsSocketName = "com.bytest.device"
+	douyinServerPort = 32316
+	forwardToPrefix  = "forward-to-"
 )
 
-func NewStubAndroidDriver(device *AndroidDevice) (driver *StubAndroidDriver, err error) {
-	socketLocalPort, err := device.Forward(StubSocketName)
+func NewShootsAndroidDriver(device *uixt.AndroidDevice) (driver *ShootsAndroidDriver, err error) {
+	socketLocalPort, err := device.Forward(shootsSocketName)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("forward port %d->%s failed: %v",
-				socketLocalPort, StubSocketName, err))
+				socketLocalPort, shootsSocketName, err))
 	}
-
-	serverLocalPort, err := device.Forward(DouyinServerPort)
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceConnectionError,
-			fmt.Sprintf("forward port %d->%d failed: %v",
-				serverLocalPort, DouyinServerPort, err))
-	}
-
 	address := fmt.Sprintf("127.0.0.1:%d", socketLocalPort)
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("failed to connect %s", address))
 		return nil, err
 	}
-
-	driver = &StubAndroidDriver{
+	driver = &ShootsAndroidDriver{
 		socket:  conn,
 		timeout: 10 * time.Second,
 	}
 
-	rawURL := fmt.Sprintf("http://forward-to-%d:%d",
-		serverLocalPort, DouyinServerPort)
-	if driver.baseURL, err = url.Parse(rawURL); err != nil {
-		return nil, err
+	driver.InitSession(nil)
+	serverLocalPort, err := device.Forward(douyinServerPort)
+	if err != nil {
+		return nil, errors.Wrap(code.DeviceConnectionError,
+			fmt.Sprintf("forward port %d->%d failed: %v",
+				serverLocalPort, douyinServerPort, err))
 	}
+	rawURL := fmt.Sprintf("http://forward-to-%d:%d",
+		serverLocalPort, douyinServerPort)
+	driver.Session.Init(rawURL)
 
-	driver.NewSession(nil)
 	driver.Device = device.Device
 	driver.Logcat = device.Logcat
 	return driver, nil
 }
 
-type StubAndroidDriver struct {
-	*ADBDriver
+type ShootsAndroidDriver struct {
+	*uixt.ADBDriver
 	socket  net.Conn
 	seq     int
 	timeout time.Duration
 }
 
-type AppLoginInfo struct {
-	Did     string `json:"did,omitempty" yaml:"did,omitempty"`
-	Uid     string `json:"uid,omitempty" yaml:"uid,omitempty"`
-	IsLogin bool   `json:"is_login,omitempty" yaml:"is_login,omitempty"`
-}
-
-func (sad *StubAndroidDriver) httpGET(pathElem ...string) (rawResp rawResponse, err error) {
-	var localPort int
-	{
-		tmpURL, _ := url.Parse(sad.baseURL.String())
-		hostname := tmpURL.Hostname()
-		if strings.HasPrefix(hostname, forwardToPrefix) {
-			localPort, _ = strconv.Atoi(strings.TrimPrefix(hostname, forwardToPrefix))
-		}
-	}
-
-	conn, err := net.Dial("tcp", fmt.Sprintf(":%d", localPort))
-	if err != nil {
-		return nil, fmt.Errorf("adb forward: %w", err)
-	}
-	sad.client = convertToHTTPClient(conn)
-	return sad.Request(http.MethodGet, sad.concatURL(nil, pathElem...), nil)
-}
-
-func (sad *StubAndroidDriver) httpPOST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
-	var localPort int
-	{
-		tmpURL, _ := url.Parse(sad.baseURL.String())
-		hostname := tmpURL.Hostname()
-		if strings.HasPrefix(hostname, forwardToPrefix) {
-			localPort, _ = strconv.Atoi(strings.TrimPrefix(hostname, forwardToPrefix))
-		}
-	}
-
-	conn, err := net.Dial("tcp", fmt.Sprintf(":%d", localPort))
-	if err != nil {
-		return nil, fmt.Errorf("adb forward: %w", err)
-	}
-	sad.client = convertToHTTPClient(conn)
-
-	var bsJSON []byte = nil
-	if data != nil {
-		if bsJSON, err = json.Marshal(data); err != nil {
-			return nil, err
-		}
-	}
-	return sad.Request(http.MethodPost, sad.concatURL(nil, pathElem...), bsJSON)
-}
-
-func (sad *StubAndroidDriver) NewSession(capabilities option.Capabilities) (Session, error) {
-	sad.Reset()
-	return Session{}, errDriverNotImplemented
-}
-
-func (sad *StubAndroidDriver) sendCommand(packageName string, cmdType string, params map[string]interface{}, readTimeout ...time.Duration) (interface{}, error) {
+func (sad *ShootsAndroidDriver) sendCommand(packageName string, cmdType string, params map[string]interface{}, readTimeout ...time.Duration) (interface{}, error) {
 	sad.seq++
 	packet := map[string]interface{}{
 		"Seq": sad.seq,
@@ -150,24 +89,24 @@ func (sad *StubAndroidDriver) sendCommand(packageName string, cmdType string, pa
 		return nil, err
 	}
 	if resultMap["Error"] != nil {
-		return nil, fmt.Errorf("failed to call stub command: %s", resultMap["Error"].(string))
+		return nil, fmt.Errorf("failed to call shoots command: %s", resultMap["Error"].(string))
 	}
 
 	return resultMap["Result"], nil
 }
 
-func (sad *StubAndroidDriver) DeleteSession() error {
+func (sad *ShootsAndroidDriver) DeleteSession() error {
 	return sad.close()
 }
 
-func (sad *StubAndroidDriver) close() error {
+func (sad *ShootsAndroidDriver) close() error {
 	if sad.socket != nil {
 		return sad.socket.Close()
 	}
 	return nil
 }
 
-func (sad *StubAndroidDriver) Status() (types.DeviceStatus, error) {
+func (sad *ShootsAndroidDriver) Status() (types.DeviceStatus, error) {
 	app, err := sad.GetForegroundApp()
 	if err != nil {
 		return types.DeviceStatus{}, err
@@ -176,11 +115,11 @@ func (sad *StubAndroidDriver) Status() (types.DeviceStatus, error) {
 	if err != nil {
 		return types.DeviceStatus{}, err
 	}
-	log.Info().Msg(fmt.Sprintf("ping stub result :%v", res))
+	log.Info().Msg(fmt.Sprintf("ping shoots result :%v", res))
 	return types.DeviceStatus{}, nil
 }
 
-func (sad *StubAndroidDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
+func (sad *ShootsAndroidDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	app, err := sad.GetForegroundApp()
 	if err != nil {
 		return "", err
@@ -198,7 +137,7 @@ func (sad *StubAndroidDriver) Source(srcOpt ...option.SourceOption) (source stri
 	return res.(string), nil
 }
 
-func (sad *StubAndroidDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+func (sad *ShootsAndroidDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
 	params := map[string]interface{}{
 		"phone": phoneNumber,
 	}
@@ -209,11 +148,11 @@ func (sad *StubAndroidDriver) LoginNoneUI(packageName, phoneNumber string, captc
 	} else {
 		return info, fmt.Errorf("password and capcha is empty")
 	}
-	resp, err := sad.httpPOST(params, "/host", "/login", "account")
+	resp, err := sad.Session.POST(params, "/host", "/login", "account")
 	if err != nil {
 		return info, err
 	}
-	res, err := resp.valueConvertToJsonObject()
+	res, err := resp.ValueConvertToJsonObject()
 	if err != nil {
 		return info, err
 	}
@@ -231,12 +170,12 @@ func (sad *StubAndroidDriver) LoginNoneUI(packageName, phoneNumber string, captc
 	return info, nil
 }
 
-func (sad *StubAndroidDriver) LogoutNoneUI(packageName string) error {
-	resp, err := sad.httpGET("/host", "/logout")
+func (sad *ShootsAndroidDriver) LogoutNoneUI(packageName string) error {
+	resp, err := sad.Session.GET("/host", "/logout")
 	if err != nil {
 		return err
 	}
-	res, err := resp.valueConvertToJsonObject()
+	res, err := resp.ValueConvertToJsonObject()
 	if err != nil {
 		return err
 	}
@@ -254,7 +193,7 @@ func (sad *StubAndroidDriver) LogoutNoneUI(packageName string) error {
 	return nil
 }
 
-func (sad *StubAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber string, captcha string) error {
+func (sad *ShootsAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber string, captcha string) error {
 	params := map[string]interface{}{
 		"ClassName": "qe.python.test.LoginUtil",
 		"Method":    "loginSync",
@@ -269,7 +208,7 @@ func (sad *StubAndroidDriver) LoginNoneUIDynamic(packageName, phoneNumber string
 	return nil
 }
 
-func (sad *StubAndroidDriver) SetHDTStatus(status bool) error {
+func (sad *ShootsAndroidDriver) SetHDTStatus(status bool) error {
 	_, err := sad.Device.RunShellCommand("settings", "put", "global", "feedbacker_sso_bypass_token", "default_sso_bypass_token")
 	if err != nil {
 		log.Warn().Msg(fmt.Sprintf("failed to disable sso, error: %v", err))
@@ -288,12 +227,12 @@ func (sad *StubAndroidDriver) SetHDTStatus(status bool) error {
 	return nil
 }
 
-func (sad *StubAndroidDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {
-	resp, err := sad.httpGET("/host", "/app", "/info")
+func (sad *ShootsAndroidDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {
+	resp, err := sad.Session.GET("/host", "/app", "/info")
 	if err != nil {
 		return info, err
 	}
-	res, err := resp.valueConvertToJsonObject()
+	res, err := resp.ValueConvertToJsonObject()
 	if err != nil {
 		return info, err
 	}
@@ -309,4 +248,10 @@ func (sad *StubAndroidDriver) getLoginAppInfo(packageName string) (info AppLogin
 		return
 	}
 	return info, nil
+}
+
+type AppLoginInfo struct {
+	Did     string `json:"did,omitempty" yaml:"did,omitempty"`
+	Uid     string `json:"uid,omitempty" yaml:"uid,omitempty"`
+	IsLogin bool   `json:"is_login,omitempty" yaml:"is_login,omitempty"`
 }

@@ -34,14 +34,13 @@ func NewADBDriver(device *AndroidDevice) (*ADBDriver, error) {
 		AndroidDevice: device,
 		Session:       &Session{},
 	}
-	driver.NewSession(nil)
+	driver.InitSession(nil)
 	return driver, nil
 }
 
 type ADBDriver struct {
 	*AndroidDevice
-	*Session
-	// DriverExt
+	Session *Session
 }
 
 func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string, err error) {
@@ -59,7 +58,7 @@ func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string,
 		} else {
 			driverResult.Success = true
 		}
-		ad.addRequestResult(driverResult)
+		ad.Session.addRequestResult(driverResult)
 	}()
 
 	// adb shell screencap -p
@@ -77,18 +76,18 @@ func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string,
 	return output, err
 }
 
-func (ad *ADBDriver) NewSession(capabilities option.Capabilities) (sessionInfo Session, err error) {
-	ad.Reset()
-	err = errDriverNotImplemented
-	return
+func (ad *ADBDriver) InitSession(capabilities option.Capabilities) error {
+	ad.Session = &Session{}
+	ad.Session.Reset()
+	return nil
 }
 
 func (ad *ADBDriver) DeleteSession() (err error) {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (ad *ADBDriver) Status() (deviceStatus types.DeviceStatus, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
@@ -97,17 +96,17 @@ func (ad *ADBDriver) GetDevice() IDevice {
 }
 
 func (ad *ADBDriver) DeviceInfo() (deviceInfo types.DeviceInfo, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
 func (ad *ADBDriver) Location() (location types.Location, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
 func (ad *ADBDriver) BatteryInfo() (batteryInfo types.BatteryInfo, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
@@ -145,9 +144,9 @@ func (ad *ADBDriver) getWindowSize() (size types.Size, err error) {
 }
 
 func (ad *ADBDriver) WindowSize() (size types.Size, err error) {
-	if !ad.windowSize.IsNil() {
+	if !ad.Session.windowSize.IsNil() {
 		// use cached window size
-		return ad.windowSize, nil
+		return ad.Session.windowSize, nil
 	}
 
 	size, err = ad.getWindowSize()
@@ -166,12 +165,12 @@ func (ad *ADBDriver) WindowSize() (size types.Size, err error) {
 		size.Width, size.Height = size.Height, size.Width
 	}
 
-	ad.windowSize = size // cache window size
+	ad.Session.windowSize = size // cache window size
 	return size, nil
 }
 
 func (ad *ADBDriver) Screen() (screen ai.Screen, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
@@ -487,17 +486,17 @@ func (ad *ADBDriver) ForceTouch(x, y int, pressure float64, second ...float64) e
 }
 
 func (ad *ADBDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) (err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
 func (ad *ADBDriver) SetPasteboard(contentType types.PasteboardType, content string) (err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
 func (ad *ADBDriver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
@@ -620,17 +619,17 @@ func (ad *ADBDriver) Clear(packageName string) error {
 }
 
 func (ad *ADBDriver) PressButton(devBtn types.DeviceButton) (err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
 func (ad *ADBDriver) Rotation() (rotation types.Rotation, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
 func (ad *ADBDriver) SetRotation(rotation types.Rotation) (err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
@@ -658,14 +657,6 @@ func (ad *ADBDriver) Source(srcOpt ...option.SourceOption) (source string, err e
 		return
 	}
 	return
-}
-
-func (ad *ADBDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
-	return info, errDriverNotImplemented
-}
-
-func (ad *ADBDriver) LogoutNoneUI(packageName string) error {
-	return errDriverNotImplemented
 }
 
 func (ad *ADBDriver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hierarchy, err error) {
@@ -750,27 +741,27 @@ func (ad *ADBDriver) searchNodes(nodes []Layout, text string, opts ...option.Act
 }
 
 func (ad *ADBDriver) AccessibleSource() (source string, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
 func (ad *ADBDriver) HealthCheck() (err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
 func (ad *ADBDriver) GetAppiumSettings() (settings map[string]interface{}, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
 func (ad *ADBDriver) SetAppiumSettings(settings map[string]interface{}) (ret map[string]interface{}, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
 func (ad *ADBDriver) IsHealthy() (healthy bool, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 

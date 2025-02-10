@@ -38,8 +38,7 @@ func handleDeviceContext() gin.HandlerFunc {
 		switch strings.ToLower(platform) {
 		case "android":
 			device, err := uixt.NewAndroidDevice(
-				option.WithSerialNumber(serial),
-				option.WithStub(true))
+				option.WithSerialNumber(serial))
 			if err != nil {
 				log.Error().Err(err).Str("platform", platform).Str("serial", serial).
 					Msg("device not found")

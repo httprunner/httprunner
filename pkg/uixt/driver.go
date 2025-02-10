@@ -30,8 +30,8 @@ var (
 
 // current implemeted driver: ADBDriver, UIA2Driver, WDADriver, HDCDriver
 type IDriver interface {
-	// NewSession starts a new session and returns the DriverSession.
-	NewSession(capabilities option.Capabilities) (Session, error)
+	// InitSession starts a new session
+	InitSession(capabilities option.Capabilities) error
 
 	// DeleteSession Kills application associated with that session and removes session
 	//  1) alertsMonitor disable
@@ -142,9 +142,6 @@ type IDriver interface {
 
 	// Source Return application elements tree
 	Source(srcOpt ...option.SourceOption) (string, error)
-
-	LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error)
-	LogoutNoneUI(packageName string) error
 
 	TapByText(text string, opts ...option.ActionOption) error
 	TapByTexts(actions ...TapTextAction) error
@@ -312,9 +309,9 @@ func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...s
 	return nil
 }
 
-type rawResponse []byte
+type DriverRawResponse []byte
 
-func (r rawResponse) checkErr() (err error) {
+func (r DriverRawResponse) CheckErr() (err error) {
 	reply := new(struct {
 		Value struct {
 			Err        string `json:"error"`
@@ -338,7 +335,7 @@ func (r rawResponse) checkErr() (err error) {
 	return
 }
 
-func (r rawResponse) valueConvertToString() (s string, err error) {
+func (r DriverRawResponse) ValueConvertToString() (s string, err error) {
 	reply := new(struct{ Value string })
 	if err = json.Unmarshal(r, reply); err != nil {
 		return "", errors.Wrapf(err, "json.Unmarshal failed, rawResponse: %s", string(r))
@@ -347,7 +344,7 @@ func (r rawResponse) valueConvertToString() (s string, err error) {
 	return
 }
 
-func (r rawResponse) valueConvertToBool() (b bool, err error) {
+func (r DriverRawResponse) ValueConvertToBool() (b bool, err error) {
 	reply := new(struct{ Value bool })
 	if err = json.Unmarshal(r, reply); err != nil {
 		return false, err
@@ -356,7 +353,7 @@ func (r rawResponse) valueConvertToBool() (b bool, err error) {
 	return
 }
 
-func (r rawResponse) valueConvertToSessionInfo() (sessionInfo Session, err error) {
+func (r DriverRawResponse) ValueConvertToSessionInfo() (sessionInfo Session, err error) {
 	reply := new(struct{ Value struct{ Session } })
 	if err = json.Unmarshal(r, reply); err != nil {
 		return Session{}, err
@@ -365,7 +362,7 @@ func (r rawResponse) valueConvertToSessionInfo() (sessionInfo Session, err error
 	return
 }
 
-func (r rawResponse) valueConvertToJsonRawMessage() (raw builtinJSON.RawMessage, err error) {
+func (r DriverRawResponse) ValueConvertToJsonRawMessage() (raw builtinJSON.RawMessage, err error) {
 	reply := new(struct{ Value builtinJSON.RawMessage })
 	if err = json.Unmarshal(r, reply); err != nil {
 		return nil, err
@@ -374,15 +371,15 @@ func (r rawResponse) valueConvertToJsonRawMessage() (raw builtinJSON.RawMessage,
 	return
 }
 
-func (r rawResponse) valueConvertToJsonObject() (obj map[string]interface{}, err error) {
+func (r DriverRawResponse) ValueConvertToJsonObject() (obj map[string]interface{}, err error) {
 	if err = json.Unmarshal(r, &obj); err != nil {
 		return nil, err
 	}
 	return
 }
 
-func (r rawResponse) valueDecodeAsBase64() (raw *bytes.Buffer, err error) {
-	str, err := r.valueConvertToString()
+func (r DriverRawResponse) ValueDecodeAsBase64() (raw *bytes.Buffer, err error) {
+	str, err := r.ValueConvertToString()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to convert value to string")
 	}

@@ -32,11 +32,11 @@ func NewServer(port int) error {
 	// get screen info
 	apiV1PlatformSerial.GET("/screenshot", handleDeviceContext(), screenshotHandler)
 	apiV1PlatformSerial.POST("/screenresult", handleDeviceContext(), screenResultHandler)
-	apiV1PlatformSerial.GET("/stub/source", handleDeviceContext(), sourceHandler)
+	apiV1PlatformSerial.GET("/shoots/source", handleDeviceContext(), sourceHandler)
 	apiV1PlatformSerial.GET("/adb/source", handleDeviceContext(), adbSourceHandler)
-	// Stub operations
-	apiV1PlatformSerial.POST("/stub/login", handleDeviceContext(), loginHandler)
-	apiV1PlatformSerial.POST("/stub/logout", handleDeviceContext(), logoutHandler)
+	// shoots operations
+	apiV1PlatformSerial.POST("/shoots/login", handleDeviceContext(), loginHandler)
+	apiV1PlatformSerial.POST("/shoots/logout", handleDeviceContext(), logoutHandler)
 
 	// run uixt actions
 	apiV1PlatformSerial.POST("/uixt/action", handleDeviceContext(), uixtActionHandler)

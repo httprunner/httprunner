@@ -1,4 +1,4 @@
-package uixt
+package driver_ext
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
@@ -22,14 +23,14 @@ const (
 	defaultDouyinServerPort = 32921
 )
 
-func NewStubIOSDriver(device *IOSDevice) (driver *StubIOSDriver, err error) {
-	localStubPort, err := builtin.GetFreePort()
+func NewShootsIOSDriver(device *uixt.IOSDevice) (driver *ShootsIOSDriver, err error) {
+	localShootsPort, err := builtin.GetFreePort()
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError,
 			fmt.Sprintf("get free port failed: %v", err))
 	}
 
-	if err = device.forward(localStubPort, defaultBightInsightPort); err != nil {
+	if err = device.Forward(localShootsPort, defaultBightInsightPort); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError,
 			fmt.Sprintf("forward tcp port failed: %v", err))
 	}
@@ -39,61 +40,54 @@ func NewStubIOSDriver(device *IOSDevice) (driver *StubIOSDriver, err error) {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError,
 			fmt.Sprintf("get free port failed: %v", err))
 	}
-	if err = device.forward(localServerPort, defaultDouyinServerPort); err != nil {
+	if err = device.Forward(localServerPort, defaultDouyinServerPort); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError,
 			fmt.Sprintf("forward tcp port failed: %v", err))
 	}
 
 	host := "localhost"
 	timeout := 10 * time.Second
-	driver = &StubIOSDriver{}
+	driver = &ShootsIOSDriver{}
 	driver.device = device
-	driver.bightInsightPrefix = fmt.Sprintf("http://%s:%d", host, localStubPort)
+	driver.bightInsightPrefix = fmt.Sprintf("http://%s:%d", host, localShootsPort)
 	driver.serverPrefix = fmt.Sprintf("http://%s:%d", host, localServerPort)
 	driver.timeout = timeout
-	driver.client = &http.Client{
-		Timeout: time.Second * 10, // 设置超时时间为 10 秒
-	}
 
 	return driver, nil
 }
 
-type StubIOSDriver struct {
-	*WDADriver
+type ShootsIOSDriver struct {
+	*uixt.WDADriver
 
 	bightInsightPrefix string
 	serverPrefix       string
 	timeout            time.Duration
-	device             *IOSDevice
+	device             *uixt.IOSDevice
 }
 
-func (s *StubIOSDriver) setUpWda() (err error) {
+func (s *ShootsIOSDriver) setUpWda() (err error) {
 	if s.WDADriver == nil {
 		capabilities := option.NewCapabilities()
 		capabilities.WithDefaultAlertAction(option.AlertActionAccept)
 		driver, err := s.device.NewHTTPDriver(capabilities)
 		if err != nil {
-			log.Error().Err(err).Msg("stub driver failed to init wda driver")
+			log.Error().Err(err).Msg("failed to init WDA driver for shoots IOS")
 			return err
 		}
-		s.WDADriver = driver.(*WDADriver)
+		s.WDADriver = driver.(*uixt.WDADriver)
 	}
 	return nil
 }
 
-// NewSession starts a new session and returns the DriverSession.
-func (s *StubIOSDriver) NewSession(capabilities option.Capabilities) (Session, error) {
-	err := s.setUpWda()
-	if err != nil {
-		return Session{}, err
-	}
-	return s.WDADriver.NewSession(capabilities)
+// InitSession starts a new session and returns the DriverSession.
+func (s *ShootsIOSDriver) InitSession(capabilities option.Capabilities) error {
+	return s.WDADriver.InitSession(capabilities)
 }
 
 // DeleteSession Kills application associated with that session and removes session
 //  1. alertsMonitor disable
 //  2. testedApplicationBundleId terminate
-func (s *StubIOSDriver) DeleteSession() error {
+func (s *ShootsIOSDriver) DeleteSession() error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -101,7 +95,7 @@ func (s *StubIOSDriver) DeleteSession() error {
 	return s.WDADriver.DeleteSession()
 }
 
-func (s *StubIOSDriver) Status() (types.DeviceStatus, error) {
+func (s *ShootsIOSDriver) Status() (types.DeviceStatus, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return types.DeviceStatus{}, err
@@ -109,7 +103,7 @@ func (s *StubIOSDriver) Status() (types.DeviceStatus, error) {
 	return s.WDADriver.Status()
 }
 
-func (s *StubIOSDriver) DeviceInfo() (types.DeviceInfo, error) {
+func (s *ShootsIOSDriver) DeviceInfo() (types.DeviceInfo, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return types.DeviceInfo{}, err
@@ -117,7 +111,7 @@ func (s *StubIOSDriver) DeviceInfo() (types.DeviceInfo, error) {
 	return s.WDADriver.DeviceInfo()
 }
 
-func (s *StubIOSDriver) Location() (types.Location, error) {
+func (s *ShootsIOSDriver) Location() (types.Location, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return types.Location{}, err
@@ -125,7 +119,7 @@ func (s *StubIOSDriver) Location() (types.Location, error) {
 	return s.WDADriver.Location()
 }
 
-func (s *StubIOSDriver) BatteryInfo() (types.BatteryInfo, error) {
+func (s *ShootsIOSDriver) BatteryInfo() (types.BatteryInfo, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return types.BatteryInfo{}, err
@@ -136,7 +130,7 @@ func (s *StubIOSDriver) BatteryInfo() (types.BatteryInfo, error) {
 // WindowSize Return the width and height in portrait mode.
 // when getting the window size in wda/ui2/adb, if the device is in landscape mode,
 // the width and height will be reversed.
-func (s *StubIOSDriver) WindowSize() (types.Size, error) {
+func (s *ShootsIOSDriver) WindowSize() (types.Size, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return types.Size{}, err
@@ -144,7 +138,7 @@ func (s *StubIOSDriver) WindowSize() (types.Size, error) {
 	return s.WDADriver.WindowSize()
 }
 
-func (s *StubIOSDriver) Screen() (ai.Screen, error) {
+func (s *ShootsIOSDriver) Screen() (ai.Screen, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return ai.Screen{}, err
@@ -152,7 +146,7 @@ func (s *StubIOSDriver) Screen() (ai.Screen, error) {
 	return s.WDADriver.Screen()
 }
 
-func (s *StubIOSDriver) Scale() (float64, error) {
+func (s *ShootsIOSDriver) Scale() (float64, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return 0, err
@@ -161,7 +155,7 @@ func (s *StubIOSDriver) Scale() (float64, error) {
 }
 
 // Homescreen Forces the device under test to switch to the home screen
-func (s *StubIOSDriver) Homescreen() error {
+func (s *ShootsIOSDriver) Homescreen() error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -169,7 +163,7 @@ func (s *StubIOSDriver) Homescreen() error {
 	return s.WDADriver.Homescreen()
 }
 
-func (s *StubIOSDriver) Unlock() (err error) {
+func (s *ShootsIOSDriver) Unlock() (err error) {
 	err = s.setUpWda()
 	if err != nil {
 		return err
@@ -179,7 +173,7 @@ func (s *StubIOSDriver) Unlock() (err error) {
 
 // AppLaunch Launch an application with given bundle identifier in scope of current session.
 // !This method is only available since Xcode9 SDK
-func (s *StubIOSDriver) AppLaunch(packageName string) error {
+func (s *ShootsIOSDriver) AppLaunch(packageName string) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -189,7 +183,7 @@ func (s *StubIOSDriver) AppLaunch(packageName string) error {
 
 // AppTerminate Terminate an application with the given package name.
 // Either `true` if the app has been successfully terminated or `false` if it was not running
-func (s *StubIOSDriver) AppTerminate(packageName string) (bool, error) {
+func (s *ShootsIOSDriver) AppTerminate(packageName string) (bool, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return false, err
@@ -198,7 +192,7 @@ func (s *StubIOSDriver) AppTerminate(packageName string) (bool, error) {
 }
 
 // GetForegroundApp returns current foreground app package name and activity name
-func (s *StubIOSDriver) GetForegroundApp() (app types.AppInfo, err error) {
+func (s *ShootsIOSDriver) GetForegroundApp() (app types.AppInfo, err error) {
 	err = s.setUpWda()
 	if err != nil {
 		return types.AppInfo{}, err
@@ -207,7 +201,7 @@ func (s *StubIOSDriver) GetForegroundApp() (app types.AppInfo, err error) {
 }
 
 // StartCamera Starts a new camera for recording
-func (s *StubIOSDriver) StartCamera() error {
+func (s *ShootsIOSDriver) StartCamera() error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -216,7 +210,7 @@ func (s *StubIOSDriver) StartCamera() error {
 }
 
 // StopCamera Stops the camera for recording
-func (s *StubIOSDriver) StopCamera() error {
+func (s *ShootsIOSDriver) StopCamera() error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -224,7 +218,7 @@ func (s *StubIOSDriver) StopCamera() error {
 	return s.WDADriver.StopCamera()
 }
 
-func (s *StubIOSDriver) Orientation() (orientation types.Orientation, err error) {
+func (s *ShootsIOSDriver) Orientation() (orientation types.Orientation, err error) {
 	err = s.setUpWda()
 	if err != nil {
 		return types.OrientationPortrait, err
@@ -233,7 +227,7 @@ func (s *StubIOSDriver) Orientation() (orientation types.Orientation, err error)
 }
 
 // Tap Sends a tap event at the coordinate.
-func (s *StubIOSDriver) Tap(x, y float64, opts ...option.ActionOption) error {
+func (s *ShootsIOSDriver) Tap(x, y float64, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -242,7 +236,7 @@ func (s *StubIOSDriver) Tap(x, y float64, opts ...option.ActionOption) error {
 }
 
 // DoubleTap Sends a double tap event at the coordinate.
-func (s *StubIOSDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+func (s *ShootsIOSDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -253,7 +247,7 @@ func (s *StubIOSDriver) DoubleTap(x, y float64, opts ...option.ActionOption) err
 // TouchAndHold Initiates a long-press gesture at the coordinate, holding for the specified duration.
 //
 //	second: The default value is 1
-func (s *StubIOSDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) error {
+func (s *ShootsIOSDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -263,7 +257,7 @@ func (s *StubIOSDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) 
 
 // Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
 // WithPressDurationOption option can be used to set pressForDuration (default to 1 second).
-func (s *StubIOSDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+func (s *ShootsIOSDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -272,7 +266,7 @@ func (s *StubIOSDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.Acti
 }
 
 // SetPasteboard Sets data to the general pasteboard
-func (s *StubIOSDriver) SetPasteboard(contentType types.PasteboardType, content string) error {
+func (s *ShootsIOSDriver) SetPasteboard(contentType types.PasteboardType, content string) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -283,7 +277,7 @@ func (s *StubIOSDriver) SetPasteboard(contentType types.PasteboardType, content 
 // GetPasteboard Gets the data contained in the general pasteboard.
 //
 //	It worked when `WDA` was foreground. https://github.com/appium/WebDriverAgent/issues/330
-func (s *StubIOSDriver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
+func (s *ShootsIOSDriver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
 	err = s.setUpWda()
 	if err != nil {
 		return nil, err
@@ -291,7 +285,7 @@ func (s *StubIOSDriver) GetPasteboard(contentType types.PasteboardType) (raw *by
 	return s.WDADriver.GetPasteboard(contentType)
 }
 
-func (s *StubIOSDriver) SetIme(ime string) error {
+func (s *ShootsIOSDriver) SetIme(ime string) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -302,7 +296,7 @@ func (s *StubIOSDriver) SetIme(ime string) error {
 // SendKeys Types a string into active element. There must be element with keyboard focus,
 // otherwise an error is raised.
 // WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
-func (s *StubIOSDriver) SendKeys(text string, opts ...option.ActionOption) error {
+func (s *ShootsIOSDriver) SendKeys(text string, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -311,7 +305,7 @@ func (s *StubIOSDriver) SendKeys(text string, opts ...option.ActionOption) error
 }
 
 // Input works like SendKeys
-func (s *StubIOSDriver) Input(text string, opts ...option.ActionOption) error {
+func (s *ShootsIOSDriver) Input(text string, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -319,7 +313,7 @@ func (s *StubIOSDriver) Input(text string, opts ...option.ActionOption) error {
 	return s.WDADriver.Input(text, opts...)
 }
 
-func (s *StubIOSDriver) Clear(packageName string) error {
+func (s *ShootsIOSDriver) Clear(packageName string) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -328,7 +322,7 @@ func (s *StubIOSDriver) Clear(packageName string) error {
 }
 
 // PressButton Presses the corresponding hardware button on the device
-func (s *StubIOSDriver) PressButton(devBtn types.DeviceButton) error {
+func (s *ShootsIOSDriver) PressButton(devBtn types.DeviceButton) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -337,7 +331,7 @@ func (s *StubIOSDriver) PressButton(devBtn types.DeviceButton) error {
 }
 
 // PressBack Presses the back button
-func (s *StubIOSDriver) PressBack(opts ...option.ActionOption) error {
+func (s *ShootsIOSDriver) PressBack(opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -345,7 +339,7 @@ func (s *StubIOSDriver) PressBack(opts ...option.ActionOption) error {
 	return s.WDADriver.PressBack(opts...)
 }
 
-func (s *StubIOSDriver) PressKeyCode(keyCode KeyCode) (err error) {
+func (s *ShootsIOSDriver) PressKeyCode(keyCode uixt.KeyCode) (err error) {
 	err = s.setUpWda()
 	if err != nil {
 		return err
@@ -353,7 +347,7 @@ func (s *StubIOSDriver) PressKeyCode(keyCode KeyCode) (err error) {
 	return s.WDADriver.PressKeyCode(keyCode)
 }
 
-func (s *StubIOSDriver) Screenshot() (*bytes.Buffer, error) {
+func (s *ShootsIOSDriver) Screenshot() (*bytes.Buffer, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return nil, err
@@ -374,7 +368,7 @@ func (s *StubIOSDriver) Screenshot() (*bytes.Buffer, error) {
 	//return bytes.NewBuffer(imageBytes), nil
 }
 
-func (s *StubIOSDriver) TapByText(text string, opts ...option.ActionOption) error {
+func (s *ShootsIOSDriver) TapByText(text string, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -382,7 +376,7 @@ func (s *StubIOSDriver) TapByText(text string, opts ...option.ActionOption) erro
 	return s.WDADriver.TapByText(text, opts...)
 }
 
-func (s *StubIOSDriver) TapByTexts(actions ...TapTextAction) error {
+func (s *ShootsIOSDriver) TapByTexts(actions ...uixt.TapTextAction) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -391,7 +385,7 @@ func (s *StubIOSDriver) TapByTexts(actions ...TapTextAction) error {
 }
 
 // AccessibleSource Return application elements accessibility tree
-func (s *StubIOSDriver) AccessibleSource() (string, error) {
+func (s *ShootsIOSDriver) AccessibleSource() (string, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return "", err
@@ -404,7 +398,7 @@ func (s *StubIOSDriver) AccessibleSource() (string, error) {
 //	Checks health of XCTest by:
 //	1) Querying application for some elements,
 //	2) Triggering some device events.
-func (s *StubIOSDriver) HealthCheck() error {
+func (s *ShootsIOSDriver) HealthCheck() error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
@@ -412,7 +406,7 @@ func (s *StubIOSDriver) HealthCheck() error {
 	return s.WDADriver.HealthCheck()
 }
 
-func (s *StubIOSDriver) GetAppiumSettings() (map[string]interface{}, error) {
+func (s *ShootsIOSDriver) GetAppiumSettings() (map[string]interface{}, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return nil, err
@@ -420,7 +414,7 @@ func (s *StubIOSDriver) GetAppiumSettings() (map[string]interface{}, error) {
 	return s.WDADriver.GetAppiumSettings()
 }
 
-func (s *StubIOSDriver) SetAppiumSettings(settings map[string]interface{}) (map[string]interface{}, error) {
+func (s *ShootsIOSDriver) SetAppiumSettings(settings map[string]interface{}) (map[string]interface{}, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return nil, err
@@ -428,7 +422,7 @@ func (s *StubIOSDriver) SetAppiumSettings(settings map[string]interface{}) (map[
 	return s.WDADriver.SetAppiumSettings(settings)
 }
 
-func (s *StubIOSDriver) IsHealthy() (bool, error) {
+func (s *ShootsIOSDriver) IsHealthy() (bool, error) {
 	err := s.setUpWda()
 	if err != nil {
 		return false, err
@@ -437,7 +431,7 @@ func (s *StubIOSDriver) IsHealthy() (bool, error) {
 }
 
 // triggers the log capture and returns the log entries
-func (s *StubIOSDriver) StartCaptureLog(identifier ...string) (err error) {
+func (s *ShootsIOSDriver) StartCaptureLog(identifier ...string) (err error) {
 	err = s.setUpWda()
 	if err != nil {
 		return err
@@ -445,7 +439,7 @@ func (s *StubIOSDriver) StartCaptureLog(identifier ...string) (err error) {
 	return s.WDADriver.StartCaptureLog(identifier...)
 }
 
-func (s *StubIOSDriver) StopCaptureLog() (result interface{}, err error) {
+func (s *ShootsIOSDriver) StopCaptureLog() (result interface{}, err error) {
 	err = s.setUpWda()
 	if err != nil {
 		return nil, err
@@ -453,7 +447,7 @@ func (s *StubIOSDriver) StopCaptureLog() (result interface{}, err error) {
 	return s.WDADriver.StopCaptureLog()
 }
 
-func (s *StubIOSDriver) GetDriverResults() []*DriverRequests {
+func (s *ShootsIOSDriver) GetDriverResults() []*uixt.DriverRequests {
 	err := s.setUpWda()
 	if err != nil {
 		return nil
@@ -461,7 +455,7 @@ func (s *StubIOSDriver) GetDriverResults() []*DriverRequests {
 	return s.WDADriver.GetDriverResults()
 }
 
-func (s *StubIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {
+func (s *ShootsIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	resp, err := s.Request(http.MethodGet, fmt.Sprintf("%s/source?format=json&onlyWeb=false", s.bightInsightPrefix), []byte{})
 	if err != nil {
 		return "", err
@@ -469,7 +463,7 @@ func (s *StubIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	return string(resp), nil
 }
 
-func (s *StubIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+func (s *ShootsIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
 	params := map[string]interface{}{
 		"phone": phoneNumber,
 	}
@@ -488,7 +482,7 @@ func (s *StubIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, pa
 	if err != nil {
 		return info, err
 	}
-	res, err := resp.valueConvertToJsonObject()
+	res, err := resp.ValueConvertToJsonObject()
 	if err != nil {
 		return info, err
 	}
@@ -507,12 +501,12 @@ func (s *StubIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, pa
 	return info, nil
 }
 
-func (s *StubIOSDriver) LogoutNoneUI(packageName string) error {
+func (s *ShootsIOSDriver) LogoutNoneUI(packageName string) error {
 	resp, err := s.Request(http.MethodGet, fmt.Sprintf("%s/host/loginout/", s.serverPrefix), []byte{})
 	if err != nil {
 		return err
 	}
-	res, err := resp.valueConvertToJsonObject()
+	res, err := resp.ValueConvertToJsonObject()
 	if err != nil {
 		return err
 	}
@@ -526,17 +520,17 @@ func (s *StubIOSDriver) LogoutNoneUI(packageName string) error {
 	return nil
 }
 
-func (s *StubIOSDriver) TearDown() error {
-	s.client.CloseIdleConnections()
+func (s *ShootsIOSDriver) TearDown() error {
+	s.WDADriver.TearDown()
 	return nil
 }
 
-func (s *StubIOSDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {
+func (s *ShootsIOSDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {
 	resp, err := s.Request(http.MethodGet, fmt.Sprintf("%s/host/app/info/", s.serverPrefix), []byte{})
 	if err != nil {
 		return info, err
 	}
-	res, err := resp.valueConvertToJsonObject()
+	res, err := resp.ValueConvertToJsonObject()
 	if err != nil {
 		return info, err
 	}
@@ -553,6 +547,6 @@ func (s *StubIOSDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, 
 	return info, nil
 }
 
-func (s *StubIOSDriver) GetSession() *Session {
+func (s *ShootsIOSDriver) GetSession() *uixt.Session {
 	return s.Session
 }

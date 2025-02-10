@@ -1,4 +1,4 @@
-package uixt
+package driver_ext
 
 import (
 	"fmt"
@@ -7,71 +7,71 @@ import (
 	"testing"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 var (
-	iOSStubDriver IDriverExt
-	iOSDevice     *IOSDevice
+	shootsIOSDriver uixt.IDriverExt
+	iOSDevice       *uixt.IOSDevice
 )
 
-func setupiOSStubDriver(t *testing.T) {
+func setupShootsIOSDriver(t *testing.T) {
 	var err error
-	iOSDevice, err = NewIOSDevice(
+	iOSDevice, err = uixt.NewIOSDevice(
 		option.WithWDAPort(8700),
-		option.WithWDAMjpegPort(8800),
-		option.WithIOSStub(false))
+		option.WithWDAMjpegPort(8800))
 	checkErr(t, err)
-	iOSStubDriver, err = iOSDevice.NewDriver()
+	shootsIOSDriver, err = iOSDevice.NewDriver()
 	checkErr(t, err)
 }
 
 func TestIOSLogin(t *testing.T) {
-	setupiOSStubDriver(t)
-	info, err := iOSStubDriver.GetDriver().LoginNoneUI("", "12342316231", "8517", "")
+	setupShootsIOSDriver(t)
+	info, err := shootsIOSDriver.(*ShootsIOSDriver).LoginNoneUI("", "12342316231", "8517", "")
 	checkErr(t, err)
 	t.Log(info)
 }
 
 func TestIOSLogout(t *testing.T) {
-	setupiOSStubDriver(t)
-	err := iOSStubDriver.GetDriver().LogoutNoneUI("")
+	setupShootsIOSDriver(t)
+	err := shootsIOSDriver.(*ShootsIOSDriver).LogoutNoneUI("")
 	checkErr(t, err)
 }
 
 func TestIOSIsLogin(t *testing.T) {
-	setupiOSStubDriver(t)
-	err := iOSStubDriver.GetDriver().LogoutNoneUI("")
+	setupShootsIOSDriver(t)
+	err := shootsIOSDriver.(*ShootsIOSDriver).LogoutNoneUI("")
 	checkErr(t, err)
 }
 
 func TestIOSSource(t *testing.T) {
-	setupiOSStubDriver(t)
-	source, err := iOSStubDriver.GetDriver().Source()
+	setupShootsIOSDriver(t)
+	source, err := shootsIOSDriver.GetDriver().Source()
 	checkErr(t, err)
 	t.Log(source)
 }
 
 func TestIOSForeground(t *testing.T) {
-	setupiOSStubDriver(t)
-	app, err := iOSStubDriver.GetDriver().GetForegroundApp()
+	setupShootsIOSDriver(t)
+	app, err := shootsIOSDriver.GetDriver().GetForegroundApp()
 	checkErr(t, err)
 	t.Log(app)
 }
 
 func TestIOSSwipe(t *testing.T) {
-	setupiOSStubDriver(t)
-	iOSStubDriver.GetDriver().Swipe(540, 0, 540, 1000)
+	setupShootsIOSDriver(t)
+	shootsIOSDriver.GetDriver().Swipe(540, 0, 540, 1000)
 }
 
 func TestIOSSave(t *testing.T) {
-	setupiOSStubDriver(t)
-	raw, err := iOSStubDriver.GetDriver().Screenshot()
+	setupShootsIOSDriver(t)
+	raw, err := shootsIOSDriver.GetDriver().Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	source, err := iOSStubDriver.GetDriver().Source()
+	source, err := shootsIOSDriver.GetDriver().Source()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,12 +90,12 @@ func TestIOSSave(t *testing.T) {
 }
 
 func TestListen(t *testing.T) {
-	setupiOSStubDriver(t)
+	setupShootsIOSDriver(t)
 	localPort, err := builtin.GetFreePort()
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = iOSDevice.forward(localPort, 8800)
+	err = iOSDevice.Forward(localPort, 8800)
 	if err != nil {
 		t.Fatal(err)
 	}

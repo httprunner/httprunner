@@ -228,35 +228,10 @@ func (dev *IOSDevice) getAppInfo(packageName string) (appInfo types.AppInfo, err
 }
 
 func (dev *IOSDevice) NewDriver() (driverExt IDriverExt, err error) {
-	var driver IDriver
-	if dev.STUB {
-		driver, err = NewStubIOSDriver(dev)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to init Stub driver")
-		}
-	} else {
-		driver, err := NewWDADriver(dev)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to init WDA driver")
-		}
-		settings, err := driver.SetAppiumSettings(map[string]interface{}{
-			"snapshotMaxDepth":          dev.SnapshotMaxDepth,
-			"acceptAlertButtonSelector": dev.AcceptAlertButtonSelector,
-		})
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to set appium WDA settings")
-		}
-		log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
+	driver, err := NewWDADriver(dev)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
-
-	if dev.ResetHomeOnStartup {
-		log.Info().Msg("go back to home screen")
-		if err = driver.Homescreen(); err != nil {
-			return nil, errors.Wrap(code.MobileUIDriverError,
-				fmt.Sprintf("go back to home screen failed: %v", err))
-		}
-	}
-
 	settings, err := driver.SetAppiumSettings(map[string]interface{}{
 		"snapshotMaxDepth":          dev.SnapshotMaxDepth,
 		"acceptAlertButtonSelector": dev.AcceptAlertButtonSelector,
@@ -266,6 +241,13 @@ func (dev *IOSDevice) NewDriver() (driverExt IDriverExt, err error) {
 	}
 	log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
 
+	if dev.ResetHomeOnStartup {
+		log.Info().Msg("go back to home screen")
+		if err = driver.Homescreen(); err != nil {
+			return nil, errors.Wrap(code.MobileUIDriverError,
+				fmt.Sprintf("go back to home screen failed: %v", err))
+		}
+	}
 	if dev.LogOn {
 		err = driver.StartCaptureLog("hrp_wda_log")
 		if err != nil {
@@ -319,7 +301,7 @@ func (dev *IOSDevice) Uninstall(bundleId string) error {
 	return nil
 }
 
-func (dev *IOSDevice) forward(localPort, remotePort int) error {
+func (dev *IOSDevice) Forward(localPort, remotePort int) error {
 	if dev.listeners[localPort] != nil {
 		log.Warn().Msg(fmt.Sprintf("local port :%d is already in use", localPort))
 		_ = dev.listeners[localPort].Close()
@@ -521,7 +503,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("get free port failed: %v", err))
 		}
-		if err = dev.forward(localPort, dev.WDAPort); err != nil {
+		if err = dev.Forward(localPort, dev.WDAPort); err != nil {
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
@@ -537,7 +519,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("get free port failed: %v", err))
 		}
-		if err = dev.forward(localMjpegPort, dev.WDAMjpegPort); err != nil {
+		if err = dev.Forward(localMjpegPort, dev.WDAMjpegPort); err != nil {
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
@@ -563,11 +545,9 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 	}
 
 	// create new session
-	var sessionInfo Session
-	if sessionInfo, err = wd.NewSession(capabilities); err != nil {
+	if err = wd.InitSession(capabilities); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
-	wd.sessionID = sessionInfo.sessionID
 
 	if wd.mjpegHTTPConn, err = net.Dial(
 		"tcp",
@@ -575,7 +555,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 	); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
-	wd.mjpegClient = convertToHTTPClient(wd.mjpegHTTPConn)
+	wd.mjpegClient = NewHTTPClientWithConnection(wd.mjpegHTTPConn, 30*time.Second)
 	wd.mjpegUrl = fmt.Sprintf("%s:%d", host, localMjpegPort)
 	// init WDA scale
 	if wd.scale, err = wd.Scale(); err != nil {

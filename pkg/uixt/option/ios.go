@@ -4,7 +4,6 @@ type IOSDeviceOptions struct {
 	UDID         string `json:"udid,omitempty" yaml:"udid,omitempty"`
 	WDAPort      int    `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
 	WDAMjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
-	STUB         bool   `json:"stub,omitempty" yaml:"stub,omitempty"`             // use stub
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 
 	// switch to iOS springboard before init WDA session
@@ -25,9 +24,6 @@ func (dev *IOSDeviceOptions) Options() (deviceOptions []IOSDeviceOption) {
 	}
 	if dev.WDAMjpegPort != 0 {
 		deviceOptions = append(deviceOptions, WithWDAMjpegPort(dev.WDAMjpegPort))
-	}
-	if dev.STUB {
-		deviceOptions = append(deviceOptions, WithIOSStub(true))
 	}
 	if dev.LogOn {
 		deviceOptions = append(deviceOptions, WithWDALogOn(true))
@@ -120,12 +116,6 @@ func WithWDAMjpegPort(port int) IOSDeviceOption {
 func WithWDALogOn(logOn bool) IOSDeviceOption {
 	return func(device *IOSDeviceOptions) {
 		device.LogOn = logOn
-	}
-}
-
-func WithIOSStub(stub bool) IOSDeviceOption {
-	return func(device *IOSDeviceOptions) {
-		device.STUB = stub
 	}
 }
 

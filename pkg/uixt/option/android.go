@@ -4,7 +4,6 @@ import "github.com/httprunner/httprunner/v5/pkg/gadb"
 
 type AndroidDeviceOptions struct {
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
-	STUB         bool   `json:"stub,omitempty" yaml:"stub,omitempty"` // use stub
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 
 	// adb
@@ -22,9 +21,6 @@ type AndroidDeviceOptions struct {
 func (dev *AndroidDeviceOptions) Options() (deviceOptions []AndroidDeviceOption) {
 	if dev.SerialNumber != "" {
 		deviceOptions = append(deviceOptions, WithSerialNumber(dev.SerialNumber))
-	}
-	if dev.STUB {
-		deviceOptions = append(deviceOptions, WithStub(true))
 	}
 	if dev.UIA2 {
 		deviceOptions = append(deviceOptions, WithUIA2(true))
@@ -87,12 +83,6 @@ func NewAndroidDeviceOptions(opts ...AndroidDeviceOption) *AndroidDeviceOptions 
 
 type AndroidDeviceOption func(*AndroidDeviceOptions)
 
-func WithDriverTypeADB() AndroidDeviceOption {
-	return func(device *AndroidDeviceOptions) {
-		device.STUB = false
-	}
-}
-
 func WithSerialNumber(serial string) AndroidDeviceOption {
 	return func(device *AndroidDeviceOptions) {
 		device.SerialNumber = serial
@@ -102,12 +92,6 @@ func WithSerialNumber(serial string) AndroidDeviceOption {
 func WithUIA2(uia2On bool) AndroidDeviceOption {
 	return func(device *AndroidDeviceOptions) {
 		device.UIA2 = uia2On
-	}
-}
-
-func WithStub(stubOn bool) AndroidDeviceOption {
-	return func(device *AndroidDeviceOptions) {
-		device.STUB = stubOn
 	}
 }
 

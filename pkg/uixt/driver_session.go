@@ -3,6 +3,7 @@ package uixt
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -19,9 +20,9 @@ import (
 
 type Session struct {
 	// ctx       context.Context
-	sessionID string
-	baseURL   *url.URL
-	client    *http.Client
+	ID      string
+	baseURL *url.URL
+	client  *http.Client
 
 	// cache to avoid repeated query
 	scale      float64
@@ -43,13 +44,17 @@ func (d *Session) addRequestResult(driverResult *DriverRequests) {
 	d.requests = append(d.requests, driverResult)
 }
 
+func (d *Session) Init(baseUrl string) error {
+	var err error
+	d.baseURL, err = url.Parse(baseUrl)
+	return err
+}
+
 func (d *Session) Reset() {
 	d.screenResults = make([]*ScreenResult, 0)
 	d.requests = make([]*DriverRequests, 0)
 	d.e2eDelay = nil
 }
-
-type Attachments map[string]interface{}
 
 func (d *Session) GetData(withReset bool) Attachments {
 	data := Attachments{
@@ -66,6 +71,8 @@ func (d *Session) GetData(withReset bool) Attachments {
 	}
 	return data
 }
+
+type Attachments map[string]interface{}
 
 type DriverRequests struct {
 	RequestMethod string    `json:"request_method"`
@@ -91,11 +98,11 @@ func (wd *Session) concatURL(u *url.URL, elem ...string) string {
 	return tmp.String()
 }
 
-func (wd *Session) GET(pathElem ...string) (rawResp rawResponse, err error) {
+func (wd *Session) GET(pathElem ...string) (rawResp DriverRawResponse, err error) {
 	return wd.Request(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *Session) POST(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
+func (wd *Session) POST(data interface{}, pathElem ...string) (rawResp DriverRawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
@@ -105,11 +112,11 @@ func (wd *Session) POST(data interface{}, pathElem ...string) (rawResp rawRespon
 	return wd.Request(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
 }
 
-func (wd *Session) DELETE(pathElem ...string) (rawResp rawResponse, err error) {
+func (wd *Session) DELETE(pathElem ...string) (rawResp DriverRawResponse, err error) {
 	return wd.Request(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
 }
 
-func (wd *Session) Request(method string, rawURL string, rawBody []byte) (rawResp rawResponse, err error) {
+func (wd *Session) Request(method string, rawURL string, rawBody []byte) (rawResp DriverRawResponse, err error) {
 	driverResult := &DriverRequests{
 		RequestMethod: method,
 		RequestUrl:    rawURL,
@@ -179,7 +186,7 @@ func (wd *Session) Request(method string, rawURL string, rawBody []byte) (rawRes
 		return nil, err
 	}
 
-	if err = rawResp.checkErr(); err != nil {
+	if err = rawResp.CheckErr(); err != nil {
 		if resp.StatusCode == http.StatusOK {
 			return rawResp, nil
 		}
@@ -189,13 +196,22 @@ func (wd *Session) Request(method string, rawURL string, rawBody []byte) (rawRes
 	return
 }
 
-func convertToHTTPClient(conn net.Conn) *http.Client {
+func (wd *Session) InitConnection(localPort int) error {
+	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
+	if err != nil {
+		return fmt.Errorf("create tcp connection error %v", err)
+	}
+	wd.client = NewHTTPClientWithConnection(conn, 30*time.Second)
+	return nil
+}
+
+func NewHTTPClientWithConnection(conn net.Conn, timeout time.Duration) *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
 				return conn, nil
 			},
 		},
-		Timeout: 30 * time.Second,
+		Timeout: timeout,
 	}
 }

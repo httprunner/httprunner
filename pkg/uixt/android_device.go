@@ -153,8 +153,6 @@ func (dev *AndroidDevice) NewDriver() (driverExt IDriverExt, err error) {
 	var driver IDriver
 	if dev.UIA2 || dev.LogOn {
 		driver, err = NewUIA2Driver(dev)
-	} else if dev.STUB {
-		driver, err = NewStubAndroidDriver(dev)
 	} else {
 		driver, err = NewADBDriver(dev)
 	}

@@ -41,18 +41,19 @@ func NewHDCDriver(device *HarmonyDevice) (driver *HDCDriver, err error) {
 		return nil, err
 	}
 	driver.uiDriver = uiDriver
-	driver.NewSession(nil)
+	driver.InitSession(nil)
 	return
 }
 
-func (hd *HDCDriver) NewSession(capabilities option.Capabilities) (Session, error) {
-	hd.Reset()
+func (hd *HDCDriver) InitSession(capabilities option.Capabilities) error {
+	hd.Session = &Session{}
+	hd.Session.Reset()
 	hd.Unlock()
-	return Session{}, errDriverNotImplemented
+	return nil
 }
 
 func (hd *HDCDriver) DeleteSession() error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) GetSession() *Session {
@@ -60,7 +61,7 @@ func (hd *HDCDriver) GetSession() *Session {
 }
 
 func (hd *HDCDriver) Status() (types.DeviceStatus, error) {
-	return types.DeviceStatus{}, errDriverNotImplemented
+	return types.DeviceStatus{}, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) GetDevice() IDevice {
@@ -68,15 +69,15 @@ func (hd *HDCDriver) GetDevice() IDevice {
 }
 
 func (hd *HDCDriver) DeviceInfo() (types.DeviceInfo, error) {
-	return types.DeviceInfo{}, errDriverNotImplemented
+	return types.DeviceInfo{}, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) Location() (types.Location, error) {
-	return types.Location{}, errDriverNotImplemented
+	return types.Location{}, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) BatteryInfo() (types.BatteryInfo, error) {
-	return types.BatteryInfo{}, errDriverNotImplemented
+	return types.BatteryInfo{}, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) WindowSize() (size types.Size, err error) {
@@ -91,7 +92,7 @@ func (hd *HDCDriver) WindowSize() (size types.Size, err error) {
 }
 
 func (hd *HDCDriver) Screen() (ai.Screen, error) {
-	return ai.Screen{}, errDriverNotImplemented
+	return ai.Screen{}, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) Scale() (float64, error) {
@@ -126,7 +127,7 @@ func (hd *HDCDriver) Unlock() (err error) {
 
 func (hd *HDCDriver) AppLaunch(packageName string) error {
 	// Todo
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) AppTerminate(packageName string) (bool, error) {
@@ -140,7 +141,7 @@ func (hd *HDCDriver) AppTerminate(packageName string) (bool, error) {
 
 func (hd *HDCDriver) GetForegroundApp() (app types.AppInfo, err error) {
 	// Todo
-	return types.AppInfo{}, errDriverNotImplemented
+	return types.AppInfo{}, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) AssertForegroundApp(packageName string, activityType ...string) error {
@@ -149,11 +150,11 @@ func (hd *HDCDriver) AssertForegroundApp(packageName string, activityType ...str
 }
 
 func (hd *HDCDriver) StartCamera() error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) StopCamera() error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) Orientation() (orientation types.Orientation, err error) {
@@ -178,15 +179,15 @@ func (hd *HDCDriver) Tap(x, y float64, opts ...option.ActionOption) error {
 }
 
 func (hd *HDCDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 // Swipe works like Drag, but `pressForDuration` value is 0
@@ -215,15 +216,15 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 }
 
 func (hd *HDCDriver) SetPasteboard(contentType types.PasteboardType, content string) error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
-	return nil, errDriverNotImplemented
+	return nil, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) SetIme(ime string) error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) SendKeys(text string, opts ...option.ActionOption) error {
@@ -235,11 +236,11 @@ func (hd *HDCDriver) Input(text string, opts ...option.ActionOption) error {
 }
 
 func (hd *HDCDriver) Clear(packageName string) error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) PressButton(devBtn types.DeviceButton) error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) PressBack(opts ...option.ActionOption) error {
@@ -251,7 +252,7 @@ func (hd *HDCDriver) Backspace(count int, opts ...option.ActionOption) (err erro
 }
 
 func (hd *HDCDriver) PressKeyCode(keyCode KeyCode) (err error) {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) PressHarmonyKeyCode(keyCode ghdc.KeyCode) (err error) {
@@ -282,45 +283,36 @@ func (hd *HDCDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	return "", nil
 }
 
-func (hd *HDCDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
-	err = errDriverNotImplemented
-	return
-}
-
-func (hd *HDCDriver) LogoutNoneUI(packageName string) error {
-	return errDriverNotImplemented
-}
-
 func (hd *HDCDriver) TapByText(text string, opts ...option.ActionOption) error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) TapByTexts(actions ...TapTextAction) error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) AccessibleSource() (string, error) {
-	return "", errDriverNotImplemented
+	return "", types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) HealthCheck() error {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) GetAppiumSettings() (map[string]interface{}, error) {
-	return nil, errDriverNotImplemented
+	return nil, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) SetAppiumSettings(settings map[string]interface{}) (map[string]interface{}, error) {
-	return nil, errDriverNotImplemented
+	return nil, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) IsHealthy() (bool, error) {
-	return false, errDriverNotImplemented
+	return false, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) StartCaptureLog(identifier ...string) (err error) {
-	return errDriverNotImplemented
+	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) StopCaptureLog() (result interface{}, err error) {
@@ -345,11 +337,11 @@ func (hd *HDCDriver) TearDown() error {
 }
 
 func (hd *HDCDriver) Rotation() (rotation types.Rotation, err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
 
 func (hd *HDCDriver) SetRotation(rotation types.Rotation) (err error) {
-	err = errDriverNotImplemented
+	err = types.ErrDriverNotImplemented
 	return
 }
