@@ -11,7 +11,7 @@ import (
 
 // exec a single uixt action
 func uixtActionHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
@@ -40,7 +40,7 @@ func uixtActionHandler(c *gin.Context) {
 
 // exec multiple uixt actions
 func uixtActionsHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}

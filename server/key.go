@@ -11,12 +11,12 @@ import (
 )
 
 func unlockHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
 
-	err = dExt.Driver.Unlock()
+	err = dExt.GetDriver().Unlock()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
@@ -32,12 +32,12 @@ func unlockHandler(c *gin.Context) {
 }
 
 func homeHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
 
-	err = dExt.Driver.Homescreen()
+	err = dExt.GetDriver().Homescreen()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to enter homescreen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
@@ -53,7 +53,7 @@ func homeHandler(c *gin.Context) {
 }
 
 func keycodeHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
@@ -64,7 +64,7 @@ func keycodeHandler(c *gin.Context) {
 		return
 	}
 
-	err = dExt.Driver.PressKeyCode(uixt.KeyCode(keycodeReq.Keycode))
+	err = dExt.GetDriver().PressKeyCode(uixt.KeyCode(keycodeReq.Keycode))
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to input keycode %d", c.HandlerName(), keycodeReq.Keycode))
 		c.JSON(http.StatusInternalServerError,

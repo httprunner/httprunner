@@ -12,7 +12,7 @@ import (
 )
 
 func tapHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
@@ -72,7 +72,7 @@ func tapHandler(c *gin.Context) {
 }
 
 func dragHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
@@ -107,7 +107,7 @@ func dragHandler(c *gin.Context) {
 			return
 		}
 	} else {
-		err := dExt.Driver.Swipe(
+		err := dExt.GetDriver().Swipe(
 			dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY,
 			actionOptions...)
 		if err != nil {
@@ -129,7 +129,7 @@ func dragHandler(c *gin.Context) {
 }
 
 func inputHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
@@ -140,7 +140,7 @@ func inputHandler(c *gin.Context) {
 		return
 	}
 
-	err = dExt.Driver.SendKeys(inputReq.Text,
+	err = dExt.GetDriver().SendKeys(inputReq.Text,
 		option.WithFrequency(inputReq.Frequency))
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to input text %s", c.HandlerName(), inputReq.Text))

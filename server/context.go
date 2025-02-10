@@ -15,7 +15,7 @@ import (
 
 var uiClients = make(map[string]uixt.IDriverExt) // UI automation clients for iOS and Android, key is udid/serial
 
-func handleDeviceContext() gin.HandlerFunc {
+func (r *Router) HandleDeviceContext() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		platform := c.Param("platform")
 		serial := c.Param("serial")
@@ -81,7 +81,7 @@ func handleDeviceContext() gin.HandlerFunc {
 	}
 }
 
-func getContextDriver(c *gin.Context) (*uixt.DriverExt, error) {
+func GetContextDriver(c *gin.Context) (uixt.IDriverExt, error) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		handlerInitDeviceDriverFailedContext(c)

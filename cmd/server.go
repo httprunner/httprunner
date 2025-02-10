@@ -13,7 +13,7 @@ var serverCmd = &cobra.Command{
 	Long:  `start hrp server, call httprunner by HTTP`,
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return server.NewServer(port)
+		return server.NewRouter().Run(port)
 	},
 }
 

@@ -51,14 +51,3 @@ type AppLaunchRequest struct {
 type AppTerminalRequest struct {
 	PackageName string `json:"packageName"`
 }
-
-type LoginRequest struct {
-	PackageName string `json:"packageName"`
-	PhoneNumber string `json:"phoneNumber"`
-	Captcha     string `json:"captcha"`
-	Password    string `json:"password"`
-}
-
-type LogoutRequest struct {
-	PackageName string `json:"packageName"`
-}

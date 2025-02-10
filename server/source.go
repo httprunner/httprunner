@@ -13,12 +13,12 @@ import (
 )
 
 func screenshotHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
 
-	raw, err := dExt.Driver.Screenshot()
+	raw, err := dExt.GetDriver().Screenshot()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get screenshot", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
@@ -41,7 +41,7 @@ func screenshotHandler(c *gin.Context) {
 }
 
 func screenResultHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
@@ -78,47 +78,13 @@ func screenResultHandler(c *gin.Context) {
 	)
 }
 
-func sourceHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
-	if err != nil {
-		return
-	}
-
-	app, err := dExt.Driver.GetForegroundApp()
-	if err != nil {
-		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get foreground app", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError,
-			HttpResponse{
-				Code:    code.GetErrorCode(err),
-				Message: err.Error(),
-			},
-		)
-		c.Abort()
-		return
-	}
-	source, err := dExt.Driver.Source(option.NewSourceOption().WithProcessName(app.PackageName))
-	if err != nil {
-		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get source %s", c.HandlerName(), app.PackageName))
-		c.JSON(http.StatusInternalServerError,
-			HttpResponse{
-				Code:    code.GetErrorCode(err),
-				Message: err.Error(),
-			},
-		)
-		c.Abort()
-		return
-	}
-
-	c.JSON(http.StatusOK, HttpResponse{Result: source})
-}
-
 func adbSourceHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
 
-	source, err := dExt.Driver.Source()
+	source, err := dExt.GetDriver().Source()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get adb source", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,

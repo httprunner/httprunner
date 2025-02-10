@@ -10,12 +10,12 @@ import (
 )
 
 func foregroundAppHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
 
-	appInfo, err := dExt.Driver.GetForegroundApp()
+	appInfo, err := dExt.GetDriver().GetForegroundApp()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
@@ -31,7 +31,7 @@ func foregroundAppHandler(c *gin.Context) {
 }
 
 func clearAppHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
@@ -42,7 +42,7 @@ func clearAppHandler(c *gin.Context) {
 		return
 	}
 
-	err = dExt.Driver.Clear(appClearReq.PackageName)
+	err = dExt.GetDriver().Clear(appClearReq.PackageName)
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
@@ -58,7 +58,7 @@ func clearAppHandler(c *gin.Context) {
 }
 
 func launchAppHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
@@ -69,7 +69,7 @@ func launchAppHandler(c *gin.Context) {
 		return
 	}
 
-	err = dExt.Driver.AppLaunch(appLaunchReq.PackageName)
+	err = dExt.GetDriver().AppLaunch(appLaunchReq.PackageName)
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to launch app %s", c.HandlerName(), appLaunchReq.PackageName))
 		c.JSON(http.StatusInternalServerError,
@@ -85,7 +85,7 @@ func launchAppHandler(c *gin.Context) {
 }
 
 func terminalAppHandler(c *gin.Context) {
-	dExt, err := getContextDriver(c)
+	dExt, err := GetContextDriver(c)
 	if err != nil {
 		return
 	}
@@ -96,7 +96,7 @@ func terminalAppHandler(c *gin.Context) {
 		return
 	}
 
-	success, err := dExt.Driver.AppTerminate(appTerminalReq.PackageName)
+	success, err := dExt.GetDriver().AppTerminate(appTerminalReq.PackageName)
 	if !success {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to launch app %s", c.HandlerName(), appTerminalReq.PackageName))
 		c.JSON(http.StatusInternalServerError,
