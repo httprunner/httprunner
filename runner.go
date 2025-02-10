@@ -423,7 +423,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse android config failed: %v", err))
 		}
-		device, err := uixt.NewAndroidDevice(androidDevice.Options()...)
+		device, err := uixt.NewAndroidDevice(androidDevice.Options.Options()...)
 		if err != nil {
 			return nil, errors.Wrap(err, "init android device failed")
 		}
@@ -435,7 +435,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(err, "init android driver failed")
 		}
 
-		r.uixtDrivers[androidDevice.SerialNumber] = driverExt
+		r.uixtDrivers[androidDevice.Options.SerialNumber] = driverExt
 	}
 	// parse iOS devices config
 	for _, iosDevice := range parsedConfig.IOS {
@@ -445,7 +445,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 				fmt.Sprintf("parse ios config failed: %v", err))
 		}
 
-		device, err := uixt.NewIOSDevice(iosDevice.Options()...)
+		device, err := uixt.NewIOSDevice(iosDevice.Options.Options()...)
 		if err != nil {
 			return nil, errors.Wrap(err, "init ios device failed")
 		}
@@ -457,7 +457,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(err, "init ios driver failed")
 		}
 
-		r.uixtDrivers[iosDevice.UDID] = driverExt
+		r.uixtDrivers[iosDevice.Options.UDID] = driverExt
 	}
 	// parse harmony devices config
 	for _, harmonyDevice := range parsedConfig.Harmony {
@@ -467,7 +467,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 				fmt.Sprintf("parse harmony config failed: %v", err))
 		}
 
-		device, err := uixt.NewHarmonyDevice(harmonyDevice.Options()...)
+		device, err := uixt.NewHarmonyDevice(harmonyDevice.Options.Options()...)
 		if err != nil {
 			return nil, errors.Wrap(err, "init harmony device failed")
 		}
@@ -479,7 +479,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(err, "init harmony driver failed")
 		}
 
-		r.uixtDrivers[harmonyDevice.ConnectKey] = driverExt
+		r.uixtDrivers[harmonyDevice.Options.ConnectKey] = driverExt
 	}
 
 	return parsedConfig, nil

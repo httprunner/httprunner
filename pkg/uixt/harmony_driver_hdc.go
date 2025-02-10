@@ -18,7 +18,6 @@ import (
 type HDCDriver struct {
 	*HarmonyDevice
 	*Session
-	IDriver
 	*DriverExt
 	points   []ExportPoint
 	uiDriver *ghdc.UIDriver

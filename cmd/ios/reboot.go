@@ -33,7 +33,7 @@ var rebootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		fmt.Printf("reboot %s success\n", device.UDID)
+		fmt.Printf("reboot %s success\n", device.Options.UDID)
 		return nil
 	},
 }

@@ -13,7 +13,7 @@ import (
 
 type HarmonyDevice struct {
 	*ghdc.Device
-	*option.HarmonyDeviceOptions
+	Options *option.HarmonyDeviceOptions
 }
 
 func NewHarmonyDevice(opts ...option.HarmonyDeviceOption) (device *HarmonyDevice, err error) {
@@ -58,10 +58,10 @@ func NewHarmonyDevice(opts ...option.HarmonyDeviceOption) (device *HarmonyDevice
 	}
 
 	device = &HarmonyDevice{
-		HarmonyDeviceOptions: deviceConfig,
-		Device:               harmonyDevice,
+		Options: deviceConfig,
+		Device:  harmonyDevice,
 	}
-	log.Info().Str("connectKey", device.ConnectKey).Msg("init harmony device")
+	log.Info().Str("connectKey", device.Options.ConnectKey).Msg("init harmony device")
 	return device, nil
 }
 
@@ -74,11 +74,11 @@ func (dev *HarmonyDevice) Teardown() error {
 }
 
 func (dev *HarmonyDevice) UUID() string {
-	return dev.ConnectKey
+	return dev.Options.ConnectKey
 }
 
 func (dev *HarmonyDevice) LogEnabled() bool {
-	return dev.LogOn
+	return dev.Options.LogOn
 }
 
 func (dev *HarmonyDevice) Install(appPath string, opts ...option.InstallOption) error {

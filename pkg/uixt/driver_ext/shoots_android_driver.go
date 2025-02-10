@@ -22,7 +22,7 @@ const (
 )
 
 func NewShootsAndroidDriver(device *uixt.AndroidDevice) (driver *ShootsAndroidDriver, err error) {
-	socketLocalPort, err := device.Forward(shootsSocketName)
+	socketLocalPort, err := device.Device.Forward(shootsSocketName)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("forward port %d->%s failed: %v",
@@ -40,7 +40,7 @@ func NewShootsAndroidDriver(device *uixt.AndroidDevice) (driver *ShootsAndroidDr
 	}
 
 	driver.InitSession(nil)
-	serverLocalPort, err := device.Forward(douyinServerPort)
+	serverLocalPort, err := device.Device.Forward(douyinServerPort)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("forward port %d->%d failed: %v",

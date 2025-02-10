@@ -18,8 +18,8 @@ var driverExt IDriverExt
 func setupAndroidAdbDriver(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
-	device.UIA2 = false
-	device.LogOn = false
+	device.Options.UIA2 = false
+	device.Options.LogOn = false
 	driverExt, err = device.NewDriver()
 	checkErr(t, err)
 }
@@ -27,8 +27,8 @@ func setupAndroidAdbDriver(t *testing.T) {
 func setupAndroidUIA2Driver(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
-	device.UIA2 = true
-	device.LogOn = false
+	device.Options.UIA2 = true
+	device.Options.LogOn = false
 	driverExt, err = device.NewDriver()
 	checkErr(t, err)
 }

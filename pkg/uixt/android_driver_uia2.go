@@ -21,18 +21,21 @@ import (
 
 func NewUIA2Driver(device *AndroidDevice) (*UIA2Driver, error) {
 	log.Info().Interface("device", device).Msg("init android UIA2 driver")
-	localPort, err := device.Forward(device.UIA2Port)
+	localPort, err := device.Device.Forward(device.Options.UIA2Port)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("forward port %d->%d failed: %v",
-				localPort, device.UIA2Port, err))
+				localPort, device.Options.UIA2Port, err))
 	}
-	driver := new(UIA2Driver)
+	driver := &UIA2Driver{
+		ADBDriver: &ADBDriver{
+			AndroidDevice: device,
+		},
+	}
 	err = driver.Session.InitConnection(localPort)
 	if err != nil {
 		return nil, err
 	}
-	driver.Device = device.Device
 	driver.Logcat = device.Logcat
 
 	err = driver.InitSession(nil)

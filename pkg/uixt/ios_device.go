@@ -127,11 +127,11 @@ func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error)
 	}
 
 	device = &IOSDevice{
-		IOSDeviceOptions: deviceOptions,
-		listeners:        make(map[int]*forward.ConnListener),
-		d:                dev,
+		DeviceEntry: dev,
+		Options:     deviceOptions,
+		listeners:   make(map[int]*forward.ConnListener),
 	}
-	log.Info().Str("udid", device.UDID).Msg("init ios device")
+	log.Info().Str("udid", device.Options.UDID).Msg("init ios device")
 	err = device.Setup()
 	if err != nil {
 		_ = device.Teardown()
@@ -141,8 +141,8 @@ func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error)
 }
 
 type IOSDevice struct {
-	*option.IOSDeviceOptions
-	d         ios.DeviceEntry
+	ios.DeviceEntry
+	Options   *option.IOSDeviceOptions
 	listeners map[int]*forward.ConnListener
 }
 
@@ -202,11 +202,11 @@ func (dev *IOSDevice) Teardown() error {
 }
 
 func (dev *IOSDevice) UUID() string {
-	return dev.UDID
+	return dev.Options.UDID
 }
 
 func (dev *IOSDevice) LogEnabled() bool {
-	return dev.LogOn
+	return dev.Options.LogOn
 }
 
 func (dev *IOSDevice) getAppInfo(packageName string) (appInfo types.AppInfo, err error) {
@@ -233,22 +233,22 @@ func (dev *IOSDevice) NewDriver() (driverExt IDriverExt, err error) {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
 	settings, err := driver.SetAppiumSettings(map[string]interface{}{
-		"snapshotMaxDepth":          dev.SnapshotMaxDepth,
-		"acceptAlertButtonSelector": dev.AcceptAlertButtonSelector,
+		"snapshotMaxDepth":          dev.Options.SnapshotMaxDepth,
+		"acceptAlertButtonSelector": dev.Options.AcceptAlertButtonSelector,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to set appium WDA settings")
 	}
 	log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
 
-	if dev.ResetHomeOnStartup {
+	if dev.Options.ResetHomeOnStartup {
 		log.Info().Msg("go back to home screen")
 		if err = driver.Homescreen(); err != nil {
 			return nil, errors.Wrap(code.MobileUIDriverError,
 				fmt.Sprintf("go back to home screen failed: %v", err))
 		}
 	}
-	if dev.LogOn {
+	if dev.Options.LogOn {
 		err = driver.StartCaptureLog("hrp_wda_log")
 		if err != nil {
 			return nil, err
@@ -272,7 +272,7 @@ func (dev *IOSDevice) Install(appPath string, opts ...option.InstallOption) (err
 	installOpts := option.NewInstallOptions(opts...)
 	for i := 0; i <= installOpts.RetryTimes; i++ {
 		var conn *zipconduit.Connection
-		conn, err = zipconduit.New(dev.d)
+		conn, err = zipconduit.New(dev.DeviceEntry)
 		if err != nil {
 			return err
 		}
@@ -289,7 +289,7 @@ func (dev *IOSDevice) Install(appPath string, opts ...option.InstallOption) (err
 }
 
 func (dev *IOSDevice) Uninstall(bundleId string) error {
-	svc, err := installationproxy.New(dev.d)
+	svc, err := installationproxy.New(dev.DeviceEntry)
 	if err != nil {
 		return err
 	}
@@ -306,7 +306,7 @@ func (dev *IOSDevice) Forward(localPort, remotePort int) error {
 		log.Warn().Msg(fmt.Sprintf("local port :%d is already in use", localPort))
 		_ = dev.listeners[localPort].Close()
 	}
-	listener, err := forward.Forward(dev.d, uint16(localPort), uint16(remotePort))
+	listener, err := forward.Forward(dev.DeviceEntry, uint16(localPort), uint16(remotePort))
 	if err != nil {
 		log.Error().Err(err).Msg(fmt.Sprintf("failed to forward %d to %d", localPort, remotePort))
 		return err
@@ -316,7 +316,7 @@ func (dev *IOSDevice) Forward(localPort, remotePort int) error {
 }
 
 func (dev *IOSDevice) GetDeviceInfo() (*DeviceDetail, error) {
-	deviceInfo, err := deviceinfo.NewDeviceInfo(dev.d)
+	deviceInfo, err := deviceinfo.NewDeviceInfo(dev.DeviceEntry)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get device info")
 		return nil, err
@@ -343,7 +343,7 @@ func (dev *IOSDevice) GetDeviceInfo() (*DeviceDetail, error) {
 }
 
 func (dev *IOSDevice) ListApps(appType ApplicationType) (apps []installationproxy.AppInfo, err error) {
-	svc, _ := installationproxy.New(dev.d)
+	svc, _ := installationproxy.New(dev.DeviceEntry)
 	defer svc.Close()
 	switch appType {
 	case ApplicationTypeSystem:
@@ -363,7 +363,7 @@ func (dev *IOSDevice) ListApps(appType ApplicationType) (apps []installationprox
 }
 
 func (dev *IOSDevice) GetAppInfo(packageName string) (appInfo installationproxy.AppInfo, err error) {
-	svc, _ := installationproxy.New(dev.d)
+	svc, _ := installationproxy.New(dev.DeviceEntry)
 	defer svc.Close()
 	apps, err := svc.BrowseAllApps()
 	if err != nil {
@@ -379,7 +379,7 @@ func (dev *IOSDevice) GetAppInfo(packageName string) (appInfo installationproxy.
 }
 
 func (dev *IOSDevice) ListImages() (images []string, err error) {
-	conn, err := imagemounter.NewImageMounter(dev.d)
+	conn, err := imagemounter.NewImageMounter(dev.DeviceEntry)
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
@@ -397,7 +397,7 @@ func (dev *IOSDevice) ListImages() (images []string, err error) {
 
 func (dev *IOSDevice) MountImage(imagePath string) (err error) {
 	log.Info().Str("imagePath", imagePath).Msg("mount ios developer image")
-	conn, err := imagemounter.NewImageMounter(dev.d)
+	conn, err := imagemounter.NewImageMounter(dev.DeviceEntry)
 	if err != nil {
 		return errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
@@ -414,7 +414,7 @@ func (dev *IOSDevice) MountImage(imagePath string) (err error) {
 
 func (dev *IOSDevice) AutoMountImage(baseDir string) (err error) {
 	log.Info().Str("baseDir", baseDir).Msg("auto mount ios developer image")
-	imagePath, err := imagemounter.DownloadImageFor(dev.d, baseDir)
+	imagePath, err := imagemounter.DownloadImageFor(dev.DeviceEntry, baseDir)
 	if err != nil {
 		return errors.Wrapf(code.DeviceConnectionError,
 			"download ios developer image failed: %v", err)
@@ -432,7 +432,7 @@ func (dev *IOSDevice) RunXCTest(ctx context.Context, bundleID, testRunnerBundleI
 		BundleId:           bundleID,
 		TestRunnerBundleId: testRunnerBundleID,
 		XctestConfigName:   xctestConfig,
-		Device:             dev.d,
+		Device:             dev.DeviceEntry,
 		Listener:           listener,
 	}
 	_, err = testmanagerd.RunTestWithConfig(ctx, config)
@@ -455,7 +455,7 @@ func (dev *IOSDevice) RunXCTestDaemon(ctx context.Context, bundleID, testRunnerB
 }
 
 func (dev *IOSDevice) getVersion() (version *semver.Version, err error) {
-	version, err = ios.GetProductVersion(dev.d)
+	version, err = ios.GetProductVersion(dev.DeviceEntry)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get version")
 		return nil, err
@@ -465,7 +465,7 @@ func (dev *IOSDevice) getVersion() (version *semver.Version, err error) {
 }
 
 func (dev *IOSDevice) ListProcess(applicationsOnly bool) (processList []instruments.ProcessInfo, err error) {
-	service, err := instruments.NewDeviceInfoService(dev.d)
+	service, err := instruments.NewDeviceInfoService(dev.DeviceEntry)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list process")
 		return
@@ -485,7 +485,7 @@ func (dev *IOSDevice) ListProcess(applicationsOnly bool) (processList []instrume
 }
 
 func (dev *IOSDevice) Reboot() error {
-	err := diagnostics.Reboot(dev.d)
+	err := diagnostics.Reboot(dev.DeviceEntry)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to reboot device")
 		return err
@@ -503,7 +503,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("get free port failed: %v", err))
 		}
-		if err = dev.Forward(localPort, dev.WDAPort); err != nil {
+		if err = dev.Forward(localPort, dev.Options.WDAPort); err != nil {
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
@@ -519,7 +519,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("get free port failed: %v", err))
 		}
-		if err = dev.Forward(localMjpegPort, dev.WDAMjpegPort); err != nil {
+		if err = dev.Forward(localMjpegPort, dev.Options.WDAMjpegPort); err != nil {
 			return nil, errors.Wrap(code.DeviceHTTPDriverError,
 				fmt.Sprintf("forward tcp port failed: %v", err))
 		}
@@ -534,7 +534,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 
 	wd := new(WDADriver)
 	wd.IOSDevice = dev
-	wd.udid = dev.UDID
+	wd.udid = dev.Options.UDID
 	wd.client = &http.Client{
 		Timeout: time.Second * 10, // 设置超时时间为 10 秒
 	}
@@ -566,7 +566,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 }
 
 func (dev *IOSDevice) GetPackageInfo(packageName string) (types.AppInfo, error) {
-	svc, err := installationproxy.New(dev.d)
+	svc, err := installationproxy.New(dev.DeviceEntry)
 	if err != nil {
 		return types.AppInfo{}, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}

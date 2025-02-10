@@ -121,7 +121,7 @@ func (c *TConfig) SetWebSocket(times, interval, timeout, size int64) *TConfig {
 func (c *TConfig) SetIOS(opts ...option.IOSDeviceOption) *TConfig {
 	iosOptions := option.NewIOSDeviceOptions(opts...)
 	device := &uixt.IOSDevice{
-		IOSDeviceOptions: iosOptions,
+		Options: iosOptions,
 	}
 
 	// each device can have its own settings
@@ -142,7 +142,7 @@ func (c *TConfig) SetIOS(opts ...option.IOSDeviceOption) *TConfig {
 func (c *TConfig) SetHarmony(opts ...option.HarmonyDeviceOption) *TConfig {
 	harmonyOptions := option.NewHarmonyDeviceOptions(opts...)
 	device := &uixt.HarmonyDevice{
-		HarmonyDeviceOptions: harmonyOptions,
+		Options: harmonyOptions,
 	}
 
 	// each device can have its own settings
@@ -163,7 +163,7 @@ func (c *TConfig) SetHarmony(opts ...option.HarmonyDeviceOption) *TConfig {
 func (c *TConfig) SetAndroid(opts ...option.AndroidDeviceOption) *TConfig {
 	uiaOptions := option.NewAndroidDeviceOptions(opts...)
 	device := &uixt.AndroidDevice{
-		AndroidDeviceOptions: uiaOptions,
+		Options: uiaOptions,
 	}
 
 	// each device can have its own settings
