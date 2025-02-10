@@ -71,10 +71,6 @@ func (hd *HDCDriver) DeviceInfo() (types.DeviceInfo, error) {
 	return types.DeviceInfo{}, types.ErrDriverNotImplemented
 }
 
-func (hd *HDCDriver) Location() (types.Location, error) {
-	return types.Location{}, types.ErrDriverNotImplemented
-}
-
 func (hd *HDCDriver) BatteryInfo() (types.BatteryInfo, error) {
 	return types.BatteryInfo{}, types.ErrDriverNotImplemented
 }

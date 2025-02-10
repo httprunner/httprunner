@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	shootsIOSDriver uixt.IDriverExt
+	shootsIOSDriver uixt.IDriver
 	iOSDevice       *uixt.IOSDevice
 )
 
@@ -22,7 +22,7 @@ func setupShootsIOSDriver(t *testing.T) {
 		option.WithWDAPort(8700),
 		option.WithWDAMjpegPort(8800))
 	checkErr(t, err)
-	shootsIOSDriver, err = iOSDevice.NewDriver()
+	shootsIOSDriver, err = NewShootsIOSDriver(iOSDevice)
 	checkErr(t, err)
 }
 
@@ -47,31 +47,31 @@ func TestIOSIsLogin(t *testing.T) {
 
 func TestIOSSource(t *testing.T) {
 	setupShootsIOSDriver(t)
-	source, err := shootsIOSDriver.GetDriver().Source()
+	source, err := shootsIOSDriver.Source()
 	checkErr(t, err)
 	t.Log(source)
 }
 
 func TestIOSForeground(t *testing.T) {
 	setupShootsIOSDriver(t)
-	app, err := shootsIOSDriver.GetDriver().GetForegroundApp()
+	app, err := shootsIOSDriver.GetForegroundApp()
 	checkErr(t, err)
 	t.Log(app)
 }
 
 func TestIOSSwipe(t *testing.T) {
 	setupShootsIOSDriver(t)
-	shootsIOSDriver.GetDriver().Swipe(540, 0, 540, 1000)
+	shootsIOSDriver.Swipe(540, 0, 540, 1000)
 }
 
 func TestIOSSave(t *testing.T) {
 	setupShootsIOSDriver(t)
-	raw, err := shootsIOSDriver.GetDriver().Screenshot()
+	raw, err := shootsIOSDriver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	source, err := shootsIOSDriver.GetDriver().Source()
+	source, err := shootsIOSDriver.Source()
 	if err != nil {
 		t.Fatal(err)
 	}

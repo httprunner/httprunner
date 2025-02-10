@@ -509,14 +509,13 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 		Msg("init WDA HTTP driver")
 
 	wd := new(WDADriver)
-	wd.IOSDevice = dev
-	wd.udid = dev.Options.UDID
-	wd.client = &http.Client{
+	wd.Device = dev
+	wd.Session.client = &http.Client{
 		Timeout: time.Second * 10, // 设置超时时间为 10 秒
 	}
 
 	host := "localhost"
-	if wd.baseURL, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
+	if wd.Session.baseURL, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
 
@@ -534,7 +533,7 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 	wd.mjpegClient = NewHTTPClientWithConnection(wd.mjpegHTTPConn, 30*time.Second)
 	wd.mjpegUrl = fmt.Sprintf("%s:%d", host, localMjpegPort)
 	// init WDA scale
-	if wd.scale, err = wd.Scale(); err != nil {
+	if wd.Session.scale, err = wd.Scale(); err != nil {
 		return nil, err
 	}
 

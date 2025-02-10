@@ -30,46 +30,23 @@ var (
 
 // current implemeted driver: ADBDriver, UIA2Driver, WDADriver, HDCDriver
 type IDriver interface {
-	// InitSession starts a new session
+	GetDevice() IDevice
+
+	// session
 	InitSession(capabilities option.Capabilities) error
-
-	// DeleteSession Kills application associated with that session and removes session
-	//  1) alertsMonitor disable
-	//  2) testedApplicationBundleId terminate
 	DeleteSession() error
-
-	// GetSession returns session cache, including requests, screenshots, etc.
 	GetSession() *Session
 
+	// device info and status
 	Status() (types.DeviceStatus, error)
-
-	GetDevice() IDevice
 	DeviceInfo() (types.DeviceInfo, error)
-
-	// Location Returns device location data.
-	//
-	// It requires to configure location access permission by manual.
-	// The response of 'latitude', 'longitude' and 'altitude' are always zero (0) without authorization.
-	// 'authorizationStatus' indicates current authorization status. '3' is 'Always'.
-	// https://developer.apple.com/documentation/corelocation/clauthorizationstatus
-	//
-	//  Settings -> Privacy -> Location Service -> WebDriverAgent-Runner -> Always
-	//
-	// The return value could be zero even if the permission is set to 'Always'
-	// since the location service needs some time to update the location data.
-	Location() (types.Location, error)
 	BatteryInfo() (types.BatteryInfo, error)
-
-	// WindowSize Return the width and height in portrait mode.
-	// when getting the window size in wda/ui2/adb, if the device is in landscape mode,
-	// the width and height will be reversed.
 	WindowSize() (types.Size, error)
 	Screen() (ai.Screen, error)
 	Scale() (float64, error)
 
-	// Homescreen Forces the device under test to switch to the home screen
+	// actions
 	Homescreen() error
-
 	Unlock() (err error)
 
 	// AppLaunch Launch an application with given bundle identifier in scope of current session.

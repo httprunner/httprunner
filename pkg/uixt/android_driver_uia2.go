@@ -27,20 +27,16 @@ func NewUIA2Driver(device *AndroidDevice) (*UIA2Driver, error) {
 			fmt.Sprintf("forward port %d->%d failed: %v",
 				localPort, device.Options.UIA2Port, err))
 	}
+	adbDriver, err := NewADBDriver(device)
+	if err != nil {
+		return nil, err
+	}
 	driver := &UIA2Driver{
-		ADBDriver: &ADBDriver{
-			Device: device,
-		},
+		ADBDriver: adbDriver,
 	}
 	err = driver.Session.InitConnection(localPort)
 	if err != nil {
 		return nil, err
-	}
-	driver.Device.Logcat = device.Logcat
-
-	err = driver.InitSession(nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "create UIA2 session failed")
 	}
 	return driver, nil
 }

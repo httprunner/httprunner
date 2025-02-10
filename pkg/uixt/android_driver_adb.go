@@ -100,11 +100,6 @@ func (ad *ADBDriver) DeviceInfo() (deviceInfo types.DeviceInfo, err error) {
 	return
 }
 
-func (ad *ADBDriver) Location() (location types.Location, err error) {
-	err = types.ErrDriverNotImplemented
-	return
-}
-
 func (ad *ADBDriver) BatteryInfo() (batteryInfo types.BatteryInfo, err error) {
 	err = types.ErrDriverNotImplemented
 	return

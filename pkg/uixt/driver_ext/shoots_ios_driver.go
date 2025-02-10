@@ -111,14 +111,6 @@ func (s *ShootsIOSDriver) DeviceInfo() (types.DeviceInfo, error) {
 	return s.WDADriver.DeviceInfo()
 }
 
-func (s *ShootsIOSDriver) Location() (types.Location, error) {
-	err := s.setUpWda()
-	if err != nil {
-		return types.Location{}, err
-	}
-	return s.WDADriver.Location()
-}
-
 func (s *ShootsIOSDriver) BatteryInfo() (types.BatteryInfo, error) {
 	err := s.setUpWda()
 	if err != nil {
@@ -456,7 +448,7 @@ func (s *ShootsIOSDriver) GetDriverResults() []*uixt.DriverRequests {
 }
 
 func (s *ShootsIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {
-	resp, err := s.Request(http.MethodGet, fmt.Sprintf("%s/source?format=json&onlyWeb=false", s.bightInsightPrefix), []byte{})
+	resp, err := s.Session.Request(http.MethodGet, fmt.Sprintf("%s/source?format=json&onlyWeb=false", s.bightInsightPrefix), []byte{})
 	if err != nil {
 		return "", err
 	}
@@ -478,7 +470,7 @@ func (s *ShootsIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, 
 	if err != nil {
 		return info, err
 	}
-	resp, err := s.Request(http.MethodPost, fmt.Sprintf("%s/host/login/account/", s.serverPrefix), bsJSON)
+	resp, err := s.Session.Request(http.MethodPost, fmt.Sprintf("%s/host/login/account/", s.serverPrefix), bsJSON)
 	if err != nil {
 		return info, err
 	}
@@ -502,7 +494,7 @@ func (s *ShootsIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, 
 }
 
 func (s *ShootsIOSDriver) LogoutNoneUI(packageName string) error {
-	resp, err := s.Request(http.MethodGet, fmt.Sprintf("%s/host/loginout/", s.serverPrefix), []byte{})
+	resp, err := s.Session.Request(http.MethodGet, fmt.Sprintf("%s/host/loginout/", s.serverPrefix), []byte{})
 	if err != nil {
 		return err
 	}
@@ -526,7 +518,7 @@ func (s *ShootsIOSDriver) TearDown() error {
 }
 
 func (s *ShootsIOSDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {
-	resp, err := s.Request(http.MethodGet, fmt.Sprintf("%s/host/app/info/", s.serverPrefix), []byte{})
+	resp, err := s.Session.Request(http.MethodGet, fmt.Sprintf("%s/host/app/info/", s.serverPrefix), []byte{})
 	if err != nil {
 		return info, err
 	}

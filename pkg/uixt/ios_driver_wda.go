@@ -31,18 +31,17 @@ import (
 func NewWDADriver(device *IOSDevice) (*WDADriver, error) {
 	log.Info().Interface("device", device).Msg("init ios WDA driver")
 	driver := &WDADriver{
-		IOSDevice: device,
-		Session:   &Session{},
+		Device:  device,
+		Session: &Session{},
 	}
 	driver.InitSession(nil)
 	return driver, nil
 }
 
 type WDADriver struct {
-	*IOSDevice
-	*Session
-	DriverExt
-	udid          string
+	Device  *IOSDevice
+	Session *Session
+
 	mjpegHTTPConn net.Conn // via HTTP
 	mjpegClient   *http.Client
 	mjpegUrl      string
@@ -68,14 +67,14 @@ func (wd *WDADriver) resetSession() error {
 		return err
 	}
 	// update session ID
-	wd.ID = sessionInfo.ID
+	wd.Session.ID = sessionInfo.ID
 	return nil
 }
 
 func (wd *WDADriver) httpRequest(method string, rawURL string, rawBody []byte) (rawResp DriverRawResponse, err error) {
 	retryInterval := 3 * time.Second
 	for retryCount := 1; retryCount <= 3; retryCount++ {
-		rawResp, err = wd.Request(method, rawURL, rawBody)
+		rawResp, err = wd.Session.Request(method, rawURL, rawBody)
 		if err == nil {
 			return
 		}
@@ -92,22 +91,22 @@ func (wd *WDADriver) httpRequest(method string, rawURL string, rawBody []byte) (
 
 		retryInterval = retryInterval * 2
 		time.Sleep(retryInterval)
-		oldSessionID := wd.ID
+		oldSessionID := wd.Session.ID
 		if err2 := wd.resetSession(); err2 != nil {
 			log.Err(err2).Msgf("failed to reset wda driver session, retry count: %v", retryCount)
 			continue
 		}
-		log.Debug().Str("new session", wd.ID).Str("old session", oldSessionID).
+		log.Debug().Str("new session", wd.Session.ID).Str("old session", oldSessionID).
 			Msgf("reset wda driver session successfully, retry count: %v", retryCount)
 		if oldSessionID != "" {
-			rawURL = strings.Replace(rawURL, oldSessionID, wd.ID, 1)
+			rawURL = strings.Replace(rawURL, oldSessionID, wd.Session.ID, 1)
 		}
 	}
 	return
 }
 
 func (wd *WDADriver) httpGET(pathElem ...string) (rawResp DriverRawResponse, err error) {
-	return wd.httpRequest(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
+	return wd.httpRequest(http.MethodGet, wd.Session.concatURL(nil, pathElem...), nil)
 }
 
 func (wd *WDADriver) httpPOST(data interface{}, pathElem ...string) (rawResp DriverRawResponse, err error) {
@@ -117,11 +116,11 @@ func (wd *WDADriver) httpPOST(data interface{}, pathElem ...string) (rawResp Dri
 			return nil, err
 		}
 	}
-	return wd.httpRequest(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
+	return wd.httpRequest(http.MethodPost, wd.Session.concatURL(nil, pathElem...), bsJSON)
 }
 
 func (wd *WDADriver) httpDELETE(pathElem ...string) (rawResp DriverRawResponse, err error) {
-	return wd.httpRequest(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
+	return wd.httpRequest(http.MethodDelete, wd.Session.concatURL(nil, pathElem...), nil)
 }
 
 func (wd *WDADriver) GetMjpegClient() *http.Client {
@@ -160,7 +159,7 @@ func (wd *WDADriver) DeleteSession() (err error) {
 	}
 
 	// [[FBRoute DELETE:@""] respondWithTarget:self action:@selector(handleDeleteSession:)]
-	_, err = wd.httpDELETE("/session", wd.ID)
+	_, err = wd.httpDELETE("/session", wd.Session.ID)
 	return
 }
 
@@ -168,7 +167,7 @@ func (wd *WDADriver) Status() (deviceStatus types.DeviceStatus, err error) {
 	// [[FBRoute GET:@"/status"].withoutSession respondWithTarget:self action:@selector(handleGetStatus:)]
 	var rawResp DriverRawResponse
 	// Notice: use Driver.GET instead of httpGET to avoid loop calling
-	if rawResp, err = wd.GET("/status"); err != nil {
+	if rawResp, err = wd.Session.GET("/status"); err != nil {
 		return types.DeviceStatus{}, err
 	}
 	reply := new(struct{ Value struct{ types.DeviceStatus } })
@@ -180,14 +179,14 @@ func (wd *WDADriver) Status() (deviceStatus types.DeviceStatus, err error) {
 }
 
 func (wd *WDADriver) GetDevice() IDevice {
-	return wd.IOSDevice
+	return wd.Device
 }
 
 func (wd *WDADriver) DeviceInfo() (deviceInfo types.DeviceInfo, err error) {
 	// [[FBRoute GET:@"/wda/device/info"] respondWithTarget:self action:@selector(handleGetDeviceInfo:)]
 	// [[FBRoute GET:@"/wda/device/info"].withoutSession
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/wda/device/info"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/wda/device/info"); err != nil {
 		return types.DeviceInfo{}, err
 	}
 	reply := new(struct{ Value struct{ types.DeviceInfo } })
@@ -202,7 +201,7 @@ func (wd *WDADriver) Location() (location types.Location, err error) {
 	// [[FBRoute GET:@"/wda/device/location"] respondWithTarget:self action:@selector(handleGetLocation:)]
 	// [[FBRoute GET:@"/wda/device/location"].withoutSession
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/wda/device/location"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/wda/device/location"); err != nil {
 		return types.Location{}, err
 	}
 	reply := new(struct{ Value struct{ types.Location } })
@@ -216,7 +215,7 @@ func (wd *WDADriver) Location() (location types.Location, err error) {
 func (wd *WDADriver) BatteryInfo() (batteryInfo types.BatteryInfo, err error) {
 	// [[FBRoute GET:@"/wda/batteryInfo"] respondWithTarget:self action:@selector(handleGetBatteryInfo:)]
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/wda/batteryInfo"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/wda/batteryInfo"); err != nil {
 		return types.BatteryInfo{}, err
 	}
 	reply := new(struct{ Value struct{ types.BatteryInfo } })
@@ -229,13 +228,13 @@ func (wd *WDADriver) BatteryInfo() (batteryInfo types.BatteryInfo, err error) {
 
 func (wd *WDADriver) WindowSize() (size types.Size, err error) {
 	// [[FBRoute GET:@"/window/size"] respondWithTarget:self action:@selector(handleGetWindowSize:)]
-	if !wd.windowSize.IsNil() {
+	if !wd.Session.windowSize.IsNil() {
 		// use cached window size
-		return wd.windowSize, nil
+		return wd.Session.windowSize, nil
 	}
 
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/window/size"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/window/size"); err != nil {
 		return types.Size{}, errors.Wrap(err, "get window size failed by WDA request")
 	}
 	reply := new(struct{ Value struct{ types.Size } })
@@ -250,14 +249,14 @@ func (wd *WDADriver) WindowSize() (size types.Size, err error) {
 	size.Height = size.Height * int(scale)
 	size.Width = size.Width * int(scale)
 
-	wd.windowSize = size // cache window size
-	return wd.windowSize, nil
+	wd.Session.windowSize = size // cache window size
+	return wd.Session.windowSize, nil
 }
 
 func (wd *WDADriver) Screen() (screen ai.Screen, err error) {
 	// [[FBRoute GET:@"/wda/screen"] respondWithTarget:self action:@selector(handleGetScreen:)]
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/wda/screen"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/wda/screen"); err != nil {
 		return ai.Screen{}, err
 	}
 	reply := new(struct{ Value struct{ ai.Screen } })
@@ -269,8 +268,8 @@ func (wd *WDADriver) Screen() (screen ai.Screen, err error) {
 }
 
 func (wd *WDADriver) Scale() (float64, error) {
-	if !builtin.IsZeroFloat64(wd.scale) {
-		return wd.scale, nil
+	if !builtin.IsZeroFloat64(wd.Session.scale) {
+		return wd.Session.scale, nil
 	}
 	screen, err := wd.Screen()
 	if err != nil {
@@ -281,14 +280,14 @@ func (wd *WDADriver) Scale() (float64, error) {
 }
 
 func (wd *WDADriver) toScale(x float64) float64 {
-	return x / wd.scale
+	return x / wd.Session.scale
 }
 
 func (wd *WDADriver) ActiveAppInfo() (info types.AppInfo, err error) {
 	// [[FBRoute GET:@"/wda/activeAppInfo"] respondWithTarget:self action:@selector(handleActiveAppInfo:)]
 	// [[FBRoute GET:@"/wda/activeAppInfo"].withoutSession
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/wda/activeAppInfo"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/wda/activeAppInfo"); err != nil {
 		return types.AppInfo{}, err
 	}
 	reply := new(struct{ Value struct{ types.AppInfo } })
@@ -302,7 +301,7 @@ func (wd *WDADriver) ActiveAppInfo() (info types.AppInfo, err error) {
 func (wd *WDADriver) ActiveAppsList() (appsList []types.AppBaseInfo, err error) {
 	// [[FBRoute GET:@"/wda/apps/list"] respondWithTarget:self action:@selector(handleGetActiveAppsList:)]
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/wda/apps/list"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/wda/apps/list"); err != nil {
 		return nil, err
 	}
 	reply := new(struct{ Value []types.AppBaseInfo })
@@ -317,7 +316,7 @@ func (wd *WDADriver) AppState(bundleId string) (runState types.AppState, err err
 	// [[FBRoute POST:@"/wda/apps/state"] respondWithTarget:self action:@selector(handleSessionAppState:)]
 	data := map[string]interface{}{"bundleId": bundleId}
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpPOST(data, "/session", wd.ID, "/wda/apps/state"); err != nil {
+	if rawResp, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/apps/state"); err != nil {
 		return 0, err
 	}
 	reply := new(struct{ Value types.AppState })
@@ -333,7 +332,7 @@ func (wd *WDADriver) IsLocked() (locked bool, err error) {
 	// [[FBRoute GET:@"/wda/locked"] respondWithTarget:self action:@selector(handleIsLocked:)]
 	// [[FBRoute GET:@"/wda/locked"].withoutSession
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/wda/locked"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/wda/locked"); err != nil {
 		return false, err
 	}
 	if locked, err = rawResp.ValueConvertToBool(); err != nil {
@@ -345,14 +344,14 @@ func (wd *WDADriver) IsLocked() (locked bool, err error) {
 func (wd *WDADriver) Unlock() (err error) {
 	// [[FBRoute POST:@"/wda/unlock"] respondWithTarget:self action:@selector(handleUnlock:)]
 	// [[FBRoute POST:@"/wda/unlock"].withoutSession
-	_, err = wd.httpPOST(nil, "/session", wd.ID, "/wda/unlock")
+	_, err = wd.httpPOST(nil, "/session", wd.Session.ID, "/wda/unlock")
 	return
 }
 
 func (wd *WDADriver) Lock() (err error) {
 	// [[FBRoute POST:@"/wda/lock"] respondWithTarget:self action:@selector(handleLock:)]
 	// [[FBRoute POST:@"/wda/lock"].withoutSession
-	_, err = wd.httpPOST(nil, "/session", wd.ID, "/wda/lock")
+	_, err = wd.httpPOST(nil, "/session", wd.Session.ID, "/wda/lock")
 	return
 }
 
@@ -366,7 +365,7 @@ func (wd *WDADriver) AlertText() (text string, err error) {
 	// [[FBRoute GET:@"/alert/text"] respondWithTarget:self action:@selector(handleAlertGetTextCommand:)]
 	// [[FBRoute GET:@"/alert/text"].withoutSession
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/alert/text"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/alert/text"); err != nil {
 		return "", err
 	}
 	if text, err = rawResp.ValueConvertToString(); err != nil {
@@ -378,7 +377,7 @@ func (wd *WDADriver) AlertText() (text string, err error) {
 func (wd *WDADriver) AlertButtons() (btnLabels []string, err error) {
 	// [[FBRoute GET:@"/wda/alert/buttons"] respondWithTarget:self action:@selector(handleGetAlertButtonsCommand:)]
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/wda/alert/buttons"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/wda/alert/buttons"); err != nil {
 		return nil, err
 	}
 	reply := new(struct{ Value []string })
@@ -414,7 +413,7 @@ func (wd *WDADriver) AlertDismiss(label ...string) (err error) {
 func (wd *WDADriver) AlertSendKeys(text string) (err error) {
 	// [[FBRoute POST:@"/alert/text"] respondWithTarget:self action:@selector(handleAlertSetTextCommand:)]
 	data := map[string]interface{}{"value": strings.Split(text, "")}
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/alert/text")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/alert/text")
 	return
 }
 
@@ -425,7 +424,7 @@ func (wd *WDADriver) AppLaunch(bundleId string) (err error) {
 	data["environment"] = map[string]interface{}{
 		"SHOW_EXPLORER": "NO",
 	}
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/wda/apps/launch")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/apps/launch")
 	if err != nil {
 		return errors.Wrap(code.MobileUILaunchAppError,
 			fmt.Sprintf("wda launch failed: %v", err))
@@ -448,7 +447,7 @@ func (wd *WDADriver) AppTerminate(bundleId string) (successful bool, err error) 
 	// [[FBRoute POST:@"/wda/apps/terminate"] respondWithTarget:self action:@selector(handleSessionAppTerminate:)]
 	data := map[string]interface{}{"bundleId": bundleId}
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpPOST(data, "/session", wd.ID, "/wda/apps/terminate"); err != nil {
+	if rawResp, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/apps/terminate"); err != nil {
 		return false, err
 	}
 	if successful, err = rawResp.ValueConvertToBool(); err != nil {
@@ -460,7 +459,7 @@ func (wd *WDADriver) AppTerminate(bundleId string) (successful bool, err error) 
 func (wd *WDADriver) AppActivate(bundleId string) (err error) {
 	// [[FBRoute POST:@"/wda/apps/activate"] respondWithTarget:self action:@selector(handleSessionAppActivate:)]
 	data := map[string]interface{}{"bundleId": bundleId}
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/wda/apps/activate")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/apps/activate")
 	return
 }
 
@@ -470,7 +469,7 @@ func (wd *WDADriver) AppDeactivate(second float64) (err error) {
 		second = 3.0
 	}
 	data := map[string]interface{}{"duration": second}
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/wda/deactivateApp")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/deactivateApp")
 	return
 }
 
@@ -480,7 +479,7 @@ func (wd *WDADriver) GetForegroundApp() (appInfo types.AppInfo, err error) {
 	if err != nil {
 		return appInfo, err
 	}
-	apps, err := wd.ListApps(ApplicationTypeAny)
+	apps, err := wd.Device.ListApps(ApplicationTypeAny)
 	if err != nil {
 		return appInfo, err
 	}
@@ -541,7 +540,7 @@ func (wd *WDADriver) Tap(x, y float64, opts ...option.ActionOption) (err error) 
 	// update data options in post data for extra WDA configurations
 	actionOptions.UpdateData(data)
 
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/wda/tap/0")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/tap/0")
 	return
 }
 
@@ -561,7 +560,7 @@ func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) (err e
 		"x": x,
 		"y": y,
 	}
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/wda/doubleTap")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/doubleTap")
 	return
 }
 
@@ -605,8 +604,8 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	// update data options in post data for extra WDA configurations
 	actionOptions.UpdateData(data)
 	// wda 43 version
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/wda/dragfromtoforduration")
-	// _, err = wd.httpPOST(data, "/session", wd.ID, "/wda/drag")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/dragfromtoforduration")
+	// _, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/drag")
 	return
 }
 
@@ -620,7 +619,7 @@ func (wd *WDADriver) SetPasteboard(contentType types.PasteboardType, content str
 		"contentType": contentType,
 		"content":     base64.StdEncoding.EncodeToString([]byte(content)),
 	}
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/wda/setPasteboard")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/setPasteboard")
 	return
 }
 
@@ -628,7 +627,7 @@ func (wd *WDADriver) GetPasteboard(contentType types.PasteboardType) (raw *bytes
 	// [[FBRoute POST:@"/wda/getPasteboard"] respondWithTarget:self action:@selector(handleGetPasteboard:)]
 	data := map[string]interface{}{"contentType": contentType}
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpPOST(data, "/session", wd.ID, "/wda/getPasteboard"); err != nil {
+	if rawResp, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/getPasteboard"); err != nil {
 		return nil, err
 	}
 	if raw, err = rawResp.ValueDecodeAsBase64(); err != nil {
@@ -653,7 +652,7 @@ func (wd *WDADriver) SendKeys(text string, opts ...option.ActionOption) (err err
 	// new data options in post data for extra WDA configurations
 	actionOptions.UpdateData(data)
 
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/wda/keys")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/keys")
 	return
 }
 
@@ -712,14 +711,14 @@ func (wd *WDADriver) PressBack(opts ...option.ActionOption) (err error) {
 	// update data options in post data for extra WDA configurations
 	actionOptions.UpdateData(data)
 
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/wda/dragfromtoforduration")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/dragfromtoforduration")
 	return
 }
 
 func (wd *WDADriver) PressButton(devBtn types.DeviceButton) (err error) {
 	// [[FBRoute POST:@"/wda/pressButton"] respondWithTarget:self action:@selector(handlePressButtonCommand:)]
 	data := map[string]interface{}{"name": devBtn}
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/wda/pressButton")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/pressButton")
 	return
 }
 
@@ -743,7 +742,7 @@ func (wd *WDADriver) StopCamera() (err error) {
 func (wd *WDADriver) Orientation() (orientation types.Orientation, err error) {
 	// [[FBRoute GET:@"/orientation"] respondWithTarget:self action:@selector(handleGetOrientation:)]
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/orientation"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/orientation"); err != nil {
 		return "", err
 	}
 	reply := new(struct{ Value types.Orientation })
@@ -757,14 +756,14 @@ func (wd *WDADriver) Orientation() (orientation types.Orientation, err error) {
 func (wd *WDADriver) SetOrientation(orientation types.Orientation) (err error) {
 	// [[FBRoute POST:@"/orientation"] respondWithTarget:self action:@selector(handleSetOrientation:)]
 	data := map[string]interface{}{"orientation": orientation}
-	_, err = wd.httpPOST(data, "/session", wd.ID, "/orientation")
+	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/orientation")
 	return
 }
 
 func (wd *WDADriver) Rotation() (rotation types.Rotation, err error) {
 	// [[FBRoute GET:@"/rotation"] respondWithTarget:self action:@selector(handleGetRotation:)]
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/rotation"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/rotation"); err != nil {
 		return types.Rotation{}, err
 	}
 	reply := new(struct{ Value types.Rotation })
@@ -777,7 +776,7 @@ func (wd *WDADriver) Rotation() (rotation types.Rotation, err error) {
 
 func (wd *WDADriver) SetRotation(rotation types.Rotation) (err error) {
 	// [[FBRoute POST:@"/rotation"] respondWithTarget:self action:@selector(handleSetRotation:)]
-	_, err = wd.httpPOST(rotation, "/session", wd.ID, "/rotation")
+	_, err = wd.httpPOST(rotation, "/session", wd.Session.ID, "/rotation")
 	return
 }
 
@@ -785,7 +784,7 @@ func (wd *WDADriver) Screenshot() (raw *bytes.Buffer, err error) {
 	// [[FBRoute GET:@"/screenshot"] respondWithTarget:self action:@selector(handleGetScreenshot:)]
 	// [[FBRoute GET:@"/screenshot"].withoutSession respondWithTarget:self action:@selector(handleGetScreenshot:)]
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/screenshot"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/screenshot"); err != nil {
 		return nil, errors.Wrap(code.DeviceScreenShotError,
 			fmt.Sprintf("get WDA screenshot data failed: %v", err))
 	}
@@ -800,7 +799,7 @@ func (wd *WDADriver) Screenshot() (raw *bytes.Buffer, err error) {
 func (wd *WDADriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	// [[FBRoute GET:@"/source"] respondWithTarget:self action:@selector(handleGetSourceCommand:)]
 	// [[FBRoute GET:@"/source"].withoutSession
-	tmp, _ := url.Parse(wd.concatURL(nil, "/session", wd.ID))
+	tmp, _ := url.Parse(wd.Session.concatURL(nil, "/session", wd.Session.ID))
 	toJsonRaw := false
 	if len(srcOpt) != 0 {
 		q := tmp.Query()
@@ -815,7 +814,7 @@ func (wd *WDADriver) Source(srcOpt ...option.SourceOption) (source string, err e
 	}
 
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpRequest(http.MethodGet, wd.concatURL(tmp, "/source"), nil); err != nil {
+	if rawResp, err = wd.httpRequest(http.MethodGet, wd.Session.concatURL(tmp, "/source"), nil); err != nil {
 		return "", nil
 	}
 	if toJsonRaw {
@@ -843,7 +842,7 @@ func (wd *WDADriver) AccessibleSource() (source string, err error) {
 	// [[FBRoute GET:@"/wda/accessibleSource"] respondWithTarget:self action:@selector(handleGetAccessibleSourceCommand:)]
 	// [[FBRoute GET:@"/wda/accessibleSource"].withoutSession
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/wda/accessibleSource"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/wda/accessibleSource"); err != nil {
 		return "", err
 	}
 	var jr builtinJSON.RawMessage
@@ -863,7 +862,7 @@ func (wd *WDADriver) HealthCheck() (err error) {
 func (wd *WDADriver) GetAppiumSettings() (settings map[string]interface{}, err error) {
 	// [[FBRoute GET:@"/appium/settings"] respondWithTarget:self action:@selector(handleGetSettings:)]
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.ID, "/appium/settings"); err != nil {
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/appium/settings"); err != nil {
 		return nil, err
 	}
 	reply := new(struct{ Value map[string]interface{} })
@@ -878,7 +877,7 @@ func (wd *WDADriver) SetAppiumSettings(settings map[string]interface{}) (ret map
 	// [[FBRoute POST:@"/appium/settings"] respondWithTarget:self action:@selector(handleSetSettings:)]
 	data := map[string]interface{}{"settings": settings}
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpPOST(data, "/session", wd.ID, "/appium/settings"); err != nil {
+	if rawResp, err = wd.httpPOST(data, "/session", wd.Session.ID, "/appium/settings"); err != nil {
 		return nil, err
 	}
 	reply := new(struct{ Value map[string]interface{} })
@@ -1019,9 +1018,9 @@ func (wd *WDADriver) GetSession() *Session {
 
 func (wd *WDADriver) GetDriverResults() []*DriverRequests {
 	defer func() {
-		wd.requests = nil
+		wd.Session.requests = nil
 	}()
-	return wd.requests
+	return wd.Session.requests
 }
 
 func (wd *WDADriver) Setup() error {
@@ -1030,6 +1029,6 @@ func (wd *WDADriver) Setup() error {
 
 func (wd *WDADriver) TearDown() error {
 	wd.mjpegClient.CloseIdleConnections()
-	wd.client.CloseIdleConnections()
+	wd.Session.client.CloseIdleConnections()
 	return nil
 }
