@@ -44,11 +44,11 @@ func NewAndroidDevice(opts ...option.AndroidDeviceOption) (device *AndroidDevice
 	adbClient, err := gadb.NewClientWith(
 		androidOptions.AdbServerHost, androidOptions.AdbServerPort)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
 	devices, err := adbClient.DeviceList()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
 	if len(devices) == 0 {
 		return nil, errors.Wrapf(code.DeviceConnectionError,

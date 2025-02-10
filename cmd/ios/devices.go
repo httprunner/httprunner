@@ -3,13 +3,14 @@ package ios
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/danielpaulus/go-ios/ios"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
 )
@@ -50,13 +51,13 @@ var listDevicesCmd = &cobra.Command{
 			})
 		}()
 
-		devices, err := uixt.GetIOSDevices(udid)
+		devices, err := ios.ListDevices()
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(0)
+			return errors.Wrap(code.DeviceConnectionError,
+				fmt.Sprintf("list ios devices failed: %v", err))
 		}
 
-		for _, d := range devices {
+		for _, d := range devices.DeviceList {
 			deviceProperties := d.Properties
 			device := &Device{
 				d:               d,
@@ -64,10 +65,7 @@ var listDevicesCmd = &cobra.Command{
 				ConnectionType:  deviceProperties.ConnectionType,
 				ConnectionSpeed: deviceProperties.ConnectionSpeed,
 			}
-			device.Status = device.GetStatus()
-
-			fmt.Println(device.UDID, device.ConnectionType, device.Status)
-
+			fmt.Println(device.UDID, device.ConnectionType, device.GetStatus())
 		}
 		return nil
 	},
@@ -76,6 +74,5 @@ var listDevicesCmd = &cobra.Command{
 var udid string
 
 func init() {
-	listDevicesCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's udid")
 	iosRootCmd.AddCommand(listDevicesCmd)
 }

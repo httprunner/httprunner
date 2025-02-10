@@ -33,43 +33,6 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
-var tunnelManager *tunnel.TunnelManager = nil
-
-func GetIOSDevices(udid ...string) (deviceList []ios.DeviceEntry, err error) {
-	devices, err := ios.ListDevices()
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceConnectionError,
-			fmt.Sprintf("list ios devices failed: %v", err))
-	}
-	for _, d := range devices.DeviceList {
-		if len(udid) > 0 {
-			for _, u := range udid {
-				if u != "" && u != d.Properties.SerialNumber {
-					continue
-				}
-				// filter non-usb ios devices
-				if d.Properties.ConnectionType != "USB" {
-					continue
-				}
-				deviceList = append(deviceList, d)
-			}
-		} else {
-			deviceList = devices.DeviceList
-		}
-	}
-
-	if len(deviceList) == 0 {
-		var err error
-		if udid == nil || (len(udid) == 1 && udid[0] == "") {
-			err = fmt.Errorf("no ios device found")
-		} else {
-			err = fmt.Errorf("no ios device found for udid %v", udid)
-		}
-		return nil, err
-	}
-	return deviceList, nil
-}
-
 func StartTunnel(recordsPath string, tunnelInfoPort int, userspaceTUN bool) (err error) {
 	pm, err := tunnel.NewPairRecordManager(recordsPath)
 	if err != nil {
@@ -98,6 +61,8 @@ func StartTunnel(recordsPath string, tunnelInfoPort int, userspaceTUN bool) (err
 	return nil
 }
 
+var tunnelManager *tunnel.TunnelManager = nil
+
 func RebootTunnel() (err error) {
 	if tunnelManager != nil {
 		_ = tunnelManager.Close()
@@ -107,36 +72,47 @@ func RebootTunnel() (err error) {
 
 func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error) {
 	deviceOptions := option.NewIOSDeviceOptions(opts...)
-	deviceList, err := GetIOSDevices(deviceOptions.UDID)
+
+	// get all attached ios devices
+	devices, err := ios.ListDevices()
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceConnectionError, err.Error())
 	}
-
-	if deviceOptions.UDID == "" && len(deviceList) > 1 {
-		return nil, errors.Wrap(code.DeviceConnectionError, "more than one device connected, please specify the udid")
+	if len(devices.DeviceList) == 0 {
+		return nil, errors.Wrapf(code.DeviceConnectionError,
+			"no attached ios devices")
 	}
 
-	dev := deviceList[0]
-	udid := dev.Properties.SerialNumber
-
+	// filter device by udid
+	var iosDevice *ios.DeviceEntry
 	if deviceOptions.UDID == "" {
-		deviceOptions.UDID = udid
-		log.Warn().
-			Str("udid", udid).
-			Msg("ios UDID is not specified, select the first one")
+		if len(devices.DeviceList) > 1 {
+			return nil, errors.Wrap(code.DeviceConnectionError,
+				"more than one device connected, please specify the udid")
+		}
+		iosDevice = &devices.DeviceList[0]
+		deviceOptions.UDID = iosDevice.Properties.SerialNumber
+		log.Warn().Str("udid", deviceOptions.UDID).
+			Msg("ios UDID is not specified, select the attached one")
+	} else {
+		for _, d := range devices.DeviceList {
+			if d.Properties.SerialNumber == deviceOptions.UDID {
+				iosDevice = &d
+				break
+			}
+		}
+		if iosDevice == nil {
+			return nil, errors.Wrapf(code.DeviceConnectionError,
+				"ios device %s not attached", deviceOptions.UDID)
+		}
 	}
 
 	device = &IOSDevice{
-		DeviceEntry: dev,
+		DeviceEntry: *iosDevice,
 		Options:     deviceOptions,
 		listeners:   make(map[int]*forward.ConnListener),
 	}
 	log.Info().Str("udid", device.Options.UDID).Msg("init ios device")
-	err = device.Setup()
-	if err != nil {
-		_ = device.Teardown()
-		return nil, err
-	}
 	return device, nil
 }
 
