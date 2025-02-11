@@ -183,61 +183,6 @@ func (ad *ADBDriver) PressBack(opts ...option.ActionOption) (err error) {
 	return nil
 }
 
-func (ad *ADBDriver) StartCamera() (err error) {
-	if _, err = ad.runShellCommand("rm", "-r", "/sdcard/DCIM/Camera"); err != nil {
-		return errors.Wrap(err, "remove /sdcard/DCIM/Camera failed")
-	}
-	time.Sleep(5 * time.Second)
-	var version string
-	if version, err = ad.runShellCommand("getprop", "ro.build.version.release"); err != nil {
-		return err
-	}
-	if version == "11" || version == "12" {
-		if _, err = ad.runShellCommand("am", "start", "-a", "android.media.action.STILL_IMAGE_CAMERA"); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-		if _, err = ad.runShellCommand("input", "swipe", "750", "1000", "250", "1000"); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-		if _, err = ad.runShellCommand("input", "keyevent", fmt.Sprintf("%d", KCCamera)); err != nil {
-			return err
-		}
-		return
-	} else {
-		if _, err = ad.runShellCommand("am", "start", "-a", "android.media.action.VIDEO_CAPTURE"); err != nil {
-			return err
-		}
-		time.Sleep(5 * time.Second)
-		if _, err = ad.runShellCommand("input", "keyevent", fmt.Sprintf("%d", KCCamera)); err != nil {
-			return err
-		}
-		return
-	}
-}
-
-func (ad *ADBDriver) StopCamera() (err error) {
-	err = ad.PressBack()
-	if err != nil {
-		return err
-	}
-	err = ad.Homescreen()
-	if err != nil {
-		return err
-	}
-
-	// kill samsung shell command
-	if _, err = ad.AppTerminate("com.sec.android.app.camera"); err != nil {
-		return err
-	}
-	// kill other camera (huawei mi)
-	if _, err = ad.AppTerminate("com.android.camera2"); err != nil {
-		return err
-	}
-	return
-}
-
 func (ad *ADBDriver) Orientation() (orientation types.Orientation, err error) {
 	output, err := ad.runShellCommand("dumpsys", "input", "|", "grep", "'SurfaceOrientation'")
 	if err != nil {
@@ -471,16 +416,6 @@ func (ad *ADBDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) 
 	return
 }
 
-func (ad *ADBDriver) SetPasteboard(contentType types.PasteboardType, content string) (err error) {
-	err = types.ErrDriverNotImplemented
-	return
-}
-
-func (ad *ADBDriver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
-	err = types.ErrDriverNotImplemented
-	return
-}
-
 func (ad *ADBDriver) SendKeys(text string, opts ...option.ActionOption) (err error) {
 	err = ad.SendUnicodeKeys(text, opts...)
 	if err == nil {
@@ -590,7 +525,7 @@ func (ad *ADBDriver) Input(text string, opts ...option.ActionOption) (err error)
 	return ad.SendKeys(text, opts...)
 }
 
-func (ad *ADBDriver) Clear(packageName string) error {
+func (ad *ADBDriver) AppClear(packageName string) error {
 	if _, err := ad.runShellCommand("pm", "clear", packageName); err != nil {
 		log.Error().Str("packageName", packageName).Err(err).Msg("failed to clear package cache")
 		return err
@@ -719,31 +654,6 @@ func (ad *ADBDriver) searchNodes(nodes []Layout, text string, opts ...option.Act
 		}
 	}
 	return results
-}
-
-func (ad *ADBDriver) AccessibleSource() (source string, err error) {
-	err = types.ErrDriverNotImplemented
-	return
-}
-
-func (ad *ADBDriver) HealthCheck() (err error) {
-	err = types.ErrDriverNotImplemented
-	return
-}
-
-func (ad *ADBDriver) GetAppiumSettings() (settings map[string]interface{}, err error) {
-	err = types.ErrDriverNotImplemented
-	return
-}
-
-func (ad *ADBDriver) SetAppiumSettings(settings map[string]interface{}) (ret map[string]interface{}, err error) {
-	err = types.ErrDriverNotImplemented
-	return
-}
-
-func (ad *ADBDriver) IsHealthy() (healthy bool, err error) {
-	err = types.ErrDriverNotImplemented
-	return
 }
 
 func (ad *ADBDriver) StartCaptureLog(identifier ...string) (err error) {

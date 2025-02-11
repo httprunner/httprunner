@@ -192,24 +192,6 @@ func (s *ShootsIOSDriver) GetForegroundApp() (app types.AppInfo, err error) {
 	return s.WDADriver.GetForegroundApp()
 }
 
-// StartCamera Starts a new camera for recording
-func (s *ShootsIOSDriver) StartCamera() error {
-	err := s.setUpWda()
-	if err != nil {
-		return err
-	}
-	return s.WDADriver.StartCamera()
-}
-
-// StopCamera Stops the camera for recording
-func (s *ShootsIOSDriver) StopCamera() error {
-	err := s.setUpWda()
-	if err != nil {
-		return err
-	}
-	return s.WDADriver.StopCamera()
-}
-
 func (s *ShootsIOSDriver) Orientation() (orientation types.Orientation, err error) {
 	err = s.setUpWda()
 	if err != nil {
@@ -257,26 +239,6 @@ func (s *ShootsIOSDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.Ac
 	return s.WDADriver.Drag(fromX, fromY, toX, toY, opts...)
 }
 
-// SetPasteboard Sets data to the general pasteboard
-func (s *ShootsIOSDriver) SetPasteboard(contentType types.PasteboardType, content string) error {
-	err := s.setUpWda()
-	if err != nil {
-		return err
-	}
-	return s.WDADriver.SetPasteboard(contentType, content)
-}
-
-// GetPasteboard Gets the data contained in the general pasteboard.
-//
-//	It worked when `WDA` was foreground. https://github.com/appium/WebDriverAgent/issues/330
-func (s *ShootsIOSDriver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
-	err = s.setUpWda()
-	if err != nil {
-		return nil, err
-	}
-	return s.WDADriver.GetPasteboard(contentType)
-}
-
 func (s *ShootsIOSDriver) SetIme(ime string) error {
 	err := s.setUpWda()
 	if err != nil {
@@ -305,12 +267,12 @@ func (s *ShootsIOSDriver) Input(text string, opts ...option.ActionOption) error 
 	return s.WDADriver.Input(text, opts...)
 }
 
-func (s *ShootsIOSDriver) Clear(packageName string) error {
+func (s *ShootsIOSDriver) AppClear(packageName string) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
-	return s.WDADriver.Clear(packageName)
+	return s.WDADriver.AppClear(packageName)
 }
 
 // PressButton Presses the corresponding hardware button on the device
@@ -374,52 +336,6 @@ func (s *ShootsIOSDriver) TapByTexts(actions ...uixt.TapTextAction) error {
 		return err
 	}
 	return s.WDADriver.TapByTexts(actions...)
-}
-
-// AccessibleSource Return application elements accessibility tree
-func (s *ShootsIOSDriver) AccessibleSource() (string, error) {
-	err := s.setUpWda()
-	if err != nil {
-		return "", err
-	}
-	return s.WDADriver.AccessibleSource()
-}
-
-// HealthCheck Health check might modify simulator state so it should only be called in-between testing sessions
-//
-//	Checks health of XCTest by:
-//	1) Querying application for some elements,
-//	2) Triggering some device events.
-func (s *ShootsIOSDriver) HealthCheck() error {
-	err := s.setUpWda()
-	if err != nil {
-		return err
-	}
-	return s.WDADriver.HealthCheck()
-}
-
-func (s *ShootsIOSDriver) GetAppiumSettings() (map[string]interface{}, error) {
-	err := s.setUpWda()
-	if err != nil {
-		return nil, err
-	}
-	return s.WDADriver.GetAppiumSettings()
-}
-
-func (s *ShootsIOSDriver) SetAppiumSettings(settings map[string]interface{}) (map[string]interface{}, error) {
-	err := s.setUpWda()
-	if err != nil {
-		return nil, err
-	}
-	return s.WDADriver.SetAppiumSettings(settings)
-}
-
-func (s *ShootsIOSDriver) IsHealthy() (bool, error) {
-	err := s.setUpWda()
-	if err != nil {
-		return false, err
-	}
-	return s.WDADriver.IsHealthy()
 }
 
 // triggers the log capture and returns the log entries

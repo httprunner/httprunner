@@ -42,7 +42,7 @@ func clearAppHandler(c *gin.Context) {
 		return
 	}
 
-	err = dExt.GetDriver().Clear(appClearReq.PackageName)
+	err = dExt.Driver.AppClear(appClearReq.PackageName)
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,

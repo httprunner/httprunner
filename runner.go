@@ -236,7 +236,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 		// release UI driver session
 		defer func() {
 			for _, client := range caseRunner.uixtDrivers {
-				client.GetDriver().DeleteSession()
+				client.Driver.DeleteSession()
 			}
 		}()
 

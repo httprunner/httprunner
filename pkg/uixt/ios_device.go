@@ -203,11 +203,11 @@ func (dev *IOSDevice) getAppInfo(packageName string) (appInfo types.AppInfo, err
 }
 
 func (dev *IOSDevice) NewDriver() (driver IDriver, err error) {
-	driver, err = NewWDADriver(dev)
+	wdaDriver, err := NewWDADriver(dev)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
-	settings, err := driver.SetAppiumSettings(map[string]interface{}{
+	settings, err := wdaDriver.SetAppiumSettings(map[string]interface{}{
 		"snapshotMaxDepth":          dev.Options.SnapshotMaxDepth,
 		"acceptAlertButtonSelector": dev.Options.AcceptAlertButtonSelector,
 	})
@@ -218,22 +218,22 @@ func (dev *IOSDevice) NewDriver() (driver IDriver, err error) {
 
 	if dev.Options.ResetHomeOnStartup {
 		log.Info().Msg("go back to home screen")
-		if err = driver.Homescreen(); err != nil {
+		if err = wdaDriver.Homescreen(); err != nil {
 			return nil, errors.Wrap(code.MobileUIDriverError,
 				fmt.Sprintf("go back to home screen failed: %v", err))
 		}
 	}
 	if dev.Options.LogOn {
-		err = driver.StartCaptureLog("hrp_wda_log")
+		err = wdaDriver.StartCaptureLog("hrp_wda_log")
 		if err != nil {
 			return nil, err
 		}
 	}
 	// setup driver
-	if err := driver.Setup(); err != nil {
+	if err := wdaDriver.Setup(); err != nil {
 		return nil, err
 	}
-	return driver, nil
+	return wdaDriver, nil
 }
 
 func (dev *IOSDevice) Install(appPath string, opts ...option.InstallOption) (err error) {

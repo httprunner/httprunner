@@ -147,14 +147,6 @@ func (hd *HDCDriver) AssertForegroundApp(packageName string, activityType ...str
 	return nil
 }
 
-func (hd *HDCDriver) StartCamera() error {
-	return types.ErrDriverNotImplemented
-}
-
-func (hd *HDCDriver) StopCamera() error {
-	return types.ErrDriverNotImplemented
-}
-
 func (hd *HDCDriver) Orientation() (orientation types.Orientation, err error) {
 	return types.OrientationPortrait, nil
 }
@@ -213,14 +205,6 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(fromX), Y: int(fromY)}).MoveTo(ghdc.Point{X: int(toX), Y: int(toY)}, duration))
 }
 
-func (hd *HDCDriver) SetPasteboard(contentType types.PasteboardType, content string) error {
-	return types.ErrDriverNotImplemented
-}
-
-func (hd *HDCDriver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
-	return nil, types.ErrDriverNotImplemented
-}
-
 func (hd *HDCDriver) SetIme(ime string) error {
 	return types.ErrDriverNotImplemented
 }
@@ -233,7 +217,7 @@ func (hd *HDCDriver) Input(text string, opts ...option.ActionOption) error {
 	return hd.uiDriver.InputText(text)
 }
 
-func (hd *HDCDriver) Clear(packageName string) error {
+func (hd *HDCDriver) AppClear(packageName string) error {
 	return types.ErrDriverNotImplemented
 }
 
@@ -287,26 +271,6 @@ func (hd *HDCDriver) TapByText(text string, opts ...option.ActionOption) error {
 
 func (hd *HDCDriver) TapByTexts(actions ...TapTextAction) error {
 	return types.ErrDriverNotImplemented
-}
-
-func (hd *HDCDriver) AccessibleSource() (string, error) {
-	return "", types.ErrDriverNotImplemented
-}
-
-func (hd *HDCDriver) HealthCheck() error {
-	return types.ErrDriverNotImplemented
-}
-
-func (hd *HDCDriver) GetAppiumSettings() (map[string]interface{}, error) {
-	return nil, types.ErrDriverNotImplemented
-}
-
-func (hd *HDCDriver) SetAppiumSettings(settings map[string]interface{}) (map[string]interface{}, error) {
-	return nil, types.ErrDriverNotImplemented
-}
-
-func (hd *HDCDriver) IsHealthy() (bool, error) {
-	return false, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) StartCaptureLog(identifier ...string) (err error) {

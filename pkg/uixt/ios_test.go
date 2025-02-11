@@ -3,7 +3,6 @@
 package uixt
 
 import (
-	"bytes"
 	"fmt"
 	"testing"
 	"time"
@@ -128,7 +127,7 @@ func Test_remoteWD_DeleteSession(t *testing.T) {
 func Test_remoteWD_HealthCheck(t *testing.T) {
 	setup(t)
 
-	err := driver.HealthCheck()
+	err := driver.(*WDADriver).HealthCheck()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,7 +136,7 @@ func Test_remoteWD_HealthCheck(t *testing.T) {
 func Test_remoteWD_GetAppiumSettings(t *testing.T) {
 	setup(t)
 
-	settings, err := driver.GetAppiumSettings()
+	settings, err := driver.(*WDADriver).GetAppiumSettings()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +153,7 @@ func Test_remoteWD_SetAppiumSettings(t *testing.T) {
 	value := _acceptAlertButtonSelector
 
 	// settings, err := driver.SetAppiumSettings(map[string]interface{}{"dismissAlertButtonSelector": "暂不"})
-	settings, err := driver.SetAppiumSettings(map[string]interface{}{key: value})
+	settings, err := driver.(*WDADriver).SetAppiumSettings(map[string]interface{}{key: value})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,7 +165,7 @@ func Test_remoteWD_SetAppiumSettings(t *testing.T) {
 func Test_remoteWD_IsWdaHealthy(t *testing.T) {
 	setup(t)
 
-	healthy, err := driver.IsHealthy()
+	healthy, err := driver.(*WDADriver).IsHealthy()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -315,42 +314,6 @@ func Test_Relative_Drag(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_SetPasteboard(t *testing.T) {
-	setup(t)
-
-	// err := driver.SetPasteboard(PasteboardTypePlaintext, "gwda")
-	err := driver.SetPasteboard(types.PasteboardTypeUrl, "Clock-stopwatch://")
-	// userHomeDir, _ := os.UserHomeDir()
-	// bytesImg, _ := ioutil.ReadFile(userHomeDir + "/Pictures/IMG_0806.jpg")
-	// err := driver.SetPasteboard(PasteboardTypeImage, string(bytesImg))
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func Test_remoteWD_GetPasteboard(t *testing.T) {
-	setup(t)
-
-	var buffer *bytes.Buffer
-	var err error
-
-	buffer, err = driver.GetPasteboard(types.PasteboardTypePlaintext)
-	// buffer, err = driver.GetPasteboard(PasteboardTypeUrl)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(buffer.String())
-
-	// buffer, err = driver.GetPasteboard(PasteboardTypeImage)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// userHomeDir, _ := os.UserHomeDir()
-	// if err = ioutil.WriteFile(userHomeDir+"/Desktop/p1.png", buffer.Bytes(), 0600); err != nil {
-	// 	t.Error(err)
-	// }
-}
-
 func Test_remoteWD_SendKeys(t *testing.T) {
 	setup(t)
 	// driver.StartCaptureLog("hrp_wda_log")
@@ -460,7 +423,7 @@ func TestGetForegroundApp(t *testing.T) {
 func Test_remoteWD_AccessibleSource(t *testing.T) {
 	setup(t)
 
-	source, err := driver.AccessibleSource()
+	source, err := driver.(*WDADriver).AccessibleSource()
 	if err != nil {
 		t.Fatal(err)
 	}

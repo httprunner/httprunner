@@ -674,7 +674,7 @@ func (wd *WDADriver) Input(text string, opts ...option.ActionOption) (err error)
 	return wd.SendKeys(text, opts...)
 }
 
-func (wd *WDADriver) Clear(packageName string) error {
+func (wd *WDADriver) AppClear(packageName string) error {
 	return types.ErrDriverNotImplemented
 }
 
@@ -720,23 +720,6 @@ func (wd *WDADriver) PressButton(devBtn types.DeviceButton) (err error) {
 	data := map[string]interface{}{"name": devBtn}
 	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/pressButton")
 	return
-}
-
-func (wd *WDADriver) StartCamera() (err error) {
-	// start camera, alias for app_launch com.apple.camera
-	return wd.AppLaunch("com.apple.camera")
-}
-
-func (wd *WDADriver) StopCamera() (err error) {
-	// stop camera, alias for app_terminate com.apple.camera
-	success, err := wd.AppTerminate("com.apple.camera")
-	if err != nil {
-		return errors.Wrap(err, "failed to terminate camera")
-	}
-	if !success {
-		log.Warn().Msg("camera was not running")
-	}
-	return nil
 }
 
 func (wd *WDADriver) Orientation() (orientation types.Orientation, err error) {
@@ -859,6 +842,17 @@ func (wd *WDADriver) HealthCheck() (err error) {
 	return
 }
 
+func (wd *WDADriver) IsHealthy() (healthy bool, err error) {
+	var rawResp DriverRawResponse
+	if rawResp, err = wd.httpGET("/health"); err != nil {
+		return false, err
+	}
+	if string(rawResp) != "I-AM-ALIVE" {
+		return false, nil
+	}
+	return true, nil
+}
+
 func (wd *WDADriver) GetAppiumSettings() (settings map[string]interface{}, err error) {
 	// [[FBRoute GET:@"/appium/settings"] respondWithTarget:self action:@selector(handleGetSettings:)]
 	var rawResp DriverRawResponse
@@ -886,17 +880,6 @@ func (wd *WDADriver) SetAppiumSettings(settings map[string]interface{}) (ret map
 	}
 	ret = reply.Value
 	return
-}
-
-func (wd *WDADriver) IsHealthy() (healthy bool, err error) {
-	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/health"); err != nil {
-		return false, err
-	}
-	if string(rawResp) != "I-AM-ALIVE" {
-		return false, nil
-	}
-	return true, nil
 }
 
 func (wd *WDADriver) WdaShutdown() (err error) {

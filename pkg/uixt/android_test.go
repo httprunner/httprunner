@@ -121,18 +121,6 @@ func TestDriver_BatteryInfo(t *testing.T) {
 	t.Log(batteryInfo)
 }
 
-func TestDriver_GetAppiumSettings(t *testing.T) {
-	appiumSettings, err := driver.GetAppiumSettings()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for k := range appiumSettings {
-		t.Logf("key: %s\tvalue: %v", k, appiumSettings[k])
-	}
-	// t.Log(appiumSettings)
-}
-
 func TestDriver_DeviceInfo(t *testing.T) {
 	devInfo, err := driver.DeviceInfo()
 	if err != nil {

@@ -42,97 +42,42 @@ type IDriver interface {
 	WindowSize() (types.Size, error)
 	Screen() (ai.Screen, error)
 	Scale() (float64, error)
+	Screenshot() (*bytes.Buffer, error)
+	Source(srcOpt ...option.SourceOption) (string, error)
 
 	// actions
 	Homescreen() error
 	Unlock() (err error)
+	// tap
+	Tap(x, y float64, opts ...option.ActionOption) error
+	DoubleTap(x, y float64, opts ...option.ActionOption) error
+	TapByText(text string, opts ...option.ActionOption) error // TODO: remove
+	TapByTexts(actions ...TapTextAction) error                // TODO: remove
+	// swipe
+	Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
+	Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
+	TouchAndHold(x, y float64, opts ...option.ActionOption) error
+	// input
+	SendKeys(text string, opts ...option.ActionOption) error
+	Input(text string, opts ...option.ActionOption) error
+	// press key
+	PressButton(devBtn types.DeviceButton) error
+	PressBack(opts ...option.ActionOption) error
+	PressKeyCode(keyCode KeyCode) (err error)
+	Backspace(count int, opts ...option.ActionOption) (err error)
 
-	// AppLaunch Launch an application with given bundle identifier in scope of current session.
-	// !This method is only available since Xcode9 SDK
+	// app related
 	AppLaunch(packageName string) error
-	// AppTerminate Terminate an application with the given package name.
-	// Either `true` if the app has been successfully terminated or `false` if it was not running
 	AppTerminate(packageName string) (bool, error)
-	// GetForegroundApp returns current foreground app package name and activity name
 	GetForegroundApp() (app types.AppInfo, err error)
-	// AssertForegroundApp returns nil if the given package and activity are in foreground
 	AssertForegroundApp(packageName string, activityType ...string) error
-
-	// StartCamera Starts a new camera for recording
-	StartCamera() error
-	// StopCamera Stops the camera for recording
-	StopCamera() error
+	AppClear(packageName string) error
 
 	Orientation() (orientation types.Orientation, err error)
-
 	SetRotation(rotation types.Rotation) (err error)
 	Rotation() (rotation types.Rotation, err error)
 
-	// Tap Sends a tap event at the coordinate.
-	Tap(x, y float64, opts ...option.ActionOption) error
-
-	// DoubleTap Sends a double tap event at the coordinate.
-	DoubleTap(x, y float64, opts ...option.ActionOption) error
-
-	// TouchAndHold Initiates a long-press gesture at the coordinate, holding for the specified duration.
-	//  second: The default value is 1
-	TouchAndHold(x, y float64, opts ...option.ActionOption) error
-
-	// Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
-	// WithPressDurationOption option can be used to set pressForDuration (default to 1 second).
-	Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
-
-	// Swipe works like Drag, but `pressForDuration` value is 0
-	Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
-
-	// SetPasteboard Sets data to the general pasteboard
-	SetPasteboard(contentType types.PasteboardType, content string) error
-	// GetPasteboard Gets the data contained in the general pasteboard.
-	//  It worked when `WDA` was foreground. https://github.com/appium/WebDriverAgent/issues/330
-	GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error)
-
 	SetIme(ime string) error
-
-	// SendKeys Types a string into active element. There must be element with keyboard focus,
-	// otherwise an error is raised.
-	// WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
-	SendKeys(text string, opts ...option.ActionOption) error
-
-	// Input works like SendKeys
-	Input(text string, opts ...option.ActionOption) error
-
-	Clear(packageName string) error
-
-	// PressButton Presses the corresponding hardware button on the device
-	PressButton(devBtn types.DeviceButton) error
-
-	// PressBack Presses the back button
-	PressBack(opts ...option.ActionOption) error
-
-	PressKeyCode(keyCode KeyCode) (err error)
-
-	Backspace(count int, opts ...option.ActionOption) (err error)
-
-	Screenshot() (*bytes.Buffer, error)
-
-	// Source Return application elements tree
-	Source(srcOpt ...option.SourceOption) (string, error)
-
-	TapByText(text string, opts ...option.ActionOption) error
-	TapByTexts(actions ...TapTextAction) error
-
-	// AccessibleSource Return application elements accessibility tree
-	AccessibleSource() (string, error)
-
-	// HealthCheck Health check might modify simulator state so it should only be called in-between testing sessions
-	//  Checks health of XCTest by:
-	//  1) Querying application for some elements,
-	//  2) Triggering some device events.
-	HealthCheck() error
-	GetAppiumSettings() (map[string]interface{}, error)
-	SetAppiumSettings(settings map[string]interface{}) (map[string]interface{}, error)
-
-	IsHealthy() (bool, error)
 
 	// triggers the log capture and returns the log entries
 	StartCaptureLog(identifier ...string) (err error)

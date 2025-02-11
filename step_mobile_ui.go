@@ -370,24 +370,6 @@ func (s *StepMobile) ScreenShot(opts ...option.ActionOption) *StepMobile {
 	return s
 }
 
-func (s *StepMobile) StartCamera() *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method:  uixt.ACTION_StartCamera,
-		Params:  nil,
-		Options: nil,
-	})
-	return s
-}
-
-func (s *StepMobile) StopCamera() *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method:  uixt.ACTION_StopCamera,
-		Params:  nil,
-		Options: nil,
-	})
-	return s
-}
-
 func (s *StepMobile) DisableAutoPopupHandler() *StepMobile {
 	s.IgnorePopup = true
 	return s

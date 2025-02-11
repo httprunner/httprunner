@@ -13,7 +13,6 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 type ActionMethod string
@@ -31,10 +30,6 @@ const (
 	ACTION_Sleep            ActionMethod = "sleep"
 	ACTION_SleepMS          ActionMethod = "sleep_ms"
 	ACTION_SleepRandom      ActionMethod = "sleep_random"
-	ACTION_StartCamera      ActionMethod = "camera_start" // alias for app_launch camera
-	ACTION_StopCamera       ActionMethod = "camera_stop"  // alias for app_terminate camera
-	ACTION_SetClipboard     ActionMethod = "set_clipboard"
-	ACTION_GetClipboard     ActionMethod = "get_clipboard"
 	ACTION_SetIme           ActionMethod = "set_ime"
 	ACTION_GetSource        ActionMethod = "get_source"
 	ACTION_GetForegroundApp ActionMethod = "get_foreground_app"
@@ -158,7 +153,7 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		}
 	case ACTION_AppClear:
 		if packageName, ok := action.Params.(string); ok {
-			if err = dExt.Driver.Clear(packageName); err != nil {
+			if err = dExt.Driver.AppClear(packageName); err != nil {
 				return errors.Wrap(err, "failed to clear app")
 			}
 		}
@@ -200,15 +195,6 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 			return nil
 		}
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
-	case ACTION_SetClipboard:
-		if text, ok := action.Params.(string); ok {
-			err := dExt.Driver.SetPasteboard(types.PasteboardTypePlaintext, text)
-			if err != nil {
-				return errors.Wrap(err, "failed to set clipboard")
-			}
-			return nil
-		}
-		return fmt.Errorf("set_clioboard params should be text(string), got %v", action.Params)
 	case ACTION_Home:
 		return dExt.Driver.Homescreen()
 	case ACTION_SetIme:
@@ -331,10 +317,6 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		log.Info().Msg("take screenshot for current screen")
 		_, err := dExt.GetScreenResult(action.GetScreenOptions()...)
 		return err
-	case ACTION_StartCamera:
-		return dExt.Driver.StartCamera()
-	case ACTION_StopCamera:
-		return dExt.Driver.StopCamera()
 	case ACTION_ClosePopups:
 		return dExt.ClosePopupsHandler()
 	case ACTION_CallFunction:
