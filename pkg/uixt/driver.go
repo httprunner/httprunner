@@ -81,21 +81,7 @@ func NewXTDriver(driver IDriver, opts ...ai.AIServiceOption) *XTDriver {
 	return driverExt
 }
 
-var _ IDriverExt = (*XTDriver)(nil)
-
 // XTDriver = IDriver + AI
-type IDriverExt interface {
-	GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error)
-	GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error)
-
-	// tap with AI
-	TapByOCR(text string, opts ...option.ActionOption) error
-	TapByCV(opts ...option.ActionOption) error // TODO: refactor
-
-	CheckPopup() (popup *PopupInfo, err error)
-	ClosePopupsHandler() error
-}
-
 type XTDriver struct {
 	IDriver
 	CVService  ai.ICVService  // OCR/CV

@@ -64,7 +64,7 @@ func (dExt *XTDriver) AutoPopupHandler() error {
 	// TODO: check popup by activity type
 
 	// check popup by screenshot
-	screenResult, err := dExt.GetScreenResult(
+	texts, err := dExt.GetScreenTexts(
 		option.WithScreenShotOCR(true),
 		option.WithScreenShotUpload(true),
 		option.WithScreenShotFileName("check_popup"),
@@ -73,7 +73,7 @@ func (dExt *XTDriver) AutoPopupHandler() error {
 		return errors.Wrap(err, "get screen result failed for popup handler")
 	}
 
-	return dExt.handleTextPopup(screenResult.Texts)
+	return dExt.handleTextPopup(texts)
 }
 
 type PopupInfo struct {

@@ -113,8 +113,9 @@ func (dExt *XTDriver) swipeToTapTexts(texts []string, opts ...option.ActionOptio
 		if err != nil {
 			return err
 		}
+
 		points, err := screenResult.Texts.FindTexts(texts,
-			dExt.ParseActionOptions(optionsWithoutIdentifier...)...)
+			convertToAbsoluteScope(dExt.IDriver, optionsWithoutIdentifier...)...)
 		if err != nil {
 			log.Error().Err(err).Strs("texts", texts).Msg("find texts failed")
 			return err

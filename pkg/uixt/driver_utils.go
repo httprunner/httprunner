@@ -2,6 +2,8 @@ package uixt
 
 import (
 	"fmt"
+	"math/rand/v2"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -9,6 +11,24 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
+
+func convertToAbsoluteScope(driver IDriver, opts ...option.ActionOption) []option.ActionOption {
+	actionOptions := option.NewActionOptions(opts...)
+
+	// convert relative scope to absolute scope
+	if len(actionOptions.AbsScope) != 4 && len(actionOptions.Scope) == 4 {
+		scope := actionOptions.Scope
+		x1, y1, x2, y2, err := convertToAbsoluteCoordinates(
+			driver, scope[0], scope[1], scope[2], scope[3])
+		if err != nil {
+			log.Error().Err(err).Msg("convert absolute scope failed")
+			return opts
+		}
+		actionOptions.AbsScope = []int{int(x1), int(y1), int(x2), int(y2)}
+	}
+
+	return actionOptions.Options()
+}
 
 func convertToAbsolutePoint(driver IDriver, x, y float64) (absX, absY float64, err error) {
 	if !assertRelative(x) || !assertRelative(y) {
@@ -144,4 +164,84 @@ func (dExt *XTDriver) DoValidation(check, assert, expected string, message ...st
 
 	log.Info().Str("assert", assert).Str("expect", expected).Msg("validate success")
 	return nil
+}
+
+type SleepConfig struct {
+	StartTime    time.Time `json:"start_time"`
+	Seconds      float64   `json:"seconds,omitempty"`
+	Milliseconds int64     `json:"milliseconds,omitempty"`
+}
+
+// getSimulationDuration returns simulation duration by given params (in seconds)
+func getSimulationDuration(params []float64) (milliseconds int64) {
+	if len(params) == 1 {
+		// given constant duration time
+		return int64(params[0] * 1000)
+	}
+
+	if len(params) == 2 {
+		// given [min, max], missing weight
+		// append default weight 1
+		params = append(params, 1.0)
+	}
+
+	var sections []struct {
+		min, max, weight float64
+	}
+	totalProb := 0.0
+	for i := 0; i+3 <= len(params); i += 3 {
+		min := params[i]
+		max := params[i+1]
+		weight := params[i+2]
+		totalProb += weight
+		sections = append(sections,
+			struct{ min, max, weight float64 }{min, max, weight},
+		)
+	}
+
+	if totalProb == 0 {
+		log.Warn().Msg("total weight is 0, skip simulation")
+		return 0
+	}
+
+	r := rand.Float64()
+	accProb := 0.0
+	for _, s := range sections {
+		accProb += s.weight / totalProb
+		if r < accProb {
+			milliseconds := int64((s.min + rand.Float64()*(s.max-s.min)) * 1000)
+			log.Info().Int64("random(ms)", milliseconds).
+				Interface("strategy_params", params).Msg("get simulation duration")
+			return milliseconds
+		}
+	}
+
+	log.Warn().Interface("strategy_params", params).
+		Msg("get simulation duration failed, skip simulation")
+	return 0
+}
+
+// sleepStrict sleeps strict duration with given params
+// startTime is used to correct sleep duration caused by process time
+func sleepStrict(startTime time.Time, strictMilliseconds int64) {
+	var elapsed int64
+	if !startTime.IsZero() {
+		elapsed = time.Since(startTime).Milliseconds()
+	}
+	dur := strictMilliseconds - elapsed
+
+	// if elapsed time is greater than given duration, skip sleep to reduce deviation caused by process time
+	if dur <= 0 {
+		log.Warn().
+			Int64("elapsed(ms)", elapsed).
+			Int64("strictSleep(ms)", strictMilliseconds).
+			Msg("elapsed >= simulation duration, skip sleep")
+		return
+	}
+
+	log.Info().Int64("sleepDuration(ms)", dur).
+		Int64("elapsed(ms)", elapsed).
+		Int64("strictSleep(ms)", strictMilliseconds).
+		Msg("sleep remaining duration time")
+	time.Sleep(time.Duration(dur) * time.Millisecond)
 }
