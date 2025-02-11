@@ -106,7 +106,7 @@ func TestInput(t *testing.T) {
 
 func TestSave(t *testing.T) {
 	setupShootsAndroidDriver(t)
-	raw, err := shootsAndroidDriver.Screenshot()
+	raw, err := shootsAndroidDriver.ScreenShot()
 	if err != nil {
 		t.Fatal(err)
 	}

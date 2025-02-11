@@ -66,7 +66,7 @@ func TestIOSSwipe(t *testing.T) {
 
 func TestIOSSave(t *testing.T) {
 	setupShootsIOSDriver(t)
-	raw, err := shootsIOSDriver.Screenshot()
+	raw, err := shootsIOSDriver.ScreenShot()
 	if err != nil {
 		t.Fatal(err)
 	}

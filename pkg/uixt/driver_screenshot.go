@@ -200,7 +200,7 @@ func (dExt *XTDriver) FindUIResult(opts ...option.ActionOption) (point ai.PointF
 
 // GetScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
 func (dExt *XTDriver) GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error) {
-	if raw, err = dExt.Screenshot(); err != nil {
+	if raw, err = dExt.ScreenShot(); err != nil {
 		log.Error().Err(err).Msg("capture screenshot data failed")
 		return nil, "", errors.Wrap(code.DeviceScreenShotError, err.Error())
 	}

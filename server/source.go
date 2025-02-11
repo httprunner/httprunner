@@ -18,7 +18,7 @@ func screenshotHandler(c *gin.Context) {
 		return
 	}
 
-	raw, err := dExt.Screenshot()
+	raw, err := dExt.ScreenShot()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get screenshot", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,

@@ -86,7 +86,7 @@ func TestPressBack(t *testing.T) {
 
 func TestScreenshot(t *testing.T) {
 	setupHarmonyDevice(t)
-	screenshot, err := driver.Screenshot()
+	screenshot, err := driver.ScreenShot()
 	if err != nil {
 		t.Fatal(err)
 	}

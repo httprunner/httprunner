@@ -543,10 +543,10 @@ func (ud *UIA2Driver) Rotation() (rotation types.Rotation, err error) {
 	return
 }
 
-func (ud *UIA2Driver) Screenshot() (raw *bytes.Buffer, err error) {
+func (ud *UIA2Driver) ScreenShot() (raw *bytes.Buffer, err error) {
 	// https://bytedance.larkoffice.com/docx/C8qEdmSHnoRvMaxZauocMiYpnLh
 	// ui2截图受内存影响，改为adb截图
-	return ud.ADBDriver.Screenshot()
+	return ud.ADBDriver.ScreenShot()
 }
 
 func (ud *UIA2Driver) Source(srcOpt ...option.SourceOption) (source string, err error) {

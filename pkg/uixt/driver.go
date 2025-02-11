@@ -29,21 +29,22 @@ var (
 // current implemeted driver: ADBDriver, UIA2Driver, WDADriver, HDCDriver
 type IDriver interface {
 	GetDevice() IDevice
+	Setup() error
+	TearDown() error
 
 	// session
 	InitSession(capabilities option.Capabilities) error
-	DeleteSession() error
 	GetSession() *Session
+	DeleteSession() error
 
 	// device info and status
 	Status() (types.DeviceStatus, error)
 	DeviceInfo() (types.DeviceInfo, error)
 	BatteryInfo() (types.BatteryInfo, error)
 	WindowSize() (types.Size, error)
-	Screen() (ai.Screen, error)
 	Scale() (float64, error)
-	Screenshot() (*bytes.Buffer, error)
-	RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error)
+	ScreenShot() (*bytes.Buffer, error)
+	ScreenRecord(folderPath string, duration time.Duration) (videoPath string, err error)
 	Source(srcOpt ...option.SourceOption) (string, error)
 
 	// actions
@@ -70,9 +71,9 @@ type IDriver interface {
 	// app related
 	AppLaunch(packageName string) error
 	AppTerminate(packageName string) (bool, error)
-	GetForegroundApp() (app types.AppInfo, err error)
-	AssertForegroundApp(packageName string, activityType ...string) error
 	AppClear(packageName string) error
+	GetForegroundApp() (app types.AppInfo, err error)
+	AssertForegroundApp(packageName string, activityType ...string) error // TODO: remove
 
 	Orientation() (orientation types.Orientation, err error)
 	SetRotation(rotation types.Rotation) (err error)
@@ -83,11 +84,6 @@ type IDriver interface {
 	// triggers the log capture and returns the log entries
 	StartCaptureLog(identifier ...string) (err error)
 	StopCaptureLog() (result interface{}, err error)
-
-	GetDriverResults() []*DriverRequests
-
-	Setup() error
-	TearDown() error
 }
 
 func NewXTDriver(driver IDriver, opts ...ai.AIServiceOption) *XTDriver {

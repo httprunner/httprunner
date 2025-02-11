@@ -267,6 +267,22 @@ func (wd *WDADriver) Screen() (screen ai.Screen, err error) {
 	return
 }
 
+func (wd *WDADriver) ScreenShot() (raw *bytes.Buffer, err error) {
+	// [[FBRoute GET:@"/screenshot"] respondWithTarget:self action:@selector(handleGetScreenshot:)]
+	// [[FBRoute GET:@"/screenshot"].withoutSession respondWithTarget:self action:@selector(handleGetScreenshot:)]
+	var rawResp DriverRawResponse
+	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/screenshot"); err != nil {
+		return nil, errors.Wrap(code.DeviceScreenShotError,
+			fmt.Sprintf("get WDA screenshot data failed: %v", err))
+	}
+
+	if raw, err = rawResp.ValueDecodeAsBase64(); err != nil {
+		return nil, errors.Wrap(code.DeviceScreenShotError,
+			fmt.Sprintf("decode WDA screenshot data failed: %v", err))
+	}
+	return
+}
+
 func (wd *WDADriver) Scale() (float64, error) {
 	if !builtin.IsZeroFloat64(wd.Session.scale) {
 		return wd.Session.scale, nil
@@ -763,22 +779,6 @@ func (wd *WDADriver) SetRotation(rotation types.Rotation) (err error) {
 	return
 }
 
-func (wd *WDADriver) Screenshot() (raw *bytes.Buffer, err error) {
-	// [[FBRoute GET:@"/screenshot"] respondWithTarget:self action:@selector(handleGetScreenshot:)]
-	// [[FBRoute GET:@"/screenshot"].withoutSession respondWithTarget:self action:@selector(handleGetScreenshot:)]
-	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/screenshot"); err != nil {
-		return nil, errors.Wrap(code.DeviceScreenShotError,
-			fmt.Sprintf("get WDA screenshot data failed: %v", err))
-	}
-
-	if raw, err = rawResp.ValueDecodeAsBase64(); err != nil {
-		return nil, errors.Wrap(code.DeviceScreenShotError,
-			fmt.Sprintf("decode WDA screenshot data failed: %v", err))
-	}
-	return
-}
-
 func (wd *WDADriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	// [[FBRoute GET:@"/source"] respondWithTarget:self action:@selector(handleGetSourceCommand:)]
 	// [[FBRoute GET:@"/source"].withoutSession
@@ -892,7 +892,7 @@ func (wd *WDADriver) triggerWDALog(data map[string]interface{}) (rawResp []byte,
 	return wd.httpPOST(data, "/gtf/automation/log")
 }
 
-func (wd *WDADriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
+func (wd *WDADriver) ScreenRecord(folderPath string, duration time.Duration) (videoPath string, err error) {
 	// 获取当前时间戳
 	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
 	// 创建文件名
@@ -997,13 +997,6 @@ func (wd *WDADriver) StopCaptureLog() (result interface{}, err error) {
 
 func (wd *WDADriver) GetSession() *Session {
 	return wd.Session
-}
-
-func (wd *WDADriver) GetDriverResults() []*DriverRequests {
-	defer func() {
-		wd.Session.requests = nil
-	}()
-	return wd.Session.requests
 }
 
 func (wd *WDADriver) Setup() error {

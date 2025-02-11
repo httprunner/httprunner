@@ -10,7 +10,6 @@ import (
 	"code.byted.org/iesqa/ghdc"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
@@ -79,10 +78,6 @@ func (hd *HDCDriver) WindowSize() (size types.Size, err error) {
 	size.Width = display.Width
 	size.Height = display.Height
 	return size, err
-}
-
-func (hd *HDCDriver) Screen() (ai.Screen, error) {
-	return ai.Screen{}, types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) Scale() (float64, error) {
@@ -241,7 +236,7 @@ func (hd *HDCDriver) PressHarmonyKeyCode(keyCode ghdc.KeyCode) (err error) {
 	return hd.uiDriver.PressKey(keyCode)
 }
 
-func (hd *HDCDriver) Screenshot() (*bytes.Buffer, error) {
+func (hd *HDCDriver) ScreenShot() (*bytes.Buffer, error) {
 	tempDir := os.TempDir()
 	screenshotPath := fmt.Sprintf("%s/screenshot_%d.png", tempDir, time.Now().Unix())
 	err := hd.uiDriver.Screenshot(screenshotPath)
@@ -282,11 +277,7 @@ func (hd *HDCDriver) StopCaptureLog() (result interface{}, err error) {
 	return hd.points, nil
 }
 
-func (hd *HDCDriver) GetDriverResults() []*DriverRequests {
-	return nil
-}
-
-func (hd *HDCDriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
+func (hd *HDCDriver) ScreenRecord(folderPath string, duration time.Duration) (videoPath string, err error) {
 	return "", nil
 }
 

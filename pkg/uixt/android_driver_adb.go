@@ -23,7 +23,6 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/utf7"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
@@ -162,11 +161,6 @@ func (ad *ADBDriver) WindowSize() (size types.Size, err error) {
 
 	ad.Session.windowSize = size // cache window size
 	return size, nil
-}
-
-func (ad *ADBDriver) Screen() (screen ai.Screen, err error) {
-	err = types.ErrDriverNotImplemented
-	return
 }
 
 func (ad *ADBDriver) Scale() (scale float64, err error) {
@@ -549,7 +543,7 @@ func (ad *ADBDriver) SetRotation(rotation types.Rotation) (err error) {
 	return
 }
 
-func (ad *ADBDriver) Screenshot() (raw *bytes.Buffer, err error) {
+func (ad *ADBDriver) ScreenShot() (raw *bytes.Buffer, err error) {
 	resp, err := ad.runShellCommand("screencap", "-p")
 	if err != nil {
 		return nil, errors.Wrap(err, "adb screencap failed")
@@ -735,10 +729,6 @@ func (ad *ADBDriver) GetSession() *Session {
 	return ad.Session
 }
 
-func (ad *ADBDriver) GetDriverResults() []*DriverRequests {
-	return nil
-}
-
 func (ad *ADBDriver) GetForegroundApp() (app types.AppInfo, err error) {
 	packageInfo, err := ad.runShellCommand(
 		"CLASSPATH=/data/local/tmp/evalite", "app_process", "/",
@@ -905,7 +895,7 @@ var androidActivities = map[string]map[string][]string{
 	// TODO: SPH, XHS
 }
 
-func (ad *ADBDriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
+func (ad *ADBDriver) ScreenRecord(folderPath string, duration time.Duration) (videoPath string, err error) {
 	// 获取当前时间戳
 	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
 	// 创建文件名

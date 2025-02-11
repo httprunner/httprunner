@@ -229,7 +229,7 @@ func Test_remoteWD_WindowSize(t *testing.T) {
 func Test_remoteWD_Screen(t *testing.T) {
 	setup(t)
 
-	screen, err := driver.Screen()
+	screen, err := driver.(*WDADriver).Screen()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -348,7 +348,7 @@ func Test_remoteWD_PressButton(t *testing.T) {
 func Test_remoteWD_Screenshot(t *testing.T) {
 	setup(t)
 
-	screenshot, err := driver.Screenshot()
+	screenshot, err := driver.ScreenShot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -433,7 +433,7 @@ func Test_remoteWD_AccessibleSource(t *testing.T) {
 
 func TestRecord(t *testing.T) {
 	setup(t)
-	path, err := driver.(*WDADriver).RecordScreen("", 5*time.Second)
+	path, err := driver.ScreenRecord("", 5*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -68,7 +68,7 @@ func TestDriver_Status(t *testing.T) {
 }
 
 func TestDriver_Screenshot(t *testing.T) {
-	screenshot, err := driver.Screenshot()
+	screenshot, err := driver.ScreenShot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -250,7 +250,7 @@ func TestDriver_AppLaunch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	raw, err := driver.Screenshot()
+	raw, err := driver.ScreenShot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -303,14 +303,14 @@ func TestDriver_KeepAlive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = driver.Screenshot()
+	_, err = driver.ScreenShot()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(60 * time.Second)
 
-	_, err = driver.Screenshot()
+	_, err = driver.ScreenShot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -350,7 +350,7 @@ func TestDriver_ShellInputUnicode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	raw, err := driver.Screenshot()
+	raw, err := driver.ScreenShot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -393,7 +393,7 @@ func TestTapTexts(t *testing.T) {
 
 func TestRecordVideo(t *testing.T) {
 	setupAndroidAdbDriver(t)
-	path, err := driverExt.RecordScreen("", 5*time.Second)
+	path, err := driverExt.ScreenRecord("", 5*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
