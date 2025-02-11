@@ -127,18 +127,6 @@ func (s *StepMobile) TapAbsXY(x, y float64, opts ...option.ActionOption) *StepMo
 	return s
 }
 
-// Tap taps on the target element
-func (s *StepMobile) Tap(params string, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_Tap,
-		Params:  params,
-		Options: option.NewActionOptions(opts...),
-	}
-
-	s.obj().Actions = append(s.obj().Actions, action)
-	return s
-}
-
 // TapByOCR taps on the target element by OCR recognition
 func (s *StepMobile) TapByOCR(ocrText string, opts ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
@@ -181,17 +169,6 @@ func (s *StepMobile) DoubleTapXY(x, y float64, opts ...option.ActionOption) *Ste
 		Params:  []float64{x, y},
 		Options: option.NewActionOptions(opts...),
 	})
-	return s
-}
-
-func (s *StepMobile) DoubleTap(params string, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_DoubleTap,
-		Params:  params,
-		Options: option.NewActionOptions(opts...),
-	}
-
-	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
 

@@ -58,9 +58,9 @@ type IDriver interface {
 	Unlock() error
 	Back() error
 	// tap
-	TapXY(x, y float64, opts ...option.ActionOption) error // tap on [x, y] percent of window size
-	TapAbsXY(x, y float64, opts ...option.ActionOption) error
-	DoubleTapXY(x, y float64, opts ...option.ActionOption) error
+	TapXY(x, y float64, opts ...option.ActionOption) error       // by percentage
+	TapAbsXY(x, y float64, opts ...option.ActionOption) error    // by absolute coordinate
+	DoubleTapXY(x, y float64, opts ...option.ActionOption) error // by percentage
 	TouchAndHold(x, y float64, opts ...option.ActionOption) error
 	TapByText(text string, opts ...option.ActionOption) error // TODO: remove
 	TapByTexts(actions ...TapTextAction) error                // TODO: remove
@@ -99,12 +99,9 @@ type IDriverExt interface {
 	GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error)
 	GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error)
 
-	// tap
-	TapByOCR(ocrText string, opts ...option.ActionOption) error
-	TapXY(x, y float64, opts ...option.ActionOption) error
-	TapAbsXY(x, y float64, opts ...option.ActionOption) error
-	TapOffset(param string, xOffset, yOffset float64, opts ...option.ActionOption) error
-	TapByUIDetection(opts ...option.ActionOption) error
+	// tap with AI
+	TapByOCR(text string, opts ...option.ActionOption) error
+	TapByCV(opts ...option.ActionOption) error
 
 	// swipe
 	SwipeRelative(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error

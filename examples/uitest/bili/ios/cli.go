@@ -95,7 +95,7 @@ func watchVideo(driver *uixt.XTDriver) (err error) {
 	time.Sleep(500 * time.Millisecond)
 
 	// 切换横屏
-	err = driver.TapByUIDetection(
+	err = driver.TapByCV(
 		option.WithScreenShotUITypes("fullScreen"))
 	if err != nil {
 		// 未找到横屏图标，该页面可能不是横版视频（直播|广告|Feed）

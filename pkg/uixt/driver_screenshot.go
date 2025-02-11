@@ -142,16 +142,6 @@ func (dExt *XTDriver) GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.O
 	return screenResult.Texts, nil
 }
 
-func (dExt *XTDriver) FindUIRectInUIKit(search string, opts ...option.ActionOption) (point ai.PointF, err error) {
-	// find text using OCR
-	if !builtin.IsPathExists(search) {
-		return dExt.FindScreenText(search, opts...)
-	}
-	// TODO: find image using CV
-	err = errors.New("ocr text not found")
-	return
-}
-
 func (dExt *XTDriver) FindScreenText(text string, opts ...option.ActionOption) (point ai.PointF, err error) {
 	options := option.NewActionOptions(opts...)
 	if options.ScreenShotFileName == "" {

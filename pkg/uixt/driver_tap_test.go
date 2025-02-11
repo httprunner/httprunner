@@ -29,9 +29,3 @@ func TestDriverExt_TapAbsXY(t *testing.T) {
 	err := iosDriverExt.TapAbsXY(100, 300)
 	checkErr(t, err)
 }
-
-func TestDriverExt_TapWithOCR(t *testing.T) {
-	// 需要点击文字上方的图标
-	err := iosDriverExt.TapOffset("抖音", 0, -20)
-	checkErr(t, err)
-}

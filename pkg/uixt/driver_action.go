@@ -41,9 +41,7 @@ const (
 	ACTION_TapAbsXY    ActionMethod = "tap_abs_xy"
 	ACTION_TapByOCR    ActionMethod = "tap_ocr"
 	ACTION_TapByCV     ActionMethod = "tap_cv"
-	ACTION_Tap         ActionMethod = "tap"
 	ACTION_DoubleTapXY ActionMethod = "double_tap_xy"
-	ACTION_DoubleTap   ActionMethod = "double_tap"
 	ACTION_Swipe       ActionMethod = "swipe"
 	ACTION_Input       ActionMethod = "input"
 	ACTION_Back        ActionMethod = "back"
@@ -234,11 +232,6 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 			return dExt.TapAbsXY(x, y, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapAbsXY, action.Params)
-	case ACTION_Tap:
-		if param, ok := action.Params.(string); ok {
-			return dExt.Tap(param, action.GetOptions()...)
-		}
-		return fmt.Errorf("invalid %s params: %v", ACTION_Tap, action.Params)
 	case ACTION_TapByOCR:
 		if ocrText, ok := action.Params.(string); ok {
 			return dExt.TapByOCR(ocrText, action.GetOptions()...)
@@ -247,7 +240,7 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 	case ACTION_TapByCV:
 		actionOptions := option.NewActionOptions(action.GetOptions()...)
 		if len(actionOptions.ScreenShotWithUITypes) > 0 {
-			return dExt.TapByUIDetection(action.GetOptions()...)
+			return dExt.TapByCV(action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapByCV, action.Params)
 	case ACTION_DoubleTapXY:
@@ -260,11 +253,6 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 			return dExt.DoubleTapXY(x, y)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTapXY, action.Params)
-	case ACTION_DoubleTap:
-		if param, ok := action.Params.(string); ok {
-			return dExt.DoubleTap(param)
-		}
-		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTap, action.Params)
 	case ACTION_Swipe:
 		params := action.Params
 		swipeAction := prepareSwipeAction(dExt, params, action.GetOptions()...)
