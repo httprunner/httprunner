@@ -44,7 +44,7 @@ func TestViaUSB(t *testing.T) {
 
 func TestInstall(t *testing.T) {
 	setup(t)
-	err := iOSDriverExt.GetDriver().GetDevice().Install("xxx.ipa",
+	err := iOSDriverExt.GetDevice().Install("xxx.ipa",
 		option.WithRetryTimes(5))
 	log.Error().Err(err)
 	if err != nil {
@@ -268,7 +268,7 @@ func Test_remoteWD_AppTerminate(t *testing.T) {
 func Test_remoteWD_Tap(t *testing.T) {
 	setup(t)
 
-	err := driver.Tap(200, 300)
+	err := driver.TapXY(200, 300)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -277,7 +277,7 @@ func Test_remoteWD_Tap(t *testing.T) {
 func Test_remoteWD_DoubleTap(t *testing.T) {
 	setup(t)
 
-	err := driver.DoubleTap(200, 300)
+	err := driver.DoubleTapXY(200, 300)
 	if err != nil {
 		t.Fatal(err)
 	}

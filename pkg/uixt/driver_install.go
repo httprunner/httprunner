@@ -42,7 +42,7 @@ func (dExt *XTDriver) InstallByUrl(url string, opts ...option.InstallOption) err
 }
 
 func (dExt *XTDriver) Install(filePath string, opts ...option.InstallOption) error {
-	if _, ok := dExt.Driver.GetDevice().(*AndroidDevice); ok {
+	if _, ok := dExt.GetDevice().(*AndroidDevice); ok {
 		stopChan := make(chan struct{})
 		go func() {
 			ticker := time.NewTicker(5 * time.Second)
@@ -69,7 +69,7 @@ func (dExt *XTDriver) Install(filePath string, opts ...option.InstallOption) err
 							},
 						},
 					}
-					_ = dExt.Driver.TapByTexts(actions...)
+					_ = dExt.TapByTexts(actions...)
 
 					_ = dExt.TapByOCR(
 						"^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|授权本次安装|稍后提醒|继续安装|重新安装|安装)$",
@@ -87,12 +87,12 @@ func (dExt *XTDriver) Install(filePath string, opts ...option.InstallOption) err
 		}()
 	}
 
-	return dExt.Driver.GetDevice().Install(filePath, opts...)
+	return dExt.GetDevice().Install(filePath, opts...)
 }
 
 func (dExt *XTDriver) Uninstall(packageName string, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
-	err := dExt.Driver.GetDevice().Uninstall(packageName)
+	err := dExt.GetDevice().Uninstall(packageName)
 	if err != nil {
 		log.Warn().Err(err).Msg("failed to uninstall")
 	}

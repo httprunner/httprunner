@@ -666,7 +666,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				},
 				StartTime: startTime.Unix(),
 			}
-			if app, err1 := uiDriver.GetDriver().GetForegroundApp(); err1 == nil {
+			if app, err1 := uiDriver.GetForegroundApp(); err1 == nil {
 				attachments["foreground_app"] = app.AppBaseInfo
 			} else {
 				log.Warn().Err(err1).Msg("save foreground app failed, ignore")
@@ -693,7 +693,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		}
 
 		// save attachments
-		session := uiDriver.GetDriver().GetSession()
+		session := uiDriver.GetSession()
 		for key, value := range session.GetData(true) {
 			attachments[key] = value
 		}

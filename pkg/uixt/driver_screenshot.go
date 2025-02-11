@@ -74,7 +74,7 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 			continue
 		}
 
-		windowSize, err = dExt.Driver.WindowSize()
+		windowSize, err = dExt.WindowSize()
 		if err != nil {
 			lastErr = errors.Wrap(code.DeviceGetInfoError, err.Error())
 			continue
@@ -101,7 +101,7 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 	}
 
 	// cache screen result
-	dExt.Driver.GetSession().addScreenResult(screenResult)
+	dExt.GetSession().addScreenResult(screenResult)
 
 	if imageResult != nil {
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
@@ -200,7 +200,7 @@ func (dExt *XTDriver) FindUIResult(opts ...option.ActionOption) (point ai.PointF
 
 // GetScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
 func (dExt *XTDriver) GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error) {
-	if raw, err = dExt.Driver.Screenshot(); err != nil {
+	if raw, err = dExt.Screenshot(); err != nil {
 		log.Error().Err(err).Msg("capture screenshot data failed")
 		return nil, "", errors.Wrap(code.DeviceScreenShotError, err.Error())
 	}

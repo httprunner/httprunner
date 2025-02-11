@@ -73,7 +73,7 @@ func TestSwipe(t *testing.T) {
 
 func TestTap(t *testing.T) {
 	setupShootsAndroidDriver(t)
-	err := shootsAndroidDriver.Tap(900, 400)
+	err := shootsAndroidDriver.TapXY(900, 400)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +81,7 @@ func TestTap(t *testing.T) {
 
 func TestDoubleTap(t *testing.T) {
 	setupShootsAndroidDriver(t)
-	err := shootsAndroidDriver.DoubleTap(500, 500)
+	err := shootsAndroidDriver.DoubleTapXY(500, 500)
 	if err != nil {
 		t.Fatal(err)
 	}

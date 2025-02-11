@@ -296,7 +296,7 @@ func (ad *ADBDriver) AppTerminate(packageName string) (successful bool, err erro
 	return true, nil
 }
 
-func (ad *ADBDriver) Tap(x, y float64, opts ...option.ActionOption) error {
+func (ad *ADBDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 2 {
@@ -317,7 +317,7 @@ func (ad *ADBDriver) Tap(x, y float64, opts ...option.ActionOption) error {
 	return nil
 }
 
-func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+func (ad *ADBDriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
@@ -608,7 +608,7 @@ func (ad *ADBDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, 
 	}
 	for _, bound := range bounds {
 		width, height := bound.Center()
-		err := ad.Tap(width, height, opts...)
+		err := ad.TapXY(width, height, opts...)
 		if err != nil {
 			return err
 		}

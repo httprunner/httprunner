@@ -11,7 +11,7 @@ import (
 
 func (dExt *XTDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	// tap on absolute coordinate [x, y]
-	err := dExt.Driver.Tap(x, y, opts...)
+	err := dExt.TapXY(x, y, opts...)
 	if err != nil {
 		return errors.Wrap(code.MobileUITapError, err.Error())
 	}
@@ -24,7 +24,7 @@ func (dExt *XTDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 		return fmt.Errorf("x, y percentage should be <= 1, got x=%v, y=%v", x, y)
 	}
 
-	windowSize, err := dExt.Driver.WindowSize()
+	windowSize, err := dExt.WindowSize()
 	if err != nil {
 		return err
 	}
@@ -88,13 +88,13 @@ func (dExt *XTDriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) err
 		return fmt.Errorf("x, y percentage should be < 1, got x=%v, y=%v", x, y)
 	}
 
-	windowSize, err := dExt.Driver.WindowSize()
+	windowSize, err := dExt.WindowSize()
 	if err != nil {
 		return err
 	}
 	x = x * float64(windowSize.Width)
 	y = y * float64(windowSize.Height)
-	err = dExt.Driver.DoubleTap(x, y, opts...)
+	err = dExt.DoubleTapXY(x, y, opts...)
 	if err != nil {
 		return errors.Wrap(code.MobileUITapError, err.Error())
 	}
@@ -111,7 +111,7 @@ func (dExt *XTDriver) DoubleTapOffset(param string, xOffset, yOffset float64, op
 		return err
 	}
 
-	err = dExt.Driver.DoubleTap(point.X+xOffset, point.Y+yOffset, opts...)
+	err = dExt.DoubleTapXY(point.X+xOffset, point.Y+yOffset, opts...)
 	if err != nil {
 		return errors.Wrap(code.MobileUITapError, err.Error())
 	}

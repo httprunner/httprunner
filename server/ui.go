@@ -107,7 +107,7 @@ func dragHandler(c *gin.Context) {
 			return
 		}
 	} else {
-		err := dExt.GetDriver().Swipe(
+		err := dExt.Swipe(
 			dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY,
 			actionOptions...)
 		if err != nil {
@@ -140,7 +140,7 @@ func inputHandler(c *gin.Context) {
 		return
 	}
 
-	err = dExt.GetDriver().SendKeys(inputReq.Text,
+	err = dExt.SendKeys(inputReq.Text,
 		option.WithFrequency(inputReq.Frequency))
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to input text %s", c.HandlerName(), inputReq.Text))

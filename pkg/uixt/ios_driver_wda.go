@@ -520,7 +520,7 @@ func (wd *WDADriver) AssertForegroundApp(bundleId string, viewControllerType ...
 	return nil
 }
 
-func (wd *WDADriver) Tap(x, y float64, opts ...option.ActionOption) (err error) {
+func (wd *WDADriver) TapXY(x, y float64, opts ...option.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 	actionOptions := option.NewActionOptions(opts...)
 
@@ -544,7 +544,7 @@ func (wd *WDADriver) Tap(x, y float64, opts ...option.ActionOption) (err error) 
 	return
 }
 
-func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) (err error) {
+func (wd *WDADriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
 	actionOptions := option.NewActionOptions(opts...)
 	x = wd.toScale(x)
@@ -569,7 +569,7 @@ func (wd *WDADriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 	if actionOptions.Duration == 0 {
 		opts = append(opts, option.WithDuration(1))
 	}
-	return wd.Tap(x, y, opts...)
+	return wd.TapXY(x, y, opts...)
 }
 
 func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {

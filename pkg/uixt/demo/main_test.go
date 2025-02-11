@@ -33,7 +33,7 @@ func TestIOSDemo(t *testing.T) {
 
 	// release session
 	defer func() {
-		driverExt.GetDriver().DeleteSession()
+		driverExt.DeleteSession()
 	}()
 
 	// 持续监测手机屏幕，直到出现青少年模式弹窗后，点击「我知道了」

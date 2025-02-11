@@ -102,7 +102,7 @@ func NewWorldCupLive(driver *uixt.XTDriver, matchName, bundleID string, duration
 		log.Fatal().Err(err).Msg("failed to open file")
 	}
 	// write title
-	f.WriteString(fmt.Sprintf("%s\t%s\t%s\n", matchName, driver.GetDriver().GetDevice().UUID(), bundleID))
+	f.WriteString(fmt.Sprintf("%s\t%s\t%s\n", matchName, driver.GetDevice().UUID(), bundleID))
 	f.WriteString("utc_time\tutc_timestamp\tlive_time\tlive_seconds\n")
 
 	if interval == 0 {
@@ -174,13 +174,13 @@ func (wc *WorldCupLive) EnterLive(bundleID string) error {
 	log.Info().Msg("enter world cup live")
 
 	// kill app
-	_, err := wc.driver.GetDriver().AppTerminate(bundleID)
+	_, err := wc.driver.AppTerminate(bundleID)
 	if err != nil {
 		log.Error().Err(err).Msg("terminate app failed")
 	}
 
 	// launch app
-	err = wc.driver.GetDriver().AppLaunch(bundleID)
+	err = wc.driver.AppLaunch(bundleID)
 	if err != nil {
 		log.Error().Err(err).Msg("launch app failed")
 		return err

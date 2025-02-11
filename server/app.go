@@ -15,7 +15,7 @@ func foregroundAppHandler(c *gin.Context) {
 		return
 	}
 
-	appInfo, err := dExt.GetDriver().GetForegroundApp()
+	appInfo, err := dExt.GetForegroundApp()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
@@ -42,7 +42,7 @@ func clearAppHandler(c *gin.Context) {
 		return
 	}
 
-	err = dExt.Driver.AppClear(appClearReq.PackageName)
+	err = dExt.AppClear(appClearReq.PackageName)
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
@@ -69,7 +69,7 @@ func launchAppHandler(c *gin.Context) {
 		return
 	}
 
-	err = dExt.GetDriver().AppLaunch(appLaunchReq.PackageName)
+	err = dExt.AppLaunch(appLaunchReq.PackageName)
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to launch app %s", c.HandlerName(), appLaunchReq.PackageName))
 		c.JSON(http.StatusInternalServerError,
@@ -96,7 +96,7 @@ func terminalAppHandler(c *gin.Context) {
 		return
 	}
 
-	success, err := dExt.GetDriver().AppTerminate(appTerminalReq.PackageName)
+	success, err := dExt.AppTerminate(appTerminalReq.PackageName)
 	if !success {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to launch app %s", c.HandlerName(), appTerminalReq.PackageName))
 		c.JSON(http.StatusInternalServerError,

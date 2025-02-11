@@ -245,7 +245,7 @@ func (ud *UIA2Driver) Orientation() (orientation types.Orientation, err error) {
 	return
 }
 
-func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+func (ud *UIA2Driver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
 	return ud.DoubleFloatTap(x, y)
 }
 
@@ -271,7 +271,7 @@ func (ud *UIA2Driver) DoubleFloatTap(x, y float64) error {
 	return err
 }
 
-func (ud *UIA2Driver) Tap(x, y float64, opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) TapXY(x, y float64, opts ...option.ActionOption) (err error) {
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
 	actionOptions := option.NewActionOptions(opts...)
 

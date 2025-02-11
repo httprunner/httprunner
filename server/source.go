@@ -18,7 +18,7 @@ func screenshotHandler(c *gin.Context) {
 		return
 	}
 
-	raw, err := dExt.GetDriver().Screenshot()
+	raw, err := dExt.Screenshot()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get screenshot", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,
@@ -84,7 +84,7 @@ func adbSourceHandler(c *gin.Context) {
 		return
 	}
 
-	source, err := dExt.GetDriver().Source()
+	source, err := dExt.Source()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get adb source", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,

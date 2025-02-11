@@ -30,7 +30,7 @@ func TestAndroidSwipeToTapApp(t *testing.T) {
 func TestAndroidSwipeToTapTexts(t *testing.T) {
 	setupAndroidAdbDriver(t)
 
-	err := driverExt.GetDriver().AppLaunch("com.ss.android.ugc.aweme")
+	err := driverExt.AppLaunch("com.ss.android.ugc.aweme")
 	checkErr(t, err)
 
 	err = driverExt.swipeToTapTexts([]string{"点击进入直播间", "直播中"}, option.WithDirection("up"))

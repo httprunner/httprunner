@@ -200,22 +200,22 @@ func (s *ShootsIOSDriver) Orientation() (orientation types.Orientation, err erro
 	return s.WDADriver.Orientation()
 }
 
-// Tap Sends a tap event at the coordinate.
-func (s *ShootsIOSDriver) Tap(x, y float64, opts ...option.ActionOption) error {
+// TapXY Sends a tap event at the coordinate.
+func (s *ShootsIOSDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
-	return s.WDADriver.Tap(x, y, opts...)
+	return s.WDADriver.TapXY(x, y, opts...)
 }
 
-// DoubleTap Sends a double tap event at the coordinate.
-func (s *ShootsIOSDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+// DoubleTapXY Sends a double tap event at the coordinate.
+func (s *ShootsIOSDriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
 	err := s.setUpWda()
 	if err != nil {
 		return err
 	}
-	return s.WDADriver.DoubleTap(x, y, opts...)
+	return s.WDADriver.DoubleTapXY(x, y, opts...)
 }
 
 // TouchAndHold Initiates a long-press gesture at the coordinate, holding for the specified duration.

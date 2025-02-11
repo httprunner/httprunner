@@ -151,7 +151,7 @@ func (hd *HDCDriver) Orientation() (orientation types.Orientation, err error) {
 	return types.OrientationPortrait, nil
 }
 
-func (hd *HDCDriver) Tap(x, y float64, opts ...option.ActionOption) error {
+func (hd *HDCDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 
 	if len(actionOptions.Offset) == 2 {
@@ -168,7 +168,7 @@ func (hd *HDCDriver) Tap(x, y float64, opts ...option.ActionOption) error {
 	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
 }
 
-func (hd *HDCDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+func (hd *HDCDriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
 	return types.ErrDriverNotImplemented
 }
 

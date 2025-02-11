@@ -49,8 +49,8 @@ type IDriver interface {
 	Homescreen() error
 	Unlock() (err error)
 	// tap
-	Tap(x, y float64, opts ...option.ActionOption) error
-	DoubleTap(x, y float64, opts ...option.ActionOption) error
+	TapXY(x, y float64, opts ...option.ActionOption) error
+	DoubleTapXY(x, y float64, opts ...option.ActionOption) error
 	TapByText(text string, opts ...option.ActionOption) error // TODO: remove
 	TapByTexts(actions ...TapTextAction) error                // TODO: remove
 	// swipe
@@ -93,7 +93,7 @@ type IDriver interface {
 func NewXTDriver(driver IDriver, opts ...ai.AIServiceOption) *XTDriver {
 	services := ai.NewAIService(opts...)
 	driverExt := &XTDriver{
-		Driver:     driver,
+		IDriver:    driver,
 		CVService:  services.ICVService,
 		LLMService: services.ILLMService,
 	}
@@ -104,8 +104,6 @@ var _ IDriverExt = (*XTDriver)(nil)
 
 // XTDriver = IDriver + AI
 type IDriverExt interface {
-	GetDriver() IDriver // get original driver
-
 	GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error)
 	GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error)
 	GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error)
@@ -134,18 +132,14 @@ type IDriverExt interface {
 }
 
 type XTDriver struct {
-	Driver     IDriver
+	IDriver
 	CVService  ai.ICVService  // OCR/CV
 	LLMService ai.ILLMService // LLM
 }
 
-func (dExt *XTDriver) GetDriver() IDriver {
-	return dExt.Driver
-}
-
 func (dExt *XTDriver) Setup() error {
 	// unlock device screen
-	err := dExt.Driver.Unlock()
+	err := dExt.Unlock()
 	if err != nil {
 		log.Error().Err(err).Msg("unlock device screen failed")
 		return err
@@ -188,7 +182,7 @@ func (dExt *XTDriver) assertOCR(text, assert string) error {
 }
 
 func (dExt *XTDriver) assertForegroundApp(appName, assert string) (err error) {
-	err = dExt.Driver.AssertForegroundApp(appName)
+	err = dExt.AssertForegroundApp(appName)
 	switch assert {
 	case AssertionEqual:
 		if err != nil {

@@ -36,17 +36,17 @@ func launchAppDriver(pkgName string) (driverExt *uixt.XTDriver, err error) {
 		return nil, err
 	}
 
-	//_, err = driver.Driver.AppTerminate(pkgName)
+	//_, err = driver.AppTerminate(pkgName)
 	//if err != nil {
 	//	return nil, err
 	//}
 	//
-	//err = driver.Driver.Homescreen()
+	//err = driver.Homescreen()
 	//if err != nil {
 	//	return nil, err
 	//}
 	//
-	//err = driver.Driver.AppLaunch(pkgName)
+	//err = driver.AppLaunch(pkgName)
 	//if err != nil {
 	//	return nil, err
 	//}
@@ -100,7 +100,7 @@ func watchVideo(driver *uixt.XTDriver) (err error) {
 	if err != nil {
 		// 未找到横屏图标，该页面可能不是横版视频（直播|广告|Feed）
 		// 退出回到推荐页
-		driver.GetDriver().PressBack()
+		driver.PressBack()
 		return nil
 	}
 
@@ -108,7 +108,7 @@ func watchVideo(driver *uixt.XTDriver) (err error) {
 	time.Sleep(10 * time.Second)
 
 	// 返回视频页面
-	err = driver.GetDriver().PressBack()
+	err = driver.PressBack()
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func watchVideo(driver *uixt.XTDriver) (err error) {
 	time.Sleep(1 * time.Second)
 
 	// 返回推荐页
-	err = driver.GetDriver().PressBack()
+	err = driver.PressBack()
 	if err != nil {
 		return err
 	}

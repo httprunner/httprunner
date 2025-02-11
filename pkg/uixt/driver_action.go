@@ -113,7 +113,7 @@ func (dExt *XTDriver) ParseActionOptions(opts ...option.ActionOption) []option.A
 
 func (dExt *XTDriver) GenAbsScope(x1, y1, x2, y2 float64) option.AbsScope {
 	// convert relative scope to absolute scope
-	windowSize, _ := dExt.Driver.WindowSize()
+	windowSize, _ := dExt.WindowSize()
 	absX1 := int(x1 * float64(windowSize.Width))
 	absY1 := int(y1 * float64(windowSize.Height))
 	absX2 := int(x2 * float64(windowSize.Width))
@@ -153,13 +153,13 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		}
 	case ACTION_AppClear:
 		if packageName, ok := action.Params.(string); ok {
-			if err = dExt.Driver.AppClear(packageName); err != nil {
+			if err = dExt.AppClear(packageName); err != nil {
 				return errors.Wrap(err, "failed to clear app")
 			}
 		}
 	case ACTION_AppLaunch:
 		if bundleId, ok := action.Params.(string); ok {
-			return dExt.Driver.AppLaunch(bundleId)
+			return dExt.AppLaunch(bundleId)
 		}
 		return fmt.Errorf("invalid %s params, should be bundleId(string), got %v",
 			ACTION_AppLaunch, action.Params)
@@ -185,7 +185,7 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		return fmt.Errorf("invalid %s params: %v", ACTION_SwipeToTapTexts, action.Params)
 	case ACTION_AppTerminate:
 		if bundleId, ok := action.Params.(string); ok {
-			success, err := dExt.Driver.AppTerminate(bundleId)
+			success, err := dExt.AppTerminate(bundleId)
 			if err != nil {
 				return errors.Wrap(err, "failed to terminate app")
 			}
@@ -196,10 +196,10 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		}
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
 	case ACTION_Home:
-		return dExt.Driver.Homescreen()
+		return dExt.Homescreen()
 	case ACTION_SetIme:
 		if ime, ok := action.Params.(string); ok {
-			err = dExt.Driver.SetIme(ime)
+			err = dExt.SetIme(ime)
 			if err != nil {
 				return errors.Wrap(err, "failed to set ime")
 			}
@@ -208,7 +208,7 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 	case ACTION_GetSource:
 		if packageName, ok := action.Params.(string); ok {
 			source := option.NewSourceOption().WithProcessName(packageName)
-			_, err = dExt.Driver.Source(source)
+			_, err = dExt.Source(source)
 			if err != nil {
 				return errors.Wrap(err, "failed to set ime")
 			}
@@ -274,9 +274,9 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		// append \n to send text with enter
 		// send \b\b\b to delete 3 chars
 		param := fmt.Sprintf("%v", action.Params)
-		return dExt.Driver.Input(param, action.GetOptions()...)
+		return dExt.Input(param)
 	case ACTION_Back:
-		return dExt.Driver.PressBack()
+		return dExt.PressBack()
 	case ACTION_Sleep:
 		if param, ok := action.Params.(json.Number); ok {
 			seconds, _ := param.Float64()

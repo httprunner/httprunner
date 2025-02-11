@@ -236,7 +236,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 		// release UI driver session
 		defer func() {
 			for _, client := range caseRunner.uixtDrivers {
-				client.Driver.DeleteSession()
+				client.DeleteSession()
 			}
 		}()
 
@@ -604,8 +604,8 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 				"uuid": uuid,
 			}
 
-			if client.GetDriver().GetDevice().LogEnabled() {
-				log, err1 := client.GetDriver().StopCaptureLog()
+			if client.GetDevice().LogEnabled() {
+				log, err1 := client.StopCaptureLog()
 				if err1 != nil {
 					if err == nil {
 						err = errors.Wrap(err1, "stop capture log failed")

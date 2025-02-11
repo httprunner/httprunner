@@ -16,12 +16,12 @@ import (
 
 // SwipeRelative swipe from relative position [fromX, fromY] to relative position [toX, toY]
 func (dExt *XTDriver) SwipeRelative(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
-	absFromX, absFromY, absToX, absToY, err := convertToAbsoluteCoordinates(dExt.Driver, fromX, fromY, toX, toY)
+	absFromX, absFromY, absToX, absToY, err := convertToAbsoluteCoordinates(dExt.IDriver, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
 
-	err = dExt.Driver.Swipe(absFromX, absFromY, absToX, absToY, opts...)
+	err = dExt.Swipe(absFromX, absFromY, absToX, absToY, opts...)
 	if err != nil {
 		return errors.Wrap(code.MobileUISwipeError, err.Error())
 	}
@@ -166,7 +166,7 @@ func (dExt *XTDriver) swipeToTapTexts(texts []string, opts ...option.ActionOptio
 
 func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption) error {
 	// go to home screen
-	if err := dExt.Driver.Homescreen(); err != nil {
+	if err := dExt.Homescreen(); err != nil {
 		return errors.Wrap(err, "go to home screen failed")
 	}
 
