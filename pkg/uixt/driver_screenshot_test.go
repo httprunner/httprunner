@@ -3,21 +3,21 @@
 package uixt
 
 import (
+	"path/filepath"
 	"testing"
+
+	"github.com/httprunner/httprunner/v5/internal/config"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func TestGetScreenShot(t *testing.T) {
 	setupAndroidAdbDriver(t)
 
-	fileName := "test_screenshot"
-	_, path, err := driverExt.GetScreenShot(fileName)
+	imagePath := filepath.Join(config.ScreenShotsPath, "test_screenshot")
+	_, err := driverExt.IDriver.ScreenShot(option.WithScreenShotFileName(imagePath))
 	if err != nil {
 		t.Fatalf("GetScreenShot failed: %v", err)
 	}
 
-	if path == "" {
-		t.Fatal("screenshot path is empty")
-	}
-
-	t.Logf("screenshot saved at: %s", path)
+	t.Logf("screenshot saved at: %s", imagePath)
 }

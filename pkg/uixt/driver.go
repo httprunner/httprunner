@@ -43,7 +43,7 @@ type IDriver interface {
 	BatteryInfo() (types.BatteryInfo, error)
 	ForegroundInfo() (app types.AppInfo, err error)
 	WindowSize() (types.Size, error)
-	ScreenShot() (*bytes.Buffer, error)
+	ScreenShot(opts ...option.ActionOption) (*bytes.Buffer, error)
 	ScreenRecord(duration time.Duration) (videoPath string, err error)
 	Source(srcOpt ...option.SourceOption) (string, error)
 	Orientation() (orientation types.Orientation, err error)
@@ -97,11 +97,10 @@ var _ IDriverExt = (*XTDriver)(nil)
 type IDriverExt interface {
 	GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error)
 	GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error)
-	GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error)
 
 	// tap with AI
 	TapByOCR(text string, opts ...option.ActionOption) error
-	TapByCV(opts ...option.ActionOption) error
+	TapByCV(opts ...option.ActionOption) error // TODO: refactor
 
 	// swipe
 	SwipeRelative(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error

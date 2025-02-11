@@ -67,7 +67,8 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 
 	// get screenshot info with retry
 	for i := 0; i < 3; i++ {
-		bufSource, imagePath, err = dExt.GetScreenShot(fileName)
+		imagePath = filepath.Join(config.ScreenShotsPath, fileName)
+		bufSource, err = dExt.IDriver.ScreenShot(option.WithScreenShotFileName(imagePath))
 		if err != nil {
 			lastErr = err
 			time.Sleep(time.Second * 1)
@@ -186,24 +187,6 @@ func (dExt *XTDriver) FindUIResult(opts ...option.ActionOption) (point ai.PointF
 	log.Info().Interface("text", options.ScreenShotWithUITypes).
 		Interface("point", point).Msg("FindUIResult success")
 	return
-}
-
-// GetScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
-func (dExt *XTDriver) GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error) {
-	if raw, err = dExt.ScreenShot(); err != nil {
-		log.Error().Err(err).Msg("capture screenshot data failed")
-		return nil, "", errors.Wrap(code.DeviceScreenShotError, err.Error())
-	}
-
-	// save screenshot to file
-	path = filepath.Join(config.ScreenShotsPath, fileName)
-	path, err = saveScreenShot(raw, path)
-	if err != nil {
-		log.Error().Err(err).Msg("save screenshot file failed")
-		return nil, "", errors.Wrap(code.DeviceScreenShotError,
-			fmt.Sprintf("save screenshot file failed: %s", err.Error()))
-	}
-	return raw, path, nil
 }
 
 // saveScreenShot saves compressed image file with file name

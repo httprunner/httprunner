@@ -280,19 +280,31 @@ func (wd *WDADriver) Screen() (screen ai.Screen, err error) {
 	return
 }
 
-func (wd *WDADriver) ScreenShot() (raw *bytes.Buffer, err error) {
+func (wd *WDADriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer, err error) {
 	// [[FBRoute GET:@"/screenshot"] respondWithTarget:self action:@selector(handleGetScreenshot:)]
 	// [[FBRoute GET:@"/screenshot"].withoutSession respondWithTarget:self action:@selector(handleGetScreenshot:)]
-	var rawResp DriverRawResponse
-	if rawResp, err = wd.httpGET("/session", wd.Session.ID, "/screenshot"); err != nil {
+	rawResp, err := wd.httpGET("/session", wd.Session.ID, "/screenshot")
+	if err != nil {
 		return nil, errors.Wrap(code.DeviceScreenShotError,
-			fmt.Sprintf("get WDA screenshot data failed: %v", err))
+			fmt.Sprintf("WDA screenshot failed %v", err))
 	}
-
-	if raw, err = rawResp.ValueDecodeAsBase64(); err != nil {
+	raw, err = rawResp.ValueDecodeAsBase64()
+	if err != nil {
 		return nil, errors.Wrap(code.DeviceScreenShotError,
 			fmt.Sprintf("decode WDA screenshot data failed: %v", err))
 	}
+
+	actionOptions := option.NewActionOptions(opts...)
+	if actionOptions.ScreenShotFileName != "" {
+		// save screenshot to file
+		path, err := saveScreenShot(raw, actionOptions.ScreenShotFileName)
+		if err != nil {
+			return nil, errors.Wrapf(code.DeviceScreenShotError,
+				"save screenshot file failed %v", err)
+		}
+		log.Info().Str("path", path).Msg("screenshot saved")
+	}
+
 	return
 }
 

@@ -520,13 +520,26 @@ func (ad *ADBDriver) SetRotation(rotation types.Rotation) (err error) {
 	return
 }
 
-func (ad *ADBDriver) ScreenShot() (raw *bytes.Buffer, err error) {
+func (ad *ADBDriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer, err error) {
 	resp, err := ad.runShellCommand("screencap", "-p")
 	if err != nil {
-		return nil, errors.Wrap(err, "adb screencap failed")
+		return nil, errors.Wrapf(code.DeviceScreenShotError,
+			"adb screencap failed %v", err)
+	}
+	raw = bytes.NewBuffer([]byte(resp))
+
+	actionOptions := option.NewActionOptions(opts...)
+	if actionOptions.ScreenShotFileName != "" {
+		// save screenshot to file
+		path, err := saveScreenShot(raw, actionOptions.ScreenShotFileName)
+		if err != nil {
+			return nil, errors.Wrapf(code.DeviceScreenShotError,
+				"save screenshot file failed %v", err)
+		}
+		log.Info().Str("path", path).Msg("screenshot saved")
 	}
 
-	return bytes.NewBuffer([]byte(resp)), nil
+	return raw, nil
 }
 
 func (ad *ADBDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {

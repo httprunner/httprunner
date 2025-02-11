@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"code.byted.org/iesqa/ghdc"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
@@ -217,13 +219,13 @@ func (hd *HDCDriver) PressHarmonyKeyCode(keyCode ghdc.KeyCode) (err error) {
 	return hd.uiDriver.PressKey(keyCode)
 }
 
-func (hd *HDCDriver) ScreenShot() (*bytes.Buffer, error) {
+func (hd *HDCDriver) ScreenShot(opts ...option.ActionOption) (*bytes.Buffer, error) {
 	tempDir := os.TempDir()
 	screenshotPath := fmt.Sprintf("%s/screenshot_%d.png", tempDir, time.Now().Unix())
 	err := hd.uiDriver.Screenshot(screenshotPath)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to screenshot")
-		return nil, err
+		return nil, errors.Wrapf(code.DeviceScreenShotError,
+			"hdc screencap failed %v", err)
 	}
 	defer func() {
 		_ = os.Remove(screenshotPath)
@@ -234,7 +236,20 @@ func (hd *HDCDriver) ScreenShot() (*bytes.Buffer, error) {
 		log.Error().Err(err).Msg("failed to screenshot")
 		return nil, err
 	}
-	return bytes.NewBuffer(raw), nil
+	rawBuffer := bytes.NewBuffer(raw)
+
+	actionOptions := option.NewActionOptions(opts...)
+	if actionOptions.ScreenShotFileName != "" {
+		// save screenshot to file
+		path, err := saveScreenShot(rawBuffer, actionOptions.ScreenShotFileName)
+		if err != nil {
+			return nil, errors.Wrapf(code.DeviceScreenShotError,
+				"save screenshot file failed %v", err)
+		}
+		log.Info().Str("path", path).Msg("screenshot saved")
+	}
+
+	return rawBuffer, nil
 }
 
 func (hd *HDCDriver) Source(srcOpt ...option.SourceOption) (string, error) {
