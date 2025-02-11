@@ -337,9 +337,6 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		return dExt.Driver.StopCamera()
 	case ACTION_ClosePopups:
 		return dExt.ClosePopupsHandler()
-	case ACTION_EndToEndDelay:
-		CollectEndToEndDelay(dExt, action.GetOptions()...)
-		return nil
 	case ACTION_CallFunction:
 		fn := action.Fn
 		fn()

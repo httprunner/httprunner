@@ -13,8 +13,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
@@ -157,24 +155,6 @@ func NewXTDriver(driver IDriver, opts ...ai.AIServiceOption) *XTDriver {
 	return driverExt
 }
 
-func NewDriverExt(driver IDriver, opts ...ai.AIServiceOption) (*XTDriver, error) {
-	services := ai.NewAIService(opts...)
-	driverExt := &XTDriver{
-		Driver:     driver,
-		CVService:  services.ICVService,
-		LLMService: services.ILLMService,
-	}
-	// create results directory
-	// TODO: move to setup
-	if err := builtin.EnsureFolderExists(config.ResultsPath); err != nil {
-		return nil, errors.Wrap(err, "create results directory failed")
-	}
-	if err := builtin.EnsureFolderExists(config.ScreenShotsPath); err != nil {
-		return nil, errors.Wrap(err, "create screenshots directory failed")
-	}
-	return driverExt, nil
-}
-
 var _ IDriverExt = (*XTDriver)(nil)
 
 // XTDriver = IDriver + AI
@@ -185,6 +165,7 @@ type IDriverExt interface {
 	GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error)
 	GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error)
 
+	// tap
 	TapByOCR(ocrText string, opts ...option.ActionOption) error
 	TapXY(x, y float64, opts ...option.ActionOption) error
 	TapAbsXY(x, y float64, opts ...option.ActionOption) error

@@ -4,6 +4,10 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/internal/builtin"
 )
 
 const (
@@ -35,4 +39,12 @@ func init() {
 	ScreenShotsPath = filepath.Join(ResultsPath, ScreenshotsDirName)
 	ActionLogFilePath = filepath.Join(ResultsDir, ActionLogDireName)
 	DeviceActionLogFilePath = "/sdcard/Android/data/io.appium.uiautomator2.server/files/hodor"
+
+	// create results directory
+	if err := builtin.EnsureFolderExists(ResultsPath); err != nil {
+		log.Fatal().Err(err).Msg("create results directory failed")
+	}
+	if err := builtin.EnsureFolderExists(ScreenShotsPath); err != nil {
+		log.Fatal().Err(err).Msg("create screenshots directory failed")
+	}
 }

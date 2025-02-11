@@ -19,7 +19,6 @@ import (
 )
 
 type Session struct {
-	// ctx       context.Context
 	ID      string
 	baseURL *url.URL
 	client  *http.Client
@@ -32,8 +31,6 @@ type Session struct {
 	requests []*DriverRequests
 	// cache screenshot ocr results
 	screenResults []*ScreenResult
-	// cache e2e delay
-	e2eDelay []timeLog
 }
 
 func (d *Session) addScreenResult(screenResult *ScreenResult) {
@@ -53,7 +50,6 @@ func (d *Session) Init(baseUrl string) error {
 func (d *Session) Reset() {
 	d.screenResults = make([]*ScreenResult, 0)
 	d.requests = make([]*DriverRequests, 0)
-	d.e2eDelay = nil
 }
 
 func (d *Session) GetData(withReset bool) Attachments {
@@ -62,9 +58,6 @@ func (d *Session) GetData(withReset bool) Attachments {
 	}
 	if len(d.requests) != 0 {
 		data["requests"] = d.requests
-	}
-	if d.e2eDelay != nil {
-		data["e2e_results"] = d.e2eDelay
 	}
 	if withReset {
 		d.Reset()

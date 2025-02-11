@@ -8,6 +8,7 @@ import (
 // current implemeted device: IOSDevice, AndroidDevice, HarmonyDevice
 type IDevice interface {
 	UUID() string // ios udid or android serial
+	NewDriver() (driver IDriver, err error)
 
 	Setup() error
 	Teardown() error
