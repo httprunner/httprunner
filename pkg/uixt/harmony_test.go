@@ -46,7 +46,7 @@ func TestHarmonyTap(t *testing.T) {
 
 func TestHarmonySwipe(t *testing.T) {
 	setupHarmonyDevice(t)
-	err := hdcDriverExt.SwipeLeft()
+	err := hdcDriverExt.Swipe(0.5, 0.5, 0.1, 0.5)
 	if err != nil {
 		t.Fatal(err)
 	}

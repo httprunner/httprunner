@@ -89,7 +89,7 @@ func dragHandler(c *gin.Context) {
 	}
 
 	if dragReq.FromX < 1 && dragReq.FromY < 1 && dragReq.ToX < 1 && dragReq.ToY < 1 {
-		err := dExt.SwipeRelative(
+		err := dExt.Swipe(
 			dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY,
 			actionOptions...)
 		if err != nil {

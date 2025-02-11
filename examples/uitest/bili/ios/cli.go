@@ -73,7 +73,7 @@ func launchAppDriver(pkgName string) (driverExt *uixt.XTDriver, err error) {
 
 func watchVideo(driver *uixt.XTDriver) (err error) {
 	time.Sleep(3 * time.Second)
-	err = driver.SwipeRelative(0.7, 0.7, 0.7, 0.2)
+	err = driver.Swipe(0.7, 0.7, 0.7, 0.2)
 	if err != nil {
 		return err
 	}

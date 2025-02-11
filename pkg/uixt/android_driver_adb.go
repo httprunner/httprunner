@@ -347,12 +347,14 @@ func (ad *ADBDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 }
 
 func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
-	absFromX, absFromY, absToX, absToY, err := convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
-	if err != nil {
-		return err
+	actionOptions := option.NewActionOptions(opts...)
+	if !actionOptions.AbsCoordinate {
+		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
+		if err != nil {
+			return err
+		}
 	}
 
-	actionOptions := option.NewActionOptions(opts...)
 	duration := 200.0
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration * 1000
@@ -364,8 +366,8 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	// adb shell input swipe fromX fromY toX toY
 	_, err = ad.runShellCommand(
 		"input", command,
-		fmt.Sprintf("%.1f", absFromX), fmt.Sprintf("%.1f", absFromY),
-		fmt.Sprintf("%.1f", absToX), fmt.Sprintf("%.1f", absToY),
+		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
+		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
 		fmt.Sprintf("%d", int(duration)),
 	)
 	if err != nil {
@@ -375,16 +377,20 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 }
 
 func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
-	absFromX, absFromY, absToX, absToY, err := convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
-	if err != nil {
-		return err
+	var err error
+	actionOptions := option.NewActionOptions(opts...)
+	if !actionOptions.AbsCoordinate {
+		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
+		if err != nil {
+			return err
+		}
 	}
 
 	// adb shell input swipe fromX fromY toX toY
 	_, err = ad.runShellCommand(
 		"input", "swipe",
-		fmt.Sprintf("%.1f", absFromX), fmt.Sprintf("%.1f", absFromY),
-		fmt.Sprintf("%.1f", absToX), fmt.Sprintf("%.1f", absToY),
+		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
+		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
 	)
 	if err != nil {
 		return errors.Wrap(err, "adb swipe failed")

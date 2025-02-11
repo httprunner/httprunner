@@ -14,36 +14,6 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-// SwipeRelative swipe from relative position [fromX, fromY] to relative position [toX, toY]
-func (dExt *XTDriver) SwipeRelative(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
-	absFromX, absFromY, absToX, absToY, err := convertToAbsoluteCoordinates(dExt.IDriver, fromX, fromY, toX, toY)
-	if err != nil {
-		return err
-	}
-
-	err = dExt.Swipe(absFromX, absFromY, absToX, absToY, opts...)
-	if err != nil {
-		return errors.Wrap(code.MobileUISwipeError, err.Error())
-	}
-	return nil
-}
-
-func (dExt *XTDriver) SwipeUp(opts ...option.ActionOption) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.1, opts...)
-}
-
-func (dExt *XTDriver) SwipeDown(opts ...option.ActionOption) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.9, opts...)
-}
-
-func (dExt *XTDriver) SwipeLeft(opts ...option.ActionOption) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.1, 0.5, opts...)
-}
-
-func (dExt *XTDriver) SwipeRight(opts ...option.ActionOption) (err error) {
-	return dExt.SwipeRelative(0.5, 0.5, 0.9, 0.5, opts...)
-}
-
 type Action func(driver *XTDriver) error
 
 func (dExt *XTDriver) LoopUntil(findAction, findCondition, foundAction Action, opts ...option.ActionOption) error {
@@ -96,20 +66,20 @@ func prepareSwipeAction(dExt *XTDriver, params interface{}, opts ...option.Actio
 			// enum direction: up, down, left, right
 			switch d {
 			case "up":
-				return dExt.SwipeUp(opts...)
+				return dExt.Swipe(0.5, 0.5, 0.5, 0.1, opts...)
 			case "down":
-				return dExt.SwipeDown(opts...)
+				return dExt.Swipe(0.5, 0.5, 0.5, 0.9, opts...)
 			case "left":
-				return dExt.SwipeLeft(opts...)
+				return dExt.Swipe(0.5, 0.5, 0.1, 0.5, opts...)
 			case "right":
-				return dExt.SwipeRight(opts...)
+				return dExt.Swipe(0.5, 0.5, 0.9, 0.5, opts...)
 			default:
 				return errors.Wrap(code.InvalidParamError,
 					fmt.Sprintf("get unexpected swipe direction: %s", d))
 			}
 		} else if params, err := builtin.ConvertToFloat64Slice(swipeDirection); err == nil && len(params) == 4 {
 			// custom direction: [fromX, fromY, toX, toY]
-			if err := dExt.SwipeRelative(params[0], params[1], params[2], params[3], opts...); err != nil {
+			if err := dExt.Swipe(params[0], params[1], params[2], params[3], opts...); err != nil {
 				log.Error().Err(err).Msgf("swipe from (%v, %v) to (%v, %v) failed",
 					params[0], params[1], params[2], params[3])
 				return err
@@ -177,7 +147,7 @@ func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption)
 
 	// swipe to first screen
 	for i := 0; i < 5; i++ {
-		dExt.SwipeRight()
+		dExt.Swipe(0.5, 0.5, 0.9, 0.5, opts...)
 	}
 
 	opts = append(opts, option.WithDirection("left"))

@@ -573,25 +573,20 @@ func (wd *WDADriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 	return wd.TapXY(x, y, opts...)
 }
 
-func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
+func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
+	var err error
 	actionOptions := option.NewActionOptions(opts...)
-
+	if !actionOptions.AbsCoordinate {
+		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(wd, fromX, fromY, toX, toY)
+		if err != nil {
+			return err
+		}
+	}
 	fromX = wd.toScale(fromX)
 	fromY = wd.toScale(fromY)
 	toX = wd.toScale(toX)
 	toY = wd.toScale(toY)
-	if len(actionOptions.Offset) == 4 {
-		fromX += float64(actionOptions.Offset[0])
-		fromY += float64(actionOptions.Offset[1])
-		toX += float64(actionOptions.Offset[2])
-		toY += float64(actionOptions.Offset[3])
-	}
-	fromX += actionOptions.GetRandomOffset()
-	fromY += actionOptions.GetRandomOffset()
-	toX += actionOptions.GetRandomOffset()
-	toY += actionOptions.GetRandomOffset()
-
 	data := map[string]interface{}{
 		"fromX": math.Round(fromX*10) / 10,
 		"fromY": math.Round(fromY*10) / 10,
@@ -607,7 +602,7 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	// wda 43 version
 	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/dragfromtoforduration")
 	// _, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/drag")
-	return
+	return err
 }
 
 func (wd *WDADriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {

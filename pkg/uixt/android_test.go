@@ -163,7 +163,7 @@ func TestDriver_Swipe(t *testing.T) {
 
 func TestDriver_Swipe_Relative(t *testing.T) {
 	setupAndroidUIA2Driver(t)
-	err := driverExt.SwipeRelative(0.5, 0.7, 0.5, 0.5)
+	err := driverExt.Swipe(0.5, 0.7, 0.5, 0.5)
 	if err != nil {
 		t.Fatal(err)
 	}

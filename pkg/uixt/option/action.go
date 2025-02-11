@@ -19,6 +19,7 @@ type ActionOptions struct {
 	Direction     interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`             // used by swipe to tap text or app
 	Timeout       int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                 // TODO: wait timeout in seconds for mobile action
 	Frequency     int         `json:"frequency,omitempty" yaml:"frequency,omitempty"`
+	AbsCoordinate bool        `json:"abs,omitempty" yaml:"abs,omitempty"` // use absolute coordinate
 
 	ScreenOptions
 
@@ -54,6 +55,9 @@ func (o *ActionOptions) Options() []ActionOption {
 	}
 	if o.Steps != 0 {
 		options = append(options, WithSteps(o.Steps))
+	}
+	if o.AbsCoordinate {
+		options = append(options, WithAbsoluteCoordinate(true))
 	}
 
 	switch v := o.Direction.(type) {
@@ -238,6 +242,12 @@ func WithSteps(steps int) ActionOption {
 func WithDirection(direction string) ActionOption {
 	return func(o *ActionOptions) {
 		o.Direction = direction
+	}
+}
+
+func WithAbsoluteCoordinate(abs bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.AbsCoordinate = abs
 	}
 }
 

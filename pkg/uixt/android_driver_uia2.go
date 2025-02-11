@@ -325,19 +325,15 @@ func (ud *UIA2Driver) TouchAndHold(x, y float64, opts ...option.ActionOption) (e
 // the smoothness and speed of the swipe by specifying the number of steps.
 // Each step execution is throttled to 5 milliseconds per step, so for a 100
 // steps, the swipe will take around 0.5 seconds to complete.
-func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	var err error
 	actionOptions := option.NewActionOptions(opts...)
-	if len(actionOptions.Offset) == 4 {
-		fromX += float64(actionOptions.Offset[0])
-		fromY += float64(actionOptions.Offset[1])
-		toX += float64(actionOptions.Offset[2])
-		toY += float64(actionOptions.Offset[3])
+	if !actionOptions.AbsCoordinate {
+		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ud, fromX, fromY, toX, toY)
+		if err != nil {
+			return err
+		}
 	}
-	fromX += actionOptions.GetRandomOffset()
-	fromY += actionOptions.GetRandomOffset()
-	toX += actionOptions.GetRandomOffset()
-	toY += actionOptions.GetRandomOffset()
-
 	data := map[string]interface{}{
 		"startX": fromX,
 		"startY": fromY,
@@ -350,7 +346,7 @@ func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.Action
 
 	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
 	_, err = ud.httpPOST(data, "/session", ud.Session.ID, "touch/drag")
-	return
+	return err
 }
 
 // Swipe performs a swipe from one coordinate to another using the number of steps
@@ -360,17 +356,14 @@ func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.Action
 //	`steps` is the number of move steps sent to the system
 func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
+	var err error
 	actionOptions := option.NewActionOptions(opts...)
-	if len(actionOptions.Offset) == 4 {
-		fromX += float64(actionOptions.Offset[0])
-		fromY += float64(actionOptions.Offset[1])
-		toX += float64(actionOptions.Offset[2])
-		toY += float64(actionOptions.Offset[3])
+	if !actionOptions.AbsCoordinate {
+		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ud, fromX, fromY, toX, toY)
+		if err != nil {
+			return err
+		}
 	}
-	fromX += actionOptions.GetRandomOffset()
-	fromY += actionOptions.GetRandomOffset()
-	toX += actionOptions.GetRandomOffset()
-	toY += actionOptions.GetRandomOffset()
 
 	duration := 200.0
 	if actionOptions.PressDuration > 0 {
@@ -395,7 +388,7 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 	// update data options in post data for extra uiautomator configurations
 	actionOptions.UpdateData(data)
 
-	_, err := ud.httpPOST(data, "/session", ud.Session.ID, "actions/swipe")
+	_, err = ud.httpPOST(data, "/session", ud.Session.ID, "actions/swipe")
 	return err
 }
 

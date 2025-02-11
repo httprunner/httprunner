@@ -172,17 +172,14 @@ func (hd *HDCDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 
 // Swipe works like Drag, but `pressForDuration` value is 0
 func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	var err error
 	actionOptions := option.NewActionOptions(opts...)
-	if len(actionOptions.Offset) == 4 {
-		fromX += float64(actionOptions.Offset[0])
-		fromY += float64(actionOptions.Offset[1])
-		toX += float64(actionOptions.Offset[2])
-		toY += float64(actionOptions.Offset[3])
+	if !actionOptions.AbsCoordinate {
+		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(hd, fromX, fromY, toX, toY)
+		if err != nil {
+			return err
+		}
 	}
-	fromX += actionOptions.GetRandomOffset()
-	fromY += actionOptions.GetRandomOffset()
-	toX += actionOptions.GetRandomOffset()
-	toY += actionOptions.GetRandomOffset()
 
 	duration := 200
 	if actionOptions.PressDuration > 0 {
@@ -192,7 +189,9 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 		startTime := int(time.Now().UnixMilli())
 		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
 	}
-	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(fromX), Y: int(fromY)}).MoveTo(ghdc.Point{X: int(toX), Y: int(toY)}, duration))
+	return hd.uiDriver.InjectGesture(
+		ghdc.NewGesture().Start(ghdc.Point{X: int(fromX), Y: int(fromY)}).
+			MoveTo(ghdc.Point{X: int(toX), Y: int(toY)}, duration))
 }
 
 func (hd *HDCDriver) SetIme(ime string) error {

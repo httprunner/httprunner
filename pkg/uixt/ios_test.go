@@ -308,7 +308,7 @@ func Test_Relative_Drag(t *testing.T) {
 	setup(t)
 
 	// err := driver.Drag(200, 300, 200, 500, WithDataPressDuration(0.5))
-	err := iOSDriverExt.SwipeRelative(0.5, 0.7, 0.5, 0.5)
+	err := iOSDriverExt.Swipe(0.5, 0.7, 0.5, 0.5)
 	if err != nil {
 		t.Fatal(err)
 	}

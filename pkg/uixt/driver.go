@@ -66,7 +66,7 @@ type IDriver interface {
 	TapByTexts(actions ...TapTextAction) error                // TODO: remove
 	// swipe
 	Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
-	Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
+	Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error // by percentage
 	// input
 	Input(text string, opts ...option.ActionOption) error
 	Backspace(count int, opts ...option.ActionOption) error
@@ -101,15 +101,6 @@ type IDriverExt interface {
 	// tap with AI
 	TapByOCR(text string, opts ...option.ActionOption) error
 	TapByCV(opts ...option.ActionOption) error // TODO: refactor
-
-	// swipe
-	SwipeRelative(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
-	SwipeUp(opts ...option.ActionOption) error
-	SwipeDown(opts ...option.ActionOption) error
-	SwipeLeft(opts ...option.ActionOption) error
-	SwipeRight(opts ...option.ActionOption) error
-
-	SwipeToTapApp(appName string, opts ...option.ActionOption) error
 
 	CheckPopup() (popup *PopupInfo, err error)
 	ClosePopupsHandler() error
