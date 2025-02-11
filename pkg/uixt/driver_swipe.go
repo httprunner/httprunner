@@ -14,31 +14,14 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-func assertRelative(p float64) bool {
-	return p >= 0 && p <= 1
-}
-
 // SwipeRelative swipe from relative position [fromX, fromY] to relative position [toX, toY]
 func (dExt *XTDriver) SwipeRelative(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
-	if !assertRelative(fromX) || !assertRelative(fromY) ||
-		!assertRelative(toX) || !assertRelative(toY) {
-		return errors.Wrap(code.InvalidCaseError,
-			fmt.Sprintf("fromX(%f), fromY(%f), toX(%f), toY(%f) must be less than 1",
-				fromX, fromY, toX, toY))
-	}
-
-	windowSize, err := dExt.Driver.WindowSize()
+	absFromX, absFromY, absToX, absToY, err := convertToAbsoluteCoordinates(dExt.Driver, fromX, fromY, toX, toY)
 	if err != nil {
-		return errors.Wrap(code.DeviceGetInfoError, err.Error())
+		return err
 	}
-	width := windowSize.Width
-	height := windowSize.Height
 
-	fromX = float64(width) * fromX
-	fromY = float64(height) * fromY
-	toX = float64(width) * toX
-	toY = float64(height) * toY
-	err = dExt.Driver.Swipe(fromX, fromY, toX, toY, opts...)
+	err = dExt.Driver.Swipe(absFromX, absFromY, absToX, absToY, opts...)
 	if err != nil {
 		return errors.Wrap(code.MobileUISwipeError, err.Error())
 	}

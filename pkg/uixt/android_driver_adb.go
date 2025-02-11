@@ -417,18 +417,12 @@ func (ad *ADBDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 }
 
 func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
-	actionOptions := option.NewActionOptions(opts...)
-
-	if len(actionOptions.Offset) == 4 {
-		fromX += float64(actionOptions.Offset[0])
-		fromY += float64(actionOptions.Offset[1])
-		toX += float64(actionOptions.Offset[2])
-		toY += float64(actionOptions.Offset[3])
+	absFromX, absFromY, absToX, absToY, err := convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
+	if err != nil {
+		return err
 	}
-	fromX += actionOptions.GetRandomOffset()
-	fromY += actionOptions.GetRandomOffset()
-	toX += actionOptions.GetRandomOffset()
-	toY += actionOptions.GetRandomOffset()
+
+	actionOptions := option.NewActionOptions(opts...)
 	duration := 200.0
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration * 1000
@@ -440,38 +434,30 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	// adb shell input swipe fromX fromY toX toY
 	_, err = ad.runShellCommand(
 		"input", command,
-		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
-		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
+		fmt.Sprintf("%.1f", absFromX), fmt.Sprintf("%.1f", absFromY),
+		fmt.Sprintf("%.1f", absToX), fmt.Sprintf("%.1f", absToY),
 		fmt.Sprintf("%d", int(duration)),
 	)
 	if err != nil {
-		return errors.Wrap(err, "drag failed")
+		return errors.Wrap(err, "adb drag failed")
 	}
 	return nil
 }
 
 func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
-	actionOptions := option.NewActionOptions(opts...)
-
-	if len(actionOptions.Offset) == 4 {
-		fromX += float64(actionOptions.Offset[0])
-		fromY += float64(actionOptions.Offset[1])
-		toX += float64(actionOptions.Offset[2])
-		toY += float64(actionOptions.Offset[3])
+	absFromX, absFromY, absToX, absToY, err := convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
+	if err != nil {
+		return err
 	}
-	fromX += actionOptions.GetRandomOffset()
-	fromY += actionOptions.GetRandomOffset()
-	toX += actionOptions.GetRandomOffset()
-	toY += actionOptions.GetRandomOffset()
 
 	// adb shell input swipe fromX fromY toX toY
-	_, err := ad.runShellCommand(
+	_, err = ad.runShellCommand(
 		"input", "swipe",
-		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
-		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
+		fmt.Sprintf("%.1f", absFromX), fmt.Sprintf("%.1f", absFromY),
+		fmt.Sprintf("%.1f", absToX), fmt.Sprintf("%.1f", absToY),
 	)
 	if err != nil {
-		return errors.Wrap(err, "swipe failed")
+		return errors.Wrap(err, "adb swipe failed")
 	}
 	return nil
 }
