@@ -39,12 +39,9 @@ var rootCmd = &cobra.Command{
 			return errors.New("android or ios app bundldID is required")
 		}
 
-		driverExt, err := uixt.NewDriverExt(driver,
+		driverExt := uixt.NewXTDriver(driver,
 			ai.WithCVService(ai.CVServiceTypeVEDEM),
 		)
-		if err != nil {
-			return err
-		}
 
 		wc := NewWorldCupLive(driverExt, matchName, bundleID, duration, interval)
 

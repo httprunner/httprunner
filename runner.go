@@ -27,6 +27,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/internal/version"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 )
 
 // Run starts to run testcase with default configs.
@@ -281,7 +282,7 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 		TestCase:    testcase,
 		hrpRunner:   r,
 		parser:      newParser(),
-		uixtDrivers: make(map[string]uixt.IDriverExt),
+		uixtDrivers: make(map[string]*uixt.XTDriver),
 	}
 	config := testcase.Config.Get()
 
@@ -336,7 +337,7 @@ type CaseRunner struct {
 	parametersIterator *ParametersIterator
 
 	// UI automation clients for iOS and Android, key is udid/serial
-	uixtDrivers map[string]uixt.IDriverExt
+	uixtDrivers map[string]*uixt.XTDriver
 }
 
 func (r *CaseRunner) GetParametersIterator() *ParametersIterator {
@@ -430,11 +431,12 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err := device.Setup(); err != nil {
 			return nil, errors.Wrap(err, "setup android device failed")
 		}
-		driverExt, err := device.NewDriver()
+		driver, err := device.NewDriver()
 		if err != nil {
 			return nil, errors.Wrap(err, "init android driver failed")
 		}
 
+		driverExt := uixt.NewXTDriver(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
 		r.uixtDrivers[androidDevice.Options.SerialNumber] = driverExt
 	}
 	// parse iOS devices config
@@ -452,11 +454,12 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err := device.Setup(); err != nil {
 			return nil, errors.Wrap(err, "setup ios device failed")
 		}
-		driverExt, err := device.NewDriver()
+		driver, err := device.NewDriver()
 		if err != nil {
 			return nil, errors.Wrap(err, "init ios driver failed")
 		}
 
+		driverExt := uixt.NewXTDriver(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
 		r.uixtDrivers[iosDevice.Options.UDID] = driverExt
 	}
 	// parse harmony devices config
@@ -474,11 +477,12 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err := device.Setup(); err != nil {
 			return nil, errors.Wrap(err, "setup harmony device failed")
 		}
-		driverExt, err := device.NewDriver()
+		driver, err := device.NewDriver()
 		if err != nil {
 			return nil, errors.Wrap(err, "init harmony driver failed")
 		}
 
+		driverExt := uixt.NewXTDriver(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
 		r.uixtDrivers[harmonyDevice.Options.ConnectKey] = driverExt
 	}
 
@@ -521,7 +525,7 @@ func (r *CaseRunner) parseDeviceConfig(device interface{}, configVariables map[s
 	return nil
 }
 
-func (r *CaseRunner) GetUIXTDriver(serial string) (driver uixt.IDriverExt, err error) {
+func (r *CaseRunner) GetUIXTDriver(serial string) (driver *uixt.XTDriver, err error) {
 	for key, driver := range r.uixtDrivers {
 		// return the driver with the same serial
 		if key == serial {

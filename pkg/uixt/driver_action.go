@@ -103,7 +103,7 @@ type TapTextAction struct {
 	Options []option.ActionOption
 }
 
-func (dExt *DriverExt) ParseActionOptions(opts ...option.ActionOption) []option.ActionOption {
+func (dExt *XTDriver) ParseActionOptions(opts ...option.ActionOption) []option.ActionOption {
 	actionOptions := option.NewActionOptions(opts...)
 
 	// convert relative scope to absolute scope
@@ -116,7 +116,7 @@ func (dExt *DriverExt) ParseActionOptions(opts ...option.ActionOption) []option.
 	return actionOptions.Options()
 }
 
-func (dExt *DriverExt) GenAbsScope(x1, y1, x2, y2 float64) option.AbsScope {
+func (dExt *XTDriver) GenAbsScope(x1, y1, x2, y2 float64) option.AbsScope {
 	// convert relative scope to absolute scope
 	windowSize, _ := dExt.Driver.WindowSize()
 	absX1 := int(x1 * float64(windowSize.Width))
@@ -126,7 +126,7 @@ func (dExt *DriverExt) GenAbsScope(x1, y1, x2, y2 float64) option.AbsScope {
 	return option.AbsScope{absX1, absY1, absX2, absY2}
 }
 
-func (dExt *DriverExt) DoAction(action MobileAction) (err error) {
+func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 	actionStartTime := time.Now()
 	defer func() {
 		var logger *zerolog.Event

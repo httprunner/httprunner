@@ -24,7 +24,6 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/gadb"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
@@ -149,8 +148,7 @@ func (dev *AndroidDevice) LogEnabled() bool {
 	return dev.Options.LogOn
 }
 
-func (dev *AndroidDevice) NewDriver() (driverExt IDriverExt, err error) {
-	var driver IDriver
+func (dev *AndroidDevice) NewDriver() (driver IDriver, err error) {
 	if dev.Options.UIA2 || dev.Options.LogOn {
 		driver, err = NewUIA2Driver(dev)
 	} else {
@@ -166,16 +164,11 @@ func (dev *AndroidDevice) NewDriver() (driverExt IDriverExt, err error) {
 			return nil, err
 		}
 	}
-
-	driverExt, err = NewDriverExt(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
-	if err != nil {
-		return nil, errors.Wrap(err, "init android driver ext failed")
-	}
 	// setup driver
-	if err := driverExt.GetDriver().Setup(); err != nil {
+	if err := driver.Setup(); err != nil {
 		return nil, err
 	}
-	return driverExt, nil
+	return driver, nil
 }
 
 func (dev *AndroidDevice) StartPerf() error {

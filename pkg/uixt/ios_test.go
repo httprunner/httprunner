@@ -10,6 +10,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
@@ -17,7 +18,7 @@ import (
 var (
 	bundleId     = "com.apple.Preferences"
 	driver       IDriver
-	iOSDriverExt IDriverExt
+	iOSDriverExt *XTDriver
 )
 
 func setup(t *testing.T) {
@@ -30,10 +31,11 @@ func setup(t *testing.T) {
 	}
 	capabilities := option.NewCapabilities()
 	capabilities.WithDefaultAlertAction(option.AlertActionAccept)
-	iOSDriverExt, err = device.NewDriver()
+	driver, err = device.NewDriver()
 	if err != nil {
 		t.Fatal(err)
 	}
+	iOSDriverExt = NewXTDriver(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
 }
 
 func TestViaUSB(t *testing.T) {

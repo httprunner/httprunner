@@ -9,7 +9,7 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-func (dExt *DriverExt) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
+func (dExt *XTDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	// tap on absolute coordinate [x, y]
 	err := dExt.Driver.Tap(x, y, opts...)
 	if err != nil {
@@ -18,7 +18,7 @@ func (dExt *DriverExt) TapAbsXY(x, y float64, opts ...option.ActionOption) error
 	return nil
 }
 
-func (dExt *DriverExt) TapXY(x, y float64, opts ...option.ActionOption) error {
+func (dExt *XTDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 	// tap on [x, y] percent of window size
 	if x > 1 || y > 1 {
 		return fmt.Errorf("x, y percentage should be <= 1, got x=%v, y=%v", x, y)
@@ -33,7 +33,7 @@ func (dExt *DriverExt) TapXY(x, y float64, opts ...option.ActionOption) error {
 	return dExt.TapAbsXY(x, y, opts...)
 }
 
-func (dExt *DriverExt) TapByOCR(ocrText string, opts ...option.ActionOption) error {
+func (dExt *XTDriver) TapByOCR(ocrText string, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.ScreenShotFileName == "" {
 		opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("tap_by_ocr_%s", ocrText)))
@@ -50,7 +50,7 @@ func (dExt *DriverExt) TapByOCR(ocrText string, opts ...option.ActionOption) err
 	return dExt.TapAbsXY(point.X, point.Y, opts...)
 }
 
-func (dExt *DriverExt) TapByUIDetection(opts ...option.ActionOption) error {
+func (dExt *XTDriver) TapByUIDetection(opts ...option.ActionOption) error {
 	options := option.NewActionOptions(opts...)
 
 	point, err := dExt.FindUIResult(opts...)
@@ -64,11 +64,11 @@ func (dExt *DriverExt) TapByUIDetection(opts ...option.ActionOption) error {
 	return dExt.TapAbsXY(point.X, point.Y, opts...)
 }
 
-func (dExt *DriverExt) Tap(param string, opts ...option.ActionOption) error {
+func (dExt *XTDriver) Tap(param string, opts ...option.ActionOption) error {
 	return dExt.TapOffset(param, 0, 0, opts...)
 }
 
-func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, opts ...option.ActionOption) (err error) {
+func (dExt *XTDriver) TapOffset(param string, xOffset, yOffset float64, opts ...option.ActionOption) (err error) {
 	options := option.NewActionOptions(opts...)
 
 	point, err := dExt.FindUIRectInUIKit(param, opts...)
@@ -82,7 +82,7 @@ func (dExt *DriverExt) TapOffset(param string, xOffset, yOffset float64, opts ..
 	return dExt.TapAbsXY(point.X+xOffset, point.Y+yOffset, opts...)
 }
 
-func (dExt *DriverExt) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
+func (dExt *XTDriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
 	// double tap on coordinate: [x, y] should be relative
 	if x > 1 || y > 1 {
 		return fmt.Errorf("x, y percentage should be < 1, got x=%v, y=%v", x, y)
@@ -101,11 +101,11 @@ func (dExt *DriverExt) DoubleTapXY(x, y float64, opts ...option.ActionOption) er
 	return nil
 }
 
-func (dExt *DriverExt) DoubleTap(param string, opts ...option.ActionOption) (err error) {
+func (dExt *XTDriver) DoubleTap(param string, opts ...option.ActionOption) (err error) {
 	return dExt.DoubleTapOffset(param, 0, 0, opts...)
 }
 
-func (dExt *DriverExt) DoubleTapOffset(param string, xOffset, yOffset float64, opts ...option.ActionOption) (err error) {
+func (dExt *XTDriver) DoubleTapOffset(param string, xOffset, yOffset float64, opts ...option.ActionOption) (err error) {
 	point, err := dExt.FindUIRectInUIKit(param)
 	if err != nil {
 		return err

@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (dExt *DriverExt) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
+func (dExt *XTDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
 	windowSize, err := dExt.Driver.WindowSize()
 	if err != nil {
 		return errors.Wrap(code.DeviceGetInfoError, err.Error())

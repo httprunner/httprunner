@@ -10,10 +10,11 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-var uiClients = make(map[string]uixt.IDriverExt) // UI automation clients for iOS and Android, key is udid/serial
+var uiClients = make(map[string]*uixt.XTDriver) // UI automation clients for iOS and Android, key is udid/serial
 
 func (r *Router) HandleDeviceContext() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -66,9 +67,13 @@ func (r *Router) HandleDeviceContext() gin.HandlerFunc {
 				c.Abort()
 				return
 			}
-			c.Set("driver", driver)
+
+			driverExt := uixt.NewXTDriver(driver,
+				ai.WithCVService(ai.CVServiceTypeVEDEM))
+
+			c.Set("driver", driverExt)
 			// cache driver
-			uiClients[serial] = driver
+			uiClients[serial] = driverExt
 		default:
 			c.JSON(http.StatusBadRequest, HttpResponse{
 				Code:    code.GetErrorCode(code.InvalidParamError),
@@ -81,13 +86,13 @@ func (r *Router) HandleDeviceContext() gin.HandlerFunc {
 	}
 }
 
-func GetContextDriver(c *gin.Context) (uixt.IDriverExt, error) {
+func GetContextDriver(c *gin.Context) (*uixt.XTDriver, error) {
 	driverObj, exists := c.Get("driver")
 	if !exists {
 		handlerInitDeviceDriverFailedContext(c)
 		return nil, fmt.Errorf("driver not found")
 	}
-	dExt := driverObj.(*uixt.DriverExt)
+	dExt := driverObj.(*uixt.XTDriver)
 	return dExt, nil
 }
 

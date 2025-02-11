@@ -11,13 +11,12 @@ import (
 func TestAndroidSwipeAction(t *testing.T) {
 	setupAndroidAdbDriver(t)
 
-	dExt := driverExt.(*DriverExt)
-	swipeAction := prepareSwipeAction(dExt, "up", option.WithDirection("down"))
-	err := swipeAction(dExt)
+	swipeAction := prepareSwipeAction(driverExt, "up", option.WithDirection("down"))
+	err := swipeAction(driverExt)
 	checkErr(t, err)
 
-	swipeAction = prepareSwipeAction(dExt, "up", option.WithCustomDirection(0.5, 0.5, 0.5, 0.9))
-	err = swipeAction(dExt)
+	swipeAction = prepareSwipeAction(driverExt, "up", option.WithCustomDirection(0.5, 0.5, 0.5, 0.9))
+	err = swipeAction(driverExt)
 	checkErr(t, err)
 }
 
@@ -34,7 +33,6 @@ func TestAndroidSwipeToTapTexts(t *testing.T) {
 	err := driverExt.GetDriver().AppLaunch("com.ss.android.ugc.aweme")
 	checkErr(t, err)
 
-	dExt := driverExt.(*DriverExt)
-	err = dExt.swipeToTapTexts([]string{"点击进入直播间", "直播中"}, option.WithDirection("up"))
+	err = driverExt.swipeToTapTexts([]string{"点击进入直播间", "直播中"}, option.WithDirection("up"))
 	checkErr(t, err)
 }

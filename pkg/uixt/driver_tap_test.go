@@ -4,35 +4,34 @@ package uixt
 
 import (
 	"testing"
+
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 )
 
-var iosDevice *IOSDevice
+var (
+	iosDevice    *IOSDevice
+	iosDriverExt *XTDriver
+)
 
 func init() {
 	iosDevice, _ = NewIOSDevice()
+	driver, _ := iosDevice.NewDriver()
+	iosDriverExt = NewXTDriver(driver,
+		ai.WithCVService(ai.CVServiceTypeVEDEM))
 }
 
 func TestDriverExt_TapXY(t *testing.T) {
-	driverExt, err := iosDevice.NewDriver()
-	checkErr(t, err)
-
-	err = driverExt.TapXY(0.4, 0.5)
+	err := iosDriverExt.TapXY(0.4, 0.5)
 	checkErr(t, err)
 }
 
 func TestDriverExt_TapAbsXY(t *testing.T) {
-	driverExt, err := iosDevice.NewDriver()
-	checkErr(t, err)
-
-	err = driverExt.TapAbsXY(100, 300)
+	err := iosDriverExt.TapAbsXY(100, 300)
 	checkErr(t, err)
 }
 
 func TestDriverExt_TapWithOCR(t *testing.T) {
-	driverExt, err := iosDevice.NewDriver()
-	checkErr(t, err)
-
 	// 需要点击文字上方的图标
-	err = driverExt.TapOffset("抖音", 0, -20)
+	err := iosDriverExt.TapOffset("抖音", 0, -20)
 	checkErr(t, err)
 }

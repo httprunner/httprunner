@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -28,9 +29,9 @@ func init() {
 	fmt.Printf("=== start running cases, serial=%s, runTimes=%d ===\n", serial, runTimes)
 }
 
-func launchAppDriver(pkgName string) (driver uixt.IDriverExt, err error) {
+func launchAppDriver(pkgName string) (driverExt *uixt.XTDriver, err error) {
 	device, _ := uixt.NewIOSDevice(option.WithUDID(serial))
-	driver, err = device.NewDriver()
+	driver, err := device.NewDriver()
 	if err != nil {
 		return nil, err
 	}
@@ -52,22 +53,25 @@ func launchAppDriver(pkgName string) (driver uixt.IDriverExt, err error) {
 
 	time.Sleep(15 * time.Second)
 
+	driverExt = uixt.NewXTDriver(driver,
+		ai.WithCVService(ai.CVServiceTypeVEDEM))
+
 	// 处理弹窗
-	err = driver.ClosePopupsHandler()
+	err = driverExt.ClosePopupsHandler()
 	if err != nil {
 		return nil, err
 	}
 
 	// 进入推荐页
-	err = driver.TapByOCR("推荐", option.WithScope(0, 0, 1, 0.3))
+	err = driverExt.TapByOCR("推荐", option.WithScope(0, 0, 1, 0.3))
 	if err != nil {
 		return nil, err
 	}
 
-	return driver, nil
+	return driverExt, nil
 }
 
-func watchVideo(driver uixt.IDriverExt) (err error) {
+func watchVideo(driver *uixt.XTDriver) (err error) {
 	time.Sleep(3 * time.Second)
 	err = driver.SwipeRelative(0.7, 0.7, 0.7, 0.2)
 	if err != nil {

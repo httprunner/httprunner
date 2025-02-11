@@ -37,7 +37,7 @@ func convertTimeToSeconds(timeStr string) (int, error) {
 	return seconds, nil
 }
 
-func initIOSDriver(uuid string) uixt.IDriverExt {
+func initIOSDriver(uuid string) *uixt.XTDriver {
 	device, err := uixt.NewIOSDevice(
 		option.WithUDID(uuid),
 		option.WithWDAPort(8700), option.WithWDAMjpegPort(8800),
@@ -48,16 +48,18 @@ func initIOSDriver(uuid string) uixt.IDriverExt {
 		log.Fatal().Err(err).Msg("failed to init ios device")
 	}
 	driver, _ := device.NewDriver()
-	return driver
+	driverExt := uixt.NewXTDriver(driver)
+	return driverExt
 }
 
-func initAndroidDriver(uuid string) uixt.IDriverExt {
+func initAndroidDriver(uuid string) *uixt.XTDriver {
 	device, err := uixt.NewAndroidDevice(option.WithSerialNumber(uuid))
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to init android device")
 	}
 	driver, _ := device.NewDriver()
-	return driver
+	driverExt := uixt.NewXTDriver(driver)
+	return driverExt
 }
 
 type timeLog struct {
@@ -68,7 +70,7 @@ type timeLog struct {
 }
 
 type WorldCupLive struct {
-	driver    uixt.IDriverExt
+	driver    *uixt.XTDriver
 	file      *os.File
 	resultDir string
 	MatchName string    `json:"matchName"`
@@ -81,7 +83,7 @@ type WorldCupLive struct {
 	PerfFile  string    `json:"perf"`
 }
 
-func NewWorldCupLive(driver uixt.IDriverExt, matchName, bundleID string, duration, interval int) *WorldCupLive {
+func NewWorldCupLive(driver *uixt.XTDriver, matchName, bundleID string, duration, interval int) *WorldCupLive {
 	if matchName == "" {
 		matchName = "unknown-match"
 	}

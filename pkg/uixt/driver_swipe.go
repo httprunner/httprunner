@@ -19,7 +19,7 @@ func assertRelative(p float64) bool {
 }
 
 // SwipeRelative swipe from relative position [fromX, fromY] to relative position [toX, toY]
-func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+func (dExt *XTDriver) SwipeRelative(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	if !assertRelative(fromX) || !assertRelative(fromY) ||
 		!assertRelative(toX) || !assertRelative(toY) {
 		return errors.Wrap(code.InvalidCaseError,
@@ -45,25 +45,25 @@ func (dExt *DriverExt) SwipeRelative(fromX, fromY, toX, toY float64, opts ...opt
 	return nil
 }
 
-func (dExt *DriverExt) SwipeUp(opts ...option.ActionOption) (err error) {
+func (dExt *XTDriver) SwipeUp(opts ...option.ActionOption) (err error) {
 	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.1, opts...)
 }
 
-func (dExt *DriverExt) SwipeDown(opts ...option.ActionOption) (err error) {
+func (dExt *XTDriver) SwipeDown(opts ...option.ActionOption) (err error) {
 	return dExt.SwipeRelative(0.5, 0.5, 0.5, 0.9, opts...)
 }
 
-func (dExt *DriverExt) SwipeLeft(opts ...option.ActionOption) (err error) {
+func (dExt *XTDriver) SwipeLeft(opts ...option.ActionOption) (err error) {
 	return dExt.SwipeRelative(0.5, 0.5, 0.1, 0.5, opts...)
 }
 
-func (dExt *DriverExt) SwipeRight(opts ...option.ActionOption) (err error) {
+func (dExt *XTDriver) SwipeRight(opts ...option.ActionOption) (err error) {
 	return dExt.SwipeRelative(0.5, 0.5, 0.9, 0.5, opts...)
 }
 
-type Action func(driver *DriverExt) error
+type Action func(driver *XTDriver) error
 
-func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, opts ...option.ActionOption) error {
+func (dExt *XTDriver) LoopUntil(findAction, findCondition, foundAction Action, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 	maxRetryTimes := actionOptions.MaxRetryTimes
 	interval := actionOptions.Interval
@@ -86,7 +86,7 @@ func (dExt *DriverExt) LoopUntil(findAction, findCondition, foundAction Action, 
 		fmt.Sprintf("loop %d times, match find condition failed", maxRetryTimes))
 }
 
-func prepareSwipeAction(dExt *DriverExt, params interface{}, opts ...option.ActionOption) func(d *DriverExt) error {
+func prepareSwipeAction(dExt *XTDriver, params interface{}, opts ...option.ActionOption) func(d *XTDriver) error {
 	actionOptions := option.NewActionOptions(opts...)
 
 	var swipeDirection interface{}
@@ -103,7 +103,7 @@ func prepareSwipeAction(dExt *DriverExt, params interface{}, opts ...option.Acti
 		actionOptions.Steps = 10
 	}
 
-	return func(d *DriverExt) error {
+	return func(d *XTDriver) error {
 		defer func() {
 			// wait for swipe action to completed and content to load completely
 			time.Sleep(time.Duration(1000*actionOptions.Interval) * time.Millisecond)
@@ -138,7 +138,7 @@ func prepareSwipeAction(dExt *DriverExt, params interface{}, opts ...option.Acti
 	}
 }
 
-func (dExt *DriverExt) swipeToTapTexts(texts []string, opts ...option.ActionOption) error {
+func (dExt *XTDriver) swipeToTapTexts(texts []string, opts ...option.ActionOption) error {
 	if len(texts) == 0 {
 		return errors.New("no text to tap")
 	}
@@ -148,7 +148,7 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, opts ...option.ActionOpti
 	actionOptions.Identifier = ""
 	optionsWithoutIdentifier := actionOptions.Options()
 	var point ai.PointF
-	findTexts := func(d *DriverExt) error {
+	findTexts := func(d *XTDriver) error {
 		var err error
 		screenResult, err := d.GetScreenResult(
 			option.WithScreenShotOCR(true),
@@ -172,7 +172,7 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, opts ...option.ActionOpti
 		point = points[0].Center() // FIXME
 		return nil
 	}
-	foundTextAction := func(d *DriverExt) error {
+	foundTextAction := func(d *XTDriver) error {
 		// tap text
 		return d.TapAbsXY(point.X, point.Y, opts...)
 	}
@@ -181,7 +181,7 @@ func (dExt *DriverExt) swipeToTapTexts(texts []string, opts ...option.ActionOpti
 	return dExt.LoopUntil(findAction, findTexts, foundTextAction, optionsWithoutIdentifier...)
 }
 
-func (dExt *DriverExt) SwipeToTapApp(appName string, opts ...option.ActionOption) error {
+func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption) error {
 	// go to home screen
 	if err := dExt.Driver.Homescreen(); err != nil {
 		return errors.Wrap(err, "go to home screen failed")

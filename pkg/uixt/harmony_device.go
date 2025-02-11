@@ -6,7 +6,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
@@ -94,21 +93,15 @@ func (dev *HarmonyDevice) GetPackageInfo(packageName string) (types.AppInfo, err
 	return types.AppInfo{}, nil
 }
 
-func (dev *HarmonyDevice) NewDriver() (IDriverExt, error) {
+func (dev *HarmonyDevice) NewDriver() (IDriver, error) {
 	// init harmony driver
 	driver, err := NewHDCDriver(dev)
 	if err != nil {
 		return nil, errors.Wrap(err, "init harmony driver failed")
 	}
-	driverExt, err := NewDriverExt(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
-	if err != nil {
-		return nil, errors.Wrap(err, "init harmony driver ext failed")
-	}
-
 	// setup driver
-	if err := driverExt.GetDriver().Setup(); err != nil {
+	if err := driver.Setup(); err != nil {
 		return nil, err
 	}
-
-	return driverExt, nil
+	return driver, nil
 }

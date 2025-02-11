@@ -15,7 +15,7 @@ func TestNewDriverExt(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	driverExt, _ := NewDriverExt(driver,
+	driverExt := NewXTDriver(driver,
 		ai.WithCVService(ai.CVServiceTypeVEDEM))
 
 	texts, _ := driverExt.GetScreenTexts()

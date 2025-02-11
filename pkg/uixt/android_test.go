@@ -9,19 +9,22 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
-var driverExt IDriverExt
+var driverExt *XTDriver
 
 func setupAndroidAdbDriver(t *testing.T) {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
 	device.Options.UIA2 = false
 	device.Options.LogOn = false
-	driverExt, err = device.NewDriver()
+	driver, err = device.NewDriver()
 	checkErr(t, err)
+	driverExt = NewXTDriver(driver,
+		ai.WithCVService(ai.CVServiceTypeVEDEM))
 }
 
 func setupAndroidUIA2Driver(t *testing.T) {
@@ -29,8 +32,10 @@ func setupAndroidUIA2Driver(t *testing.T) {
 	checkErr(t, err)
 	device.Options.UIA2 = true
 	device.Options.LogOn = false
-	driverExt, err = device.NewDriver()
+	driver, err = device.NewDriver()
 	checkErr(t, err)
+	driverExt = NewXTDriver(driver,
+		ai.WithCVService(ai.CVServiceTypeVEDEM))
 }
 
 func TestAndroidDevice_GetPackageInfo(t *testing.T) {
@@ -252,12 +257,12 @@ func TestDriver_AppLaunch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = driver.GetDriver().AppLaunch("com.android.settings")
+	err = driver.AppLaunch("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	raw, err := driver.GetDriver().Screenshot()
+	raw, err := driver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -305,19 +310,19 @@ func TestDriver_KeepAlive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = driver.GetDriver().AppLaunch("com.android.settings")
+	err = driver.AppLaunch("com.android.settings")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = driver.GetDriver().Screenshot()
+	_, err = driver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(60 * time.Second)
 
-	_, err = driver.GetDriver().Screenshot()
+	_, err = driver.Screenshot()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -330,7 +335,7 @@ func TestDriver_AppTerminate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = driver.GetDriver().AppTerminate("tv.danmaku.bili")
+	_, err = driver.AppTerminate("tv.danmaku.bili")
 	if err != nil {
 		t.Fatal(err)
 	}

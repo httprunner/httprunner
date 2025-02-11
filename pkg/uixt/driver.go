@@ -147,6 +147,37 @@ type IDriver interface {
 	TearDown() error
 }
 
+func NewXTDriver(driver IDriver, opts ...ai.AIServiceOption) *XTDriver {
+	services := ai.NewAIService(opts...)
+	driverExt := &XTDriver{
+		Driver:     driver,
+		CVService:  services.ICVService,
+		LLMService: services.ILLMService,
+	}
+	return driverExt
+}
+
+func NewDriverExt(driver IDriver, opts ...ai.AIServiceOption) (*XTDriver, error) {
+	services := ai.NewAIService(opts...)
+	driverExt := &XTDriver{
+		Driver:     driver,
+		CVService:  services.ICVService,
+		LLMService: services.ILLMService,
+	}
+	// create results directory
+	// TODO: move to setup
+	if err := builtin.EnsureFolderExists(config.ResultsPath); err != nil {
+		return nil, errors.Wrap(err, "create results directory failed")
+	}
+	if err := builtin.EnsureFolderExists(config.ScreenShotsPath); err != nil {
+		return nil, errors.Wrap(err, "create screenshots directory failed")
+	}
+	return driverExt, nil
+}
+
+var _ IDriverExt = (*XTDriver)(nil)
+
+// XTDriver = IDriver + AI
 type IDriverExt interface {
 	GetDriver() IDriver // get original driver
 
@@ -176,35 +207,17 @@ type IDriverExt interface {
 	DoValidation(check, assert, expected string, message ...string) (err error)
 }
 
-func NewDriverExt(driver IDriver, opts ...ai.AIServiceOption) (IDriverExt, error) {
-	services := ai.NewAIService(opts...)
-	driverExt := &DriverExt{
-		Driver:     driver,
-		CVService:  services.ICVService,
-		LLMService: services.ILLMService,
-	}
-	// create results directory
-	// TODO: move to setup
-	if err := builtin.EnsureFolderExists(config.ResultsPath); err != nil {
-		return nil, errors.Wrap(err, "create results directory failed")
-	}
-	if err := builtin.EnsureFolderExists(config.ScreenShotsPath); err != nil {
-		return nil, errors.Wrap(err, "create screenshots directory failed")
-	}
-	return driverExt, nil
-}
-
-type DriverExt struct {
+type XTDriver struct {
 	Driver     IDriver
 	CVService  ai.ICVService  // OCR/CV
 	LLMService ai.ILLMService // LLM
 }
 
-func (dExt *DriverExt) GetDriver() IDriver {
+func (dExt *XTDriver) GetDriver() IDriver {
 	return dExt.Driver
 }
 
-func (dExt *DriverExt) Setup() error {
+func (dExt *XTDriver) Setup() error {
 	// unlock device screen
 	err := dExt.Driver.Unlock()
 	if err != nil {
@@ -215,7 +228,7 @@ func (dExt *DriverExt) Setup() error {
 	return nil
 }
 
-func (dExt *DriverExt) assertOCR(text, assert string) error {
+func (dExt *XTDriver) assertOCR(text, assert string) error {
 	var opts []option.ActionOption
 	opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("assert_ocr_%s", text)))
 
@@ -248,7 +261,7 @@ func (dExt *DriverExt) assertOCR(text, assert string) error {
 	return nil
 }
 
-func (dExt *DriverExt) assertForegroundApp(appName, assert string) (err error) {
+func (dExt *XTDriver) assertForegroundApp(appName, assert string) (err error) {
 	err = dExt.Driver.AssertForegroundApp(appName)
 	switch assert {
 	case AssertionEqual:
@@ -265,7 +278,7 @@ func (dExt *DriverExt) assertForegroundApp(appName, assert string) (err error) {
 	return nil
 }
 
-func (dExt *DriverExt) DoValidation(check, assert, expected string, message ...string) (err error) {
+func (dExt *XTDriver) DoValidation(check, assert, expected string, message ...string) (err error) {
 	switch check {
 	case SelectorOCR:
 		err = dExt.assertOCR(expected, assert)

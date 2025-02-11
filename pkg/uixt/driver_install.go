@@ -18,7 +18,7 @@ type InstallResult struct {
 	ErrorMsg  string `json:"errorMsg"`
 }
 
-func (dExt *DriverExt) InstallByUrl(url string, opts ...option.InstallOption) error {
+func (dExt *XTDriver) InstallByUrl(url string, opts ...option.InstallOption) error {
 	// 获取当前目录
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -41,7 +41,7 @@ func (dExt *DriverExt) InstallByUrl(url string, opts ...option.InstallOption) er
 	return nil
 }
 
-func (dExt *DriverExt) Install(filePath string, opts ...option.InstallOption) error {
+func (dExt *XTDriver) Install(filePath string, opts ...option.InstallOption) error {
 	if _, ok := dExt.Driver.GetDevice().(*AndroidDevice); ok {
 		stopChan := make(chan struct{})
 		go func() {
@@ -90,7 +90,7 @@ func (dExt *DriverExt) Install(filePath string, opts ...option.InstallOption) er
 	return dExt.Driver.GetDevice().Install(filePath, opts...)
 }
 
-func (dExt *DriverExt) Uninstall(packageName string, opts ...option.ActionOption) error {
+func (dExt *XTDriver) Uninstall(packageName string, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 	err := dExt.Driver.GetDevice().Uninstall(packageName)
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 )
 
-func (dExt *DriverExt) Input(text string) (err error) {
+func (dExt *XTDriver) Input(text string) (err error) {
 	err = dExt.Driver.Input(text)
 	if err != nil {
 		return errors.Wrap(code.MobileUIInputError, err.Error())

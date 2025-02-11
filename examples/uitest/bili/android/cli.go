@@ -28,46 +28,48 @@ func init() {
 	fmt.Printf("=== start running cases, serial=%s, runTimes=%d ===\n", serial, runTimes)
 }
 
-func launchAppDriver(pkgName string) (driver uixt.IDriverExt, err error) {
+func launchAppDriver(pkgName string) (driverExt *uixt.XTDriver, err error) {
 	device, _ := uixt.NewAndroidDevice(option.WithSerialNumber(serial))
-	driver, err = device.NewDriver()
+	driver, err := device.NewDriver()
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = driver.GetDriver().AppTerminate(pkgName)
+	_, err = driver.AppTerminate(pkgName)
 	if err != nil {
 		return nil, err
 	}
 
-	err = driver.GetDriver().Homescreen()
+	err = driver.Homescreen()
 	if err != nil {
 		return nil, err
 	}
 
-	err = driver.GetDriver().AppLaunch(pkgName)
+	err = driver.AppLaunch(pkgName)
 	if err != nil {
 		return nil, err
 	}
 
 	time.Sleep(15 * time.Second)
 
+	driverExt = uixt.NewXTDriver(driver)
+
 	// 处理弹窗
-	err = driver.ClosePopupsHandler()
+	err = driverExt.ClosePopupsHandler()
 	if err != nil {
 		return nil, err
 	}
 
 	// 进入推荐页
-	err = driver.TapByOCR("推荐", option.WithScope(0, 0, 1, 0.3))
+	err = driverExt.TapByOCR("推荐", option.WithScope(0, 0, 1, 0.3))
 	if err != nil {
 		return nil, err
 	}
 
-	return driver, nil
+	return driverExt, nil
 }
 
-func watchVideo(driver uixt.IDriverExt) (err error) {
+func watchVideo(driver *uixt.XTDriver) (err error) {
 	time.Sleep(3 * time.Second)
 	err = driver.SwipeRelative(0.7, 0.7, 0.7, 0.2)
 	if err != nil {

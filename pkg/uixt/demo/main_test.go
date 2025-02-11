@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -22,10 +23,13 @@ func TestIOSDemo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	driverExt, err := device.NewDriver()
+	driver, err := device.NewDriver()
 	if err != nil {
 		t.Fatal(err)
 	}
+	driverExt := uixt.NewXTDriver(driver,
+		ai.WithCVService(ai.CVServiceTypeVEDEM),
+	)
 
 	// release session
 	defer func() {

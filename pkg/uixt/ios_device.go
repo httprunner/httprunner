@@ -28,7 +28,6 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
@@ -203,8 +202,8 @@ func (dev *IOSDevice) getAppInfo(packageName string) (appInfo types.AppInfo, err
 	return types.AppInfo{}, fmt.Errorf("not found App by bundle id: %s", packageName)
 }
 
-func (dev *IOSDevice) NewDriver() (driverExt IDriverExt, err error) {
-	driver, err := NewWDADriver(dev)
+func (dev *IOSDevice) NewDriver() (driver IDriver, err error) {
+	driver, err = NewWDADriver(dev)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
@@ -230,18 +229,11 @@ func (dev *IOSDevice) NewDriver() (driverExt IDriverExt, err error) {
 			return nil, err
 		}
 	}
-
-	driverExt, err = NewDriverExt(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
-	if err != nil {
-		return nil, errors.Wrap(err, "init ios driver ext failed")
-	}
-
 	// setup driver
-	if err := driverExt.GetDriver().Setup(); err != nil {
+	if err := driver.Setup(); err != nil {
 		return nil, err
 	}
-
-	return driverExt, nil
+	return driver, nil
 }
 
 func (dev *IOSDevice) Install(appPath string, opts ...option.InstallOption) (err error) {

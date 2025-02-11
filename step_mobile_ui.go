@@ -780,7 +780,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 	return stepResult, nil
 }
 
-func validateUI(ud uixt.IDriverExt, iValidators []interface{}) (validateResults []*ValidationResult, err error) {
+func validateUI(ud *uixt.XTDriver, iValidators []interface{}) (validateResults []*ValidationResult, err error) {
 	for _, iValidator := range iValidators {
 		validator, ok := iValidator.(Validator)
 		if !ok {

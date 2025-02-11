@@ -41,13 +41,13 @@ var installCmd = &cobra.Command{
 			fmt.Println(err)
 			return err
 		}
-		driverExt, err := device.NewDriver()
+		driver, err := device.NewDriver()
 		if err != nil {
 			fmt.Println(err)
 			return err
 		}
 
-		err = driverExt.GetDriver().GetDevice().Install(args[0],
+		err = driver.GetDevice().Install(args[0],
 			option.WithReinstall(replace),
 			option.WithDowngrade(downgrade),
 			option.WithGrantPermission(grant),

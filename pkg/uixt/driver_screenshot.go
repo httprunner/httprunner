@@ -46,7 +46,7 @@ func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) ai.OCRTexts {
 }
 
 // GetScreenResult takes a screenshot, returns the image recognition result
-func (dExt *DriverExt) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
+func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
 	screenshotOptions := option.NewActionOptions(opts...)
 
 	var fileName string
@@ -129,7 +129,7 @@ func (dExt *DriverExt) GetScreenResult(opts ...option.ActionOption) (screenResul
 	return screenResult, nil
 }
 
-func (dExt *DriverExt) GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error) {
+func (dExt *XTDriver) GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error) {
 	options := option.NewActionOptions(opts...)
 	if options.ScreenShotFileName == "" {
 		opts = append(opts, option.WithScreenShotFileName("get_screen_texts"))
@@ -142,7 +142,7 @@ func (dExt *DriverExt) GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.
 	return screenResult.Texts, nil
 }
 
-func (dExt *DriverExt) FindUIRectInUIKit(search string, opts ...option.ActionOption) (point ai.PointF, err error) {
+func (dExt *XTDriver) FindUIRectInUIKit(search string, opts ...option.ActionOption) (point ai.PointF, err error) {
 	// find text using OCR
 	if !builtin.IsPathExists(search) {
 		return dExt.FindScreenText(search, opts...)
@@ -152,7 +152,7 @@ func (dExt *DriverExt) FindUIRectInUIKit(search string, opts ...option.ActionOpt
 	return
 }
 
-func (dExt *DriverExt) FindScreenText(text string, opts ...option.ActionOption) (point ai.PointF, err error) {
+func (dExt *XTDriver) FindScreenText(text string, opts ...option.ActionOption) (point ai.PointF, err error) {
 	options := option.NewActionOptions(opts...)
 	if options.ScreenShotFileName == "" {
 		opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("find_screen_text_%s", text)))
@@ -174,7 +174,7 @@ func (dExt *DriverExt) FindScreenText(text string, opts ...option.ActionOption) 
 	return
 }
 
-func (dExt *DriverExt) FindUIResult(opts ...option.ActionOption) (point ai.PointF, err error) {
+func (dExt *XTDriver) FindUIResult(opts ...option.ActionOption) (point ai.PointF, err error) {
 	options := option.NewActionOptions(opts...)
 	if options.ScreenShotFileName == "" {
 		opts = append(opts, option.WithScreenShotFileName(
@@ -199,7 +199,7 @@ func (dExt *DriverExt) FindUIResult(opts ...option.ActionOption) (point ai.Point
 }
 
 // GetScreenShot takes screenshot and saves image file to $CWD/screenshots/ folder
-func (dExt *DriverExt) GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error) {
+func (dExt *XTDriver) GetScreenShot(fileName string) (raw *bytes.Buffer, path string, err error) {
 	if raw, err = dExt.Driver.Screenshot(); err != nil {
 		log.Error().Err(err).Msg("capture screenshot data failed")
 		return nil, "", errors.Wrap(code.DeviceScreenShotError, err.Error())

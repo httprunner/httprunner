@@ -43,7 +43,7 @@ func findTextPopup(screenTexts ai.OCRTexts) (closePoint *ai.OCRText) {
 	return
 }
 
-func (dExt *DriverExt) handleTextPopup(screenTexts ai.OCRTexts) error {
+func (dExt *XTDriver) handleTextPopup(screenTexts ai.OCRTexts) error {
 	closePoint := findTextPopup(screenTexts)
 	if closePoint == nil {
 		// no popup found
@@ -60,7 +60,7 @@ func (dExt *DriverExt) handleTextPopup(screenTexts ai.OCRTexts) error {
 	return nil
 }
 
-func (dExt *DriverExt) AutoPopupHandler() error {
+func (dExt *XTDriver) AutoPopupHandler() error {
 	// TODO: check popup by activity type
 
 	// check popup by screenshot
@@ -98,7 +98,7 @@ func (p *PopupInfo) ClosePoint() *ai.PointF {
 	return &closePoint
 }
 
-func (dExt *DriverExt) CheckPopup() (popup *PopupInfo, err error) {
+func (dExt *XTDriver) CheckPopup() (popup *PopupInfo, err error) {
 	screenResult, err := dExt.GetScreenResult(
 		option.WithScreenShotUpload(true),
 		option.WithScreenShotClosePopups(true), // get popup area and close area
@@ -122,7 +122,7 @@ func (dExt *DriverExt) CheckPopup() (popup *PopupInfo, err error) {
 	return popup, nil
 }
 
-func (dExt *DriverExt) ClosePopupsHandler() (err error) {
+func (dExt *XTDriver) ClosePopupsHandler() (err error) {
 	log.Info().Msg("try to find and close popups")
 
 	popup, err := dExt.CheckPopup()

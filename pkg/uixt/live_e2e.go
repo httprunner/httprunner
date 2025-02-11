@@ -22,7 +22,7 @@ type timeLog struct {
 }
 
 type EndToEndDelay struct {
-	driver    *DriverExt
+	driver    *XTDriver
 	StartTime string    `json:"startTime"`
 	EndTime   string    `json:"endTime"`
 	Interval  int       `json:"interval"` // seconds
@@ -30,7 +30,7 @@ type EndToEndDelay struct {
 	Timelines []timeLog `json:"timelines"`
 }
 
-func CollectEndToEndDelay(dExt *DriverExt, opts ...option.ActionOption) {
+func CollectEndToEndDelay(dExt *XTDriver, opts ...option.ActionOption) {
 	dataOptions := option.NewActionOptions(opts...)
 	startTime := time.Now()
 

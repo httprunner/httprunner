@@ -5,9 +5,14 @@ package uixt
 import (
 	"fmt"
 	"testing"
+
+	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 )
 
-var hdcDriver *HDCDriver
+var (
+	hdcDriver    *HDCDriver
+	hdcDriverExt *XTDriver
+)
 
 func setupHarmonyDevice(t *testing.T) {
 	device, err := NewHarmonyDevice()
@@ -18,6 +23,8 @@ func setupHarmonyDevice(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	hdcDriverExt = NewXTDriver(hdcDriver,
+		ai.WithCVService(ai.CVServiceTypeVEDEM))
 }
 
 func TestWindowSize(t *testing.T) {
@@ -31,7 +38,7 @@ func TestWindowSize(t *testing.T) {
 
 func TestHarmonyTap(t *testing.T) {
 	setupHarmonyDevice(t)
-	err := hdcDriver.TapAbsXY(200, 2000)
+	err := hdcDriverExt.TapAbsXY(200, 2000)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +46,7 @@ func TestHarmonyTap(t *testing.T) {
 
 func TestHarmonySwipe(t *testing.T) {
 	setupHarmonyDevice(t)
-	err := hdcDriver.SwipeLeft()
+	err := hdcDriverExt.SwipeLeft()
 	if err != nil {
 		t.Fatal(err)
 	}
