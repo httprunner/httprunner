@@ -393,7 +393,7 @@ func TestTapTexts(t *testing.T) {
 
 func TestRecordVideo(t *testing.T) {
 	setupAndroidAdbDriver(t)
-	path, err := driverExt.ScreenRecord("", 5*time.Second)
+	path, err := driverExt.ScreenRecord(5 * time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}

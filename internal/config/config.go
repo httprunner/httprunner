@@ -13,7 +13,7 @@ import (
 const (
 	ResultsDirName     = "results"
 	ScreenshotsDirName = "screenshots"
-	ActionLogDireName  = "action_log"
+	ActionLogDirName   = "action_log"
 )
 
 var (
@@ -37,7 +37,7 @@ func init() {
 	ResultsDir = filepath.Join(ResultsDirName, StartTimeStr)
 	ResultsPath = filepath.Join(RootDir, ResultsDir)
 	ScreenShotsPath = filepath.Join(ResultsPath, ScreenshotsDirName)
-	ActionLogFilePath = filepath.Join(ResultsDir, ActionLogDireName)
+	ActionLogFilePath = filepath.Join(ResultsDir, ActionLogDirName)
 	DeviceActionLogFilePath = "/sdcard/Android/data/io.appium.uiautomator2.server/files/hodor"
 
 	// create results directory

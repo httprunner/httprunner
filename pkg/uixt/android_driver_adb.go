@@ -895,17 +895,10 @@ var androidActivities = map[string]map[string][]string{
 	// TODO: SPH, XHS
 }
 
-func (ad *ADBDriver) ScreenRecord(folderPath string, duration time.Duration) (videoPath string, err error) {
-	// 获取当前时间戳
+func (ad *ADBDriver) ScreenRecord(duration time.Duration) (videoPath string, err error) {
 	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
-	// 创建文件名
-	fileName := fmt.Sprintf("%s/%s.mp4", folderPath, timestamp)
-	err = os.MkdirAll(folderPath, os.ModePerm)
-	if err != nil {
-		log.Error().Err(err).Msg("Error creating directory")
-	}
+	fileName := filepath.Join(config.ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
 
-	// 创建一个文件
 	file, err := os.Create(fileName)
 	if err != nil {
 		log.Error().Err(err)

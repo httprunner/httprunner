@@ -22,6 +22,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
@@ -892,23 +893,16 @@ func (wd *WDADriver) triggerWDALog(data map[string]interface{}) (rawResp []byte,
 	return wd.httpPOST(data, "/gtf/automation/log")
 }
 
-func (wd *WDADriver) ScreenRecord(folderPath string, duration time.Duration) (videoPath string, err error) {
-	// 获取当前时间戳
+func (wd *WDADriver) ScreenRecord(duration time.Duration) (videoPath string, err error) {
 	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
-	// 创建文件名
-	fileName := fmt.Sprintf("%s/%s.mp4", folderPath, timestamp)
-	err = os.MkdirAll(folderPath, os.ModePerm)
-	if err != nil {
-		log.Error().Err(err).Msg("Error creating directory")
-	}
-	// 创建一个文件
+	fileName := filepath.Join(config.ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
+
 	file, err := os.Create(fileName)
 	if err != nil {
 		fmt.Println("Error creating file:", err)
 		return "", err
 	}
 	defer func() {
-		// 确保文件在程序结束时被删除
 		_ = file.Close()
 	}()
 

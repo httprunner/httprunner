@@ -44,7 +44,7 @@ type IDriver interface {
 	WindowSize() (types.Size, error)
 	Scale() (float64, error)
 	ScreenShot() (*bytes.Buffer, error)
-	ScreenRecord(folderPath string, duration time.Duration) (videoPath string, err error)
+	ScreenRecord(duration time.Duration) (videoPath string, err error)
 	Source(srcOpt ...option.SourceOption) (string, error)
 
 	// actions
