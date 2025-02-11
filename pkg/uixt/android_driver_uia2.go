@@ -201,19 +201,11 @@ func (ud *UIA2Driver) WindowSize() (size types.Size, err error) {
 	return size, nil
 }
 
-// PressBack simulates a short press on the BACK button.
-func (ud *UIA2Driver) PressBack(opts ...option.ActionOption) (err error) {
+// Back simulates a short press on the BACK button.
+func (ud *UIA2Driver) Back() (err error) {
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	_, err = ud.httpPOST(nil, "/session", ud.Session.ID, "back")
 	return
-}
-
-func (ud *UIA2Driver) Homescreen() (err error) {
-	return ud.PressKeyCodes(KCHome, KMEmpty)
-}
-
-func (ud *UIA2Driver) PressKeyCode(keyCode KeyCode) (err error) {
-	return ud.PressKeyCodes(keyCode, KMEmpty)
 }
 
 func (ud *UIA2Driver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta, flags ...KeyFlag) (err error) {
@@ -449,7 +441,7 @@ func (ud *UIA2Driver) GetPasteboard(contentType types.PasteboardType) (raw *byte
 }
 
 // SendKeys Android input does not support setting frequency.
-func (ud *UIA2Driver) SendKeys(text string, opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) Input(text string, opts ...option.ActionOption) (err error) {
 	// register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/keys"))
 	// https://github.com/appium/appium-uiautomator2-server/blob/master/app/src/main/java/io/appium/uiautomator2/handler/SendKeysToElement.java#L76-L85
 	actionOptions := option.NewActionOptions(opts...)
@@ -522,10 +514,6 @@ func (ud *UIA2Driver) SendActionKey(text string, opts ...option.ActionOption) (e
 	actionOptions.UpdateData(data)
 	_, err = ud.httpPOST(data, "/session", ud.Session.ID, "/actions/keys")
 	return
-}
-
-func (ud *UIA2Driver) Input(text string, opts ...option.ActionOption) (err error) {
-	return ud.SendKeys(text, opts...)
 }
 
 func (ud *UIA2Driver) Rotation() (rotation types.Rotation, err error) {

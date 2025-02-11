@@ -62,7 +62,7 @@ func TestHarmonyInput(t *testing.T) {
 
 func TestHomeScreen(t *testing.T) {
 	setupHarmonyDevice(t)
-	err := driver.Homescreen()
+	err := driver.Home()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func TestUnlock(t *testing.T) {
 
 func TestPressBack(t *testing.T) {
 	setupHarmonyDevice(t)
-	err := driver.PressBack()
+	err := driver.Back()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestLaunch(t *testing.T) {
 
 func TestForegroundApp(t *testing.T) {
 	setupHarmonyDevice(t)
-	appInfo, err := driver.GetForegroundApp()
+	appInfo, err := driver.ForegroundInfo()
 	if err != nil {
 		t.Fatal(err)
 	}

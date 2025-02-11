@@ -80,11 +80,7 @@ func (hd *HDCDriver) WindowSize() (size types.Size, err error) {
 	return size, err
 }
 
-func (hd *HDCDriver) Scale() (float64, error) {
-	return 1, nil
-}
-
-func (hd *HDCDriver) Homescreen() error {
+func (hd *HDCDriver) Home() error {
 	return hd.uiDriver.PressKey(ghdc.KEYCODE_HOME)
 }
 
@@ -132,14 +128,9 @@ func (hd *HDCDriver) AppTerminate(packageName string) (bool, error) {
 	return true, nil
 }
 
-func (hd *HDCDriver) GetForegroundApp() (app types.AppInfo, err error) {
+func (hd *HDCDriver) ForegroundInfo() (app types.AppInfo, err error) {
 	// Todo
 	return types.AppInfo{}, types.ErrDriverNotImplemented
-}
-
-func (hd *HDCDriver) AssertForegroundApp(packageName string, activityType ...string) error {
-	// Todo
-	return nil
 }
 
 func (hd *HDCDriver) Orientation() (orientation types.Orientation, err error) {
@@ -204,10 +195,6 @@ func (hd *HDCDriver) SetIme(ime string) error {
 	return types.ErrDriverNotImplemented
 }
 
-func (hd *HDCDriver) SendKeys(text string, opts ...option.ActionOption) error {
-	return hd.uiDriver.InputText(text)
-}
-
 func (hd *HDCDriver) Input(text string, opts ...option.ActionOption) error {
 	return hd.uiDriver.InputText(text)
 }
@@ -216,20 +203,12 @@ func (hd *HDCDriver) AppClear(packageName string) error {
 	return types.ErrDriverNotImplemented
 }
 
-func (hd *HDCDriver) PressButton(devBtn types.DeviceButton) error {
-	return types.ErrDriverNotImplemented
-}
-
-func (hd *HDCDriver) PressBack(opts ...option.ActionOption) error {
+func (hd *HDCDriver) Back() error {
 	return hd.uiDriver.PressBack()
 }
 
 func (hd *HDCDriver) Backspace(count int, opts ...option.ActionOption) (err error) {
 	return nil
-}
-
-func (hd *HDCDriver) PressKeyCode(keyCode KeyCode) (err error) {
-	return types.ErrDriverNotImplemented
 }
 
 func (hd *HDCDriver) PressHarmonyKeyCode(keyCode ghdc.KeyCode) (err error) {

@@ -218,7 +218,7 @@ func (dev *IOSDevice) NewDriver() (driver IDriver, err error) {
 
 	if dev.Options.ResetHomeOnStartup {
 		log.Info().Msg("go back to home screen")
-		if err = wdaDriver.Homescreen(); err != nil {
+		if err = wdaDriver.Home(); err != nil {
 			return nil, errors.Wrap(code.MobileUIDriverError,
 				fmt.Sprintf("go back to home screen failed: %v", err))
 		}

@@ -33,7 +33,6 @@ func (r *Router) Init() {
 	// Key operations
 	apiV1PlatformSerial.POST("/key/unlock", r.HandleDeviceContext(), unlockHandler)
 	apiV1PlatformSerial.POST("/key/home", r.HandleDeviceContext(), homeHandler)
-	apiV1PlatformSerial.POST("/key", r.HandleDeviceContext(), keycodeHandler)
 	// App operations
 	apiV1PlatformSerial.GET("/app/foreground", r.HandleDeviceContext(), foregroundAppHandler)
 	apiV1PlatformSerial.POST("/app/clear", r.HandleDeviceContext(), clearAppHandler)

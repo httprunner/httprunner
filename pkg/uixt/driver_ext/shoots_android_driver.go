@@ -109,7 +109,7 @@ func (sad *ShootsAndroidDriver) close() error {
 }
 
 func (sad *ShootsAndroidDriver) Status() (types.DeviceStatus, error) {
-	app, err := sad.GetForegroundApp()
+	app, err := sad.ForegroundInfo()
 	if err != nil {
 		return types.DeviceStatus{}, err
 	}
@@ -122,7 +122,7 @@ func (sad *ShootsAndroidDriver) Status() (types.DeviceStatus, error) {
 }
 
 func (sad *ShootsAndroidDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
-	app, err := sad.GetForegroundApp()
+	app, err := sad.ForegroundInfo()
 	if err != nil {
 		return "", err
 	}

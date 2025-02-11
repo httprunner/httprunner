@@ -254,6 +254,18 @@ func (wd *WDADriver) WindowSize() (size types.Size, err error) {
 	return wd.Session.windowSize, nil
 }
 
+func (wd *WDADriver) Scale() (float64, error) {
+	if !builtin.IsZeroFloat64(wd.Session.scale) {
+		return wd.Session.scale, nil
+	}
+	screen, err := wd.Screen()
+	if err != nil {
+		return 0, errors.Wrap(code.MobileUIDriverError,
+			fmt.Sprintf("get screen info failed: %v", err))
+	}
+	return screen.Scale, nil
+}
+
 func (wd *WDADriver) Screen() (screen ai.Screen, err error) {
 	// [[FBRoute GET:@"/wda/screen"] respondWithTarget:self action:@selector(handleGetScreen:)]
 	var rawResp DriverRawResponse
@@ -282,18 +294,6 @@ func (wd *WDADriver) ScreenShot() (raw *bytes.Buffer, err error) {
 			fmt.Sprintf("decode WDA screenshot data failed: %v", err))
 	}
 	return
-}
-
-func (wd *WDADriver) Scale() (float64, error) {
-	if !builtin.IsZeroFloat64(wd.Session.scale) {
-		return wd.Session.scale, nil
-	}
-	screen, err := wd.Screen()
-	if err != nil {
-		return 0, errors.Wrap(code.MobileUIDriverError,
-			fmt.Sprintf("get screen info failed: %v", err))
-	}
-	return screen.Scale, nil
 }
 
 func (wd *WDADriver) toScale(x float64) float64 {
@@ -372,7 +372,7 @@ func (wd *WDADriver) Lock() (err error) {
 	return
 }
 
-func (wd *WDADriver) Homescreen() (err error) {
+func (wd *WDADriver) Home() (err error) {
 	// [[FBRoute POST:@"/wda/homescreen"].withoutSession respondWithTarget:self action:@selector(handleHomescreenCommand:)]
 	_, err = wd.httpPOST(nil, "/wda/homescreen")
 	return
@@ -490,7 +490,7 @@ func (wd *WDADriver) AppDeactivate(second float64) (err error) {
 	return
 }
 
-func (wd *WDADriver) GetForegroundApp() (appInfo types.AppInfo, err error) {
+func (wd *WDADriver) ForegroundInfo() (appInfo types.AppInfo, err error) {
 	activeAppInfo, err := wd.ActiveAppInfo()
 	appInfo.BundleId = activeAppInfo.BundleId
 	if err != nil {
@@ -512,29 +512,6 @@ func (wd *WDADriver) GetForegroundApp() (appInfo types.AppInfo, err error) {
 		}
 	}
 	return appInfo, err
-}
-
-func (wd *WDADriver) AssertForegroundApp(bundleId string, viewControllerType ...string) error {
-	log.Debug().Str("bundleId", bundleId).
-		Strs("viewControllerType", viewControllerType).
-		Msg("assert ios foreground bundleId")
-
-	app, err := wd.GetForegroundApp()
-	if err != nil {
-		log.Warn().Err(err).Msg("get foreground app failed, skip bundleId assertion")
-		return nil // Notice: ignore error when get foreground app failed
-	}
-
-	// assert package
-	if app.BundleId != bundleId {
-		log.Error().
-			Interface("foreground_app", app.AppBaseInfo).
-			Str("expected_package", bundleId).
-			Msg("assert package failed")
-		return errors.Wrap(code.MobileUIAssertForegroundAppError,
-			"assert foreground package failed")
-	}
-	return nil
 }
 
 func (wd *WDADriver) TapXY(x, y float64, opts ...option.ActionOption) (err error) {
@@ -657,11 +634,7 @@ func (wd *WDADriver) SetIme(ime string) error {
 	return types.ErrDriverNotImplemented
 }
 
-func (wd *WDADriver) PressKeyCode(keyCode KeyCode) (err error) {
-	return types.ErrDriverNotImplemented
-}
-
-func (wd *WDADriver) SendKeys(text string, opts ...option.ActionOption) (err error) {
+func (wd *WDADriver) Input(text string, opts ...option.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
 	actionOptions := option.NewActionOptions(opts...)
 	data := map[string]interface{}{"value": strings.Split(text, "")}
@@ -687,18 +660,12 @@ func (wd *WDADriver) Backspace(count int, opts ...option.ActionOption) (err erro
 	return
 }
 
-func (wd *WDADriver) Input(text string, opts ...option.ActionOption) (err error) {
-	return wd.SendKeys(text, opts...)
-}
-
 func (wd *WDADriver) AppClear(packageName string) error {
 	return types.ErrDriverNotImplemented
 }
 
-// PressBack simulates a short press on the BACK button.
-func (wd *WDADriver) PressBack(opts ...option.ActionOption) (err error) {
-	actionOptions := option.NewActionOptions(opts...)
-
+// Back simulates a short press on the BACK button.
+func (wd *WDADriver) Back() (err error) {
 	windowSize, err := wd.WindowSize()
 	if err != nil {
 		return
@@ -707,16 +674,6 @@ func (wd *WDADriver) PressBack(opts ...option.ActionOption) (err error) {
 	fromY := wd.toScale(float64(windowSize.Height) * 0.5)
 	toX := wd.toScale(float64(windowSize.Width) * 0.6)
 	toY := wd.toScale(float64(windowSize.Height) * 0.5)
-	if len(actionOptions.Offset) == 4 {
-		fromX += float64(actionOptions.Offset[0])
-		fromY += float64(actionOptions.Offset[1])
-		toX += float64(actionOptions.Offset[2])
-		toY += float64(actionOptions.Offset[3])
-	}
-	fromX += actionOptions.GetRandomOffset()
-	fromY += actionOptions.GetRandomOffset()
-	toX += actionOptions.GetRandomOffset()
-	toY += actionOptions.GetRandomOffset()
 
 	data := map[string]interface{}{
 		"fromX": fromX,
@@ -724,9 +681,6 @@ func (wd *WDADriver) PressBack(opts ...option.ActionOption) (err error) {
 		"toX":   toX,
 		"toY":   toY,
 	}
-
-	// update data options in post data for extra WDA configurations
-	actionOptions.UpdateData(data)
 
 	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/dragfromtoforduration")
 	return

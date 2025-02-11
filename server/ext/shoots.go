@@ -38,7 +38,7 @@ func sourceHandler(c *gin.Context) {
 		return
 	}
 
-	app, err := dExt.GetForegroundApp()
+	app, err := dExt.ForegroundInfo()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get foreground app", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,

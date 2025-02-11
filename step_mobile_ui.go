@@ -195,11 +195,11 @@ func (s *StepMobile) DoubleTap(params string, opts ...option.ActionOption) *Step
 	return s
 }
 
-func (s *StepMobile) Back(opts ...option.ActionOption) *StepMobile {
+func (s *StepMobile) Back() *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_Back,
 		Params:  nil,
-		Options: option.NewActionOptions(opts...),
+		Options: nil,
 	}
 
 	s.obj().Actions = append(s.obj().Actions, action)
@@ -666,7 +666,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				},
 				StartTime: startTime.Unix(),
 			}
-			if app, err1 := uiDriver.GetForegroundApp(); err1 == nil {
+			if app, err1 := uiDriver.ForegroundInfo(); err1 == nil {
 				attachments["foreground_app"] = app.AppBaseInfo
 			} else {
 				log.Warn().Err(err1).Msg("save foreground app failed, ignore")

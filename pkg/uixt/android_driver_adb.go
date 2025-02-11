@@ -163,12 +163,8 @@ func (ad *ADBDriver) WindowSize() (size types.Size, err error) {
 	return size, nil
 }
 
-func (ad *ADBDriver) Scale() (scale float64, err error) {
-	return 1, nil
-}
-
-// PressBack simulates a short press on the BACK button.
-func (ad *ADBDriver) PressBack(opts ...option.ActionOption) (err error) {
+// Back simulates a short press on the BACK button.
+func (ad *ADBDriver) Back() (err error) {
 	// adb shell input keyevent 4
 	_, err = ad.runShellCommand("input", "keyevent", fmt.Sprintf("%d", KCBack))
 	if err != nil {
@@ -195,18 +191,18 @@ func (ad *ADBDriver) Orientation() (orientation types.Orientation, err error) {
 	return
 }
 
-func (ad *ADBDriver) Homescreen() (err error) {
-	return ad.PressKeyCodes(KCHome, KMEmpty)
+func (ad *ADBDriver) Home() (err error) {
+	return ad.PressKeyCode(KCHome, KMEmpty)
 }
 
 func (ad *ADBDriver) Unlock() (err error) {
 	// Notice: brighten should be executed before unlock
 	// brighten android device screen
-	if err := ad.PressKeyCodes(KCWakeup, KMEmpty); err != nil {
+	if err := ad.PressKeyCode(KCWakeup, KMEmpty); err != nil {
 		log.Error().Err(err).Msg("brighten android device screen failed")
 	}
 	// unlock android device screen
-	if err := ad.PressKeyCodes(KCMenu, KMEmpty); err != nil {
+	if err := ad.PressKeyCode(KCMenu, KMEmpty); err != nil {
 		log.Error().Err(err).Msg("press menu key to unlock screen failed")
 	}
 
@@ -219,7 +215,7 @@ func (ad *ADBDriver) Backspace(count int, opts ...option.ActionOption) (err erro
 		return nil
 	}
 	if count == 1 {
-		return ad.PressKeyCode(KCDel)
+		return ad.PressKeyCode(KCDel, KMEmpty)
 	}
 	keyArray := make([]KeyCode, count)
 
@@ -231,7 +227,7 @@ func (ad *ADBDriver) Backspace(count int, opts ...option.ActionOption) (err erro
 
 func (ad *ADBDriver) combinationKey(keyCodes []KeyCode) (err error) {
 	if len(keyCodes) == 1 {
-		return ad.PressKeyCode(keyCodes[0])
+		return ad.PressKeyCode(keyCodes[0], KMEmpty)
 	}
 	strKeyCodes := make([]string, len(keyCodes))
 	for i, keycode := range keyCodes {
@@ -242,11 +238,7 @@ func (ad *ADBDriver) combinationKey(keyCodes []KeyCode) (err error) {
 	return
 }
 
-func (ad *ADBDriver) PressKeyCode(keyCode KeyCode) (err error) {
-	return ad.PressKeyCodes(keyCode, KMEmpty)
-}
-
-func (ad *ADBDriver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta) (err error) {
+func (ad *ADBDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta) (err error) {
 	// adb shell input keyevent [--longpress] KEYCODE [METASTATE]
 	if metaState != KMEmpty {
 		// press key with metastate, e.g. KMShiftOn/KMCtrlOn
@@ -410,18 +402,13 @@ func (ad *ADBDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) 
 	return
 }
 
-func (ad *ADBDriver) SendKeys(text string, opts ...option.ActionOption) (err error) {
-	err = ad.SendUnicodeKeys(text, opts...)
+func (ad *ADBDriver) Input(text string, opts ...option.ActionOption) error {
+	err := ad.SendUnicodeKeys(text, opts...)
 	if err == nil {
-		return
+		return nil
 	}
-	err = ad.InputText(text, opts...)
-	return
-}
-
-func (ad *ADBDriver) InputText(text string, opts ...option.ActionOption) error {
 	// adb shell input text <text>
-	_, err := ad.runShellCommand("input", "text", text)
+	_, err = ad.runShellCommand("input", "text", text)
 	if err != nil {
 		return errors.Wrap(err, "send keys failed")
 	}
@@ -454,7 +441,7 @@ func (ad *ADBDriver) SendUnicodeKeys(text string, opts ...option.ActionOption) (
 		log.Warn().Err(err).Msgf("encode text with modified utf7 failed")
 		return
 	}
-	err = ad.InputText("\""+strings.ReplaceAll(encodedStr, "\"", "\\\"")+"\"", opts...)
+	err = ad.Input("\""+strings.ReplaceAll(encodedStr, "\"", "\\\"")+"\"", opts...)
 	return
 }
 
@@ -515,10 +502,6 @@ func (ad *ADBDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 	return
 }
 
-func (ad *ADBDriver) Input(text string, opts ...option.ActionOption) (err error) {
-	return ad.SendKeys(text, opts...)
-}
-
 func (ad *ADBDriver) AppClear(packageName string) error {
 	if _, err := ad.runShellCommand("pm", "clear", packageName); err != nil {
 		log.Error().Str("packageName", packageName).Err(err).Msg("failed to clear package cache")
@@ -526,11 +509,6 @@ func (ad *ADBDriver) AppClear(packageName string) error {
 	}
 
 	return nil
-}
-
-func (ad *ADBDriver) PressButton(devBtn types.DeviceButton) (err error) {
-	err = types.ErrDriverNotImplemented
-	return
 }
 
 func (ad *ADBDriver) Rotation() (rotation types.Rotation, err error) {
@@ -729,7 +707,7 @@ func (ad *ADBDriver) GetSession() *Session {
 	return ad.Session
 }
 
-func (ad *ADBDriver) GetForegroundApp() (app types.AppInfo, err error) {
+func (ad *ADBDriver) ForegroundInfo() (app types.AppInfo, err error) {
 	packageInfo, err := ad.runShellCommand(
 		"CLASSPATH=/data/local/tmp/evalite", "app_process", "/",
 		"com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
@@ -768,14 +746,14 @@ func (ad *ADBDriver) SetIme(imeRegx string) error {
 		time.Sleep(1 * time.Second)
 		pid, _ := ad.runShellCommand("pidof", packageName)
 		if strings.TrimSpace(pid) == "" {
-			appInfo, err := ad.GetForegroundApp()
+			appInfo, err := ad.ForegroundInfo()
 			_ = ad.AppLaunch(packageName)
 			if err == nil && packageName != option.UnicodeImePackageName {
 				time.Sleep(10 * time.Second)
-				nextAppInfo, err := ad.GetForegroundApp()
+				nextAppInfo, err := ad.ForegroundInfo()
 				log.Info().Str("beforeFocusedPackage", appInfo.PackageName).Str("afterFocusedPackage", nextAppInfo.PackageName).Msg("")
 				if err == nil && nextAppInfo.PackageName != appInfo.PackageName {
-					_ = ad.PressKeyCodes(KCBack, KMEmpty)
+					_ = ad.PressKeyCode(KCBack, KMEmpty)
 				}
 			}
 		}
@@ -797,102 +775,6 @@ func (ad *ADBDriver) GetIme() (ime string, err error) {
 	}
 	currentIme = strings.TrimSpace(currentIme)
 	return currentIme, nil
-}
-
-func (ad *ADBDriver) AssertForegroundApp(packageName string, activityType ...string) error {
-	log.Debug().Str("package_name", packageName).
-		Strs("activity_type", activityType).
-		Msg("assert android foreground package and activity")
-
-	app, err := ad.GetForegroundApp()
-	if err != nil {
-		log.Warn().Err(err).Msg("get foreground app failed, skip app/activity assertion")
-		return nil // Notice: ignore error when get foreground app failed
-	}
-
-	// assert package
-	if app.PackageName != packageName {
-		log.Error().
-			Interface("foreground_app", app.AppBaseInfo).
-			Str("expected_package", packageName).
-			Msg("assert package failed")
-		return errors.Wrap(code.MobileUIAssertForegroundAppError,
-			"assert foreground package failed")
-	}
-
-	if len(activityType) == 0 {
-		return nil
-	}
-
-	// assert activity
-	expectActivityType := activityType[0]
-	activities, ok := androidActivities[packageName]
-	if !ok {
-		msg := fmt.Sprintf("activities not configured for package %s", packageName)
-		log.Error().Msg(msg)
-		return errors.Wrap(code.MobileUIAssertForegroundActivityError, msg)
-	}
-
-	expectActivities, ok := activities[expectActivityType]
-	if !ok {
-		msg := fmt.Sprintf("activity type %s not configured for package %s",
-			expectActivityType, packageName)
-		log.Error().Msg(msg)
-		return errors.Wrap(code.MobileUIAssertForegroundActivityError, msg)
-	}
-
-	// assertion
-	for _, expectActivity := range expectActivities {
-		if strings.HasSuffix(app.Activity, expectActivity) {
-			// assert activity success
-			return nil
-		}
-	}
-
-	// assert activity failed
-	log.Error().
-		Interface("foreground_app", app.AppBaseInfo).
-		Str("expected_activity_type", expectActivityType).
-		Strs("expected_activities", expectActivities).
-		Msg("assert activity failed")
-	return errors.Wrap(code.MobileUIAssertForegroundActivityError,
-		"assert foreground activity failed")
-}
-
-var androidActivities = map[string]map[string][]string{
-	// DY
-	"com.ss.android.ugc.aweme": {
-		"feed": []string{".splash.SplashActivity"},
-		"live": []string{".live.LivePlayActivity"},
-	},
-	// DY lite
-	"com.ss.android.ugc.aweme.lite": {
-		"feed": []string{".splash.SplashActivity"},
-		"live": []string{".live.LivePlayActivity"},
-	},
-	// KS
-	"com.smile.gifmaker": {
-		"feed": []string{
-			"com.yxcorp.gifshow.HomeActivity",
-			"com.yxcorp.gifshow.detail.PhotoDetailActivity",
-		},
-		"live": []string{
-			"com.kuaishou.live.core.basic.activity.LiveSlideActivity",
-			"com.yxcorp.gifshow.detail.PhotoDetailActivity",
-		},
-	},
-	// KS lite
-	"com.kuaishou.nebula": {
-		"feed": []string{
-			"com.yxcorp.gifshow.HomeActivity",
-			"com.yxcorp.gifshow.detail.PhotoDetailActivity",
-		},
-		"live": []string{
-			"com.kuaishou.live.core.basic.activity.LiveSlideActivity",
-			"com.yxcorp.gifshow.detail.PhotoDetailActivity",
-		},
-	},
-	// TODO: SPH, XHS
 }
 
 func (ad *ADBDriver) ScreenRecord(duration time.Duration) (videoPath string, err error) {

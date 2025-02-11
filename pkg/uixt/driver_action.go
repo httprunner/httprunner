@@ -196,7 +196,7 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		}
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
 	case ACTION_Home:
-		return dExt.Homescreen()
+		return dExt.Home()
 	case ACTION_SetIme:
 		if ime, ok := action.Params.(string); ok {
 			err = dExt.SetIme(ime)
@@ -276,7 +276,7 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		param := fmt.Sprintf("%v", action.Params)
 		return dExt.Input(param)
 	case ACTION_Back:
-		return dExt.PressBack()
+		return dExt.Back()
 	case ACTION_Sleep:
 		if param, ok := action.Params.(json.Number); ok {
 			seconds, _ := param.Float64()

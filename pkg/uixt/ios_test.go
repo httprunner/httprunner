@@ -107,7 +107,7 @@ func TestNewUSBDriver(t *testing.T) {
 func TestDriver_DeviceScaleRatio(t *testing.T) {
 	setup(t)
 
-	scaleRatio, err := driver.Scale()
+	scaleRatio, err := driver.(*WDADriver).Scale()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,7 +239,7 @@ func Test_remoteWD_Screen(t *testing.T) {
 func Test_remoteWD_Homescreen(t *testing.T) {
 	setup(t)
 
-	err := driver.Homescreen()
+	err := driver.Home()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -317,7 +317,7 @@ func Test_Relative_Drag(t *testing.T) {
 func Test_remoteWD_SendKeys(t *testing.T) {
 	setup(t)
 	// driver.StartCaptureLog("hrp_wda_log")
-	err := driver.SendKeys("test", option.WithIdentifier("test"))
+	err := driver.Input("test", option.WithIdentifier("test"))
 	// result, _ := driver.StopCaptureLog()
 	// err := driver.SendKeys("App Store", WithFrequency(3))
 	if err != nil {
@@ -329,17 +329,17 @@ func Test_remoteWD_SendKeys(t *testing.T) {
 func Test_remoteWD_PressButton(t *testing.T) {
 	setup(t)
 
-	err := driver.PressButton(types.DeviceButtonVolumeUp)
+	err := driver.(*WDADriver).PressButton(types.DeviceButtonVolumeUp)
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Second * 1)
-	err = driver.PressButton(types.DeviceButtonVolumeDown)
+	err = driver.(*WDADriver).PressButton(types.DeviceButtonVolumeDown)
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Second * 1)
-	err = driver.PressButton(types.DeviceButtonHome)
+	err = driver.(*WDADriver).PressButton(types.DeviceButtonHome)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -413,7 +413,7 @@ func Test_remoteWD_Source(t *testing.T) {
 
 func TestGetForegroundApp(t *testing.T) {
 	setup(t)
-	app, err := driver.GetForegroundApp()
+	app, err := driver.ForegroundInfo()
 	if err != nil {
 		t.Fatal(err)
 	}

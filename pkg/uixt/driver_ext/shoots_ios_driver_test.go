@@ -54,7 +54,7 @@ func TestIOSSource(t *testing.T) {
 
 func TestIOSForeground(t *testing.T) {
 	setupShootsIOSDriver(t)
-	app, err := shootsIOSDriver.GetForegroundApp()
+	app, err := shootsIOSDriver.ForegroundInfo()
 	checkErr(t, err)
 	t.Log(app)
 }

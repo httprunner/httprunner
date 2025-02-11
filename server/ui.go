@@ -140,7 +140,7 @@ func inputHandler(c *gin.Context) {
 		return
 	}
 
-	err = dExt.SendKeys(inputReq.Text,
+	err = dExt.Input(inputReq.Text,
 		option.WithFrequency(inputReq.Frequency))
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to input text %s", c.HandlerName(), inputReq.Text))

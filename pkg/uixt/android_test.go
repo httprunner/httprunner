@@ -186,7 +186,7 @@ func TestDriver_Drag(t *testing.T) {
 func TestDriver_SendKeys(t *testing.T) {
 	setupAndroidUIA2Driver(t)
 
-	err := driverExt.SendKeys("辽宁省沈阳市新民市民族街36-4",
+	err := driverExt.Input("辽宁省沈阳市新民市民族街36-4",
 		option.WithIdentifier("test"))
 	if err != nil {
 		t.Fatal(err)
@@ -208,7 +208,7 @@ func TestDriver_SendKeys(t *testing.T) {
 }
 
 func TestDriver_PressBack(t *testing.T) {
-	err := driver.PressBack()
+	err := driver.Back()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -227,7 +227,7 @@ func TestDriver_GetOrientation(t *testing.T) {
 	_, _ = driverExt.AppTerminate("com.quark.browser")
 	_ = driverExt.AppLaunch("com.quark.browser")
 	time.Sleep(2 * time.Second)
-	_ = driverExt.Homescreen()
+	_ = driverExt.Home()
 }
 
 func Test_getFreePort(t *testing.T) {
@@ -265,29 +265,13 @@ func TestDriver_IsAppInForeground(t *testing.T) {
 	err := driverExt.AppLaunch("com.android.settings")
 	checkErr(t, err)
 
-	app, err := driverExt.GetForegroundApp()
+	app, err := driverExt.ForegroundInfo()
 	checkErr(t, err)
 	if app.PackageName != "com.android.settings" {
 		t.FailNow()
 	}
 	if app.Activity != ".Settings" {
 		t.FailNow()
-	}
-
-	err = driverExt.AssertForegroundApp("com.android.settings")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	time.Sleep(2 * time.Second)
-	_, err = driverExt.AppTerminate("com.android.settings")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driverExt.AssertForegroundApp("com.android.settings")
-	if err == nil {
-		t.Fatal(err)
 	}
 }
 
@@ -345,7 +329,7 @@ func TestDriver_ShellInputUnicode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = driver.SendKeys("test中文输入&")
+	err = driver.Input("test中文输入&")
 	if err != nil {
 		t.Fatal(err)
 	}

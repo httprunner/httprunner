@@ -41,48 +41,42 @@ type IDriver interface {
 	Status() (types.DeviceStatus, error)
 	DeviceInfo() (types.DeviceInfo, error)
 	BatteryInfo() (types.BatteryInfo, error)
+	ForegroundInfo() (app types.AppInfo, err error)
 	WindowSize() (types.Size, error)
-	Scale() (float64, error)
 	ScreenShot() (*bytes.Buffer, error)
 	ScreenRecord(duration time.Duration) (videoPath string, err error)
 	Source(srcOpt ...option.SourceOption) (string, error)
+	Orientation() (orientation types.Orientation, err error)
+	Rotation() (rotation types.Rotation, err error)
+
+	// config
+	SetRotation(rotation types.Rotation) error
+	SetIme(ime string) error
 
 	// actions
-	Homescreen() error
-	Unlock() (err error)
+	Home() error
+	Unlock() error
+	Back() error
 	// tap
 	TapXY(x, y float64, opts ...option.ActionOption) error
 	DoubleTapXY(x, y float64, opts ...option.ActionOption) error
+	TouchAndHold(x, y float64, opts ...option.ActionOption) error
 	TapByText(text string, opts ...option.ActionOption) error // TODO: remove
 	TapByTexts(actions ...TapTextAction) error                // TODO: remove
 	// swipe
 	Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
 	Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
-	TouchAndHold(x, y float64, opts ...option.ActionOption) error
 	// input
-	SendKeys(text string, opts ...option.ActionOption) error
 	Input(text string, opts ...option.ActionOption) error
-	// press key
-	PressButton(devBtn types.DeviceButton) error
-	PressBack(opts ...option.ActionOption) error
-	PressKeyCode(keyCode KeyCode) (err error)
-	Backspace(count int, opts ...option.ActionOption) (err error)
+	Backspace(count int, opts ...option.ActionOption) error
 
 	// app related
 	AppLaunch(packageName string) error
 	AppTerminate(packageName string) (bool, error)
 	AppClear(packageName string) error
-	GetForegroundApp() (app types.AppInfo, err error)
-	AssertForegroundApp(packageName string, activityType ...string) error // TODO: remove
-
-	Orientation() (orientation types.Orientation, err error)
-	SetRotation(rotation types.Rotation) (err error)
-	Rotation() (rotation types.Rotation, err error)
-
-	SetIme(ime string) error
 
 	// triggers the log capture and returns the log entries
-	StartCaptureLog(identifier ...string) (err error)
+	StartCaptureLog(identifier ...string) error
 	StopCaptureLog() (result interface{}, err error)
 }
 
@@ -108,7 +102,7 @@ type IDriverExt interface {
 	TapByOCR(ocrText string, opts ...option.ActionOption) error
 	TapXY(x, y float64, opts ...option.ActionOption) error
 	TapAbsXY(x, y float64, opts ...option.ActionOption) error
-	TapOffset(param string, xOffset, yOffset float64, opts ...option.ActionOption) (err error)
+	TapOffset(param string, xOffset, yOffset float64, opts ...option.ActionOption) error
 	TapByUIDetection(opts ...option.ActionOption) error
 
 	// swipe
@@ -123,8 +117,8 @@ type IDriverExt interface {
 	CheckPopup() (popup *PopupInfo, err error)
 	ClosePopupsHandler() error
 
-	DoAction(action MobileAction) (err error)
-	DoValidation(check, assert, expected string, message ...string) (err error)
+	DoAction(action MobileAction) error
+	DoValidation(check, assert, expected string, message ...string) error
 }
 
 type XTDriver struct {
@@ -177,15 +171,20 @@ func (dExt *XTDriver) assertOCR(text, assert string) error {
 	return nil
 }
 
-func (dExt *XTDriver) assertForegroundApp(appName, assert string) (err error) {
-	err = dExt.AssertForegroundApp(appName)
+func (dExt *XTDriver) assertForegroundApp(appName, assert string) error {
+	app, err := dExt.ForegroundInfo()
+	if err != nil {
+		log.Warn().Err(err).Msg("get foreground app failed, skip app assertion")
+		return nil // Notice: ignore error when get foreground app failed
+	}
+
 	switch assert {
 	case AssertionEqual:
-		if err != nil {
+		if app.PackageName != appName {
 			return errors.Wrap(err, "assert foreground app equal failed")
 		}
 	case AssertionNotEqual:
-		if err == nil {
+		if app.PackageName == appName {
 			return errors.New("assert foreground app not equal failed")
 		}
 	default:

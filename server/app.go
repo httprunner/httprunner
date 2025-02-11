@@ -15,7 +15,7 @@ func foregroundAppHandler(c *gin.Context) {
 		return
 	}
 
-	appInfo, err := dExt.GetForegroundApp()
+	appInfo, err := dExt.ForegroundInfo()
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
 		c.JSON(http.StatusInternalServerError,

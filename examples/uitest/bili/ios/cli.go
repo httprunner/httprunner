@@ -100,7 +100,7 @@ func watchVideo(driver *uixt.XTDriver) (err error) {
 	if err != nil {
 		// 未找到横屏图标，该页面可能不是横版视频（直播|广告|Feed）
 		// 退出回到推荐页
-		driver.PressBack()
+		driver.Back()
 		return nil
 	}
 
@@ -108,7 +108,7 @@ func watchVideo(driver *uixt.XTDriver) (err error) {
 	time.Sleep(10 * time.Second)
 
 	// 返回视频页面
-	err = driver.PressBack()
+	err = driver.Back()
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func watchVideo(driver *uixt.XTDriver) (err error) {
 	time.Sleep(1 * time.Second)
 
 	// 返回推荐页
-	err = driver.PressBack()
+	err = driver.Back()
 	if err != nil {
 		return err
 	}

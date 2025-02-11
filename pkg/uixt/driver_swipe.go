@@ -166,7 +166,7 @@ func (dExt *XTDriver) swipeToTapTexts(texts []string, opts ...option.ActionOptio
 
 func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption) error {
 	// go to home screen
-	if err := dExt.Homescreen(); err != nil {
+	if err := dExt.Home(); err != nil {
 		return errors.Wrap(err, "go to home screen failed")
 	}
 
