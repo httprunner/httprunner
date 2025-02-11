@@ -137,15 +137,15 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 
 	switch action.Method {
 	case ACTION_AppInstall:
-		if appUrl, ok := action.Params.(string); ok {
-			if err = dExt.InstallByUrl(appUrl,
+		if app, ok := action.Params.(string); ok {
+			if err = dExt.GetDevice().Install(app,
 				option.WithRetryTimes(action.MaxRetryTimes)); err != nil {
 				return errors.Wrap(err, "failed to install app")
 			}
 		}
 	case ACTION_AppUninstall:
 		if packageName, ok := action.Params.(string); ok {
-			if err = dExt.Uninstall(packageName, action.GetOptions()...); err != nil {
+			if err = dExt.GetDevice().Uninstall(packageName); err != nil {
 				return errors.Wrap(err, "failed to uninstall app")
 			}
 		}

@@ -15,7 +15,6 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -381,57 +380,6 @@ func GetCurrentDay() string {
 	// 格式化日期为 yyyyMMdd
 	formattedDate := now.Format("20060102")
 	return formattedDate
-}
-
-func DownloadFile(filePath string, fileUrl string) error {
-	log.Info().Str("filePath", filePath).Str("url", fileUrl).Msg("download file")
-	parsedURL, err := url.Parse(fileUrl)
-	if err != nil {
-		return err
-	}
-
-	out, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// 创建一个新的 HTTP 请求
-	req, err := http.NewRequest("GET", fileUrl, nil)
-	if err != nil {
-		return err
-	}
-
-	// TODO: rename token
-	eapiToken := os.Getenv("EAPI_TOKEN")
-	if eapiToken != "" {
-		if parsedURL.Host != "gtf-eapi-cn.bytedance.com" && parsedURL.Host != "gtf-eapi-cn.bytedance.net" {
-			return errors.New("invalid domain: must be gtf-eapi-cn.bytedance.com")
-		}
-		// 添加自定义头部
-		req.Header.Add("accessKey", "ies.vedem.video")
-		req.Header.Add("token", eapiToken)
-	}
-
-	// 创建一个 HTTP 客户端并发送请求
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s, download failed", resp.Status)
-	}
-
-	// 将响应主体写入文件
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func fileExists(filepath string) bool {

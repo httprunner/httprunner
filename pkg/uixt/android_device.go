@@ -287,6 +287,12 @@ func (dev *AndroidDevice) installViaInstaller(apkPath string, args ...string) er
 	}
 }
 
+type InstallResult struct {
+	Result    int    `json:"result"`
+	ErrorCode int    `json:"errorCode"`
+	ErrorMsg  string `json:"errorMsg"`
+}
+
 func (dev *AndroidDevice) installCommon(apkPath string, args ...string) error {
 	_, err := dev.Device.InstallAPK(apkPath, args...)
 	return err

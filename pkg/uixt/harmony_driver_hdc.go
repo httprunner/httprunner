@@ -255,14 +255,6 @@ func (hd *HDCDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	return "", nil
 }
 
-func (hd *HDCDriver) TapByText(text string, opts ...option.ActionOption) error {
-	return types.ErrDriverNotImplemented
-}
-
-func (hd *HDCDriver) TapByTexts(actions ...TapTextAction) error {
-	return types.ErrDriverNotImplemented
-}
-
 func (hd *HDCDriver) StartCaptureLog(identifier ...string) (err error) {
 	return types.ErrDriverNotImplemented
 }

@@ -770,14 +770,6 @@ func (wd *WDADriver) Source(srcOpt ...option.SourceOption) (source string, err e
 	return
 }
 
-func (wd *WDADriver) TapByText(text string, opts ...option.ActionOption) error {
-	return types.ErrDriverNotImplemented
-}
-
-func (wd *WDADriver) TapByTexts(actions ...TapTextAction) error {
-	return types.ErrDriverNotImplemented
-}
-
 func (wd *WDADriver) AccessibleSource() (source string, err error) {
 	// [[FBRoute GET:@"/wda/accessibleSource"] respondWithTarget:self action:@selector(handleGetAccessibleSourceCommand:)]
 	// [[FBRoute GET:@"/wda/accessibleSource"].withoutSession

@@ -105,13 +105,6 @@ func TestDriver_Source(t *testing.T) {
 	t.Log(source)
 }
 
-func TestDriver_TapByText(t *testing.T) {
-	err := driver.TapByText("安装")
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestDriver_BatteryInfo(t *testing.T) {
 	batteryInfo, err := driver.BatteryInfo()
 	if err != nil {
@@ -340,39 +333,6 @@ func TestDriver_ShellInputUnicode(t *testing.T) {
 	}
 
 	t.Log(os.WriteFile("s1.png", raw.Bytes(), 0o600))
-}
-
-func TestTapTexts(t *testing.T) {
-	setupAndroidUIA2Driver(t)
-	actions := []TapTextAction{
-		{
-			Text: "^.*无视风险安装$",
-			Options: []option.ActionOption{
-				option.WithTapOffset(100, 0),
-				option.WithRegex(true),
-				option.WithIgnoreNotFoundError(true),
-			},
-		},
-		{
-			Text: "已了解此应用未经检测.*",
-			Options: []option.ActionOption{
-				option.WithTapOffset(-450, 0),
-				option.WithRegex(true),
-				option.WithIgnoreNotFoundError(true),
-			},
-		},
-		{
-			Text: "^(.*无视风险安装|确定|继续|完成|点击继续安装|继续安装旧版本|替换|安装|授权本次安装|继续安装|重新安装)$",
-			Options: []option.ActionOption{
-				option.WithRegex(true),
-				option.WithIgnoreNotFoundError(true),
-			},
-		},
-	}
-	err := driverExt.TapByTexts(actions...)
-	if err != nil {
-		t.Fatal(err)
-	}
 }
 
 func TestRecordVideo(t *testing.T) {

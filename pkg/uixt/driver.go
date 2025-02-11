@@ -62,8 +62,6 @@ type IDriver interface {
 	TapAbsXY(x, y float64, opts ...option.ActionOption) error    // by absolute coordinate
 	DoubleTapXY(x, y float64, opts ...option.ActionOption) error // by percentage
 	TouchAndHold(x, y float64, opts ...option.ActionOption) error
-	TapByText(text string, opts ...option.ActionOption) error // TODO: remove
-	TapByTexts(actions ...TapTextAction) error                // TODO: remove
 	// swipe
 	Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
 	Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error // by percentage
@@ -104,9 +102,6 @@ type IDriverExt interface {
 
 	CheckPopup() (popup *PopupInfo, err error)
 	ClosePopupsHandler() error
-
-	DoAction(action MobileAction) error
-	DoValidation(check, assert, expected string, message ...string) error
 }
 
 type XTDriver struct {

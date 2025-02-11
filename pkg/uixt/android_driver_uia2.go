@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"net/http"
 	"strings"
@@ -545,40 +544,4 @@ func (ud *UIA2Driver) Source(srcOpt ...option.SourceOption) (source string, err 
 
 	source = reply.Value
 	return
-}
-
-func (ud *UIA2Driver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hierarchy, err error) {
-	source, err := ud.Source()
-	if err != nil {
-		return
-	}
-	sourceTree = new(Hierarchy)
-	err = xml.Unmarshal([]byte(source), sourceTree)
-	if err != nil {
-		return
-	}
-	return
-}
-
-func (ud *UIA2Driver) TapByText(text string, opts ...option.ActionOption) error {
-	sourceTree, err := ud.sourceTree()
-	if err != nil {
-		return err
-	}
-	return ud.tapByTextUsingHierarchy(sourceTree, text, opts...)
-}
-
-func (ud *UIA2Driver) TapByTexts(actions ...TapTextAction) error {
-	sourceTree, err := ud.sourceTree()
-	if err != nil {
-		return err
-	}
-
-	for _, action := range actions {
-		err := ud.tapByTextUsingHierarchy(sourceTree, action.Text, action.Options...)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
