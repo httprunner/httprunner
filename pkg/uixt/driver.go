@@ -58,7 +58,8 @@ type IDriver interface {
 	Unlock() error
 	Back() error
 	// tap
-	TapXY(x, y float64, opts ...option.ActionOption) error
+	TapXY(x, y float64, opts ...option.ActionOption) error // tap on [x, y] percent of window size
+	TapAbsXY(x, y float64, opts ...option.ActionOption) error
 	DoubleTapXY(x, y float64, opts ...option.ActionOption) error
 	TouchAndHold(x, y float64, opts ...option.ActionOption) error
 	TapByText(text string, opts ...option.ActionOption) error // TODO: remove

@@ -138,20 +138,22 @@ func (hd *HDCDriver) Orientation() (orientation types.Orientation, err error) {
 }
 
 func (hd *HDCDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
+	absX, absY, err := convertToAbsolutePoint(hd, x, y)
+	if err != nil {
+		return err
+	}
+	return hd.TapAbsXY(absX, absY, opts...)
+}
+
+func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 
-	if len(actionOptions.Offset) == 2 {
-		x += float64(actionOptions.Offset[0])
-		y += float64(actionOptions.Offset[1])
-	}
-
-	x += actionOptions.GetRandomOffset()
-	y += actionOptions.GetRandomOffset()
 	if actionOptions.Identifier != "" {
 		startTime := int(time.Now().UnixMilli())
 		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
 	}
-	return hd.uiDriver.InjectGesture(ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
+	return hd.uiDriver.InjectGesture(
+		ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
 }
 
 func (hd *HDCDriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {

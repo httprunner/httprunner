@@ -283,15 +283,14 @@ func (ad *ADBDriver) AppTerminate(packageName string) (successful bool, err erro
 }
 
 func (ad *ADBDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
-	actionOptions := option.NewActionOptions(opts...)
-
-	if len(actionOptions.Offset) == 2 {
-		x += float64(actionOptions.Offset[0])
-		y += float64(actionOptions.Offset[1])
+	absX, absY, err := convertToAbsolutePoint(ad, x, y)
+	if err != nil {
+		return err
 	}
-	x += actionOptions.GetRandomOffset()
-	y += actionOptions.GetRandomOffset()
+	return ad.TapAbsXY(absX, absY, opts...)
+}
 
+func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)

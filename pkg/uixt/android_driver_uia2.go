@@ -263,16 +263,18 @@ func (ud *UIA2Driver) DoubleFloatTap(x, y float64) error {
 	return err
 }
 
-func (ud *UIA2Driver) TapXY(x, y float64, opts ...option.ActionOption) (err error) {
+func (ud *UIA2Driver) TapXY(x, y float64, opts ...option.ActionOption) error {
+	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
+	absX, absY, err := convertToAbsolutePoint(ud, x, y)
+	if err != nil {
+		return err
+	}
+	return ud.TapAbsXY(absX, absY, opts...)
+}
+
+func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
 	actionOptions := option.NewActionOptions(opts...)
-
-	if len(actionOptions.Offset) == 2 {
-		x += float64(actionOptions.Offset[0])
-		y += float64(actionOptions.Offset[1])
-	}
-	x += actionOptions.GetRandomOffset()
-	y += actionOptions.GetRandomOffset()
 
 	duration := 100.0
 	if actionOptions.PressDuration > 0 {
@@ -297,7 +299,7 @@ func (ud *UIA2Driver) TapXY(x, y float64, opts ...option.ActionOption) (err erro
 	// update data options in post data for extra uiautomator configurations
 	actionOptions.UpdateData(data)
 
-	_, err = ud.httpPOST(data, "/session", ud.Session.ID, "actions/tap")
+	_, err := ud.httpPOST(data, "/session", ud.Session.ID, "actions/tap")
 	return err
 }
 

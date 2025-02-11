@@ -514,28 +514,23 @@ func (wd *WDADriver) ForegroundInfo() (appInfo types.AppInfo, err error) {
 	return appInfo, err
 }
 
-func (wd *WDADriver) TapXY(x, y float64, opts ...option.ActionOption) (err error) {
+func (wd *WDADriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
-	actionOptions := option.NewActionOptions(opts...)
-
-	x = wd.toScale(x)
-	y = wd.toScale(y)
-	if len(actionOptions.Offset) == 2 {
-		x += float64(actionOptions.Offset[0])
-		y += float64(actionOptions.Offset[1])
+	absX, absY, err := convertToAbsolutePoint(wd, x, y)
+	if err != nil {
+		return err
 	}
-	x += actionOptions.GetRandomOffset()
-	y += actionOptions.GetRandomOffset()
+	return wd.TapAbsXY(absX, absY, opts...)
+}
 
+func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
+	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 	data := map[string]interface{}{
-		"x": x,
-		"y": y,
+		"x": wd.toScale(x),
+		"y": wd.toScale(y),
 	}
-	// update data options in post data for extra WDA configurations
-	actionOptions.UpdateData(data)
-
-	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/tap/0")
-	return
+	_, err := wd.httpPOST(data, "/session", wd.Session.ID, "/wda/tap/0")
+	return err
 }
 
 func (wd *WDADriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) (err error) {

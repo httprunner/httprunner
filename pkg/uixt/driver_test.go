@@ -26,4 +26,5 @@ func TestNewDriverExt(t *testing.T) {
 
 	// get device
 	device = driver.GetDevice().(*AndroidDevice)
+	t.Log(device)
 }

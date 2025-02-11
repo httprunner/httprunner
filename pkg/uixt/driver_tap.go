@@ -9,30 +9,6 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-func (dExt *XTDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
-	// tap on absolute coordinate [x, y]
-	err := dExt.TapXY(x, y, opts...)
-	if err != nil {
-		return errors.Wrap(code.MobileUITapError, err.Error())
-	}
-	return nil
-}
-
-func (dExt *XTDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
-	// tap on [x, y] percent of window size
-	if x > 1 || y > 1 {
-		return fmt.Errorf("x, y percentage should be <= 1, got x=%v, y=%v", x, y)
-	}
-
-	windowSize, err := dExt.WindowSize()
-	if err != nil {
-		return err
-	}
-	x = x * float64(windowSize.Width)
-	y = y * float64(windowSize.Height)
-	return dExt.TapAbsXY(x, y, opts...)
-}
-
 func (dExt *XTDriver) TapByOCR(ocrText string, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.ScreenShotFileName == "" {
