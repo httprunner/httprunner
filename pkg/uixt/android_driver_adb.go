@@ -548,6 +548,14 @@ func (ad *ADBDriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer,
 	return raw, nil
 }
 
+func (ad *ADBDriver) TapByHierarchy(text string, opts ...option.ActionOption) error {
+	sourceTree, err := ad.sourceTree()
+	if err != nil {
+		return err
+	}
+	return ad.tapByTextUsingHierarchy(sourceTree, text, opts...)
+}
+
 func (ad *ADBDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	_, err = ad.runShellCommand("rm", "-rf", "/sdcard/window_dump.xml")
 	if err != nil {
@@ -566,7 +574,7 @@ func (ad *ADBDriver) Source(srcOpt ...option.SourceOption) (source string, err e
 }
 
 func (ad *ADBDriver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hierarchy, err error) {
-	source, err := ad.Source()
+	source, err := ad.Source(srcOpt...)
 	if err != nil {
 		return
 	}
@@ -576,14 +584,6 @@ func (ad *ADBDriver) sourceTree(srcOpt ...option.SourceOption) (sourceTree *Hier
 		return
 	}
 	return
-}
-
-func (ad *ADBDriver) TapByText(text string, opts ...option.ActionOption) error {
-	sourceTree, err := ad.sourceTree()
-	if err != nil {
-		return err
-	}
-	return ad.tapByTextUsingHierarchy(sourceTree, text, opts...)
 }
 
 func (ad *ADBDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, opts ...option.ActionOption) error {
@@ -599,21 +599,6 @@ func (ad *ADBDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, 
 	for _, bound := range bounds {
 		width, height := bound.Center()
 		err := ad.TapXY(width, height, opts...)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (ad *ADBDriver) TapByTexts(actions ...TapTextAction) error {
-	sourceTree, err := ad.sourceTree()
-	if err != nil {
-		return err
-	}
-
-	for _, action := range actions {
-		err := ad.tapByTextUsingHierarchy(sourceTree, action.Text, action.Options...)
 		if err != nil {
 			return err
 		}

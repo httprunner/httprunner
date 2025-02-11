@@ -91,11 +91,6 @@ func (ma MobileAction) GetOptions() []option.ActionOption {
 	return actionOptionList
 }
 
-type TapTextAction struct {
-	Text    string
-	Options []option.ActionOption
-}
-
 func (dExt *XTDriver) ParseActionOptions(opts ...option.ActionOption) []option.ActionOption {
 	actionOptions := option.NewActionOptions(opts...)
 

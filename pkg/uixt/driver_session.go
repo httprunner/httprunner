@@ -3,19 +3,24 @@ package uixt
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
+	builtinJSON "encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/internal/json"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 type Session struct {
@@ -207,4 +212,86 @@ func NewHTTPClientWithConnection(conn net.Conn, timeout time.Duration) *http.Cli
 		},
 		Timeout: timeout,
 	}
+}
+
+type DriverRawResponse []byte
+
+func (r DriverRawResponse) CheckErr() (err error) {
+	reply := new(struct {
+		Value struct {
+			Err        string `json:"error"`
+			Message    string `json:"message"`
+			Traceback  string `json:"traceback"`  // wda
+			Stacktrace string `json:"stacktrace"` // uia
+		}
+	})
+	if err = json.Unmarshal(r, reply); err != nil {
+		return err
+	}
+	if reply.Value.Err != "" {
+		errText := reply.Value.Message
+		re := regexp.MustCompile(`{.+?=(.+?)}`)
+		if re.MatchString(reply.Value.Message) {
+			subMatch := re.FindStringSubmatch(reply.Value.Message)
+			errText = subMatch[len(subMatch)-1]
+		}
+		return fmt.Errorf("%s: %s", reply.Value.Err, errText)
+	}
+	return
+}
+
+func (r DriverRawResponse) ValueConvertToString() (s string, err error) {
+	reply := new(struct{ Value string })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return "", errors.Wrapf(err, "json.Unmarshal failed, rawResponse: %s", string(r))
+	}
+	s = reply.Value
+	return
+}
+
+func (r DriverRawResponse) ValueConvertToBool() (b bool, err error) {
+	reply := new(struct{ Value bool })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return false, err
+	}
+	b = reply.Value
+	return
+}
+
+func (r DriverRawResponse) ValueConvertToSessionInfo() (sessionInfo Session, err error) {
+	reply := new(struct{ Value struct{ Session } })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return Session{}, err
+	}
+	sessionInfo = reply.Value.Session
+	return
+}
+
+func (r DriverRawResponse) ValueConvertToJsonRawMessage() (raw builtinJSON.RawMessage, err error) {
+	reply := new(struct{ Value builtinJSON.RawMessage })
+	if err = json.Unmarshal(r, reply); err != nil {
+		return nil, err
+	}
+	raw = reply.Value
+	return
+}
+
+func (r DriverRawResponse) ValueConvertToJsonObject() (obj map[string]interface{}, err error) {
+	if err = json.Unmarshal(r, &obj); err != nil {
+		return nil, err
+	}
+	return
+}
+
+func (r DriverRawResponse) ValueDecodeAsBase64() (raw *bytes.Buffer, err error) {
+	str, err := r.ValueConvertToString()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to convert value to string")
+	}
+	decodeString, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode base64 string")
+	}
+	raw = bytes.NewBuffer(decodeString)
+	return
 }
