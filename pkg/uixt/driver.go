@@ -43,6 +43,7 @@ type IDriver interface {
 	Screen() (ai.Screen, error)
 	Scale() (float64, error)
 	Screenshot() (*bytes.Buffer, error)
+	RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error)
 	Source(srcOpt ...option.SourceOption) (string, error)
 
 	// actions
@@ -84,7 +85,6 @@ type IDriver interface {
 	StopCaptureLog() (result interface{}, err error)
 
 	GetDriverResults() []*DriverRequests
-	RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error)
 
 	Setup() error
 	TearDown() error
