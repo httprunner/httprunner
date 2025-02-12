@@ -68,7 +68,7 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 	// get screenshot info with retry
 	for i := 0; i < 3; i++ {
 		imagePath = filepath.Join(config.ScreenShotsPath, fileName)
-		bufSource, err = dExt.IDriver.ScreenShot(option.WithScreenShotFileName(imagePath))
+		bufSource, err = dExt.ScreenShot(option.WithScreenShotFileName(imagePath))
 		if err != nil {
 			lastErr = err
 			time.Sleep(time.Second * 1)

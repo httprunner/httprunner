@@ -171,26 +171,6 @@ func (dev *AndroidDevice) NewDriver() (driver IDriver, err error) {
 	return driver, nil
 }
 
-func (dev *AndroidDevice) StartPerf() error {
-	// TODO
-	return nil
-}
-
-func (dev *AndroidDevice) StopPerf() string {
-	// TODO
-	return ""
-}
-
-func (dev *AndroidDevice) StartPcap() error {
-	// TODO
-	return nil
-}
-
-func (dev *AndroidDevice) StopPcap() string {
-	// TODO
-	return ""
-}
-
 func (dev *AndroidDevice) Install(apkPath string, opts ...option.InstallOption) error {
 	installOpts := option.NewInstallOptions(opts...)
 	brand, err := dev.Device.Brand()

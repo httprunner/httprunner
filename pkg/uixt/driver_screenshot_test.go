@@ -14,7 +14,7 @@ func TestGetScreenShot(t *testing.T) {
 	setupAndroidAdbDriver(t)
 
 	imagePath := filepath.Join(config.ScreenShotsPath, "test_screenshot")
-	_, err := driverExt.IDriver.ScreenShot(option.WithScreenShotFileName(imagePath))
+	_, err := driverExt.ScreenShot(option.WithScreenShotFileName(imagePath))
 	if err != nil {
 		t.Fatalf("GetScreenShot failed: %v", err)
 	}
