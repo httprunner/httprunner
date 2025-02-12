@@ -545,24 +545,21 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	return err
 }
 
-func (wd *WDADriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) (err error) {
+func (wd *WDADriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
-	actionOptions := option.NewActionOptions(opts...)
+	var err error
+	if x, y, err = convertToAbsolutePoint(wd, x, y); err != nil {
+		return err
+	}
+
 	x = wd.toScale(x)
 	y = wd.toScale(y)
-	if len(actionOptions.Offset) == 2 {
-		x += float64(actionOptions.Offset[0])
-		y += float64(actionOptions.Offset[1])
-	}
-	x += actionOptions.GetRandomOffset()
-	y += actionOptions.GetRandomOffset()
-
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
 	}
 	_, err = wd.httpPOST(data, "/session", wd.Session.ID, "/wda/doubleTap")
-	return
+	return err
 }
 
 func (wd *WDADriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {

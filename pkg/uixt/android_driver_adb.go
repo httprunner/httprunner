@@ -303,10 +303,14 @@ func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 }
 
 func (ad *ADBDriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
+	var err error
+	if x, y, err = convertToAbsolutePoint(ad, x, y); err != nil {
+		return err
+	}
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
-	_, err := ad.runShellCommand(
+	_, err = ad.runShellCommand(
 		"input", "tap", xStr, yStr)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))

@@ -237,10 +237,10 @@ func (ud *UIA2Driver) Orientation() (orientation types.Orientation, err error) {
 }
 
 func (ud *UIA2Driver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
-	return ud.DoubleFloatTap(x, y)
-}
-
-func (ud *UIA2Driver) DoubleFloatTap(x, y float64) error {
+	var err error
+	if x, y, err = convertToAbsolutePoint(ud, x, y); err != nil {
+		return err
+	}
 	data := map[string]interface{}{
 		"actions": []interface{}{
 			map[string]interface{}{
@@ -258,7 +258,7 @@ func (ud *UIA2Driver) DoubleFloatTap(x, y float64) error {
 		},
 	}
 
-	_, err := ud.httpPOST(data, "/session", ud.Session.ID, "actions/tap")
+	_, err = ud.httpPOST(data, "/session", ud.Session.ID, "actions/tap")
 	return err
 }
 
