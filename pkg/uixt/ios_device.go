@@ -524,10 +524,6 @@ func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver ID
 	}
 	wd.mjpegClient = NewHTTPClientWithConnection(wd.mjpegHTTPConn, 30*time.Second)
 	wd.mjpegUrl = fmt.Sprintf("%s:%d", host, localMjpegPort)
-	// init WDA scale
-	if wd.Session.scale, err = wd.Scale(); err != nil {
-		return nil, err
-	}
 
 	return wd, nil
 }

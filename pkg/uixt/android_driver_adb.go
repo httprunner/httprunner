@@ -40,6 +40,9 @@ func NewADBDriver(device *AndroidDevice) (*ADBDriver, error) {
 type ADBDriver struct {
 	Device  *AndroidDevice
 	Session *Session
+
+	// cache to avoid repeated query
+	windowSize types.Size
 }
 
 func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string, err error) {
@@ -138,9 +141,9 @@ func (ad *ADBDriver) getWindowSize() (size types.Size, err error) {
 }
 
 func (ad *ADBDriver) WindowSize() (size types.Size, err error) {
-	if !ad.Session.windowSize.IsNil() {
+	if !ad.windowSize.IsNil() {
 		// use cached window size
-		return ad.Session.windowSize, nil
+		return ad.windowSize, nil
 	}
 
 	size, err = ad.getWindowSize()
@@ -159,7 +162,7 @@ func (ad *ADBDriver) WindowSize() (size types.Size, err error) {
 		size.Width, size.Height = size.Height, size.Width
 	}
 
-	ad.Session.windowSize = size // cache window size
+	ad.windowSize = size // cache window size
 	return size, nil
 }
 

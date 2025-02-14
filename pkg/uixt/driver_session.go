@@ -20,17 +20,12 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/internal/json"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 type Session struct {
 	ID      string
 	baseURL *url.URL
 	client  *http.Client
-
-	// cache to avoid repeated query
-	scale      float64
-	windowSize types.Size
 
 	// cache uia2/wda request and response
 	requests []*DriverRequests
@@ -151,8 +146,8 @@ func (wd *Session) Request(method string, rawURL string, rawBody []byte) (rawRes
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var req *http.Request
-	if req, err = http.NewRequestWithContext(ctx, method, rawURL, bytes.NewBuffer(rawBody)); err != nil {
+	req, err := http.NewRequestWithContext(ctx, method, rawURL, bytes.NewBuffer(rawBody))
+	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json;charset=UTF-8")

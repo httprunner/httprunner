@@ -36,12 +36,23 @@ func NewWDADriver(device *IOSDevice) (*WDADriver, error) {
 		Session: &Session{},
 	}
 	driver.InitSession(nil)
+
+	// init WDA scale
+	var err error
+	if driver.scale, err = driver.Scale(); err != nil {
+		return nil, err
+	}
+
 	return driver, nil
 }
 
 type WDADriver struct {
 	Device  *IOSDevice
 	Session *Session
+
+	// cache to avoid repeated query
+	windowSize types.Size
+	scale      float64
 
 	mjpegHTTPConn net.Conn // via HTTP
 	mjpegClient   *http.Client
@@ -229,9 +240,9 @@ func (wd *WDADriver) BatteryInfo() (batteryInfo types.BatteryInfo, err error) {
 
 func (wd *WDADriver) WindowSize() (size types.Size, err error) {
 	// [[FBRoute GET:@"/window/size"] respondWithTarget:self action:@selector(handleGetWindowSize:)]
-	if !wd.Session.windowSize.IsNil() {
+	if !wd.windowSize.IsNil() {
 		// use cached window size
-		return wd.Session.windowSize, nil
+		return wd.windowSize, nil
 	}
 
 	var rawResp DriverRawResponse
@@ -250,13 +261,13 @@ func (wd *WDADriver) WindowSize() (size types.Size, err error) {
 	size.Height = size.Height * int(scale)
 	size.Width = size.Width * int(scale)
 
-	wd.Session.windowSize = size // cache window size
-	return wd.Session.windowSize, nil
+	wd.windowSize = size // cache window size
+	return wd.windowSize, nil
 }
 
 func (wd *WDADriver) Scale() (float64, error) {
-	if !builtin.IsZeroFloat64(wd.Session.scale) {
-		return wd.Session.scale, nil
+	if !builtin.IsZeroFloat64(wd.scale) {
+		return wd.scale, nil
 	}
 	screen, err := wd.Screen()
 	if err != nil {
@@ -309,7 +320,7 @@ func (wd *WDADriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer,
 }
 
 func (wd *WDADriver) toScale(x float64) float64 {
-	return x / wd.Session.scale
+	return x / wd.scale
 }
 
 func (wd *WDADriver) ActiveAppInfo() (info types.AppInfo, err error) {

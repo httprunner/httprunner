@@ -42,6 +42,9 @@ func NewUIA2Driver(device *AndroidDevice) (*UIA2Driver, error) {
 
 type UIA2Driver struct {
 	*ADBDriver
+
+	// cache to avoid repeated query
+	windowSize types.Size
 }
 
 func (ud *UIA2Driver) resetDriver() error {
@@ -171,9 +174,9 @@ func (ud *UIA2Driver) BatteryInfo() (batteryInfo types.BatteryInfo, err error) {
 
 func (ud *UIA2Driver) WindowSize() (size types.Size, err error) {
 	// register(getHandler, new GetDeviceSize("/wd/hub/session/:sessionId/window/:windowHandle/size"))
-	if !ud.Session.windowSize.IsNil() {
+	if !ud.windowSize.IsNil() {
 		// use cached window size
-		return ud.Session.windowSize, nil
+		return ud.windowSize, nil
 	}
 
 	var rawResp DriverRawResponse
@@ -196,7 +199,7 @@ func (ud *UIA2Driver) WindowSize() (size types.Size, err error) {
 		size.Width, size.Height = size.Height, size.Width
 	}
 
-	ud.Session.windowSize = size // cache window size
+	ud.windowSize = size // cache window size
 	return size, nil
 }
 

@@ -54,7 +54,6 @@ func NewShootsIOSDriver(device *uixt.IOSDevice) (driver *ShootsIOSDriver, err er
 	driver = &ShootsIOSDriver{
 		WDADriver: wdaDriver.(*uixt.WDADriver),
 	}
-	driver.device = device
 	driver.bightInsightPrefix = fmt.Sprintf("http://%s:%d", host, localShootsPort)
 	driver.serverPrefix = fmt.Sprintf("http://%s:%d", host, localServerPort)
 	driver.timeout = timeout
@@ -68,7 +67,6 @@ type ShootsIOSDriver struct {
 	bightInsightPrefix string
 	serverPrefix       string
 	timeout            time.Duration
-	device             *uixt.IOSDevice
 }
 
 func (s *ShootsIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {
