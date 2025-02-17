@@ -102,7 +102,7 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 	}
 
 	// cache screen result
-	dExt.GetSession().addScreenResult(screenResult)
+	dExt.screenResults = append(dExt.screenResults, screenResult)
 
 	if imageResult != nil {
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()

@@ -68,12 +68,12 @@ var (
 	iosDriverExt *XTDriver
 )
 
-func init() {
-	iosDevice, _ = NewIOSDevice()
-	driver, _ := iosDevice.NewDriver()
-	iosDriverExt = NewXTDriver(driver,
-		ai.WithCVService(ai.CVServiceTypeVEDEM))
-}
+// func init() {
+// 	iosDevice, _ = NewIOSDevice()
+// 	driver, _ := iosDevice.NewDriver()
+// 	iosDriverExt = NewXTDriver(driver,
+// 		ai.WithCVService(ai.CVServiceTypeVEDEM))
+// }
 
 func TestDriverExt_TapXY(t *testing.T) {
 	err := iosDriverExt.TapXY(0.4, 0.5)

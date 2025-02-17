@@ -20,50 +20,8 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
-
-type Session struct {
-	ID      string
-	baseURL *url.URL
-	client  *http.Client
-
-	// cache uia2/wda request and response
-	requests []*DriverRequests
-	// cache screenshot ocr results
-	screenResults []*ScreenResult
-}
-
-func (d *Session) addScreenResult(screenResult *ScreenResult) {
-	d.screenResults = append(d.screenResults, screenResult)
-}
-
-func (d *Session) addRequestResult(driverResult *DriverRequests) {
-	d.requests = append(d.requests, driverResult)
-}
-
-func (d *Session) Init(baseUrl string) error {
-	var err error
-	d.baseURL, err = url.Parse(baseUrl)
-	return err
-}
-
-func (d *Session) Reset() {
-	d.screenResults = make([]*ScreenResult, 0)
-	d.requests = make([]*DriverRequests, 0)
-}
-
-func (d *Session) GetData(withReset bool) Attachments {
-	data := Attachments{
-		"screen_results": d.screenResults,
-	}
-	if len(d.requests) != 0 {
-		data["requests"] = d.requests
-	}
-	if withReset {
-		d.Reset()
-	}
-	return data
-}
 
 type Attachments map[string]interface{}
 
@@ -81,35 +39,134 @@ type DriverRequests struct {
 	Error   string `json:"error,omitempty"`
 }
 
-func (wd *Session) concatURL(u *url.URL, elem ...string) string {
-	var tmp *url.URL
-	if u == nil {
-		u = wd.baseURL
+func NewDriverSession() *DriverSession {
+	timeout := 30 * time.Second
+	session := &DriverSession{
+		ctx:     context.Background(),
+		timeout: timeout,
+		client: &http.Client{
+			Timeout: timeout,
+		},
+		requests: make([]*DriverRequests, 0),
+		maxRetry: 5,
 	}
-	tmp, _ = url.Parse(u.String())
-	tmp.Path = path.Join(append([]string{u.Path}, elem...)...)
-	return tmp.String()
+	return session
 }
 
-func (wd *Session) GET(pathElem ...string) (rawResp DriverRawResponse, err error) {
-	return wd.Request(http.MethodGet, wd.concatURL(nil, pathElem...), nil)
+type DriverSession struct {
+	ctx      context.Context
+	ID       string
+	baseUrl  string
+	client   *http.Client
+	timeout  time.Duration
+	maxRetry int
+
+	// cache driver request and response
+	requests []*DriverRequests
 }
 
-func (wd *Session) POST(data interface{}, pathElem ...string) (rawResp DriverRawResponse, err error) {
+func (s *DriverSession) Init(capabilities option.Capabilities) (err error) {
+	data := make(map[string]interface{})
+	if len(capabilities) == 0 {
+		data["capabilities"] = make(map[string]interface{})
+	} else {
+		data["capabilities"] = map[string]interface{}{"alwaysMatch": capabilities}
+	}
+	var rawResp DriverRawResponse
+	if rawResp, err = s.POST(data, "/session"); err != nil {
+		return err
+	}
+	reply := new(struct{ Value struct{ SessionId string } })
+	if err = json.Unmarshal(rawResp, reply); err != nil {
+		return err
+	}
+	s.ID = reply.Value.SessionId
+
+	// WDA
+	// sessionInfo, err := rawResp.ValueConvertToSessionInfo()
+	// if err != nil {
+	// 	return err
+	// }
+	// // update session ID
+	// wd.Session.ID = sessionInfo.ID
+
+	return nil
+}
+
+func (s *DriverSession) Reset() {
+	s.requests = make([]*DriverRequests, 0)
+}
+
+func (s *DriverSession) SetBaseURL(baseUrl string) {
+	s.baseUrl = baseUrl
+}
+
+func (s *DriverSession) addRequestResult(driverResult *DriverRequests) {
+	s.requests = append(s.requests, driverResult)
+}
+
+func (s *DriverSession) History() []*DriverRequests {
+	return s.requests
+}
+
+func (s *DriverSession) concatURL(elem ...string) (string, error) {
+	if s.baseUrl == "" {
+		return "", fmt.Errorf("base URL is empty")
+	}
+
+	u, err := url.Parse(s.baseUrl)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse base URL: %w", err)
+	}
+
+	// 分离路径和查询参数
+	lastElem := elem[len(elem)-1]
+	parts := strings.SplitN(lastElem, "?", 2)
+	elem[len(elem)-1] = parts[0]
+
+	// 合并基础路径
+	u.Path = path.Join(append([]string{u.Path}, elem...)...)
+
+	// 如果有查询参数，添加到 URL
+	if len(parts) > 1 {
+		u.RawQuery = parts[1]
+	}
+
+	return u.String(), nil
+}
+
+func (s *DriverSession) GET(pathElem ...string) (rawResp DriverRawResponse, err error) {
+	urlStr, err := s.concatURL(pathElem...)
+	if err != nil {
+		return nil, err
+	}
+	return s.Request(http.MethodGet, urlStr, nil)
+}
+
+func (s *DriverSession) POST(data interface{}, pathElem ...string) (rawResp DriverRawResponse, err error) {
+	urlStr, err := s.concatURL(pathElem...)
+	if err != nil {
+		return nil, err
+	}
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
 			return nil, err
 		}
 	}
-	return wd.Request(http.MethodPost, wd.concatURL(nil, pathElem...), bsJSON)
+	return s.Request(http.MethodPost, urlStr, bsJSON)
 }
 
-func (wd *Session) DELETE(pathElem ...string) (rawResp DriverRawResponse, err error) {
-	return wd.Request(http.MethodDelete, wd.concatURL(nil, pathElem...), nil)
+func (s *DriverSession) DELETE(pathElem ...string) (rawResp DriverRawResponse, err error) {
+	urlStr, err := s.concatURL(pathElem...)
+	if err != nil {
+		return nil, err
+	}
+	return s.Request(http.MethodDelete, urlStr, nil)
 }
 
-func (wd *Session) Request(method string, rawURL string, rawBody []byte) (rawResp DriverRawResponse, err error) {
+func (s *DriverSession) Request(method string, rawURL string, rawBody []byte) (
+	rawResp DriverRawResponse, err error) {
 	driverResult := &DriverRequests{
 		RequestMethod: method,
 		RequestUrl:    rawURL,
@@ -117,7 +174,7 @@ func (wd *Session) Request(method string, rawURL string, rawBody []byte) (rawRes
 	}
 
 	defer func() {
-		wd.addRequestResult(driverResult)
+		s.addRequestResult(driverResult)
 
 		var logger *zerolog.Event
 		if err != nil {
@@ -143,7 +200,7 @@ func (wd *Session) Request(method string, rawURL string, rawBody []byte) (rawRes
 		logger.Msg("request uixt driver")
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(s.ctx, s.timeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, method, rawURL, bytes.NewBuffer(rawBody))
@@ -155,7 +212,7 @@ func (wd *Session) Request(method string, rawURL string, rawBody []byte) (rawRes
 
 	driverResult.RequestTime = time.Now()
 	var resp *http.Response
-	if resp, err = wd.client.Do(req); err != nil {
+	if resp, err = s.client.Do(req); err != nil {
 		return nil, err
 	}
 	defer func() {
@@ -189,12 +246,36 @@ func (wd *Session) Request(method string, rawURL string, rawBody []byte) (rawRes
 	return
 }
 
-func (wd *Session) InitConnection(localPort int) error {
+// TODO: FIXME
+func (s *DriverSession) RequestWithRetry(method string, rawURL string, rawBody []byte) (
+	rawResp DriverRawResponse, err error) {
+	for count := 1; count <= s.maxRetry; count++ {
+		rawResp, err = s.Request(method, rawURL, rawBody)
+		if err == nil {
+			return
+		}
+		time.Sleep(3 * time.Second)
+		oldSessionID := s.ID
+		if err2 := s.Init(nil); err2 != nil {
+			log.Error().Err(err2).Msgf(
+				"failed to reset session, try count %v", count)
+			continue
+		}
+		log.Debug().Str("new session", s.ID).Str("old session", oldSessionID).Msgf(
+			"reset session successfully, try count %v", count)
+		if oldSessionID != "" {
+			rawURL = strings.Replace(rawURL, oldSessionID, s.ID, 1)
+		}
+	}
+	return
+}
+
+func (s *DriverSession) InitConnection(localPort int) error {
 	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
 	if err != nil {
 		return fmt.Errorf("create tcp connection error %v", err)
 	}
-	wd.client = NewHTTPClientWithConnection(conn, 30*time.Second)
+	s.client = NewHTTPClientWithConnection(conn, s.timeout)
 	return nil
 }
 
@@ -253,12 +334,12 @@ func (r DriverRawResponse) ValueConvertToBool() (b bool, err error) {
 	return
 }
 
-func (r DriverRawResponse) ValueConvertToSessionInfo() (sessionInfo Session, err error) {
-	reply := new(struct{ Value struct{ Session } })
+func (r DriverRawResponse) ValueConvertToSessionInfo() (sessionInfo DriverSession, err error) {
+	reply := new(struct{ Value struct{ DriverSession } })
 	if err = json.Unmarshal(r, reply); err != nil {
-		return Session{}, err
+		return DriverSession{}, err
 	}
-	sessionInfo = reply.Value.Session
+	sessionInfo = reply.Value.DriverSession
 	return
 }
 

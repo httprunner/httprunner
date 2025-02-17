@@ -26,7 +26,7 @@ type IDriver interface {
 
 	// session
 	InitSession(capabilities option.Capabilities) error
-	GetSession() *Session
+	GetSession() *DriverSession
 	DeleteSession() error
 
 	// device info and status
@@ -77,6 +77,8 @@ func NewXTDriver(driver IDriver, opts ...ai.AIServiceOption) *XTDriver {
 		IDriver:    driver,
 		CVService:  services.ICVService,
 		LLMService: services.ILLMService,
+
+		screenResults: make([]*ScreenResult, 0),
 	}
 	return driverExt
 }
@@ -86,4 +88,7 @@ type XTDriver struct {
 	IDriver
 	CVService  ai.ICVService  // OCR/CV
 	LLMService ai.ILLMService // LLM
+
+	// cache screenshot results
+	screenResults []*ScreenResult
 }

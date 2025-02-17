@@ -3,7 +3,6 @@ package driver_ext
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/pkg/errors"
@@ -42,18 +41,16 @@ func NewShootsIOSDriver(device *uixt.IOSDevice) (driver *ShootsIOSDriver, err er
 			fmt.Sprintf("forward tcp port failed: %v", err))
 	}
 
-	capabilities := option.NewCapabilities()
-	capabilities.WithDefaultAlertAction(option.AlertActionAccept)
-	wdaDriver, err := device.NewHTTPDriver(capabilities)
+	wdaDriver, err := uixt.NewWDADriver(device)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver for shoots IOS")
 	}
 
-	host := "localhost"
 	timeout := 10 * time.Second
 	driver = &ShootsIOSDriver{
-		WDADriver: wdaDriver.(*uixt.WDADriver),
+		WDADriver: wdaDriver,
 	}
+	host := "localhost"
 	driver.bightInsightPrefix = fmt.Sprintf("http://%s:%d", host, localShootsPort)
 	driver.serverPrefix = fmt.Sprintf("http://%s:%d", host, localServerPort)
 	driver.timeout = timeout
@@ -70,7 +67,7 @@ type ShootsIOSDriver struct {
 }
 
 func (s *ShootsIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {
-	resp, err := s.Session.Request(http.MethodGet, fmt.Sprintf("%s/source?format=json&onlyWeb=false", s.bightInsightPrefix), []byte{})
+	resp, err := s.Session.GET(fmt.Sprintf("%s/source?format=json&onlyWeb=false", s.bightInsightPrefix))
 	if err != nil {
 		return "", err
 	}
@@ -88,11 +85,7 @@ func (s *ShootsIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, 
 	} else {
 		return info, fmt.Errorf("password and capcha is empty")
 	}
-	bsJSON, err := json.Marshal(params)
-	if err != nil {
-		return info, err
-	}
-	resp, err := s.Session.Request(http.MethodPost, fmt.Sprintf("%s/host/login/account/", s.serverPrefix), bsJSON)
+	resp, err := s.Session.POST(params, fmt.Sprintf("%s/host/login/account/", s.serverPrefix))
 	if err != nil {
 		return info, err
 	}
@@ -116,7 +109,7 @@ func (s *ShootsIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, 
 }
 
 func (s *ShootsIOSDriver) LogoutNoneUI(packageName string) error {
-	resp, err := s.Session.Request(http.MethodGet, fmt.Sprintf("%s/host/loginout/", s.serverPrefix), []byte{})
+	resp, err := s.Session.GET(fmt.Sprintf("%s/host/loginout/", s.serverPrefix))
 	if err != nil {
 		return err
 	}
@@ -140,7 +133,7 @@ func (s *ShootsIOSDriver) TearDown() error {
 }
 
 func (s *ShootsIOSDriver) getLoginAppInfo(packageName string) (info AppLoginInfo, err error) {
-	resp, err := s.Session.Request(http.MethodGet, fmt.Sprintf("%s/host/app/info/", s.serverPrefix), []byte{})
+	resp, err := s.Session.GET(fmt.Sprintf("%s/host/app/info/", s.serverPrefix))
 	if err != nil {
 		return info, err
 	}

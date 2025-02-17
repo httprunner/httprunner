@@ -52,7 +52,7 @@ func NewShootsAndroidDriver(device *uixt.AndroidDevice) (driver *ShootsAndroidDr
 	}
 	rawURL := fmt.Sprintf("http://forward-to-%d:%d",
 		serverLocalPort, douyinServerPort)
-	driver.Session.Init(rawURL)
+	driver.Session.SetBaseURL(rawURL)
 
 	return driver, nil
 }

@@ -90,6 +90,19 @@ func (dExt *XTDriver) Setup() error {
 	return nil
 }
 
+func (dExt *XTDriver) GetData(withReset bool) map[string]interface{} {
+	session := dExt.GetSession()
+	data := map[string]interface{}{
+		"requests":       session.History(),
+		"screen_results": dExt.screenResults,
+	}
+	if withReset {
+		session.Reset()
+		dExt.screenResults = make([]*ScreenResult, 0)
+	}
+	return data
+}
+
 func (dExt *XTDriver) assertOCR(text, assert string) error {
 	var opts []option.ActionOption
 	opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("assert_ocr_%s", text)))

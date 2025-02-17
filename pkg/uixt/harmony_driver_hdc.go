@@ -34,16 +34,13 @@ func NewHDCDriver(device *HarmonyDevice) (*HDCDriver, error) {
 
 type HDCDriver struct {
 	Device  *HarmonyDevice
-	Session *Session
+	Session *DriverSession
 
 	points   []ExportPoint
 	uiDriver *ghdc.UIDriver
 }
 
 func (hd *HDCDriver) InitSession(capabilities option.Capabilities) error {
-	hd.Session = &Session{}
-	hd.Session.Reset()
-	hd.Unlock()
 	return nil
 }
 
@@ -51,7 +48,7 @@ func (hd *HDCDriver) DeleteSession() error {
 	return types.ErrDriverNotImplemented
 }
 
-func (hd *HDCDriver) GetSession() *Session {
+func (hd *HDCDriver) GetSession() *DriverSession {
 	return hd.Session
 }
 

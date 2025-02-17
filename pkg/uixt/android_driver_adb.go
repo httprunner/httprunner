@@ -31,15 +31,14 @@ func NewADBDriver(device *AndroidDevice) (*ADBDriver, error) {
 	log.Info().Interface("device", device).Msg("init android adb driver")
 	driver := &ADBDriver{
 		Device:  device,
-		Session: &Session{},
+		Session: NewDriverSession(),
 	}
-	driver.InitSession(nil)
 	return driver, nil
 }
 
 type ADBDriver struct {
 	Device  *AndroidDevice
-	Session *Session
+	Session *DriverSession
 
 	// cache to avoid repeated query
 	windowSize types.Size
@@ -79,8 +78,6 @@ func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string,
 }
 
 func (ad *ADBDriver) InitSession(capabilities option.Capabilities) error {
-	ad.Session = &Session{}
-	ad.Session.Reset()
 	return nil
 }
 
@@ -713,7 +710,7 @@ func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 	return pointRes, nil
 }
 
-func (ad *ADBDriver) GetSession() *Session {
+func (ad *ADBDriver) GetSession() *DriverSession {
 	return ad.Session
 }
 

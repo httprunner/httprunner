@@ -670,8 +670,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		}
 
 		// save attachments
-		session := uiDriver.GetSession()
-		for key, value := range session.GetData(true) {
+		for key, value := range uiDriver.GetData(true) {
 			attachments[key] = value
 		}
 		stepResult.Attachments = attachments

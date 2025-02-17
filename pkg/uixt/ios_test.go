@@ -89,15 +89,6 @@ func TestIOSDevice_GetPackageInfo(t *testing.T) {
 	t.Log(appInfo)
 }
 
-func TestNewWDAHTTPDriver(t *testing.T) {
-	device, _ := NewIOSDevice()
-	var err error
-	_, err = device.NewHTTPDriver(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestNewUSBDriver(t *testing.T) {
 	setup(t)
 

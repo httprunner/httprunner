@@ -5,11 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
-	"net/http"
-	"net/url"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -27,7 +23,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
@@ -459,73 +454,6 @@ func (dev *IOSDevice) Reboot() error {
 		return err
 	}
 	return nil
-}
-
-// NewHTTPDriver creates new remote HTTP client, this will also start a new session.
-func (dev *IOSDevice) NewHTTPDriver(capabilities option.Capabilities) (driver IDriver, err error) {
-	var localPort int
-	localPort, err = strconv.Atoi(os.Getenv("WDA_LOCAL_PORT"))
-	if err != nil {
-		localPort, err = builtin.GetFreePort()
-		if err != nil {
-			return nil, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("get free port failed: %v", err))
-		}
-		if err = dev.Forward(localPort, dev.Options.WDAPort); err != nil {
-			return nil, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("forward tcp port failed: %v", err))
-		}
-	} else {
-		log.Info().Int("WDA_LOCAL_PORT", localPort).Msg("reuse WDA local port")
-	}
-
-	var localMjpegPort int
-	localMjpegPort, err = strconv.Atoi(os.Getenv("WDA_LOCAL_MJPEG_PORT"))
-	if err != nil {
-		localMjpegPort, err = builtin.GetFreePort()
-		if err != nil {
-			return nil, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("get free port failed: %v", err))
-		}
-		if err = dev.Forward(localMjpegPort, dev.Options.WDAMjpegPort); err != nil {
-			return nil, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("forward tcp port failed: %v", err))
-		}
-	} else {
-		log.Info().Int("WDA_LOCAL_MJPEG_PORT", localMjpegPort).
-			Msg("reuse WDA local mjpeg port")
-	}
-
-	log.Info().Interface("capabilities", capabilities).
-		Int("localPort", localPort).Int("localMjpegPort", localMjpegPort).
-		Msg("init WDA HTTP driver")
-
-	wd := new(WDADriver)
-	wd.Device = dev
-	wd.Session.client = &http.Client{
-		Timeout: time.Second * 10, // 设置超时时间为 10 秒
-	}
-
-	host := "localhost"
-	if wd.Session.baseURL, err = url.Parse(fmt.Sprintf("http://%s:%d", host, localPort)); err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
-	}
-
-	// create new session
-	if err = wd.InitSession(capabilities); err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
-	}
-
-	if wd.mjpegHTTPConn, err = net.Dial(
-		"tcp",
-		fmt.Sprintf("%s:%d", host, localMjpegPort),
-	); err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
-	}
-	wd.mjpegClient = NewHTTPClientWithConnection(wd.mjpegHTTPConn, 30*time.Second)
-	wd.mjpegUrl = fmt.Sprintf("%s:%d", host, localMjpegPort)
-
-	return wd, nil
 }
 
 func (dev *IOSDevice) GetPackageInfo(packageName string) (types.AppInfo, error) {
