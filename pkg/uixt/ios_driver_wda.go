@@ -9,7 +9,6 @@ import (
 	"math"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,7 +24,6 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
@@ -37,57 +35,21 @@ func NewWDADriver(device *IOSDevice) (*WDADriver, error) {
 		Session: NewDriverSession(),
 	}
 
-	var err error
-	// forward local port to device
-	var localPort int
-	localPort, err = strconv.Atoi(os.Getenv("WDA_LOCAL_PORT"))
-	if err != nil {
-		localPort, err = builtin.GetFreePort()
-		if err != nil {
-			return nil, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("get free port failed: %v", err))
-		}
-		if err = device.Forward(localPort, device.Options.WDAPort); err != nil {
-			return nil, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("forward tcp port failed: %v", err))
-		}
-	} else {
-		log.Info().Int("WDA_LOCAL_PORT", localPort).Msg("reuse WDA local port")
-	}
-
-	var localMjpegPort int
-	localMjpegPort, err = strconv.Atoi(os.Getenv("WDA_LOCAL_MJPEG_PORT"))
-	if err != nil {
-		localMjpegPort, err = builtin.GetFreePort()
-		if err != nil {
-			return nil, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("get free port failed: %v", err))
-		}
-		if err = device.Forward(localMjpegPort, device.Options.WDAMjpegPort); err != nil {
-			return nil, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("forward tcp port failed: %v", err))
-		}
-	} else {
-		log.Info().Int("WDA_LOCAL_MJPEG_PORT", localMjpegPort).
-			Msg("reuse WDA local mjpeg port")
-	}
-
 	host := "localhost"
+	localPort, err := driver.getLocalPort()
+	if err != nil {
+		return nil, err
+	}
 	driver.Session.SetBaseURL(fmt.Sprintf("http://%s:%d", host, localPort))
+
+	if err = driver.initMjpegClient(); err != nil {
+		return nil, err
+	}
 
 	// create new session
 	if err = driver.InitSession(nil); err != nil {
 		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
-
-	if driver.mjpegHTTPConn, err = net.Dial(
-		"tcp",
-		fmt.Sprintf("%s:%d", host, localMjpegPort),
-	); err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
-	}
-	driver.mjpegClient = NewHTTPClientWithConnection(driver.mjpegHTTPConn, 30*time.Second)
-	driver.mjpegUrl = fmt.Sprintf("%s:%d", host, localMjpegPort)
 
 	// init WDA scale
 	if driver.scale, err = driver.Scale(); err != nil {
@@ -108,6 +70,61 @@ type WDADriver struct {
 	mjpegHTTPConn net.Conn // via HTTP
 	mjpegClient   *http.Client
 	mjpegUrl      string
+}
+
+func (wd *WDADriver) getLocalPort() (int, error) {
+	localPort, err := strconv.Atoi(os.Getenv("WDA_LOCAL_PORT"))
+	if err != nil {
+		localPort, err = builtin.GetFreePort()
+		if err != nil {
+			return 0, errors.Wrap(code.DeviceHTTPDriverError,
+				fmt.Sprintf("get free port failed: %v", err))
+		}
+		// forward local port to device
+		if err = wd.Device.Forward(localPort, wd.Device.Options.WDAPort); err != nil {
+			return 0, errors.Wrap(code.DeviceHTTPDriverError,
+				fmt.Sprintf("forward tcp port failed: %v", err))
+		}
+	} else {
+		log.Info().Int("WDA_LOCAL_PORT", localPort).Msg("reuse WDA local port")
+	}
+	return localPort, nil
+}
+
+func (wd *WDADriver) getMjpegLocalPort() (int, error) {
+	localMjpegPort, err := strconv.Atoi(os.Getenv("WDA_LOCAL_MJPEG_PORT"))
+	if err != nil {
+		localMjpegPort, err = builtin.GetFreePort()
+		if err != nil {
+			return 0, errors.Wrap(code.DeviceHTTPDriverError,
+				fmt.Sprintf("get free port failed: %v", err))
+		}
+		if err = wd.Device.Forward(localMjpegPort, wd.Device.Options.WDAMjpegPort); err != nil {
+			return 0, errors.Wrap(code.DeviceHTTPDriverError,
+				fmt.Sprintf("forward tcp port failed: %v", err))
+		}
+	} else {
+		log.Info().Int("WDA_LOCAL_MJPEG_PORT", localMjpegPort).
+			Msg("reuse WDA local mjpeg port")
+	}
+	return localMjpegPort, nil
+}
+
+func (wd *WDADriver) initMjpegClient() error {
+	host := "localhost"
+	localMjpegPort, err := wd.getMjpegLocalPort()
+	if err != nil {
+		return err
+	}
+	if wd.mjpegHTTPConn, err = net.Dial(
+		"tcp",
+		fmt.Sprintf("%s:%d", host, localMjpegPort),
+	); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	wd.mjpegClient = NewHTTPClientWithConnection(wd.mjpegHTTPConn, 30*time.Second)
+	wd.mjpegUrl = fmt.Sprintf("http://%s:%d", host, localMjpegPort)
+	return nil
 }
 
 func (wd *WDADriver) GetMjpegClient() *http.Client {
@@ -145,6 +162,8 @@ func (wd *WDADriver) DeleteSession() (err error) {
 
 	// [[FBRoute DELETE:@""] respondWithTarget:self action:@selector(handleDeleteSession:)]
 	_, err = wd.Session.DELETE("/session", wd.Session.ID)
+	wd.Session.ID = ""
+	wd.Session.client.CloseIdleConnections()
 	return
 }
 
@@ -250,15 +269,20 @@ func (wd *WDADriver) Scale() (float64, error) {
 	return screen.Scale, nil
 }
 
-func (wd *WDADriver) Screen() (screen ai.Screen, err error) {
+type Screen struct {
+	StatusBarSize types.Size `json:"statusBarSize"`
+	Scale         float64    `json:"scale"`
+}
+
+func (wd *WDADriver) Screen() (screen Screen, err error) {
 	// [[FBRoute GET:@"/wda/screen"] respondWithTarget:self action:@selector(handleGetScreen:)]
 	var rawResp DriverRawResponse
 	if rawResp, err = wd.Session.GET("/session", wd.Session.ID, "/wda/screen"); err != nil {
-		return ai.Screen{}, err
+		return Screen{}, err
 	}
-	reply := new(struct{ Value struct{ ai.Screen } })
+	reply := new(struct{ Value struct{ Screen } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return ai.Screen{}, err
+		return Screen{}, err
 	}
 	screen = reply.Value.Screen
 	return
@@ -525,6 +549,8 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 		"x": wd.toScale(x),
 		"y": wd.toScale(y),
 	}
+	option.MergeOptions(data, opts...)
+
 	_, err := wd.Session.POST(data, "/session", wd.Session.ID, "/wda/tap/0")
 	return err
 }
@@ -546,10 +572,11 @@ func (wd *WDADriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) erro
 	return err
 }
 
+// FIXME: hold not work
 func (wd *WDADriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
 	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.Duration == 0 {
-		opts = append(opts, option.WithDuration(1))
+		opts = append(opts, option.WithPressDuration(1))
 	}
 	return wd.TapXY(x, y, opts...)
 }
@@ -574,12 +601,7 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 		"toX":   math.Round(toX*10) / 10,
 		"toY":   math.Round(toY*10) / 10,
 	}
-	if actionOptions.PressDuration > 0 {
-		data["pressDuration"] = actionOptions.PressDuration
-	}
-
-	// update data options in post data for extra WDA configurations
-	actionOptions.UpdateData(data)
+	option.MergeOptions(data, opts...)
 	// wda 43 version
 	_, err = wd.Session.POST(data, "/session", wd.Session.ID, "/wda/dragfromtoforduration")
 	// _, err = wd.Session.POST(data, "/session", wd.Session.ID, "/wda/drag")
@@ -619,12 +641,8 @@ func (wd *WDADriver) SetIme(ime string) error {
 
 func (wd *WDADriver) Input(text string, opts ...option.ActionOption) (err error) {
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
-	actionOptions := option.NewActionOptions(opts...)
 	data := map[string]interface{}{"value": strings.Split(text, "")}
-
-	// new data options in post data for extra WDA configurations
-	actionOptions.UpdateData(data)
-
+	option.MergeOptions(data, opts...)
 	_, err = wd.Session.POST(data, "/session", wd.Session.ID, "/wda/keys")
 	return
 }
@@ -633,12 +651,8 @@ func (wd *WDADriver) Backspace(count int, opts ...option.ActionOption) (err erro
 	if count == 0 {
 		return nil
 	}
-	actionOptions := option.NewActionOptions(opts...)
 	data := map[string]interface{}{"count": count}
-
-	// new data options in post data for extra WDA configurations
-	actionOptions.UpdateData(data)
-
+	option.MergeOptions(data, opts...)
 	_, err = wd.Session.POST(data, "/gtf/interaction/input/backspace")
 	return
 }
@@ -720,39 +734,29 @@ func (wd *WDADriver) SetRotation(rotation types.Rotation) (err error) {
 func (wd *WDADriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	// [[FBRoute GET:@"/source"] respondWithTarget:self action:@selector(handleGetSourceCommand:)]
 	// [[FBRoute GET:@"/source"].withoutSession
-	urlStr, err := wd.Session.concatURL("/session", wd.Session.ID)
-	if err != nil {
-		return "", err
-	}
-	tmp, _ := url.Parse(urlStr)
-	toJsonRaw := false
-	if len(srcOpt) != 0 {
-		q := tmp.Query()
-		for k, val := range srcOpt[0] {
-			v := val.(string)
-			q.Set(k, v)
-			if k == "format" && v == "json" {
-				toJsonRaw = true
-			}
-		}
-		tmp.RawQuery = q.Encode()
-	}
-
-	urlStr, err = wd.Session.concatURL(tmp.Path, "/source")
-	if err != nil {
-		return "", err
+	// urlStr, err := wd.Session.concatURL("/session", wd.Session.ID)
+	// if err != nil {
+	// 	return "", err
+	// }
+	options := option.NewSourceOptions(srcOpt...)
+	query := options.Query()
+	if len(query) > 0 {
+		query = "?" + query
 	}
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.Session.GET(http.MethodGet, urlStr); err != nil {
-		return "", nil
+	if rawResp, err = wd.Session.GET("/source" + query); err != nil {
+		return "", err
 	}
-	if toJsonRaw {
+	// json format
+	if options.Format == option.SourceFormatJSON {
 		var jr builtinJSON.RawMessage
 		if jr, err = rawResp.ValueConvertToJsonRawMessage(); err != nil {
 			return "", err
 		}
 		return string(jr), nil
 	}
+
+	// xml/description format
 	if source, err = rawResp.ValueConvertToString(); err != nil {
 		return "", err
 	}
@@ -850,7 +854,7 @@ func (wd *WDADriver) ScreenRecord(duration time.Duration) (videoPath string, err
 		"-f", "mjpeg",
 		"-y",
 		"-r", "10",
-		"-i", "http://"+wd.mjpegUrl,
+		"-i", wd.mjpegUrl,
 		"-c:v", "libx264",
 		"-vf", "pad=width=ceil(iw/2)*2:height=ceil(ih/2)*2",
 		fileName,
@@ -936,7 +940,5 @@ func (wd *WDADriver) Setup() error {
 }
 
 func (wd *WDADriver) TearDown() error {
-	wd.mjpegClient.CloseIdleConnections()
-	wd.Session.client.CloseIdleConnections()
-	return nil
+	return wd.DeleteSession()
 }

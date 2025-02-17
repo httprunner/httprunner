@@ -6,6 +6,7 @@ import (
 	"image"
 	"image/gif"
 	"image/jpeg"
+	"image/png"
 	_ "image/png"
 	"os"
 	"path/filepath"
@@ -214,14 +215,14 @@ func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 
 	// compress image and save to file
 	switch format {
-	case "jpeg", "png":
+	case "jpeg":
 		jpegOptions := &jpeg.Options{Quality: 95}
 		err = jpeg.Encode(file, img, jpegOptions)
-	// case "png":
-	// 	encoder := png.Encoder{
-	// 		CompressionLevel: png.BestCompression,
-	// 	}
-	// 	err = encoder.Encode(file, img)
+	case "png":
+		encoder := png.Encoder{
+			CompressionLevel: png.BestCompression,
+		}
+		err = encoder.Encode(file, img)
 	case "gif":
 		gifOptions := &gif.Options{
 			NumColors: 256,

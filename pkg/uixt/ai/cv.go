@@ -316,8 +316,3 @@ func (p PointF) IsIdentical(p2 PointF) bool {
 	// set the coordinate precision to 1 pixel
 	return math.Abs(p.X-p2.X) < 1 && math.Abs(p.Y-p2.Y) < 1
 }
-
-type Screen struct {
-	StatusBarSize types.Size `json:"statusBarSize"`
-	Scale         float64    `json:"scale"`
-}

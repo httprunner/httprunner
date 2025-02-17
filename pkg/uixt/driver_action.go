@@ -176,8 +176,7 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		}
 	case ACTION_GetSource:
 		if packageName, ok := action.Params.(string); ok {
-			source := option.NewSourceOption().WithProcessName(packageName)
-			_, err = dExt.Source(source)
+			_, err = dExt.Source(option.WithProcessName(packageName))
 			if err != nil {
 				return errors.Wrap(err, "failed to set ime")
 			}

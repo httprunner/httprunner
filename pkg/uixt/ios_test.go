@@ -14,13 +14,7 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
-var (
-	bundleId     = "com.apple.Preferences"
-	driver       IDriver
-	iOSDriverExt *XTDriver
-)
-
-func setup(t *testing.T) {
+func setupWDADriverExt(t *testing.T) *XTDriver {
 	device, err := NewIOSDevice(
 		option.WithWDAPort(8700),
 		option.WithWDAMjpegPort(8800),
@@ -28,21 +22,16 @@ func setup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	driver, err = device.NewDriver()
+	driver, err := device.NewDriver()
 	if err != nil {
 		t.Fatal(err)
 	}
-	iOSDriverExt = NewXTDriver(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
-}
-
-func TestViaUSB(t *testing.T) {
-	setup(t)
-	t.Log(driver.Status())
+	return NewXTDriver(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
 }
 
 func TestInstall(t *testing.T) {
-	setup(t)
-	err := iOSDriverExt.GetDevice().Install("xxx.ipa",
+	driver := setupWDADriverExt(t)
+	err := driver.GetDevice().Install("xxx.ipa",
 		option.WithRetryTimes(5))
 	log.Error().Err(err)
 	if err != nil {
@@ -84,28 +73,22 @@ func TestIOSDevice_GetPackageInfo(t *testing.T) {
 	checkErr(t, err)
 	appInfo, err := device.GetPackageInfo("com.ss.iphone.ugc.Aweme")
 	checkErr(t, err)
-	t.Log(appInfo)
-}
-
-func TestNewUSBDriver(t *testing.T) {
-	setup(t)
-
-	// t.Log(driver.IsWdaHealthy())
+	t.Logf("%+v", appInfo)
 }
 
 func TestDriver_DeviceScaleRatio(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
-	scaleRatio, err := driver.(*WDADriver).Scale()
+	scaleRatio, err := driver.IDriver.(*WDADriver).Scale()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Log(scaleRatio)
+	t.Logf("%+v", scaleRatio)
 }
 
 func Test_remoteWD_DeleteSession(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
 	err := driver.DeleteSession()
 	if err != nil {
@@ -114,26 +97,26 @@ func Test_remoteWD_DeleteSession(t *testing.T) {
 }
 
 func Test_remoteWD_HealthCheck(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
-	err := driver.(*WDADriver).HealthCheck()
+	err := driver.IDriver.(*WDADriver).HealthCheck()
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func Test_remoteWD_GetAppiumSettings(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
-	settings, err := driver.(*WDADriver).GetAppiumSettings()
+	settings, err := driver.IDriver.(*WDADriver).GetAppiumSettings()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(settings)
+	t.Logf("%+v", settings)
 }
 
 func Test_remoteWD_SetAppiumSettings(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
 	const _acceptAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','暂不'}`]"
 	const _dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
@@ -142,7 +125,7 @@ func Test_remoteWD_SetAppiumSettings(t *testing.T) {
 	value := _acceptAlertButtonSelector
 
 	// settings, err := driver.SetAppiumSettings(map[string]interface{}{"dismissAlertButtonSelector": "暂不"})
-	settings, err := driver.(*WDADriver).SetAppiumSettings(map[string]interface{}{key: value})
+	settings, err := driver.IDriver.(*WDADriver).SetAppiumSettings(map[string]interface{}{key: value})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,39 +135,31 @@ func Test_remoteWD_SetAppiumSettings(t *testing.T) {
 }
 
 func Test_remoteWD_IsWdaHealthy(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
-	healthy, err := driver.(*WDADriver).IsHealthy()
+	healthy, err := driver.IDriver.(*WDADriver).IsHealthy()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if healthy == false {
-		t.Fatal("healthy =", healthy)
+	if !healthy {
+		t.Fatal("assert healthy failed")
 	}
 }
 
-// func Test_remoteWD_WdaShutdown(t *testing.T) {
-// 	setup(t)
-//
-// 	if err := driver.WdaShutdown(); err != nil {
-// 		t.Fatal(err)
-// 	}
-// }
-
 func Test_remoteWD_Status(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
 	status, err := driver.Status()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if status.Ready == false {
-		t.Fatal("deviceStatus =", status)
+	if !status.Ready {
+		t.Fatal("assert device status failed")
 	}
 }
 
 func Test_remoteWD_DeviceInfo(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
 	info, err := driver.DeviceInfo()
 	if err != nil {
@@ -196,7 +171,7 @@ func Test_remoteWD_DeviceInfo(t *testing.T) {
 }
 
 func Test_remoteWD_BatteryInfo(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
 	batteryInfo, err := driver.BatteryInfo()
 	if err != nil {
@@ -206,7 +181,7 @@ func Test_remoteWD_BatteryInfo(t *testing.T) {
 }
 
 func Test_remoteWD_WindowSize(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
 	size, err := driver.WindowSize()
 	if err != nil {
@@ -216,9 +191,9 @@ func Test_remoteWD_WindowSize(t *testing.T) {
 }
 
 func Test_remoteWD_Screen(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
-	screen, err := driver.(*WDADriver).Screen()
+	screen, err := driver.IDriver.(*WDADriver).Screen()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -226,7 +201,7 @@ func Test_remoteWD_Screen(t *testing.T) {
 }
 
 func Test_remoteWD_Homescreen(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
 	err := driver.Home()
 	if err != nil {
@@ -234,174 +209,154 @@ func Test_remoteWD_Homescreen(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_AppLaunch(t *testing.T) {
-	setup(t)
+func Test_remoteWD_AppLaunchTerminate(t *testing.T) {
+	driver := setupWDADriverExt(t)
 
+	bundleId := "com.apple.Preferences"
 	err := driver.AppLaunch(bundleId)
-	// err := driver.AppLaunch(bundleId, NewAppLaunchOption().WithShouldWaitForQuiescence(true))
-	// err := driver.AppLaunch(bundleId, NewAppLaunchOption().WithArguments([]string{"-AppleLanguages", "(Russian)"}))
 	if err != nil {
 		t.Fatal(err)
 	}
-}
+	time.Sleep(2 * time.Second)
 
-func Test_remoteWD_AppTerminate(t *testing.T) {
-	setup(t)
-
-	_, err := driver.AppTerminate(bundleId)
+	_, err = driver.AppTerminate(bundleId)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func Test_remoteWD_Tap(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
-	err := driver.TapXY(200, 300)
+	err := driver.TapXY(0.2, 0.2)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func Test_remoteWD_DoubleTap(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
-	err := driver.DoubleTapXY(200, 300)
+	err := driver.DoubleTapXY(0.2, 0.2)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func Test_remoteWD_TouchAndHold(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
-	// err := driver.TouchAndHold(200, 300)
-	err := driver.TouchAndHold(200, 300)
+	err := driver.TouchAndHold(0.2, 0.2)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func Test_remoteWD_Drag(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
-	// err := driver.Drag(200, 300, 200, 500, WithDataPressDuration(0.5))
-	err := driver.Drag(200, 300, 200, 500,
-		option.WithPressDuration(2), option.WithDuration(3))
+	err := driver.Drag(0.8, 0.5, 0.2, 0.5,
+		option.WithDuration(0.5))
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func Test_Relative_Drag(t *testing.T) {
-	setup(t)
+func Test_Relative_Swipe(t *testing.T) {
+	driver := setupWDADriverExt(t)
 
-	// err := driver.Drag(200, 300, 200, 500, WithDataPressDuration(0.5))
-	err := iOSDriverExt.Swipe(0.5, 0.7, 0.5, 0.5)
+	err := driver.Swipe(0.8, 0.5, 0.2, 0.5)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func Test_remoteWD_SendKeys(t *testing.T) {
-	setup(t)
-	// driver.StartCaptureLog("hrp_wda_log")
-	err := driver.Input("test", option.WithIdentifier("test"))
-	// result, _ := driver.StopCaptureLog()
-	// err := driver.SendKeys("App Store", WithFrequency(3))
+	driver := setupWDADriverExt(t)
+	driver.StartCaptureLog("hrp_wda_log")
+	err := driver.Input("test中文", option.WithIdentifier("test"))
+	result, _ := driver.StopCaptureLog()
 	if err != nil {
 		t.Fatal(err)
 	}
-	// t.Log(result)
+	t.Log(result)
 }
 
 func Test_remoteWD_PressButton(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
-	err := driver.(*WDADriver).PressButton(types.DeviceButtonVolumeUp)
+	err := driver.IDriver.(*WDADriver).PressButton(types.DeviceButtonVolumeUp)
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Second * 1)
-	err = driver.(*WDADriver).PressButton(types.DeviceButtonVolumeDown)
+	err = driver.IDriver.(*WDADriver).PressButton(types.DeviceButtonVolumeDown)
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Second * 1)
-	err = driver.(*WDADriver).PressButton(types.DeviceButtonHome)
+	err = driver.IDriver.(*WDADriver).PressButton(types.DeviceButtonHome)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func Test_remoteWD_Screenshot(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
+	// without save file
 	screenshot, err := driver.ScreenShot()
 	if err != nil {
 		t.Fatal(err)
 	}
 	_ = screenshot
 
-	// img, format, err := image.Decode(screenshot)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// userHomeDir, _ := os.UserHomeDir()
-	// file, err := os.Create(userHomeDir + "/Desktop/s1." + format)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// defer func() { _ = file.Close() }()
-	// switch format {
-	// case "png":
-	// 	err = png.Encode(file, img)
-	// case "jpeg":
-	// 	err = jpeg.Encode(file, img, nil)
-	// }
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// t.Log(file.Name())
+	// save file
+	screenshot, err = driver.ScreenShot(option.WithScreenShotFileName("123"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = screenshot
+
+	path, err := saveScreenShot(screenshot, "1234")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("save screenshot to %s", path)
 }
 
 func Test_remoteWD_Source(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
 	var source string
 	var err error
-
-	// source, err = driver.Source()
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
 
 	source, err = driver.Source()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// source, err = driver.Source(NewSourceOption().WithFormatAsJson())
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	source, err = driver.Source(option.WithFormat(option.SourceFormatJSON))
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// source, err = driver.Source(NewSourceOption().WithFormatAsDescription())
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+	source, err = driver.Source(option.WithFormat(option.SourceFormatDescription))
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// source, err = driver.Source(NewSourceOption().WithFormatAsXml().WithExcludedAttributes([]string{"label", "type", "index"}))
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-
-	_ = source
-	fmt.Println(source)
+	source, err = driver.Source(
+		option.WithFormat(option.SourceFormatXML),
+		option.WithExcludedAttributes([]string{"label", "type", "index"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("source: %s", source)
 }
 
 func TestGetForegroundApp(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 	app, err := driver.ForegroundInfo()
 	if err != nil {
 		t.Fatal(err)
@@ -410,18 +365,17 @@ func TestGetForegroundApp(t *testing.T) {
 }
 
 func Test_remoteWD_AccessibleSource(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 
-	source, err := driver.(*WDADriver).AccessibleSource()
+	source, err := driver.IDriver.(*WDADriver).AccessibleSource()
 	if err != nil {
 		t.Fatal(err)
 	}
-	_ = source
 	fmt.Println(source)
 }
 
 func TestRecord(t *testing.T) {
-	setup(t)
+	driver := setupWDADriverExt(t)
 	path, err := driver.ScreenRecord(5 * time.Second)
 	if err != nil {
 		t.Fatal(err)
@@ -429,11 +383,11 @@ func TestRecord(t *testing.T) {
 	println(path)
 }
 
-// func Test_Backspace(t *testing.T) {
-// 	setup(t)
+func Test_Backspace(t *testing.T) {
+	driver := setupWDADriverExt(t)
 
-// 	err := driver.Backspace(3)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// }
+	err := driver.Backspace(3)
+	if err != nil {
+		t.Fatal(err)
+	}
+}

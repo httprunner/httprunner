@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"fmt"
+	"math"
 	"math/rand/v2"
 	"time"
 
@@ -43,8 +44,8 @@ func convertToAbsolutePoint(driver IDriver, x, y float64) (absX, absY float64, e
 		return
 	}
 
-	absX = float64(windowSize.Width) * x
-	absY = float64(windowSize.Height) * y
+	absX = math.Round(float64(windowSize.Width)*x*10) / 10
+	absY = math.Round(float64(windowSize.Height)*y*10) / 10
 	return
 }
 

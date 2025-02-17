@@ -13,9 +13,9 @@ type ActionOptions struct {
 	// control related
 	MaxRetryTimes int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"` // max retry times
 	Interval      float64     `json:"interval,omitempty" yaml:"interval,omitempty"`               // interval between retries in seconds
-	Duration      float64     `json:"duration,omitempty" yaml:"duration,omitempty"`               // used to set duration of ios swipe action
-	PressDuration float64     `json:"press_duration,omitempty" yaml:"press_duration,omitempty"`   // used to set duration of ios swipe action
-	Steps         int         `json:"steps,omitempty" yaml:"steps,omitempty"`                     // used to set steps of android swipe action
+	Duration      float64     `json:"duration,omitempty" yaml:"duration,omitempty"`               // used to set duration in seconds
+	PressDuration float64     `json:"press_duration,omitempty" yaml:"press_duration,omitempty"`   // used to set press duration in seconds
+	Steps         int         `json:"steps,omitempty" yaml:"steps,omitempty"`                     // used to set steps of action
 	Direction     interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`             // used by swipe to tap text or app
 	Timeout       int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                 // TODO: wait timeout in seconds for mobile action
 	Frequency     int         `json:"frequency,omitempty" yaml:"frequency,omitempty"`
@@ -142,7 +142,8 @@ func (o *ActionOptions) GetRandomOffset() float64 {
 	return float64(builtin.GetRandomNumber(minOffset, maxOffset)) + rand.Float64()
 }
 
-func (o *ActionOptions) UpdateData(data map[string]interface{}) {
+func MergeOptions(data map[string]interface{}, opts ...ActionOption) {
+	o := NewActionOptions(opts...)
 	if o.Identifier != "" {
 		data["log"] = map[string]interface{}{
 			"enable": true,
@@ -162,6 +163,10 @@ func (o *ActionOptions) UpdateData(data map[string]interface{}) {
 	}
 	if _, ok := data["duration"]; !ok {
 		data["duration"] = 0 // default duration
+	}
+
+	if o.PressDuration > 0 {
+		data["pressDuration"] = o.PressDuration
 	}
 
 	if o.Frequency > 0 {

@@ -50,7 +50,7 @@ func sourceHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	source, err := dExt.Source(option.NewSourceOption().WithProcessName(app.PackageName))
+	source, err := dExt.Source(option.WithProcessName(app.PackageName))
 	if err != nil {
 		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get source %s", c.HandlerName(), app.PackageName))
 		c.JSON(http.StatusInternalServerError,

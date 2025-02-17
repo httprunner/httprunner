@@ -239,7 +239,7 @@ func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error 
 
 	duration := 100.0
 	if actionOptions.PressDuration > 0 {
-		duration = actionOptions.PressDuration * 1000
+		duration = actionOptions.PressDuration * 1000 // convert to ms
 	}
 	data := map[string]interface{}{
 		"actions": []interface{}{
@@ -256,9 +256,7 @@ func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error 
 			},
 		},
 	}
-
-	// update data options in post data for extra uiautomator configurations
-	actionOptions.UpdateData(data)
+	option.MergeOptions(data, opts...)
 
 	_, err := ud.Session.POST(data, "/session", ud.Session.ID, "actions/tap")
 	return err
@@ -301,9 +299,7 @@ func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.Action
 		"endX":   toX,
 		"endY":   toY,
 	}
-
-	// update data options in post data for extra uiautomator configurations
-	actionOptions.UpdateData(data)
+	option.MergeOptions(data, opts...)
 
 	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
 	_, err = ud.Session.POST(data, "/session", ud.Session.ID, "touch/drag")
@@ -328,7 +324,7 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 
 	duration := 200.0
 	if actionOptions.PressDuration > 0 {
-		duration = actionOptions.PressDuration * 1000
+		duration = actionOptions.PressDuration * 1000 // ms
 	}
 	data := map[string]interface{}{
 		"actions": []interface{}{
@@ -345,9 +341,7 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 			},
 		},
 	}
-
-	// update data options in post data for extra uiautomator configurations
-	actionOptions.UpdateData(data)
+	option.MergeOptions(data, opts...)
 
 	_, err = ud.Session.POST(data, "/session", ud.Session.ID, "actions/swipe")
 	return err
@@ -400,18 +394,16 @@ func (ud *UIA2Driver) GetPasteboard(contentType types.PasteboardType) (raw *byte
 func (ud *UIA2Driver) Input(text string, opts ...option.ActionOption) (err error) {
 	// register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/keys"))
 	// https://github.com/appium/appium-uiautomator2-server/blob/master/app/src/main/java/io/appium/uiautomator2/handler/SendKeysToElement.java#L76-L85
-	actionOptions := option.NewActionOptions(opts...)
 	err = ud.SendUnicodeKeys(text, opts...)
-	if err != nil {
-		data := map[string]interface{}{
-			"text": text,
-		}
-
-		// new data options in post data for extra uiautomator configurations
-		actionOptions.UpdateData(data)
-
-		_, err = ud.Session.POST(data, "/session", ud.Session.ID, "/keys")
+	if err == nil {
+		return nil
 	}
+
+	data := map[string]interface{}{
+		"text": text,
+	}
+	option.MergeOptions(data, opts...)
+	_, err = ud.Session.POST(data, "/session", ud.Session.ID, "/keys")
 	return
 }
 
@@ -446,7 +438,6 @@ func (ud *UIA2Driver) SendUnicodeKeys(text string, opts ...option.ActionOption) 
 }
 
 func (ud *UIA2Driver) SendActionKey(text string, opts ...option.ActionOption) (err error) {
-	actionOptions := option.NewActionOptions(opts...)
 	var actions []interface{}
 	for i, c := range text {
 		actions = append(actions, map[string]interface{}{"type": "keyDown", "value": string(c)},
@@ -465,9 +456,8 @@ func (ud *UIA2Driver) SendActionKey(text string, opts ...option.ActionOption) (e
 			},
 		},
 	}
+	option.MergeOptions(data, opts...)
 
-	// new data options in post data for extra uiautomator configurations
-	actionOptions.UpdateData(data)
 	_, err = ud.Session.POST(data, "/session", ud.Session.ID, "/actions/keys")
 	return
 }

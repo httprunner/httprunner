@@ -14,7 +14,10 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
-var driverExt *XTDriver
+var (
+	driver    IDriver
+	driverExt *XTDriver
+)
 
 func setupAndroidAdbDriver(t *testing.T) {
 	device, err := NewAndroidDevice()
