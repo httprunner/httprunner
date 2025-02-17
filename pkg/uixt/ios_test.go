@@ -28,8 +28,6 @@ func setup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	capabilities := option.NewCapabilities()
-	capabilities.WithDefaultAlertAction(option.AlertActionAccept)
 	driver, err = device.NewDriver()
 	if err != nil {
 		t.Fatal(err)

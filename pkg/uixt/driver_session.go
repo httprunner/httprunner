@@ -334,15 +334,6 @@ func (r DriverRawResponse) ValueConvertToBool() (b bool, err error) {
 	return
 }
 
-func (r DriverRawResponse) ValueConvertToSessionInfo() (sessionInfo DriverSession, err error) {
-	reply := new(struct{ Value struct{ DriverSession } })
-	if err = json.Unmarshal(r, reply); err != nil {
-		return DriverSession{}, err
-	}
-	sessionInfo = reply.Value.DriverSession
-	return
-}
-
 func (r DriverRawResponse) ValueConvertToJsonRawMessage() (raw builtinJSON.RawMessage, err error) {
 	reply := new(struct{ Value builtinJSON.RawMessage })
 	if err = json.Unmarshal(r, reply); err != nil {

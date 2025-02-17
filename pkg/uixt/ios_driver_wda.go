@@ -36,16 +36,8 @@ func NewWDADriver(device *IOSDevice) (*WDADriver, error) {
 		Device:  device,
 		Session: NewDriverSession(),
 	}
-	err := driver.InitSession(nil)
-	if err != nil {
-		return nil, err
-	}
 
-	// init WDA scale
-	if driver.scale, err = driver.Scale(); err != nil {
-		return nil, err
-	}
-
+	var err error
 	// forward local port to device
 	var localPort int
 	localPort, err = strconv.Atoi(os.Getenv("WDA_LOCAL_PORT"))
@@ -97,6 +89,11 @@ func NewWDADriver(device *IOSDevice) (*WDADriver, error) {
 	driver.mjpegClient = NewHTTPClientWithConnection(driver.mjpegHTTPConn, 30*time.Second)
 	driver.mjpegUrl = fmt.Sprintf("%s:%d", host, localMjpegPort)
 
+	// init WDA scale
+	if driver.scale, err = driver.Scale(); err != nil {
+		return nil, err
+	}
+
 	return driver, nil
 }
 
@@ -129,12 +126,12 @@ func (wd *WDADriver) InitSession(capabilities option.Capabilities) error {
 	if err != nil {
 		return err
 	}
-	sessionInfo, err := rawResp.ValueConvertToSessionInfo()
-	if err != nil {
+	reply := new(struct{ Value struct{ SessionId string } })
+	if err = json.Unmarshal(rawResp, reply); err != nil {
 		return err
 	}
 	// update session ID
-	wd.Session.ID = sessionInfo.ID
+	wd.Session.ID = reply.Value.SessionId
 	return nil
 }
 
@@ -906,8 +903,9 @@ func (wd *WDADriver) StartCaptureLog(identifier ...string) error {
 }
 
 type wdaResponse struct {
-	Value     interface{} `json:"value"`
+	Status    int         `json:"status"`
 	SessionID string      `json:"sessionId"`
+	Value     interface{} `json:"value"`
 }
 
 func (wd *WDADriver) StopCaptureLog() (result interface{}, err error) {

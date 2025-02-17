@@ -2,6 +2,30 @@ package types
 
 import "fmt"
 
+// DeviceStatus example:
+//
+//	{
+//	    "status": 0,
+//	    "sessionId": "7DD3B0F7-958B-45F1-B99D-745B4EEFE178",
+//	    "value": {
+//	        "message": "WebDriverAgent is ready to accept commands",
+//	        "state": "success",
+//	        "os": {
+//	            "testmanagerdVersion": 28,
+//	            "name": "iOS",
+//	            "sdkVersion": "16.0",
+//	            "version": "15.3.1"
+//	        },
+//	        "ios": {
+//	            "ip": "169.254.237.64"
+//	        },
+//	        "ready": true,
+//	        "build": {
+//	            "time": "Jun 21 2024 11:11:37",
+//	            "productBundleIdentifier": "com.facebook.WebDriverAgentRunner"
+//	        }
+//	    }
+//	}
 type DeviceStatus struct {
 	Message string `json:"message"`
 	State   string `json:"state"`
