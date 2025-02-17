@@ -14,30 +14,25 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
-var (
-	driver    IDriver
-	driverExt *XTDriver
-)
-
-func setupAndroidAdbDriver(t *testing.T) {
+func setupADBDriverExt(t *testing.T) *XTDriver {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
 	device.Options.UIA2 = false
 	device.Options.LogOn = false
-	driver, err = device.NewDriver()
+	driver, err := device.NewDriver()
 	checkErr(t, err)
-	driverExt = NewXTDriver(driver,
+	return NewXTDriver(driver,
 		ai.WithCVService(ai.CVServiceTypeVEDEM))
 }
 
-func setupAndroidUIA2Driver(t *testing.T) {
+func setupUIA2DriverExt(t *testing.T) *XTDriver {
 	device, err := NewAndroidDevice()
 	checkErr(t, err)
-	device.Options.UIA2 = true
+	device.Options.UIA2 = true // use uiautomator2 driver
 	device.Options.LogOn = false
-	driver, err = device.NewDriver()
+	driver, err := device.NewDriver()
 	checkErr(t, err)
-	driverExt = NewXTDriver(driver,
+	return NewXTDriver(driver,
 		ai.WithCVService(ai.CVServiceTypeVEDEM))
 }
 
@@ -58,12 +53,14 @@ func TestAndroidDevice_GetCurrentWindow(t *testing.T) {
 }
 
 func TestDriver_Quit(t *testing.T) {
+	driver := setupADBDriverExt(t)
 	if err := driver.DeleteSession(); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDriver_Status(t *testing.T) {
+	driver := setupADBDriverExt(t)
 	_, err := driver.Status()
 	if err != nil {
 		t.Fatal(err)
@@ -71,6 +68,7 @@ func TestDriver_Status(t *testing.T) {
 }
 
 func TestDriver_Screenshot(t *testing.T) {
+	driver := setupADBDriverExt(t)
 	screenshot, err := driver.ScreenShot()
 	if err != nil {
 		t.Fatal(err)
@@ -80,6 +78,7 @@ func TestDriver_Screenshot(t *testing.T) {
 }
 
 func TestDriver_Rotation(t *testing.T) {
+	driver := setupADBDriverExt(t)
 	rotation, err := driver.Rotation()
 	if err != nil {
 		t.Fatal(err)
@@ -89,6 +88,7 @@ func TestDriver_Rotation(t *testing.T) {
 }
 
 func TestDriver_DeviceSize(t *testing.T) {
+	driver := setupADBDriverExt(t)
 	deviceSize, err := driver.WindowSize()
 	if err != nil {
 		t.Fatal(err)
@@ -98,9 +98,9 @@ func TestDriver_DeviceSize(t *testing.T) {
 }
 
 func TestDriver_Source(t *testing.T) {
-	setupAndroidUIA2Driver(t)
+	driver := setupUIA2DriverExt(t)
 
-	source, err := driverExt.Source()
+	source, err := driver.Source()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,6 +109,7 @@ func TestDriver_Source(t *testing.T) {
 }
 
 func TestDriver_BatteryInfo(t *testing.T) {
+	driver := setupADBDriverExt(t)
 	batteryInfo, err := driver.BatteryInfo()
 	if err != nil {
 		t.Fatal(err)
@@ -118,6 +119,7 @@ func TestDriver_BatteryInfo(t *testing.T) {
 }
 
 func TestDriver_DeviceInfo(t *testing.T) {
+	driver := setupADBDriverExt(t)
 	devInfo, err := driver.DeviceInfo()
 	if err != nil {
 		t.Fatal(err)
@@ -129,9 +131,9 @@ func TestDriver_DeviceInfo(t *testing.T) {
 }
 
 func TestDriver_Tap(t *testing.T) {
-	setupAndroidUIA2Driver(t)
-	driverExt.StartCaptureLog("")
-	err := driverExt.TapXY(0.5, 0.5,
+	driver := setupUIA2DriverExt(t)
+	driver.StartCaptureLog("")
+	err := driver.TapXY(0.5, 0.5,
 		option.WithIdentifier("test"),
 		option.WithPressDuration(4))
 	if err != nil {
@@ -149,8 +151,8 @@ func TestDriver_Tap(t *testing.T) {
 }
 
 func TestDriver_Swipe(t *testing.T) {
-	setupAndroidUIA2Driver(t)
-	err := driverExt.Swipe(400, 1000, 400, 500,
+	driver := setupUIA2DriverExt(t)
+	err := driver.Swipe(400, 1000, 400, 500,
 		option.WithPressDuration(0.5))
 	if err != nil {
 		t.Fatal(err)
@@ -158,14 +160,15 @@ func TestDriver_Swipe(t *testing.T) {
 }
 
 func TestDriver_Swipe_Relative(t *testing.T) {
-	setupAndroidUIA2Driver(t)
-	err := driverExt.Swipe(0.5, 0.7, 0.5, 0.5)
+	driver := setupUIA2DriverExt(t)
+	err := driver.Swipe(0.5, 0.7, 0.5, 0.5)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDriver_Drag(t *testing.T) {
+	driver := setupUIA2DriverExt(t)
 	err := driver.Drag(400, 260, 400, 500)
 	if err != nil {
 		t.Fatal(err)
@@ -180,9 +183,9 @@ func TestDriver_Drag(t *testing.T) {
 }
 
 func TestDriver_SendKeys(t *testing.T) {
-	setupAndroidUIA2Driver(t)
+	driver := setupUIA2DriverExt(t)
 
-	err := driverExt.Input("辽宁省沈阳市新民市民族街36-4",
+	err := driver.Input("辽宁省沈阳市新民市民族街36-4",
 		option.WithIdentifier("test"))
 	if err != nil {
 		t.Fatal(err)
@@ -204,6 +207,7 @@ func TestDriver_SendKeys(t *testing.T) {
 }
 
 func TestDriver_PressBack(t *testing.T) {
+	driver := setupADBDriverExt(t)
 	err := driver.Back()
 	if err != nil {
 		t.Fatal(err)
@@ -211,6 +215,7 @@ func TestDriver_PressBack(t *testing.T) {
 }
 
 func TestDriver_SetRotation(t *testing.T) {
+	driver := setupADBDriverExt(t)
 	// err = driver.SetRotation(Rotation{Z: 0})
 	err := driver.SetRotation(types.Rotation{Z: 270})
 	if err != nil {
@@ -219,11 +224,11 @@ func TestDriver_SetRotation(t *testing.T) {
 }
 
 func TestDriver_GetOrientation(t *testing.T) {
-	setupAndroidUIA2Driver(t)
-	_, _ = driverExt.AppTerminate("com.quark.browser")
-	_ = driverExt.AppLaunch("com.quark.browser")
+	driver := setupUIA2DriverExt(t)
+	_, _ = driver.AppTerminate("com.quark.browser")
+	_ = driver.AppLaunch("com.quark.browser")
 	time.Sleep(2 * time.Second)
-	_ = driverExt.Home()
+	_ = driver.Home()
 }
 
 func Test_getFreePort(t *testing.T) {
@@ -255,13 +260,13 @@ func TestDriver_AppLaunch(t *testing.T) {
 }
 
 func TestDriver_IsAppInForeground(t *testing.T) {
-	setupAndroidUIA2Driver(t)
+	driver := setupUIA2DriverExt(t)
 	// setupAndroidAdbDriver(t)
 
-	err := driverExt.AppLaunch("com.android.settings")
+	err := driver.AppLaunch("com.android.settings")
 	checkErr(t, err)
 
-	app, err := driverExt.ForegroundInfo()
+	app, err := driver.ForegroundInfo()
 	checkErr(t, err)
 	if app.PackageName != "com.android.settings" {
 		t.FailNow()
@@ -339,8 +344,8 @@ func TestDriver_ShellInputUnicode(t *testing.T) {
 }
 
 func TestRecordVideo(t *testing.T) {
-	setupAndroidAdbDriver(t)
-	path, err := driverExt.ScreenRecord(5 * time.Second)
+	driver := setupADBDriverExt(t)
+	path, err := driver.ScreenRecord(5 * time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -348,9 +353,8 @@ func TestRecordVideo(t *testing.T) {
 }
 
 func Test_Android_Backspace(t *testing.T) {
-	setupAndroidAdbDriver(t)
-
-	err := driverExt.Backspace(1)
+	driver := setupADBDriverExt(t)
+	err := driver.Backspace(1)
 	if err != nil {
 		t.Fatal(err)
 	}

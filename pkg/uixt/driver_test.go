@@ -63,54 +63,61 @@ func TestDriverExt(t *testing.T) {
 	androidDevice.InstallAPK("/path/to/app.apk")
 }
 
-var (
-	iosDevice    *IOSDevice
-	iosDriverExt *XTDriver
-)
-
-// func init() {
-// 	iosDevice, _ = NewIOSDevice()
-// 	driver, _ := iosDevice.NewDriver()
-// 	iosDriverExt = NewXTDriver(driver,
-// 		ai.WithCVService(ai.CVServiceTypeVEDEM))
-// }
+func setupDriverExt(t *testing.T, driverType ...string) *XTDriver {
+	var dType string
+	if len(driverType) > 0 {
+		dType = driverType[0]
+	}
+	switch dType {
+	case "ADB":
+		return setupADBDriverExt(t)
+	case "UIA2":
+		return setupUIA2DriverExt(t)
+	case "WDA":
+		return setupWDADriverExt(t)
+	case "HDC":
+		return setupHDCDriverExt(t)
+	default:
+		return setupADBDriverExt(t)
+	}
+}
 
 func TestDriverExt_TapXY(t *testing.T) {
-	err := iosDriverExt.TapXY(0.4, 0.5)
+	driver := setupDriverExt(t)
+	err := driver.TapXY(0.4, 0.5)
 	checkErr(t, err)
 }
 
 func TestDriverExt_TapAbsXY(t *testing.T) {
-	err := iosDriverExt.TapAbsXY(100, 300)
+	driver := setupDriverExt(t)
+	err := driver.TapAbsXY(100, 300)
 	checkErr(t, err)
 }
 
 func TestAndroidSwipeAction(t *testing.T) {
-	setupAndroidAdbDriver(t)
+	driver := setupDriverExt(t)
 
-	swipeAction := prepareSwipeAction(driverExt, "up", option.WithDirection("down"))
-	err := swipeAction(driverExt)
+	swipeAction := prepareSwipeAction(driver, "up", option.WithDirection("down"))
+	err := swipeAction(driver)
 	checkErr(t, err)
 
-	swipeAction = prepareSwipeAction(driverExt, "up", option.WithCustomDirection(0.5, 0.5, 0.5, 0.9))
-	err = swipeAction(driverExt)
+	swipeAction = prepareSwipeAction(driver, "up", option.WithCustomDirection(0.5, 0.5, 0.5, 0.9))
+	err = swipeAction(driver)
 	checkErr(t, err)
 }
 
 func TestAndroidSwipeToTapApp(t *testing.T) {
-	setupAndroidAdbDriver(t)
-
-	err := driverExt.SwipeToTapApp("抖音")
+	driver := setupDriverExt(t)
+	err := driver.SwipeToTapApp("抖音")
 	checkErr(t, err)
 }
 
 func TestAndroidSwipeToTapTexts(t *testing.T) {
-	setupAndroidAdbDriver(t)
-
-	err := driverExt.AppLaunch("com.ss.android.ugc.aweme")
+	driver := setupDriverExt(t)
+	err := driver.AppLaunch("com.ss.android.ugc.aweme")
 	checkErr(t, err)
 
-	err = driverExt.swipeToTapTexts([]string{"点击进入直播间", "直播中"}, option.WithDirection("up"))
+	err = driver.swipeToTapTexts([]string{"点击进入直播间", "直播中"}, option.WithDirection("up"))
 	checkErr(t, err)
 }
 
@@ -155,10 +162,10 @@ func TestSleepStrict(t *testing.T) {
 }
 
 func TestGetScreenShot(t *testing.T) {
-	setupAndroidAdbDriver(t)
+	driver := setupADBDriverExt(t)
 
 	imagePath := filepath.Join(config.ScreenShotsPath, "test_screenshot")
-	_, err := driverExt.ScreenShot(option.WithScreenShotFileName(imagePath))
+	_, err := driver.ScreenShot(option.WithScreenShotFileName(imagePath))
 	if err != nil {
 		t.Fatalf("GetScreenShot failed: %v", err)
 	}
@@ -167,8 +174,8 @@ func TestGetScreenShot(t *testing.T) {
 }
 
 func TestCheckPopup(t *testing.T) {
-	setupAndroidAdbDriver(t)
-	popup, err := driverExt.CheckPopup()
+	driver := setupADBDriverExt(t)
+	popup, err := driver.CheckPopup()
 	if err != nil {
 		t.Logf("check popup failed, err: %v", err)
 	} else if popup == nil {
@@ -179,9 +186,8 @@ func TestCheckPopup(t *testing.T) {
 }
 
 func TestClosePopup(t *testing.T) {
-	setupAndroidAdbDriver(t)
-
-	if err := driverExt.ClosePopupsHandler(); err != nil {
+	driver := setupADBDriverExt(t)
+	if err := driver.ClosePopupsHandler(); err != nil {
 		t.Fatal(err)
 	}
 }
