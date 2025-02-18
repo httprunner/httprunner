@@ -1,10 +1,7 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
-	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/rs/zerolog/log"
 )
@@ -25,13 +22,7 @@ func uixtActionHandler(c *gin.Context) {
 	if err = dExt.DoAction(req); err != nil {
 		log.Err(err).Interface("action", req).
 			Msg("exec uixt action failed")
-		c.JSON(http.StatusInternalServerError,
-			HttpResponse{
-				Code:    code.GetErrorCode(err),
-				Message: err.Error(),
-			},
-		)
-		c.Abort()
+		RenderError(c, err)
 		return
 	}
 	RenderSuccess(c, true)
@@ -54,13 +45,7 @@ func uixtActionsHandler(c *gin.Context) {
 		if err = dExt.DoAction(action); err != nil {
 			log.Err(err).Interface("action", action).
 				Msg("exec uixt action failed")
-			c.JSON(http.StatusInternalServerError,
-				HttpResponse{
-					Code:    code.GetErrorCode(err),
-					Message: err.Error(),
-				},
-			)
-			c.Abort()
+			RenderError(c, err)
 			return
 		}
 	}

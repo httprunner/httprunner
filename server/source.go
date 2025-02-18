@@ -2,12 +2,10 @@ package server
 
 import (
 	"encoding/base64"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -45,13 +43,7 @@ func screenResultHandler(c *gin.Context) {
 	screenResult, err := dExt.GetScreenResult(actionOptions...)
 	if err != nil {
 		log.Err(err).Msg("get screen result failed")
-		c.JSON(http.StatusInternalServerError,
-			HttpResponse{
-				Code:    code.GetErrorCode(err),
-				Message: err.Error(),
-			},
-		)
-		c.Abort()
+		RenderError(c, err)
 		return
 	}
 	RenderSuccess(c, screenResult)
