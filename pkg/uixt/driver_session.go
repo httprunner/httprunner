@@ -110,26 +110,65 @@ func (s *DriverSession) History() []*DriverRequests {
 }
 
 func (s *DriverSession) concatURL(elem ...string) (string, error) {
+	if len(elem) == 0 {
+		if s.baseUrl == "" {
+			return "", fmt.Errorf("base URL is empty")
+		}
+		return s.baseUrl, nil
+	}
+
+	// 处理完整 URL
+	if strings.HasPrefix(elem[0], "http://") || strings.HasPrefix(elem[0], "https://") {
+		u, err := url.Parse(elem[0])
+		if err != nil {
+			return "", fmt.Errorf("failed to parse URL: %w", err)
+		}
+		if len(elem) > 1 {
+			u.Path = path.Join(u.Path, path.Join(elem[1:]...))
+		}
+		return u.String(), nil
+	}
+
+	// 处理相对路径
 	if s.baseUrl == "" {
 		return "", fmt.Errorf("base URL is empty")
 	}
-
 	u, err := url.Parse(s.baseUrl)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse base URL: %w", err)
 	}
 
-	// 分离路径和查询参数
-	lastElem := elem[len(elem)-1]
-	parts := strings.SplitN(lastElem, "?", 2)
-	elem[len(elem)-1] = parts[0]
+	// 保存原始查询参数
+	baseQuery := u.Query()
 
-	// 合并基础路径
-	u.Path = path.Join(append([]string{u.Path}, elem...)...)
+	// 处理路径和查询参数
+	var paths []string
+	for i, e := range elem {
+		if i == len(elem)-1 {
+			// 处理最后一个元素的查询参数
+			parts := strings.SplitN(e, "?", 2)
+			paths = append(paths, parts[0])
+			if len(parts) > 1 {
+				newQuery, err := url.ParseQuery(parts[1])
+				if err != nil {
+					return "", fmt.Errorf("failed to parse query params: %w", err)
+				}
+				// 合并查询参数
+				for k, v := range newQuery {
+					baseQuery[k] = v
+				}
+			}
+		} else {
+			paths = append(paths, e)
+		}
+	}
 
-	// 如果有查询参数，添加到 URL
-	if len(parts) > 1 {
-		u.RawQuery = parts[1]
+	// 合并路径
+	u.Path = path.Join(append([]string{u.Path}, paths...)...)
+
+	// 设置合并后的查询参数
+	if len(baseQuery) > 0 {
+		u.RawQuery = baseQuery.Encode()
 	}
 
 	return u.String(), nil
