@@ -140,16 +140,16 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 			ACTION_SwipeToTapApp, action.Params)
 	case ACTION_SwipeToTapText:
 		if text, ok := action.Params.(string); ok {
-			return dExt.swipeToTapTexts([]string{text}, action.GetOptions()...)
+			return dExt.SwipeToTapTexts([]string{text}, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params, should be app text(string), got %v",
 			ACTION_SwipeToTapText, action.Params)
 	case ACTION_SwipeToTapTexts:
 		if texts, ok := action.Params.([]string); ok {
-			return dExt.swipeToTapTexts(texts, action.GetOptions()...)
+			return dExt.SwipeToTapTexts(texts, action.GetOptions()...)
 		}
 		if texts, err := builtin.ConvertToStringSlice(action.Params); err == nil {
-			return dExt.swipeToTapTexts(texts, action.GetOptions()...)
+			return dExt.SwipeToTapTexts(texts, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_SwipeToTapTexts, action.Params)
 	case ACTION_AppTerminate:

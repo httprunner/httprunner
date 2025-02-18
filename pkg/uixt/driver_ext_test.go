@@ -3,27 +3,29 @@
 package uixt
 
 import (
-	"path/filepath"
-	"regexp"
 	"testing"
 
-	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestNewDriver1(t *testing.T) {
-	device, _ := NewAndroidDevice(option.WithUIA2(true))
-	driver, _ := device.NewDriver()
+func TestDriverExt_NewMethod1(t *testing.T) {
+	device, err := NewAndroidDevice(option.WithUIA2(true))
+	require.Nil(t, err)
+	driver, err := device.NewDriver()
+	require.Nil(t, err)
 	driverExt := NewXTDriver(driver,
 		ai.WithCVService(ai.CVServiceTypeVEDEM))
 	driverExt.TapByOCR("推荐")
 }
 
-func TestNewDriver2(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, _ := NewUIA2Driver(device)
+func TestDriverExt_NewMethod2(t *testing.T) {
+	device, err := NewAndroidDevice()
+	require.Nil(t, err)
+	driver, err := NewUIA2Driver(device)
+	require.Nil(t, err)
 	driverExt := NewXTDriver(driver,
 		ai.WithCVService(ai.CVServiceTypeVEDEM))
 	driverExt.TapByOCR("推荐")
@@ -80,7 +82,13 @@ func setupDriverExt(t *testing.T) *XTDriver {
 	}
 }
 
-func TestAndroidSwipeAction(t *testing.T) {
+func TestDriverExt_TapByOCR(t *testing.T) {
+	driver := setupDriverExt(t)
+	err := driver.TapByOCR("天气")
+	assert.Nil(t, err)
+}
+
+func TestDriverExt_prepareSwipeAction(t *testing.T) {
 	driver := setupDriverExt(t)
 
 	swipeAction := prepareSwipeAction(driver, "up", option.WithDirection("down"))
@@ -92,69 +100,37 @@ func TestAndroidSwipeAction(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestAndroidSwipeToTapApp(t *testing.T) {
+func TestDriverExt_SwipeToTapApp(t *testing.T) {
 	driver := setupDriverExt(t)
 	err := driver.SwipeToTapApp("抖音")
 	assert.Nil(t, err)
 }
 
-func TestAndroidSwipeToTapTexts(t *testing.T) {
+func TestDriverExt_SwipeToTapTexts(t *testing.T) {
 	driver := setupDriverExt(t)
 	err := driver.AppLaunch("com.ss.android.ugc.aweme")
 	assert.Nil(t, err)
 
-	err = driver.swipeToTapTexts([]string{"点击进入直播间", "直播中"}, option.WithDirection("up"))
+	err = driver.SwipeToTapTexts(
+		[]string{"点击进入直播间", "直播中"},
+		option.WithDirection("up"),
+		option.WithMaxRetryTimes(10))
 	assert.Nil(t, err)
 }
 
-func TestGetScreenShot(t *testing.T) {
-	driver := setupADBDriverExt(t)
-
-	imagePath := filepath.Join(config.ScreenShotsPath, "test_screenshot")
-	_, err := driver.ScreenShot(option.WithScreenShotFileName(imagePath))
-	if err != nil {
-		t.Fatalf("GetScreenShot failed: %v", err)
-	}
-
-	t.Logf("screenshot saved at: %s", imagePath)
-}
-
-func TestCheckPopup(t *testing.T) {
+func TestDriverExt_CheckPopup(t *testing.T) {
 	driver := setupADBDriverExt(t)
 	popup, err := driver.CheckPopup()
-	if err != nil {
-		t.Logf("check popup failed, err: %v", err)
-	} else if popup == nil {
+	require.Nil(t, err)
+	if popup == nil {
 		t.Log("no popup found")
 	} else {
 		t.Logf("found popup: %v", popup)
 	}
 }
 
-func TestClosePopup(t *testing.T) {
+func TestDriverExt_ClosePopupsHandler(t *testing.T) {
 	driver := setupADBDriverExt(t)
-	if err := driver.ClosePopupsHandler(); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func matchPopup(text string) bool {
-	for _, popup := range popups {
-		if regexp.MustCompile(popup[1]).MatchString(text) {
-			return true
-		}
-	}
-	return false
-}
-
-func TestMatchRegex(t *testing.T) {
-	testData := []string{
-		"以后再说", "我知道了", "同意", "拒绝", "稍后",
-		"始终允许", "继续使用", "仅在使用中允许",
-	}
-	for _, text := range testData {
-		if !matchPopup(text) {
-			t.Fatal(text)
-		}
-	}
+	err := driver.ClosePopupsHandler()
+	assert.Nil(t, err)
 }

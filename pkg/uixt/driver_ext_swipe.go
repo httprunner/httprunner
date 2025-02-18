@@ -91,7 +91,7 @@ func prepareSwipeAction(dExt *XTDriver, params interface{}, opts ...option.Actio
 	}
 }
 
-func (dExt *XTDriver) swipeToTapTexts(texts []string, opts ...option.ActionOption) error {
+func (dExt *XTDriver) SwipeToTapTexts(texts []string, opts ...option.ActionOption) error {
 	if len(texts) == 0 {
 		return errors.New("no text to tap")
 	}
@@ -152,12 +152,9 @@ func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption)
 	}
 
 	opts = append(opts, option.WithDirection("left"))
+	opts = append(opts, option.WithMaxRetryTimes(5))
 
 	actionOptions := option.NewActionOptions(opts...)
-	// default to retry 5 times
-	if actionOptions.MaxRetryTimes == 0 {
-		opts = append(opts, option.WithMaxRetryTimes(5))
-	}
 	// tap app icon above the text
 	if len(actionOptions.Offset) == 0 {
 		opts = append(opts, option.WithTapOffset(0, -25))
@@ -167,5 +164,5 @@ func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption)
 		opts = append(opts, option.WithInterval(1))
 	}
 
-	return dExt.swipeToTapTexts([]string{appName}, opts...)
+	return dExt.SwipeToTapTexts([]string{appName}, opts...)
 }
