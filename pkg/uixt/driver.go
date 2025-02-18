@@ -66,6 +66,10 @@ type IDriver interface {
 	AppTerminate(packageName string) (bool, error)
 	AppClear(packageName string) error
 
+	// image related
+	PushImage(localPath string) error
+	ClearImages() error
+
 	// triggers the log capture and returns the log entries
 	StartCaptureLog(identifier ...string) error
 	StopCaptureLog() (result interface{}, err error)

@@ -287,3 +287,13 @@ func (hd *HDCDriver) SetRotation(rotation types.Rotation) (err error) {
 	err = types.ErrDriverNotImplemented
 	return
 }
+
+func (hd *HDCDriver) PushImage(localPath string) error {
+	log.Warn().Msg("PushImage not implemented in HDCDriver")
+	return nil
+}
+
+func (hd *HDCDriver) ClearImages() error {
+	log.Warn().Msg("ClearImages not implemented in HDCDriver")
+	return nil
+}

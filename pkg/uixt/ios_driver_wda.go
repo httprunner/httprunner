@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -924,6 +925,33 @@ func (wd *WDADriver) StartCaptureLog(identifier ...string) error {
 	}
 
 	return nil
+}
+
+func (wd *WDADriver) PushImage(localPath string) error {
+	localFile, err := os.Open(localPath)
+	if err != nil {
+		return err
+	}
+	defer localFile.Close()
+
+	imageBytes, err := io.ReadAll(localFile)
+	data := map[string]interface{}{
+		"file_name": path.Base(localPath),
+		"file_data": base64.StdEncoding.EncodeToString(imageBytes),
+	}
+	if err != nil {
+		return err
+	}
+
+	_, err = wd.Session.POST(data, "/gtf/albums/add")
+	return err
+}
+
+func (wd *WDADriver) ClearImages() error {
+	data := map[string]interface{}{}
+
+	_, err := wd.Session.POST(data, "/gtf/albums/clear")
+	return err
 }
 
 type wdaResponse struct {

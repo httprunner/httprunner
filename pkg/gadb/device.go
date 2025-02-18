@@ -147,6 +147,19 @@ func (d *Device) Usb() (string, error) {
 	return "", errors.New("does not have attribute: usb")
 }
 
+func (d *Device) SdkVersion() (string, error) {
+	if d.HasAttribute("sdkVersion") {
+		return d.attrs["sdkVersion"], nil
+	}
+	sdkVersion, err := d.RunShellCommand("getprop", "ro.build.version.sdk")
+	sdkVersion = strings.TrimSpace(sdkVersion)
+	if err != nil {
+		return "", errors.New("does not have attribute: sdkVersion")
+	}
+	d.attrs["sdkVersion"] = sdkVersion
+	return sdkVersion, nil
+}
+
 func (d *Device) transportId() (string, error) {
 	if d.HasAttribute("transport_id") {
 		return d.attrs["transport_id"], nil

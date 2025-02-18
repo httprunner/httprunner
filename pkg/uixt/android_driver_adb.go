@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -423,7 +424,11 @@ func (ad *ADBDriver) Input(text string, opts ...option.ActionOption) error {
 		return nil
 	}
 	// adb shell input text <text>
-	_, err = ad.runShellCommand("input", "text", text)
+	return ad.input(text, opts...)
+}
+
+func (ad *ADBDriver) input(text string, _ ...option.ActionOption) error {
+	_, err := ad.runShellCommand("input", "text", text)
 	if err != nil {
 		return errors.Wrap(err, "send keys failed")
 	}
@@ -456,7 +461,7 @@ func (ad *ADBDriver) SendUnicodeKeys(text string, opts ...option.ActionOption) (
 		log.Warn().Err(err).Msgf("encode text with modified utf7 failed")
 		return
 	}
-	err = ad.Input("\""+strings.ReplaceAll(encodedStr, "\"", "\\\"")+"\"", opts...)
+	err = ad.input("\""+strings.ReplaceAll(encodedStr, "\"", "\\\"")+"\"", opts...)
 	return
 }
 
@@ -847,6 +852,29 @@ func (ad *ADBDriver) Setup() error {
 
 func (ad *ADBDriver) TearDown() error {
 	log.Warn().Msg("TearDown not implemented in ADBDriver")
+	return nil
+}
+
+func (ad *ADBDriver) OpenUrl(url string) (err error) {
+	_, err = ad.runShellCommand(
+		"am", "start", "-W", "-a", "android.intent.action.VIEW",
+		"-d", fmt.Sprintf("'%s'", url))
+	return
+}
+
+func (ad *ADBDriver) PushImage(localPath string) error {
+	remotePath := path.Join("/sdcard/DCIM/Camera/", path.Base(localPath))
+	if err := ad.Device.PushFile(localPath, remotePath); err != nil {
+		return err
+	}
+	_, _ = ad.Device.RunShellCommand("am", "broadcast",
+		"-a", "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
+		"-d", fmt.Sprintf("file://%s", remotePath))
+	return nil
+}
+
+func (ad *ADBDriver) ClearImages() error {
+	_, _ = ad.Device.RunShellCommand("rm", "-rf", "/sdcard/DCIM/Camera/*")
 	return nil
 }
 
