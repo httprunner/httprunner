@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	builtinJSON "encoding/json"
 	"fmt"
@@ -35,24 +36,8 @@ func NewWDADriver(device *IOSDevice) (*WDADriver, error) {
 		Session: NewDriverSession(),
 	}
 
-	host := "localhost"
-	localPort, err := driver.getLocalPort()
-	if err != nil {
-		return nil, err
-	}
-	driver.Session.SetBaseURL(fmt.Sprintf("http://%s:%d", host, localPort))
-
-	if err = driver.initMjpegClient(); err != nil {
-		return nil, err
-	}
-
-	// create new session
-	if err = driver.InitSession(nil); err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
-	}
-
-	// init WDA scale
-	if driver.scale, err = driver.Scale(); err != nil {
+	// setup driver
+	if err := driver.Setup(); err != nil {
 		return nil, err
 	}
 
@@ -67,9 +52,8 @@ type WDADriver struct {
 	windowSize types.Size
 	scale      float64
 
-	mjpegHTTPConn net.Conn // via HTTP
-	mjpegClient   *http.Client
-	mjpegUrl      string
+	mjpegClient *http.Client
+	mjpegUrl    string
 }
 
 func (wd *WDADriver) getLocalPort() (int, error) {
@@ -116,19 +100,58 @@ func (wd *WDADriver) initMjpegClient() error {
 	if err != nil {
 		return err
 	}
-	if wd.mjpegHTTPConn, err = net.Dial(
+	mjpegHTTPConn, err := net.Dial(
 		"tcp",
 		fmt.Sprintf("%s:%d", host, localMjpegPort),
-	); err != nil {
+	)
+	if err != nil {
 		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
-	wd.mjpegClient = NewHTTPClientWithConnection(wd.mjpegHTTPConn, 30*time.Second)
+	wd.mjpegClient = &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+				return mjpegHTTPConn, nil
+			},
+		},
+		Timeout: 30 * time.Second,
+	}
 	wd.mjpegUrl = fmt.Sprintf("http://%s:%d", host, localMjpegPort)
 	return nil
 }
 
 func (wd *WDADriver) GetMjpegClient() *http.Client {
 	return wd.mjpegClient
+}
+
+func (wd *WDADriver) Setup() error {
+	localPort, err := wd.getLocalPort()
+	if err != nil {
+		return err
+	}
+	err = wd.Session.SetupPortForward(localPort)
+	if err != nil {
+		return err
+	}
+	wd.Session.SetBaseURL(fmt.Sprintf("http://127.0.0.1:%d", localPort))
+
+	if err = wd.initMjpegClient(); err != nil {
+		return err
+	}
+
+	// create new session
+	if err := wd.InitSession(nil); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+
+	// init WDA scale
+	if wd.scale, err = wd.Scale(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (wd *WDADriver) TearDown() error {
+	return wd.DeleteSession()
 }
 
 func (wd *WDADriver) InitSession(capabilities option.Capabilities) error {
@@ -155,9 +178,6 @@ func (wd *WDADriver) InitSession(capabilities option.Capabilities) error {
 func (wd *WDADriver) DeleteSession() (err error) {
 	if wd.mjpegClient != nil {
 		wd.mjpegClient.CloseIdleConnections()
-	}
-	if wd.mjpegHTTPConn != nil {
-		wd.mjpegHTTPConn.Close()
 	}
 
 	// [[FBRoute DELETE:@""] respondWithTarget:self action:@selector(handleDeleteSession:)]
@@ -933,12 +953,4 @@ func (wd *WDADriver) StopCaptureLog() (result interface{}, err error) {
 
 func (wd *WDADriver) GetSession() *DriverSession {
 	return wd.Session
-}
-
-func (wd *WDADriver) Setup() error {
-	return nil
-}
-
-func (wd *WDADriver) TearDown() error {
-	return wd.DeleteSession()
 }

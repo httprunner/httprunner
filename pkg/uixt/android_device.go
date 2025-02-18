@@ -84,6 +84,11 @@ func NewAndroidDevice(opts ...option.AndroidDeviceOption) (device *AndroidDevice
 		Logcat:  NewAdbLogcat(androidOptions.SerialNumber),
 	}
 	log.Info().Str("serial", device.Options.SerialNumber).Msg("init android device")
+
+	// setup device
+	if err := device.Setup(); err != nil {
+		return nil, errors.Wrap(err, "setup android device failed")
+	}
 	return device, nil
 }
 
@@ -107,32 +112,6 @@ func (dev *AndroidDevice) Setup() error {
 		return errors.Wrap(code.DeviceShellExecError, err.Error())
 	}
 
-	if dev.Options.UIA2 {
-		// uiautomator2 server must be started before
-
-		// check uiautomator server package installed
-		if !dev.Device.IsPackageInstalled(dev.Options.UIA2ServerPackageName) {
-			return errors.Wrapf(code.MobileUIDriverAppNotInstalled,
-				"%s not installed", dev.Options.UIA2ServerPackageName)
-		}
-		if !dev.Device.IsPackageInstalled(dev.Options.UIA2ServerTestPackageName) {
-			return errors.Wrapf(code.MobileUIDriverAppNotInstalled,
-				"%s not installed", dev.Options.UIA2ServerTestPackageName)
-		}
-
-		// TODO: check uiautomator server package running
-		// if dev.IsPackageRunning(UIA2ServerPackageName) {
-		// 	return nil
-		// }
-
-		// start uiautomator2 server
-		go func() {
-			if err := dev.startUIA2Server(); err != nil {
-				log.Error().Err(err).Msg("start UIA2 failed")
-			}
-		}()
-		time.Sleep(5 * time.Second) // wait for uiautomator2 server start
-	}
 	return nil
 }
 
@@ -163,10 +142,6 @@ func (dev *AndroidDevice) NewDriver() (driver IDriver, err error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-	// setup driver
-	if err := driver.Setup(); err != nil {
-		return nil, err
 	}
 	return driver, nil
 }
@@ -402,33 +377,6 @@ func (dev *AndroidDevice) getPackageMD5(packagePath string) (string, error) {
 		return matches[0], nil
 	}
 	return "", errors.New("failed to get package md5")
-}
-
-func (dev *AndroidDevice) startUIA2Server() error {
-	const maxRetries = 3
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		log.Info().Str("package", dev.Options.UIA2ServerTestPackageName).
-			Int("attempt", attempt).Msg("start uiautomator server")
-		// $ adb shell am instrument -w $UIA2ServerTestPackageName
-		// -w: wait for instrumentation to finish before returning.
-		// Required for test runners.
-		out, err := dev.Device.RunShellCommand("am", "instrument", "-w",
-			dev.Options.UIA2ServerTestPackageName)
-		if err != nil {
-			return errors.Wrap(err, "start uiautomator server failed")
-		}
-		if strings.Contains(out, "Process crashed") {
-			log.Error().Msg("uiautomator server crashed, retrying...")
-		}
-	}
-
-	return errors.Wrapf(code.MobileUIDriverAppCrashed,
-		"uiautomator server crashed %d times", maxRetries)
-}
-
-func (dev *AndroidDevice) stopUIA2Server() error {
-	_, err := dev.Device.RunShellCommand("am", "force-stop", dev.Options.UIA2ServerPackageName)
-	return err
 }
 
 type LineCallback func(string)

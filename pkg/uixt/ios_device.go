@@ -107,6 +107,11 @@ func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error)
 		listeners:   make(map[int]*forward.ConnListener),
 	}
 	log.Info().Str("udid", device.Options.UDID).Msg("init ios device")
+
+	// setup device
+	if err := device.Setup(); err != nil {
+		return nil, errors.Wrap(err, "setup ios device failed")
+	}
 	return device, nil
 }
 
@@ -223,10 +228,6 @@ func (dev *IOSDevice) NewDriver() (driver IDriver, err error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-	// setup driver
-	if err := wdaDriver.Setup(); err != nil {
-		return nil, err
 	}
 	return wdaDriver, nil
 }

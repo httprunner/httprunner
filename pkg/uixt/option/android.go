@@ -58,7 +58,7 @@ func NewAndroidDeviceOptions(opts ...AndroidDeviceOption) *AndroidDeviceOptions 
 		opt(config)
 	}
 
-	// set default
+	// adb default
 	if config.AdbServerHost == "" {
 		config.AdbServerHost = defaultAdbServerHost
 	}
@@ -66,18 +66,18 @@ func NewAndroidDeviceOptions(opts ...AndroidDeviceOption) *AndroidDeviceOptions 
 		config.AdbServerPort = defaultAdbServerPort
 	}
 
-	if config.UIA2 {
-		if config.UIA2IP == "" && config.UIA2Port == 0 {
-			config.UIA2IP = defaultUIA2ServerHost
-			config.UIA2Port = defaultUIA2ServerPort
-		}
-		if config.UIA2ServerPackageName == "" {
-			config.UIA2ServerPackageName = defaultUIA2ServerPackageName
-		}
-		if config.UIA2ServerTestPackageName == "" {
-			config.UIA2ServerTestPackageName = defaultUIA2ServerTestPackageName
-		}
+	// uiautomator2 default
+	if config.UIA2IP == "" && config.UIA2Port == 0 {
+		config.UIA2IP = defaultUIA2ServerHost
+		config.UIA2Port = defaultUIA2ServerPort
 	}
+	if config.UIA2ServerPackageName == "" {
+		config.UIA2ServerPackageName = defaultUIA2ServerPackageName
+	}
+	if config.UIA2ServerTestPackageName == "" {
+		config.UIA2ServerTestPackageName = defaultUIA2ServerTestPackageName
+	}
+
 	return config
 }
 

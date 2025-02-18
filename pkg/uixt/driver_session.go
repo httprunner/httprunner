@@ -270,24 +270,17 @@ func (s *DriverSession) RequestWithRetry(method string, rawURL string, rawBody [
 	return
 }
 
-func (s *DriverSession) InitConnection(localPort int) error {
+func (s *DriverSession) SetupPortForward(localPort int) error {
 	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
 	if err != nil {
 		return fmt.Errorf("create tcp connection error %v", err)
 	}
-	s.client = NewHTTPClientWithConnection(conn, s.timeout)
-	return nil
-}
-
-func NewHTTPClientWithConnection(conn net.Conn, timeout time.Duration) *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return conn, nil
-			},
+	s.client.Transport = &http.Transport{
+		DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+			return conn, nil
 		},
-		Timeout: timeout,
 	}
+	return nil
 }
 
 type DriverRawResponse []byte

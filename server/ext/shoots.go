@@ -194,7 +194,6 @@ func handleDeviceContext() gin.HandlerFunc {
 				c.Abort()
 				return
 			}
-			device.Setup()
 
 			driver, err := driver_ext.NewShootsAndroidDriver(device)
 			if err != nil {

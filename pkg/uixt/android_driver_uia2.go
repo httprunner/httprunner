@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -24,20 +25,9 @@ func NewUIA2Driver(device *AndroidDevice) (*UIA2Driver, error) {
 	driver := &UIA2Driver{
 		ADBDriver: adbDriver,
 	}
-	err = driver.InitSession(nil)
-	if err != nil {
-		return nil, err
-	}
 
-	// forward port
-	localPort, err := device.Device.Forward(device.Options.UIA2Port)
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceConnectionError,
-			fmt.Sprintf("forward port %d->%d failed: %v",
-				localPort, device.Options.UIA2Port, err))
-	}
-	err = driver.Session.InitConnection(localPort)
-	if err != nil {
+	// setup driver
+	if err := driver.Setup(); err != nil {
 		return nil, err
 	}
 	return driver, nil
@@ -48,6 +38,59 @@ type UIA2Driver struct {
 
 	// cache to avoid repeated query
 	windowSize types.Size
+}
+
+func (ud *UIA2Driver) Setup() error {
+	localPort, err := ud.Device.Forward(ud.Device.Options.UIA2Port)
+	if err != nil {
+		return errors.Wrap(code.DeviceConnectionError,
+			fmt.Sprintf("forward port %d->%d failed: %v",
+				localPort, ud.Device.Options.UIA2Port, err))
+	}
+	err = ud.Session.SetupPortForward(localPort)
+	if err != nil {
+		return err
+	}
+	ud.Session.SetBaseURL(
+		fmt.Sprintf("http://forward-to-%d:%d/wd/hub",
+			localPort, ud.Device.Options.UIA2Port))
+
+	// uiautomator2 server must be started before
+
+	// check uiautomator server package installed
+	if !ud.Device.IsPackageInstalled(ud.Device.Options.UIA2ServerPackageName) {
+		return errors.Wrapf(code.MobileUIDriverAppNotInstalled,
+			"%s not installed", ud.Device.Options.UIA2ServerPackageName)
+	}
+	if !ud.Device.IsPackageInstalled(ud.Device.Options.UIA2ServerTestPackageName) {
+		return errors.Wrapf(code.MobileUIDriverAppNotInstalled,
+			"%s not installed", ud.Device.Options.UIA2ServerTestPackageName)
+	}
+
+	// TODO: check uiautomator server package running
+	// if dev.IsPackageRunning(UIA2ServerPackageName) {
+	// 	return nil
+	// }
+
+	// start uiautomator2 server
+	// go func() {
+	// 	if err := ud.startUIA2Server(); err != nil {
+	// 		log.Fatal().Err(err).Msg("start UIA2 failed")
+	// 	}
+	// }()
+	// time.Sleep(5 * time.Second) // wait for uiautomator2 server start
+
+	// create new session
+	err = ud.InitSession(nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ud *UIA2Driver) TearDown() error {
+	log.Warn().Msg("TearDown not implemented in UIA2Driver")
+	return nil
 }
 
 func (ud *UIA2Driver) InitSession(capabilities option.Capabilities) (err error) {
@@ -496,4 +539,32 @@ func (ud *UIA2Driver) Source(srcOpt ...option.SourceOption) (source string, err 
 
 	source = reply.Value
 	return
+}
+
+func (ud *UIA2Driver) startUIA2Server() error {
+	const maxRetries = 3
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		log.Info().Str("package", ud.Device.Options.UIA2ServerTestPackageName).
+			Int("attempt", attempt).Msg("start uiautomator server")
+		// $ adb shell am instrument -w $UIA2ServerTestPackageName
+		// -w: wait for instrumentation to finish before returning.
+		// Required for test runners.
+		out, err := ud.Device.RunShellCommand("am", "instrument", "-w",
+			ud.Device.Options.UIA2ServerTestPackageName)
+		if err != nil {
+			return errors.Wrap(err, "start uiautomator server failed")
+		}
+		if strings.Contains(out, "Process crashed") {
+			log.Error().Msg("uiautomator server crashed, retrying...")
+		}
+	}
+
+	return errors.Wrapf(code.MobileUIDriverAppCrashed,
+		"uiautomator server crashed %d times", maxRetries)
+}
+
+func (ud *UIA2Driver) stopUIA2Server() error {
+	_, err := ud.Device.RunShellCommand("am", "force-stop",
+		ud.Device.Options.UIA2ServerPackageName)
+	return err
 }

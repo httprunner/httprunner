@@ -33,6 +33,10 @@ func NewADBDriver(device *AndroidDevice) (*ADBDriver, error) {
 		Device:  device,
 		Session: NewDriverSession(),
 	}
+	// setup driver
+	if err := driver.Setup(); err != nil {
+		return nil, err
+	}
 	return driver, nil
 }
 

@@ -424,12 +424,10 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse android config failed: %v", err))
 		}
+
 		device, err := uixt.NewAndroidDevice(androidDevice.Options.Options()...)
 		if err != nil {
 			return nil, errors.Wrap(err, "init android device failed")
-		}
-		if err := device.Setup(); err != nil {
-			return nil, errors.Wrap(err, "setup android device failed")
 		}
 		driver, err := device.NewDriver()
 		if err != nil {
@@ -451,9 +449,6 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "init ios device failed")
 		}
-		if err := device.Setup(); err != nil {
-			return nil, errors.Wrap(err, "setup ios device failed")
-		}
 		driver, err := device.NewDriver()
 		if err != nil {
 			return nil, errors.Wrap(err, "init ios driver failed")
@@ -473,9 +468,6 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		device, err := uixt.NewHarmonyDevice(harmonyDevice.Options.Options()...)
 		if err != nil {
 			return nil, errors.Wrap(err, "init harmony device failed")
-		}
-		if err := device.Setup(); err != nil {
-			return nil, errors.Wrap(err, "setup harmony device failed")
 		}
 		driver, err := device.NewDriver()
 		if err != nil {

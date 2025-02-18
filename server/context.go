@@ -52,7 +52,6 @@ func (r *Router) HandleDeviceContext() gin.HandlerFunc {
 				c.Abort()
 				return
 			}
-			device.Setup()
 
 			driver, err := device.NewDriver()
 			if err != nil {

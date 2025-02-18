@@ -61,6 +61,11 @@ func NewHarmonyDevice(opts ...option.HarmonyDeviceOption) (device *HarmonyDevice
 		Device:  harmonyDevice,
 	}
 	log.Info().Str("connectKey", device.Options.ConnectKey).Msg("init harmony device")
+
+	// setup device
+	if err := device.Setup(); err != nil {
+		return nil, errors.Wrap(err, "setup harmony device failed")
+	}
 	return device, nil
 }
 
@@ -98,10 +103,6 @@ func (dev *HarmonyDevice) NewDriver() (IDriver, error) {
 	driver, err := NewHDCDriver(dev)
 	if err != nil {
 		return nil, errors.Wrap(err, "init harmony driver failed")
-	}
-	// setup driver
-	if err := driver.Setup(); err != nil {
-		return nil, err
 	}
 	return driver, nil
 }

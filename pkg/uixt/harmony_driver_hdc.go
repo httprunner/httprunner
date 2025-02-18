@@ -29,6 +29,11 @@ func NewHDCDriver(device *HarmonyDevice) (*HDCDriver, error) {
 	}
 	driver.uiDriver = uiDriver
 
+	// setup driver
+	if err := driver.Setup(); err != nil {
+		return nil, err
+	}
+
 	return driver, nil
 }
 

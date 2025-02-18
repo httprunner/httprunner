@@ -65,6 +65,7 @@ func TestDevice_IOS_GetPackageInfo(t *testing.T) {
 	require.Nil(t, err)
 	appInfo, err := device.GetPackageInfo("com.ss.iphone.ugc.Aweme")
 	assert.Nil(t, err)
+	assert.Equal(t, "com.ss.iphone.ugc.Aweme", appInfo.PackageName)
 	t.Logf("%+v", appInfo)
 }
 
