@@ -44,16 +44,12 @@ func TestLoadHARWithProfileOverride(t *testing.T) {
 	}
 
 	for i := 0; i < 3; i++ {
-		if !assert.Equal(t,
+		assert.Equal(t,
 			map[string]string{"Content-Type": "application/x-www-form-urlencoded"},
-			converter.tCase.Steps[i].Request.Headers) {
-			t.FailNow()
-		}
-		if !assert.Equal(t,
+			converter.tCase.Steps[i].Request.Headers)
+		assert.Equal(t,
 			map[string]string{"UserName": "debugtalk"},
-			converter.tCase.Steps[i].Request.Cookies) {
-			t.FailNow()
-		}
+			converter.tCase.Steps[i].Request.Cookies)
 	}
 }
 

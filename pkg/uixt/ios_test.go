@@ -76,7 +76,7 @@ func TestIOSDevice_GetPackageInfo(t *testing.T) {
 	t.Logf("%+v", appInfo)
 }
 
-func TestDriver_DeviceScaleRatio(t *testing.T) {
+func TestDriver_WDA_DeviceScaleRatio(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	scaleRatio, err := driver.IDriver.(*WDADriver).Scale()
@@ -87,7 +87,7 @@ func TestDriver_DeviceScaleRatio(t *testing.T) {
 	t.Logf("%+v", scaleRatio)
 }
 
-func Test_remoteWD_DeleteSession(t *testing.T) {
+func TestDriver_WDA_DeleteSession(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	err := driver.DeleteSession()
@@ -96,7 +96,7 @@ func Test_remoteWD_DeleteSession(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_HealthCheck(t *testing.T) {
+func TestDriver_WDA_HealthCheck(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	err := driver.IDriver.(*WDADriver).HealthCheck()
@@ -105,7 +105,7 @@ func Test_remoteWD_HealthCheck(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_GetAppiumSettings(t *testing.T) {
+func TestDriver_WDA_GetAppiumSettings(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	settings, err := driver.IDriver.(*WDADriver).GetAppiumSettings()
@@ -115,7 +115,7 @@ func Test_remoteWD_GetAppiumSettings(t *testing.T) {
 	t.Logf("%+v", settings)
 }
 
-func Test_remoteWD_SetAppiumSettings(t *testing.T) {
+func TestDriver_WDA_SetAppiumSettings(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	const _acceptAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','暂不'}`]"
@@ -134,7 +134,7 @@ func Test_remoteWD_SetAppiumSettings(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_IsWdaHealthy(t *testing.T) {
+func TestDriver_WDA_IsWdaHealthy(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	healthy, err := driver.IDriver.(*WDADriver).IsHealthy()
@@ -146,7 +146,7 @@ func Test_remoteWD_IsWdaHealthy(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_Status(t *testing.T) {
+func TestDriver_WDA_Status(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	status, err := driver.Status()
@@ -158,7 +158,7 @@ func Test_remoteWD_Status(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_DeviceInfo(t *testing.T) {
+func TestDriver_WDA_DeviceInfo(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	info, err := driver.DeviceInfo()
@@ -170,7 +170,7 @@ func Test_remoteWD_DeviceInfo(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_BatteryInfo(t *testing.T) {
+func TestDriver_WDA_BatteryInfo(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	batteryInfo, err := driver.BatteryInfo()
@@ -180,7 +180,7 @@ func Test_remoteWD_BatteryInfo(t *testing.T) {
 	t.Log(batteryInfo)
 }
 
-func Test_remoteWD_WindowSize(t *testing.T) {
+func TestDriver_WDA_WindowSize(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	size, err := driver.WindowSize()
@@ -190,7 +190,7 @@ func Test_remoteWD_WindowSize(t *testing.T) {
 	t.Log(size)
 }
 
-func Test_remoteWD_Screen(t *testing.T) {
+func TestDriver_WDA_Screen(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	screen, err := driver.IDriver.(*WDADriver).Screen()
@@ -200,7 +200,7 @@ func Test_remoteWD_Screen(t *testing.T) {
 	t.Log(screen)
 }
 
-func Test_remoteWD_Homescreen(t *testing.T) {
+func TestDriver_WDA_Home(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	err := driver.Home()
@@ -209,7 +209,7 @@ func Test_remoteWD_Homescreen(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_AppLaunchTerminate(t *testing.T) {
+func TestDriver_WDA_AppLaunchTerminate(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	bundleId := "com.apple.Preferences"
@@ -225,7 +225,7 @@ func Test_remoteWD_AppLaunchTerminate(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_Tap(t *testing.T) {
+func TestDriver_WDA_TapXY(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	err := driver.TapXY(0.2, 0.2)
@@ -234,7 +234,7 @@ func Test_remoteWD_Tap(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_DoubleTap(t *testing.T) {
+func TestDriver_WDA_DoubleTapXY(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	err := driver.DoubleTapXY(0.2, 0.2)
@@ -243,7 +243,7 @@ func Test_remoteWD_DoubleTap(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_TouchAndHold(t *testing.T) {
+func TestDriver_WDA_TouchAndHold(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	err := driver.TouchAndHold(0.2, 0.2)
@@ -252,7 +252,7 @@ func Test_remoteWD_TouchAndHold(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_Drag(t *testing.T) {
+func TestDriver_WDA_Drag(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	err := driver.Drag(0.8, 0.5, 0.2, 0.5,
@@ -262,7 +262,7 @@ func Test_remoteWD_Drag(t *testing.T) {
 	}
 }
 
-func Test_Relative_Swipe(t *testing.T) {
+func TestDriver_WDA_Swipe(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	err := driver.Swipe(0.8, 0.5, 0.2, 0.5)
@@ -271,7 +271,7 @@ func Test_Relative_Swipe(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_SendKeys(t *testing.T) {
+func TestDriver_WDA_Input(t *testing.T) {
 	driver := setupWDADriverExt(t)
 	driver.StartCaptureLog("hrp_wda_log")
 	err := driver.Input("test中文", option.WithIdentifier("test"))
@@ -282,7 +282,7 @@ func Test_remoteWD_SendKeys(t *testing.T) {
 	t.Log(result)
 }
 
-func Test_remoteWD_PressButton(t *testing.T) {
+func TestDriver_WDA_PressButton(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	err := driver.IDriver.(*WDADriver).PressButton(types.DeviceButtonVolumeUp)
@@ -301,7 +301,7 @@ func Test_remoteWD_PressButton(t *testing.T) {
 	}
 }
 
-func Test_remoteWD_Screenshot(t *testing.T) {
+func TestDriver_WDA_ScreenShot(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	// without save file
@@ -325,7 +325,7 @@ func Test_remoteWD_Screenshot(t *testing.T) {
 	t.Logf("save screenshot to %s", path)
 }
 
-func Test_remoteWD_Source(t *testing.T) {
+func TestDriver_WDA_Source(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	var source string
@@ -355,7 +355,7 @@ func Test_remoteWD_Source(t *testing.T) {
 	t.Logf("source: %s", source)
 }
 
-func TestGetForegroundApp(t *testing.T) {
+func TestDriver_WDA_GetForegroundApp(t *testing.T) {
 	driver := setupWDADriverExt(t)
 	app, err := driver.ForegroundInfo()
 	if err != nil {
@@ -364,7 +364,7 @@ func TestGetForegroundApp(t *testing.T) {
 	t.Log(app)
 }
 
-func Test_remoteWD_AccessibleSource(t *testing.T) {
+func TestDriver_WDA_AccessibleSource(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	source, err := driver.IDriver.(*WDADriver).AccessibleSource()
@@ -374,7 +374,7 @@ func Test_remoteWD_AccessibleSource(t *testing.T) {
 	fmt.Println(source)
 }
 
-func TestRecord(t *testing.T) {
+func TestDriver_WDA_ScreenRecord(t *testing.T) {
 	driver := setupWDADriverExt(t)
 	path, err := driver.ScreenRecord(5 * time.Second)
 	if err != nil {
@@ -383,7 +383,7 @@ func TestRecord(t *testing.T) {
 	println(path)
 }
 
-func Test_Backspace(t *testing.T) {
+func TestDriver_WDA_Backspace(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
 	err := driver.Backspace(3)

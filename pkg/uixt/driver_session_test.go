@@ -22,13 +22,9 @@ func TestDriverSession(t *testing.T) {
 	t.Log(resp)
 
 	driverRequests := session.History()
-	if !assert.Equal(t, 2, len(driverRequests)) {
-		t.FailNow()
-	}
+	assert.Equal(t, 2, len(driverRequests))
 
 	session.Reset()
 	driverRequests = session.History()
-	if !assert.Equal(t, 0, len(driverRequests)) {
-		t.FailNow()
-	}
+	assert.Equal(t, 0, len(driverRequests))
 }

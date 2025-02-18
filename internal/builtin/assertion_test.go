@@ -57,9 +57,7 @@ func TestEqualLength(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, EqualLength(t, data.raw, data.expected)) {
-			t.Fatal()
-		}
+		assert.True(t, EqualLength(t, data.raw, data.expected))
 	}
 }
 

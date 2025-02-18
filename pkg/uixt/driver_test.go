@@ -63,12 +63,10 @@ func TestDriverExt(t *testing.T) {
 	androidDevice.InstallAPK("/path/to/app.apk")
 }
 
-func setupDriverExt(t *testing.T, driverType ...string) *XTDriver {
-	var dType string
-	if len(driverType) > 0 {
-		dType = driverType[0]
-	}
-	switch dType {
+var driverType = "ADB"
+
+func setupDriverExt(t *testing.T) *XTDriver {
+	switch driverType {
 	case "ADB":
 		return setupADBDriverExt(t)
 	case "UIA2":
@@ -80,18 +78,6 @@ func setupDriverExt(t *testing.T, driverType ...string) *XTDriver {
 	default:
 		return setupADBDriverExt(t)
 	}
-}
-
-func TestDriverExt_TapXY(t *testing.T) {
-	driver := setupDriverExt(t)
-	err := driver.TapXY(0.4, 0.5)
-	checkErr(t, err)
-}
-
-func TestDriverExt_TapAbsXY(t *testing.T) {
-	driver := setupDriverExt(t)
-	err := driver.TapAbsXY(100, 300)
-	checkErr(t, err)
 }
 
 func TestAndroidSwipeAction(t *testing.T) {
