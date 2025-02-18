@@ -1,112 +1,121 @@
 package server
 
 import (
-	"fmt"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
-	"github.com/httprunner/httprunner/v5/code"
-	"github.com/rs/zerolog/log"
+	"github.com/httprunner/httprunner/v5/pkg/uixt"
 )
 
 func foregroundAppHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
+	driver, err := GetDriver(c)
 	if err != nil {
 		return
 	}
+	appInfo, err := driver.ForegroundInfo()
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, appInfo)
+}
 
-	appInfo, err := dExt.ForegroundInfo()
-	if err != nil {
-		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError,
-			HttpResponse{
-				Code:    code.GetErrorCode(err),
-				Message: err.Error(),
-			},
-		)
-		c.Abort()
+func appInfoHandler(c *gin.Context) {
+	var appInfoReq AppInfoRequest
+	if err := c.ShouldBindQuery(&appInfoReq); err != nil {
+		RenderErrorValidateRequest(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: appInfo})
+	device, err := GetDevice(c)
+	if err != nil {
+		return
+	}
+	if androidDevice, ok := device.(*uixt.AndroidDevice); ok {
+		appInfo, err := androidDevice.GetAppInfo(appInfoReq.PackageName)
+		if err != nil {
+			RenderError(c, err)
+			return
+		}
+		RenderSuccess(c, appInfo)
+		return
+	} else if iOSDevice, ok := device.(*uixt.IOSDevice); ok {
+		appInfo, err := iOSDevice.GetAppInfo(appInfoReq.PackageName)
+		if err != nil {
+			RenderError(c, err)
+			return
+		}
+		RenderSuccess(c, appInfo)
+		return
+	}
 }
 
 func clearAppHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
-	if err != nil {
-		return
-	}
-
 	var appClearReq AppClearRequest
 	if err := c.ShouldBindJSON(&appClearReq); err != nil {
-		handlerValidateRequestFailedContext(c, err)
+		RenderErrorValidateRequest(c, err)
 		return
 	}
 
-	err = dExt.AppClear(appClearReq.PackageName)
+	driver, err := GetDriver(c)
 	if err != nil {
-		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to unlick screen", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError,
-			HttpResponse{
-				Code:    code.GetErrorCode(err),
-				Message: err.Error(),
-			},
-		)
-		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
+	err = driver.IDriver.(*uixt.ADBDriver).AppClear(appClearReq.PackageName)
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, true)
 }
 
 func launchAppHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
-	if err != nil {
-		return
-	}
-
 	var appLaunchReq AppLaunchRequest
 	if err := c.ShouldBindJSON(&appLaunchReq); err != nil {
-		handlerValidateRequestFailedContext(c, err)
+		RenderErrorValidateRequest(c, err)
 		return
 	}
-
-	err = dExt.AppLaunch(appLaunchReq.PackageName)
+	driver, err := GetDriver(c)
 	if err != nil {
-		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to launch app %s", c.HandlerName(), appLaunchReq.PackageName))
-		c.JSON(http.StatusInternalServerError,
-			HttpResponse{
-				Code:    code.GetErrorCode(err),
-				Message: err.Error(),
-			},
-		)
-		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
+	err = driver.AppLaunch(appLaunchReq.PackageName)
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, true)
 }
 
 func terminalAppHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
+	var appTerminalReq AppTerminalRequest
+	if err := c.ShouldBindJSON(&appTerminalReq); err != nil {
+		RenderErrorValidateRequest(c, err)
+		return
+	}
+	driver, err := GetDriver(c)
 	if err != nil {
 		return
 	}
-
-	var appTerminalReq AppTerminalRequest
-	if err := c.ShouldBindJSON(&appTerminalReq); err != nil {
-		handlerValidateRequestFailedContext(c, err)
+	_, err = driver.AppTerminate(appTerminalReq.PackageName)
+	if err != nil {
+		RenderError(c, err)
 		return
 	}
+	RenderSuccess(c, true)
+}
 
-	success, err := dExt.AppTerminate(appTerminalReq.PackageName)
-	if !success {
-		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to launch app %s", c.HandlerName(), appTerminalReq.PackageName))
-		c.JSON(http.StatusInternalServerError,
-			HttpResponse{
-				Code:    code.GetErrorCode(err),
-				Message: err.Error(),
-			},
-		)
-		c.Abort()
+func uninstallAppHandler(c *gin.Context) {
+	var appUninstallReq AppUninstallRequest
+	if err := c.ShouldBindJSON(&appUninstallReq); err != nil {
+		RenderErrorValidateRequest(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
+	driver, err := GetDriver(c)
+	if err != nil {
+		return
+	}
+	err = driver.GetDevice().Uninstall(appUninstallReq.PackageName)
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, true)
 }

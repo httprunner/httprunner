@@ -14,99 +14,101 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-var uiClients = make(map[string]*uixt.XTDriver) // UI automation clients for iOS and Android, key is udid/serial
-
-func (r *Router) HandleDeviceContext() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		platform := c.Param("platform")
-		serial := c.Param("serial")
-		if serial == "" {
-			log.Error().Str("platform", platform).Msg(fmt.Sprintf("[%s]: serial is empty", c.HandlerName()))
-			c.JSON(http.StatusBadRequest, HttpResponse{
-				Code:    code.GetErrorCode(code.InvalidParamError),
-				Message: "serial is empty",
-			})
-			c.Abort()
-			return
-		}
-		// get cached driver
-		if driver, ok := uiClients[serial]; ok {
-			c.Set("driver", driver)
-			c.Next()
-			return
-		}
-
-		switch strings.ToLower(platform) {
-		case "android":
-			device, err := uixt.NewAndroidDevice(
-				option.WithSerialNumber(serial))
-			if err != nil {
-				log.Error().Err(err).Str("platform", platform).Str("serial", serial).
-					Msg("device not found")
-				c.JSON(http.StatusBadRequest,
-					HttpResponse{
-						Code:    code.GetErrorCode(err),
-						Message: err.Error(),
-					},
-				)
-				c.Abort()
-				return
-			}
-
-			driver, err := device.NewDriver()
-			if err != nil {
-				log.Error().Err(err).Str("platform", platform).Str("serial", serial).
-					Msg("failed to init driver")
-				c.JSON(http.StatusInternalServerError,
-					HttpResponse{
-						Code:    code.GetErrorCode(err),
-						Message: err.Error(),
-					},
-				)
-				c.Abort()
-				return
-			}
-
-			driverExt := uixt.NewXTDriver(driver,
-				ai.WithCVService(ai.CVServiceTypeVEDEM))
-
-			c.Set("driver", driverExt)
-			// cache driver
-			uiClients[serial] = driverExt
-		default:
-			c.JSON(http.StatusBadRequest, HttpResponse{
-				Code:    code.GetErrorCode(code.InvalidParamError),
-				Message: fmt.Sprintf("unsupported platform %s", platform),
-			})
-			c.Abort()
-			return
-		}
-		c.Next()
-	}
-}
-
-func GetContextDriver(c *gin.Context) (*uixt.XTDriver, error) {
-	driverObj, exists := c.Get("driver")
+func GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error) {
+	deviceObj, exists := c.Get("device")
+	var device uixt.IDevice
+	var driver uixt.IDriver
 	if !exists {
-		handlerInitDeviceDriverFailedContext(c)
-		return nil, fmt.Errorf("driver not found")
+		device, err = GetDevice(c)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		device = deviceObj.(uixt.IDevice)
 	}
-	dExt := driverObj.(*uixt.XTDriver)
-	return dExt, nil
+
+	driver, err = device.NewDriver()
+	if err != nil {
+		RenderErrorInitDriver(c, err)
+		return
+	}
+	c.Set("driver", driver)
+
+	driverExt = uixt.NewXTDriver(driver,
+		ai.WithCVService(ai.CVServiceTypeVEDEM))
+	return driverExt, nil
 }
 
-func handlerInitDeviceDriverFailedContext(c *gin.Context) {
-	log.Error().Msg("init device driver failed")
+func GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
+	platform := c.Param("platform")
+	serial := c.Param("serial")
+	if serial == "" {
+		RenderErrorInitDriver(c, err)
+		return
+	}
+	switch strings.ToLower(platform) {
+	case "android":
+		device, err = uixt.NewAndroidDevice(
+			option.WithSerialNumber(serial))
+		if err != nil {
+			RenderErrorInitDriver(c, err)
+			return
+		}
+		_ = device.Setup()
+	case "ios":
+		device, err = uixt.NewIOSDevice(
+			option.WithUDID(serial),
+			option.WithWDAPort(8700),
+			option.WithWDAMjpegPort(8800),
+			option.WithResetHomeOnStartup(false),
+		)
+		if err != nil {
+			RenderErrorInitDriver(c, err)
+			return
+		}
+	default:
+		err = fmt.Errorf("[%s]: invalid platform", c.HandlerName())
+		return
+	}
+	c.Set("device", device)
+	return device, nil
+}
+
+func RenderSuccess(c *gin.Context, result interface{}) {
+	c.JSON(http.StatusOK, HttpResponse{
+		Code:    code.Success,
+		Message: "success",
+		Result:  result,
+	})
+}
+
+func RenderError(c *gin.Context, err error) {
+	log.Error().Err(err).Msgf("failed to %s", c.HandlerName())
 	c.JSON(http.StatusInternalServerError,
 		HttpResponse{
-			Code:    code.GetErrorCode(code.MobileUIDriverError),
+			Code:    code.GetErrorCode(err),
+			Message: err.Error(),
+		},
+	)
+	c.Abort()
+}
+
+func RenderErrorInitDriver(c *gin.Context, err error) {
+	log.Error().Err(err).Msg("init device driver failed")
+	errCode := code.GetErrorCode(err)
+	if errCode == code.GeneralFail {
+		errCode = code.GetErrorCode(code.MobileUIDriverError)
+	}
+	c.JSON(http.StatusInternalServerError,
+		HttpResponse{
+			Code:    errCode,
 			Message: "init driver failed",
 		},
 	)
 	c.Abort()
 }
 
-func handlerValidateRequestFailedContext(c *gin.Context, err error) {
+func RenderErrorValidateRequest(c *gin.Context, err error) {
 	log.Error().Err(err).Msg("validate request failed")
 	c.JSON(http.StatusBadRequest, HttpResponse{
 		Code:    code.GetErrorCode(code.InvalidParamError),

@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/base64"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,42 +12,28 @@ import (
 )
 
 func screenshotHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
+	driver, err := GetDriver(c)
 	if err != nil {
 		return
 	}
 
-	raw, err := dExt.ScreenShot()
+	raw, err := driver.ScreenShot()
 	if err != nil {
-		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get screenshot", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError,
-			HttpResponse{
-				Code:    code.GetErrorCode(err),
-				Message: err.Error(),
-			},
-		)
-		c.Abort()
+		RenderError(c, err)
 		return
 	}
-
-	c.JSON(http.StatusOK,
-		HttpResponse{
-			Code:    code.Success,
-			Message: "success",
-			Result:  base64.StdEncoding.EncodeToString(raw.Bytes()),
-		},
-	)
+	RenderSuccess(c, base64.StdEncoding.EncodeToString(raw.Bytes()))
 }
 
 func screenResultHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
+	dExt, err := GetDriver(c)
 	if err != nil {
 		return
 	}
 
 	var screenReq ScreenRequest
 	if err := c.ShouldBindJSON(&screenReq); err != nil {
-		handlerValidateRequestFailedContext(c, err)
+		RenderErrorValidateRequest(c, err)
 		return
 	}
 
@@ -69,32 +54,19 @@ func screenResultHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK,
-		HttpResponse{
-			Code:    code.Success,
-			Message: "success",
-			Result:  screenResult,
-		},
-	)
+	RenderSuccess(c, screenResult)
 }
 
 func adbSourceHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
+	dExt, err := GetDriver(c)
 	if err != nil {
 		return
 	}
 
 	source, err := dExt.Source()
 	if err != nil {
-		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to get adb source", c.HandlerName()))
-		c.JSON(http.StatusInternalServerError,
-			HttpResponse{
-				Code:    code.GetErrorCode(err),
-				Message: err.Error(),
-			},
-		)
-		c.Abort()
+		RenderError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Result: source})
+	RenderSuccess(c, source)
 }

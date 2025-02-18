@@ -1,157 +1,98 @@
 package server
 
 import (
-	"fmt"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
-
-	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 func tapHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
+	var tapReq TapRequest
+	if err := c.ShouldBindJSON(&tapReq); err != nil {
+		RenderErrorValidateRequest(c, err)
+		return
+	}
+	driver, err := GetDriver(c)
+	if err != nil {
+		return
+	}
+	if tapReq.Duration > 0 {
+		err = driver.Drag(tapReq.X, tapReq.Y, tapReq.X, tapReq.Y,
+			option.WithDuration(tapReq.Duration),
+			option.WithAbsoluteCoordinate(true))
+	} else {
+		err = driver.TapAbsXY(tapReq.X, tapReq.Y)
+	}
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, true)
+}
+
+func doubleTapHandler(c *gin.Context) {
+	var tapReq TapRequest
+	if err := c.ShouldBindJSON(&tapReq); err != nil {
+		RenderErrorValidateRequest(c, err)
+		return
+	}
+
+	driver, err := GetDriver(c)
 	if err != nil {
 		return
 	}
 
-	var tapReq TapRequest
-	if err := c.ShouldBindJSON(&tapReq); err != nil {
-		handlerValidateRequestFailedContext(c, err)
+	if tapReq.X < 1 && tapReq.Y < 1 {
+		err = driver.DoubleTapXY(tapReq.X, tapReq.Y)
+	} else {
+		err = driver.DoubleTapXY(tapReq.X, tapReq.Y,
+			option.WithAbsoluteCoordinate(true))
+	}
+
+	if err != nil {
+		RenderError(c, err)
 		return
 	}
-
-	var actionOptions []option.ActionOption
-	if tapReq.Options != nil {
-		actionOptions = tapReq.Options.Options()
-	}
-
-	if tapReq.Text != "" {
-		err := dExt.TapByOCR(tapReq.Text, actionOptions...)
-		if err != nil {
-			log.Err(err).Str("text", tapReq.Text).Msg("tap text failed")
-			c.JSON(http.StatusInternalServerError,
-				HttpResponse{
-					Code:    code.GetErrorCode(err),
-					Message: err.Error(),
-				},
-			)
-			c.Abort()
-			return
-		}
-	} else if tapReq.X < 1 && tapReq.Y < 1 {
-		err := dExt.TapXY(tapReq.X, tapReq.Y, actionOptions...)
-		if err != nil {
-			log.Err(err).Float64("x", tapReq.X).Float64("y", tapReq.Y).Msg("tap relative xy failed")
-			c.JSON(http.StatusInternalServerError,
-				HttpResponse{
-					Code:    code.GetErrorCode(err),
-					Message: err.Error(),
-				},
-			)
-			c.Abort()
-			return
-		}
-	} else {
-		err := dExt.TapAbsXY(tapReq.X, tapReq.Y, actionOptions...)
-		if err != nil {
-			log.Err(err).Float64("x", tapReq.X).Float64("y", tapReq.Y).Msg("tap abs xy failed")
-			c.JSON(http.StatusInternalServerError,
-				HttpResponse{
-					Code:    code.GetErrorCode(err),
-					Message: err.Error(),
-				},
-			)
-			c.Abort()
-			return
-		}
-	}
-	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
+	RenderSuccess(c, true)
 }
 
 func dragHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
+	var dragReq DragRequest
+	if err := c.ShouldBindJSON(&dragReq); err != nil {
+		RenderErrorValidateRequest(c, err)
+		return
+	}
+	if dragReq.Duration == 0 {
+		dragReq.Duration = 1
+	}
+	driver, err := GetDriver(c)
 	if err != nil {
 		return
 	}
 
-	var dragReq DragRequest
-	if err := c.ShouldBindJSON(&dragReq); err != nil {
-		handlerValidateRequestFailedContext(c, err)
+	err = driver.Drag(dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY,
+		option.WithDuration(dragReq.Duration), option.WithPressDuration(dragReq.PressDuration),
+		option.WithAbsoluteCoordinate(true))
+	if err != nil {
+		RenderError(c, err)
 		return
 	}
-
-	var actionOptions []option.ActionOption
-	if dragReq.Options != nil {
-		actionOptions = dragReq.Options.Options()
-	}
-
-	if dragReq.FromX < 1 && dragReq.FromY < 1 && dragReq.ToX < 1 && dragReq.ToY < 1 {
-		err := dExt.Swipe(
-			dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY,
-			actionOptions...)
-		if err != nil {
-			log.Err(err).
-				Float64("from_x", dragReq.FromX).Float64("from_y", dragReq.FromY).
-				Float64("to_x", dragReq.ToX).Float64("to_y", dragReq.ToY).
-				Msg("swipe relative failed")
-			c.JSON(http.StatusInternalServerError,
-				HttpResponse{
-					Code:    code.GetErrorCode(err),
-					Message: err.Error(),
-				},
-			)
-			c.Abort()
-			return
-		}
-	} else {
-		err := dExt.Swipe(
-			dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY,
-			actionOptions...)
-		if err != nil {
-			log.Err(err).
-				Float64("from_x", dragReq.FromX).Float64("from_y", dragReq.FromY).
-				Float64("to_x", dragReq.ToX).Float64("to_y", dragReq.ToY).
-				Msg("swipe absolute failed")
-			c.JSON(http.StatusInternalServerError,
-				HttpResponse{
-					Code:    code.GetErrorCode(err),
-					Message: err.Error(),
-				},
-			)
-			c.Abort()
-			return
-		}
-	}
-	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
+	RenderSuccess(c, true)
 }
 
 func inputHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
-	if err != nil {
-		return
-	}
-
 	var inputReq InputRequest
 	if err := c.ShouldBindJSON(&inputReq); err != nil {
-		handlerValidateRequestFailedContext(c, err)
+		RenderErrorValidateRequest(c, err)
 		return
 	}
-
-	err = dExt.Input(inputReq.Text,
-		option.WithFrequency(inputReq.Frequency))
+	driver, err := GetDriver(c)
 	if err != nil {
-		log.Err(err).Msg(fmt.Sprintf("[%s]: failed to input text %s", c.HandlerName(), inputReq.Text))
-		c.JSON(http.StatusInternalServerError,
-			HttpResponse{
-				Code:    code.GetErrorCode(err),
-				Message: err.Error(),
-			},
-		)
-		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
+	err = driver.Input(inputReq.Text, option.WithFrequency(inputReq.Frequency))
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, true)
 }

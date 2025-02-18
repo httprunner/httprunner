@@ -11,14 +11,14 @@ import (
 
 // exec a single uixt action
 func uixtActionHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
+	dExt, err := GetDriver(c)
 	if err != nil {
 		return
 	}
 
 	var req uixt.MobileAction
 	if err := c.ShouldBindJSON(&req); err != nil {
-		handlerValidateRequestFailedContext(c, err)
+		RenderErrorValidateRequest(c, err)
 		return
 	}
 
@@ -34,20 +34,19 @@ func uixtActionHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
-
-	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
+	RenderSuccess(c, true)
 }
 
 // exec multiple uixt actions
 func uixtActionsHandler(c *gin.Context) {
-	dExt, err := GetContextDriver(c)
+	dExt, err := GetDriver(c)
 	if err != nil {
 		return
 	}
 
 	var actions []uixt.MobileAction
 	if err := c.ShouldBindJSON(&actions); err != nil {
-		handlerValidateRequestFailedContext(c, err)
+		RenderErrorValidateRequest(c, err)
 		return
 	}
 
@@ -65,6 +64,5 @@ func uixtActionsHandler(c *gin.Context) {
 			return
 		}
 	}
-
-	c.JSON(http.StatusOK, HttpResponse{Code: 0, Message: "success"})
+	RenderSuccess(c, true)
 }
