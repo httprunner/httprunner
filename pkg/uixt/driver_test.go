@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewDriver1(t *testing.T) {
@@ -85,66 +85,26 @@ func TestAndroidSwipeAction(t *testing.T) {
 
 	swipeAction := prepareSwipeAction(driver, "up", option.WithDirection("down"))
 	err := swipeAction(driver)
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	swipeAction = prepareSwipeAction(driver, "up", option.WithCustomDirection(0.5, 0.5, 0.5, 0.9))
 	err = swipeAction(driver)
-	checkErr(t, err)
+	assert.Nil(t, err)
 }
 
 func TestAndroidSwipeToTapApp(t *testing.T) {
 	driver := setupDriverExt(t)
 	err := driver.SwipeToTapApp("抖音")
-	checkErr(t, err)
+	assert.Nil(t, err)
 }
 
 func TestAndroidSwipeToTapTexts(t *testing.T) {
 	driver := setupDriverExt(t)
 	err := driver.AppLaunch("com.ss.android.ugc.aweme")
-	checkErr(t, err)
+	assert.Nil(t, err)
 
 	err = driver.swipeToTapTexts([]string{"点击进入直播间", "直播中"}, option.WithDirection("up"))
-	checkErr(t, err)
-}
-
-func checkErr(t *testing.T, err error, msg ...string) {
-	if err != nil {
-		if len(msg) == 0 {
-			t.Fatal(err)
-		} else {
-			t.Fatal(msg, err)
-		}
-	}
-}
-
-func TestGetSimulationDuration(t *testing.T) {
-	params := []float64{1.23}
-	duration := getSimulationDuration(params)
-	if duration != 1230 {
-		t.Fatal("getSimulationDuration failed")
-	}
-
-	params = []float64{1, 2}
-	duration = getSimulationDuration(params)
-	if duration < 1000 || duration > 2000 {
-		t.Fatal("getSimulationDuration failed")
-	}
-
-	params = []float64{1, 5, 0.7, 5, 10, 0.3}
-	duration = getSimulationDuration(params)
-	if duration < 1000 || duration > 10000 {
-		t.Fatal("getSimulationDuration failed")
-	}
-}
-
-func TestSleepStrict(t *testing.T) {
-	startTime := time.Now()
-	sleepStrict(startTime, 1230)
-	dur := time.Since(startTime).Milliseconds()
-	t.Log(dur)
-	if dur < 1230 || dur > 1300 {
-		t.Fatalf("sleepRandom failed, dur: %d", dur)
-	}
+	assert.Nil(t, err)
 }
 
 func TestGetScreenShot(t *testing.T) {

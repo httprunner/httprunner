@@ -552,36 +552,3 @@ func (l *AdbLogcat) CatchLogcat(filter string) (err error) {
 
 	return
 }
-
-type ExportPoint struct {
-	Start     int         `json:"start" yaml:"start"`
-	End       int         `json:"end" yaml:"end"`
-	From      interface{} `json:"from" yaml:"from"`
-	To        interface{} `json:"to" yaml:"to"`
-	Operation string      `json:"operation" yaml:"operation"`
-	Ext       string      `json:"ext" yaml:"ext"`
-	RunTime   int         `json:"run_time,omitempty" yaml:"run_time,omitempty"`
-}
-
-func ConvertPoints(lines []string) (eps []ExportPoint) {
-	log.Info().Msg("ConvertPoints")
-	log.Info().Msg(strings.Join(lines, "\n"))
-	for _, line := range lines {
-		if strings.Contains(line, "ext") {
-			idx := strings.Index(line, "{")
-			if idx == -1 {
-				continue
-			}
-			line = line[idx:]
-			p := ExportPoint{}
-			err := json.Unmarshal([]byte(line), &p)
-			if err != nil {
-				log.Error().Msg("failed to parse point data")
-				continue
-			}
-			log.Info().Msg(line)
-			eps = append(eps, p)
-		}
-	}
-	return
-}

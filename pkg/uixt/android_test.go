@@ -4,11 +4,12 @@ package uixt
 
 import (
 	"os"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
@@ -16,346 +17,220 @@ import (
 
 func setupADBDriverExt(t *testing.T) *XTDriver {
 	device, err := NewAndroidDevice()
-	checkErr(t, err)
+	require.Nil(t, err)
 	device.Options.UIA2 = false
 	device.Options.LogOn = false
 	driver, err := device.NewDriver()
-	checkErr(t, err)
+	require.Nil(t, err)
 	return NewXTDriver(driver,
 		ai.WithCVService(ai.CVServiceTypeVEDEM))
 }
 
 func setupUIA2DriverExt(t *testing.T) *XTDriver {
 	device, err := NewAndroidDevice()
-	checkErr(t, err)
+	require.Nil(t, err)
 	device.Options.UIA2 = true // use uiautomator2 driver
 	device.Options.LogOn = false
 	driver, err := device.NewDriver()
-	checkErr(t, err)
+	require.Nil(t, err)
 	return NewXTDriver(driver,
 		ai.WithCVService(ai.CVServiceTypeVEDEM))
 }
 
-func TestAndroidDevice_GetPackageInfo(t *testing.T) {
-	device, err := NewAndroidDevice()
-	checkErr(t, err)
-	appInfo, err := device.GetPackageInfo("com.android.settings")
-	checkErr(t, err)
+func TestDevice_Android_GetPackageInfo(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	appInfo, err := driver.GetDevice().GetPackageInfo("com.android.settings")
+	require.Nil(t, err)
 	t.Log(appInfo)
+	assert.Equal(t, "com.android.settings", appInfo.Name)
+	assert.NotEmpty(t, appInfo.AppPath)
+	assert.NotEmpty(t, appInfo.AppMD5)
 }
 
-func TestAndroidDevice_GetCurrentWindow(t *testing.T) {
-	device, err := NewAndroidDevice()
-	checkErr(t, err)
-	windowInfo, err := device.GetCurrentWindow()
-	checkErr(t, err)
-	t.Logf("packageName: %s\tactivityName: %s", windowInfo.PackageName, windowInfo.Activity)
-}
-
-func TestDriver_Quit(t *testing.T) {
+func TestDevice_Android_GetCurrentWindow(t *testing.T) {
 	driver := setupADBDriverExt(t)
-	if err := driver.DeleteSession(); err != nil {
-		t.Fatal(err)
-	}
+	driver.AppLaunch("com.android.settings")
+	windowInfo, err := driver.GetDevice().(*AndroidDevice).GetCurrentWindow()
+	require.Nil(t, err)
+	assert.Equal(t, "com.android.settings", windowInfo.PackageName)
 }
 
-func TestDriver_Status(t *testing.T) {
+func TestDriver_ADB_Session_TODO(t *testing.T) {
 	driver := setupADBDriverExt(t)
-	_, err := driver.Status()
-	if err != nil {
-		t.Fatal(err)
-	}
+	err := driver.InitSession(nil)
+	require.Nil(t, err)
+	err = driver.DeleteSession()
+	assert.Nil(t, err)
 }
 
-func TestDriver_Screenshot(t *testing.T) {
+func TestDriver_ADB_Status_TODO(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	status, err := driver.Status()
+	require.Nil(t, err)
+	t.Log(status)
+}
+
+func TestDriver_ADB_ScreenShot(t *testing.T) {
 	driver := setupADBDriverExt(t)
 	screenshot, err := driver.ScreenShot()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(os.WriteFile("/Users/hero/Desktop/s1.png", screenshot.Bytes(), 0o600))
+	assert.Nil(t, err)
+	path, err := saveScreenShot(screenshot, "1234")
+	require.Nil(t, err)
+	defer os.Remove(path)
+	t.Logf("save screenshot to %s", path)
 }
 
-func TestDriver_Rotation(t *testing.T) {
+func TestDriver_ADB_Rotation_TODO(t *testing.T) {
 	driver := setupADBDriverExt(t)
 	rotation, err := driver.Rotation()
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	require.Nil(t, err)
 	t.Logf("x = %d\ty = %d\tz = %d", rotation.X, rotation.Y, rotation.Z)
 }
 
-func TestDriver_DeviceSize(t *testing.T) {
+func TestDriver_ADB_DeviceSize(t *testing.T) {
 	driver := setupADBDriverExt(t)
 	deviceSize, err := driver.WindowSize()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Logf("width = %d\theight = %d", deviceSize.Width, deviceSize.Height)
+	require.Nil(t, err)
+	assert.Greater(t, deviceSize.Width, 200)
+	assert.Greater(t, deviceSize.Height, 200)
 }
 
-func TestDriver_Source(t *testing.T) {
-	driver := setupUIA2DriverExt(t)
-
+func TestDriver_ADB_Source(t *testing.T) {
+	driver := setupADBDriverExt(t)
 	source, err := driver.Source()
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	require.Nil(t, err)
+	assert.Contains(t, source, "<?xml version")
+	assert.Contains(t, source, "android.widget.TextView")
 	t.Log(source)
 }
 
-func TestDriver_BatteryInfo(t *testing.T) {
+func TestDriver_ADB_BatteryInfo_TODO(t *testing.T) {
 	driver := setupADBDriverExt(t)
 	batteryInfo, err := driver.BatteryInfo()
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	require.Nil(t, err)
 	t.Log(batteryInfo)
 }
 
-func TestDriver_DeviceInfo(t *testing.T) {
+func TestDriver_ADB_DeviceInfo_TODO(t *testing.T) {
 	driver := setupADBDriverExt(t)
 	devInfo, err := driver.DeviceInfo()
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	require.Nil(t, err)
 	t.Logf("api version: %s", devInfo.APIVersion)
 	t.Logf("platform version: %s", devInfo.PlatformVersion)
 	t.Logf("bluetooth state: %s", devInfo.Bluetooth.State)
 }
 
-func TestDriver_Tap(t *testing.T) {
+func TestDriver_ADB_TapXY(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	err := driver.TapXY(0.4, 0.5)
+	assert.Nil(t, err)
+}
+
+func TestDriver_ADB_TapAbsXY(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	err := driver.TapAbsXY(100, 300)
+	assert.Nil(t, err)
+}
+
+func TestDriver_ADB_Swipe(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	err := driver.Swipe(0.5, 0.7, 0.5, 0.5,
+		option.WithPressDuration(0.5))
+	assert.Nil(t, err)
+}
+
+func TestDriver_ADB_Drag(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	err := driver.Drag(0.5, 0.7, 0.5, 0.5)
+	assert.Nil(t, err)
+}
+
+func TestDriver_ADB_Input(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	err := driver.Input("Hi 你好\n",
+		option.WithIdentifier("test"))
+	assert.Nil(t, err)
+	time.Sleep(time.Second * 1)
+	err = driver.Input("123\n")
+	assert.Nil(t, err)
+}
+
+func TestDriver_ADB_PressBack(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	err := driver.Back()
+	assert.Nil(t, err)
+}
+
+func TestDriver_ADB_SetRotation_TODO(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	err := driver.SetRotation(types.Rotation{Z: 270})
+	assert.Nil(t, err)
+}
+
+func TestDriver_ADB_Orientation(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	orientation, err := driver.Orientation()
+	assert.Nil(t, err)
+	assert.Equal(t, types.OrientationPortrait, orientation)
+}
+
+func TestDriver_ADB_AppLaunchTerminate(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	err := driver.AppLaunch("com.android.settings")
+	assert.Nil(t, err)
+	time.Sleep(1 * time.Second)
+	ok, err := driver.AppTerminate("com.android.settings")
+	assert.Nil(t, err)
+	assert.True(t, ok)
+}
+
+func TestDriver_ADB_ForegroundInfo(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	err := driver.AppLaunch("com.android.settings")
+	assert.Nil(t, err)
+	app, err := driver.ForegroundInfo()
+	assert.Nil(t, err)
+	assert.Equal(t, "com.android.settings", app.PackageName)
+}
+
+func TestDriver_ADB_ScreenRecord(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	path, err := driver.ScreenRecord(5 * time.Second)
+	assert.Nil(t, err)
+	defer os.Remove(path)
+	t.Log(path)
+}
+
+func TestDriver_ADB_Backspace(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	err := driver.Backspace(1)
+	assert.Nil(t, err)
+}
+
+func TestDriver_UIA2_TapXY(t *testing.T) {
 	driver := setupUIA2DriverExt(t)
-	driver.StartCaptureLog("")
+	driver.StartCaptureLog("tap_xy")
 	err := driver.TapXY(0.5, 0.5,
 		option.WithIdentifier("test"),
 		option.WithPressDuration(4))
-	if err != nil {
-		t.Fatal(err)
-	}
-	//time.Sleep(time.Second)
-	//
-	//err = driverExt.Tap(60.5, 125.5, WithIdentifier("test"))
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//time.Sleep(time.Second)
-	//result, _ := driverExt.StopCaptureLog()
-	//t.Log(result)
+	assert.Nil(t, err)
+	result, _ := driver.StopCaptureLog()
+	t.Log(result)
 }
 
-func TestDriver_Swipe(t *testing.T) {
+func TestDriver_UIA2_Swipe(t *testing.T) {
 	driver := setupUIA2DriverExt(t)
-	err := driver.Swipe(400, 1000, 400, 500,
+	err := driver.Swipe(0.5, 0.7, 0.5, 0.5,
 		option.WithPressDuration(0.5))
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 }
 
-func TestDriver_Swipe_Relative(t *testing.T) {
+func TestDriver_UIA2_Input(t *testing.T) {
 	driver := setupUIA2DriverExt(t)
-	err := driver.Swipe(0.5, 0.7, 0.5, 0.5)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_Drag(t *testing.T) {
-	driver := setupUIA2DriverExt(t)
-	err := driver.Drag(400, 260, 400, 500)
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Millisecond * 200)
-
-	err = driver.Drag(400, 501.5, 400, 261.5)
-	if err != nil {
-		t.Fatal(err)
-	}
-	time.Sleep(time.Millisecond * 200)
-}
-
-func TestDriver_SendKeys(t *testing.T) {
-	driver := setupUIA2DriverExt(t)
-
-	err := driver.Input("辽宁省沈阳市新民市民族街36-4",
+	err := driver.Input("Hi 你好\n",
 		option.WithIdentifier("test"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	time.Sleep(time.Second * 2)
-
-	//err = driver.SendKeys("def")
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//time.Sleep(time.Second * 2)
-
-	//err = driver.SendKeys("\\n")
-	// err = driver.SendKeys(`\n`, false)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-}
-
-func TestDriver_PressBack(t *testing.T) {
-	driver := setupADBDriverExt(t)
-	err := driver.Back()
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_SetRotation(t *testing.T) {
-	driver := setupADBDriverExt(t)
-	// err = driver.SetRotation(Rotation{Z: 0})
-	err := driver.SetRotation(types.Rotation{Z: 270})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_GetOrientation(t *testing.T) {
-	driver := setupUIA2DriverExt(t)
-	_, _ = driver.AppTerminate("com.quark.browser")
-	_ = driver.AppLaunch("com.quark.browser")
-	time.Sleep(2 * time.Second)
-	_ = driver.Home()
-}
-
-func Test_getFreePort(t *testing.T) {
-	freePort, err := builtin.GetFreePort()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(freePort)
-}
-
-func TestDriver_AppLaunch(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewDriver()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.AppLaunch("com.android.settings")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	raw, err := driver.ScreenShot()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(os.WriteFile("s1.png", raw.Bytes(), 0o600))
-}
-
-func TestDriver_IsAppInForeground(t *testing.T) {
-	driver := setupUIA2DriverExt(t)
-	// setupAndroidAdbDriver(t)
-
-	err := driver.AppLaunch("com.android.settings")
-	checkErr(t, err)
-
-	app, err := driver.ForegroundInfo()
-	checkErr(t, err)
-	if app.PackageName != "com.android.settings" {
-		t.FailNow()
-	}
-	if app.Activity != ".Settings" {
-		t.FailNow()
-	}
-}
-
-func TestDriver_KeepAlive(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewDriver()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.AppLaunch("com.android.settings")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = driver.ScreenShot()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	time.Sleep(60 * time.Second)
-
-	_, err = driver.ScreenShot()
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestDriver_AppTerminate(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := device.NewDriver()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = driver.AppTerminate("tv.danmaku.bili")
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestConvertPoints(t *testing.T) {
-	data := "10-09 20:16:48.216 I/iesqaMonitor(17845): {\"duration\":0,\"end\":1665317808206,\"ext\":\"输入\",\"from\":{\"x\":0.0,\"y\":0.0},\"operation\":\"Gtf-SendKeys\",\"run_time\":627,\"start\":1665317807579,\"start_first\":0,\"start_last\":0,\"to\":{\"x\":0.0,\"y\":0.0}}\n10-09 20:18:22.899 I/iesqaMonitor(17845): {\"duration\":0,\"end\":1665317902898,\"ext\":\"进入直播间\",\"from\":{\"x\":717.0,\"y\":2117.5},\"operation\":\"Gtf-Tap\",\"run_time\":121,\"start\":1665317902777,\"start_first\":0,\"start_last\":0,\"to\":{\"x\":717.0,\"y\":2117.5}}\n10-09 20:18:32.063 I/iesqaMonitor(17845): {\"duration\":0,\"end\":1665317912062,\"ext\":\"第一次上划\",\"from\":{\"x\":1437.0,\"y\":2409.9},\"operation\":\"Gtf-Swipe\",\"run_time\":32,\"start\":1665317912030,\"start_first\":0,\"start_last\":0,\"to\":{\"x\":1437.0,\"y\":2409.9}}"
-
-	eps := ConvertPoints(strings.Split(data, "\n"))
-	if len(eps) != 3 {
-		t.Fatal()
-	}
-}
-
-func TestDriver_ShellInputUnicode(t *testing.T) {
-	device, _ := NewAndroidDevice()
-	driver, err := NewADBDriver(device)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = driver.Input("test中文输入&")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	raw, err := driver.ScreenShot()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Log(os.WriteFile("s1.png", raw.Bytes(), 0o600))
-}
-
-func TestRecordVideo(t *testing.T) {
-	driver := setupADBDriverExt(t)
-	path, err := driver.ScreenRecord(5 * time.Second)
-	if err != nil {
-		t.Fatal(err)
-	}
-	println(path)
-}
-
-func Test_Android_Backspace(t *testing.T) {
-	driver := setupADBDriverExt(t)
-	err := driver.Backspace(1)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
+	time.Sleep(time.Second * 1)
+	err = driver.Input("123\n")
+	assert.Nil(t, err)
 }

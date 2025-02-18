@@ -10,15 +10,11 @@ func TestDriverSession(t *testing.T) {
 	session := NewDriverSession()
 	session.SetBaseURL("https://postman-echo.com")
 	resp, err := session.GET("/get")
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 	t.Log(resp)
 
 	resp, err = session.GET("/get?a=1&b=2")
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 	t.Log(resp)
 
 	driverRequests := session.History()

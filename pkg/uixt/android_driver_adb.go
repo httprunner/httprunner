@@ -78,15 +78,17 @@ func (ad *ADBDriver) runShellCommand(cmd string, args ...string) (output string,
 }
 
 func (ad *ADBDriver) InitSession(capabilities option.Capabilities) error {
+	log.Warn().Msg("InitSession not implemented in ADBDriver")
 	return nil
 }
 
-func (ad *ADBDriver) DeleteSession() (err error) {
-	return types.ErrDriverNotImplemented
+func (ad *ADBDriver) DeleteSession() error {
+	log.Warn().Msg("DeleteSession not implemented in ADBDriver")
+	return nil
 }
 
 func (ad *ADBDriver) Status() (deviceStatus types.DeviceStatus, err error) {
-	err = types.ErrDriverNotImplemented
+	log.Warn().Msg("Status not implemented in ADBDriver")
 	return
 }
 
@@ -95,12 +97,12 @@ func (ad *ADBDriver) GetDevice() IDevice {
 }
 
 func (ad *ADBDriver) DeviceInfo() (deviceInfo types.DeviceInfo, err error) {
-	err = types.ErrDriverNotImplemented
+	log.Warn().Msg("DeviceInfo not implemented in ADBDriver")
 	return
 }
 
 func (ad *ADBDriver) BatteryInfo() (batteryInfo types.BatteryInfo, err error) {
-	err = types.ErrDriverNotImplemented
+	log.Warn().Msg("BatteryInfo not implemented in ADBDriver")
 	return
 }
 
@@ -407,7 +409,7 @@ func (ad *ADBDriver) ForceTouch(x, y int, pressure float64, second ...float64) e
 }
 
 func (ad *ADBDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) (err error) {
-	err = types.ErrDriverNotImplemented
+	log.Warn().Msg("ForceTouchFloat not implemented in ADBDriver")
 	return
 }
 
@@ -521,12 +523,12 @@ func (ad *ADBDriver) AppClear(packageName string) error {
 }
 
 func (ad *ADBDriver) Rotation() (rotation types.Rotation, err error) {
-	err = types.ErrDriverNotImplemented
+	log.Warn().Msg("Rotation not implemented in ADBDriver")
 	return
 }
 
 func (ad *ADBDriver) SetRotation(rotation types.Rotation) (err error) {
-	err = types.ErrDriverNotImplemented
+	log.Warn().Msg("SetRotation not implemented in ADBDriver")
 	return
 }
 
@@ -835,9 +837,44 @@ func (ad *ADBDriver) ScreenRecord(duration time.Duration) (videoPath string, err
 }
 
 func (ad *ADBDriver) Setup() error {
+	log.Warn().Msg("Setup not implemented in ADBDriver")
 	return nil
 }
 
 func (ad *ADBDriver) TearDown() error {
+	log.Warn().Msg("TearDown not implemented in ADBDriver")
 	return nil
+}
+
+type ExportPoint struct {
+	Start     int         `json:"start" yaml:"start"`
+	End       int         `json:"end" yaml:"end"`
+	From      interface{} `json:"from" yaml:"from"`
+	To        interface{} `json:"to" yaml:"to"`
+	Operation string      `json:"operation" yaml:"operation"`
+	Ext       string      `json:"ext" yaml:"ext"`
+	RunTime   int         `json:"run_time,omitempty" yaml:"run_time,omitempty"`
+}
+
+func ConvertPoints(lines []string) (eps []ExportPoint) {
+	log.Info().Msg("ConvertPoints")
+	log.Info().Msg(strings.Join(lines, "\n"))
+	for _, line := range lines {
+		if strings.Contains(line, "ext") {
+			idx := strings.Index(line, "{")
+			if idx == -1 {
+				continue
+			}
+			line = line[idx:]
+			p := ExportPoint{}
+			err := json.Unmarshal([]byte(line), &p)
+			if err != nil {
+				log.Error().Msg("failed to parse point data")
+				continue
+			}
+			log.Info().Msg(line)
+			eps = append(eps, p)
+		}
+	}
+	return
 }

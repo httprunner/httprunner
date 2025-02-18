@@ -7,14 +7,15 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetImageFromBuffer(t *testing.T) {
 	imagePath := "/Users/debugtalk/Downloads/s1.png"
 	file, err := os.ReadFile(imagePath)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.Nil(t, err)
 	buf := new(bytes.Buffer)
 	buf.Read(file)
 
@@ -22,9 +23,7 @@ func TestGetImageFromBuffer(t *testing.T) {
 		WithCVService(CVServiceTypeVEDEM),
 	)
 	cvResult, err := service.ReadFromBuffer(buf)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 	fmt.Println(fmt.Sprintf("cvResult: %v", cvResult))
 }
 
@@ -34,8 +33,6 @@ func TestGetImageFromPath(t *testing.T) {
 		WithCVService(CVServiceTypeVEDEM),
 	)
 	cvResult, err := service.ReadFromPath(imagePath)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 	fmt.Println(fmt.Sprintf("cvResult: %v", cvResult))
 }
