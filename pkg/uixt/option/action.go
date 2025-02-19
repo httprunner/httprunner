@@ -131,7 +131,17 @@ func (o *ActionOptions) GetScreenOptions() []ActionOption {
 	return o.ScreenOptions.Options()
 }
 
-func (o *ActionOptions) GetRandomOffset() float64 {
+func (o *ActionOptions) ApplyOffset(absX, absY float64) (float64, float64) {
+	if len(o.Offset) == 2 {
+		absX += float64(o.Offset[0])
+		absY += float64(o.Offset[1])
+	}
+	absX += o.GenerateRandomOffset()
+	absY += o.GenerateRandomOffset()
+	return absX, absY
+}
+
+func (o *ActionOptions) GenerateRandomOffset() float64 {
 	if len(o.OffsetRandomRange) != 2 {
 		// invalid offset random range, should be [min, max]
 		return 0

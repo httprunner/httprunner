@@ -44,6 +44,9 @@ func NewStubIOSDriver(dev *uixt.IOSDevice) (*StubIOSDriver, error) {
 		return nil, err
 	}
 
+	// register driver session reset handler
+	driver.Session.RegisterResetHandler(driver.Setup)
+
 	return driver, nil
 }
 
@@ -114,13 +117,11 @@ func (s *StubIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 
 func (s *StubIOSDriver) OpenUrl(urlStr string, opts ...option.ActionOption) (err error) {
 	targetUrl := fmt.Sprintf("/openURL?url=%s", url.QueryEscape(urlStr))
-	fmt.Sprintln(targetUrl)
-	resp, err := s.Session.GET(targetUrl)
+	_, err = s.Session.GET(targetUrl)
 	if err != nil {
 		log.Error().Err(err).Msg("get source err")
 		return nil
 	}
-	fmt.Sprintln(resp)
 	return nil
 }
 

@@ -86,10 +86,6 @@ func NewIOSDeviceOptions(opts ...IOSDeviceOption) *IOSDeviceOptions {
 		config.DismissAlertButtonSelector = dismissAlertButtonSelector
 	}
 
-	// switch to iOS springboard before init WDA session
-	// avoid getting stuck when some super app is active such as douyin or wexin
-	config.ResetHomeOnStartup = true
-
 	return config
 }
 

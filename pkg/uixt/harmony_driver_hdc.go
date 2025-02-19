@@ -151,6 +151,7 @@ func (hd *HDCDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 
 func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
+	x, y = actionOptions.ApplyOffset(x, y)
 
 	if actionOptions.Identifier != "" {
 		startTime := int(time.Now().UnixMilli())
