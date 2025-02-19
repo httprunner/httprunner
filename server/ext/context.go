@@ -13,6 +13,7 @@ import (
 
 func (p RouterBaseMethodExt) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver, err error) {
 	platform := c.Param("platform")
+	serial := c.Param("serial")
 	deviceObj, exists := c.Get("device")
 	var device uixt.IDevice
 	var driver uixt.IDriver
@@ -29,6 +30,8 @@ func (p RouterBaseMethodExt) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver
 		driver, err = driver_ext.NewStubAndroidDriver(device.(*uixt.AndroidDevice))
 	case "ios":
 		driver, err = driver_ext.NewStubIOSDriver(device.(*uixt.IOSDevice))
+	case "browser":
+		driver, err = driver_ext.NewStubBrowserDriver(serial)
 	}
 	if err != nil {
 		server.RenderErrorInitDriver(c, err)
