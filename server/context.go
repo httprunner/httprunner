@@ -66,6 +66,12 @@ func GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
 			RenderErrorInitDriver(c, err)
 			return
 		}
+	case "browser":
+		device, err = uixt.NewBrowserDevice(uixt.WithBrowserId(serial))
+		if err != nil {
+			RenderErrorInitDriver(c, err)
+			return
+		}
 	default:
 		err = fmt.Errorf("[%s]: invalid platform", c.HandlerName())
 		return

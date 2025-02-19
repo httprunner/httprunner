@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -22,6 +23,69 @@ func tapHandler(c *gin.Context) {
 	} else {
 		err = driver.TapAbsXY(tapReq.X, tapReq.Y)
 	}
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, true)
+}
+
+func uploadHandler(c *gin.Context) {
+	var uploadRequest uploadRequest
+	if err := c.ShouldBindJSON(&uploadRequest); err != nil {
+		RenderErrorValidateRequest(c, err)
+		return
+	}
+
+	driver, err := GetDriver(c)
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	err = driver.IDriver.(*uixt.BrowserWebDriver).UploadFile(uploadRequest.X, uploadRequest.Y, uploadRequest.FileUrl, uploadRequest.FileFormat)
+	if err != nil {
+		c.Abort()
+		return
+	}
+	RenderSuccess(c, true)
+}
+func hoverHandler(c *gin.Context) {
+	var hoverReq HoverRequest
+	if err := c.ShouldBindJSON(&hoverReq); err != nil {
+		RenderErrorValidateRequest(c, err)
+		return
+	}
+
+	driver, err := GetDriver(c)
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+
+	err = driver.IDriver.(*uixt.BrowserWebDriver).Hover(hoverReq.X, hoverReq.Y)
+
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, true)
+}
+
+func scrollHandler(c *gin.Context) {
+	var scrollReq ScrollRequest
+	if err := c.ShouldBindJSON(&scrollReq); err != nil {
+		RenderErrorValidateRequest(c, err)
+		return
+	}
+
+	driver, err := GetDriver(c)
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+
+	err = driver.IDriver.(*uixt.BrowserWebDriver).Scroll(scrollReq.Delta)
+
 	if err != nil {
 		RenderError(c, err)
 		return

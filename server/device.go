@@ -88,6 +88,36 @@ func listDeviceHandler(c *gin.Context) {
 	RenderSuccess(c, deviceList)
 }
 
+func createBrowserHandler(c *gin.Context) {
+	var createBrowserReq CreateBrowserRequest
+	if err := c.ShouldBindJSON(&createBrowserReq); err != nil {
+		RenderErrorValidateRequest(c, err)
+		return
+	}
+
+	browserInfo, err := uixt.CreateBrowser(createBrowserReq.Timeout)
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, browserInfo)
+	return
+}
+
+func deleteBrowserHandler(c *gin.Context) {
+	driver, err := GetDriver(c)
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	err = driver.DeleteSession()
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, true)
+}
+
 func pushImageHandler(c *gin.Context) {
 	var pushMediaReq PushMediaRequest
 	if err := c.ShouldBindJSON(&pushMediaReq); err != nil {
