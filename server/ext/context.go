@@ -11,7 +11,7 @@ import (
 	"github.com/httprunner/httprunner/v5/server"
 )
 
-func (r *RouterExt) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver, err error) {
+func (p RouterBaseMethodExt) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver, err error) {
 	platform := c.Param("platform")
 	deviceObj, exists := c.Get("device")
 	var device uixt.IDevice

@@ -167,6 +167,28 @@ func (dev *IOSDevice) Setup() error {
 		}
 	}
 
+	if version.GreaterThan(semver.MustParse("17.4.0")) {
+		info, err := tunnel.TunnelInfoForDevice(dev.DeviceEntry.Properties.SerialNumber, ios.HttpApiHost(), ios.HttpApiPort())
+		if err != nil {
+			return err
+		}
+		dev.DeviceEntry.UserspaceTUNPort = info.UserspaceTUNPort
+		dev.DeviceEntry.UserspaceTUN = info.UserspaceTUN
+		rsdService, err := ios.NewWithAddrPortDevice(info.Address, info.RsdPort, dev.DeviceEntry)
+		defer rsdService.Close()
+		rsdProvider, err := rsdService.Handshake()
+		if err != nil {
+			return err
+		}
+		device, err := ios.GetDeviceWithAddress(dev.DeviceEntry.Properties.SerialNumber, info.Address, rsdProvider)
+		if err != nil {
+			return err
+		}
+		device.UserspaceTUN = dev.DeviceEntry.UserspaceTUN
+		device.UserspaceTUNPort = dev.DeviceEntry.UserspaceTUNPort
+		dev.DeviceEntry = device
+	}
+
 	return nil
 }
 

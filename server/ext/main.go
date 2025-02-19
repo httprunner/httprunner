@@ -1,6 +1,7 @@
 package server_ext
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/httprunner/httprunner/v5/server"
 )
 
@@ -8,15 +9,22 @@ type RouterExt struct {
 	*server.Router
 }
 
+type RouterBaseMethodExt struct {
+	server.RouterBaseMethod
+}
+
 func NewExtRouter() *RouterExt {
 	router := &RouterExt{
-		Router: server.NewRouter(),
+		Router: &server.Router{
+			Engine:            gin.Default(),
+			IRouterBaseMethod: &RouterBaseMethodExt{},
+		},
 	}
-	router.Setup()
+	router.Init()
 	return router
 }
 
-func (r *RouterExt) Setup() {
+func (r *RouterExt) Init() {
 	r.Router.Init()
 	apiV1PlatformSerial := r.Group("/api/v1").Group("/:platform").Group("/:serial")
 

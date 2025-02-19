@@ -11,21 +11,27 @@ import (
 )
 
 func NewRouter() *Router {
-	router := &Router{}
+	router := &Router{
+		Engine:            gin.Default(),
+		IRouterBaseMethod: &RouterBaseMethod{},
+	}
 	router.Init()
 	return router
 }
 
 type Router struct {
 	*gin.Engine
+	IRouterBaseMethod
 }
 
-type IRouter interface {
+type RouterBaseMethod struct {
+}
+
+type IRouterBaseMethod interface {
 	GetDriver(c *gin.Context) (driver uixt.IXTDriver, err error)
 }
 
 func (r *Router) Init() {
-	r.Engine = gin.Default()
 	r.Engine.Use(teardown())
 	r.Engine.GET("/ping", r.pingHandler)
 	r.Engine.GET("/", r.pingHandler)
