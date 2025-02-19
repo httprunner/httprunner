@@ -41,6 +41,8 @@ func TestDriver_WDA_LazySetup(t *testing.T) {
 	require.Nil(t, err)
 	driver, err := NewWDADriver(device)
 	require.Nil(t, err)
+	err = driver.TapAbsXY(100, 200)
+	assert.Nil(t, err)
 	err = driver.PressButton(types.DeviceButtonHome)
 	assert.Nil(t, err)
 	err = driver.TapXY(0.5, 0.5)
