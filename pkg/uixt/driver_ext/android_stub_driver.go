@@ -55,10 +55,6 @@ func (sad *StubAndroidDriver) Setup() error {
 			fmt.Sprintf("forward port %d->%s failed: %v",
 				socketLocalPort, StubSocketName, err))
 	}
-	err = sad.Session.SetupPortForward(socketLocalPort)
-	if err != nil {
-		return err
-	}
 
 	douyinLocalPort, err := sad.Device.Forward(AndroidDouyinPort)
 	if err != nil {

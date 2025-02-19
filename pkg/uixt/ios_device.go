@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -324,6 +325,22 @@ func (dev *IOSDevice) ListApps(appType ApplicationType) (apps []installationprox
 		return nil, err
 	}
 	return apps, nil
+}
+
+func (dev *IOSDevice) ScreenShot() (*bytes.Buffer, error) {
+	screenshotService, err := instruments.NewScreenshotService(dev.DeviceEntry)
+	if err != nil {
+		log.Error().Err(err).Msg("Starting screenshot service failed")
+		return nil, err
+	}
+	defer screenshotService.Close()
+
+	imageBytes, err := screenshotService.TakeScreenshot()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to task screenshot")
+		return nil, err
+	}
+	return bytes.NewBuffer(imageBytes), nil
 }
 
 func (dev *IOSDevice) GetAppInfo(packageName string) (appInfo installationproxy.AppInfo, err error) {
