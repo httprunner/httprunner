@@ -9,7 +9,7 @@ type AppInstallRequest struct {
 
 type LoginRequest struct {
 	PackageName string `json:"packageName"`
-	PhoneNumber string `json:"phoneNumber" binding:"required"`
+	PhoneNumber string `json:"phoneNumber"`
 	Captcha     string `json:"captcha" binding:"required_without=Password"`
 	Password    string `json:"password" binding:"required_without=Captcha"`
 }

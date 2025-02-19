@@ -37,6 +37,7 @@ func (r *Router) Init() {
 	r.Engine.GET("/", r.pingHandler)
 	r.Engine.POST("/", r.pingHandler)
 	r.Engine.GET("/api/v1/devices", r.listDeviceHandler)
+	r.Engine.POST("/api/v1/browser/create_browser", createBrowserHandler)
 
 	apiV1PlatformSerial := r.Group("/api/v1").Group("/:platform").Group("/:serial")
 
@@ -46,6 +47,9 @@ func (r *Router) Init() {
 	apiV1PlatformSerial.POST("/ui/drag", r.dragHandler)
 	apiV1PlatformSerial.POST("/ui/input", r.inputHandler)
 	apiV1PlatformSerial.POST("/ui/home", r.homeHandler)
+	apiV1PlatformSerial.POST("/ui/upload", r.uploadHandler)
+	apiV1PlatformSerial.POST("/ui/hover", r.hoverHandler)
+	apiV1PlatformSerial.POST("/ui/scroll", r.scrollHandler)
 
 	// Key operations
 	apiV1PlatformSerial.POST("/key/unlock", r.unlockHandler)
@@ -63,6 +67,7 @@ func (r *Router) Init() {
 
 	// Device operations
 	apiV1PlatformSerial.GET("/screenshot", r.screenshotHandler)
+	apiV1PlatformSerial.DELETE("/close_browser", r.deleteBrowserHandler)
 	apiV1PlatformSerial.GET("/video", r.videoHandler)
 	apiV1PlatformSerial.POST("/device/push_image", r.pushImageHandler)
 	apiV1PlatformSerial.POST("/device/clear_image", r.clearImageHandler)
