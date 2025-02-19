@@ -10,82 +10,101 @@ func TestDriverSession_concatURL(t *testing.T) {
 	tests := []struct {
 		name    string
 		baseUrl string
-		elem    []string
+		urlStr  string
 		want    string
 		wantErr bool
 		errMsg  string
 	}{
 		{
-			name:    "empty elements with empty base url",
+			name:    "empty url with empty base url",
 			baseUrl: "",
-			elem:    []string{},
+			urlStr:  "",
 			wantErr: true,
 			errMsg:  "base URL is empty",
 		},
 		{
-			name:    "empty elements with valid base url",
+			name:    "empty url with valid base url",
 			baseUrl: "http://localhost:8080",
-			elem:    []string{},
+			urlStr:  "",
 			want:    "http://localhost:8080",
 		},
 		{
-			name:    "absolute url in first element",
+			name:    "root path with empty base url",
+			baseUrl: "",
+			urlStr:  "/",
+			wantErr: true,
+			errMsg:  "base URL is empty",
+		},
+		{
+			name:    "root path with valid base url",
 			baseUrl: "http://localhost:8080",
-			elem:    []string{"https://example.com/api", "users"},
-			want:    "https://example.com/api/users",
+			urlStr:  "/",
+			want:    "http://localhost:8080",
+		},
+		{
+			name:    "absolute http url",
+			baseUrl: "http://localhost:8080",
+			urlStr:  "http://example.com/api",
+			want:    "http://example.com/api",
+		},
+		{
+			name:    "absolute https url",
+			baseUrl: "http://localhost:8080",
+			urlStr:  "https://example.com/api",
+			want:    "https://example.com/api",
 		},
 		{
 			name:    "invalid absolute url",
 			baseUrl: "http://localhost:8080",
-			elem:    []string{"http://[invalid-url", "users"},
+			urlStr:  "http://[invalid-url",
 			wantErr: true,
 			errMsg:  "failed to parse URL",
 		},
 		{
 			name:    "relative path with empty base url",
 			baseUrl: "",
-			elem:    []string{"api", "users"},
+			urlStr:  "api/users",
 			wantErr: true,
 			errMsg:  "base URL is empty",
 		},
 		{
 			name:    "relative path with invalid base url",
 			baseUrl: "http://[invalid-url",
-			elem:    []string{"api", "users"},
+			urlStr:  "api/users",
 			wantErr: true,
 			errMsg:  "failed to parse base URL",
 		},
 		{
+			name:    "relative path with valid base url",
+			baseUrl: "http://localhost:8080",
+			urlStr:  "api/users",
+			want:    "http://localhost:8080/api/users",
+		},
+		{
 			name:    "relative path with query params",
 			baseUrl: "http://localhost:8080",
-			elem:    []string{"api", "users?id=1&name=test"},
+			urlStr:  "api/users?id=1&name=test",
 			want:    "http://localhost:8080/api/users?id=1&name=test",
 		},
 		{
 			name:    "base url with query params",
 			baseUrl: "http://localhost:8080?token=123",
-			elem:    []string{"api", "users?id=1"},
-			want:    "http://localhost:8080/api/users?id=1&token=123",
+			urlStr:  "api/users?id=1",
+			want:    "http://localhost:8080/api/users?id=1",
 		},
 		{
 			name:    "invalid query params",
 			baseUrl: "http://localhost:8080",
-			elem:    []string{"api", "users?id=%invalid"},
+			urlStr:  "api/users?id=%invalid",
 			wantErr: true,
 			errMsg:  "failed to parse query params",
-		},
-		{
-			name:    "multiple path segments",
-			baseUrl: "http://localhost:8080",
-			elem:    []string{"api", "v1", "users", "profile"},
-			want:    "http://localhost:8080/api/v1/users/profile",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &DriverSession{baseUrl: tt.baseUrl}
-			got, err := s.concatURL(tt.elem...)
+			got, err := s.concatURL(tt.urlStr)
 
 			if tt.wantErr {
 				assert.Error(t, err)

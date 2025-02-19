@@ -34,6 +34,13 @@ const (
 )
 
 func NewStubIOSDriver(dev *uixt.IOSDevice) (*StubIOSDriver, error) {
+	// lazy setup WDA
+	dev.Options.LazySetup = true
+
+	wdaDriver, err := uixt.NewWDADriver(dev)
+	if err != nil {
+		return nil, err
+	}
 	driver := &StubIOSDriver{
 		Device:  dev,
 		timeout: 10 * time.Second,
