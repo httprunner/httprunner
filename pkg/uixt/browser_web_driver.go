@@ -553,7 +553,7 @@ func (wd *BrowserWebDriver) Clear(packageName string) error {
 	return errors.New("not support")
 }
 func (wd *BrowserWebDriver) Setup() error {
-	return errors.New("not support")
+	return nil
 }
 
 func (wd *BrowserWebDriver) GetDevice() IDevice {
@@ -622,7 +622,7 @@ func (wd *BrowserWebDriver) RecordScreen(folderPath string, duration time.Durati
 }
 
 func (wd *BrowserWebDriver) TearDown() error {
-	return errors.New("not support")
+	return nil
 }
 
 func (wd *BrowserWebDriver) InitSession(capabilities option.Capabilities) error {

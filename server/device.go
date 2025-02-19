@@ -103,8 +103,8 @@ func createBrowserHandler(c *gin.Context) {
 	return
 }
 
-func deleteBrowserHandler(c *gin.Context) {
-	driver, err := GetDriver(c)
+func (r *Router) deleteBrowserHandler(c *gin.Context) {
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		RenderError(c, err)
 		return
@@ -117,7 +117,6 @@ func deleteBrowserHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func pushImageHandler(c *gin.Context) {
 func (r *Router) pushImageHandler(c *gin.Context) {
 	var pushMediaReq PushMediaRequest
 	if err := c.ShouldBindJSON(&pushMediaReq); err != nil {

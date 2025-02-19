@@ -42,7 +42,7 @@ func (dev *BrowserDevice) UUID() string {
 }
 
 func (dev *BrowserDevice) Setup() error {
-	return errors.New("not support")
+	return nil
 }
 
 func (dev *BrowserDevice) LogEnabled() bool {
@@ -50,7 +50,7 @@ func (dev *BrowserDevice) LogEnabled() bool {
 }
 
 func (dev *BrowserDevice) Teardown() error {
-	return errors.New("not support")
+	return nil
 }
 
 func (dev *BrowserDevice) Install(appPath string, opts ...option.InstallOption) error {

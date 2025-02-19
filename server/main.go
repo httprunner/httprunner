@@ -33,23 +33,23 @@ type IRouterBaseMethod interface {
 
 func (r *Router) Init() {
 	r.Engine.Use(teardown())
-	r.Engine.GET("/ping", pingHandler)
-	r.Engine.GET("/", pingHandler)
-	r.Engine.POST("/", pingHandler)
-	r.Engine.GET("/api/v1/devices", listDeviceHandler)
+	r.Engine.GET("/ping", r.pingHandler)
+	r.Engine.GET("/", r.pingHandler)
+	r.Engine.POST("/", r.pingHandler)
+	r.Engine.GET("/api/v1/devices", r.listDeviceHandler)
 	r.Engine.POST("/api/v1/browser/create_browser", createBrowserHandler)
 
 	apiV1PlatformSerial := r.Group("/api/v1").Group("/:platform").Group("/:serial")
 
 	// UI operations
-	apiV1PlatformSerial.POST("/ui/tap", tapHandler)
-	apiV1PlatformSerial.POST("/ui/double_tap", doubleTapHandler)
-	apiV1PlatformSerial.POST("/ui/drag", dragHandler)
-	apiV1PlatformSerial.POST("/ui/input", inputHandler)
-	apiV1PlatformSerial.POST("/ui/home", homeHandler)
-	apiV1PlatformSerial.POST("/ui/upload", uploadHandler)
-	apiV1PlatformSerial.POST("/ui/hover", hoverHandler)
-	apiV1PlatformSerial.POST("/ui/scroll", scrollHandler)
+	apiV1PlatformSerial.POST("/ui/tap", r.tapHandler)
+	apiV1PlatformSerial.POST("/ui/double_tap", r.doubleTapHandler)
+	apiV1PlatformSerial.POST("/ui/drag", r.dragHandler)
+	apiV1PlatformSerial.POST("/ui/input", r.inputHandler)
+	apiV1PlatformSerial.POST("/ui/home", r.homeHandler)
+	apiV1PlatformSerial.POST("/ui/upload", r.uploadHandler)
+	apiV1PlatformSerial.POST("/ui/hover", r.hoverHandler)
+	apiV1PlatformSerial.POST("/ui/scroll", r.scrollHandler)
 
 	// Key operations
 	apiV1PlatformSerial.POST("/key/unlock", r.unlockHandler)
@@ -66,12 +66,12 @@ func (r *Router) Init() {
 	apiV1PlatformSerial.POST("/app/uninstall", r.uninstallAppHandler)
 
 	// Device operations
-	apiV1PlatformSerial.GET("/screenshot", screenshotHandler)
-	apiV1PlatformSerial.DELETE("/close_browser", deleteBrowserHandler)
-	apiV1PlatformSerial.GET("/video", videoHandler)
-	apiV1PlatformSerial.POST("/device/push_image", pushImageHandler)
-	apiV1PlatformSerial.POST("/device/clear_image", clearImageHandler)
-	apiV1PlatformSerial.GET("/adb/source", adbSourceHandler)
+	apiV1PlatformSerial.GET("/screenshot", r.screenshotHandler)
+	apiV1PlatformSerial.DELETE("/close_browser", r.deleteBrowserHandler)
+	apiV1PlatformSerial.GET("/video", r.videoHandler)
+	apiV1PlatformSerial.POST("/device/push_image", r.pushImageHandler)
+	apiV1PlatformSerial.POST("/device/clear_image", r.clearImageHandler)
+	apiV1PlatformSerial.GET("/adb/source", r.adbSourceHandler)
 
 	// uixt operations
 	apiV1PlatformSerial.POST("/uixt/action", r.uixtActionHandler)
