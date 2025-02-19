@@ -350,6 +350,13 @@ func (wd *WDADriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer,
 }
 
 func (wd *WDADriver) toScale(x float64) float64 {
+	if wd.scale == 0 {
+		// not setup yet
+		if err := wd.Setup(); err != nil {
+			log.Error().Err(err).Msg("init scale failed")
+			os.Exit(code.GetErrorCode(err))
+		}
+	}
 	return x / wd.scale
 }
 
