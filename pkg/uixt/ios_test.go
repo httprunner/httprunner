@@ -33,6 +33,20 @@ func TestDevice_IOS_Install(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestDriver_WDA_LazySetup(t *testing.T) {
+	device, err := NewIOSDevice(
+		option.WithWDAPort(8700),
+		option.WithWDAMjpegPort(8800),
+		option.WithLazySetup(true))
+	require.Nil(t, err)
+	driver, err := NewWDADriver(device)
+	require.Nil(t, err)
+	err = driver.PressButton(types.DeviceButtonHome)
+	assert.Nil(t, err)
+	err = driver.TapXY(0.5, 0.5)
+	assert.Nil(t, err)
+}
+
 func TestDevice_IOS_New(t *testing.T) {
 	device, err := NewIOSDevice(
 		option.WithWDAPort(8700),

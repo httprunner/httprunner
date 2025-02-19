@@ -5,6 +5,7 @@ type IOSDeviceOptions struct {
 	WDAPort      int    `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
 	WDAMjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	LazySetup    bool   `json:"lazy_setup,omitempty" yaml:"lazy_setup,omitempty"` // lazy setup WDA
 
 	// switch to iOS springboard before init WDA session
 	ResetHomeOnStartup bool `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`
@@ -27,6 +28,9 @@ func (dev *IOSDeviceOptions) Options() (deviceOptions []IOSDeviceOption) {
 	}
 	if dev.LogOn {
 		deviceOptions = append(deviceOptions, WithWDALogOn(true))
+	}
+	if dev.LazySetup {
+		deviceOptions = append(deviceOptions, WithLazySetup(true))
 	}
 	if dev.ResetHomeOnStartup {
 		deviceOptions = append(deviceOptions, WithResetHomeOnStartup(true))
@@ -112,6 +116,12 @@ func WithWDAMjpegPort(port int) IOSDeviceOption {
 func WithWDALogOn(logOn bool) IOSDeviceOption {
 	return func(device *IOSDeviceOptions) {
 		device.LogOn = logOn
+	}
+}
+
+func WithLazySetup(lazySetup bool) IOSDeviceOption {
+	return func(device *IOSDeviceOptions) {
+		device.LazySetup = lazySetup
 	}
 }
 

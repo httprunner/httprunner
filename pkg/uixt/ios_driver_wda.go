@@ -37,9 +37,11 @@ func NewWDADriver(device *IOSDevice) (*WDADriver, error) {
 		Session: NewDriverSession(),
 	}
 
-	// setup driver
-	if err := driver.Setup(); err != nil {
-		return nil, err
+	if !device.Options.LazySetup {
+		// setup driver
+		if err := driver.Setup(); err != nil {
+			return nil, err
+		}
 	}
 
 	// register driver session reset handler
