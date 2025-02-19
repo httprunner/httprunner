@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/httprunner/httprunner/v5/code"
@@ -43,9 +44,6 @@ func NewStubIOSDriver(dev *uixt.IOSDevice) (*StubIOSDriver, error) {
 	if err := driver.Setup(); err != nil {
 		return nil, err
 	}
-
-	// register driver session reset handler
-	driver.Session.RegisterResetHandler(driver.Setup)
 
 	return driver, nil
 }
@@ -565,9 +563,12 @@ func (s *StubIOSDriver) PressButton(devBtn types.DeviceButton) error {
 }
 
 func (s *StubIOSDriver) ScreenShot(opts ...option.ActionOption) (*bytes.Buffer, error) {
+	if os.Getenv("WINGS_LOCAL") == "true" {
+		return s.Device.ScreenShot()
+	}
 	err := s.setUpWda()
 	if err != nil {
-		return s.Device.ScreenShot()
+		return nil, err
 	}
 	return s.wdaDriver.ScreenShot()
 }

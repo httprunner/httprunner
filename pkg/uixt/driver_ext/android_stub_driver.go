@@ -50,9 +50,6 @@ func NewStubAndroidDriver(dev *uixt.AndroidDevice) (*StubAndroidDriver, error) {
 		return nil, err
 	}
 
-	// register driver session reset handler
-	driver.Session.RegisterResetHandler(driver.Setup)
-
 	return driver, nil
 }
 

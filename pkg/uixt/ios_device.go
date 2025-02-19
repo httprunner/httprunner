@@ -28,7 +28,7 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
-func StartTunnel(recordsPath string, tunnelInfoPort int, userspaceTUN bool) (err error) {
+func StartTunnel(ctx context.Context, recordsPath string, tunnelInfoPort int, userspaceTUN bool) (err error) {
 	pm, err := tunnel.NewPairRecordManager(recordsPath)
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func StartTunnel(recordsPath string, tunnelInfoPort int, userspaceTUN bool) (err
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 		for {
-			err := tm.UpdateTunnels(context.Background())
+			err := tm.UpdateTunnels(ctx)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to update tunnels")
 			}
@@ -62,7 +62,7 @@ func RebootTunnel() (err error) {
 	if tunnelManager != nil {
 		_ = tunnelManager.Close()
 	}
-	return StartTunnel(os.TempDir(), ios.HttpApiPort(), true)
+	return StartTunnel(context.Background(), os.TempDir(), ios.HttpApiPort(), true)
 }
 
 func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error) {

@@ -96,3 +96,14 @@ type XTDriver struct {
 	// cache screenshot results
 	screenResults []*ScreenResult
 }
+
+func (dExt *XTDriver) GetIDriver() IDriver {
+	return dExt.IDriver
+}
+
+type IXTDriver interface {
+	IDriver
+	GetIDriver() IDriver
+	GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error)
+	DoAction(action MobileAction) (err error)
+}

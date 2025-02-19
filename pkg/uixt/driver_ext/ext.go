@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
@@ -34,7 +33,7 @@ type XTDriver struct {
 }
 
 func (dExt *XTDriver) InstallByUrl(url string, opts ...option.InstallOption) error {
-	appPath, err := builtin.DownloadFileByUrl(url)
+	appPath, err := uixt.DownloadFileByUrl(url)
 	if err != nil {
 		return err
 	}

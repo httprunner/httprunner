@@ -7,8 +7,8 @@ import (
 )
 
 // exec a single uixt action
-func uixtActionHandler(c *gin.Context) {
-	dExt, err := GetDriver(c)
+func (r *Router) uixtActionHandler(c *gin.Context) {
+	dExt, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -29,8 +29,8 @@ func uixtActionHandler(c *gin.Context) {
 }
 
 // exec multiple uixt actions
-func uixtActionsHandler(c *gin.Context) {
-	dExt, err := GetDriver(c)
+func (r *Router) uixtActionsHandler(c *gin.Context) {
+	dExt, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}

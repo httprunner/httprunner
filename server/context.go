@@ -14,7 +14,7 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-func GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error) {
+func (r *Router) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver, err error) {
 	deviceObj, exists := c.Get("device")
 	var device uixt.IDevice
 	var driver uixt.IDriver
