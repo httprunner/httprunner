@@ -44,6 +44,9 @@ func NewStubIOSDriver(dev *uixt.IOSDevice) (*StubIOSDriver, error) {
 		return nil, err
 	}
 
+	// register driver session reset handler
+	driver.Session.RegisterResetHandler(driver.Setup)
+
 	return driver, nil
 }
 

@@ -45,6 +45,14 @@ func NewStubAndroidDriver(dev *uixt.AndroidDevice) (*StubAndroidDriver, error) {
 		ADBDriver: adbDriver,
 	}
 
+	// setup driver
+	if err := driver.Setup(); err != nil {
+		return nil, err
+	}
+
+	// register driver session reset handler
+	driver.Session.RegisterResetHandler(driver.Setup)
+
 	return driver, nil
 }
 
@@ -272,11 +280,6 @@ func (sad *StubAndroidDriver) LogoutNoneUI(packageName string) error {
 		log.Err(err).Msgf("%v", res)
 		return err
 	}
-	fmt.Printf("%v", resp)
-	if err != nil {
-		return err
-	}
-	time.Sleep(3 * time.Second)
 	return nil
 }
 

@@ -30,6 +30,10 @@ func NewUIA2Driver(device *AndroidDevice) (*UIA2Driver, error) {
 	if err := driver.Setup(); err != nil {
 		return nil, err
 	}
+
+	// register driver session reset handler
+	driver.Session.RegisterResetHandler(driver.Setup)
+
 	return driver, nil
 }
 

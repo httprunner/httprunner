@@ -20,7 +20,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/internal/json"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 type Attachments map[string]interface{}
@@ -61,36 +60,11 @@ type DriverSession struct {
 	timeout  time.Duration
 	maxRetry int
 
+	// used to reset driver session when request failed
+	resetFn func() error
+
 	// cache driver request and response
 	requests []*DriverRequests
-}
-
-func (s *DriverSession) Init(capabilities option.Capabilities) (err error) {
-	data := make(map[string]interface{})
-	if len(capabilities) == 0 {
-		data["capabilities"] = make(map[string]interface{})
-	} else {
-		data["capabilities"] = map[string]interface{}{"alwaysMatch": capabilities}
-	}
-	var rawResp DriverRawResponse
-	if rawResp, err = s.POST(data, "/session"); err != nil {
-		return err
-	}
-	reply := new(struct{ Value struct{ SessionId string } })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return err
-	}
-	s.ID = reply.Value.SessionId
-
-	// WDA
-	// sessionInfo, err := rawResp.ValueConvertToSessionInfo()
-	// if err != nil {
-	// 	return err
-	// }
-	// // update session ID
-	// wd.Session.ID = sessionInfo.ID
-
-	return nil
 }
 
 func (s *DriverSession) Reset() {
@@ -99,6 +73,10 @@ func (s *DriverSession) Reset() {
 
 func (s *DriverSession) SetBaseURL(baseUrl string) {
 	s.baseUrl = baseUrl
+}
+
+func (s *DriverSession) RegisterResetHandler(fn func() error) {
+	s.resetFn = fn
 }
 
 func (s *DriverSession) addRequestResult(driverResult *DriverRequests) {
@@ -179,7 +157,7 @@ func (s *DriverSession) GET(pathElem ...string) (rawResp DriverRawResponse, err 
 	if err != nil {
 		return nil, err
 	}
-	return s.Request(http.MethodGet, urlStr, nil)
+	return s.RequestWithRetry(http.MethodGet, urlStr, nil)
 }
 
 func (s *DriverSession) POST(data interface{}, pathElem ...string) (rawResp DriverRawResponse, err error) {
@@ -193,7 +171,7 @@ func (s *DriverSession) POST(data interface{}, pathElem ...string) (rawResp Driv
 			return nil, err
 		}
 	}
-	return s.Request(http.MethodPost, urlStr, bsJSON)
+	return s.RequestWithRetry(http.MethodPost, urlStr, bsJSON)
 }
 
 func (s *DriverSession) DELETE(pathElem ...string) (rawResp DriverRawResponse, err error) {
@@ -201,7 +179,30 @@ func (s *DriverSession) DELETE(pathElem ...string) (rawResp DriverRawResponse, e
 	if err != nil {
 		return nil, err
 	}
-	return s.Request(http.MethodDelete, urlStr, nil)
+	return s.RequestWithRetry(http.MethodDelete, urlStr, nil)
+}
+
+func (s *DriverSession) RequestWithRetry(method string, rawURL string, rawBody []byte) (
+	rawResp DriverRawResponse, err error) {
+	for count := 1; count <= s.maxRetry; count++ {
+		rawResp, err = s.Request(method, rawURL, rawBody)
+		if err == nil {
+			return
+		}
+		time.Sleep(3 * time.Second)
+
+		if s.resetFn != nil {
+			log.Warn().Msg("reset driver session")
+			if err2 := s.resetFn(); err2 != nil {
+				log.Error().Err(err2).Msgf(
+					"failed to reset session, try count %v", count)
+			} else {
+				log.Info().Msgf(
+					"reset session success, try count %v", count)
+			}
+		}
+	}
+	return
 }
 
 func (s *DriverSession) Request(method string, rawURL string, rawBody []byte) (
@@ -282,30 +283,6 @@ func (s *DriverSession) Request(method string, rawURL string, rawBody []byte) (
 		return nil, err
 	}
 
-	return
-}
-
-// TODO: FIXME
-func (s *DriverSession) RequestWithRetry(method string, rawURL string, rawBody []byte) (
-	rawResp DriverRawResponse, err error) {
-	for count := 1; count <= s.maxRetry; count++ {
-		rawResp, err = s.Request(method, rawURL, rawBody)
-		if err == nil {
-			return
-		}
-		time.Sleep(3 * time.Second)
-		oldSessionID := s.ID
-		if err2 := s.Init(nil); err2 != nil {
-			log.Error().Err(err2).Msgf(
-				"failed to reset session, try count %v", count)
-			continue
-		}
-		log.Debug().Str("new session", s.ID).Str("old session", oldSessionID).Msgf(
-			"reset session successfully, try count %v", count)
-		if oldSessionID != "" {
-			rawURL = strings.Replace(rawURL, oldSessionID, s.ID, 1)
-		}
-	}
 	return
 }
 
