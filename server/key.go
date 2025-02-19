@@ -6,8 +6,8 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
 )
 
-func unlockHandler(c *gin.Context) {
-	driver, err := GetDriver(c)
+func (r *Router) unlockHandler(c *gin.Context) {
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -19,8 +19,8 @@ func unlockHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func homeHandler(c *gin.Context) {
-	driver, err := GetDriver(c)
+func (r *Router) homeHandler(c *gin.Context) {
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -32,7 +32,7 @@ func homeHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func backspaceHandler(c *gin.Context) {
+func (r *Router) backspaceHandler(c *gin.Context) {
 	var deleteReq DeleteRequest
 	if err := c.ShouldBindJSON(&deleteReq); err != nil {
 		RenderErrorValidateRequest(c, err)
@@ -41,7 +41,7 @@ func backspaceHandler(c *gin.Context) {
 	if deleteReq.Count == 0 {
 		deleteReq.Count = 20
 	}
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -53,18 +53,18 @@ func backspaceHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func keycodeHandler(c *gin.Context) {
+func (r *Router) keycodeHandler(c *gin.Context) {
 	var keycodeReq KeycodeRequest
 	if err := c.ShouldBindJSON(&keycodeReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
 	// TODO FIXME
-	err = driver.IDriver.(*uixt.ADBDriver).
+	err = driver.GetIDriver().(*uixt.ADBDriver).
 		PressKeyCode(uixt.KeyCode(keycodeReq.Keycode), uixt.KMEmpty)
 	if err != nil {
 		RenderError(c, err)

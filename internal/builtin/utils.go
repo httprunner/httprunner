@@ -5,16 +5,13 @@ import (
 	"bytes"
 	"context"
 	"crypto/hmac"
-	"crypto/md5"
 	"crypto/sha256"
 	"encoding/csv"
 	builtinJSON "encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"math/rand"
 	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,7 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/BurntSushi/locker"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
@@ -382,67 +378,12 @@ func GetCurrentDay() string {
 	return formattedDate
 }
 
-func fileExists(filepath string) bool {
+func FileExists(filepath string) bool {
 	_, err := os.Stat(filepath)
 	if os.IsNotExist(err) {
 		return false // 文件不存在
 	}
 	return err == nil // 文件存在，且没有其他错误
-}
-
-func DownloadFileByUrl(fileUrl string) (filePath string, err error) {
-	// 使用 UUID 生成唯一文件名
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	hash := md5.Sum([]byte(fileUrl))
-	fileName := fmt.Sprintf("%x", hash)
-	filePath = filepath.Join(cwd, fileName)
-	locker.Lock(filePath)
-	defer locker.Unlock(filePath)
-	if fileExists(filePath) {
-		return filePath, nil
-	}
-
-	fmt.Printf("Downloading file to %s from URL %s\n", filePath, fileUrl)
-
-	// Create an HTTP client with default settings.
-	client := &http.Client{}
-
-	// Build the HTTP GET request.
-	req, err := http.NewRequest("GET", fileUrl, nil)
-	if err != nil {
-		return "", err
-	}
-
-	// Perform the request.
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	// Check the HTTP status code.
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to download file: %s", resp.Status)
-	}
-
-	// Create the output file.
-	outFile, err := os.Create(fileName)
-	if err != nil {
-		return "", err
-	}
-	defer outFile.Close()
-
-	// Copy the response body to the file.
-	_, err = io.Copy(outFile, resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	fmt.Printf("File downloaded successfully: %s\n", fileName)
-	return filePath, nil
 }
 
 func RunCommand(cmdName string, args ...string) error {

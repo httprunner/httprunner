@@ -6,13 +6,13 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-func tapHandler(c *gin.Context) {
+func (r *Router) tapHandler(c *gin.Context) {
 	var tapReq TapRequest
 	if err := c.ShouldBindJSON(&tapReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -93,14 +93,14 @@ func scrollHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func doubleTapHandler(c *gin.Context) {
+func (r *Router) doubleTapHandler(c *gin.Context) {
 	var tapReq TapRequest
 	if err := c.ShouldBindJSON(&tapReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
 
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -119,7 +119,7 @@ func doubleTapHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func dragHandler(c *gin.Context) {
+func (r *Router) dragHandler(c *gin.Context) {
 	var dragReq DragRequest
 	if err := c.ShouldBindJSON(&dragReq); err != nil {
 		RenderErrorValidateRequest(c, err)
@@ -128,7 +128,7 @@ func dragHandler(c *gin.Context) {
 	if dragReq.Duration == 0 {
 		dragReq.Duration = 1
 	}
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -143,13 +143,13 @@ func dragHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func inputHandler(c *gin.Context) {
+func (r *Router) inputHandler(c *gin.Context) {
 	var inputReq InputRequest
 	if err := c.ShouldBindJSON(&inputReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}

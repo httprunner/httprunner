@@ -20,7 +20,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/internal/json"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
 type Attachments map[string]interface{}
@@ -61,36 +60,11 @@ type DriverSession struct {
 	timeout  time.Duration
 	maxRetry int
 
+	// used to reset driver session when request failed
+	resetFn func() error
+
 	// cache driver request and response
 	requests []*DriverRequests
-}
-
-func (s *DriverSession) Init(capabilities option.Capabilities) (err error) {
-	data := make(map[string]interface{})
-	if len(capabilities) == 0 {
-		data["capabilities"] = make(map[string]interface{})
-	} else {
-		data["capabilities"] = map[string]interface{}{"alwaysMatch": capabilities}
-	}
-	var rawResp DriverRawResponse
-	if rawResp, err = s.POST(data, "/session"); err != nil {
-		return err
-	}
-	reply := new(struct{ Value struct{ SessionId string } })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return err
-	}
-	s.ID = reply.Value.SessionId
-
-	// WDA
-	// sessionInfo, err := rawResp.ValueConvertToSessionInfo()
-	// if err != nil {
-	// 	return err
-	// }
-	// // update session ID
-	// wd.Session.ID = sessionInfo.ID
-
-	return nil
 }
 
 func (s *DriverSession) Reset() {
@@ -101,6 +75,10 @@ func (s *DriverSession) SetBaseURL(baseUrl string) {
 	s.baseUrl = baseUrl
 }
 
+func (s *DriverSession) RegisterResetHandler(fn func() error) {
+	s.resetFn = fn
+}
+
 func (s *DriverSession) addRequestResult(driverResult *DriverRequests) {
 	s.requests = append(s.requests, driverResult)
 }
@@ -109,8 +87,8 @@ func (s *DriverSession) History() []*DriverRequests {
 	return s.requests
 }
 
-func (s *DriverSession) concatURL(elem ...string) (string, error) {
-	if len(elem) == 0 {
+func (s *DriverSession) concatURL(urlStr string) (string, error) {
+	if urlStr == "" || urlStr == "/" {
 		if s.baseUrl == "" {
 			return "", fmt.Errorf("base URL is empty")
 		}
@@ -118,13 +96,10 @@ func (s *DriverSession) concatURL(elem ...string) (string, error) {
 	}
 
 	// 处理完整 URL
-	if strings.HasPrefix(elem[0], "http://") || strings.HasPrefix(elem[0], "https://") {
-		u, err := url.Parse(elem[0])
+	if strings.HasPrefix(urlStr, "http://") || strings.HasPrefix(urlStr, "https://") {
+		u, err := url.Parse(urlStr)
 		if err != nil {
 			return "", fmt.Errorf("failed to parse URL: %w", err)
-		}
-		if len(elem) > 1 {
-			u.Path = path.Join(u.Path, path.Join(elem[1:]...))
 		}
 		return u.String(), nil
 	}
@@ -138,74 +113,70 @@ func (s *DriverSession) concatURL(elem ...string) (string, error) {
 		return "", fmt.Errorf("failed to parse base URL: %w", err)
 	}
 
-	// 保存原始查询参数
-	baseQuery := u.Query()
-
 	// 处理路径和查询参数
-	var paths []string
-	for i, e := range elem {
-		if i == len(elem)-1 {
-			// 处理最后一个元素的查询参数
-			parts := strings.SplitN(e, "?", 2)
-			paths = append(paths, parts[0])
-			if len(parts) > 1 {
-				newQuery, err := url.ParseQuery(parts[1])
-				if err != nil {
-					return "", fmt.Errorf("failed to parse query params: %w", err)
-				}
-				// 合并查询参数
-				for k, v := range newQuery {
-					baseQuery[k] = v
-				}
-			}
-		} else {
-			paths = append(paths, e)
+	parts := strings.SplitN(urlStr, "?", 2)
+	u.Path = path.Join(u.Path, parts[0])
+	if len(parts) > 1 {
+		query, err := url.ParseQuery(parts[1])
+		if err != nil {
+			return "", fmt.Errorf("failed to parse query params: %w", err)
 		}
-	}
-
-	// 合并路径
-	u.Path = path.Join(append([]string{u.Path}, paths...)...)
-
-	// 设置合并后的查询参数
-	if len(baseQuery) > 0 {
-		u.RawQuery = baseQuery.Encode()
+		u.RawQuery = query.Encode()
 	}
 
 	return u.String(), nil
 }
 
-func (s *DriverSession) GET(pathElem ...string) (rawResp DriverRawResponse, err error) {
-	urlStr, err := s.concatURL(pathElem...)
-	if err != nil {
-		return nil, err
-	}
-	return s.Request(http.MethodGet, urlStr, nil)
+func (s *DriverSession) GET(urlStr string) (rawResp DriverRawResponse, err error) {
+	return s.RequestWithRetry(http.MethodGet, urlStr, nil)
 }
 
-func (s *DriverSession) POST(data interface{}, pathElem ...string) (rawResp DriverRawResponse, err error) {
-	urlStr, err := s.concatURL(pathElem...)
-	if err != nil {
-		return nil, err
-	}
+func (s *DriverSession) POST(data interface{}, urlStr string) (rawResp DriverRawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
 			return nil, err
 		}
 	}
-	return s.Request(http.MethodPost, urlStr, bsJSON)
+	return s.RequestWithRetry(http.MethodPost, urlStr, bsJSON)
 }
 
-func (s *DriverSession) DELETE(pathElem ...string) (rawResp DriverRawResponse, err error) {
-	urlStr, err := s.concatURL(pathElem...)
+func (s *DriverSession) DELETE(urlStr string) (rawResp DriverRawResponse, err error) {
+	return s.RequestWithRetry(http.MethodDelete, urlStr, nil)
+}
+
+func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody []byte) (
+	rawResp DriverRawResponse, err error) {
+	for count := 1; count <= s.maxRetry; count++ {
+		rawResp, err = s.Request(method, urlStr, rawBody)
+		if err == nil {
+			return
+		}
+		time.Sleep(3 * time.Second)
+
+		if s.resetFn != nil {
+			log.Warn().Msg("reset driver session")
+			if err2 := s.resetFn(); err2 != nil {
+				log.Error().Err(err2).Msgf(
+					"failed to reset session, try count %v", count)
+			} else {
+				log.Info().Msgf(
+					"reset session success, try count %v", count)
+			}
+		}
+	}
+	return
+}
+
+func (s *DriverSession) Request(method string, urlStr string, rawBody []byte) (
+	rawResp DriverRawResponse, err error) {
+
+	// concat url with base url
+	rawURL, err := s.concatURL(urlStr)
 	if err != nil {
 		return nil, err
 	}
-	return s.Request(http.MethodDelete, urlStr, nil)
-}
 
-func (s *DriverSession) Request(method string, rawURL string, rawBody []byte) (
-	rawResp DriverRawResponse, err error) {
 	driverResult := &DriverRequests{
 		RequestMethod: method,
 		RequestUrl:    rawURL,
@@ -282,30 +253,6 @@ func (s *DriverSession) Request(method string, rawURL string, rawBody []byte) (
 		return nil, err
 	}
 
-	return
-}
-
-// TODO: FIXME
-func (s *DriverSession) RequestWithRetry(method string, rawURL string, rawBody []byte) (
-	rawResp DriverRawResponse, err error) {
-	for count := 1; count <= s.maxRetry; count++ {
-		rawResp, err = s.Request(method, rawURL, rawBody)
-		if err == nil {
-			return
-		}
-		time.Sleep(3 * time.Second)
-		oldSessionID := s.ID
-		if err2 := s.Init(nil); err2 != nil {
-			log.Error().Err(err2).Msgf(
-				"failed to reset session, try count %v", count)
-			continue
-		}
-		log.Debug().Str("new session", s.ID).Str("old session", oldSessionID).Msgf(
-			"reset session successfully, try count %v", count)
-		if oldSessionID != "" {
-			rawURL = strings.Replace(rawURL, oldSessionID, s.ID, 1)
-		}
-	}
 	return
 }
 

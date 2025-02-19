@@ -9,8 +9,8 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-func screenshotHandler(c *gin.Context) {
-	driver, err := GetDriver(c)
+func (r *Router) screenshotHandler(c *gin.Context) {
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -23,8 +23,8 @@ func screenshotHandler(c *gin.Context) {
 	RenderSuccess(c, base64.StdEncoding.EncodeToString(raw.Bytes()))
 }
 
-func screenResultHandler(c *gin.Context) {
-	dExt, err := GetDriver(c)
+func (r *Router) screenResultHandler(c *gin.Context) {
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -40,7 +40,7 @@ func screenResultHandler(c *gin.Context) {
 		actionOptions = screenReq.Options.Options()
 	}
 
-	screenResult, err := dExt.GetScreenResult(actionOptions...)
+	screenResult, err := driver.GetScreenResult(actionOptions...)
 	if err != nil {
 		log.Err(err).Msg("get screen result failed")
 		RenderError(c, err)
@@ -49,8 +49,8 @@ func screenResultHandler(c *gin.Context) {
 	RenderSuccess(c, screenResult)
 }
 
-func adbSourceHandler(c *gin.Context) {
-	dExt, err := GetDriver(c)
+func (r *Router) adbSourceHandler(c *gin.Context) {
+	dExt, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}

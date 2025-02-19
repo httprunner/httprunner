@@ -8,18 +8,18 @@ import (
 	"github.com/httprunner/httprunner/v5/server"
 )
 
-func loginHandler(c *gin.Context) {
+func (r *RouterExt) loginHandler(c *gin.Context) {
 	var loginReq LoginRequest
 	if err := c.ShouldBindJSON(&loginReq); err != nil {
 		server.RenderErrorValidateRequest(c, err)
 		return
 	}
 
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
-	info, err := driver.IDriver.(driver_ext.IStubDriver).
+	info, err := driver.GetIDriver().(driver_ext.IStubDriver).
 		LoginNoneUI(loginReq.PackageName, loginReq.PhoneNumber,
 			loginReq.Captcha, loginReq.Password)
 	if err != nil {
@@ -29,18 +29,18 @@ func loginHandler(c *gin.Context) {
 	server.RenderSuccess(c, info)
 }
 
-func logoutHandler(c *gin.Context) {
+func (r *RouterExt) logoutHandler(c *gin.Context) {
 	var logoutReq LogoutRequest
 	if err := c.ShouldBindJSON(&logoutReq); err != nil {
 		server.RenderErrorValidateRequest(c, err)
 		return
 	}
 
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
-	err = driver.IDriver.(driver_ext.IStubDriver).
+	err = driver.GetIDriver().(driver_ext.IStubDriver).
 		LogoutNoneUI(logoutReq.PackageName)
 	if err != nil {
 		server.RenderError(c, err)
@@ -49,8 +49,8 @@ func logoutHandler(c *gin.Context) {
 	server.RenderSuccess(c, true)
 }
 
-func sourceHandler(c *gin.Context) {
-	driver, err := GetDriver(c)
+func (r *RouterExt) sourceHandler(c *gin.Context) {
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}

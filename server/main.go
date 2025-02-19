@@ -11,17 +11,27 @@ import (
 )
 
 func NewRouter() *Router {
-	router := &Router{}
+	router := &Router{
+		Engine:            gin.Default(),
+		IRouterBaseMethod: &RouterBaseMethod{},
+	}
 	router.Init()
 	return router
 }
 
 type Router struct {
 	*gin.Engine
+	IRouterBaseMethod
+}
+
+type RouterBaseMethod struct {
+}
+
+type IRouterBaseMethod interface {
+	GetDriver(c *gin.Context) (driver uixt.IXTDriver, err error)
 }
 
 func (r *Router) Init() {
-	r.Engine = gin.Default()
 	r.Engine.Use(teardown())
 	r.Engine.GET("/ping", pingHandler)
 	r.Engine.GET("/", pingHandler)
@@ -42,18 +52,18 @@ func (r *Router) Init() {
 	apiV1PlatformSerial.POST("/ui/scroll", scrollHandler)
 
 	// Key operations
-	apiV1PlatformSerial.POST("/key/unlock", unlockHandler)
-	apiV1PlatformSerial.POST("/key/home", homeHandler)
-	apiV1PlatformSerial.POST("/key/backspace", backspaceHandler)
-	apiV1PlatformSerial.POST("/key", keycodeHandler)
+	apiV1PlatformSerial.POST("/key/unlock", r.unlockHandler)
+	apiV1PlatformSerial.POST("/key/home", r.homeHandler)
+	apiV1PlatformSerial.POST("/key/backspace", r.backspaceHandler)
+	apiV1PlatformSerial.POST("/key", r.keycodeHandler)
 
 	// APP operations
-	apiV1PlatformSerial.GET("/app/foreground", foregroundAppHandler)
-	apiV1PlatformSerial.GET("/app/appInfo", appInfoHandler)
-	apiV1PlatformSerial.POST("/app/clear", clearAppHandler)
-	apiV1PlatformSerial.POST("/app/launch", launchAppHandler)
-	apiV1PlatformSerial.POST("/app/terminal", terminalAppHandler)
-	apiV1PlatformSerial.POST("/app/uninstall", uninstallAppHandler)
+	apiV1PlatformSerial.GET("/app/foreground", r.foregroundAppHandler)
+	apiV1PlatformSerial.GET("/app/appInfo", r.appInfoHandler)
+	apiV1PlatformSerial.POST("/app/clear", r.clearAppHandler)
+	apiV1PlatformSerial.POST("/app/launch", r.launchAppHandler)
+	apiV1PlatformSerial.POST("/app/terminal", r.terminalAppHandler)
+	apiV1PlatformSerial.POST("/app/uninstall", r.uninstallAppHandler)
 
 	// Device operations
 	apiV1PlatformSerial.GET("/screenshot", screenshotHandler)
@@ -64,8 +74,8 @@ func (r *Router) Init() {
 	apiV1PlatformSerial.GET("/adb/source", adbSourceHandler)
 
 	// uixt operations
-	apiV1PlatformSerial.POST("/uixt/action", uixtActionHandler)
-	apiV1PlatformSerial.POST("/uixt/actions", uixtActionsHandler)
+	apiV1PlatformSerial.POST("/uixt/action", r.uixtActionHandler)
+	apiV1PlatformSerial.POST("/uixt/actions", r.uixtActionsHandler)
 }
 
 func (r *Router) Run(port int) error {
@@ -77,7 +87,7 @@ func (r *Router) Run(port int) error {
 	return nil
 }
 
-func pingHandler(c *gin.Context) {
+func (r *Router) pingHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 

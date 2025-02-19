@@ -5,8 +5,8 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
 )
 
-func foregroundAppHandler(c *gin.Context) {
-	driver, err := GetDriver(c)
+func (r *Router) foregroundAppHandler(c *gin.Context) {
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -18,7 +18,7 @@ func foregroundAppHandler(c *gin.Context) {
 	RenderSuccess(c, appInfo)
 }
 
-func appInfoHandler(c *gin.Context) {
+func (r *Router) appInfoHandler(c *gin.Context) {
 	var appInfoReq AppInfoRequest
 	if err := c.ShouldBindQuery(&appInfoReq); err != nil {
 		RenderErrorValidateRequest(c, err)
@@ -47,18 +47,18 @@ func appInfoHandler(c *gin.Context) {
 	}
 }
 
-func clearAppHandler(c *gin.Context) {
+func (r *Router) clearAppHandler(c *gin.Context) {
 	var appClearReq AppClearRequest
 	if err := c.ShouldBindJSON(&appClearReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
 
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
-	err = driver.IDriver.(*uixt.ADBDriver).AppClear(appClearReq.PackageName)
+	err = driver.GetIDriver().(*uixt.ADBDriver).AppClear(appClearReq.PackageName)
 	if err != nil {
 		RenderError(c, err)
 		return
@@ -66,13 +66,13 @@ func clearAppHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func launchAppHandler(c *gin.Context) {
+func (r *Router) launchAppHandler(c *gin.Context) {
 	var appLaunchReq AppLaunchRequest
 	if err := c.ShouldBindJSON(&appLaunchReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -84,13 +84,13 @@ func launchAppHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func terminalAppHandler(c *gin.Context) {
+func (r *Router) terminalAppHandler(c *gin.Context) {
 	var appTerminalReq AppTerminalRequest
 	if err := c.ShouldBindJSON(&appTerminalReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -102,13 +102,13 @@ func terminalAppHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func uninstallAppHandler(c *gin.Context) {
+func (r *Router) uninstallAppHandler(c *gin.Context) {
 	var appUninstallReq AppUninstallRequest
 	if err := c.ShouldBindJSON(&appUninstallReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}

@@ -45,6 +45,11 @@ func NewStubAndroidDriver(dev *uixt.AndroidDevice) (*StubAndroidDriver, error) {
 		ADBDriver: adbDriver,
 	}
 
+	// setup driver
+	if err := driver.Setup(); err != nil {
+		return nil, err
+	}
+
 	return driver, nil
 }
 
@@ -54,10 +59,6 @@ func (sad *StubAndroidDriver) Setup() error {
 		return errors.Wrap(code.DeviceConnectionError,
 			fmt.Sprintf("forward port %d->%s failed: %v",
 				socketLocalPort, StubSocketName, err))
-	}
-	err = sad.Session.SetupPortForward(socketLocalPort)
-	if err != nil {
-		return err
 	}
 
 	douyinLocalPort, err := sad.Device.Forward(AndroidDouyinPort)
@@ -272,11 +273,6 @@ func (sad *StubAndroidDriver) LogoutNoneUI(packageName string) error {
 		log.Err(err).Msgf("%v", res)
 		return err
 	}
-	fmt.Printf("%v", resp)
-	if err != nil {
-		return err
-	}
-	time.Sleep(3 * time.Second)
 	return nil
 }
 

@@ -1,9 +1,11 @@
 package driver_ext
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/httprunner/httprunner/v5/code"
@@ -16,8 +18,8 @@ import (
 )
 
 type StubIOSDriver struct {
+	Session *uixt.DriverSession
 	*uixt.WDADriver
-
 	timeout             time.Duration
 	douyinUrlPrefix     string
 	douyinLiteUrlPrefix string
@@ -30,6 +32,9 @@ const (
 )
 
 func NewStubIOSDriver(dev *uixt.IOSDevice) (*StubIOSDriver, error) {
+	// lazy setup WDA
+	dev.Options.LazySetup = true
+
 	wdaDriver, err := uixt.NewWDADriver(dev)
 	if err != nil {
 		return nil, err
@@ -37,6 +42,7 @@ func NewStubIOSDriver(dev *uixt.IOSDevice) (*StubIOSDriver, error) {
 	driver := &StubIOSDriver{
 		WDADriver: wdaDriver,
 		timeout:   10 * time.Second,
+		Session:   uixt.NewDriverSession(),
 	}
 
 	// setup driver
@@ -49,10 +55,6 @@ func NewStubIOSDriver(dev *uixt.IOSDevice) (*StubIOSDriver, error) {
 
 func (s *StubIOSDriver) Setup() error {
 	localPort, err := s.getLocalPort()
-	if err != nil {
-		return err
-	}
-	err = s.Session.SetupPortForward(localPort)
 	if err != nil {
 		return err
 	}
@@ -104,7 +106,7 @@ func (s *StubIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	return string(resp), nil
 }
 
-func (s *StubIOSDriver) OpenUrl(urlStr string, options ...option.ActionOption) (err error) {
+func (s *StubIOSDriver) OpenUrl(urlStr string, opts ...option.ActionOption) (err error) {
 	targetUrl := fmt.Sprintf("/openURL?url=%s", url.QueryEscape(urlStr))
 	_, err = s.Session.GET(targetUrl)
 	if err != nil {
@@ -152,17 +154,12 @@ func (s *StubIOSDriver) LoginDouyin(packageName, phoneNumber string, captcha, pa
 	} else {
 		return info, fmt.Errorf("password and capcha is empty")
 	}
-	bsJSON, err := json.Marshal(params)
-	if err != nil {
-		return info, err
-	}
-
 	urlPrefix, err := s.getUrlPrefix(packageName)
 	if err != nil {
 		return info, err
 	}
-	fullUrl := urlPrefix + "/host/login/account/" + urlPrefix
-	resp, err := s.Session.POST(bsJSON, fullUrl)
+	fullUrl := urlPrefix + "/host/login/account/"
+	resp, err := s.Session.POST(params, fullUrl)
 	if err != nil {
 		return info, err
 	}
@@ -219,11 +216,7 @@ func (s *StubIOSDriver) EnableDevtool(packageName string, enable bool) (err erro
 	params := map[string]interface{}{
 		"enable": enable,
 	}
-	bsJSON, err := json.Marshal(params)
-	if err != nil {
-		return err
-	}
-	resp, err := s.Session.POST(bsJSON, fullUrl)
+	resp, err := s.Session.POST(params, fullUrl)
 	if err != nil {
 		return err
 	}
@@ -277,4 +270,11 @@ func (s *StubIOSDriver) getUrlPrefix(packageName string) (urlPrefix string, err 
 		return "", fmt.Errorf("not support app %s", packageName)
 	}
 	return urlPrefix, nil
+}
+
+func (s *StubIOSDriver) ScreenShot(opts ...option.ActionOption) (*bytes.Buffer, error) {
+	if os.Getenv("WINGS_LOCAL") == "true" {
+		return s.Device.ScreenShot()
+	}
+	return s.WDADriver.ScreenShot()
 }

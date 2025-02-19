@@ -1,9 +1,17 @@
 package uixt
 
 import (
+	"crypto/md5"
 	"fmt"
+	"github.com/BurntSushi/locker"
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/internal/config"
+	"io"
 	"math"
 	"math/rand/v2"
+	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
@@ -258,4 +266,54 @@ func sleepStrict(startTime time.Time, strictMilliseconds int64) {
 		Int64("strictSleep(ms)", strictMilliseconds).
 		Msg("sleep remaining duration time")
 	time.Sleep(time.Duration(dur) * time.Millisecond)
+}
+
+func DownloadFileByUrl(fileUrl string) (filePath string, err error) {
+	hash := md5.Sum([]byte(fileUrl))
+	fileName := fmt.Sprintf("%x", hash)
+	filePath = filepath.Join(config.DownloadsPath, fileName)
+	locker.Lock(filePath)
+	defer locker.Unlock(filePath)
+	if builtin.FileExists(filePath) {
+		return filePath, nil
+	}
+
+	fmt.Printf("Downloading file to %s from URL %s\n", filePath, fileUrl)
+
+	// Create an HTTP client with default settings.
+	client := &http.Client{}
+
+	// Build the HTTP GET request.
+	req, err := http.NewRequest("GET", fileUrl, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// Perform the request.
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// Check the HTTP status code.
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to download file: %s", resp.Status)
+	}
+
+	// Create the output file.
+	outFile, err := os.Create(fileName)
+	if err != nil {
+		return "", err
+	}
+	defer outFile.Close()
+
+	// Copy the response body to the file.
+	_, err = io.Copy(outFile, resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Printf("File downloaded successfully: %s\n", fileName)
+	return filePath, nil
 }

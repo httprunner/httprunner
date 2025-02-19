@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -27,7 +28,7 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
-func StartTunnel(recordsPath string, tunnelInfoPort int, userspaceTUN bool) (err error) {
+func StartTunnel(ctx context.Context, recordsPath string, tunnelInfoPort int, userspaceTUN bool) (err error) {
 	pm, err := tunnel.NewPairRecordManager(recordsPath)
 	if err != nil {
 		return err
@@ -37,7 +38,7 @@ func StartTunnel(recordsPath string, tunnelInfoPort int, userspaceTUN bool) (err
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 		for {
-			err := tm.UpdateTunnels(context.Background())
+			err := tm.UpdateTunnels(ctx)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to update tunnels")
 			}
@@ -61,7 +62,7 @@ func RebootTunnel() (err error) {
 	if tunnelManager != nil {
 		_ = tunnelManager.Close()
 	}
-	return StartTunnel(os.TempDir(), ios.HttpApiPort(), true)
+	return StartTunnel(context.Background(), os.TempDir(), ios.HttpApiPort(), true)
 }
 
 func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error) {
@@ -164,6 +165,28 @@ func (dev *IOSDevice) Setup() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if version.GreaterThan(semver.MustParse("17.4.0")) {
+		info, err := tunnel.TunnelInfoForDevice(dev.DeviceEntry.Properties.SerialNumber, ios.HttpApiHost(), ios.HttpApiPort())
+		if err != nil {
+			return err
+		}
+		dev.DeviceEntry.UserspaceTUNPort = info.UserspaceTUNPort
+		dev.DeviceEntry.UserspaceTUN = info.UserspaceTUN
+		rsdService, err := ios.NewWithAddrPortDevice(info.Address, info.RsdPort, dev.DeviceEntry)
+		defer rsdService.Close()
+		rsdProvider, err := rsdService.Handshake()
+		if err != nil {
+			return err
+		}
+		device, err := ios.GetDeviceWithAddress(dev.DeviceEntry.Properties.SerialNumber, info.Address, rsdProvider)
+		if err != nil {
+			return err
+		}
+		device.UserspaceTUN = dev.DeviceEntry.UserspaceTUN
+		device.UserspaceTUNPort = dev.DeviceEntry.UserspaceTUNPort
+		dev.DeviceEntry = device
 	}
 
 	return nil
@@ -324,6 +347,22 @@ func (dev *IOSDevice) ListApps(appType ApplicationType) (apps []installationprox
 		return nil, err
 	}
 	return apps, nil
+}
+
+func (dev *IOSDevice) ScreenShot() (*bytes.Buffer, error) {
+	screenshotService, err := instruments.NewScreenshotService(dev.DeviceEntry)
+	if err != nil {
+		log.Error().Err(err).Msg("Starting screenshot service failed")
+		return nil, err
+	}
+	defer screenshotService.Close()
+
+	imageBytes, err := screenshotService.TakeScreenshot()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to task screenshot")
+		return nil, err
+	}
+	return bytes.NewBuffer(imageBytes), nil
 }
 
 func (dev *IOSDevice) GetAppInfo(packageName string) (appInfo installationproxy.AppInfo, err error) {

@@ -12,6 +12,7 @@ import (
 
 const (
 	ResultsDirName     = "results"
+	DownloadsDirName   = "downloads"
 	ScreenshotsDirName = "screenshots"
 	ActionLogDirName   = "action_log"
 )
@@ -20,6 +21,7 @@ var (
 	RootDir                 string
 	ResultsDir              string
 	ResultsPath             string
+	DownloadsPath           string
 	ScreenShotsPath         string
 	StartTime               = time.Now()
 	StartTimeStr            = StartTime.Format("20060102150405")
@@ -36,6 +38,7 @@ func init() {
 
 	ResultsDir = filepath.Join(ResultsDirName, StartTimeStr)
 	ResultsPath = filepath.Join(RootDir, ResultsDir)
+	DownloadsPath = filepath.Join(RootDir, filepath.Join(DownloadsDirName, StartTimeStr))
 	ScreenShotsPath = filepath.Join(ResultsPath, ScreenshotsDirName)
 	ActionLogFilePath = filepath.Join(ResultsDir, ActionLogDirName)
 	DeviceActionLogFilePath = "/sdcard/Android/data/io.appium.uiautomator2.server/files/hodor"

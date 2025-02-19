@@ -14,7 +14,7 @@ import (
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-func GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error) {
+func (p RouterBaseMethod) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver, err error) {
 	deviceObj, exists := c.Get("device")
 	var device uixt.IDevice
 	var driver uixt.IDriver
@@ -54,7 +54,6 @@ func GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
 			RenderErrorInitDriver(c, err)
 			return
 		}
-		_ = device.Setup()
 	case "ios":
 		device, err = uixt.NewIOSDevice(
 			option.WithUDID(serial),
@@ -75,6 +74,10 @@ func GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
 	default:
 		err = fmt.Errorf("[%s]: invalid platform", c.HandlerName())
 		return
+	}
+	err = device.Setup()
+	if err != nil {
+		log.Error().Err(err).Msg("setup device failed")
 	}
 	c.Set("device", device)
 	return device, nil
