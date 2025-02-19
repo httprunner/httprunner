@@ -566,6 +566,8 @@ func (wd *WDADriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 
 func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
+	actionOptions := option.NewActionOptions(opts...)
+	x, y = actionOptions.ApplyOffset(x, y)
 	data := map[string]interface{}{
 		"x": wd.toScale(x),
 		"y": wd.toScale(y),
@@ -582,6 +584,8 @@ func (wd *WDADriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) erro
 	if x, y, err = convertToAbsolutePoint(wd, x, y); err != nil {
 		return err
 	}
+	actionOptions := option.NewActionOptions(opts...)
+	x, y = actionOptions.ApplyOffset(x, y)
 
 	x = wd.toScale(x)
 	y = wd.toScale(y)
@@ -596,6 +600,7 @@ func (wd *WDADriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) erro
 // FIXME: hold not work
 func (wd *WDADriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
 	actionOptions := option.NewActionOptions(opts...)
+	x, y = actionOptions.ApplyOffset(x, y)
 	if actionOptions.Duration == 0 {
 		opts = append(opts, option.WithPressDuration(1))
 	}

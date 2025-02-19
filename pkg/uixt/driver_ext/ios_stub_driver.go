@@ -106,13 +106,11 @@ func (s *StubIOSDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 
 func (s *StubIOSDriver) OpenUrl(urlStr string, options ...option.ActionOption) (err error) {
 	targetUrl := fmt.Sprintf("/openURL?url=%s", url.QueryEscape(urlStr))
-	fmt.Sprintln(targetUrl)
-	resp, err := s.Session.GET(targetUrl)
+	_, err = s.Session.GET(targetUrl)
 	if err != nil {
 		log.Error().Err(err).Msg("get source err")
 		return nil
 	}
-	fmt.Sprintln(resp)
 	return nil
 }
 
