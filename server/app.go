@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/rs/zerolog/log"
 )
 
 func (r *Router) foregroundAppHandler(c *gin.Context) {
@@ -114,8 +115,7 @@ func (r *Router) uninstallAppHandler(c *gin.Context) {
 	}
 	err = driver.GetDevice().Uninstall(appUninstallReq.PackageName)
 	if err != nil {
-		RenderError(c, err)
-		return
+		log.Err(err).Msg("failed to uninstall app")
 	}
 	RenderSuccess(c, true)
 }
