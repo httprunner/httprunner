@@ -48,7 +48,7 @@ func (dExt *XTDriver) Install(filePath string, opts ...option.InstallOption) err
 	if _, ok := dExt.GetDevice().(*uixt.AndroidDevice); ok {
 		stopChan := make(chan struct{})
 		go func() {
-			ticker := time.NewTicker(8 * time.Second)
+			ticker := time.NewTicker(5 * time.Second)
 			defer ticker.Stop()
 
 			for {
