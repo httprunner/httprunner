@@ -354,21 +354,19 @@ func ConvertToStringSlice(val interface{}) ([]string, error) {
 }
 
 func GetFreePort() (int, error) {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		return 0, errors.Wrap(err, "resolve tcp addr failed")
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return 0, errors.Wrap(err, "listen tcp addr failed")
-	}
-	defer func() {
-		if err = l.Close(); err != nil {
-			log.Error().Err(err).Msg(fmt.Sprintf("close addr %s error", l.Addr().String()))
+	minPort := 20000
+	maxPort := 50000
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < 10; i++ {
+		port := rand.Intn(maxPort-minPort+1) + minPort
+		addr := fmt.Sprintf("0.0.0.0:%d", port)
+		l, err := net.Listen("tcp", addr)
+		if err == nil {
+			defer l.Close() // 端口成功绑定后立即释放，返回该端口号
+			return port, nil
 		}
-	}()
-	return l.Addr().(*net.TCPAddr).Port, nil
+	}
+	return 0, errors.New("failed to find available port in range")
 }
 
 func GetCurrentDay() string {
