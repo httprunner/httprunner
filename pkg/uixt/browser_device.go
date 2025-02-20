@@ -67,7 +67,7 @@ func (dev *BrowserDevice) GetPackageInfo(packageName string) (types.AppInfo, err
 
 func (dev *BrowserDevice) NewDriver() (driver IDriver, err error) {
 	// var driver WebDriver
-	driver, err = newBrowserWebDriver(dev.UUID())
+	driver, err = NewBrowserWebDriver(dev.UUID())
 	if err != nil {
 		return nil, err
 	}

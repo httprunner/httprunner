@@ -68,3 +68,7 @@ func (dExt *XTDriver) Install(filePath string, opts ...option.InstallOption) err
 
 	return dExt.GetDevice().Install(filePath, opts...)
 }
+
+func (dExt *XTDriver) GetWebDriver() uixt.IBrowserWebDriver {
+	return dExt.GetIDriver().(*StubBrowserDriver)
+}

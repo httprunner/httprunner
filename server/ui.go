@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -42,7 +41,7 @@ func (r *Router) uploadHandler(c *gin.Context) {
 		RenderError(c, err)
 		return
 	}
-	err = driver.GetIDriver().(*uixt.BrowserWebDriver).UploadFile(uploadRequest.X, uploadRequest.Y, uploadRequest.FileUrl, uploadRequest.FileFormat)
+	err = driver.GetWebDriver().UploadFile(uploadRequest.X, uploadRequest.Y, uploadRequest.FileUrl, uploadRequest.FileFormat)
 	if err != nil {
 		c.Abort()
 		return
@@ -62,7 +61,7 @@ func (r *Router) hoverHandler(c *gin.Context) {
 		return
 	}
 
-	err = driver.GetIDriver().(*uixt.BrowserWebDriver).Hover(hoverReq.X, hoverReq.Y)
+	err = driver.GetWebDriver().Hover(hoverReq.X, hoverReq.Y)
 
 	if err != nil {
 		RenderError(c, err)
@@ -84,7 +83,7 @@ func (r *Router) scrollHandler(c *gin.Context) {
 		return
 	}
 
-	err = driver.GetIDriver().(*uixt.BrowserWebDriver).Scroll(scrollReq.Delta)
+	err = driver.GetWebDriver().Scroll(scrollReq.Delta)
 
 	if err != nil {
 		RenderError(c, err)
