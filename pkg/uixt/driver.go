@@ -101,9 +101,22 @@ func (dExt *XTDriver) GetIDriver() IDriver {
 	return dExt.IDriver
 }
 
+func (dExt *XTDriver) GetWebDriver() IBrowserWebDriver {
+	return dExt.GetIDriver().(*BrowserWebDriver)
+}
+
 type IXTDriver interface {
 	IDriver
 	GetIDriver() IDriver
+	GetWebDriver() IBrowserWebDriver
 	GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error)
 	DoAction(action MobileAction) (err error)
+}
+
+type IBrowserWebDriver interface {
+	IDriver
+	Hover(x, y float64) (err error)
+	RightClick(x, y int) (err error)
+	Scroll(delta int) (err error)
+	UploadFile(x, y float64, FileUrl, FileFormat string) (err error)
 }
