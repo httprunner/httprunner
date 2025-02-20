@@ -34,7 +34,7 @@ type CreateBrowserResponse struct {
 	Data    BrowserInfo `json:"data"`
 }
 
-type BrowserWebDriver struct {
+type StubBrowserDriver struct {
 	*uixt.BrowserWebDriver
 	urlPrefix *url.URL
 	sessionId string
@@ -92,15 +92,13 @@ func CreateBrowser(timeout int) (browserInfo *BrowserInfo, err error) {
 	return &result.Data, nil
 }
 
-func NewStubBrowserDriver(browserId string) (driver *BrowserWebDriver, err error) {
-	log.Info().Msg("init NewStubBrowserDriver driver")
-	driver = new(BrowserWebDriver)
-	driver.urlPrefix = &url.URL{}
-	driver.urlPrefix.Host = BROWSER_LOCAL_ADDRESS
-	driver.urlPrefix.Scheme = "http"
-	driver.scale = 1.0
+func NewStubBrowserDriver(browserId string) (driver *StubBrowserDriver, err error) {
+	BrowserWebDriver, err := uixt.NewBrowserWebDriver(browserId)
 	if err != nil {
 		return nil, errors.Wrap(err, "create browser session failed")
+	}
+	driver = &StubBrowserDriver{
+		BrowserWebDriver: BrowserWebDriver,
 	}
 	driver.sessionId = browserId
 	if err != nil {
@@ -109,7 +107,7 @@ func NewStubBrowserDriver(browserId string) (driver *BrowserWebDriver, err error
 	return driver, nil
 }
 
-func (wd *BrowserWebDriver) Drag(fromX, fromY, toX, toY float64, options ...option.ActionOption) (err error) {
+func (wd *StubBrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.ActionOption) (err error) {
 	data := map[string]interface{}{
 		"from_x": fromX,
 		"from_y": fromY,
@@ -127,7 +125,7 @@ func (wd *BrowserWebDriver) Drag(fromX, fromY, toX, toY float64, options ...opti
 	return
 }
 
-func (wd *BrowserWebDriver) AppLaunch(packageName string) (err error) {
+func (wd *StubBrowserDriver) AppLaunch(packageName string) (err error) {
 	data := map[string]interface{}{
 		"url": packageName,
 	}
@@ -136,7 +134,7 @@ func (wd *BrowserWebDriver) AppLaunch(packageName string) (err error) {
 	return
 }
 
-func (wd *BrowserWebDriver) DeleteSession() (err error) {
+func (wd *StubBrowserDriver) DeleteSession() (err error) {
 
 	url := wd.concatURL("context", wd.sessionId)
 
@@ -170,7 +168,7 @@ func (wd *BrowserWebDriver) DeleteSession() (err error) {
 	return nil
 }
 
-func (wd *BrowserWebDriver) Scroll(delta int) (err error) {
+func (wd *StubBrowserDriver) Scroll(delta int) (err error) {
 	data := map[string]interface{}{
 		"delta": delta,
 	}
@@ -178,7 +176,7 @@ func (wd *BrowserWebDriver) Scroll(delta int) (err error) {
 	return err
 }
 
-func (wd *BrowserWebDriver) CreateNetListener() (*websocket.Conn, error) {
+func (wd *StubBrowserDriver) CreateNetListener() (*websocket.Conn, error) {
 	webSocketUrl := "ws://localhost:8093/websocket_net_listen"
 	c, _, err := websocket.DefaultDialer.Dial(webSocketUrl, nil)
 	if err != nil {
@@ -193,7 +191,7 @@ func (wd *BrowserWebDriver) CreateNetListener() (*websocket.Conn, error) {
 	return c, nil
 }
 
-func (wd *BrowserWebDriver) ClosePage(pageIndex int) (err error) {
+func (wd *StubBrowserDriver) ClosePage(pageIndex int) (err error) {
 	data := map[string]interface{}{
 		"page_index": pageIndex,
 	}
@@ -201,7 +199,7 @@ func (wd *BrowserWebDriver) ClosePage(pageIndex int) (err error) {
 	return err
 }
 
-func (wd *BrowserWebDriver) HoverBySelector(selector string, options ...option.ActionOption) (err error) {
+func (wd *StubBrowserDriver) HoverBySelector(selector string, options ...option.ActionOption) (err error) {
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -213,7 +211,7 @@ func (wd *BrowserWebDriver) HoverBySelector(selector string, options ...option.A
 	return err
 }
 
-func (wd *BrowserWebDriver) tapBySelector(selector string, options ...option.ActionOption) (err error) {
+func (wd *StubBrowserDriver) tapBySelector(selector string, options ...option.ActionOption) (err error) {
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -225,7 +223,7 @@ func (wd *BrowserWebDriver) tapBySelector(selector string, options ...option.Act
 	return err
 }
 
-func (wd *BrowserWebDriver) RightClick(x, y int) (err error) {
+func (wd *StubBrowserDriver) RightClick(x, y int) (err error) {
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
@@ -234,7 +232,7 @@ func (wd *BrowserWebDriver) RightClick(x, y int) (err error) {
 	return err
 }
 
-func (wd *BrowserWebDriver) RightclickbySelector(selector string, options ...option.ActionOption) (err error) {
+func (wd *StubBrowserDriver) RightclickbySelector(selector string, options ...option.ActionOption) (err error) {
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -246,7 +244,7 @@ func (wd *BrowserWebDriver) RightclickbySelector(selector string, options ...opt
 	return err
 }
 
-func (wd *BrowserWebDriver) GetElementTextBySelector(selector string, options ...option.ActionOption) (text string, err error) {
+func (wd *StubBrowserDriver) GetElementTextBySelector(selector string, options ...option.ActionOption) (text string, err error) {
 	actionOptions := option.NewActionOptions(options...)
 	uri := "ui/element_text?selector=" + selector
 	if actionOptions.Index > 0 {
@@ -260,7 +258,7 @@ func (wd *BrowserWebDriver) GetElementTextBySelector(selector string, options ..
 	return data["text"].(string), nil
 }
 
-func (wd *BrowserWebDriver) GetPageUrl(options ...option.ActionOption) (text string, err error) {
+func (wd *StubBrowserDriver) GetPageUrl(options ...option.ActionOption) (text string, err error) {
 	uri := "ui/page_url"
 	actionOptions := option.NewActionOptions(options...)
 	if actionOptions.Index > 0 {
@@ -274,7 +272,7 @@ func (wd *BrowserWebDriver) GetPageUrl(options ...option.ActionOption) (text str
 	return data["url"].(string), nil
 }
 
-func (wd *BrowserWebDriver) IsElementExistBySelector(selector string) (bool, error) {
+func (wd *StubBrowserDriver) IsElementExistBySelector(selector string) (bool, error) {
 	resp, err := wd.httpGet(wd.sessionId, "ui/element_exist", "?selector=", selector)
 	if err != nil {
 		return false, err
@@ -283,7 +281,7 @@ func (wd *BrowserWebDriver) IsElementExistBySelector(selector string) (bool, err
 	return data["exist"].(bool), nil
 }
 
-func (wd *BrowserWebDriver) Hover(x, y float64) (err error) {
+func (wd *StubBrowserDriver) Hover(x, y float64) (err error) {
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
@@ -292,7 +290,7 @@ func (wd *BrowserWebDriver) Hover(x, y float64) (err error) {
 	return err
 }
 
-func (wd *BrowserWebDriver) DoubleTapXY(x, y float64, option ...option.ActionOption) (err error) {
+func (wd *StubBrowserDriver) DoubleTapXY(x, y float64, option ...option.ActionOption) (err error) {
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
@@ -301,7 +299,7 @@ func (wd *BrowserWebDriver) DoubleTapXY(x, y float64, option ...option.ActionOpt
 	return err
 }
 
-func (wd *BrowserWebDriver) Input(text string, option ...option.ActionOption) (err error) {
+func (wd *StubBrowserDriver) Input(text string, option ...option.ActionOption) (err error) {
 	data := map[string]interface{}{
 		"text": text,
 	}
@@ -310,7 +308,7 @@ func (wd *BrowserWebDriver) Input(text string, option ...option.ActionOption) (e
 }
 
 // Source Return application elements tree
-func (wd *BrowserWebDriver) Source(srcOpt ...option.SourceOption) (string, error) {
+func (wd *StubBrowserDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	resp, err := wd.httpGet(http.MethodGet, wd.sessionId, "stub/source")
 
 	if err != nil {
@@ -326,7 +324,7 @@ func (wd *BrowserWebDriver) Source(srcOpt ...option.SourceOption) (string, error
 	return string(jsonData), err
 }
 
-func (wd *BrowserWebDriver) ScreenShot(options ...option.ActionOption) (*bytes.Buffer, error) {
+func (wd *StubBrowserDriver) ScreenShot(options ...option.ActionOption) (*bytes.Buffer, error) {
 	resp, err := wd.httpGet(http.MethodGet, wd.sessionId, "screenshot")
 	if err != nil {
 		return nil, err
@@ -339,7 +337,7 @@ func (wd *BrowserWebDriver) ScreenShot(options ...option.ActionOption) (*bytes.B
 	return res, err
 }
 
-func (wd *BrowserWebDriver) httpPOST(data interface{}, pathElem ...string) (response *WebAgentResponse, err error) {
+func (wd *StubBrowserDriver) httpPOST(data interface{}, pathElem ...string) (response *WebAgentResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
@@ -350,19 +348,19 @@ func (wd *BrowserWebDriver) httpPOST(data interface{}, pathElem ...string) (resp
 	return wd.httpRequest(http.MethodPost, wd.concatURL(pathElem...), bsJSON)
 }
 
-func (wd *BrowserWebDriver) httpGet(data interface{}, pathElem ...string) (response *WebAgentResponse, err error) {
+func (wd *StubBrowserDriver) httpGet(data interface{}, pathElem ...string) (response *WebAgentResponse, err error) {
 
 	return wd.httpRequest(http.MethodGet, wd.concatURL(pathElem...), nil)
 }
 
-func (wd *BrowserWebDriver) concatURL(elem ...string) string {
+func (wd *StubBrowserDriver) concatURL(elem ...string) string {
 	tmp, _ := url.Parse(wd.urlPrefix.String())
 	commonPath := path.Join(append([]string{wd.urlPrefix.Path}, "api/v1/")...)
 	tmp.Path = path.Join(append([]string{commonPath}, elem...)...)
 	return tmp.String()
 }
 
-func (wd *BrowserWebDriver) httpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (response *WebAgentResponse, err error) {
+func (wd *StubBrowserDriver) httpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (response *WebAgentResponse, err error) {
 	req, err := http.NewRequest(method, rawURL, bytes.NewBuffer(rawBody))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -403,7 +401,7 @@ func (wd *BrowserWebDriver) httpRequest(method string, rawURL string, rawBody []
 	return &result, err
 }
 
-func (wd *BrowserWebDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+func (wd *StubBrowserDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
 	data := map[string]interface{}{
 		"url":        packageName,
 		"web_cookie": password,
@@ -421,7 +419,7 @@ func (wd *BrowserWebDriver) LoginNoneUI(packageName, phoneNumber string, captcha
 	return loginSuccss, err
 }
 
-func (wd *BrowserWebDriver) WindowSize() (types.Size, error) {
+func (wd *StubBrowserDriver) WindowSize() (types.Size, error) {
 	resp, err := wd.httpGet(http.MethodGet, wd.sessionId, "window_size")
 	if err != nil {
 		return types.Size{}, err
@@ -435,7 +433,7 @@ func (wd *BrowserWebDriver) WindowSize() (types.Size, error) {
 	}, nil
 }
 
-func (wd *BrowserWebDriver) TapFloat(x, y float64, options ...option.ActionOption) error {
+func (wd *StubBrowserDriver) TapFloat(x, y float64, options ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(options...)
 	duration := 0.1
 	if actionOptions.Duration > 0 {
@@ -451,7 +449,7 @@ func (wd *BrowserWebDriver) TapFloat(x, y float64, options ...option.ActionOptio
 }
 
 // DoubleTap Sends a double tap event at the coordinate.
-func (wd *BrowserWebDriver) DoubleTap(x, y float64, options ...option.ActionOption) error {
+func (wd *StubBrowserDriver) DoubleTap(x, y float64, options ...option.ActionOption) error {
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
@@ -459,7 +457,7 @@ func (wd *BrowserWebDriver) DoubleTap(x, y float64, options ...option.ActionOpti
 	_, err := wd.httpPOST(data, wd.sessionId, "ui/double_tap")
 	return err
 }
-func (wd *BrowserWebDriver) UploadFile(x, y float64, FileUrl, FileFormat string) (err error) {
+func (wd *StubBrowserDriver) UploadFile(x, y float64, FileUrl, FileFormat string) (err error) {
 	data := map[string]interface{}{
 		"x":           x,
 		"y":           y,

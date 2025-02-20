@@ -90,8 +90,8 @@ func CreateBrowser(timeout int) (browserInfo *BrowserInfo, err error) {
 	return &result.Data, nil
 }
 
-func newBrowserWebDriver(browserId string) (driver *BrowserWebDriver, err error) {
-	log.Info().Msg("init newBrowserWebDriver driver")
+func NewBrowserWebDriver(browserId string) (driver *BrowserWebDriver, err error) {
+	log.Info().Msg("init NewBrowserWebDriver driver")
 	driver = new(BrowserWebDriver)
 	driver.urlPrefix = &url.URL{}
 	driver.urlPrefix.Host = BROWSER_LOCAL_ADDRESS
