@@ -19,7 +19,7 @@ type LogoutRequest struct {
 }
 
 type HttpResponse struct {
-	Code    int         `json:"code"`
-	Message string      `json:"msg"`
+	Code    int         `json:"errorCode"`
+	Message string      `json:"errorMsg"`
 	Result  interface{} `json:"result,omitempty"`
 }
