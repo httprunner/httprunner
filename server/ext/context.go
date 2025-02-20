@@ -37,8 +37,8 @@ func (p RouterBaseMethodExt) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver
 		server.RenderErrorInitDriver(c, err)
 		return
 	}
-	c.Set("driver", driver)
 	driverExt = driver_ext.NewXTDriver(driver,
 		ai.WithCVService(ai.CVServiceTypeVEDEM))
+	c.Set("driver", driverExt)
 	return driverExt, nil
 }

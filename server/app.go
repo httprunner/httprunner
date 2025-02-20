@@ -59,7 +59,7 @@ func (r *Router) clearAppHandler(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	err = driver.GetIDriver().(*uixt.ADBDriver).AppClear(appClearReq.PackageName)
+	err = driver.GetIDriver().AppClear(appClearReq.PackageName)
 	if err != nil {
 		RenderError(c, err)
 		return

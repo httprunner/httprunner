@@ -32,7 +32,7 @@ type IRouterBaseMethod interface {
 }
 
 func (r *Router) Init() {
-	r.Engine.Use(teardown())
+	r.Engine.Use(r.teardown())
 	r.Engine.GET("/ping", r.pingHandler)
 	r.Engine.GET("/", r.pingHandler)
 	r.Engine.POST("/", r.pingHandler)
@@ -91,7 +91,7 @@ func (r *Router) pingHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func teardown() gin.HandlerFunc {
+func (r *Router) teardown() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logID := c.Request.Header.Get("x-tt-logid")
 		startTime := time.Now()
@@ -107,7 +107,7 @@ func teardown() gin.HandlerFunc {
 
 		driverObj, exists := c.Get("driver")
 		if exists {
-			if driver, ok := driverObj.(*uixt.XTDriver); ok {
+			if driver, ok := driverObj.(uixt.IXTDriver); ok {
 				_ = driver.TearDown()
 			}
 		}
