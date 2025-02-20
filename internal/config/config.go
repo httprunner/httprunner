@@ -47,6 +47,9 @@ func init() {
 	if err := builtin.EnsureFolderExists(ResultsPath); err != nil {
 		log.Fatal().Err(err).Msg("create results directory failed")
 	}
+	if err := builtin.EnsureFolderExists(DownloadsPath); err != nil {
+		log.Fatal().Err(err).Msg("create results directory failed")
+	}
 	if err := builtin.EnsureFolderExists(ScreenShotsPath); err != nil {
 		log.Fatal().Err(err).Msg("create screenshots directory failed")
 	}

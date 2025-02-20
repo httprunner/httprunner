@@ -302,7 +302,7 @@ func DownloadFileByUrl(fileUrl string) (filePath string, err error) {
 	}
 
 	// Create the output file.
-	outFile, err := os.Create(fileName)
+	outFile, err := os.Create(filePath)
 	if err != nil {
 		return "", err
 	}
@@ -314,6 +314,6 @@ func DownloadFileByUrl(fileUrl string) (filePath string, err error) {
 		return "", err
 	}
 
-	fmt.Printf("File downloaded successfully: %s\n", fileName)
+	fmt.Printf("File downloaded successfully: %s\n", filePath)
 	return filePath, nil
 }
