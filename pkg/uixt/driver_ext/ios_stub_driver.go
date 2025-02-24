@@ -32,9 +32,6 @@ const (
 )
 
 func NewStubIOSDriver(dev *uixt.IOSDevice) (*StubIOSDriver, error) {
-	// lazy setup WDA
-	dev.Options.LazySetup = true
-
 	wdaDriver, err := uixt.NewWDADriver(dev)
 	if err != nil {
 		return nil, err
@@ -277,4 +274,9 @@ func (s *StubIOSDriver) ScreenShot(opts ...option.ActionOption) (*bytes.Buffer, 
 		return s.Device.ScreenShot()
 	}
 	return s.WDADriver.ScreenShot()
+}
+
+func (s *StubIOSDriver) AppLaunch(packageName string) error {
+	_ = s.EnableDevtool(packageName, true)
+	return s.WDADriver.AppLaunch(packageName)
 }
