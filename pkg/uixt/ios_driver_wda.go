@@ -157,7 +157,7 @@ func (wd *WDADriver) Setup() error {
 }
 
 func (wd *WDADriver) TearDown() error {
-	return wd.DeleteSession()
+	return nil
 }
 
 func (wd *WDADriver) InitSession(capabilities option.Capabilities) error {
@@ -611,13 +611,16 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	return err
 }
 
-func (wd *WDADriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
+func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
 	var err error
-	if x, y, err = convertToAbsolutePoint(wd, x, y); err != nil {
-		return err
-	}
 	actionOptions := option.NewActionOptions(opts...)
+	if !actionOptions.AbsCoordinate {
+		x, y, err = convertToAbsolutePoint(wd, x, y)
+		if err != nil {
+			return err
+		}
+	}
 	x, y = actionOptions.ApplyOffset(x, y)
 
 	x = wd.toScale(x)
