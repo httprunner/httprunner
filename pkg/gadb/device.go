@@ -640,16 +640,17 @@ func (d *Device) InstallAPK(apkPath string, args ...string) (string, error) {
 	haserr := func(ret string) bool {
 		return strings.Contains(ret, "Failure")
 	}
-	if d.HasFeature(FeatAbbExec) {
-		raw, err := d.installViaABBExec(apkFile)
-		if err != nil {
-			return "", fmt.Errorf("error installing: %v", err)
-		}
-		if haserr(string(raw)) {
-			return "", errors.New(string(raw))
-		}
-		return string(raw), err
-	}
+	// 该方法掉线不会返回error。导致误认为安装成功
+	//if d.HasFeature(FeatAbbExec) {
+	//	raw, err := d.installViaABBExec(apkFile)
+	//	if err != nil {
+	//		return "", fmt.Errorf("error installing: %v", err)
+	//	}
+	//	if haserr(string(raw)) {
+	//		return "", errors.New(string(raw))
+	//	}
+	//	return string(raw), err
+	//}
 
 	remote := fmt.Sprintf("/data/local/tmp/%s.apk", builtin.GenNameWithTimestamp("gadb_remote_%d"))
 	err = d.Push(apkFile, remote, time.Now())
