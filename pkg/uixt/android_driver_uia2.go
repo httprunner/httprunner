@@ -252,12 +252,15 @@ func (ud *UIA2Driver) Orientation() (orientation types.Orientation, err error) {
 	return
 }
 
-func (ud *UIA2Driver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
+func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	var err error
-	if x, y, err = convertToAbsolutePoint(ud, x, y); err != nil {
-		return err
-	}
 	actionOptions := option.NewActionOptions(opts...)
+	if !actionOptions.AbsCoordinate {
+		x, y, err = convertToAbsolutePoint(ud, x, y)
+		if err != nil {
+			return err
+		}
+	}
 	x, y = actionOptions.ApplyOffset(x, y)
 
 	data := map[string]interface{}{

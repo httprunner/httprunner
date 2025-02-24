@@ -161,7 +161,7 @@ func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 		ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
 }
 
-func (hd *HDCDriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
+func (hd *HDCDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	return types.ErrDriverNotImplemented
 }
 

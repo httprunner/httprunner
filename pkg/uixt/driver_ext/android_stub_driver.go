@@ -46,7 +46,7 @@ func NewStubAndroidDriver(dev *uixt.AndroidDevice) (*StubAndroidDriver, error) {
 	}
 
 	// setup driver
-	if err := driver.Setup(); err != nil {
+	if err = driver.Setup(); err != nil {
 		return nil, err
 	}
 

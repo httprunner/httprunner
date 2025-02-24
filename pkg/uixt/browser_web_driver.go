@@ -290,15 +290,6 @@ func (wd *BrowserWebDriver) Hover(x, y float64) (err error) {
 	return err
 }
 
-func (wd *BrowserWebDriver) DoubleTapXY(x, y float64, option ...option.ActionOption) (err error) {
-	data := map[string]interface{}{
-		"x": x,
-		"y": y,
-	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/double_tap")
-	return err
-}
-
 func (wd *BrowserWebDriver) Input(text string, option ...option.ActionOption) (err error) {
 	data := map[string]interface{}{
 		"text": text,

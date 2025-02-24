@@ -312,12 +312,15 @@ func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	return nil
 }
 
-func (ad *ADBDriver) DoubleTapXY(x, y float64, opts ...option.ActionOption) error {
+func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	var err error
-	if x, y, err = convertToAbsolutePoint(ad, x, y); err != nil {
-		return err
-	}
 	actionOptions := option.NewActionOptions(opts...)
+	if !actionOptions.AbsCoordinate {
+		x, y, err = convertToAbsolutePoint(ad, x, y)
+		if err != nil {
+			return err
+		}
+	}
 	x, y = actionOptions.ApplyOffset(x, y)
 
 	// adb shell input tap x y
@@ -542,12 +545,12 @@ func (ad *ADBDriver) SetRotation(rotation types.Rotation) (err error) {
 }
 
 func (ad *ADBDriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer, err error) {
-	resp, err := ad.runShellCommand("screencap", "-p")
+	resp, err := ad.Device.ScreenCap()
 	if err != nil {
 		return nil, errors.Wrapf(code.DeviceScreenShotError,
 			"adb screencap failed %v", err)
 	}
-	raw = bytes.NewBuffer([]byte(resp))
+	raw = bytes.NewBuffer(resp)
 
 	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.ScreenShotFileName != "" {

@@ -220,7 +220,7 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 				return fmt.Errorf("invalid tap location params: %v", params)
 			}
 			x, y := params[0], params[1]
-			return dExt.DoubleTapXY(x, y)
+			return dExt.DoubleTap(x, y)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_DoubleTapXY, action.Params)
 	case ACTION_Swipe:

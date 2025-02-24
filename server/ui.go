@@ -105,9 +105,9 @@ func (r *Router) doubleTapHandler(c *gin.Context) {
 	}
 
 	if tapReq.X < 1 && tapReq.Y < 1 {
-		err = driver.DoubleTapXY(tapReq.X, tapReq.Y)
+		err = driver.DoubleTap(tapReq.X, tapReq.Y)
 	} else {
-		err = driver.DoubleTapXY(tapReq.X, tapReq.Y,
+		err = driver.DoubleTap(tapReq.X, tapReq.Y,
 			option.WithAbsoluteCoordinate(true))
 	}
 
