@@ -151,22 +151,10 @@ const (
 )
 
 func (dev *IOSDevice) Setup() error {
-	images, err := dev.ListImages()
-	if err != nil {
-		return err
-	}
 	version, err := dev.getVersion()
 	if err != nil {
 		return err
 	}
-	if len(images) == 0 && version.LessThan(ios.IOS17()) {
-		// Notice: iOS 17.0+ does not need to mount developer image
-		err = dev.AutoMountImage(os.TempDir())
-		if err != nil {
-			return err
-		}
-	}
-
 	if version.GreaterThan(semver.MustParse("17.4.0")) {
 		info, err := tunnel.TunnelInfoForDevice(dev.DeviceEntry.Properties.SerialNumber, ios.HttpApiHost(), ios.HttpApiPort())
 		if err != nil {
@@ -188,7 +176,6 @@ func (dev *IOSDevice) Setup() error {
 		device.UserspaceTUNPort = dev.DeviceEntry.UserspaceTUNPort
 		dev.DeviceEntry = device
 	}
-
 	return nil
 }
 
