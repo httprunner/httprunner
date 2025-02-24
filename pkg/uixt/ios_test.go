@@ -196,7 +196,7 @@ func TestDriver_WDA_TapXY(t *testing.T) {
 func TestDriver_WDA_DoubleTapXY(t *testing.T) {
 	driver := setupWDADriverExt(t)
 
-	err := driver.DoubleTapXY(0.2, 0.2)
+	err := driver.DoubleTap(0.2, 0.2)
 	assert.Nil(t, err)
 }
 
