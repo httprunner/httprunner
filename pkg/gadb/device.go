@@ -641,16 +641,16 @@ func (d *Device) InstallAPK(apkPath string, args ...string) (string, error) {
 		return strings.Contains(ret, "Failure")
 	}
 	// 该方法掉线不会返回error。导致误认为安装成功
-	//if d.HasFeature(FeatAbbExec) {
-	//	raw, err := d.installViaABBExec(apkFile)
-	//	if err != nil {
-	//		return "", fmt.Errorf("error installing: %v", err)
-	//	}
-	//	if haserr(string(raw)) {
-	//		return "", errors.New(string(raw))
-	//	}
-	//	return string(raw), err
-	//}
+	if d.HasFeature(FeatAbbExec) {
+		raw, err := d.installViaABBExec(apkFile)
+		if err != nil {
+			return "", fmt.Errorf("error installing: %v", err)
+		}
+		if haserr(string(raw)) {
+			return "", errors.New(string(raw))
+		}
+		return string(raw), err
+	}
 
 	remote := fmt.Sprintf("/data/local/tmp/%s.apk", builtin.GenNameWithTimestamp("gadb_remote_%d"))
 	err = d.Push(apkFile, remote, time.Now())
@@ -722,20 +722,5 @@ func (d *Device) IsPackageRunning(packageName string) bool {
 }
 
 func (d *Device) ScreenCap() ([]byte, error) {
-	if d.HasFeature(FeatShellV2) {
-		return d.RunShellCommandV2WithBytes("screencap", "-p")
-	}
-
-	// for shell v1, screenshot buffer maybe truncated
-	// thus we firstly save it to local file and then pull it
-	tempPath := fmt.Sprintf("/data/local/tmp/screenshot_%d.png",
-		time.Now().Unix())
-	_, err := d.RunShellCommandWithBytes("screencap", "-p", tempPath)
-	if err != nil {
-		return nil, err
-	}
-
-	buffer := bytes.NewBuffer(nil)
-	err = d.Pull(tempPath, buffer)
-	return buffer.Bytes(), err
+	return d.RunShellCommandV2WithBytes("screencap", "-p")
 }
