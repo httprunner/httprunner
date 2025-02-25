@@ -29,6 +29,24 @@ func (r *Router) tapHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
+func (r *Router) rightClickHandler(c *gin.Context) {
+	var rightClickReq TapRequest
+	if err := c.ShouldBindJSON(&rightClickReq); err != nil {
+		RenderErrorValidateRequest(c, err)
+		return
+	}
+	driver, err := r.GetDriver(c)
+	if err != nil {
+		return
+	}
+	err = driver.GetWebDriver().RightClick(rightClickReq.X, rightClickReq.Y)
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, true)
+}
+
 func (r *Router) uploadHandler(c *gin.Context) {
 	var uploadRequest uploadRequest
 	if err := c.ShouldBindJSON(&uploadRequest); err != nil {
