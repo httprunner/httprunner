@@ -111,7 +111,6 @@ func (dev *AndroidDevice) Setup() error {
 	if err != nil {
 		return errors.Wrap(code.DeviceShellExecError, err.Error())
 	}
-
 	return nil
 }
 
@@ -337,6 +336,15 @@ func (dev *AndroidDevice) GetPackageInfo(packageName string) (types.AppInfo, err
 
 	log.Info().Interface("appInfo", appInfo).Msg("get package info")
 	return appInfo, nil
+}
+
+func (dev *AndroidDevice) ScreenShot() (*bytes.Buffer, error) {
+	raw, err := dev.Device.ScreenCap()
+	if err != nil {
+		return nil, errors.Wrapf(code.DeviceScreenShotError,
+			"adb screencap failed %v", err)
+	}
+	return bytes.NewBuffer(raw), nil
 }
 
 func (dev *AndroidDevice) GetAppInfo(packageName string) (app types.AppInfo, err error) {
