@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"bytes"
 	"code.byted.org/iesqa/ghdc"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -105,4 +106,8 @@ func (dev *HarmonyDevice) NewDriver() (IDriver, error) {
 		return nil, errors.Wrap(err, "init harmony driver failed")
 	}
 	return driver, nil
+}
+
+func (dev *HarmonyDevice) ScreenShot() (*bytes.Buffer, error) {
+	return nil, errors.New("not implemented")
 }

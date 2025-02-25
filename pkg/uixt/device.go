@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"bytes"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
@@ -17,7 +18,7 @@ type IDevice interface {
 	Uninstall(packageName string) error
 
 	GetPackageInfo(packageName string) (types.AppInfo, error)
-
+	ScreenShot() (*bytes.Buffer, error)
 	// TODO: remove?
 	LogEnabled() bool
 }

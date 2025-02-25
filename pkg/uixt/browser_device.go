@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"bytes"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 	"github.com/pkg/errors"
@@ -72,4 +73,8 @@ func (dev *BrowserDevice) NewDriver() (driver IDriver, err error) {
 		return nil, err
 	}
 	return driver, nil
+}
+
+func (dev *BrowserDevice) ScreenShot() (*bytes.Buffer, error) {
+	return nil, errors.New("not support")
 }
