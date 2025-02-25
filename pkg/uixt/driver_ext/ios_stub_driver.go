@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/httprunner/httprunner/v5/code"
@@ -18,8 +18,9 @@ import (
 )
 
 type StubIOSDriver struct {
-	Session *uixt.DriverSession
-	*uixt.WDADriver
+	Device              *uixt.IOSDevice
+	Session             *uixt.DriverSession
+	WDADriver           *uixt.WDADriver
 	timeout             time.Duration
 	douyinUrlPrefix     string
 	douyinLiteUrlPrefix string
@@ -32,14 +33,10 @@ const (
 )
 
 func NewStubIOSDriver(dev *uixt.IOSDevice) (*StubIOSDriver, error) {
-	wdaDriver, err := uixt.NewWDADriver(dev)
-	if err != nil {
-		return nil, err
-	}
 	driver := &StubIOSDriver{
-		WDADriver: wdaDriver,
-		timeout:   10 * time.Second,
-		Session:   uixt.NewDriverSession(),
+		Device:  dev,
+		timeout: 10 * time.Second,
+		Session: uixt.NewDriverSession(),
 	}
 
 	// setup driver
@@ -48,6 +45,14 @@ func NewStubIOSDriver(dev *uixt.IOSDevice) (*StubIOSDriver, error) {
 	}
 
 	return driver, nil
+}
+
+func (s *StubIOSDriver) SetupWda() (err error) {
+	if s.WDADriver != nil {
+		return nil
+	}
+	s.WDADriver, err = uixt.NewWDADriver(s.Device)
+	return err
 }
 
 func (s *StubIOSDriver) Setup() error {
@@ -270,13 +275,239 @@ func (s *StubIOSDriver) getUrlPrefix(packageName string) (urlPrefix string, err 
 }
 
 func (s *StubIOSDriver) ScreenShot(opts ...option.ActionOption) (*bytes.Buffer, error) {
-	if os.Getenv("WINGS_LOCAL") == "true" {
-		return s.Device.ScreenShot()
+	if err := s.SetupWda(); err != nil {
+		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
-	return s.WDADriver.ScreenShot()
+	return s.WDADriver.ScreenShot(opts...)
 }
 
 func (s *StubIOSDriver) AppLaunch(packageName string) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	err := s.WDADriver.AppLaunch(packageName)
+	if err != nil {
+		return err
+	}
 	_ = s.EnableDevtool(packageName, true)
-	return s.WDADriver.AppLaunch(packageName)
+	return nil
+}
+
+func (s *StubIOSDriver) GetDevice() uixt.IDevice {
+	return s.Device
+}
+
+func (s *StubIOSDriver) TearDown() error {
+	return nil
+}
+
+// session
+func (s *StubIOSDriver) InitSession(capabilities option.Capabilities) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.InitSession(capabilities)
+}
+func (s *StubIOSDriver) GetSession() *uixt.DriverSession {
+	if err := s.SetupWda(); err != nil {
+		_ = errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+		return nil
+	}
+	return s.WDADriver.GetSession()
+}
+
+func (s *StubIOSDriver) DeleteSession() error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.DeleteSession()
+}
+
+// device info and status
+func (s *StubIOSDriver) Status() (types.DeviceStatus, error) {
+	if err := s.SetupWda(); err != nil {
+		return types.DeviceStatus{}, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.Status()
+}
+
+func (s *StubIOSDriver) DeviceInfo() (types.DeviceInfo, error) {
+	if err := s.SetupWda(); err != nil {
+		return types.DeviceInfo{}, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.DeviceInfo()
+}
+
+func (s *StubIOSDriver) BatteryInfo() (types.BatteryInfo, error) {
+	if err := s.SetupWda(); err != nil {
+		return types.BatteryInfo{}, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.BatteryInfo()
+}
+
+func (s *StubIOSDriver) ForegroundInfo() (types.AppInfo, error) {
+	if err := s.SetupWda(); err != nil {
+		return types.AppInfo{}, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.ForegroundInfo()
+}
+
+func (s *StubIOSDriver) WindowSize() (types.Size, error) {
+	if err := s.SetupWda(); err != nil {
+		return types.Size{}, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.WindowSize()
+}
+
+func (s *StubIOSDriver) ScreenRecord(duration time.Duration) (videoPath string, err error) {
+	if err := s.SetupWda(); err != nil {
+		return "", errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.ScreenRecord(duration)
+}
+
+func (s *StubIOSDriver) Orientation() (types.Orientation, error) {
+	if err := s.SetupWda(); err != nil {
+		return "", errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.Orientation()
+}
+
+func (s *StubIOSDriver) Rotation() (types.Rotation, error) {
+	if err := s.SetupWda(); err != nil {
+		return types.Rotation{}, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.Rotation()
+}
+
+func (s *StubIOSDriver) SetRotation(rotation types.Rotation) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.SetRotation(rotation)
+}
+
+func (s *StubIOSDriver) SetIme(ime string) error {
+	return types.ErrDriverNotImplemented
+}
+
+func (s *StubIOSDriver) Home() error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.Home()
+}
+
+func (s *StubIOSDriver) Unlock() error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.Unlock()
+}
+
+func (s *StubIOSDriver) Back() error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.Back()
+}
+
+func (s *StubIOSDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.TapXY(x, y, opts...)
+}
+
+func (s *StubIOSDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.TapAbsXY(x, y, opts...)
+}
+
+func (s *StubIOSDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.DoubleTap(x, y, opts...)
+}
+
+func (s *StubIOSDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.TouchAndHold(x, y, opts...)
+}
+
+func (s *StubIOSDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.Drag(fromX, fromY, toX, toY, opts...)
+}
+
+func (s *StubIOSDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.Swipe(fromX, fromY, toX, toY, opts...)
+}
+
+func (s *StubIOSDriver) Input(text string, opts ...option.ActionOption) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.Input(text, opts...)
+}
+
+func (s *StubIOSDriver) Backspace(count int, opts ...option.ActionOption) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.Backspace(count, opts...)
+}
+
+func (s *StubIOSDriver) AppTerminate(packageName string) (bool, error) {
+	if err := s.SetupWda(); err != nil {
+		return false, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.AppTerminate(packageName)
+}
+
+func (s *StubIOSDriver) AppClear(packageName string) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.AppClear(packageName)
+}
+
+// image related
+func (s *StubIOSDriver) PushImage(localPath string) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.PushImage(localPath)
+}
+
+func (s *StubIOSDriver) ClearImages() error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.ClearImages()
+}
+
+// triggers the log capture and returns the log entries
+func (s *StubIOSDriver) StartCaptureLog(identifier ...string) error {
+	if err := s.SetupWda(); err != nil {
+		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.StartCaptureLog(identifier...)
+}
+
+func (s *StubIOSDriver) StopCaptureLog() (interface{}, error) {
+	if err := s.SetupWda(); err != nil {
+		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return s.WDADriver.StopCaptureLog()
 }
