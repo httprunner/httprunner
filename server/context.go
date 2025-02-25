@@ -19,7 +19,7 @@ func (p RouterBaseMethod) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver, e
 	var device uixt.IDevice
 	var driver uixt.IDriver
 	if !exists {
-		device, err = GetDevice(c)
+		device, err = p.GetDevice(c)
 		if err != nil {
 			return nil, err
 		}
@@ -39,7 +39,7 @@ func (p RouterBaseMethod) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver, e
 	return driverExt, nil
 }
 
-func GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
+func (p RouterBaseMethod) GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
 	platform := c.Param("platform")
 	serial := c.Param("serial")
 	if serial == "" {
@@ -96,7 +96,7 @@ func RenderError(c *gin.Context, err error) {
 	c.JSON(http.StatusInternalServerError,
 		HttpResponse{
 			Code:    code.GetErrorCode(err),
-			Message: err.Error(),
+			Message: "grey " + err.Error(),
 		},
 	)
 	c.Abort()
@@ -111,7 +111,7 @@ func RenderErrorInitDriver(c *gin.Context, err error) {
 	c.JSON(http.StatusInternalServerError,
 		HttpResponse{
 			Code:    errCode,
-			Message: "init driver failed",
+			Message: "grey init driver failed",
 		},
 	)
 	c.Abort()
@@ -121,7 +121,7 @@ func RenderErrorValidateRequest(c *gin.Context, err error) {
 	log.Error().Err(err).Msg("validate request failed")
 	c.JSON(http.StatusBadRequest, HttpResponse{
 		Code:    code.GetErrorCode(code.InvalidParamError),
-		Message: fmt.Sprintf("validate request param failed: %s", err.Error()),
+		Message: fmt.Sprintf("grey validate request param failed: %s", err.Error()),
 	})
 	c.Abort()
 }

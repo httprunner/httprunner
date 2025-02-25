@@ -16,7 +16,7 @@ type IStubDriver interface {
 	LogoutNoneUI(packageName string) error
 }
 
-func NewXTDriver(driver uixt.IDriver, opts ...ai.AIServiceOption) *XTDriver {
+func NewXTDriver(driver IStubDriver, opts ...ai.AIServiceOption) *XTDriver {
 	services := ai.NewAIService(opts...)
 	driverExt := &XTDriver{
 		XTDriver: &uixt.XTDriver{
@@ -24,11 +24,13 @@ func NewXTDriver(driver uixt.IDriver, opts ...ai.AIServiceOption) *XTDriver {
 			CVService:  services.ICVService,
 			LLMService: services.ILLMService,
 		},
+		IStubDriver: driver,
 	}
 	return driverExt
 }
 
 type XTDriver struct {
+	IStubDriver
 	*uixt.XTDriver
 }
 
@@ -48,7 +50,7 @@ func (dExt *XTDriver) Install(filePath string, opts ...option.InstallOption) err
 	if _, ok := dExt.GetDevice().(*uixt.AndroidDevice); ok {
 		stopChan := make(chan struct{})
 		go func() {
-			ticker := time.NewTicker(3 * time.Second)
+			ticker := time.NewTicker(5 * time.Second)
 			defer ticker.Stop()
 
 			for {
@@ -56,6 +58,7 @@ func (dExt *XTDriver) Install(filePath string, opts ...option.InstallOption) err
 				case <-ticker.C:
 					go func() {
 						_ = dExt.TapByOCR("^(.*无视风险安装|正在扫描.*|我知道了|稍后继续|稍后提醒|继续安装|知道了|确定|继续|完成|点击继续安装|继续安装旧版本|替换|.*正在安装|安装|授权本次安装|重新安装|仍要安装|更多详情|我知道了|已了解此应用未经检测.)$", option.WithRegex(true), option.WithIgnoreNotFoundError(true))
+						//_ = dExt.IDriver.TapByHierarchy("^(.*无视风险安装|正在扫描.*|我知道了|稍后继续|稍后提醒|继续安装|知道了|确定|继续|完成|点击继续安装|继续安装旧版本|替换|.*正在安装|安装|授权本次安装|重新安装|仍要安装|更多详情|我知道了|已了解此应用未经检测.)$", option.WithRegex(true), option.WithIgnoreNotFoundError(true))
 					}()
 				case <-stopChan:
 					log.Info().Msg("install complete")

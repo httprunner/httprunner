@@ -29,6 +29,7 @@ type RouterBaseMethod struct {
 
 type IRouterBaseMethod interface {
 	GetDriver(c *gin.Context) (driver uixt.IXTDriver, err error)
+	GetDevice(c *gin.Context) (driver uixt.IDevice, err error)
 }
 
 func (r *Router) Init() {

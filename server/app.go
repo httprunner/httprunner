@@ -25,7 +25,7 @@ func (r *Router) appInfoHandler(c *gin.Context) {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
-	device, err := GetDevice(c)
+	device, err := r.GetDevice(c)
 	if err != nil {
 		return
 	}

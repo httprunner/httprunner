@@ -1,9 +1,8 @@
 package server_ext
 
 import (
-	"strings"
-
 	"github.com/gin-gonic/gin"
+	"strings"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
@@ -16,9 +15,9 @@ func (p RouterBaseMethodExt) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver
 	serial := c.Param("serial")
 	deviceObj, exists := c.Get("device")
 	var device uixt.IDevice
-	var driver uixt.IDriver
+	var driver driver_ext.IStubDriver
 	if !exists {
-		device, err = server.GetDevice(c)
+		device, err = p.GetDevice(c)
 		if err != nil {
 			return nil, err
 		}
