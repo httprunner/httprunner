@@ -3,6 +3,7 @@ package server_ext
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"time"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt/driver_ext"
 	"github.com/httprunner/httprunner/v5/server"
@@ -57,6 +58,10 @@ func (r *RouterExt) sourceHandler(c *gin.Context) {
 	source, err := driver.Source()
 	if err != nil {
 		log.Warn().Err(err).Msg("get source failed")
+	}
+	if source == "{}" || source == "" {
+		time.Sleep(1 * time.Second)
+		source, err = driver.Source()
 	}
 	server.RenderSuccess(c, source)
 }
