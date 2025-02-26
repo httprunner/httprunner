@@ -44,6 +44,7 @@ func (r *Router) Init() {
 
 	// UI operations
 	apiV1PlatformSerial.POST("/ui/tap", r.tapHandler)
+	apiV1PlatformSerial.POST("/ui/right_click", r.rightClickHandler)
 	apiV1PlatformSerial.POST("/ui/double_tap", r.doubleTapHandler)
 	apiV1PlatformSerial.POST("/ui/drag", r.dragHandler)
 	apiV1PlatformSerial.POST("/ui/input", r.inputHandler)

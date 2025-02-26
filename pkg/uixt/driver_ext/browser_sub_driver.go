@@ -124,14 +124,15 @@ func (wd *StubBrowserDriver) LoginNoneUI(packageName, phoneNumber string, captch
 		"url":        packageName,
 		"web_cookie": password,
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "stub/login")
+	resp, err := wd.HttpPOST(data, wd.sessionId, "stub/login")
 
 	if err != nil {
 		return info, err
 	}
+	respdata := resp.Data.(map[string]interface{})
 	loginSuccss := AppLoginInfo{
 		IsLogin: true,
-		Uid:     wd.sessionId,
+		Uid:     respdata["webid"].(string),
 		Did:     password,
 	}
 	return loginSuccss, err

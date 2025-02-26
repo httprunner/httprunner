@@ -223,7 +223,7 @@ func (wd *BrowserWebDriver) tapBySelector(selector string, options ...option.Act
 	return err
 }
 
-func (wd *BrowserWebDriver) RightClick(x, y int) (err error) {
+func (wd *BrowserWebDriver) RightClick(x, y float64) (err error) {
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,

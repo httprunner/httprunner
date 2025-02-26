@@ -116,7 +116,7 @@ type IXTDriver interface {
 type IBrowserWebDriver interface {
 	IDriver
 	Hover(x, y float64) (err error)
-	RightClick(x, y int) (err error)
+	RightClick(x, y float64) (err error)
 	Scroll(delta int) (err error)
 	UploadFile(x, y float64, FileUrl, FileFormat string) (err error)
 }
