@@ -39,14 +39,14 @@ type DriverRequests struct {
 }
 
 const (
-	rawSessionID = "<NoSession>"
+	emptySessionID = "<SessionNotInit>"
 )
 
 func NewDriverSession() *DriverSession {
 	timeout := 30 * time.Second
 	session := &DriverSession{
 		ctx:     context.Background(),
-		ID:      rawSessionID,
+		ID:      emptySessionID,
 		timeout: timeout,
 		client: &http.Client{
 			Timeout: timeout,
@@ -101,8 +101,8 @@ func (s *DriverSession) concatURL(urlStr string) (string, error) {
 	}
 
 	// replace with session ID
-	if s.ID != rawSessionID {
-		urlStr = strings.Replace(urlStr, rawSessionID, s.ID, 1)
+	if s.ID != emptySessionID {
+		urlStr = strings.Replace(urlStr, emptySessionID, s.ID, 1)
 	}
 
 	// 处理完整 URL
