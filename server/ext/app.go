@@ -2,12 +2,12 @@ package server_ext
 
 import (
 	"fmt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/driver_ext"
 	"os"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/driver_ext"
 	"github.com/httprunner/httprunner/v5/server"
 )
 

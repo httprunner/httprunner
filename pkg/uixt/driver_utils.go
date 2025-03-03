@@ -3,21 +3,21 @@ package uixt
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/BurntSushi/locker"
-	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/internal/config"
 	"io"
 	"math"
 	"math/rand/v2"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -268,17 +268,27 @@ func sleepStrict(startTime time.Time, strictMilliseconds int64) {
 	time.Sleep(time.Duration(dur) * time.Millisecond)
 }
 
+// global file lock
+var (
+	fileLocks sync.Map
+)
+
 func DownloadFileByUrl(fileUrl string) (filePath string, err error) {
 	hash := md5.Sum([]byte(fileUrl))
 	fileName := fmt.Sprintf("%x", hash)
 	filePath = filepath.Join(config.DownloadsPath, fileName)
-	locker.Lock(filePath)
-	defer locker.Unlock(filePath)
+
+	// get or create file lock
+	lockI, _ := fileLocks.LoadOrStore(filePath, &sync.Mutex{})
+	lock := lockI.(*sync.Mutex)
+	lock.Lock()
+	defer lock.Unlock()
+
 	if builtin.FileExists(filePath) {
 		return filePath, nil
 	}
 
-	fmt.Printf("Downloading file to %s from URL %s\n", filePath, fileUrl)
+	log.Info().Str("fileUrl", fileUrl).Str("filePath", filePath).Msg("downloading file")
 
 	// Create an HTTP client with default settings.
 	client := &http.Client{}
@@ -314,6 +324,6 @@ func DownloadFileByUrl(fileUrl string) (filePath string, err error) {
 		return "", err
 	}
 
-	fmt.Printf("File downloaded successfully: %s\n", filePath)
+	log.Info().Str("filePath", filePath).Msg("download file success")
 	return filePath, nil
 }

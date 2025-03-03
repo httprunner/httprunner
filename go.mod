@@ -4,7 +4,6 @@ go 1.23.0
 
 require (
 	code.byted.org/iesqa/ghdc v0.0.0-20241009025217-ecb76cf5bd27
-	github.com/BurntSushi/locker v0.0.0-20171006230638-a6e239ea1c69
 	github.com/Masterminds/semver v1.5.0
 	github.com/andybalholm/brotli v1.0.4
 	github.com/danielpaulus/go-ios v1.0.161
@@ -54,7 +53,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/grandcat/zeroconf v1.0.0 // indirect
 	github.com/hashicorp/go-hclog v1.5.0 // indirect
 	github.com/hashicorp/go-plugin v1.4.10 // indirect

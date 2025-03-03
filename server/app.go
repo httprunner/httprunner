@@ -2,8 +2,9 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/pkg/uixt"
 )
 
 func (r *Router) foregroundAppHandler(c *gin.Context) {
