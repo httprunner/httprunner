@@ -11,38 +11,34 @@ import (
 )
 
 type BrowserDevice struct {
-	BrowserId string `json:"browser_id,omitempty" yaml:"browser_id,omitempty"`
-	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	Options *option.BrowserDeviceOptions
 }
 
-type BrowserDeviceOption func(*BrowserDevice)
-
-func WithBrowserId(serial string) BrowserDeviceOption {
-	return func(device *BrowserDevice) {
-		device.BrowserId = serial
-	}
-}
-
-func NewBrowserDevice(options ...BrowserDeviceOption) (device *BrowserDevice, err error) {
-	device = &BrowserDevice{}
-	for _, option := range options {
-		option(device)
+func NewBrowserDevice(opts ...option.BrowserDeviceOption) (device *BrowserDevice, err error) {
+	options := &option.BrowserDeviceOptions{}
+	for _, option := range opts {
+		option(options)
 	}
 
-	if device.BrowserId == "" {
+	if options.BrowserID == "" {
 		browserInfo, err := CreateBrowser(3600)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create browser")
 			return nil, err
 		}
-		device.BrowserId = browserInfo.ContextId
+		options.BrowserID = browserInfo.ContextId
 	}
+
+	device = &BrowserDevice{
+		Options: options,
+	}
+	log.Info().Str("browserID", device.Options.BrowserID).Msg("init browser device")
 
 	return device, nil
 }
 
 func (dev *BrowserDevice) UUID() string {
-	return dev.BrowserId
+	return dev.Options.BrowserID
 }
 
 func (dev *BrowserDevice) Setup() error {
@@ -50,7 +46,7 @@ func (dev *BrowserDevice) Setup() error {
 }
 
 func (dev *BrowserDevice) LogEnabled() bool {
-	return dev.LogOn
+	return dev.Options.LogOn
 }
 
 func (dev *BrowserDevice) Teardown() error {

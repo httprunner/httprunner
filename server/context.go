@@ -66,7 +66,7 @@ func (p RouterBaseMethod) GetDevice(c *gin.Context) (device uixt.IDevice, err er
 			return
 		}
 	case "browser":
-		device, err = uixt.NewBrowserDevice(uixt.WithBrowserId(serial))
+		device, err = uixt.NewBrowserDevice(option.WithBrowserID(serial))
 		if err != nil {
 			RenderErrorInitDriver(c, err)
 			return
