@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -227,11 +226,7 @@ func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 		encoder := png.Encoder{
 			CompressionLevel: png.BestCompression,
 		}
-		time1 := time.Now()
-		log.Info().Str("time1", time1.String()).Msg("png encode start")
 		err = encoder.Encode(file, img)
-		time2 := time.Now()
-		log.Info().Int64("time", time2.Sub(time1).Milliseconds()).Msg("png encode time")
 	case "gif":
 		gifOptions := &gif.Options{
 			NumColors: 256,
@@ -257,30 +252,26 @@ func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 }
 
 func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error) {
-	// 解码原始图像数据
+	// decode image from buffer
 	img, format, err := image.Decode(raw)
 	if err != nil {
 		return nil, err
 	}
 
-	// 创建一个用来保存压缩后数据的buffer
 	var buf bytes.Buffer
 
 	switch format {
-	// Convert to jpeg uniformly and compress with a compression rate of 95
+	// compress image
 	case "jpeg", "png":
 		jpegOptions := &jpeg.Options{Quality: 60}
-		time1 := time.Now()
 		err = jpeg.Encode(&buf, img, jpegOptions)
 		if err != nil {
 			return nil, err
 		}
-		time2 := time.Now()
-		log.Info().Int64("time", time2.Sub(time1).Milliseconds()).Msg("jpeg encode time")
 	default:
 		return nil, fmt.Errorf("unsupported image format: %s", format)
 	}
 
-	// 返回压缩后的图像数据
+	// return compressed image buffer
 	return &buf, nil
 }
