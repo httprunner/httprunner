@@ -10,12 +10,14 @@ type TapRequest struct {
 	Duration float64               `json:"duration"`
 	Options  *option.ActionOptions `json:"options,omitempty"`
 }
+
 type uploadRequest struct {
 	X          float64 `json:"x"`
 	Y          float64 `json:"y"`
 	FileUrl    string  `json:"file_url"`
 	FileFormat string  `json:"file_format"`
 }
+
 type DragRequest struct {
 	FromX         float64               `json:"from_x" binding:"required"`
 	FromY         float64               `json:"from_y" binding:"required"`

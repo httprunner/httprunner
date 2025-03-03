@@ -12,10 +12,11 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 const BROWSER_LOCAL_ADDRESS = "localhost:8093"
@@ -71,8 +72,7 @@ func CreateBrowser(timeout int) (browserInfo *BrowserInfo, err error) {
 		return nil, err
 	}
 
-	rawResp, err := io.ReadAll(resp.Body)
-
+	rawResp, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New(resp.Status)
 	}
@@ -96,13 +96,7 @@ func NewBrowserWebDriver(browserId string) (driver *BrowserWebDriver, err error)
 	driver.urlPrefix.Host = BROWSER_LOCAL_ADDRESS
 	driver.urlPrefix.Scheme = "http"
 	driver.scale = 1.0
-	if err != nil {
-		return nil, errors.Wrap(err, "create browser session failed")
-	}
 	driver.sessionId = browserId
-	if err != nil {
-		return nil, fmt.Errorf("adb forward: %w", err)
-	}
 	return driver, nil
 }
 
@@ -148,8 +142,7 @@ func (wd *BrowserWebDriver) DeleteSession() (err error) {
 		return err
 	}
 
-	rawResp, err := io.ReadAll(resp.Body)
-
+	rawResp, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		return errors.New(resp.Status)
 	}
@@ -185,7 +178,7 @@ func (wd *BrowserWebDriver) CreateNetListener() (*websocket.Conn, error) {
     "context_id":"%v"
 	}`, wd.sessionId)
 	err = c.WriteMessage(websocket.TextMessage, []byte(initMessage))
-	return c, nil
+	return c, err
 }
 
 func (wd *BrowserWebDriver) ClosePage(pageIndex int) (err error) {
@@ -362,8 +355,7 @@ func (wd *BrowserWebDriver) httpRequest(method string, rawURL string, rawBody []
 		return nil, err
 	}
 
-	rawResp, err := io.ReadAll(resp.Body)
-
+	rawResp, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New(resp.Status)
 	}

@@ -2,16 +2,19 @@ package uixt
 
 import (
 	"bytes"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 )
 
 type BrowserDevice struct {
 	BrowserId string `json:"browser_id,omitempty" yaml:"browser_id,omitempty"`
 	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
 }
+
 type BrowserDeviceOption func(*BrowserDevice)
 
 func WithBrowserId(serial string) BrowserDeviceOption {
