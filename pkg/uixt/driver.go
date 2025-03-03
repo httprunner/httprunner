@@ -118,5 +118,6 @@ type IBrowserWebDriver interface {
 	Hover(x, y float64) (err error)
 	RightClick(x, y float64) (err error)
 	Scroll(delta int) (err error)
+	// TODO: move x,y parameters to option
 	UploadFile(x, y float64, FileUrl, FileFormat string) (err error)
 }

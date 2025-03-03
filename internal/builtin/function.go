@@ -47,10 +47,6 @@ func escapeQuotes(s string) string {
 	return quoteEscaper.Replace(s)
 }
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
 func random_range(a, b float64) float64 {
 	return a + rand.Float64()*(b-a)
 }

@@ -67,7 +67,6 @@ func CreateBrowser(timeout int) (browserInfo *BrowserInfo, err error) {
 		Timeout: 30 * time.Second, // 设置超时时间为5秒
 	}
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +134,6 @@ func (wd *BrowserWebDriver) AppLaunch(packageName string) (err error) {
 }
 
 func (wd *BrowserWebDriver) DeleteSession() (err error) {
-
 	url := wd.concatURL("context", wd.sessionId)
 
 	req, err := http.NewRequest("DELETE", url, nil)
@@ -146,7 +144,6 @@ func (wd *BrowserWebDriver) DeleteSession() (err error) {
 		Timeout: 60 * time.Second, // 设置超时时间为5秒
 	}
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return err
 	}
@@ -301,13 +298,11 @@ func (wd *BrowserWebDriver) Input(text string, option ...option.ActionOption) (e
 // Source Return application elements tree
 func (wd *BrowserWebDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	resp, err := wd.HttpGet(http.MethodGet, wd.sessionId, "stub/source")
-
 	if err != nil {
 		return "", err
 	}
 
 	jsonData, err := json.Marshal(resp.Data)
-
 	if err != nil {
 		return "", err
 	}
@@ -340,7 +335,6 @@ func (wd *BrowserWebDriver) HttpPOST(data interface{}, pathElem ...string) (resp
 }
 
 func (wd *BrowserWebDriver) HttpGet(data interface{}, pathElem ...string) (response *WebAgentResponse, err error) {
-
 	return wd.httpRequest(http.MethodGet, wd.concatURL(pathElem...), nil)
 }
 
@@ -364,7 +358,6 @@ func (wd *BrowserWebDriver) httpRequest(method string, rawURL string, rawBody []
 		Timeout: 60 * time.Second, // 设置超时时间为5秒
 	}
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -424,6 +417,7 @@ func (wd *BrowserWebDriver) WindowSize() (types.Size, error) {
 func (wd *BrowserWebDriver) Screen() (Screen, error) {
 	return Screen{}, errors.New("not support")
 }
+
 func (wd *BrowserWebDriver) Scale() (float64, error) {
 	return 0, errors.New("not support")
 }
@@ -460,6 +454,7 @@ func (wd *BrowserWebDriver) Back() error {
 func (wd *BrowserWebDriver) AppClear(packageName string) error {
 	return errors.New("not support")
 }
+
 func (wd *BrowserWebDriver) ClearImages() error {
 	return errors.New("not support")
 }
@@ -502,6 +497,7 @@ func (wd *BrowserWebDriver) DoubleTap(x, y float64, options ...option.ActionOpti
 	_, err := wd.HttpPOST(data, wd.sessionId, "ui/double_tap")
 	return err
 }
+
 func (wd *BrowserWebDriver) UploadFile(x, y float64, FileUrl, FileFormat string) (err error) {
 	data := map[string]interface{}{
 		"x":           x,
@@ -543,6 +539,7 @@ func (wd *BrowserWebDriver) SendKeys(text string, options ...option.ActionOption
 func (wd *BrowserWebDriver) Clear(packageName string) error {
 	return errors.New("not support")
 }
+
 func (wd *BrowserWebDriver) Setup() error {
 	return nil
 }
@@ -590,9 +587,11 @@ func (wd *BrowserWebDriver) AccessibleSource() (string, error) {
 func (wd *BrowserWebDriver) HealthCheck() error {
 	return errors.New("not support")
 }
+
 func (wd *BrowserWebDriver) GetAppiumSettings() (map[string]interface{}, error) {
 	return nil, errors.New("not support")
 }
+
 func (wd *BrowserWebDriver) SetAppiumSettings(settings map[string]interface{}) (map[string]interface{}, error) {
 	return nil, errors.New("not support")
 }
@@ -605,9 +604,11 @@ func (wd *BrowserWebDriver) IsHealthy() (bool, error) {
 func (wd *BrowserWebDriver) StartCaptureLog(identifier ...string) (err error) {
 	return errors.New("not support")
 }
+
 func (wd *BrowserWebDriver) StopCaptureLog() (result interface{}, err error) {
 	return nil, errors.New("not support")
 }
+
 func (wd *BrowserWebDriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
 	return "", errors.New("not support")
 }

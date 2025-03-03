@@ -356,7 +356,6 @@ func ConvertToStringSlice(val interface{}) ([]string, error) {
 func GetFreePort() (int, error) {
 	minPort := 20000
 	maxPort := 50000
-	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < 10; i++ {
 		port := rand.Intn(maxPort-minPort+1) + minPort
 		addr := fmt.Sprintf("0.0.0.0:%d", port)
@@ -366,7 +365,7 @@ func GetFreePort() (int, error) {
 			return port, nil
 		}
 	}
-	return 0, errors.New("failed to find available port in range")
+	return 0, errors.New("failed to get available port")
 }
 
 func GetCurrentDay() string {
