@@ -722,5 +722,25 @@ func (d *Device) IsPackageRunning(packageName string) bool {
 }
 
 func (d *Device) ScreenCap() ([]byte, error) {
-	return d.RunShellCommandV2WithBytes("screencap", "-p")
+	if d.HasFeature(FeatShellV2) {
+		return d.RunShellCommandV2WithBytes("screencap", "-p")
+	}
+
+	// for shell v1, screenshot buffer maybe truncated
+	// thus we firstly save it to local file and then pull it
+	tempPath := fmt.Sprintf("/data/local/tmp/screenshot_%d.png",
+		time.Now().Unix())
+	_, err := d.RunShellCommandWithBytes("screencap", "-p", tempPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// remove temp file
+	defer func() {
+		go d.RunShellCommand("rm", tempPath)
+	}()
+
+	buffer := bytes.NewBuffer(nil)
+	err = d.Pull(tempPath, buffer)
+	return buffer.Bytes(), err
 }
