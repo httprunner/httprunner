@@ -1,8 +1,9 @@
 package server_ext
 
 import (
-	"github.com/gin-gonic/gin"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
@@ -12,7 +13,6 @@ import (
 
 func (p RouterBaseMethodExt) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver, err error) {
 	platform := c.Param("platform")
-	serial := c.Param("serial")
 	deviceObj, exists := c.Get("device")
 	var device uixt.IDevice
 	var driver driver_ext.IStubDriver
@@ -30,7 +30,7 @@ func (p RouterBaseMethodExt) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver
 	case "ios":
 		driver, err = driver_ext.NewStubIOSDriver(device.(*uixt.IOSDevice))
 	case "browser":
-		driver, err = driver_ext.NewStubBrowserDriver(serial)
+		driver, err = driver_ext.NewStubBrowserDriver(device.(*uixt.BrowserDevice))
 	}
 	if err != nil {
 		server.RenderErrorInitDriver(c, err)

@@ -102,7 +102,7 @@ func (dExt *XTDriver) GetIDriver() IDriver {
 }
 
 func (dExt *XTDriver) GetWebDriver() IBrowserWebDriver {
-	return dExt.GetIDriver().(*BrowserWebDriver)
+	return dExt.GetIDriver().(*BrowserDriver)
 }
 
 type IXTDriver interface {

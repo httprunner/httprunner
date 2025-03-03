@@ -3,7 +3,6 @@ package driver_ext
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -30,7 +29,7 @@ type CreateBrowserResponse struct {
 }
 
 type StubBrowserDriver struct {
-	*uixt.BrowserWebDriver
+	*uixt.BrowserDriver
 	urlPrefix *url.URL
 	sessionId string
 	scale     float64
@@ -64,7 +63,6 @@ func CreateBrowser(timeout int) (browserInfo *BrowserInfo, err error) {
 		Timeout: 30 * time.Second, // 设置超时时间为5秒
 	}
 	resp, err := client.Do(req)
-
 	if err != nil {
 		return nil, err
 	}
@@ -87,31 +85,26 @@ func CreateBrowser(timeout int) (browserInfo *BrowserInfo, err error) {
 	return &result.Data, nil
 }
 
-func NewStubBrowserDriver(browserId string) (driver *StubBrowserDriver, err error) {
-	BrowserWebDriver, err := uixt.NewBrowserWebDriver(browserId)
+func NewStubBrowserDriver(device *uixt.BrowserDevice) (driver *StubBrowserDriver, err error) {
+	BrowserWebDriver, err := uixt.NewBrowserDriver(device)
 	if err != nil {
 		return nil, errors.Wrap(err, "create browser session failed")
 	}
 	driver = &StubBrowserDriver{
-		BrowserWebDriver: BrowserWebDriver,
+		BrowserDriver: BrowserWebDriver,
 	}
-	driver.sessionId = browserId
-	if err != nil {
-		return nil, fmt.Errorf("adb forward: %w", err)
-	}
+	driver.sessionId = device.UUID()
 	return driver, nil
 }
 
 // Source Return application elements tree
 func (wd *StubBrowserDriver) Source(srcOpt ...option.SourceOption) (string, error) {
-	resp, err := wd.BrowserWebDriver.HttpGet(http.MethodGet, wd.sessionId, "stub/source")
-
+	resp, err := wd.BrowserDriver.HttpGet(http.MethodGet, wd.sessionId, "stub/source")
 	if err != nil {
 		return "", err
 	}
 
 	jsonData, err := json.Marshal(resp.Data)
-
 	if err != nil {
 		return "", err
 	}
@@ -125,7 +118,6 @@ func (wd *StubBrowserDriver) LoginNoneUI(packageName, phoneNumber string, captch
 		"web_cookie": password,
 	}
 	resp, err := wd.HttpPOST(data, wd.sessionId, "stub/login")
-
 	if err != nil {
 		return info, err
 	}
