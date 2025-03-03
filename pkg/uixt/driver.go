@@ -52,7 +52,7 @@ type IDriver interface {
 	// tap
 	TapXY(x, y float64, opts ...option.ActionOption) error     // by percentage
 	TapAbsXY(x, y float64, opts ...option.ActionOption) error  // by absolute coordinate
-	DoubleTap(x, y float64, opts ...option.ActionOption) error // by percentage
+	DoubleTap(x, y float64, opts ...option.ActionOption) error // by absolute coordinate
 	TouchAndHold(x, y float64, opts ...option.ActionOption) error
 	// swipe
 	Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error

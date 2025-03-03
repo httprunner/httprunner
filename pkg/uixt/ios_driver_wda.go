@@ -615,7 +615,7 @@ func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
 	var err error
 	actionOptions := option.NewActionOptions(opts...)
-	if !actionOptions.AbsCoordinate {
+	if actionOptions.Relative {
 		x, y, err = convertToAbsolutePoint(wd, x, y)
 		if err != nil {
 			return err
@@ -648,7 +648,7 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
 	var err error
 	actionOptions := option.NewActionOptions(opts...)
-	if !actionOptions.AbsCoordinate {
+	if actionOptions.Relative {
 		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(wd, fromX, fromY, toX, toY)
 		if err != nil {
 			return err

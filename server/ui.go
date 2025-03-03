@@ -17,8 +17,7 @@ func (r *Router) tapHandler(c *gin.Context) {
 	}
 	if tapReq.Duration > 0 {
 		err = driver.Drag(tapReq.X, tapReq.Y, tapReq.X, tapReq.Y,
-			option.WithDuration(tapReq.Duration),
-			option.WithAbsoluteCoordinate(true))
+			option.WithDuration(tapReq.Duration))
 	} else {
 		err = driver.TapAbsXY(tapReq.X, tapReq.Y)
 	}
@@ -66,6 +65,7 @@ func (r *Router) uploadHandler(c *gin.Context) {
 	}
 	RenderSuccess(c, true)
 }
+
 func (r *Router) hoverHandler(c *gin.Context) {
 	var hoverReq HoverRequest
 	if err := c.ShouldBindJSON(&hoverReq); err != nil {
@@ -125,8 +125,7 @@ func (r *Router) doubleTapHandler(c *gin.Context) {
 	if tapReq.X < 1 && tapReq.Y < 1 {
 		err = driver.DoubleTap(tapReq.X, tapReq.Y)
 	} else {
-		err = driver.DoubleTap(tapReq.X, tapReq.Y,
-			option.WithAbsoluteCoordinate(true))
+		err = driver.DoubleTap(tapReq.X, tapReq.Y)
 	}
 
 	if err != nil {
@@ -151,8 +150,8 @@ func (r *Router) dragHandler(c *gin.Context) {
 	}
 
 	err = driver.Drag(dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY,
-		option.WithDuration(dragReq.Duration), option.WithPressDuration(dragReq.PressDuration),
-		option.WithAbsoluteCoordinate(true))
+		option.WithDuration(dragReq.Duration),
+		option.WithPressDuration(dragReq.PressDuration))
 	if err != nil {
 		RenderError(c, err)
 		return

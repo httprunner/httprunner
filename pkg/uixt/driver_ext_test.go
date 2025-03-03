@@ -4,6 +4,7 @@ package uixt
 
 import (
 	"testing"
+	"time"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
@@ -79,6 +80,34 @@ func setupDriverExt(t *testing.T) *XTDriver {
 		return setupHDCDriverExt(t)
 	default:
 		return setupADBDriverExt(t)
+	}
+}
+
+func TestDriverExt_FindScreenText(t *testing.T) {
+	driver := setupDriverExt(t)
+	point, err := driver.FindScreenText("首页")
+	assert.Nil(t, err)
+	t.Log(point)
+}
+
+func TestDriverExt_Seek(t *testing.T) {
+	driver := setupDriverExt(t)
+
+	point, err := driver.FindScreenText("首页")
+	assert.Nil(t, err)
+
+	size, err := driver.WindowSize()
+	assert.Nil(t, err)
+	width := size.Width
+
+	y := point.Y - 40
+	for i := 0; i < 5; i++ {
+		err := driver.Swipe(0.5, 0.8, 0.5, 0.2)
+		assert.Nil(t, err)
+		time.Sleep(1 * time.Second)
+		err = driver.Drag(20, y, float64(width)*0.75, y)
+		assert.Nil(t, err)
+		time.Sleep(1 * time.Second)
 	}
 }
 

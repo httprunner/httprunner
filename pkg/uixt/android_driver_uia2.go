@@ -255,7 +255,7 @@ func (ud *UIA2Driver) Orientation() (orientation types.Orientation, err error) {
 func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	var err error
 	actionOptions := option.NewActionOptions(opts...)
-	if !actionOptions.AbsCoordinate {
+	if actionOptions.Relative {
 		x, y, err = convertToAbsolutePoint(ud, x, y)
 		if err != nil {
 			return err
@@ -352,7 +352,7 @@ func (ud *UIA2Driver) TouchAndHold(x, y float64, opts ...option.ActionOption) (e
 func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	var err error
 	actionOptions := option.NewActionOptions(opts...)
-	if !actionOptions.AbsCoordinate {
+	if actionOptions.Relative {
 		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ud, fromX, fromY, toX, toY)
 		if err != nil {
 			return err
@@ -381,7 +381,7 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
 	var err error
 	actionOptions := option.NewActionOptions(opts...)
-	if !actionOptions.AbsCoordinate {
+	if actionOptions.Relative {
 		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ud, fromX, fromY, toX, toY)
 		if err != nil {
 			return err
