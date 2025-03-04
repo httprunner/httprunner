@@ -188,5 +188,5 @@ func GetProjectRootDirPath(path string) (rootDir string, err error) {
 	// failed to locate project root dir
 	// maybe project plugin debugtalk.xx and proj.json are not exist
 	// use current dir instead
-	return config.RootDir, nil
+	return config.GetConfig().RootDir, nil
 }

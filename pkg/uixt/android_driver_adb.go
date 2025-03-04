@@ -677,10 +677,10 @@ func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 	// 没有解析到打点日志，走兜底逻辑
 	if len(pointRes) == 0 {
 		log.Info().Msg("action log is null, use action file >>>")
-		logFilePathPrefix := fmt.Sprintf("%v/data", config.ActionLogFilePath)
+		logFilePathPrefix := fmt.Sprintf("%v/data", config.GetConfig().ActionLogFilePath)
 		files := []string{}
-		ad.Device.RunShellCommand("pull", config.DeviceActionLogFilePath, config.ActionLogFilePath)
-		err = filepath.Walk(config.ActionLogFilePath, func(path string, info fs.FileInfo, err error) error {
+		ad.Device.RunShellCommand("pull", config.GetConfig().DeviceActionLogFilePath, config.GetConfig().ActionLogFilePath)
+		err = filepath.Walk(config.GetConfig().ActionLogFilePath, func(path string, info fs.FileInfo, err error) error {
 			// 只是需要日志文件
 			if ok := strings.Contains(path, logFilePathPrefix); ok {
 				files = append(files, path)
@@ -800,7 +800,7 @@ func (ad *ADBDriver) GetIme() (ime string, err error) {
 
 func (ad *ADBDriver) ScreenRecord(duration time.Duration) (videoPath string, err error) {
 	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
-	fileName := filepath.Join(config.ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
+	fileName := filepath.Join(config.GetConfig().ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
 
 	file, err := os.Create(fileName)
 	if err != nil {

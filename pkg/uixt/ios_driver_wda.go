@@ -894,7 +894,7 @@ func (wd *WDADriver) triggerWDALog(data map[string]interface{}) (rawResp []byte,
 
 func (wd *WDADriver) ScreenRecord(duration time.Duration) (videoPath string, err error) {
 	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
-	fileName := filepath.Join(config.ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
+	fileName := filepath.Join(config.GetConfig().ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
 
 	file, err := os.Create(fileName)
 	if err != nil {

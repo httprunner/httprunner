@@ -276,7 +276,7 @@ var (
 func DownloadFileByUrl(fileUrl string) (filePath string, err error) {
 	hash := md5.Sum([]byte(fileUrl))
 	fileName := fmt.Sprintf("%x", hash)
-	filePath = filepath.Join(config.DownloadsPath, fileName)
+	filePath = filepath.Join(config.GetConfig().DownloadsPath, fileName)
 
 	// get or create file lock
 	lockI, _ := fileLocks.LoadOrStore(filePath, &sync.Mutex{})
