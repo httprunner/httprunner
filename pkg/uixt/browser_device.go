@@ -15,11 +15,7 @@ type BrowserDevice struct {
 }
 
 func NewBrowserDevice(opts ...option.BrowserDeviceOption) (device *BrowserDevice, err error) {
-	options := &option.BrowserDeviceOptions{}
-	for _, option := range opts {
-		option(options)
-	}
-
+	options := option.NewBrowserDeviceOptions(opts...)
 	if options.BrowserID == "" {
 		browserInfo, err := CreateBrowser(3600)
 		if err != nil {
