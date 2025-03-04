@@ -7,12 +7,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
-
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
