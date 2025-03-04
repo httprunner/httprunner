@@ -56,6 +56,10 @@ func (s *StubIOSDriver) SetupWda() (err error) {
 	return err
 }
 
+func (s *StubIOSDriver) GetDriver() uixt.IDriver {
+	return s.WDADriver
+}
+
 func (s *StubIOSDriver) Setup() error {
 	localPort, err := s.getLocalPort()
 	if err != nil {

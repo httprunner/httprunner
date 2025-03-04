@@ -11,19 +11,24 @@ import (
 	"github.com/httprunner/httprunner/v5/server"
 )
 
-func (p RouterBaseMethodExt) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver, err error) {
-	platform := c.Param("platform")
+func (r *RouterExt) GetDriver(c *gin.Context) (driverExt *driver_ext.StubXTDriver, err error) {
+	driverObj, exists := c.Get("driver")
+	if exists {
+		return driverObj.(*driver_ext.StubXTDriver), nil
+	}
+
 	deviceObj, exists := c.Get("device")
 	var device uixt.IDevice
 	var driver driver_ext.IStubDriver
 	if !exists {
-		device, err = p.GetDevice(c)
+		device, err = r.GetDevice(c)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		device = deviceObj.(uixt.IDevice)
 	}
+	platform := c.Param("platform")
 	switch strings.ToLower(platform) {
 	case "android":
 		driver, err = driver_ext.NewStubAndroidDriver(device.(*uixt.AndroidDevice))
@@ -36,7 +41,8 @@ func (p RouterBaseMethodExt) GetDriver(c *gin.Context) (driverExt uixt.IXTDriver
 		server.RenderErrorInitDriver(c, err)
 		return
 	}
-	driverExt = driver_ext.NewXTDriver(driver,
+
+	driverExt = driver_ext.NewStubXTDriver(driver,
 		ai.WithCVService(ai.CVServiceTypeVEDEM))
 	c.Set("driver", driverExt)
 	return driverExt, nil

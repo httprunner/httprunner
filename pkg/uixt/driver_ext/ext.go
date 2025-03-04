@@ -1,40 +1,46 @@
 package driver_ext
 
 import (
-	"github.com/rs/zerolog/log"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
-type IStubDriver interface {
-	uixt.IDriver
+var (
+	_ IStubDriver = (*StubAndroidDriver)(nil)
+	_ IStubDriver = (*StubIOSDriver)(nil)
+	_ IStubDriver = (*StubBrowserDriver)(nil)
+)
 
+type IStubDriver interface {
+	GetDriver() uixt.IDriver
 	LoginNoneUI(packageName, phoneNumber, captcha, password string) (info AppLoginInfo, err error)
 	LogoutNoneUI(packageName string) error
 }
 
-func NewXTDriver(driver IStubDriver, opts ...ai.AIServiceOption) *XTDriver {
+func NewStubXTDriver(stubDriver IStubDriver, opts ...ai.AIServiceOption) *StubXTDriver {
 	services := ai.NewAIService(opts...)
-	driverExt := &XTDriver{
+	driverExt := &StubXTDriver{
 		XTDriver: &uixt.XTDriver{
-			IDriver:    driver,
+			IDriver:    stubDriver.GetDriver(),
 			CVService:  services.ICVService,
 			LLMService: services.ILLMService,
 		},
-		IStubDriver: driver,
+		IStubDriver: stubDriver,
 	}
 	return driverExt
 }
 
-type XTDriver struct {
-	IStubDriver
+type StubXTDriver struct {
 	*uixt.XTDriver
+	IStubDriver
 }
 
-func (dExt *XTDriver) InstallByUrl(url string, opts ...option.InstallOption) error {
+func (dExt *StubXTDriver) InstallByUrl(url string, opts ...option.InstallOption) error {
 	appPath, err := uixt.DownloadFileByUrl(url)
 	if err != nil {
 		return err
@@ -46,7 +52,7 @@ func (dExt *XTDriver) InstallByUrl(url string, opts ...option.InstallOption) err
 	return nil
 }
 
-func (dExt *XTDriver) Install(filePath string, opts ...option.InstallOption) error {
+func (dExt *StubXTDriver) Install(filePath string, opts ...option.InstallOption) error {
 	if _, ok := dExt.GetDevice().(*uixt.AndroidDevice); ok {
 		stopChan := make(chan struct{})
 		go func() {
@@ -72,8 +78,4 @@ func (dExt *XTDriver) Install(filePath string, opts ...option.InstallOption) err
 	}
 
 	return dExt.GetDevice().Install(filePath, opts...)
-}
-
-func (dExt *XTDriver) GetWebDriver() uixt.IBrowserWebDriver {
-	return dExt.GetIDriver().(*StubBrowserDriver)
 }

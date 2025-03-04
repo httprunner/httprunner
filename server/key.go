@@ -64,7 +64,7 @@ func (r *Router) keycodeHandler(c *gin.Context) {
 		return
 	}
 	// TODO FIXME
-	err = driver.GetIDriver().(*uixt.ADBDriver).
+	err = driver.IDriver.(*uixt.ADBDriver).
 		PressKeyCode(uixt.KeyCode(keycodeReq.Keycode), uixt.KMEmpty)
 	if err != nil {
 		RenderError(c, err)

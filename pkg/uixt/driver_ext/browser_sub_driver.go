@@ -27,6 +27,10 @@ func NewStubBrowserDriver(device *uixt.BrowserDevice) (driver *StubBrowserDriver
 	return driver, nil
 }
 
+func (wd *StubBrowserDriver) GetDriver() uixt.IDriver {
+	return wd.BrowserDriver
+}
+
 // Source Return application elements tree
 func (wd *StubBrowserDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	resp, err := wd.BrowserDriver.HttpGet(http.MethodGet, wd.sessionId, "stub/source")

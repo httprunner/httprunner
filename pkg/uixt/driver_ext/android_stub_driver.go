@@ -53,6 +53,10 @@ func NewStubAndroidDriver(dev *uixt.AndroidDevice) (*StubAndroidDriver, error) {
 	return driver, nil
 }
 
+func (sad *StubAndroidDriver) GetDriver() uixt.IDriver {
+	return sad.ADBDriver
+}
+
 func (sad *StubAndroidDriver) Setup() error {
 	socketLocalPort, err := sad.Device.Forward(StubSocketName)
 	if err != nil {

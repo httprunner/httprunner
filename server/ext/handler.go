@@ -1,11 +1,11 @@
 package server_ext
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt/driver_ext"
+	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v5/server"
 )
 
@@ -20,9 +20,9 @@ func (r *RouterExt) loginHandler(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	info, err := driver.GetIDriver().(driver_ext.IStubDriver).
-		LoginNoneUI(loginReq.PackageName, loginReq.PhoneNumber,
-			loginReq.Captcha, loginReq.Password)
+	info, err := driver.LoginNoneUI(
+		loginReq.PackageName, loginReq.PhoneNumber,
+		loginReq.Captcha, loginReq.Password)
 	if err != nil {
 		server.RenderError(c, err)
 		return
@@ -41,8 +41,7 @@ func (r *RouterExt) logoutHandler(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	err = driver.GetIDriver().(driver_ext.IStubDriver).
-		LogoutNoneUI(logoutReq.PackageName)
+	err = driver.LogoutNoneUI(logoutReq.PackageName)
 	if err != nil {
 		server.RenderError(c, err)
 		return

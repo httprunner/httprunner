@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 )
 
@@ -38,7 +39,8 @@ func (r *Router) rightClickHandler(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	err = driver.GetWebDriver().RightClick(rightClickReq.X, rightClickReq.Y)
+	err = driver.IDriver.(*uixt.BrowserDriver).
+		RightClick(rightClickReq.X, rightClickReq.Y)
 	if err != nil {
 		RenderError(c, err)
 		return
@@ -58,7 +60,9 @@ func (r *Router) uploadHandler(c *gin.Context) {
 		RenderError(c, err)
 		return
 	}
-	err = driver.GetWebDriver().UploadFile(uploadRequest.X, uploadRequest.Y, uploadRequest.FileUrl, uploadRequest.FileFormat)
+	err = driver.IDriver.(*uixt.BrowserDriver).
+		UploadFile(uploadRequest.X, uploadRequest.Y,
+			uploadRequest.FileUrl, uploadRequest.FileFormat)
 	if err != nil {
 		c.Abort()
 		return
@@ -79,7 +83,8 @@ func (r *Router) hoverHandler(c *gin.Context) {
 		return
 	}
 
-	err = driver.GetWebDriver().Hover(hoverReq.X, hoverReq.Y)
+	err = driver.IDriver.(*uixt.BrowserDriver).
+		Hover(hoverReq.X, hoverReq.Y)
 
 	if err != nil {
 		RenderError(c, err)
@@ -101,7 +106,8 @@ func (r *Router) scrollHandler(c *gin.Context) {
 		return
 	}
 
-	err = driver.GetWebDriver().Scroll(scrollReq.Delta)
+	err = driver.IDriver.(*uixt.BrowserDriver).
+		Scroll(scrollReq.Delta)
 
 	if err != nil {
 		RenderError(c, err)

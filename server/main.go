@@ -12,8 +12,7 @@ import (
 
 func NewRouter() *Router {
 	router := &Router{
-		Engine:            gin.Default(),
-		IRouterBaseMethod: &RouterBaseMethod{},
+		Engine: gin.Default(),
 	}
 	router.Init()
 	return router
@@ -21,15 +20,6 @@ func NewRouter() *Router {
 
 type Router struct {
 	*gin.Engine
-	IRouterBaseMethod
-}
-
-type RouterBaseMethod struct {
-}
-
-type IRouterBaseMethod interface {
-	GetDriver(c *gin.Context) (driver uixt.IXTDriver, err error)
-	GetDevice(c *gin.Context) (driver uixt.IDevice, err error)
 }
 
 func (r *Router) Init() {
@@ -109,14 +99,14 @@ func (r *Router) teardown() gin.HandlerFunc {
 
 		driverObj, exists := c.Get("driver")
 		if exists {
-			if driver, ok := driverObj.(uixt.IXTDriver); ok {
+			if driver, ok := driverObj.(*uixt.XTDriver); ok {
 				_ = driver.TearDown()
 			}
 		}
 
 		deviceObj, exists := c.Get("device")
 		if exists {
-			if device, ok := deviceObj.(*uixt.IOSDevice); ok {
+			if device, ok := deviceObj.(uixt.IDevice); ok {
 				err := device.Teardown()
 				if err != nil {
 					log.Error().Err(err)

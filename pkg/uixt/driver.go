@@ -16,6 +16,7 @@ var (
 	_ IDriver = (*UIA2Driver)(nil)
 	_ IDriver = (*WDADriver)(nil)
 	_ IDriver = (*HDCDriver)(nil)
+	_ IDriver = (*BrowserDriver)(nil)
 )
 
 // current implemeted driver: ADBDriver, UIA2Driver, WDADriver, HDCDriver
@@ -95,29 +96,4 @@ type XTDriver struct {
 
 	// cache screenshot results
 	screenResults []*ScreenResult
-}
-
-func (dExt *XTDriver) GetIDriver() IDriver {
-	return dExt.IDriver
-}
-
-func (dExt *XTDriver) GetWebDriver() IBrowserWebDriver {
-	return dExt.GetIDriver().(*BrowserDriver)
-}
-
-type IXTDriver interface {
-	IDriver
-	GetIDriver() IDriver
-	GetWebDriver() IBrowserWebDriver
-	GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error)
-	DoAction(action MobileAction) (err error)
-}
-
-type IBrowserWebDriver interface {
-	IDriver
-	Hover(x, y float64) (err error)
-	RightClick(x, y float64) (err error)
-	Scroll(delta int) (err error)
-	// TODO: move x,y parameters to option
-	UploadFile(x, y float64, FileUrl, FileFormat string) (err error)
 }

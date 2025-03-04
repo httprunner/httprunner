@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/driver_ext"
 	"github.com/httprunner/httprunner/v5/server"
 )
 
@@ -21,7 +20,7 @@ func (r *RouterExt) installAppHandler(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	err = driver.(*driver_ext.XTDriver).InstallByUrl(appInstallReq.AppUrl)
+	err = driver.InstallByUrl(appInstallReq.AppUrl)
 	if err != nil {
 		server.RenderError(c, err)
 		return
