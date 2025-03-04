@@ -7,9 +7,6 @@ type ILLMService interface {
 }
 
 func NewGPT4oLLMService() (*openaiLLMService, error) {
-	if err := checkEnv(); err != nil {
-		return nil, err
-	}
 	return &openaiLLMService{}, nil
 }
 

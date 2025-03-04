@@ -51,7 +51,7 @@ type IDriver interface {
 	Unlock() error
 	Back() error
 	// tap
-	TapXY(x, y float64, opts ...option.ActionOption) error     // by percentage
+	TapXY(x, y float64, opts ...option.ActionOption) error     // by percentage or absolute coordinate
 	TapAbsXY(x, y float64, opts ...option.ActionOption) error  // by absolute coordinate
 	DoubleTap(x, y float64, opts ...option.ActionOption) error // by absolute coordinate
 	TouchAndHold(x, y float64, opts ...option.ActionOption) error

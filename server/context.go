@@ -15,14 +15,9 @@ import (
 )
 
 func (r *Router) GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error) {
-	driverObj, exists := c.Get("driver")
-	if exists {
-		return driverObj.(*uixt.XTDriver), nil
-	}
-
-	deviceObj, exists := c.Get("device")
 	var device uixt.IDevice
 	var driver uixt.IDriver
+	deviceObj, exists := c.Get("device")
 	if !exists {
 		device, err = r.GetDevice(c)
 		if err != nil {

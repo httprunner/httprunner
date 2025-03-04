@@ -20,7 +20,7 @@ func (r *Router) tapHandler(c *gin.Context) {
 		err = driver.Drag(tapReq.X, tapReq.Y, tapReq.X, tapReq.Y,
 			option.WithDuration(tapReq.Duration))
 	} else {
-		err = driver.TapAbsXY(tapReq.X, tapReq.Y)
+		err = driver.TapXY(tapReq.X, tapReq.Y)
 	}
 	if err != nil {
 		RenderError(c, err)
