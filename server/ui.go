@@ -128,12 +128,7 @@ func (r *Router) doubleTapHandler(c *gin.Context) {
 		return
 	}
 
-	if tapReq.X < 1 && tapReq.Y < 1 {
-		err = driver.DoubleTap(tapReq.X, tapReq.Y, option.WithRelative(true))
-	} else {
-		err = driver.DoubleTap(tapReq.X, tapReq.Y)
-	}
-
+	err = driver.DoubleTap(tapReq.X, tapReq.Y)
 	if err != nil {
 		RenderError(c, err)
 		return

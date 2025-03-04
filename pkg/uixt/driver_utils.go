@@ -40,48 +40,62 @@ func convertToAbsoluteScope(driver IDriver, opts ...option.ActionOption) []optio
 }
 
 func convertToAbsolutePoint(driver IDriver, x, y float64) (absX, absY float64, err error) {
-	if !assertRelative(x) || !assertRelative(y) {
-		err = errors.Wrap(code.InvalidCaseError,
-			fmt.Sprintf("x(%f), y(%f) must be less than 1", x, y))
-		return
+	// absolute coordinates
+	if x > 1 || y > 1 {
+		return x, y, nil
 	}
 
-	windowSize, err := driver.WindowSize()
-	if err != nil {
-		err = errors.Wrap(code.DeviceGetInfoError, err.Error())
-		return
+	// relative coordinates
+	if assertRelative(x) && assertRelative(y) {
+		windowSize, err := driver.WindowSize()
+		if err != nil {
+			err = errors.Wrap(code.DeviceGetInfoError, err.Error())
+			return 0, 0, err
+		}
+
+		absX = math.Round(float64(windowSize.Width)*x*10) / 10
+		absY = math.Round(float64(windowSize.Height)*y*10) / 10
+		return absX, absY, nil
 	}
 
-	absX = math.Round(float64(windowSize.Width)*x*10) / 10
-	absY = math.Round(float64(windowSize.Height)*y*10) / 10
+	// invalid coordinates
+	err = errors.Wrap(code.InvalidCaseError,
+		fmt.Sprintf("invalid coordinates x(%f), y(%f)", x, y))
 	return
 }
 
 func convertToAbsoluteCoordinates(driver IDriver, fromX, fromY, toX, toY float64) (
 	absFromX, absFromY, absToX, absToY float64, err error) {
 
-	if !assertRelative(fromX) || !assertRelative(fromY) ||
-		!assertRelative(toX) || !assertRelative(toY) {
-		err = errors.Wrap(code.InvalidCaseError,
-			fmt.Sprintf("fromX(%f), fromY(%f), toX(%f), toY(%f) must be less than 1",
-				fromX, fromY, toX, toY))
-		return
+	// absolute coordinates
+	if fromX > 1 || toX > 1 || fromY > 1 || toY > 1 {
+		return fromX, fromY, toX, toY, nil
 	}
 
-	windowSize, err := driver.WindowSize()
-	if err != nil {
-		err = errors.Wrap(code.DeviceGetInfoError, err.Error())
-		return
+	// relative coordinates
+	if assertRelative(fromX) && assertRelative(fromY) &&
+		assertRelative(toX) && assertRelative(toY) {
+		windowSize, err := driver.WindowSize()
+		if err != nil {
+			err = errors.Wrap(code.DeviceGetInfoError, err.Error())
+			return 0, 0, 0, 0, err
+		}
+		width := windowSize.Width
+		height := windowSize.Height
+
+		absFromX = float64(width) * fromX
+		absFromY = float64(height) * fromY
+		absToX = float64(width) * toX
+		absToY = float64(height) * toY
+
+		return absFromX, absFromY, absToX, absToY, nil
 	}
-	width := windowSize.Width
-	height := windowSize.Height
 
-	absFromX = float64(width) * fromX
-	absFromY = float64(height) * fromY
-	absToX = float64(width) * toX
-	absToY = float64(height) * toY
-
-	return absFromX, absFromY, absToX, absToY, nil
+	// invalid coordinates
+	err = errors.Wrap(code.InvalidCaseError,
+		fmt.Sprintf("invalid coordinates fromX(%f), fromY(%f), toX(%f), toY(%f)",
+			fromX, fromY, toX, toY))
+	return
 }
 
 func assertRelative(p float64) bool {

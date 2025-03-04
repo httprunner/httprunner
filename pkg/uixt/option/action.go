@@ -19,7 +19,6 @@ type ActionOptions struct {
 	Direction     interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`             // used by swipe to tap text or app
 	Timeout       int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                 // TODO: wait timeout in seconds for mobile action
 	Frequency     int         `json:"frequency,omitempty" yaml:"frequency,omitempty"`
-	Relative      bool        `json:"relative,omitempty" yaml:"relative,omitempty"` // use relative coordinate
 
 	ScreenOptions
 
@@ -55,9 +54,6 @@ func (o *ActionOptions) Options() []ActionOption {
 	}
 	if o.Steps != 0 {
 		options = append(options, WithSteps(o.Steps))
-	}
-	if o.Relative {
-		options = append(options, WithRelative(true))
 	}
 
 	switch v := o.Direction.(type) {
@@ -257,13 +253,6 @@ func WithSteps(steps int) ActionOption {
 func WithDirection(direction string) ActionOption {
 	return func(o *ActionOptions) {
 		o.Direction = direction
-	}
-}
-
-// WithRelative set relative coordinate, (0, 0) is the top-left corner of the screen
-func WithRelative(relative bool) ActionOption {
-	return func(o *ActionOptions) {
-		o.Relative = relative
 	}
 }
 

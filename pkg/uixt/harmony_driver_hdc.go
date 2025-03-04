@@ -177,11 +177,9 @@ func (hd *HDCDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	var err error
 	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.Relative {
-		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(hd, fromX, fromY, toX, toY)
-		if err != nil {
-			return err
-		}
+	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(hd, fromX, fromY, toX, toY)
+	if err != nil {
+		return err
 	}
 
 	duration := 200

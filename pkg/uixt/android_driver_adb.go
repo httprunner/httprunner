@@ -315,11 +315,9 @@ func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	var err error
 	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.Relative {
-		x, y, err = convertToAbsolutePoint(ad, x, y)
-		if err != nil {
-			return err
-		}
+	x, y, err = convertToAbsolutePoint(ad, x, y)
+	if err != nil {
+		return err
 	}
 	x, y = actionOptions.ApplyOffset(x, y)
 
@@ -362,11 +360,9 @@ func (ad *ADBDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 
 func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
 	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.Relative {
-		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
-		if err != nil {
-			return err
-		}
+	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
+	if err != nil {
+		return err
 	}
 
 	duration := 200.0
@@ -392,12 +388,9 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 
 func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	var err error
-	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.Relative {
-		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
-		if err != nil {
-			return err
-		}
+	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
+	if err != nil {
+		return err
 	}
 
 	// adb shell input swipe fromX fromY toX toY

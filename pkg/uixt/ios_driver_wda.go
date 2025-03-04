@@ -615,11 +615,9 @@ func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
 	var err error
 	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.Relative {
-		x, y, err = convertToAbsolutePoint(wd, x, y)
-		if err != nil {
-			return err
-		}
+	x, y, err = convertToAbsolutePoint(wd, x, y)
+	if err != nil {
+		return err
 	}
 	x, y = actionOptions.ApplyOffset(x, y)
 
@@ -647,12 +645,9 @@ func (wd *WDADriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
 	var err error
-	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.Relative {
-		fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(wd, fromX, fromY, toX, toY)
-		if err != nil {
-			return err
-		}
+	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(wd, fromX, fromY, toX, toY)
+	if err != nil {
+		return err
 	}
 	fromX = wd.toScale(fromX)
 	fromY = wd.toScale(fromY)
