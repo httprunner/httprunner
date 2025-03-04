@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 	"net/url"
 	"time"
+
+	"github.com/httprunner/httprunner/v5/pkg/uixt/types"
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
@@ -118,7 +119,7 @@ func (s *StubIOSDriver) OpenUrl(urlStr string, opts ...option.ActionOption) (err
 	return nil
 }
 
-func (s *StubIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+func (s *StubIOSDriver) LoginNoneUI(packageName, phoneNumber, captcha, password string) (info AppLoginInfo, err error) {
 	appInfo, err := s.ForegroundInfo()
 	if err != nil {
 		return info, err
@@ -132,7 +133,7 @@ func (s *StubIOSDriver) LoginNoneUI(packageName, phoneNumber string, captcha, pa
 	}
 }
 
-func (s *StubIOSDriver) LoginXigua(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+func (s *StubIOSDriver) LoginXigua(packageName, phoneNumber, captcha, password string) (info AppLoginInfo, err error) {
 	loginSchema := ""
 	if captcha != "" {
 		loginSchema = fmt.Sprintf("snssdk32://local_channel_autologin?login_type=1&account=%s&smscode=%s", phoneNumber, captcha)
@@ -145,7 +146,7 @@ func (s *StubIOSDriver) LoginXigua(packageName, phoneNumber string, captcha, pas
 	return info, s.OpenUrl(loginSchema)
 }
 
-func (s *StubIOSDriver) LoginDouyin(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+func (s *StubIOSDriver) LoginDouyin(packageName, phoneNumber, captcha, password string) (info AppLoginInfo, err error) {
 	params := map[string]interface{}{
 		"phone": phoneNumber,
 	}
@@ -308,6 +309,7 @@ func (s *StubIOSDriver) InitSession(capabilities option.Capabilities) error {
 	}
 	return s.WDADriver.InitSession(capabilities)
 }
+
 func (s *StubIOSDriver) GetSession() *uixt.DriverSession {
 	if err := s.SetupWda(); err != nil {
 		_ = errors.Wrap(code.DeviceHTTPDriverError, err.Error())

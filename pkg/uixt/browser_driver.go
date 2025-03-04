@@ -62,7 +62,7 @@ func CreateBrowser(timeout int) (browserInfo *BrowserInfo, err error) {
 	}
 
 	client := &http.Client{
-		Timeout: 30 * time.Second, // 设置超时时间为5秒
+		Timeout: 30 * time.Second,
 	}
 	resp, err := client.Do(req)
 	if err != nil {

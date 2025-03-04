@@ -166,7 +166,7 @@ func (sad *StubAndroidDriver) Source(srcOpt ...option.SourceOption) (source stri
 	return res.(string), nil
 }
 
-func (sad *StubAndroidDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (
+func (sad *StubAndroidDriver) LoginNoneUI(packageName, phoneNumber, captcha, password string) (
 	info AppLoginInfo, err error) {
 	app, err := sad.ForegroundInfo()
 	if err != nil {
@@ -182,7 +182,7 @@ func (sad *StubAndroidDriver) LoginNoneUI(packageName, phoneNumber string, captc
 	}
 }
 
-func (sad *StubAndroidDriver) LoginXigua(packageName, phoneNumber string, captcha, password string) (
+func (sad *StubAndroidDriver) LoginXigua(packageName, phoneNumber, captcha, password string) (
 	info AppLoginInfo, err error) {
 	loginSchema := ""
 	if captcha != "" {
@@ -198,7 +198,7 @@ func (sad *StubAndroidDriver) LoginXigua(packageName, phoneNumber string, captch
 	return info, sad.OpenUrl(loginSchema)
 }
 
-func (sad *StubAndroidDriver) LoginDouyin(packageName, phoneNumber string, captcha, password string) (
+func (sad *StubAndroidDriver) LoginDouyin(packageName, phoneNumber, captcha, password string) (
 	info AppLoginInfo, err error) {
 
 	params := map[string]interface{}{

@@ -1,97 +1,27 @@
 package driver_ext
 
 import (
-	"bytes"
 	"encoding/json"
-	"io"
 	"net/http"
-	"net/url"
-	"time"
 
 	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/pkg/errors"
 )
 
-const BROWSER_LOCAL_ADDRESS = "localhost:8093"
-
-type WebAgentResponse struct {
-	Code    int         `json:"code"`
-	Message string      `json:"msg"`
-	Data    interface{} `json:"data"`
-	Result  interface{} `json:"result"`
-}
-
-type CreateBrowserResponse struct {
-	Code    int         `json:"code"`
-	Message string      `json:"msg"`
-	Data    BrowserInfo `json:"data"`
-}
-
 type StubBrowserDriver struct {
 	*uixt.BrowserDriver
-	urlPrefix *url.URL
+
 	sessionId string
-	scale     float64
-}
-
-type BrowserInfo struct {
-	ContextId string `json:"context_id"`
-}
-
-func CreateBrowser(timeout int) (browserInfo *BrowserInfo, err error) {
-	data := map[string]interface{}{
-		"timeout": timeout,
-	}
-
-	var bsJSON []byte = nil
-	if data != nil {
-		if bsJSON, err = json.Marshal(data); err != nil {
-			return nil, err
-		}
-	}
-
-	rawURL := "http://" + BROWSER_LOCAL_ADDRESS + "/api/v1/create_browser"
-	req, err := http.NewRequest(http.MethodPost, rawURL, bytes.NewBuffer(bsJSON))
-	req.Header.Set("Content-Type", "application/json")
-
-	if err != nil {
-		return nil, err
-	}
-
-	client := &http.Client{
-		Timeout: 30 * time.Second, // 设置超时时间为5秒
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	rawResp, err := io.ReadAll(resp.Body)
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
-	}
-
-	var result CreateBrowserResponse
-	if err = json.Unmarshal(rawResp, &result); err != nil {
-		return nil, err
-	}
-
-	if result.Code != 0 {
-		return nil, errors.New(result.Message)
-	}
-
-	return &result.Data, nil
 }
 
 func NewStubBrowserDriver(device *uixt.BrowserDevice) (driver *StubBrowserDriver, err error) {
-	BrowserWebDriver, err := uixt.NewBrowserDriver(device)
+	browserDriver, err := uixt.NewBrowserDriver(device)
 	if err != nil {
 		return nil, errors.Wrap(err, "create browser session failed")
 	}
 	driver = &StubBrowserDriver{
-		BrowserDriver: BrowserWebDriver,
+		BrowserDriver: browserDriver,
 	}
 	driver.sessionId = device.UUID()
 	return driver, nil
@@ -112,7 +42,8 @@ func (wd *StubBrowserDriver) Source(srcOpt ...option.SourceOption) (string, erro
 	return string(jsonData), err
 }
 
-func (wd *StubBrowserDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (info AppLoginInfo, err error) {
+func (wd *StubBrowserDriver) LoginNoneUI(packageName, phoneNumber, captcha, password string) (
+	info AppLoginInfo, err error) {
 	data := map[string]interface{}{
 		"url":        packageName,
 		"web_cookie": password,
@@ -128,4 +59,8 @@ func (wd *StubBrowserDriver) LoginNoneUI(packageName, phoneNumber string, captch
 		Did:     password,
 	}
 	return loginSuccss, err
+}
+
+func (wd *StubBrowserDriver) LogoutNoneUI(packageName string) error {
+	return errors.New("not implemented")
 }
