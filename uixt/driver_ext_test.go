@@ -105,7 +105,7 @@ func TestDriverExt_Seek(t *testing.T) {
 		err := driver.Swipe(0.5, 0.8, 0.5, 0.2)
 		assert.Nil(t, err)
 		time.Sleep(1 * time.Second)
-		err = driver.Drag(20, y, float64(width)*0.75, y)
+		err = driver.Swipe(20, y, float64(width)*0.6, y)
 		assert.Nil(t, err)
 		time.Sleep(1 * time.Second)
 	}

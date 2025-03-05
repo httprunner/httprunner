@@ -38,15 +38,11 @@ type DriverRequests struct {
 	Error   string `json:"error,omitempty"`
 }
 
-const (
-	emptySessionID = "<SessionNotInit>"
-)
-
 func NewDriverSession() *DriverSession {
 	timeout := 30 * time.Second
 	session := &DriverSession{
 		ctx:     context.Background(),
-		ID:      emptySessionID,
+		ID:      "",
 		timeout: timeout,
 		client: &http.Client{
 			Timeout: timeout,
@@ -101,8 +97,11 @@ func (s *DriverSession) concatURL(urlStr string) (string, error) {
 	}
 
 	// replace with session ID
-	if s.ID != emptySessionID {
-		urlStr = strings.Replace(urlStr, emptySessionID, s.ID, 1)
+	if s.ID != "" && !strings.Contains(urlStr, s.ID) {
+		sessionPattern := regexp.MustCompile(`/session/([^/]+)/`)
+		if matches := sessionPattern.FindStringSubmatch(urlStr); len(matches) != 0 {
+			urlStr = strings.Replace(urlStr, matches[1], s.ID, 1)
+		}
 	}
 
 	// 处理完整 URL
