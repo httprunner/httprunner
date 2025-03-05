@@ -103,7 +103,9 @@ func (s *StepMobile) Home() *StepMobile {
 	return s
 }
 
-// TapXY taps the point {X,Y}, X & Y is percentage of coordinates
+// TapXY taps the point {X,Y}
+// if X<1 & Y<1, {X,Y} will be considered as percentage
+// else, X & Y will be considered as absolute coordinates
 func (s *StepMobile) TapXY(x, y float64, opts ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_TapXY,

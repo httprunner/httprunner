@@ -79,12 +79,8 @@ func TestLoadParameters(t *testing.T) {
 	parser := hrp.NewParser()
 	for _, data := range testData {
 		value, err := parser.LoadParameters(data.configParameters, variablesMapping)
-		if !assert.Nil(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.loadedParameters, value) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.loadedParameters, value)
 	}
 }
 
@@ -114,9 +110,7 @@ func TestLoadParametersError(t *testing.T) {
 	parser := hrp.NewParser()
 	for _, data := range testData {
 		_, err := parser.LoadParameters(data.configParameters, map[string]interface{}{})
-		if !assert.Error(t, err) {
-			t.Fatal()
-		}
+		assert.Error(t, err)
 	}
 }
 
@@ -250,23 +244,15 @@ func TestInitParametersIteratorCount(t *testing.T) {
 	parser := hrp.NewParser()
 	for _, data := range testData {
 		iterator, err := parser.InitParametersIterator(data.cfg)
-		if !assert.Nil(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expectLimit, iterator.Limit) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.expectLimit, iterator.Limit)
 
 		for i := 0; i < data.expectLimit; i++ {
-			if !assert.True(t, iterator.HasNext()) {
-				t.Fatal()
-			}
+			assert.True(t, iterator.HasNext())
 			iterator.Next() // consume next parameters
 		}
 		// should not have next
-		if !assert.False(t, iterator.HasNext()) {
-			t.Fatal()
-		}
+		assert.False(t, iterator.HasNext())
 	}
 }
 
@@ -299,28 +285,18 @@ func TestInitParametersIteratorUnlimitedCount(t *testing.T) {
 	parser := hrp.NewParser()
 	for _, data := range testData {
 		iterator, err := parser.InitParametersIterator(data.cfg)
-		if !assert.Nil(t, err) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
 		// set unlimited mode
 		iterator.SetUnlimitedMode()
-		if !assert.Equal(t, -1, iterator.Limit) {
-			t.Fatal()
-		}
+		assert.Equal(t, -1, iterator.Limit)
 
 		for i := 0; i < 100; i++ {
-			if !assert.True(t, iterator.HasNext()) {
-				t.Fatal()
-			}
+			assert.True(t, iterator.HasNext())
 			iterator.Next() // consume next parameters
 		}
-		if !assert.Equal(t, 100, iterator.Index) {
-			t.Fatal()
-		}
+		assert.Equal(t, 100, iterator.Index)
 		// should also have next
-		if !assert.True(t, iterator.HasNext()) {
-			t.Fatal()
-		}
+		assert.True(t, iterator.HasNext())
 	}
 }
 
@@ -382,22 +358,16 @@ func TestInitParametersIteratorContent(t *testing.T) {
 	parser := hrp.NewParser()
 	for _, data := range testData {
 		iterator, err := parser.InitParametersIterator(data.cfg)
-		if !assert.Nil(t, err) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
 
 		// get expected parameters item
 		for i := 0; i < data.checkIndex; i++ {
-			if !assert.True(t, iterator.HasNext()) {
-				t.Fatal()
-			}
+			assert.True(t, iterator.HasNext())
 			iterator.Next() // consume next parameters
 		}
 		parametersItem := iterator.Next()
 
-		if !assert.Equal(t, data.expectParameters, parametersItem) {
-			t.Fatal()
-		}
+		assert.Equal(t, data.expectParameters, parametersItem)
 	}
 }
 
@@ -439,9 +409,7 @@ func TestGenCartesianProduct(t *testing.T) {
 
 	for _, data := range testData {
 		parameters := hrp.GenCartesianProduct(data.multiParameters)
-		if !assert.Equal(t, data.expect, parameters) {
-			t.Fatal()
-		}
+		assert.Equal(t, data.expect, parameters)
 	}
 }
 
@@ -493,12 +461,8 @@ func TestConvertParameters(t *testing.T) {
 
 	for _, data := range testData {
 		value, err := hrp.ConvertParameters(data.key, data.parametersRawList)
-		if !assert.Nil(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expect, value) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.expect, value)
 	}
 }
 
@@ -533,8 +497,6 @@ func TestConvertParametersError(t *testing.T) {
 
 	for _, data := range testData {
 		_, err := hrp.ConvertParameters(data.key, data.parametersRawList)
-		if !assert.Error(t, err) {
-			t.Fatal()
-		}
+		assert.Error(t, err)
 	}
 }

@@ -13,7 +13,7 @@ const (
 
 // tmpl returns template file path
 func tmpl(relativePath string) string {
-	return filepath.Join("internal/scaffold/templates/", relativePath)
+	return filepath.Join("../internal/scaffold/templates/", relativePath)
 }
 
 var (

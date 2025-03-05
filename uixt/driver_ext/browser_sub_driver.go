@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/pkg/errors"
 )
 
 type StubBrowserDriver struct {
