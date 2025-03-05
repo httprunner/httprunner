@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rs/zerolog/log"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
@@ -19,14 +19,10 @@ func TestIOSDemo(t *testing.T) {
 		option.WithWDAMjpegPort(8800),
 		option.WithResetHomeOnStartup(false), // not reset home on startup
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 
 	driver, err := device.NewDriver()
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 	driverExt := uixt.NewXTDriver(driver,
 		ai.WithCVService(ai.CVServiceTypeVEDEM),
 	)
@@ -40,10 +36,7 @@ func TestIOSDemo(t *testing.T) {
 	for {
 		// take screenshot and get screen texts by OCR
 		ocrTexts, err := driverExt.GetScreenTexts()
-		if err != nil {
-			log.Error().Err(err).Msg("OCR GetTexts failed")
-			t.Fatal(err)
-		}
+		assert.Nil(t, err)
 
 		points, err := ocrTexts.FindTexts([]string{"青少年模式", "我知道了"})
 		if err != nil {
@@ -53,8 +46,6 @@ func TestIOSDemo(t *testing.T) {
 
 		point := points[1].Center()
 		err = driverExt.TapAbsXY(point.X, point.Y)
-		if err != nil {
-			t.Fatal(err)
-		}
+		assert.Nil(t, err)
 	}
 }

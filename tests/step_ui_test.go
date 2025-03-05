@@ -7,6 +7,7 @@ import (
 
 	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/uixt/option"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIOSSettingsAction(t *testing.T) {
@@ -25,9 +26,7 @@ func TestIOSSettingsAction(t *testing.T) {
 		},
 	}
 	err := hrp.NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 }
 
 func TestIOSSearchApp(t *testing.T) {
@@ -43,9 +42,7 @@ func TestIOSSearchApp(t *testing.T) {
 		},
 	}
 	err := hrp.NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 }
 
 func TestIOSAppLaunch(t *testing.T) {
@@ -64,9 +61,7 @@ func TestIOSAppLaunch(t *testing.T) {
 		},
 	}
 	err := hrp.NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 }
 
 func TestAndroidAction(t *testing.T) {
@@ -83,7 +78,5 @@ func TestAndroidAction(t *testing.T) {
 		},
 	}
 	err := hrp.NewRunner(t).Run(testCase)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.Nil(t, err)
 }

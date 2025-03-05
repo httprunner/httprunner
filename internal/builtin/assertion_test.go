@@ -19,9 +19,7 @@ func TestStartsWith(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, StartsWith(t, data.raw, data.expected)) {
-			t.Fatal()
-		}
+		assert.True(t, StartsWith(t, data.raw, data.expected))
 	}
 }
 
@@ -37,9 +35,7 @@ func TestEndsWith(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, EndsWith(t, data.raw, data.expected)) {
-			t.Fatal()
-		}
+		assert.True(t, EndsWith(t, data.raw, data.expected))
 	}
 }
 
@@ -75,9 +71,7 @@ func TestLessThanLength(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, LessThanLength(t, data.raw, data.expected)) {
-			t.Fatal()
-		}
+		assert.True(t, LessThanLength(t, data.raw, data.expected))
 	}
 }
 
@@ -95,9 +89,7 @@ func TestLessOrEqualsLength(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, LessOrEqualsLength(t, data.raw, data.expected)) {
-			t.Fatal()
-		}
+		assert.True(t, LessOrEqualsLength(t, data.raw, data.expected))
 	}
 }
 
@@ -112,9 +104,7 @@ func TestGreaterThanLength(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, GreaterThanLength(t, data.raw, data.expected)) {
-			t.Fatal()
-		}
+		assert.True(t, GreaterThanLength(t, data.raw, data.expected))
 	}
 }
 
@@ -132,9 +122,7 @@ func TestGreaterOrEqualsLength(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, GreaterOrEqualsLength(t, data.raw, data.expected)) {
-			t.Fatal()
-		}
+		assert.True(t, GreaterOrEqualsLength(t, data.raw, data.expected))
 	}
 }
 
@@ -149,9 +137,7 @@ func TestContainedBy(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, ContainedBy(t, data.raw, data.expected)) {
-			t.Fatal()
-		}
+		assert.True(t, ContainedBy(t, data.raw, data.expected))
 	}
 }
 
@@ -170,9 +156,7 @@ func TestStringEqual(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, StringEqual(t, data.raw, data.expected)) {
-			t.Fatal()
-		}
+		assert.True(t, StringEqual(t, data.raw, data.expected))
 	}
 }
 
@@ -187,9 +171,7 @@ func TestEqualFold(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, EqualFold(t, data.raw, data.expected)) {
-			t.Fatal()
-		}
+		assert.True(t, EqualFold(t, data.raw, data.expected))
 	}
 }
 
@@ -203,8 +185,6 @@ func TestRegexMatch(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		if !assert.True(t, RegexMatch(t, data.raw, data.expected)) {
-			t.Fatal()
-		}
+		assert.True(t, RegexMatch(t, data.raw, data.expected))
 	}
 }

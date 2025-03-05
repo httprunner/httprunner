@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
+	"github.com/stretchr/testify/assert"
 )
 
 // reference extracted variables for validation in the same step
@@ -37,9 +38,7 @@ func TestCaseExtractStepSingle(t *testing.T) {
 	}
 
 	err := hrp.NewRunner(t).Run(testcase)
-	if err != nil {
-		t.Fatalf("run testcase error: %v", err)
-	}
+	assert.Nil(t, err)
 }
 
 // reference extracted variables from previous step
@@ -79,7 +78,5 @@ func TestCaseExtractStepAssociation(t *testing.T) {
 	}
 
 	err := hrp.NewRunner(t).Run(testcase)
-	if err != nil {
-		t.Fatalf("run testcase error: %v", err)
-	}
+	assert.Nil(t, err)
 }

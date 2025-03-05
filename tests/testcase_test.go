@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -155,20 +156,12 @@ var demoTestCaseWithoutPlugin = &hrp.TestCase{
 
 func TestGenDemoTestCase(t *testing.T) {
 	err := demoTestCaseWithPlugin.Dump2JSON(demoTestCaseWithPluginJSONPath)
-	if err != nil {
-		t.Fatal()
-	}
+	assert.Nil(t, err)
 	err = demoTestCaseWithPlugin.Dump2YAML(demoTestCaseWithPluginYAMLPath)
-	if err != nil {
-		t.Fatal()
-	}
+	assert.Nil(t, err)
 
 	err = demoTestCaseWithoutPlugin.Dump2JSON(demoTestCaseWithoutPluginJSONPath)
-	if err != nil {
-		t.Fatal()
-	}
+	assert.Nil(t, err)
 	err = demoTestCaseWithoutPlugin.Dump2YAML(demoTestCaseWithoutPluginYAMLPath)
-	if err != nil {
-		t.Fatal()
-	}
+	assert.Nil(t, err)
 }

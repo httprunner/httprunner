@@ -58,10 +58,6 @@ func TestTestCaseSummary_AddStepResult(t *testing.T) {
 	}
 	caseSummary.AddStepResult(stepResult2)
 
-	if !assert.Equal(t, 2, len(caseSummary.Records)) {
-		t.Fatal()
-	}
-	if !assert.False(t, caseSummary.Success) {
-		t.Fatal()
-	}
+	assert.Equal(t, 2, len(caseSummary.Records))
+	assert.False(t, caseSummary.Success)
 }
