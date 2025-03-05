@@ -7,11 +7,11 @@ import (
 	"regexp"
 	"time"
 
-	"code.byted.org/iesqa/ghdc"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/pkg/ghdc"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 )

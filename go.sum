@@ -1,5 +1,3 @@
-code.byted.org/iesqa/ghdc v0.0.0-20241009025217-ecb76cf5bd27 h1:+wNJiEXXIUP6luKJRA4tfwDqfnWUON6LIopKD9tvUns=
-code.byted.org/iesqa/ghdc v0.0.0-20241009025217-ecb76cf5bd27/go.mod h1:C2kq6TTE+JAOnqDorSwae1MQzRuex03RshuSUC2U/FY=
 github.com/Masterminds/semver v1.5.0 h1:H65muMkzWKEuNDnfl9d70GUjFniHKHRbFPGBuZ3QEww=
 github.com/Masterminds/semver v1.5.0/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
 github.com/andybalholm/brotli v1.0.4 h1:V7DdXeJtZscaqfNuAdSRuRFzuiKlHSC/Zh3zl9qY3JY=

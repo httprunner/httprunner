@@ -1,6 +1,6 @@
 package option
 
-import "code.byted.org/iesqa/ghdc"
+import "github.com/httprunner/httprunner/v5/pkg/ghdc"
 
 const (
 	HdcServerHost = "localhost"

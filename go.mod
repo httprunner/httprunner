@@ -3,7 +3,6 @@ module github.com/httprunner/httprunner/v5
 go 1.23.0
 
 require (
-	code.byted.org/iesqa/ghdc v0.0.0-20241009025217-ecb76cf5bd27
 	github.com/Masterminds/semver v1.5.0
 	github.com/andybalholm/brotli v1.0.4
 	github.com/danielpaulus/go-ios v1.0.161
