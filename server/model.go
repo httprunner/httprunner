@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 type TapRequest struct {
@@ -9,6 +9,13 @@ type TapRequest struct {
 	Y        float64               `json:"y" binding:"required"`
 	Duration float64               `json:"duration"`
 	Options  *option.ActionOptions `json:"options,omitempty"`
+}
+
+type uploadRequest struct {
+	X          float64 `json:"x"`
+	Y          float64 `json:"y"`
+	FileUrl    string  `json:"file_url"`
+	FileFormat string  `json:"file_format"`
 }
 
 type DragRequest struct {
@@ -71,8 +78,8 @@ type OperateRequest struct {
 }
 
 type HttpResponse struct {
-	Code    int         `json:"code"`
-	Message string      `json:"msg"`
+	Code    int         `json:"errorCode"`
+	Message string      `json:"errorMsg"`
 	Result  interface{} `json:"result,omitempty"`
 }
 

@@ -15,7 +15,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/version"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/uixt"
 )
 
 func NewSummary() *Summary {
@@ -32,7 +32,7 @@ func NewSummary() *Summary {
 			},
 		},
 		Time: &TestCaseTime{
-			StartAt: config.StartTime,
+			StartAt: config.GetConfig().StartTime,
 		},
 		Platform: platForm,
 	}
@@ -67,7 +67,7 @@ func (s *Summary) AddCaseSummary(caseSummary *TestCaseSummary) {
 		s.rootDir = caseSummary.RootDir
 	} else if s.rootDir != caseSummary.RootDir {
 		// if multiple testcases have different root path, use current working dir
-		s.rootDir = config.RootDir
+		s.rootDir = config.GetConfig().RootDir
 	}
 
 	// merge action stats
@@ -80,7 +80,7 @@ func (s *Summary) AddCaseSummary(caseSummary *TestCaseSummary) {
 }
 
 func (s *Summary) SetupDirPath() (path string, err error) {
-	dirPath := filepath.Join(s.rootDir, config.ResultsDir)
+	dirPath := filepath.Join(s.rootDir, config.GetConfig().ResultsDir)
 	err = builtin.EnsureFolderExists(dirPath)
 	if err != nil {
 		return "", err

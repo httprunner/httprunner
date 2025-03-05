@@ -4,8 +4,8 @@ import (
 	"reflect"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 type IConfig interface {
@@ -80,7 +80,7 @@ func (c *TConfig) WithParameters(parameters map[string]interface{}) *TConfig {
 }
 
 // SetThinkTime sets think time config for current testcase.
-func (c *TConfig) SetThinkTime(strategy thinkTimeStrategy, cfg interface{}, limit float64) *TConfig {
+func (c *TConfig) SetThinkTime(strategy ThinkTimeStrategy, cfg interface{}, limit float64) *TConfig {
 	c.ThinkTimeSetting = &ThinkTimeConfig{strategy, cfg, limit}
 	return c
 }
@@ -194,7 +194,7 @@ func (c *TConfig) DisableAutoPopupHandler() *TConfig {
 }
 
 type ThinkTimeConfig struct {
-	Strategy thinkTimeStrategy `json:"strategy,omitempty" yaml:"strategy,omitempty"` // default、random、multiply、ignore
+	Strategy ThinkTimeStrategy `json:"strategy,omitempty" yaml:"strategy,omitempty"` // default、random、multiply、ignore
 	Setting  interface{}       `json:"setting,omitempty" yaml:"setting,omitempty"`   // random(map): {"min_percentage": 0.5, "max_percentage": 1.5}; 10、multiply(float64): 1.5
 	Limit    float64           `json:"limit,omitempty" yaml:"limit,omitempty"`       // limit think time no more than specific time, ignore if value <= 0
 }
@@ -205,10 +205,10 @@ func (ttc *ThinkTimeConfig) checkThinkTime() {
 	}
 	// unset strategy, set default strategy
 	if ttc.Strategy == "" {
-		ttc.Strategy = thinkTimeDefault
+		ttc.Strategy = ThinkTimeDefault
 	}
 	// check think time
-	if ttc.Strategy == thinkTimeRandomPercentage {
+	if ttc.Strategy == ThinkTimeRandomPercentage {
 		if ttc.Setting == nil || reflect.TypeOf(ttc.Setting).Kind() != reflect.Map {
 			ttc.Setting = thinkTimeDefaultRandom
 			return
@@ -237,7 +237,7 @@ func (ttc *ThinkTimeConfig) checkThinkTime() {
 			return
 		}
 		ttc.Setting = map[string]float64{"min_percentage": left, "max_percentage": right}
-	} else if ttc.Strategy == thinkTimeMultiply {
+	} else if ttc.Strategy == ThinkTimeMultiply {
 		if ttc.Setting == nil {
 			ttc.Setting = float64(0) // default
 			return
@@ -248,19 +248,19 @@ func (ttc *ThinkTimeConfig) checkThinkTime() {
 			return
 		}
 		ttc.Setting = value
-	} else if ttc.Strategy != thinkTimeIgnore {
+	} else if ttc.Strategy != ThinkTimeIgnore {
 		// unrecognized strategy, set default strategy
-		ttc.Strategy = thinkTimeDefault
+		ttc.Strategy = ThinkTimeDefault
 	}
 }
 
-type thinkTimeStrategy string
+type ThinkTimeStrategy string
 
 const (
-	thinkTimeDefault          thinkTimeStrategy = "default"           // as recorded
-	thinkTimeRandomPercentage thinkTimeStrategy = "random_percentage" // use random percentage of recorded think time
-	thinkTimeMultiply         thinkTimeStrategy = "multiply"          // multiply recorded think time
-	thinkTimeIgnore           thinkTimeStrategy = "ignore"            // ignore recorded think time
+	ThinkTimeDefault          ThinkTimeStrategy = "default"           // as recorded
+	ThinkTimeRandomPercentage ThinkTimeStrategy = "random_percentage" // use random percentage of recorded think time
+	ThinkTimeMultiply         ThinkTimeStrategy = "multiply"          // multiply recorded think time
+	ThinkTimeIgnore           ThinkTimeStrategy = "ignore"            // ignore recorded think time
 )
 
 const (

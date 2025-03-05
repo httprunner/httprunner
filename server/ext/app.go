@@ -6,18 +6,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/server"
+	"github.com/httprunner/httprunner/v5/uixt"
 )
 
-func installAppHandler(c *gin.Context) {
+func (r *RouterExt) installAppHandler(c *gin.Context) {
 	var appInstallReq AppInstallRequest
 	if err := c.ShouldBindJSON(&appInstallReq); err != nil {
 		server.RenderErrorValidateRequest(c, err)
 		return
 	}
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -32,7 +31,7 @@ func installAppHandler(c *gin.Context) {
 			server.RenderSuccess(c, true)
 			return
 		}
-		localMappingPath, err := builtin.DownloadFileByUrl(appInstallReq.MappingUrl)
+		localMappingPath, err := uixt.DownloadFileByUrl(appInstallReq.MappingUrl)
 		if err != nil {
 			server.RenderError(c, err)
 		}
@@ -45,7 +44,7 @@ func installAppHandler(c *gin.Context) {
 			server.RenderError(c, err)
 			return
 		}
-		localResourceMappingPath, err := builtin.DownloadFileByUrl(
+		localResourceMappingPath, err := uixt.DownloadFileByUrl(
 			appInstallReq.ResourceMappingUrl)
 		if err != nil {
 			server.RenderError(c, err)

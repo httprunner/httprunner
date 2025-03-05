@@ -10,17 +10,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/httprunner/funplugin"
-	"github.com/httprunner/funplugin/fungo"
 	"github.com/maja42/goval"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/funplugin"
+	"github.com/httprunner/funplugin/fungo"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 )
 
-func newParser() *Parser {
+func NewParser() *Parser {
 	return &Parser{}
 }
 

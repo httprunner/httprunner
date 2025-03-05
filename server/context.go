@@ -9,17 +9,17 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/ai"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
-func GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error) {
-	deviceObj, exists := c.Get("device")
+func (r *Router) GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error) {
 	var device uixt.IDevice
 	var driver uixt.IDriver
+	deviceObj, exists := c.Get("device")
 	if !exists {
-		device, err = GetDevice(c)
+		device, err = r.GetDevice(c)
 		if err != nil {
 			return nil, err
 		}
@@ -32,14 +32,14 @@ func GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error) {
 		RenderErrorInitDriver(c, err)
 		return
 	}
-	c.Set("driver", driver)
 
 	driverExt = uixt.NewXTDriver(driver,
 		ai.WithCVService(ai.CVServiceTypeVEDEM))
+	c.Set("driver", driverExt)
 	return driverExt, nil
 }
 
-func GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
+func (r *Router) GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
 	platform := c.Param("platform")
 	serial := c.Param("serial")
 	if serial == "" {
@@ -54,7 +54,6 @@ func GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
 			RenderErrorInitDriver(c, err)
 			return
 		}
-		_ = device.Setup()
 	case "ios":
 		device, err = uixt.NewIOSDevice(
 			option.WithUDID(serial),
@@ -66,9 +65,19 @@ func GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
 			RenderErrorInitDriver(c, err)
 			return
 		}
+	case "browser":
+		device, err = uixt.NewBrowserDevice(option.WithBrowserID(serial))
+		if err != nil {
+			RenderErrorInitDriver(c, err)
+			return
+		}
 	default:
 		err = fmt.Errorf("[%s]: invalid platform", c.HandlerName())
 		return
+	}
+	err = device.Setup()
+	if err != nil {
+		log.Error().Err(err).Msg("setup device failed")
 	}
 	c.Set("device", device)
 	return device, nil
@@ -87,7 +96,7 @@ func RenderError(c *gin.Context, err error) {
 	c.JSON(http.StatusInternalServerError,
 		HttpResponse{
 			Code:    code.GetErrorCode(err),
-			Message: err.Error(),
+			Message: "grey " + err.Error(),
 		},
 	)
 	c.Abort()
@@ -102,7 +111,7 @@ func RenderErrorInitDriver(c *gin.Context, err error) {
 	c.JSON(http.StatusInternalServerError,
 		HttpResponse{
 			Code:    errCode,
-			Message: "init driver failed",
+			Message: "grey init driver failed",
 		},
 	)
 	c.Abort()
@@ -112,7 +121,7 @@ func RenderErrorValidateRequest(c *gin.Context, err error) {
 	log.Error().Err(err).Msg("validate request failed")
 	c.JSON(http.StatusBadRequest, HttpResponse{
 		Code:    code.GetErrorCode(code.InvalidParamError),
-		Message: fmt.Sprintf("validate request param failed: %s", err.Error()),
+		Message: fmt.Sprintf("grey validate request param failed: %s", err.Error()),
 	})
 	c.Abort()
 }

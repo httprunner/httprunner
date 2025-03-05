@@ -1,8 +1,11 @@
 package hrp
 
 import (
+	"io"
+	"net/http"
 	"net/url"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -208,7 +211,7 @@ func TestParseDataStringWithVariables(t *testing.T) {
 		{"abc$var_5", "abctrue"},     // "abcTrue"
 	}
 
-	parser := newParser()
+	parser := NewParser()
 	for _, data := range testData {
 		parsedData, err := parser.Parse(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
@@ -233,7 +236,7 @@ func TestParseDataStringWithUndefinedVariables(t *testing.T) {
 		{"/api/$SECRET_KEY", "/api/$SECRET_KEY"}, // raise error
 	}
 
-	parser := newParser()
+	parser := NewParser()
 	for _, data := range testData {
 		parsedData, err := parser.Parse(data.expr, variablesMapping)
 		if !assert.Error(t, err) {
@@ -278,7 +281,7 @@ func TestParseDataStringWithVariablesAbnormal(t *testing.T) {
 		{"ABC$var_1{}a", "ABCabc{}a"},     // {}
 	}
 
-	parser := newParser()
+	parser := NewParser()
 	for _, data := range testData {
 		parsedData, err := parser.Parse(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
@@ -309,7 +312,7 @@ func TestParseDataMapWithVariables(t *testing.T) {
 		{map[string]interface{}{"$var2": "$val1"}, map[string]interface{}{"123": 200}},
 	}
 
-	parser := newParser()
+	parser := NewParser()
 	for _, data := range testData {
 		parsedData, err := parser.Parse(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
@@ -343,7 +346,7 @@ func TestParseHeaders(t *testing.T) {
 		{map[string]string{"$var2": "$val2"}, map[string]string{"123": "<nil>"}},
 	}
 
-	parser := newParser()
+	parser := NewParser()
 	for _, data := range testData {
 		parsedHeaders, err := parser.ParseHeaders(data.rawHeaders, variablesMapping)
 		if !assert.NoError(t, err) {
@@ -488,7 +491,7 @@ func TestMergeValidators(t *testing.T) {
 }
 
 func TestCallBuiltinFunction(t *testing.T) {
-	parser := newParser()
+	parser := NewParser()
 
 	// call function without arguments
 	_, err := parser.callFunc("get_timestamp")
@@ -601,7 +604,7 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 		{"123${gen_random_string($n)}abc", 11},
 	}
 
-	parser := newParser()
+	parser := NewParser()
 	for _, data := range testData1 {
 		value, err := parser.Parse(data.expr, variablesMapping)
 		if !assert.NoError(t, err) {
@@ -670,7 +673,7 @@ func TestParseVariables(t *testing.T) {
 		},
 	}
 
-	parser := newParser()
+	parser := NewParser()
 	for _, data := range testData {
 		value, err := parser.ParseVariables(data.rawVars)
 		if !assert.NoError(t, err) {
@@ -701,7 +704,7 @@ func TestParseVariablesAbnormal(t *testing.T) {
 		},
 	}
 
-	parser := newParser()
+	parser := NewParser()
 	for _, data := range testData {
 		value, err := parser.ParseVariables(data.rawVars)
 		if !assert.Error(t, err) {
@@ -782,5 +785,195 @@ func TestFindallVariables(t *testing.T) {
 		if !assert.Equal(t, data.expectVars, varList) {
 			t.Fatal()
 		}
+	}
+}
+
+func TestSearchJmespath(t *testing.T) {
+	testText := `{"a": {"b": "foo"}, "c": "bar", "d": {"e": [{"f": "foo"}, {"f": "bar"}]}}`
+	testData := []struct {
+		raw      string
+		expected string
+	}{
+		{"body.a.b", "foo"},
+		{"body.c", "bar"},
+		{"body.d.e[0].f", "foo"},
+		{"body.d.e[1].f", "bar"},
+	}
+	resp := http.Response{}
+	resp.Body = io.NopCloser(strings.NewReader(testText))
+	respObj, err := newHttpResponseObject(t, NewParser(), &resp)
+	if err != nil {
+		t.Fatal()
+	}
+	for _, data := range testData {
+		if !assert.Equal(t, data.expected, respObj.searchJmespath(data.raw)) {
+			t.Fatal()
+		}
+	}
+}
+
+func TestSearchRegexp(t *testing.T) {
+	testText := `
+	<ul class="nav navbar-nav navbar-right">
+	<li><a href="/order/addToCart" style="color: white"><i class="fa fa-shopping-cart fa-2x"></i><span class="badge">0</span></a></li>
+	<li class="dropdown">
+	  <a class="dropdown-toggle" data-toggle="dropdown" href="#" style="color: white">
+		Leo   <i class="fa fa-cog fa-2x"></i><span class="caret"></span></a>
+	  <ul class="dropdown-menu">
+		<li><a href="/user/changePassword">Change Password</a></li>
+		<li><a href="/user/addAddress">Shipping</a></li>
+		<li><a href="/user/addCard">Payment</a></li>
+		<li><a href="/order/orderHistory">Order History</a></li>
+		<li><a href="/user/signOut">Sign Out</a></li>
+	  </ul>
+	</li>
+
+	<li>&nbsp;&nbsp;&nbsp;</li>
+	<li><a href="/user/signOut" style="color: white"><i class="fa fa-sign-out fa-2x"></i>
+	  Sign Out</a></li>
+  </ul>
+`
+	testData := []struct {
+		raw      string
+		expected string
+	}{
+		{"/user/signOut\">(.*)</a></li>", "Sign Out"},
+		{"<li><a href=\"/user/(.*)\" style", "signOut"},
+		{"		(.*)   <i class=\"fa fa-cog fa-2x\"></i>", "Leo"},
+	}
+	// new response object
+	resp := http.Response{}
+	resp.Body = io.NopCloser(strings.NewReader(testText))
+	respObj, err := newHttpResponseObject(t, NewParser(), &resp)
+	if err != nil {
+		t.Fatal()
+	}
+	for _, data := range testData {
+		if !assert.Equal(t, data.expected, respObj.searchRegexp(data.raw)) {
+			t.Fatal()
+		}
+	}
+}
+
+func TestConvertCheckExpr(t *testing.T) {
+	exprs := []struct {
+		before string
+		after  string
+	}{
+		// normal check expression
+		{"a.b.c", "a.b.c"},
+		{"a.\"b-c\".d", "a.\"b-c\".d"},
+		{"a.b-c.d", "a.b-c.d"},
+		{"body.args.a[-1]", "body.args.a[-1]"},
+		// check expression using regex
+		{"covering (.*) testing,", "covering (.*) testing,"},
+		{" (.*) a-b-c", " (.*) a-b-c"},
+		// abnormal check expression
+		{"headers.Content-Type", "headers.\"Content-Type\""},
+		{"headers.\"Content-Type", "headers.\"Content-Type\""},
+		{"headers.Content-Type\"", "headers.\"Content-Type\""},
+		{"headers.User-Agent", "headers.\"User-Agent\""},
+	}
+	for _, expr := range exprs {
+		assert.Equal(t, expr.after, convertJmespathExpr(expr.before))
+	}
+}
+
+func TestFindAllPythonFunctionNames(t *testing.T) {
+	content := `
+def test_1():	# exported function
+    pass
+
+def _test_2():	# exported function
+    pass
+
+def __test_3():	# private function
+    pass
+
+# def test_4():	# commented out function
+#    pass
+
+def Test5():	# exported function
+    pass
+`
+	names, err := regexPyFunctionName.findAllFunctionNames(content)
+	if !assert.Nil(t, err) {
+		t.FailNow()
+	}
+	if !assert.Contains(t, names, "test_1") {
+		t.FailNow()
+	}
+	if !assert.Contains(t, names, "Test5") {
+		t.FailNow()
+	}
+	if !assert.Contains(t, names, "_test_2") {
+		t.FailNow()
+	}
+	if !assert.NotContains(t, names, "__test_3") {
+		t.FailNow()
+	}
+	// commented out function
+	if !assert.NotContains(t, names, "test_4") {
+		t.FailNow()
+	}
+}
+
+func TestFindAllGoFunctionNames(t *testing.T) {
+	content := `
+func Test1() {	// exported function
+	return
+}
+
+func testFunc2() {	// exported function
+	return
+}
+
+func init() {	// private function
+	return
+}
+
+func _Test3() { // exported function
+	return
+}
+
+// func Test4() {	// commented out function
+// 	return
+// }
+`
+	names, err := regexGoFunctionName.findAllFunctionNames(content)
+	if !assert.Nil(t, err) {
+		t.FailNow()
+	}
+	if !assert.Contains(t, names, "Test1") {
+		t.FailNow()
+	}
+	if !assert.Contains(t, names, "testFunc2") {
+		t.FailNow()
+	}
+	if !assert.NotContains(t, names, "init") {
+		t.FailNow()
+	}
+	if !assert.Contains(t, names, "_Test3") {
+		t.FailNow()
+	}
+	// commented out function
+	if !assert.NotContains(t, names, "Test4") {
+		t.FailNow()
+	}
+}
+
+func TestFindAllGoFunctionNamesAbnormal(t *testing.T) {
+	content := `
+func init() {	// private function
+	return
+}
+
+func main() {	// should not define main() function
+	return
+}
+`
+	_, err := regexGoFunctionName.findAllFunctionNames(content)
+	if !assert.NotNil(t, err) {
+		t.FailNow()
 	}
 }

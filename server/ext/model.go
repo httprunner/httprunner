@@ -9,7 +9,7 @@ type AppInstallRequest struct {
 
 type LoginRequest struct {
 	PackageName string `json:"packageName"`
-	PhoneNumber string `json:"phoneNumber" binding:"required"`
+	PhoneNumber string `json:"phoneNumber"`
 	Captcha     string `json:"captcha" binding:"required_without=Password"`
 	Password    string `json:"password" binding:"required_without=Captcha"`
 }
@@ -19,7 +19,7 @@ type LogoutRequest struct {
 }
 
 type HttpResponse struct {
-	Code    int         `json:"code"`
-	Message string      `json:"msg"`
+	Code    int         `json:"errorCode"`
+	Message string      `json:"errorMsg"`
 	Result  interface{} `json:"result,omitempty"`
 }

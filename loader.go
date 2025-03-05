@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/json"
 )
 
@@ -85,7 +86,7 @@ func LoadTestCases(tests ...ITestCase) ([]*TestCase, error) {
 // LoadFileObject loads file content with file extension and assigns to structObj
 func LoadFileObject(path string, structObj interface{}) (err error) {
 	log.Info().Str("path", path).Msg("load file")
-	file, err := readFile(path)
+	file, err := builtin.LoadFile(path)
 	if err != nil {
 		return errors.Wrap(err, "read file failed")
 	}
@@ -144,20 +145,4 @@ func parseEnvContent(file []byte, obj interface{}) error {
 		os.Setenv(key, value)
 	}
 	return nil
-}
-
-func readFile(path string) ([]byte, error) {
-	var err error
-	path, err = filepath.Abs(path)
-	if err != nil {
-		log.Error().Err(err).Str("path", path).Msg("convert absolute path failed")
-		return nil, errors.Wrap(code.LoadFileError, err.Error())
-	}
-
-	file, err := os.ReadFile(path)
-	if err != nil {
-		log.Error().Err(err).Msg("read file failed")
-		return nil, errors.Wrap(code.LoadFileError, err.Error())
-	}
-	return file, nil
 }

@@ -220,26 +220,128 @@ func (s *StepWebSocket) WithCloseStatus(closeStatus int64) *StepWebSocket {
 }
 
 // Validate switches to step validation.
-func (s *StepWebSocket) Validate() *StepRequestValidation {
-	return &StepRequestValidation{
-		StepRequestWithOptionalArgs: &StepRequestWithOptionalArgs{
-			StepRequest: &StepRequest{
-				StepConfig: s.StepConfig,
-			},
-		},
+func (s *StepWebSocket) Validate() *StepWebSocketValidation {
+	return &StepWebSocketValidation{
+		StepWebSocket: s,
 	}
 }
 
 // Extract switches to step extraction.
-func (s *StepWebSocket) Extract() *StepRequestExtraction {
+func (s *StepWebSocket) Extract() *StepWebSocketExtraction {
 	s.StepConfig.Extract = make(map[string]string)
-	return &StepRequestExtraction{
-		StepRequestWithOptionalArgs: &StepRequestWithOptionalArgs{
-			StepRequest: &StepRequest{
-				StepConfig: s.StepConfig,
-			},
-		},
+	return &StepWebSocketExtraction{
+		StepWebSocket: s,
 	}
+}
+
+// StepWebSocketExtraction implements IStep interface.
+type StepWebSocketExtraction struct {
+	*StepWebSocket
+}
+
+// WithJmesPath sets the JMESPath expression to extract from the response.
+func (s *StepWebSocketExtraction) WithJmesPath(jmesPath string, varName string) *StepWebSocketExtraction {
+	s.StepConfig.Extract[varName] = jmesPath
+	return s
+}
+
+// Validate switches to step validation.
+func (s *StepWebSocketExtraction) Validate() *StepWebSocketValidation {
+	return &StepWebSocketValidation{
+		StepWebSocket: s.StepWebSocket,
+	}
+}
+
+func (s *StepWebSocketExtraction) Name() string {
+	return s.StepName
+}
+
+func (s *StepWebSocketExtraction) Type() StepType {
+	stepType := StepType(fmt.Sprintf("websocket-%v", s.WebSocket.Type))
+	return stepType + stepTypeSuffixExtraction
+}
+
+func (s *StepWebSocketExtraction) Struct() *StepConfig {
+	return &s.StepConfig
+}
+
+func (s *StepWebSocketExtraction) Run(r *SessionRunner) (*StepResult, error) {
+	if s.WebSocket != nil {
+		return runStepWebSocket(r, s.StepWebSocket)
+	}
+	return nil, errors.New("unexpected protocol type")
+}
+
+// StepWebSocketValidation implements IStep interface.
+type StepWebSocketValidation struct {
+	*StepWebSocket
+}
+
+func (s *StepWebSocketValidation) Name() string {
+	if s.StepName != "" {
+		return s.StepName
+	}
+	return fmt.Sprintf("%s %s", s.WebSocket.Type, s.WebSocket.URL)
+}
+
+func (s *StepWebSocketValidation) Type() StepType {
+	stepType := StepType(fmt.Sprintf("websocket-%v", s.WebSocket.Type))
+	return stepType + stepTypeSuffixValidation
+}
+
+func (s *StepWebSocketValidation) Config() *StepConfig {
+	return &s.StepConfig
+}
+
+func (s *StepWebSocketValidation) Run(r *SessionRunner) (*StepResult, error) {
+	if s.WebSocket != nil {
+		return runStepWebSocket(r, s.StepWebSocket)
+	}
+	return nil, errors.New("unexpected protocol type")
+}
+
+func (s *StepWebSocketValidation) AssertEqual(jmesPath string, expected interface{}, msg string) *StepWebSocketValidation {
+	v := Validator{
+		Check:   jmesPath,
+		Assert:  "equals",
+		Expect:  expected,
+		Message: msg,
+	}
+	s.Validators = append(s.Validators, v)
+	return s
+}
+
+func (s *StepWebSocketValidation) AssertEqualFold(jmesPath string, expected interface{}, msg string) *StepWebSocketValidation {
+	v := Validator{
+		Check:   jmesPath,
+		Assert:  "equal_fold",
+		Expect:  expected,
+		Message: msg,
+	}
+	s.Validators = append(s.Validators, v)
+	return s
+}
+
+func (s *StepWebSocketValidation) AssertLengthEqual(jmesPath string, expected interface{}, msg string) *StepWebSocketValidation {
+	v := Validator{
+		Check:   jmesPath,
+		Assert:  "length_equals",
+		Expect:  expected,
+		Message: msg,
+	}
+	s.Validators = append(s.Validators, v)
+	return s
+}
+
+func (s *StepWebSocketValidation) AssertContains(jmesPath string, expected interface{}, msg string) *StepWebSocketValidation {
+	v := Validator{
+		Check:   jmesPath,
+		Assert:  "contains",
+		Expect:  expected,
+		Message: msg,
+	}
+	s.Validators = append(s.Validators, v)
+	return s
 }
 
 type WebSocketAction struct {

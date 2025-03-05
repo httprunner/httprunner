@@ -1,6 +1,6 @@
 package hrp
 
-import "github.com/httprunner/httprunner/v5/pkg/uixt"
+import "github.com/httprunner/httprunner/v5/uixt"
 
 type StepType string
 

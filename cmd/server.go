@@ -14,6 +14,7 @@ var serverCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return server_ext.NewExtRouter().Run(port)
+		// return server.NewRouter().Run(port)
 	},
 }
 

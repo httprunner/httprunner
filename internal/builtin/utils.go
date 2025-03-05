@@ -5,16 +5,13 @@ import (
 	"bytes"
 	"context"
 	"crypto/hmac"
-	"crypto/md5"
 	"crypto/sha256"
 	"encoding/csv"
 	builtinJSON "encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"math/rand"
 	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,7 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/BurntSushi/locker"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
@@ -229,6 +225,22 @@ func InterfaceType(raw interface{}) string {
 	return reflect.TypeOf(raw).String()
 }
 
+func LoadFile(path string) ([]byte, error) {
+	var err error
+	path, err = filepath.Abs(path)
+	if err != nil {
+		log.Error().Err(err).Str("path", path).Msg("convert absolute path failed")
+		return nil, errors.Wrap(code.LoadFileError, err.Error())
+	}
+
+	file, err := os.ReadFile(path)
+	if err != nil {
+		log.Error().Err(err).Msg("read file failed")
+		return nil, errors.Wrap(code.LoadFileError, err.Error())
+	}
+	return file, nil
+}
+
 func loadFromCSV(path string) []map[string]interface{} {
 	log.Info().Str("path", path).Msg("load csv file")
 	file, err := os.ReadFile(path)
@@ -358,21 +370,18 @@ func ConvertToStringSlice(val interface{}) ([]string, error) {
 }
 
 func GetFreePort() (int, error) {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		return 0, errors.Wrap(err, "resolve tcp addr failed")
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return 0, errors.Wrap(err, "listen tcp addr failed")
-	}
-	defer func() {
-		if err = l.Close(); err != nil {
-			log.Error().Err(err).Msg(fmt.Sprintf("close addr %s error", l.Addr().String()))
+	minPort := 20000
+	maxPort := 50000
+	for i := 0; i < 10; i++ {
+		port := rand.Intn(maxPort-minPort+1) + minPort
+		addr := fmt.Sprintf("0.0.0.0:%d", port)
+		l, err := net.Listen("tcp", addr)
+		if err == nil {
+			defer l.Close() // 端口成功绑定后立即释放，返回该端口号
+			return port, nil
 		}
-	}()
-	return l.Addr().(*net.TCPAddr).Port, nil
+	}
+	return 0, errors.New("failed to get available port")
 }
 
 func GetCurrentDay() string {
@@ -382,67 +391,12 @@ func GetCurrentDay() string {
 	return formattedDate
 }
 
-func fileExists(filepath string) bool {
+func FileExists(filepath string) bool {
 	_, err := os.Stat(filepath)
 	if os.IsNotExist(err) {
 		return false // 文件不存在
 	}
 	return err == nil // 文件存在，且没有其他错误
-}
-
-func DownloadFileByUrl(fileUrl string) (filePath string, err error) {
-	// 使用 UUID 生成唯一文件名
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	hash := md5.Sum([]byte(fileUrl))
-	fileName := fmt.Sprintf("%x", hash)
-	filePath = filepath.Join(cwd, fileName)
-	locker.Lock(filePath)
-	defer locker.Unlock(filePath)
-	if fileExists(filePath) {
-		return filePath, nil
-	}
-
-	fmt.Printf("Downloading file to %s from URL %s\n", filePath, fileUrl)
-
-	// Create an HTTP client with default settings.
-	client := &http.Client{}
-
-	// Build the HTTP GET request.
-	req, err := http.NewRequest("GET", fileUrl, nil)
-	if err != nil {
-		return "", err
-	}
-
-	// Perform the request.
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	// Check the HTTP status code.
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to download file: %s", resp.Status)
-	}
-
-	// Create the output file.
-	outFile, err := os.Create(fileName)
-	if err != nil {
-		return "", err
-	}
-	defer outFile.Close()
-
-	// Copy the response body to the file.
-	_, err = io.Copy(outFile, resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	fmt.Printf("File downloaded successfully: %s\n", fileName)
-	return filePath, nil
 }
 
 func RunCommand(cmdName string, args ...string) error {

@@ -17,17 +17,18 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/httprunner/funplugin"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
+	"github.com/httprunner/funplugin"
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/internal/version"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/ai"
 )
 
 // Run starts to run testcase with default configs.
@@ -281,7 +282,7 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 	caseRunner := &CaseRunner{
 		TestCase:    testcase,
 		hrpRunner:   r,
-		parser:      newParser(),
+		parser:      NewParser(),
 		uixtDrivers: make(map[string]*uixt.XTDriver),
 	}
 	config := testcase.Config.Get()
@@ -296,7 +297,7 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 
 		// load plugin info to testcase config
 		pluginPath := plugin.Path()
-		pluginContent, err := readFile(pluginPath)
+		pluginContent, err := builtin.LoadFile(pluginPath)
 		if err != nil {
 			return nil, err
 		}
@@ -407,7 +408,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 	parsedConfig.WebSocketSetting.checkWebSocket()
 
 	// parse testcase config parameters
-	parametersIterator, err := r.parser.initParametersIterator(parsedConfig)
+	parametersIterator, err := r.parser.InitParametersIterator(parsedConfig)
 	if err != nil {
 		log.Error().Err(err).
 			Interface("parameters", parsedConfig.Parameters).

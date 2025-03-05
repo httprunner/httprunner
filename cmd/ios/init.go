@@ -3,8 +3,8 @@ package ios
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 var iosRootCmd = &cobra.Command{

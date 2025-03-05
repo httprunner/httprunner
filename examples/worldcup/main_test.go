@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func TestConvertTimeToSeconds(t *testing.T) {

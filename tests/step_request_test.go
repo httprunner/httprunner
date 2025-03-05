@@ -1,0 +1,215 @@
+package tests
+
+import (
+	"testing"
+	"time"
+
+	hrp "github.com/httprunner/httprunner/v5"
+	"github.com/stretchr/testify/assert"
+)
+
+var (
+	stepGET = hrp.NewStep("get with params").
+		GET("/get").
+		WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
+		WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
+		WithCookies(map[string]string{"user": "debugtalk"}).
+		Validate().
+		AssertEqual("status_code", 200, "check status code").
+		AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
+		AssertEqual("body.args.foo1", "bar1", "check param foo1").
+		AssertEqual("body.args.foo2", "bar2", "check param foo2")
+	stepPOSTData = hrp.NewStep("post form data").
+			POST("/post").
+			WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
+			WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus", "Content-Type": "application/x-www-form-urlencoded"}).
+			WithBody("a=1&b=2").
+			WithCookies(map[string]string{"user": "debugtalk"}).
+			Validate().
+			AssertEqual("status_code", 200, "check status code")
+)
+
+func TestRunRequestGetToStruct(t *testing.T) {
+	tStep := stepGET
+	if tStep.Request.Method != hrp.HTTP_GET {
+		t.Fatalf("tStep.Request.Method != GET")
+	}
+	if tStep.Request.URL != "/get" {
+		t.Fatalf("tStep.Request.URL != '/get'")
+	}
+	if tStep.Request.Params["foo1"] != "bar1" || tStep.Request.Params["foo2"] != "bar2" {
+		t.Fatalf("tStep.Request.Params mismatch")
+	}
+	if tStep.Request.Headers["User-Agent"] != "HttpRunnerPlus" {
+		t.Fatalf("tStep.Request.Headers mismatch")
+	}
+	if tStep.Request.Cookies["user"] != "debugtalk" {
+		t.Fatalf("tStep.Request.Cookies mismatch")
+	}
+	validator, ok := tStep.Validators[0].(hrp.Validator)
+	if !ok || validator.Check != "status_code" || validator.Expect != 200 {
+		t.Fatalf("tStep.Validators mismatch")
+	}
+}
+
+func TestRunRequestPostDataToStruct(t *testing.T) {
+	tStep := stepPOSTData
+	if tStep.Request.Method != hrp.HTTP_POST {
+		t.Fatalf("tStep.Request.Method != POST")
+	}
+	if tStep.Request.URL != "/post" {
+		t.Fatalf("tStep.Request.URL != '/post'")
+	}
+	if tStep.Request.Params["foo1"] != "bar1" || tStep.Request.Params["foo2"] != "bar2" {
+		t.Fatalf("tStep.Request.Params mismatch")
+	}
+	if tStep.Request.Headers["User-Agent"] != "HttpRunnerPlus" {
+		t.Fatalf("tStep.Request.Headers mismatch")
+	}
+	if tStep.Request.Cookies["user"] != "debugtalk" {
+		t.Fatalf("tStep.Request.Cookies mismatch")
+	}
+	if tStep.Request.Body != "a=1&b=2" {
+		t.Fatalf("tStep.Request.Data mismatch")
+	}
+	validator, ok := tStep.Validators[0].(hrp.Validator)
+	if !ok || validator.Check != "status_code" || validator.Expect != 200 {
+		t.Fatalf("tStep.Validators mismatch")
+	}
+}
+
+func TestRunRequestStatOn(t *testing.T) {
+	testcase := hrp.TestCase{
+		Config:    hrp.NewConfig("test").SetBaseURL("https://postman-echo.com"),
+		TestSteps: []hrp.IStep{stepGET, stepPOSTData},
+	}
+	caseRunner, _ := hrp.NewRunner(t).SetHTTPStatOn().NewCaseRunner(testcase)
+	sessionRunner := caseRunner.NewSession()
+	summary, err := sessionRunner.Start(nil)
+	if err != nil {
+		t.Fatal()
+	}
+
+	stat := summary.Records[0].HttpStat
+	if !assert.GreaterOrEqual(t, stat["DNSLookup"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["TCPConnection"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["TLSHandshake"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["ServerProcessing"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.GreaterOrEqual(t, stat["ContentTransfer"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.GreaterOrEqual(t, stat["NameLookup"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["Connect"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["Pretransfer"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["StartTransfer"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["Total"], int64(5)) {
+		t.Fatal()
+	}
+	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(3)) {
+		t.Fatal()
+	}
+
+	// reuse connection
+	stat = summary.Records[1].HttpStat
+	if !assert.Equal(t, int64(0), stat["DNSLookup"]) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, int64(0), stat["TCPConnection"]) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, int64(0), stat["TLSHandshake"]) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["ServerProcessing"], int64(1)) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, int64(0), stat["NameLookup"]) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, int64(0), stat["Connect"]) {
+		t.Fatal()
+	}
+	if !assert.Equal(t, int64(0), stat["Pretransfer"]) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["StartTransfer"], int64(0)) {
+		t.Fatal()
+	}
+	if !assert.Greater(t, stat["Total"], int64(1)) {
+		t.Fatal()
+	}
+	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(100)) {
+		t.Fatal()
+	}
+}
+
+func TestRunCaseWithTimeout(t *testing.T) {
+	r := hrp.NewRunner(t)
+
+	// global timeout
+	testcase1 := &hrp.TestCase{
+		Config: hrp.NewConfig("TestCase1").
+			SetRequestTimeout(10). // set global timeout to 10s
+			SetBaseURL("https://postman-echo.com"),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("step1").
+				GET("/delay/1").
+				Validate().
+				AssertEqual("status_code", 200, "check status code"),
+		},
+	}
+	err := r.Run(testcase1)
+	if !assert.NoError(t, err) { // assert no error
+		t.FailNow()
+	}
+
+	testcase2 := &hrp.TestCase{
+		Config: hrp.NewConfig("TestCase2").
+			SetRequestTimeout(5). // set global timeout to 10s
+			SetBaseURL("https://postman-echo.com"),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("step1").
+				GET("/delay/10").
+				Validate().
+				AssertEqual("status_code", 200, "check status code"),
+		},
+	}
+	err = r.Run(testcase2)
+	if !assert.Error(t, err) { // assert error
+		t.FailNow()
+	}
+
+	// step timeout
+	testcase3 := &hrp.TestCase{
+		Config: hrp.NewConfig("TestCase3").
+			SetRequestTimeout(10).
+			SetBaseURL("https://postman-echo.com"),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("step2").
+				GET("/delay/11").
+				SetTimeout(15*time.Second). // set step timeout to 4s
+				Validate().
+				AssertEqual("status_code", 200, "check status code"),
+		},
+	}
+	err = r.Run(testcase3)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+}

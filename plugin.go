@@ -6,11 +6,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/httprunner/funplugin"
-	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/funplugin"
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
@@ -37,12 +37,12 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		Bool("logOn", logOn).Msg("init plugin")
 	// plugin file not found
 	if path == "" {
-		return nil, nil
+		return nil, errors.New("testcase path not specified")
 	}
-	pluginPath, err := locatePlugin(path)
+	pluginPath, err := LocatePlugin(path)
 	if err != nil {
 		log.Warn().Str("path", path).Msg("locate plugin failed")
-		return nil, nil
+		return nil, errors.Wrap(err, "locate plugin failed")
 	}
 
 	pluginMutex.Lock()
@@ -100,21 +100,21 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 	return
 }
 
-func locatePlugin(path string) (pluginPath string, err error) {
+func LocatePlugin(path string) (pluginPath string, err error) {
 	log.Info().Str("path", path).Msg("locate plugin")
 	// priority: hashicorp plugin (debugtalk.bin > debugtalk.py) > go plugin (debugtalk.so)
 
-	pluginPath, err = locateFile(path, PluginHashicorpGoBuiltFile)
+	pluginPath, err = LocateFile(path, PluginHashicorpGoBuiltFile)
 	if err == nil {
 		return
 	}
 
-	pluginPath, err = locateFile(path, PluginPySourceFile)
+	pluginPath, err = LocateFile(path, PluginPySourceFile)
 	if err == nil {
 		return
 	}
 
-	pluginPath, err = locateFile(path, PluginGoBuiltFile)
+	pluginPath, err = LocateFile(path, PluginGoBuiltFile)
 	if err == nil {
 		return
 	}
@@ -122,9 +122,9 @@ func locatePlugin(path string) (pluginPath string, err error) {
 	return "", errors.New("plugin file not found")
 }
 
-// locateFile searches destFile upward recursively until system root dir
+// LocateFile searches destFile upward recursively until system root dir
 // if not found, then searches in hrp executable dir
-func locateFile(startPath string, destFile string) (pluginPath string, err error) {
+func LocateFile(startPath string, destFile string) (pluginPath string, err error) {
 	stat, err := os.Stat(startPath)
 	if os.IsNotExist(err) {
 		return "", errors.Wrap(err, "start path not exists")
@@ -153,7 +153,7 @@ func locateFile(startPath string, destFile string) (pluginPath string, err error
 		return "", errors.New("searched to system root dir, plugin file not found")
 	}
 
-	return locateFile(parentDir, destFile)
+	return LocateFile(parentDir, destFile)
 }
 
 // locateExecutable finds destFile in hrp executable dir
@@ -173,13 +173,13 @@ func locateExecutable(destFile string) (string, error) {
 }
 
 func GetProjectRootDirPath(path string) (rootDir string, err error) {
-	pluginPath, err := locatePlugin(path)
+	pluginPath, err := LocatePlugin(path)
 	if err == nil {
 		rootDir = filepath.Dir(pluginPath)
 		return
 	}
 	// fix: no debugtalk file in project but having proj.json created by startproject
-	projPath, err := locateFile(path, projectInfoFile)
+	projPath, err := LocateFile(path, projectInfoFile)
 	if err == nil {
 		rootDir = filepath.Dir(projPath)
 		return
@@ -188,5 +188,5 @@ func GetProjectRootDirPath(path string) (rootDir string, err error) {
 	// failed to locate project root dir
 	// maybe project plugin debugtalk.xx and proj.json are not exist
 	// use current dir instead
-	return config.RootDir, nil
+	return config.GetConfig().RootDir, nil
 }

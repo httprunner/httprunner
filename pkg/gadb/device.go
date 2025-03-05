@@ -640,6 +640,7 @@ func (d *Device) InstallAPK(apkPath string, args ...string) (string, error) {
 	haserr := func(ret string) bool {
 		return strings.Contains(ret, "Failure")
 	}
+	// 该方法掉线不会返回error。导致误认为安装成功
 	if d.HasFeature(FeatAbbExec) {
 		raw, err := d.installViaABBExec(apkFile)
 		if err != nil {
@@ -733,6 +734,11 @@ func (d *Device) ScreenCap() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// remove temp file
+	defer func() {
+		go d.RunShellCommand("rm", tempPath)
+	}()
 
 	buffer := bytes.NewBuffer(nil)
 	err = d.Pull(tempPath, buffer)

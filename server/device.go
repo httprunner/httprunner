@@ -7,14 +7,14 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/danielpaulus/go-ios/ios"
 	"github.com/gin-gonic/gin"
-	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/gadb"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/pkg/gadb"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
-func listDeviceHandler(c *gin.Context) {
+func (r *Router) listDeviceHandler(c *gin.Context) {
 	var deviceList []interface{}
 	client, err := gadb.NewClient()
 	if err == nil {
@@ -88,17 +88,47 @@ func listDeviceHandler(c *gin.Context) {
 	RenderSuccess(c, deviceList)
 }
 
-func pushImageHandler(c *gin.Context) {
+func createBrowserHandler(c *gin.Context) {
+	var createBrowserReq CreateBrowserRequest
+	if err := c.ShouldBindJSON(&createBrowserReq); err != nil {
+		RenderErrorValidateRequest(c, err)
+		return
+	}
+
+	browserInfo, err := uixt.CreateBrowser(createBrowserReq.Timeout)
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, browserInfo)
+	return
+}
+
+func (r *Router) deleteBrowserHandler(c *gin.Context) {
+	driver, err := r.GetDriver(c)
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	err = driver.DeleteSession()
+	if err != nil {
+		RenderError(c, err)
+		return
+	}
+	RenderSuccess(c, true)
+}
+
+func (r *Router) pushImageHandler(c *gin.Context) {
 	var pushMediaReq PushMediaRequest
 	if err := c.ShouldBindJSON(&pushMediaReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
-	driver, err := GetDriver(c)
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
-	imagePath, err := builtin.DownloadFileByUrl(pushMediaReq.ImageUrl)
+	imagePath, err := uixt.DownloadFileByUrl(pushMediaReq.ImageUrl)
 	if path.Ext(imagePath) == "" {
 		err = os.Rename(imagePath, imagePath+".png")
 		if err != nil {
@@ -122,8 +152,8 @@ func pushImageHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func clearImageHandler(c *gin.Context) {
-	driver, err := GetDriver(c)
+func (r *Router) clearImageHandler(c *gin.Context) {
+	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
@@ -135,6 +165,6 @@ func clearImageHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func videoHandler(c *gin.Context) {
+func (r *Router) videoHandler(c *gin.Context) {
 	RenderSuccess(c, "")
 }

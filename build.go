@@ -10,11 +10,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/httprunner/funplugin/fungo"
-	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/funplugin/fungo"
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
@@ -107,7 +107,7 @@ func (pt *pluginTemplate) generate(tmpl, output string) error {
 func (pt *pluginTemplate) generatePy(output string) error {
 	// specify output file path
 	if output == "" {
-		output = filepath.Join(config.RootDir, PluginPySourceGenFile)
+		output = filepath.Join(config.GetConfig().RootDir, PluginPySourceGenFile)
 	} else if builtin.IsFolderPathExists(output) {
 		output = filepath.Join(output, PluginPySourceGenFile)
 	}
@@ -155,7 +155,7 @@ func (pt *pluginTemplate) generateGo(output string) error {
 
 	// specify output file path
 	if output == "" {
-		output = filepath.Join(config.RootDir, PluginHashicorpGoBuiltFile)
+		output = filepath.Join(config.GetConfig().RootDir, PluginHashicorpGoBuiltFile)
 	} else if builtin.IsFolderPathExists(output) {
 		output = filepath.Join(output, PluginHashicorpGoBuiltFile)
 	}

@@ -42,14 +42,14 @@ func (s *StepThinkTime) Run(r *SessionRunner) (*StepResult, error) {
 
 	cfg := r.caseRunner.Config.Get().ThinkTimeSetting
 	if cfg == nil {
-		cfg = &ThinkTimeConfig{thinkTimeDefault, nil, 0}
+		cfg = &ThinkTimeConfig{ThinkTimeDefault, nil, 0}
 	}
 
 	var tt time.Duration
 	switch cfg.Strategy {
-	case thinkTimeDefault:
+	case ThinkTimeDefault:
 		tt = time.Duration(thinkTime.Time*1000) * time.Millisecond
-	case thinkTimeRandomPercentage:
+	case ThinkTimeRandomPercentage:
 		// e.g. {"min_percentage": 0.5, "max_percentage": 1.5}
 		m, ok := cfg.Setting.(map[string]float64)
 		if !ok {
@@ -58,13 +58,13 @@ func (s *StepThinkTime) Run(r *SessionRunner) (*StepResult, error) {
 		}
 		res := builtin.GetRandomNumber(int(thinkTime.Time*m["min_percentage"]*1000), int(thinkTime.Time*m["max_percentage"]*1000))
 		tt = time.Duration(res) * time.Millisecond
-	case thinkTimeMultiply:
+	case ThinkTimeMultiply:
 		value, ok := cfg.Setting.(float64) // e.g. 0.5
 		if !ok || value <= 0 {
 			value = thinkTimeDefaultMultiply
 		}
 		tt = time.Duration(thinkTime.Time*value*1000) * time.Millisecond
-	case thinkTimeIgnore:
+	case ThinkTimeIgnore:
 		// nothing to do
 	}
 

@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/uixt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
 
 func NewRouter() *Router {
-	router := &Router{}
+	router := &Router{
+		Engine: gin.Default(),
+	}
 	router.Init()
 	return router
 }
@@ -21,46 +23,51 @@ type Router struct {
 }
 
 func (r *Router) Init() {
-	r.Engine = gin.Default()
-	r.Engine.Use(teardown())
-	r.Engine.GET("/ping", pingHandler)
-	r.Engine.GET("/", pingHandler)
-	r.Engine.POST("/", pingHandler)
-	r.Engine.GET("/api/v1/devices", listDeviceHandler)
+	r.Engine.Use(r.teardown())
+	r.Engine.GET("/ping", r.pingHandler)
+	r.Engine.GET("/", r.pingHandler)
+	r.Engine.POST("/", r.pingHandler)
+	r.Engine.GET("/api/v1/devices", r.listDeviceHandler)
+	r.Engine.POST("/api/v1/browser/create_browser", createBrowserHandler)
 
 	apiV1PlatformSerial := r.Group("/api/v1").Group("/:platform").Group("/:serial")
 
 	// UI operations
-	apiV1PlatformSerial.POST("/ui/tap", tapHandler)
-	apiV1PlatformSerial.POST("/ui/double_tap", doubleTapHandler)
-	apiV1PlatformSerial.POST("/ui/drag", dragHandler)
-	apiV1PlatformSerial.POST("/ui/input", inputHandler)
-	apiV1PlatformSerial.POST("/ui/home", homeHandler)
+	apiV1PlatformSerial.POST("/ui/tap", r.tapHandler)
+	apiV1PlatformSerial.POST("/ui/right_click", r.rightClickHandler)
+	apiV1PlatformSerial.POST("/ui/double_tap", r.doubleTapHandler)
+	apiV1PlatformSerial.POST("/ui/drag", r.dragHandler)
+	apiV1PlatformSerial.POST("/ui/input", r.inputHandler)
+	apiV1PlatformSerial.POST("/ui/home", r.homeHandler)
+	apiV1PlatformSerial.POST("/ui/upload", r.uploadHandler)
+	apiV1PlatformSerial.POST("/ui/hover", r.hoverHandler)
+	apiV1PlatformSerial.POST("/ui/scroll", r.scrollHandler)
 
 	// Key operations
-	apiV1PlatformSerial.POST("/key/unlock", unlockHandler)
-	apiV1PlatformSerial.POST("/key/home", homeHandler)
-	apiV1PlatformSerial.POST("/key/backspace", backspaceHandler)
-	apiV1PlatformSerial.POST("/key", keycodeHandler)
+	apiV1PlatformSerial.POST("/key/unlock", r.unlockHandler)
+	apiV1PlatformSerial.POST("/key/home", r.homeHandler)
+	apiV1PlatformSerial.POST("/key/backspace", r.backspaceHandler)
+	apiV1PlatformSerial.POST("/key", r.keycodeHandler)
 
 	// APP operations
-	apiV1PlatformSerial.GET("/app/foreground", foregroundAppHandler)
-	apiV1PlatformSerial.GET("/app/appInfo", appInfoHandler)
-	apiV1PlatformSerial.POST("/app/clear", clearAppHandler)
-	apiV1PlatformSerial.POST("/app/launch", launchAppHandler)
-	apiV1PlatformSerial.POST("/app/terminal", terminalAppHandler)
-	apiV1PlatformSerial.POST("/app/uninstall", uninstallAppHandler)
+	apiV1PlatformSerial.GET("/app/foreground", r.foregroundAppHandler)
+	apiV1PlatformSerial.GET("/app/appInfo", r.appInfoHandler)
+	apiV1PlatformSerial.POST("/app/clear", r.clearAppHandler)
+	apiV1PlatformSerial.POST("/app/launch", r.launchAppHandler)
+	apiV1PlatformSerial.POST("/app/terminal", r.terminalAppHandler)
+	apiV1PlatformSerial.POST("/app/uninstall", r.uninstallAppHandler)
 
 	// Device operations
-	apiV1PlatformSerial.GET("/screenshot", screenshotHandler)
-	apiV1PlatformSerial.GET("/video", videoHandler)
-	apiV1PlatformSerial.POST("/device/push_image", pushImageHandler)
-	apiV1PlatformSerial.POST("/device/clear_image", clearImageHandler)
-	apiV1PlatformSerial.GET("/adb/source", adbSourceHandler)
+	apiV1PlatformSerial.GET("/screenshot", r.screenshotHandler)
+	apiV1PlatformSerial.DELETE("/close_browser", r.deleteBrowserHandler)
+	apiV1PlatformSerial.GET("/video", r.videoHandler)
+	apiV1PlatformSerial.POST("/device/push_image", r.pushImageHandler)
+	apiV1PlatformSerial.POST("/device/clear_image", r.clearImageHandler)
+	apiV1PlatformSerial.GET("/adb/source", r.adbSourceHandler)
 
 	// uixt operations
-	apiV1PlatformSerial.POST("/uixt/action", uixtActionHandler)
-	apiV1PlatformSerial.POST("/uixt/actions", uixtActionsHandler)
+	apiV1PlatformSerial.POST("/uixt/action", r.uixtActionHandler)
+	apiV1PlatformSerial.POST("/uixt/actions", r.uixtActionsHandler)
 }
 
 func (r *Router) Run(port int) error {
@@ -72,11 +79,11 @@ func (r *Router) Run(port int) error {
 	return nil
 }
 
-func pingHandler(c *gin.Context) {
+func (r *Router) pingHandler(c *gin.Context) {
 	RenderSuccess(c, true)
 }
 
-func teardown() gin.HandlerFunc {
+func (r *Router) teardown() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logID := c.Request.Header.Get("x-tt-logid")
 		startTime := time.Now()
@@ -99,7 +106,7 @@ func teardown() gin.HandlerFunc {
 
 		deviceObj, exists := c.Get("device")
 		if exists {
-			if device, ok := deviceObj.(*uixt.IOSDevice); ok {
+			if device, ok := deviceObj.(uixt.IDevice); ok {
 				err := device.Teardown()
 				if err != nil {
 					log.Error().Err(err)
