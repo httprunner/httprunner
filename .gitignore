@@ -2,7 +2,6 @@
 *.exe
 *.exe~
 *.dll
-*.so
 *.dylib
 *.apk
 
