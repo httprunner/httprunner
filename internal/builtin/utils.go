@@ -225,6 +225,22 @@ func InterfaceType(raw interface{}) string {
 	return reflect.TypeOf(raw).String()
 }
 
+func LoadFile(path string) ([]byte, error) {
+	var err error
+	path, err = filepath.Abs(path)
+	if err != nil {
+		log.Error().Err(err).Str("path", path).Msg("convert absolute path failed")
+		return nil, errors.Wrap(code.LoadFileError, err.Error())
+	}
+
+	file, err := os.ReadFile(path)
+	if err != nil {
+		log.Error().Err(err).Msg("read file failed")
+		return nil, errors.Wrap(code.LoadFileError, err.Error())
+	}
+	return file, nil
+}
+
 func loadFromCSV(path string) []map[string]interface{} {
 	log.Info().Str("path", path).Msg("load csv file")
 	file, err := os.ReadFile(path)

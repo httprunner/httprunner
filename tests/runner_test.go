@@ -1,22 +1,22 @@
-package hrp
+package tests
 
 import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 
+	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/code"
 )
 
 func buildHashicorpGoPlugin() {
 	log.Info().Msg("[init] build hashicorp go plugin")
-	err := BuildPlugin(tmpl("plugin/debugtalk.go"), tmpl("debugtalk.bin"))
+	err := hrp.BuildPlugin(tmpl("plugin/debugtalk.go"), tmpl("debugtalk.bin"))
 	if err != nil {
 		log.Error().Err(err).Msg("build hashicorp go plugin failed")
 		os.Exit(code.GetErrorCode(err))
@@ -26,8 +26,6 @@ func buildHashicorpGoPlugin() {
 func removeHashicorpGoPlugin() {
 	log.Info().Msg("[teardown] remove hashicorp go plugin")
 	os.Remove(tmpl("debugtalk.bin"))
-	pluginPath, _ := filepath.Abs(tmpl("debugtalk.bin"))
-	pluginMap.Delete(pluginPath)
 }
 
 func buildHashicorpPyPlugin() {
@@ -43,8 +41,8 @@ func buildHashicorpPyPlugin() {
 func removeHashicorpPyPlugin() {
 	log.Info().Msg("[teardown] remove hashicorp python plugin")
 	// on v4.1^, running case will generate .debugtalk_gen.py used by python plugin
-	os.Remove(tmpl(PluginPySourceFile))
-	os.Remove(tmpl(PluginPySourceGenFile))
+	os.Remove(tmpl(hrp.PluginPySourceFile))
+	os.Remove(tmpl(hrp.PluginPySourceGenFile))
 }
 
 func TestRunCaseWithGoPlugin(t *testing.T) {
@@ -62,21 +60,21 @@ func TestRunCaseWithPythonPlugin(t *testing.T) {
 }
 
 func assertRunTestCases(t *testing.T) {
-	refCase := TestCasePath(demoTestCaseWithPluginJSONPath)
-	testcase1 := &TestCase{
-		Config: NewConfig("TestCase1").
+	refCase := hrp.TestCasePath(demoTestCaseWithPluginJSONPath)
+	testcase1 := &hrp.TestCase{
+		Config: hrp.NewConfig("TestCase1").
 			SetBaseURL("https://postman-echo.com"),
-		TestSteps: []IStep{
-			NewStep("testcase1-step1").
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("testcase1-step1").
 				GET("/headers").
 				Validate().
 				AssertEqual("status_code", 200, "check status code").
 				AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check http response Content-Type"),
-			NewStep("testcase1-step2").CallRefCase(
-				&TestCase{
-					Config: NewConfig("testcase1-step3-ref-case").SetBaseURL("https://postman-echo.com"),
-					TestSteps: []IStep{
-						NewStep("ip").
+			hrp.NewStep("testcase1-step2").CallRefCase(
+				&hrp.TestCase{
+					Config: hrp.NewConfig("testcase1-step3-ref-case").SetBaseURL("https://postman-echo.com"),
+					TestSteps: []hrp.IStep{
+						hrp.NewStep("ip").
 							GET("/ip").
 							Validate().
 							AssertEqual("status_code", 200, "check status code").
@@ -84,14 +82,14 @@ func assertRunTestCases(t *testing.T) {
 					},
 				},
 			),
-			NewStep("testcase1-step3").CallRefCase(&refCase),
+			hrp.NewStep("testcase1-step3").CallRefCase(&refCase),
 		},
 	}
-	testcase2 := &TestCase{
-		Config: NewConfig("TestCase2").SetWeight(3),
+	testcase2 := &hrp.TestCase{
+		Config: hrp.NewConfig("TestCase2").SetWeight(3),
 	}
 
-	r := NewRunner(t)
+	r := hrp.NewRunner(t)
 	r.SetPluginLogOn()
 	err := r.Run(testcase1, testcase2)
 	if err != nil {
@@ -103,46 +101,46 @@ func TestRunCaseWithThinkTime(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
 
-	testcases := []*TestCase{
+	testcases := []*hrp.TestCase{
 		{
-			Config: NewConfig("TestCase1"),
-			TestSteps: []IStep{
-				NewStep("thinkTime").SetThinkTime(2),
+			Config: hrp.NewConfig("TestCase1"),
+			TestSteps: []hrp.IStep{
+				hrp.NewStep("thinkTime").SetThinkTime(2),
 			},
 		},
 		{
-			Config: NewConfig("TestCase2").
-				SetThinkTime(thinkTimeIgnore, nil, 0),
-			TestSteps: []IStep{
-				NewStep("thinkTime").SetThinkTime(0.5),
+			Config: hrp.NewConfig("TestCase2").
+				SetThinkTime(hrp.ThinkTimeIgnore, nil, 0),
+			TestSteps: []hrp.IStep{
+				hrp.NewStep("thinkTime").SetThinkTime(0.5),
 			},
 		},
 		{
-			Config: NewConfig("TestCase3").
-				SetThinkTime(thinkTimeRandomPercentage, nil, 0),
-			TestSteps: []IStep{
-				NewStep("thinkTime").SetThinkTime(1),
+			Config: hrp.NewConfig("TestCase3").
+				SetThinkTime(hrp.ThinkTimeRandomPercentage, nil, 0),
+			TestSteps: []hrp.IStep{
+				hrp.NewStep("thinkTime").SetThinkTime(1),
 			},
 		},
 		{
-			Config: NewConfig("TestCase4").
-				SetThinkTime(thinkTimeRandomPercentage, map[string]interface{}{"min_percentage": 2, "max_percentage": 3}, 2.5),
-			TestSteps: []IStep{
-				NewStep("thinkTime").SetThinkTime(1),
+			Config: hrp.NewConfig("TestCase4").
+				SetThinkTime(hrp.ThinkTimeRandomPercentage, map[string]interface{}{"min_percentage": 2, "max_percentage": 3}, 2.5),
+			TestSteps: []hrp.IStep{
+				hrp.NewStep("thinkTime").SetThinkTime(1),
 			},
 		},
 		{
-			Config: NewConfig("TestCase5"),
-			TestSteps: []IStep{
+			Config: hrp.NewConfig("TestCase5"),
+			TestSteps: []hrp.IStep{
 				// think time: 3s, random pct: {"min_percentage":1, "max_percentage":1.5}, limit: 4s
-				NewStep("thinkTime").CallRefCase(&demoTestCaseWithThinkTimePath),
+				hrp.NewStep("thinkTime").CallRefCase(&demoTestCaseWithThinkTimePath),
 			},
 		},
 	}
 	expectedMinValue := []float64{2, 0, 0.5, 2, 3}
 	expectedMaxValue := []float64{2.5, 0.5, 2, 3, 10}
 	for idx, testcase := range testcases {
-		r := NewRunner(t)
+		r := hrp.NewRunner(t)
 		startTime := time.Now()
 		err := r.Run(testcase)
 		if err != nil {
@@ -158,20 +156,20 @@ func TestRunCaseWithThinkTime(t *testing.T) {
 }
 
 func TestRunCaseWithShell(t *testing.T) {
-	testcase1 := &TestCase{
-		Config: NewConfig("complex shell with env variables").
+	testcase1 := &hrp.TestCase{
+		Config: hrp.NewConfig("complex shell with env variables").
 			WithVariables(map[string]interface{}{
 				"SS":  "12345",
 				"ABC": "$SS",
 			}),
-		TestSteps: []IStep{
-			NewStep("shell21").Shell("echo hello world"),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("shell21").Shell("echo hello world"),
 			// NewStep("shell21").Shell("echo $ABC"),
 			// NewStep("shell21").Shell("which hrp"),
 		},
 	}
 
-	r := NewRunner(t)
+	r := hrp.NewRunner(t)
 	err := r.Run(testcase1)
 	if err != nil {
 		t.Fatal()
@@ -193,16 +191,16 @@ func TestRunCaseWithFunction(t *testing.T) {
 		err3 = errors.New("func3 error")
 		fmt.Println("call function3 with return value and error")
 	}
-	testcase1 := &TestCase{
-		Config: NewConfig("call function"),
-		TestSteps: []IStep{
-			NewStep("fn1").Function(fn1),
-			NewStep("fn2").Function(fn2),
-			NewStep("fn3").Function(fn3),
+	testcase1 := &hrp.TestCase{
+		Config: hrp.NewConfig("call function"),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("fn1").Function(fn1),
+			hrp.NewStep("fn2").Function(fn2),
+			hrp.NewStep("fn3").Function(fn3),
 		},
 	}
 
-	r := NewRunner(t)
+	r := hrp.NewRunner(t)
 	err := r.Run(testcase1)
 	if err != nil {
 		t.Fatal()
@@ -220,8 +218,8 @@ func TestRunCaseWithPluginJSON(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
 
-	testCase := TestCasePath(demoTestCaseWithPluginJSONPath)
-	err := NewRunner(nil).Run(&testCase) // hrp.Run(testCase)
+	testCase := hrp.TestCasePath(demoTestCaseWithPluginJSONPath)
+	err := hrp.NewRunner(nil).Run(&testCase) // hrp.Run(testCase)
 	if err != nil {
 		t.Fatal()
 	}
@@ -243,22 +241,22 @@ func TestRunCaseWithRefAPI(t *testing.T) {
 	buildHashicorpGoPlugin()
 	defer removeHashicorpGoPlugin()
 
-	testCase := TestCasePath(demoTestCaseWithRefAPIPath)
-	err := NewRunner(nil).Run(&testCase)
+	testCase := hrp.TestCasePath(demoTestCaseWithRefAPIPath)
+	err := hrp.NewRunner(nil).Run(&testCase)
 	if err != nil {
 		t.Fatal()
 	}
 
-	refAPI := APIPath(demoAPIGETPath)
-	testcase := &TestCase{
-		Config: NewConfig("TestCase").
+	refAPI := hrp.APIPath(demoAPIGETPath)
+	testcase := &hrp.TestCase{
+		Config: hrp.NewConfig("TestCase").
 			SetBaseURL("https://postman-echo.com"),
-		TestSteps: []IStep{
-			NewStep("run referenced api").CallRefAPI(&refAPI),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("run referenced api").CallRefAPI(&refAPI),
 		},
 	}
 
-	r := NewRunner(t)
+	r := hrp.NewRunner(t)
 	err = r.Run(testcase)
 	if err != nil {
 		t.Fatal()
@@ -266,15 +264,15 @@ func TestRunCaseWithRefAPI(t *testing.T) {
 }
 
 func TestSessionRunner(t *testing.T) {
-	testcase := TestCase{
-		Config: NewConfig("TestCase").
+	testcase := hrp.TestCase{
+		Config: hrp.NewConfig("TestCase").
 			WithVariables(map[string]interface{}{
 				"a":      12.3,
 				"b":      3.45,
 				"varFoo": "${max($a, $b)}",
 			}),
-		TestSteps: []IStep{
-			NewStep("check variables").
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("check variables").
 				WithVariables(map[string]interface{}{
 					"a":      12.3,
 					"b":      34.5,
@@ -287,7 +285,7 @@ func TestSessionRunner(t *testing.T) {
 		},
 	}
 
-	caseRunner, _ := NewRunner(t).NewCaseRunner(testcase)
+	caseRunner, _ := hrp.NewRunner(t).NewCaseRunner(testcase)
 	sessionRunner := caseRunner.NewSession()
 	step := testcase.TestSteps[0]
 	if !assert.Equal(t, step.Config().Variables["varFoo"], "${max($a, $b)}") {

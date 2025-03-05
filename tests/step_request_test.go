@@ -1,17 +1,15 @@
-package hrp
+package tests
 
 import (
-	"io"
-	"net/http"
-	"strings"
 	"testing"
 	"time"
 
+	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	stepGET = NewStep("get with params").
+	stepGET = hrp.NewStep("get with params").
 		GET("/get").
 		WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 		WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus"}).
@@ -21,7 +19,7 @@ var (
 		AssertEqual("headers.\"Content-Type\"", "application/json; charset=utf-8", "check header Content-Type").
 		AssertEqual("body.args.foo1", "bar1", "check param foo1").
 		AssertEqual("body.args.foo2", "bar2", "check param foo2")
-	stepPOSTData = NewStep("post form data").
+	stepPOSTData = hrp.NewStep("post form data").
 			POST("/post").
 			WithParams(map[string]interface{}{"foo1": "bar1", "foo2": "bar2"}).
 			WithHeaders(map[string]string{"User-Agent": "HttpRunnerPlus", "Content-Type": "application/x-www-form-urlencoded"}).
@@ -33,7 +31,7 @@ var (
 
 func TestRunRequestGetToStruct(t *testing.T) {
 	tStep := stepGET
-	if tStep.Request.Method != httpGET {
+	if tStep.Request.Method != hrp.HTTP_GET {
 		t.Fatalf("tStep.Request.Method != GET")
 	}
 	if tStep.Request.URL != "/get" {
@@ -48,7 +46,7 @@ func TestRunRequestGetToStruct(t *testing.T) {
 	if tStep.Request.Cookies["user"] != "debugtalk" {
 		t.Fatalf("tStep.Request.Cookies mismatch")
 	}
-	validator, ok := tStep.Validators[0].(Validator)
+	validator, ok := tStep.Validators[0].(hrp.Validator)
 	if !ok || validator.Check != "status_code" || validator.Expect != 200 {
 		t.Fatalf("tStep.Validators mismatch")
 	}
@@ -56,7 +54,7 @@ func TestRunRequestGetToStruct(t *testing.T) {
 
 func TestRunRequestPostDataToStruct(t *testing.T) {
 	tStep := stepPOSTData
-	if tStep.Request.Method != httpPOST {
+	if tStep.Request.Method != hrp.HTTP_POST {
 		t.Fatalf("tStep.Request.Method != POST")
 	}
 	if tStep.Request.URL != "/post" {
@@ -74,18 +72,18 @@ func TestRunRequestPostDataToStruct(t *testing.T) {
 	if tStep.Request.Body != "a=1&b=2" {
 		t.Fatalf("tStep.Request.Data mismatch")
 	}
-	validator, ok := tStep.Validators[0].(Validator)
+	validator, ok := tStep.Validators[0].(hrp.Validator)
 	if !ok || validator.Check != "status_code" || validator.Expect != 200 {
 		t.Fatalf("tStep.Validators mismatch")
 	}
 }
 
 func TestRunRequestStatOn(t *testing.T) {
-	testcase := TestCase{
-		Config:    NewConfig("test").SetBaseURL("https://postman-echo.com"),
-		TestSteps: []IStep{stepGET, stepPOSTData},
+	testcase := hrp.TestCase{
+		Config:    hrp.NewConfig("test").SetBaseURL("https://postman-echo.com"),
+		TestSteps: []hrp.IStep{stepGET, stepPOSTData},
 	}
-	caseRunner, _ := NewRunner(t).SetHTTPStatOn().NewCaseRunner(testcase)
+	caseRunner, _ := hrp.NewRunner(t).SetHTTPStatOn().NewCaseRunner(testcase)
 	sessionRunner := caseRunner.NewSession()
 	summary, err := sessionRunner.Start(nil)
 	if err != nil {
@@ -162,15 +160,15 @@ func TestRunRequestStatOn(t *testing.T) {
 }
 
 func TestRunCaseWithTimeout(t *testing.T) {
-	r := NewRunner(t)
+	r := hrp.NewRunner(t)
 
 	// global timeout
-	testcase1 := &TestCase{
-		Config: NewConfig("TestCase1").
+	testcase1 := &hrp.TestCase{
+		Config: hrp.NewConfig("TestCase1").
 			SetRequestTimeout(10). // set global timeout to 10s
 			SetBaseURL("https://postman-echo.com"),
-		TestSteps: []IStep{
-			NewStep("step1").
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("step1").
 				GET("/delay/1").
 				Validate().
 				AssertEqual("status_code", 200, "check status code"),
@@ -181,12 +179,12 @@ func TestRunCaseWithTimeout(t *testing.T) {
 		t.FailNow()
 	}
 
-	testcase2 := &TestCase{
-		Config: NewConfig("TestCase2").
+	testcase2 := &hrp.TestCase{
+		Config: hrp.NewConfig("TestCase2").
 			SetRequestTimeout(5). // set global timeout to 10s
 			SetBaseURL("https://postman-echo.com"),
-		TestSteps: []IStep{
-			NewStep("step1").
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("step1").
 				GET("/delay/10").
 				Validate().
 				AssertEqual("status_code", 200, "check status code"),
@@ -198,12 +196,12 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	}
 
 	// step timeout
-	testcase3 := &TestCase{
-		Config: NewConfig("TestCase3").
+	testcase3 := &hrp.TestCase{
+		Config: hrp.NewConfig("TestCase3").
 			SetRequestTimeout(10).
 			SetBaseURL("https://postman-echo.com"),
-		TestSteps: []IStep{
-			NewStep("step2").
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("step2").
 				GET("/delay/11").
 				SetTimeout(15*time.Second). // set step timeout to 4s
 				Validate().
@@ -213,72 +211,5 @@ func TestRunCaseWithTimeout(t *testing.T) {
 	err = r.Run(testcase3)
 	if !assert.NoError(t, err) {
 		t.FailNow()
-	}
-}
-
-func TestSearchJmespath(t *testing.T) {
-	testText := `{"a": {"b": "foo"}, "c": "bar", "d": {"e": [{"f": "foo"}, {"f": "bar"}]}}`
-	testData := []struct {
-		raw      string
-		expected string
-	}{
-		{"body.a.b", "foo"},
-		{"body.c", "bar"},
-		{"body.d.e[0].f", "foo"},
-		{"body.d.e[1].f", "bar"},
-	}
-	resp := http.Response{}
-	resp.Body = io.NopCloser(strings.NewReader(testText))
-	respObj, err := newHttpResponseObject(t, newParser(), &resp)
-	if err != nil {
-		t.Fatal()
-	}
-	for _, data := range testData {
-		if !assert.Equal(t, data.expected, respObj.searchJmespath(data.raw)) {
-			t.Fatal()
-		}
-	}
-}
-
-func TestSearchRegexp(t *testing.T) {
-	testText := `
-	<ul class="nav navbar-nav navbar-right">
-	<li><a href="/order/addToCart" style="color: white"><i class="fa fa-shopping-cart fa-2x"></i><span class="badge">0</span></a></li>
-	<li class="dropdown">
-	  <a class="dropdown-toggle" data-toggle="dropdown" href="#" style="color: white">
-		Leo   <i class="fa fa-cog fa-2x"></i><span class="caret"></span></a>
-	  <ul class="dropdown-menu">
-		<li><a href="/user/changePassword">Change Password</a></li>
-		<li><a href="/user/addAddress">Shipping</a></li>
-		<li><a href="/user/addCard">Payment</a></li>
-		<li><a href="/order/orderHistory">Order History</a></li>
-		<li><a href="/user/signOut">Sign Out</a></li>
-	  </ul>
-	</li>
-
-	<li>&nbsp;&nbsp;&nbsp;</li>
-	<li><a href="/user/signOut" style="color: white"><i class="fa fa-sign-out fa-2x"></i>
-	  Sign Out</a></li>
-  </ul>
-`
-	testData := []struct {
-		raw      string
-		expected string
-	}{
-		{"/user/signOut\">(.*)</a></li>", "Sign Out"},
-		{"<li><a href=\"/user/(.*)\" style", "signOut"},
-		{"		(.*)   <i class=\"fa fa-cog fa-2x\"></i>", "Leo"},
-	}
-	// new response object
-	resp := http.Response{}
-	resp.Body = io.NopCloser(strings.NewReader(testText))
-	respObj, err := newHttpResponseObject(t, newParser(), &resp)
-	if err != nil {
-		t.Fatal()
-	}
-	for _, data := range testData {
-		if !assert.Equal(t, data.expected, respObj.searchRegexp(data.raw)) {
-			t.Fatal()
-		}
 	}
 }

@@ -1,23 +1,25 @@
-package hrp
+package tests
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	hrp "github.com/httprunner/httprunner/v5"
 )
 
 func TestGenHTMLReport(t *testing.T) {
-	summary := NewSummary()
+	summary := hrp.NewSummary()
 
-	caseSummary1 := NewCaseSummary()
-	stepResult1 := &StepResult{}
+	caseSummary1 := hrp.NewCaseSummary()
+	stepResult1 := &hrp.StepResult{}
 	caseSummary1.AddStepResult(stepResult1)
 	summary.AddCaseSummary(caseSummary1)
 
-	caseSummary2 := NewCaseSummary()
-	stepResult2 := &StepResult{
+	caseSummary2 := hrp.NewCaseSummary()
+	stepResult2 := &hrp.StepResult{
 		Name:        "Test",
-		StepType:    StepTypeRequest,
+		StepType:    hrp.StepTypeRequest,
 		Success:     false,
 		ContentSize: 0,
 		Attachments: "err",
@@ -37,22 +39,22 @@ func TestGenHTMLReport(t *testing.T) {
 }
 
 func TestTestCaseSummary_AddStepResult(t *testing.T) {
-	caseSummary := NewCaseSummary()
-	stepResult1 := &StepResult{
+	caseSummary := hrp.NewCaseSummary()
+	stepResult1 := &hrp.StepResult{
 		Name:        "Test1",
-		StepType:    StepTypeRequest,
+		StepType:    hrp.StepTypeRequest,
 		Success:     true,
 		ContentSize: 0,
 		Attachments: "err",
 	}
 	caseSummary.AddStepResult(stepResult1)
-	stepResult2 := &StepResult{
+	stepResult2 := &hrp.StepResult{
 		Name:        "Test2",
-		StepType:    StepTypeTestCase,
+		StepType:    hrp.StepTypeTestCase,
 		Success:     false,
 		ContentSize: 0,
 		Attachments: "err",
-		Data:        []*StepResult{stepResult1},
+		Data:        []*hrp.StepResult{stepResult1},
 	}
 	caseSummary.AddStepResult(stepResult2)
 

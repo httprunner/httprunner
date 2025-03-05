@@ -10,11 +10,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/httprunner/funplugin/fungo"
-	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/funplugin/fungo"
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"

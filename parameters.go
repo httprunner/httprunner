@@ -13,7 +13,7 @@ import (
 
 type TParamsConfig struct {
 	PickOrder  iteratorPickOrder           `json:"pick_order,omitempty" yaml:"pick_order,omitempty"` // overall pick-order strategy
-	Strategies map[string]iteratorStrategy `json:"strategies,omitempty" yaml:"strategies,omitempty"` // individual strategies for each parameters
+	Strategies map[string]IteratorStrategy `json:"strategies,omitempty" yaml:"strategies,omitempty"` // individual strategies for each parameters
 	Limit      int                         `json:"limit,omitempty" yaml:"limit,omitempty"`
 }
 
@@ -35,13 +35,13 @@ const (
 */
 type Parameters []map[string]interface{}
 
-type iteratorStrategy struct {
+type IteratorStrategy struct {
 	Name      string            `json:"name,omitempty" yaml:"name,omitempty"`
 	PickOrder iteratorPickOrder `json:"pick_order,omitempty" yaml:"pick_order,omitempty"`
 }
 
-func (p *Parser) initParametersIterator(cfg *TConfig) (*ParametersIterator, error) {
-	parameters, err := p.loadParameters(cfg.Parameters, cfg.Variables)
+func (p *Parser) InitParametersIterator(cfg *TConfig) (*ParametersIterator, error) {
+	parameters, err := p.LoadParameters(cfg.Parameters, cfg.Variables)
 	if err != nil {
 		return nil, err
 	}
@@ -57,13 +57,13 @@ func newParametersIterator(parameters map[string]Parameters, config *TParamsConf
 		hasNext:              true,
 		sequentialParameters: nil,
 		randomParameterNames: nil,
-		limit:                config.Limit,
-		index:                0,
+		Limit:                config.Limit,
+		Index:                0,
 	}
 
 	if len(parameters) == 0 {
 		iterator.data = map[string]Parameters{}
-		iterator.limit = 1
+		iterator.Limit = 1
 		return iterator
 	}
 
@@ -85,24 +85,24 @@ func newParametersIterator(parameters map[string]Parameters, config *TParamsConf
 	}
 
 	// generate cartesian product for sequential parameters
-	iterator.sequentialParameters = genCartesianProduct(parametersList)
+	iterator.sequentialParameters = GenCartesianProduct(parametersList)
 
-	if iterator.limit < 0 {
+	if iterator.Limit < 0 {
 		log.Warn().Msg("parameters unlimited mode is only supported for load testing")
-		iterator.limit = 0
+		iterator.Limit = 0
 	}
-	if iterator.limit == 0 {
+	if iterator.Limit == 0 {
 		// limit not set
 		if len(iterator.sequentialParameters) > 0 {
 			// use cartesian product of sequential parameters size as limit
-			iterator.limit = len(iterator.sequentialParameters)
+			iterator.Limit = len(iterator.sequentialParameters)
 		} else {
 			// all parameters are selected by random
 			// only run once
-			iterator.limit = 1
+			iterator.Limit = 1
 		}
 	} else { // limit > 0
-		log.Info().Int("limit", iterator.limit).Msg("set limit for parameters")
+		log.Info().Int("limit", iterator.Limit).Msg("set limit for parameters")
 	}
 
 	return iterator
@@ -114,14 +114,14 @@ type ParametersIterator struct {
 	hasNext              bool       // cache query result
 	sequentialParameters Parameters // cartesian product for sequential parameters
 	randomParameterNames []string   // value is parameter names
-	limit                int        // limit count for iteration
-	index                int        // current iteration index
+	Limit                int        // limit count for iteration
+	Index                int        // current iteration index
 }
 
 // SetUnlimitedMode is used for load testing
 func (iter *ParametersIterator) SetUnlimitedMode() {
 	log.Info().Msg("set parameters unlimited mode")
-	iter.limit = -1
+	iter.Limit = -1
 }
 
 func (iter *ParametersIterator) HasNext() bool {
@@ -130,12 +130,12 @@ func (iter *ParametersIterator) HasNext() bool {
 	}
 
 	// unlimited mode
-	if iter.limit == -1 {
+	if iter.Limit == -1 {
 		return true
 	}
 
 	// reached limit
-	if iter.index >= iter.limit {
+	if iter.Index >= iter.Limit {
 		// cache query result
 		iter.hasNext = false
 		return false
@@ -155,11 +155,11 @@ func (iter *ParametersIterator) Next() map[string]interface{} {
 	var selectedParameters map[string]interface{}
 	if len(iter.sequentialParameters) == 0 {
 		selectedParameters = make(map[string]interface{})
-	} else if iter.index < len(iter.sequentialParameters) {
-		selectedParameters = iter.sequentialParameters[iter.index]
+	} else if iter.Index < len(iter.sequentialParameters) {
+		selectedParameters = iter.sequentialParameters[iter.Index]
 	} else {
 		// loop back to the first sequential parameter
-		index := iter.index % len(iter.sequentialParameters)
+		index := iter.Index % len(iter.sequentialParameters)
 		selectedParameters = iter.sequentialParameters[index]
 	}
 
@@ -172,8 +172,8 @@ func (iter *ParametersIterator) Next() map[string]interface{} {
 		}
 	}
 
-	iter.index++
-	if iter.limit > 0 && iter.index >= iter.limit {
+	iter.Index++
+	if iter.Limit > 0 && iter.Index >= iter.Limit {
 		iter.hasNext = false
 	}
 
@@ -188,7 +188,7 @@ func (iter *ParametersIterator) Data() map[string]interface{} {
 	return res
 }
 
-func genCartesianProduct(multiParameters []Parameters) Parameters {
+func GenCartesianProduct(multiParameters []Parameters) Parameters {
 	if len(multiParameters) == 0 {
 		return nil
 	}
@@ -208,7 +208,7 @@ func genCartesianProduct(multiParameters []Parameters) Parameters {
 }
 
 /*
-	loadParameters loads parameters from multiple sources.
+	LoadParameters loads parameters from multiple sources.
 
 parameter value may be in three types:
 
@@ -240,7 +240,7 @@ parameter value may be in three types:
 		]
 	}
 */
-func (p *Parser) loadParameters(configParameters map[string]interface{}, variablesMapping map[string]interface{}) (
+func (p *Parser) LoadParameters(configParameters map[string]interface{}, variablesMapping map[string]interface{}) (
 	map[string]Parameters, error) {
 
 	if len(configParameters) == 0 {
@@ -291,7 +291,7 @@ func (p *Parser) loadParameters(configParameters map[string]interface{}, variabl
 			return nil, errors.New("config parameters raw value format error")
 		}
 
-		parameterSlice, err := convertParameters(k, parametersRawList)
+		parameterSlice, err := ConvertParameters(k, parametersRawList)
 		if err != nil {
 			return nil, err
 		}
@@ -320,7 +320,7 @@ case 3:
 	key = "username-password"
 	parametersRawList = [["test1", "111111"], ["test2", "222222"]]
 */
-func convertParameters(key string, parametersRawList interface{}) (parameterSlice []map[string]interface{}, err error) {
+func ConvertParameters(key string, parametersRawList interface{}) (parameterSlice []map[string]interface{}, err error) {
 	parametersRawSlice := reflect.ValueOf(parametersRawList)
 	if parametersRawSlice.Kind() != reflect.Slice {
 		return nil, errors.New("parameters raw value is not list")

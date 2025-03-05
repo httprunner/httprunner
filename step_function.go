@@ -5,9 +5,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/uixt"
 )
 
 // StepFunction implements IStep interface.

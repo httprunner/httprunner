@@ -1,15 +1,17 @@
-package hrp
+package tests
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	hrp "github.com/httprunner/httprunner/v5"
 )
 
 func TestLoadTestCases(t *testing.T) {
 	// load test cases from folder path
-	tc := TestCasePath("../examples/demo-with-py-plugin/testcases/")
-	testCases, err := LoadTestCases(&tc)
+	tc := hrp.TestCasePath("../examples/demo-with-py-plugin/testcases/")
+	testCases, err := hrp.LoadTestCases(&tc)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
@@ -18,8 +20,8 @@ func TestLoadTestCases(t *testing.T) {
 	}
 
 	// load test cases from folder path, including sub folders
-	tc = TestCasePath("../examples/demo-with-py-plugin/")
-	testCases, err = LoadTestCases(&tc)
+	tc = hrp.TestCasePath("../examples/demo-with-py-plugin/")
+	testCases, err = hrp.LoadTestCases(&tc)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
@@ -28,8 +30,8 @@ func TestLoadTestCases(t *testing.T) {
 	}
 
 	// load test cases from single file path
-	tc = TestCasePath(demoTestCaseWithPluginJSONPath)
-	testCases, err = LoadTestCases(&tc)
+	tc = hrp.TestCasePath(demoTestCaseWithPluginJSONPath)
+	testCases, err = hrp.LoadTestCases(&tc)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
@@ -38,10 +40,10 @@ func TestLoadTestCases(t *testing.T) {
 	}
 
 	// load test cases from TestCase instance
-	testcase := &TestCase{
-		Config: NewConfig("TestCase").SetWeight(3),
+	testcase := &hrp.TestCase{
+		Config: hrp.NewConfig("TestCase").SetWeight(3),
 	}
-	testCases, err = LoadTestCases(testcase)
+	testCases, err = hrp.LoadTestCases(testcase)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
@@ -50,7 +52,7 @@ func TestLoadTestCases(t *testing.T) {
 	}
 
 	// load test cases from TestCaseJSON
-	testcaseJSON := TestCaseJSON(`
+	testcaseJSON := hrp.TestCaseJSON(`
 	{
 		"config":{"name":"TestCaseJSON"},
 		"teststeps":[
@@ -58,7 +60,7 @@ func TestLoadTestCases(t *testing.T) {
 			{"name": "step2", "shell":{"string": "ls -l"}}
 		]
 	}`)
-	testCases, err = LoadTestCases(&testcaseJSON)
+	testCases, err = hrp.LoadTestCases(&testcaseJSON)
 	if !assert.Nil(t, err) {
 		t.Fatal()
 	}
@@ -68,13 +70,13 @@ func TestLoadTestCases(t *testing.T) {
 }
 
 func TestLoadCase(t *testing.T) {
-	tcJSON := &TestCaseDef{}
-	tcYAML := &TestCaseDef{}
-	err := LoadFileObject(demoTestCaseWithPluginJSONPath, tcJSON)
+	tcJSON := &hrp.TestCaseDef{}
+	tcYAML := &hrp.TestCaseDef{}
+	err := hrp.LoadFileObject(demoTestCaseWithPluginJSONPath, tcJSON)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
-	err = LoadFileObject(demoTestCaseWithPluginYAMLPath, tcYAML)
+	err = hrp.LoadFileObject(demoTestCaseWithPluginYAMLPath, tcYAML)
 	if !assert.NoError(t, err) {
 		t.Fatal()
 	}

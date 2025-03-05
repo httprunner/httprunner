@@ -30,13 +30,13 @@ import (
 type HTTPMethod string
 
 const (
-	httpGET     HTTPMethod = "GET"
-	httpHEAD    HTTPMethod = "HEAD"
-	httpPOST    HTTPMethod = "POST"
-	httpPUT     HTTPMethod = "PUT"
-	httpDELETE  HTTPMethod = "DELETE"
-	httpOPTIONS HTTPMethod = "OPTIONS"
-	httpPATCH   HTTPMethod = "PATCH"
+	HTTP_GET     HTTPMethod = "GET"
+	HTTP_HEAD    HTTPMethod = "HEAD"
+	HTTP_POST    HTTPMethod = "POST"
+	HTTP_PUT     HTTPMethod = "PUT"
+	HTTP_DELETE  HTTPMethod = "DELETE"
+	HTTP_OPTIONS HTTPMethod = "OPTIONS"
+	HTTP_PATCH   HTTPMethod = "PATCH"
 )
 
 // Request represents HTTP request data structure.
@@ -566,11 +566,11 @@ func (s *StepRequest) Loop(times int) *StepRequest {
 // GET makes a HTTP GET request.
 func (s *StepRequest) GET(url string) *StepRequestWithOptionalArgs {
 	if s.Request != nil {
-		s.Request.Method = httpGET
+		s.Request.Method = HTTP_GET
 		s.Request.URL = url
 	} else {
 		s.Request = &Request{
-			Method: httpGET,
+			Method: HTTP_GET,
 			URL:    url,
 		}
 	}
@@ -582,11 +582,11 @@ func (s *StepRequest) GET(url string) *StepRequestWithOptionalArgs {
 // HEAD makes a HTTP HEAD request.
 func (s *StepRequest) HEAD(url string) *StepRequestWithOptionalArgs {
 	if s.Request != nil {
-		s.Request.Method = httpHEAD
+		s.Request.Method = HTTP_HEAD
 		s.Request.URL = url
 	} else {
 		s.Request = &Request{
-			Method: httpHEAD,
+			Method: HTTP_HEAD,
 			URL:    url,
 		}
 	}
@@ -598,11 +598,11 @@ func (s *StepRequest) HEAD(url string) *StepRequestWithOptionalArgs {
 // POST makes a HTTP POST request.
 func (s *StepRequest) POST(url string) *StepRequestWithOptionalArgs {
 	if s.Request != nil {
-		s.Request.Method = httpPOST
+		s.Request.Method = HTTP_POST
 		s.Request.URL = url
 	} else {
 		s.Request = &Request{
-			Method: httpPOST,
+			Method: HTTP_POST,
 			URL:    url,
 		}
 	}
@@ -614,11 +614,11 @@ func (s *StepRequest) POST(url string) *StepRequestWithOptionalArgs {
 // PUT makes a HTTP PUT request.
 func (s *StepRequest) PUT(url string) *StepRequestWithOptionalArgs {
 	if s.Request != nil {
-		s.Request.Method = httpPUT
+		s.Request.Method = HTTP_PUT
 		s.Request.URL = url
 	} else {
 		s.Request = &Request{
-			Method: httpPUT,
+			Method: HTTP_PUT,
 			URL:    url,
 		}
 	}
@@ -630,11 +630,11 @@ func (s *StepRequest) PUT(url string) *StepRequestWithOptionalArgs {
 // DELETE makes a HTTP DELETE request.
 func (s *StepRequest) DELETE(url string) *StepRequestWithOptionalArgs {
 	if s.Request != nil {
-		s.Request.Method = httpDELETE
+		s.Request.Method = HTTP_DELETE
 		s.Request.URL = url
 	} else {
 		s.Request = &Request{
-			Method: httpDELETE,
+			Method: HTTP_DELETE,
 			URL:    url,
 		}
 	}
@@ -646,11 +646,11 @@ func (s *StepRequest) DELETE(url string) *StepRequestWithOptionalArgs {
 // OPTIONS makes a HTTP OPTIONS request.
 func (s *StepRequest) OPTIONS(url string) *StepRequestWithOptionalArgs {
 	if s.Request != nil {
-		s.Request.Method = httpOPTIONS
+		s.Request.Method = HTTP_OPTIONS
 		s.Request.URL = url
 	} else {
 		s.Request = &Request{
-			Method: httpOPTIONS,
+			Method: HTTP_OPTIONS,
 			URL:    url,
 		}
 	}
@@ -662,11 +662,11 @@ func (s *StepRequest) OPTIONS(url string) *StepRequestWithOptionalArgs {
 // PATCH makes a HTTP PATCH request.
 func (s *StepRequest) PATCH(url string) *StepRequestWithOptionalArgs {
 	if s.Request != nil {
-		s.Request.Method = httpPATCH
+		s.Request.Method = HTTP_PATCH
 		s.Request.URL = url
 	} else {
 		s.Request = &Request{
-			Method: httpPATCH,
+			Method: HTTP_PATCH,
 			URL:    url,
 		}
 	}

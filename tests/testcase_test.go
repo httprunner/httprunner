@@ -1,10 +1,10 @@
-package hrp
+package tests
 
 import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	hrp "github.com/httprunner/httprunner/v5"
 )
 
 const (
@@ -25,10 +25,10 @@ var (
 	demoAPIGETPath                    = tmpl("/api/get.yml")
 )
 
-var demoTestCaseWithThinkTimePath TestCasePath = hrpExamplesDir + "/think_time_test.json"
+var demoTestCaseWithThinkTimePath hrp.TestCasePath = hrpExamplesDir + "/think_time_test.json"
 
-var demoTestCaseWithPlugin = &TestCase{
-	Config: NewConfig("demo with complex mechanisms").
+var demoTestCaseWithPlugin = &hrp.TestCase{
+	Config: hrp.NewConfig("demo with complex mechanisms").
 		SetBaseURL("https://postman-echo.com").
 		WithVariables(map[string]interface{}{ // global level variables
 			"n":       "${sum_ints(1, 2, 2)}",
@@ -37,9 +37,9 @@ var demoTestCaseWithPlugin = &TestCase{
 			"varFoo1": "${gen_random_string($n)}",
 			"varFoo2": "${max($a, $b)}", // 12.3; eval with built-in function
 		}),
-	TestSteps: []IStep{
-		NewStep("transaction 1 start").StartTransaction("tran1"), // start transaction
-		NewStep("get with params").
+	TestSteps: []hrp.IStep{
+		hrp.NewStep("transaction 1 start").StartTransaction("tran1"), // start transaction
+		hrp.NewStep("get with params").
 			WithVariables(map[string]interface{}{ // step level variables
 				"n":       3,                // inherit config level variables if not set in step level, a/varFoo1
 				"b":       34.5,             // override config level variable if existed, n/b/varFoo2
@@ -59,8 +59,8 @@ var demoTestCaseWithPlugin = &TestCase{
 			AssertLengthEqual("body.args.foo1", 5, "check args foo1").            // validate response body with jmespath
 			AssertLengthEqual("$varFoo1", 5, "check args foo1").                  // assert with extracted variable from current step
 			AssertEqual("body.args.foo2", "34.5", "check args foo2"),             // notice: request params value will be converted to string
-		NewStep("transaction 1 end").EndTransaction("tran1"), // end transaction
-		NewStep("post json data").
+		hrp.NewStep("transaction 1 end").EndTransaction("tran1"), // end transaction
+		hrp.NewStep("post json data").
 			POST("/post").
 			WithBody(map[string]interface{}{
 				"foo1": "$varFoo1",       // reference former extracted variable
@@ -70,7 +70,7 @@ var demoTestCaseWithPlugin = &TestCase{
 			AssertEqual("status_code", 200, "check status code").
 			AssertLengthEqual("body.json.foo1", 5, "check args foo1").
 			AssertEqual("body.json.foo2", 12.3, "check args foo2"),
-		NewStep("post form data").
+		hrp.NewStep("post form data").
 			POST("/post").
 			WithHeaders(map[string]string{"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}).
 			WithBody(map[string]interface{}{
@@ -84,15 +84,15 @@ var demoTestCaseWithPlugin = &TestCase{
 			AssertEqual("status_code", 200, "check status code").
 			AssertLengthEqual("body.form.foo1", 5, "check args foo1").
 			AssertEqual("body.form.foo2", "12.3", "check args foo2"), // form data will be converted to string
-		NewStep("get with timestamp").
+		hrp.NewStep("get with timestamp").
 			GET("/get").WithParams(map[string]interface{}{"time": "$varTime"}).
 			Validate().
 			AssertLengthEqual("body.args.time", 13, "check extracted var timestamp"),
 	},
 }
 
-var demoTestCaseWithoutPlugin = &TestCase{
-	Config: NewConfig("demo without custom function plugin").
+var demoTestCaseWithoutPlugin = &hrp.TestCase{
+	Config: hrp.NewConfig("demo without custom function plugin").
 		SetBaseURL("https://postman-echo.com").
 		WithVariables(map[string]interface{}{ // global level variables
 			"n":       5,
@@ -101,9 +101,9 @@ var demoTestCaseWithoutPlugin = &TestCase{
 			"varFoo1": "${gen_random_string($n)}",
 			"varFoo2": "${max($a, $b)}", // 12.3; eval with built-in function
 		}),
-	TestSteps: []IStep{
-		NewStep("transaction 1 start").StartTransaction("tran1"), // start transaction
-		NewStep("get with params").
+	TestSteps: []hrp.IStep{
+		hrp.NewStep("transaction 1 start").StartTransaction("tran1"), // start transaction
+		hrp.NewStep("get with params").
 			WithVariables(map[string]interface{}{ // step level variables
 				"n":       3,                // inherit config level variables if not set in step level, a/varFoo1
 				"b":       34.5,             // override config level variable if existed, n/b/varFoo2
@@ -121,8 +121,8 @@ var demoTestCaseWithoutPlugin = &TestCase{
 			AssertLengthEqual("body.args.foo1", 5, "check args foo1").            // validate response body with jmespath
 			AssertLengthEqual("$varFoo1", 5, "check args foo1").                  // assert with extracted variable from current step
 			AssertEqual("body.args.foo2", "34.5", "check args foo2"),             // notice: request params value will be converted to string
-		NewStep("transaction 1 end").EndTransaction("tran1"), // end transaction
-		NewStep("post json data").
+		hrp.NewStep("transaction 1 end").EndTransaction("tran1"), // end transaction
+		hrp.NewStep("post json data").
 			POST("/post").
 			WithBody(map[string]interface{}{
 				"foo1": "$varFoo1",       // reference former extracted variable
@@ -132,7 +132,7 @@ var demoTestCaseWithoutPlugin = &TestCase{
 			AssertEqual("status_code", 200, "check status code").
 			AssertLengthEqual("body.json.foo1", 5, "check args foo1").
 			AssertEqual("body.json.foo2", 12.3, "check args foo2"),
-		NewStep("post form data").
+		hrp.NewStep("post form data").
 			POST("/post").
 			WithHeaders(map[string]string{"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"}).
 			WithBody(map[string]interface{}{
@@ -146,7 +146,7 @@ var demoTestCaseWithoutPlugin = &TestCase{
 			AssertEqual("status_code", 200, "check status code").
 			AssertLengthEqual("body.form.foo1", 5, "check args foo1").
 			AssertEqual("body.form.foo2", "12.3", "check args foo2"), // form data will be converted to string
-		NewStep("get with timestamp").
+		hrp.NewStep("get with timestamp").
 			GET("/get").WithParams(map[string]interface{}{"time": "$varTime"}).
 			Validate().
 			AssertLengthEqual("body.args.time", 13, "check extracted var timestamp"),
@@ -170,31 +170,5 @@ func TestGenDemoTestCase(t *testing.T) {
 	err = demoTestCaseWithoutPlugin.Dump2YAML(demoTestCaseWithoutPluginYAMLPath)
 	if err != nil {
 		t.Fatal()
-	}
-}
-
-func TestConvertCheckExpr(t *testing.T) {
-	exprs := []struct {
-		before string
-		after  string
-	}{
-		// normal check expression
-		{"a.b.c", "a.b.c"},
-		{"a.\"b-c\".d", "a.\"b-c\".d"},
-		{"a.b-c.d", "a.b-c.d"},
-		{"body.args.a[-1]", "body.args.a[-1]"},
-		// check expression using regex
-		{"covering (.*) testing,", "covering (.*) testing,"},
-		{" (.*) a-b-c", " (.*) a-b-c"},
-		// abnormal check expression
-		{"headers.Content-Type", "headers.\"Content-Type\""},
-		{"headers.\"Content-Type", "headers.\"Content-Type\""},
-		{"headers.Content-Type\"", "headers.\"Content-Type\""},
-		{"headers.User-Agent", "headers.\"User-Agent\""},
-	}
-	for _, expr := range exprs {
-		if !assert.Equal(t, expr.after, convertJmespathExpr(expr.before)) {
-			t.Fatal()
-		}
 	}
 }

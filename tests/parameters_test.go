@@ -1,22 +1,24 @@
-package hrp
+package tests
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	hrp "github.com/httprunner/httprunner/v5"
 )
 
 func TestLoadParameters(t *testing.T) {
 	testData := []struct {
 		configParameters map[string]interface{}
-		loadedParameters map[string]Parameters
+		loadedParameters map[string]hrp.Parameters
 	}{
 		{
 			map[string]interface{}{
 				"username-password": fmt.Sprintf("${parameterize(%s/$file)}", hrpExamplesDir),
 			},
-			map[string]Parameters{
+			map[string]hrp.Parameters{
 				"username-password": {
 					{"username": "test1", "password": "111111"},
 					{"username": "test2", "password": "222222"},
@@ -33,7 +35,7 @@ func TestLoadParameters(t *testing.T) {
 				"user_agent":  []interface{}{"iOS/10.1", "iOS/10.2"},
 				"app_version": []interface{}{4.0},
 			},
-			map[string]Parameters{
+			map[string]hrp.Parameters{
 				"username-password": {
 					{"username": "test1", "password": "111111"},
 					{"username": "test2", "password": "222222"},
@@ -54,7 +56,7 @@ func TestLoadParameters(t *testing.T) {
 					[]interface{}{"test2", "222222"},
 				},
 			},
-			map[string]Parameters{
+			map[string]hrp.Parameters{
 				"username-password": {
 					{"username": "test1", "password": "111111"},
 					{"username": "test2", "password": "222222"},
@@ -74,9 +76,9 @@ func TestLoadParameters(t *testing.T) {
 	variablesMapping := map[string]interface{}{
 		"file": "account.csv",
 	}
-	parser := newParser()
+	parser := hrp.NewParser()
 	for _, data := range testData {
-		value, err := parser.loadParameters(data.configParameters, variablesMapping)
+		value, err := parser.LoadParameters(data.configParameters, variablesMapping)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}
@@ -109,9 +111,9 @@ func TestLoadParametersError(t *testing.T) {
 			},
 		},
 	}
-	parser := newParser()
+	parser := hrp.NewParser()
 	for _, data := range testData {
-		_, err := parser.loadParameters(data.configParameters, map[string]interface{}{})
+		_, err := parser.LoadParameters(data.configParameters, map[string]interface{}{})
 		if !assert.Error(t, err) {
 			t.Fatal()
 		}
@@ -125,28 +127,28 @@ func TestInitParametersIteratorCount(t *testing.T) {
 		"app_version":       []interface{}{4.0},                                             // 1
 	}
 	testData := []struct {
-		cfg         *TConfig
+		cfg         *hrp.TConfig
 		expectLimit int
 	}{
 		// default, no parameters setting
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters:        configParameters,
-				ParametersSetting: &TParamsConfig{},
+				ParametersSetting: &hrp.TParamsConfig{},
 			},
 			6, // 3 * 2 * 1
 		},
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters: configParameters,
 			},
 			6, // 3 * 2 * 1
 		},
 		// default equals to set overall parameters pick-order to "sequential"
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters: configParameters,
-				ParametersSetting: &TParamsConfig{
+				ParametersSetting: &hrp.TParamsConfig{
 					PickOrder: "sequential",
 				},
 			},
@@ -154,10 +156,10 @@ func TestInitParametersIteratorCount(t *testing.T) {
 		},
 		// default equals to set each individual parameters pick-order to "sequential"
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters: configParameters,
-				ParametersSetting: &TParamsConfig{
-					Strategies: map[string]iteratorStrategy{
+				ParametersSetting: &hrp.TParamsConfig{
+					Strategies: map[string]hrp.IteratorStrategy{
 						"username-password": {Name: "user-info", PickOrder: "sequential"},
 						"user_agent":        {Name: "user-identity", PickOrder: "sequential"},
 						"app_version":       {Name: "app-version", PickOrder: "sequential"},
@@ -167,10 +169,10 @@ func TestInitParametersIteratorCount(t *testing.T) {
 			6, // 3 * 2 * 1
 		},
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters: configParameters,
-				ParametersSetting: &TParamsConfig{
-					Strategies: map[string]iteratorStrategy{
+				ParametersSetting: &hrp.TParamsConfig{
+					Strategies: map[string]hrp.IteratorStrategy{
 						"user_agent":  {Name: "user-identity", PickOrder: "sequential"},
 						"app_version": {Name: "app-version", PickOrder: "sequential"},
 					},
@@ -182,9 +184,9 @@ func TestInitParametersIteratorCount(t *testing.T) {
 		// set overall parameters overall pick-order to "random"
 		// each random parameters only select one item
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters: configParameters,
-				ParametersSetting: &TParamsConfig{
+				ParametersSetting: &hrp.TParamsConfig{
 					PickOrder: "random",
 				},
 			},
@@ -193,10 +195,10 @@ func TestInitParametersIteratorCount(t *testing.T) {
 		// set some individual parameters pick-order to "random"
 		// this will override overall strategy
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters: configParameters,
-				ParametersSetting: &TParamsConfig{
-					Strategies: map[string]iteratorStrategy{
+				ParametersSetting: &hrp.TParamsConfig{
+					Strategies: map[string]hrp.IteratorStrategy{
 						"user_agent": {Name: "user-identity", PickOrder: "random"},
 					},
 				},
@@ -204,10 +206,10 @@ func TestInitParametersIteratorCount(t *testing.T) {
 			3, // 3 * 1 * 1
 		},
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters: configParameters,
-				ParametersSetting: &TParamsConfig{
-					Strategies: map[string]iteratorStrategy{
+				ParametersSetting: &hrp.TParamsConfig{
+					Strategies: map[string]hrp.IteratorStrategy{
 						"username-password": {Name: "user-info", PickOrder: "random"},
 					},
 				},
@@ -217,18 +219,18 @@ func TestInitParametersIteratorCount(t *testing.T) {
 
 		// set limit for parameters
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters: configParameters, // total: 6 = 3 * 2 * 1
-				ParametersSetting: &TParamsConfig{
+				ParametersSetting: &hrp.TParamsConfig{
 					Limit: 4, // limit could be less than total
 				},
 			},
 			4,
 		},
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters: configParameters, // total: 6 = 3 * 2 * 1
-				ParametersSetting: &TParamsConfig{
+				ParametersSetting: &hrp.TParamsConfig{
 					Limit: 9, // limit could also be greater than total
 				},
 			},
@@ -238,20 +240,20 @@ func TestInitParametersIteratorCount(t *testing.T) {
 		// no parameters
 		// also will generate one empty item
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters:        nil,
 				ParametersSetting: nil,
 			},
 			1,
 		},
 	}
-	parser := newParser()
+	parser := hrp.NewParser()
 	for _, data := range testData {
-		iterator, err := parser.initParametersIterator(data.cfg)
+		iterator, err := parser.InitParametersIterator(data.cfg)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}
-		if !assert.Equal(t, data.expectLimit, iterator.limit) {
+		if !assert.Equal(t, data.expectLimit, iterator.Limit) {
 			t.Fatal()
 		}
 
@@ -275,34 +277,34 @@ func TestInitParametersIteratorUnlimitedCount(t *testing.T) {
 		"app_version":       []interface{}{4.0},                                             // 1
 	}
 	testData := []struct {
-		cfg *TConfig
+		cfg *hrp.TConfig
 	}{
 		// default, no parameters setting
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters:        configParameters,
-				ParametersSetting: &TParamsConfig{},
+				ParametersSetting: &hrp.TParamsConfig{},
 			},
 		},
 
 		// no parameters
 		// also will generate one empty item
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters:        nil,
 				ParametersSetting: nil,
 			},
 		},
 	}
-	parser := newParser()
+	parser := hrp.NewParser()
 	for _, data := range testData {
-		iterator, err := parser.initParametersIterator(data.cfg)
+		iterator, err := parser.InitParametersIterator(data.cfg)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}
 		// set unlimited mode
 		iterator.SetUnlimitedMode()
-		if !assert.Equal(t, -1, iterator.limit) {
+		if !assert.Equal(t, -1, iterator.Limit) {
 			t.Fatal()
 		}
 
@@ -312,7 +314,7 @@ func TestInitParametersIteratorUnlimitedCount(t *testing.T) {
 			}
 			iterator.Next() // consume next parameters
 		}
-		if !assert.Equal(t, 100, iterator.index) {
+		if !assert.Equal(t, 100, iterator.Index) {
 			t.Fatal()
 		}
 		// should also have next
@@ -329,13 +331,13 @@ func TestInitParametersIteratorContent(t *testing.T) {
 		"app_version":       []interface{}{4.0},                                             // 1
 	}
 	testData := []struct {
-		cfg              *TConfig
+		cfg              *hrp.TConfig
 		checkIndex       int
 		expectParameters map[string]interface{}
 	}{
 		// default, no parameters setting
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters: configParameters,
 			},
 			0, // check first item
@@ -346,16 +348,16 @@ func TestInitParametersIteratorContent(t *testing.T) {
 
 		// set limit for parameters
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters: map[string]interface{}{
 					"username-password": []map[string]interface{}{ // 1
 						{"username": "test1", "password": 111111, "other": "111"},
 					},
 					"user_agent": []string{"iOS/10.1", "iOS/10.2"}, // 2
 				},
-				ParametersSetting: &TParamsConfig{
+				ParametersSetting: &hrp.TParamsConfig{
 					Limit: 5, // limit could also be greater than total
-					Strategies: map[string]iteratorStrategy{
+					Strategies: map[string]hrp.IteratorStrategy{
 						"username-password": {Name: "user-info", PickOrder: "random"},
 					},
 				},
@@ -369,7 +371,7 @@ func TestInitParametersIteratorContent(t *testing.T) {
 		// no parameters
 		// also will generate one empty item
 		{
-			&TConfig{
+			&hrp.TConfig{
 				Parameters:        nil,
 				ParametersSetting: nil,
 			},
@@ -377,9 +379,9 @@ func TestInitParametersIteratorContent(t *testing.T) {
 			map[string]interface{}{},
 		},
 	}
-	parser := newParser()
+	parser := hrp.NewParser()
 	for _, data := range testData {
-		iterator, err := parser.initParametersIterator(data.cfg)
+		iterator, err := parser.InitParametersIterator(data.cfg)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}
@@ -401,11 +403,11 @@ func TestInitParametersIteratorContent(t *testing.T) {
 
 func TestGenCartesianProduct(t *testing.T) {
 	testData := []struct {
-		multiParameters []Parameters
-		expect          Parameters
+		multiParameters []hrp.Parameters
+		expect          hrp.Parameters
 	}{
 		{
-			[]Parameters{
+			[]hrp.Parameters{
 				{
 					{"app_version": 4.0},
 				},
@@ -418,7 +420,7 @@ func TestGenCartesianProduct(t *testing.T) {
 					{"user_agent": "iOS/10.2"},
 				},
 			},
-			Parameters{
+			hrp.Parameters{
 				{"app_version": 4.0, "password": "111111", "user_agent": "iOS/10.1", "username": "test1"},
 				{"app_version": 4.0, "password": "111111", "user_agent": "iOS/10.2", "username": "test1"},
 				{"app_version": 4.0, "password": "222222", "user_agent": "iOS/10.1", "username": "test2"},
@@ -430,13 +432,13 @@ func TestGenCartesianProduct(t *testing.T) {
 			nil,
 		},
 		{
-			[]Parameters{},
+			[]hrp.Parameters{},
 			nil,
 		},
 	}
 
 	for _, data := range testData {
-		parameters := genCartesianProduct(data.multiParameters)
+		parameters := hrp.GenCartesianProduct(data.multiParameters)
 		if !assert.Equal(t, data.expect, parameters) {
 			t.Fatal()
 		}
@@ -490,7 +492,7 @@ func TestConvertParameters(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		value, err := convertParameters(data.key, data.parametersRawList)
+		value, err := hrp.ConvertParameters(data.key, data.parametersRawList)
 		if !assert.Nil(t, err) {
 			t.Fatal()
 		}
@@ -530,7 +532,7 @@ func TestConvertParametersError(t *testing.T) {
 	}
 
 	for _, data := range testData {
-		_, err := convertParameters(data.key, data.parametersRawList)
+		_, err := hrp.ConvertParameters(data.key, data.parametersRawList)
 		if !assert.Error(t, err) {
 			t.Fatal()
 		}
