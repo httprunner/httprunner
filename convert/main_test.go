@@ -5,11 +5,12 @@ import (
 
 	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
-	profilePath         = "../../../examples/data/profile.yml"
-	profileOverridePath = "../../../examples/data/profile_override.yml"
+	profilePath         = "../tests/data/profile.yml"
+	profileOverridePath = "../tests/data/profile_override.yml"
 )
 
 var converter *TCaseConverter
@@ -20,28 +21,18 @@ func init() {
 
 func TestLoadTCase(t *testing.T) {
 	err := converter.loadCase(harPath, FromTypeHAR)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	if !assert.NotEmpty(t, converter.tCase) {
-		t.Fatal()
-	}
+	require.NoError(t, err)
+	assert.NotEmpty(t, converter.tCase)
 }
 
 func TestLoadHARWithProfileOverride(t *testing.T) {
 	err := converter.loadCase(harPath, FromTypeHAR)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	if !assert.NotEmpty(t, converter.tCase) {
-		t.Fatal()
-	}
+	assert.NoError(t, err)
+	assert.NotEmpty(t, converter.tCase)
 
 	// override TCase with profile
 	err = converter.overrideWithProfile(profileOverridePath)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
+	assert.NoError(t, err)
 
 	for i := 0; i < 3; i++ {
 		assert.Equal(t,
@@ -75,23 +66,15 @@ func TestMakeRequestWithProfile(t *testing.T) {
 	}
 
 	err := caseConverter.overrideWithProfile(profilePath)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
+	assert.NoError(t, err)
+	assert.NoError(t, err)
 
-	if !assert.Equal(t, map[string]string{
+	assert.Equal(t, map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded", "User-Agent": "hrp",
-	}, caseConverter.tCase.Steps[0].Request.Headers) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, map[string]string{
+	}, caseConverter.tCase.Steps[0].Request.Headers)
+	assert.Equal(t, map[string]string{
 		"UserName": "debugtalk", "abc": "123",
-	}, caseConverter.tCase.Steps[0].Request.Cookies) {
-		t.Fatal()
-	}
+	}, caseConverter.tCase.Steps[0].Request.Cookies)
 }
 
 func TestMakeRequestWithProfileOverride(t *testing.T) {
@@ -117,21 +100,13 @@ func TestMakeRequestWithProfileOverride(t *testing.T) {
 
 	// override TCase with profile
 	err := caseConverter.overrideWithProfile(profileOverridePath)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
+	assert.NoError(t, err)
+	assert.NoError(t, err)
 
-	if !assert.Equal(t, map[string]string{
+	assert.Equal(t, map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded",
-	}, caseConverter.tCase.Steps[0].Request.Headers) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, map[string]string{
+	}, caseConverter.tCase.Steps[0].Request.Headers)
+	assert.Equal(t, map[string]string{
 		"UserName": "debugtalk",
-	}, caseConverter.tCase.Steps[0].Request.Cookies) {
-		t.Fatal()
-	}
+	}, caseConverter.tCase.Steps[0].Request.Cookies)
 }

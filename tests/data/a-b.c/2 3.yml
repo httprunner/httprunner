@@ -1,0 +1,26 @@
+config:
+    name: "reference testcase unittest for abnormal folder path"
+    base_url: "https://postman-echo.com"
+    verify: False
+
+teststeps:
+-
+    name: request with functions
+    testcase: a-b.c/1.yml
+    export:
+        - session_foo2
+-
+    name: post form data
+    variables:
+        foo1: bar12
+    request:
+        method: POST
+        url: /post
+        headers:
+            User-Agent: HttpRunner/${get_httprunner_version()}
+            Content-Type: "application/x-www-form-urlencoded"
+        data: "foo1=$foo1&foo2=$session_foo2"
+    validate:
+        - eq: ["status_code", 200]
+        - eq: ["body.form.foo1", "bar12"]
+        - eq: ["body.form.foo2", "config_bar2"]

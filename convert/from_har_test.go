@@ -5,79 +5,44 @@ import (
 
 	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-var harPath = "../../../examples/data/har/demo.har"
-
-var caseHar *CaseHar
-
-func init() {
-	caseHar, _ = loadCaseHAR(harPath)
-}
+var harPath = "../tests/data/har/demo.har"
 
 func TestLoadHAR(t *testing.T) {
 	caseHAR, err := loadCaseHAR(harPath)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, "GET", caseHAR.Log.Entries[0].Request.Method) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, "POST", caseHAR.Log.Entries[1].Request.Method) {
-		t.Fatal()
-	}
+	require.NoError(t, err)
+	assert.Equal(t, "GET", caseHAR.Log.Entries[0].Request.Method)
+	assert.Equal(t, "POST", caseHAR.Log.Entries[1].Request.Method)
 }
 
 func TestLoadTCaseFromHAR(t *testing.T) {
 	tCase, err := LoadHARCase(harPath)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
+	assert.NoError(t, err)
 
 	// make request method
-	if !assert.EqualValues(t, "GET", tCase.Steps[0].Request.Method) {
-		t.Fatal()
-	}
-	if !assert.EqualValues(t, "POST", tCase.Steps[1].Request.Method) {
-		t.Fatal()
-	}
+	assert.EqualValues(t, "GET", tCase.Steps[0].Request.Method)
+	assert.EqualValues(t, "POST", tCase.Steps[1].Request.Method)
 
 	// make request url
-	if !assert.Equal(t, "https://postman-echo.com/get", tCase.Steps[0].Request.URL) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, "https://postman-echo.com/post", tCase.Steps[1].Request.URL) {
-		t.Fatal()
-	}
+	assert.Equal(t, "https://postman-echo.com/get", tCase.Steps[0].Request.URL)
+	assert.Equal(t, "https://postman-echo.com/post", tCase.Steps[1].Request.URL)
 
 	// make request params
-	if !assert.Equal(t, "HDnY8", tCase.Steps[0].Request.Params["foo1"]) {
-		t.Fatal()
-	}
+	assert.Equal(t, "HDnY8", tCase.Steps[0].Request.Params["foo1"])
 
 	// make request cookies
-	if !assert.NotEmpty(t, tCase.Steps[1].Request.Cookies["sails.sid"]) {
-		t.Fatal()
-	}
+	assert.NotEmpty(t, tCase.Steps[1].Request.Cookies["sails.sid"])
 
 	// make request headers
-	if !assert.Equal(t, "HttpRunnerPlus", tCase.Steps[0].Request.Headers["User-Agent"]) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, "postman-echo.com", tCase.Steps[0].Request.Headers["Host"]) {
-		t.Fatal()
-	}
+	assert.Equal(t, "HttpRunnerPlus", tCase.Steps[0].Request.Headers["User-Agent"])
+	assert.Equal(t, "postman-echo.com", tCase.Steps[0].Request.Headers["Host"])
 
 	// make request data
-	if !assert.Equal(t, nil, tCase.Steps[0].Request.Body) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, map[string]interface{}{"foo1": "HDnY8", "foo2": 12.3}, tCase.Steps[1].Request.Body) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, map[string]string{"foo1": "HDnY8", "foo2": "12.3"}, tCase.Steps[2].Request.Body) {
-		t.Fatal()
-	}
+	assert.Equal(t, nil, tCase.Steps[0].Request.Body)
+	assert.Equal(t, map[string]interface{}{"foo1": "HDnY8", "foo2": 12.3}, tCase.Steps[1].Request.Body)
+	assert.Equal(t, map[string]string{"foo1": "HDnY8", "foo2": "12.3"}, tCase.Steps[2].Request.Body)
 
 	// make validators
 	validator, ok := tCase.Steps[0].Validators[0].(hrp.Validator)
@@ -100,14 +65,12 @@ func TestMakeRequestURL(t *testing.T) {
 			URL: "http://127.0.0.1:8080/api/login",
 		},
 	}
+	caseHar, err := loadCaseHAR(harPath)
+	require.NoError(t, err)
 	step, err := caseHar.prepareTestStep(entry)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
+	assert.NoError(t, err)
 
-	if !assert.Equal(t, "http://127.0.0.1:8080/api/login", step.Request.URL) {
-		t.Fatal()
-	}
+	assert.Equal(t, "http://127.0.0.1:8080/api/login", step.Request.URL)
 }
 
 func TestMakeRequestHeaders(t *testing.T) {
@@ -119,16 +82,14 @@ func TestMakeRequestHeaders(t *testing.T) {
 			},
 		},
 	}
+	caseHar, err := loadCaseHAR(harPath)
+	require.NoError(t, err)
 	step, err := caseHar.prepareTestStep(entry)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
+	assert.NoError(t, err)
 
-	if !assert.Equal(t, map[string]string{
+	assert.Equal(t, map[string]string{
 		"Content-Type": "application/json; charset=utf-8",
-	}, step.Request.Headers) {
-		t.Fatal()
-	}
+	}, step.Request.Headers)
 }
 
 func TestMakeRequestCookies(t *testing.T) {
@@ -141,17 +102,15 @@ func TestMakeRequestCookies(t *testing.T) {
 			},
 		},
 	}
+	caseHar, err := loadCaseHAR(harPath)
+	require.NoError(t, err)
 	step, err := caseHar.prepareTestStep(entry)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
+	assert.NoError(t, err)
 
-	if !assert.Equal(t, map[string]string{
+	assert.Equal(t, map[string]string{
 		"abc":      "123",
 		"UserName": "leolee",
-	}, step.Request.Cookies) {
-		t.Fatal()
-	}
+	}, step.Request.Cookies)
 }
 
 func TestMakeRequestDataParams(t *testing.T) {
@@ -167,14 +126,12 @@ func TestMakeRequestDataParams(t *testing.T) {
 			},
 		},
 	}
+	caseHar, err := loadCaseHAR(harPath)
+	require.NoError(t, err)
 	step, err := caseHar.prepareTestStep(entry)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
+	assert.NoError(t, err)
 
-	if !assert.Equal(t, map[string]string{"a": "1", "b": "2"}, step.Request.Body) {
-		t.Fatal()
-	}
+	assert.Equal(t, map[string]string{"a": "1", "b": "2"}, step.Request.Body)
 }
 
 func TestMakeRequestDataJSON(t *testing.T) {
@@ -187,14 +144,12 @@ func TestMakeRequestDataJSON(t *testing.T) {
 			},
 		},
 	}
+	caseHar, err := loadCaseHAR(harPath)
+	require.NoError(t, err)
 	step, err := caseHar.prepareTestStep(entry)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
+	assert.NoError(t, err)
 
-	if !assert.Equal(t, map[string]interface{}{"a": "1", "b": "2"}, step.Request.Body) {
-		t.Fatal()
-	}
+	assert.Equal(t, map[string]interface{}{"a": "1", "b": "2"}, step.Request.Body)
 }
 
 func TestMakeRequestDataTextEmpty(t *testing.T) {
@@ -207,14 +162,11 @@ func TestMakeRequestDataTextEmpty(t *testing.T) {
 			},
 		},
 	}
+	caseHar, err := loadCaseHAR(harPath)
+	require.NoError(t, err)
 	step, err := caseHar.prepareTestStep(entry)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-
-	if !assert.Equal(t, nil, step.Request.Body) { // TODO
-		t.Fatal()
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, nil, step.Request.Body)
 }
 
 func TestMakeValidate(t *testing.T) {
@@ -233,49 +185,37 @@ func TestMakeValidate(t *testing.T) {
 			},
 		},
 	}
+	caseHar, err := loadCaseHAR(harPath)
+	require.NoError(t, err)
 	step, err := caseHar.prepareTestStep(entry)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
+	assert.NoError(t, err)
 	validator, ok := step.Validators[0].(hrp.Validator)
-	if !ok {
-		t.Fatal()
-	}
-	if !assert.Equal(t, validator,
+	assert.True(t, ok)
+	assert.Equal(t, validator,
 		hrp.Validator{
 			Check:   "status_code",
 			Expect:  200,
 			Assert:  "equals",
 			Message: "assert response status code",
-		}) {
-		t.Fatal()
-	}
+		})
 
 	validator, ok = step.Validators[1].(hrp.Validator)
-	if !ok {
-		t.Fatal()
-	}
-	if !assert.Equal(t, validator,
+	assert.True(t, ok)
+	assert.Equal(t, validator,
 		hrp.Validator{
 			Check:   "headers.\"Content-Type\"",
 			Expect:  "application/json; charset=utf-8",
 			Assert:  "equals",
 			Message: "assert response header Content-Type",
-		}) {
-		t.Fatal()
-	}
+		})
 
 	validator, ok = step.Validators[2].(hrp.Validator)
-	if !ok {
-		t.Fatal()
-	}
-	if !assert.Equal(t, validator,
+	assert.True(t, ok)
+	assert.Equal(t, validator,
 		hrp.Validator{
 			Check:   "body.Code",
 			Expect:  float64(200), // TODO
 			Assert:  "equals",
 			Message: "assert response body Code",
-		}) {
-		t.Fatal()
-	}
+		})
 }
