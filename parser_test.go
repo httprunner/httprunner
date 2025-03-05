@@ -10,77 +10,52 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBuildURL(t *testing.T) {
 	var preparedURL *url.URL
 
 	preparedURL = buildURL("https://postman-echo.com", "/get", nil)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/")
 	preparedURL = buildURL("https://postman-echo.com", "get", nil)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/")
 	preparedURL = buildURL("https://postman-echo.com/", "/get", nil)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/")
 
 	preparedURL = buildURL("https://postman-echo.com/abc/", "/get?a=1&b=2", nil)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2")
 	preparedURL = buildURL("https://postman-echo.com/abc", "get?a=1&b=2", nil)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2")
 
 	// omit query string in base url
 	preparedURL = buildURL("https://postman-echo.com/abc?x=6&y=9", "/get?a=1&b=2", nil)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2")
 
 	preparedURL = buildURL("", "https://postman-echo.com/get", nil)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/")
 
 	// notice: step request url > config base url
 	preparedURL = buildURL("https://postman-echo.com", "https://httpbin.org/get", nil)
-	if !assert.Equal(t, preparedURL.String(), "https://httpbin.org/get/") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "https://httpbin.org/get/")
 
 	// websocket url
 	preparedURL = buildURL("wss://ws.postman-echo.com/raw", "", nil)
-	if !assert.Equal(t, preparedURL.String(), "wss://ws.postman-echo.com/raw/") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "wss://ws.postman-echo.com/raw/")
 
 	preparedURL = buildURL("wss://ws.postman-echo.com", "/raw", nil)
-	if !assert.Equal(t, preparedURL.String(), "wss://ws.postman-echo.com/raw/") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "wss://ws.postman-echo.com/raw/")
 
 	preparedURL = buildURL("wss://ws.postman-echo.com/raw", "ws://echo.websocket.events", nil)
-	if !assert.Equal(t, preparedURL.String(), "ws://echo.websocket.events/") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "ws://echo.websocket.events/")
 
 	queryParams := url.Values{}
 	queryParams.Add("c", "3")
 	queryParams.Add("d", "4")
 	preparedURL = buildURL("https://postman-echo.com/", "/get/", queryParams)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get?c=3&d=4") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get?c=3&d=4")
 	preparedURL = buildURL("https://postman-echo.com/abc", "get?a=1&b=2", queryParams)
-	if !assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2&c=3&d=4") {
-		t.Fatal()
-	}
+	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2&c=3&d=4")
 }
 
 func TestRegexCompileVariable(t *testing.T) {
@@ -95,9 +70,7 @@ func TestRegexCompileVariable(t *testing.T) {
 
 	for _, expr := range testData {
 		varMatched := regexCompileVariable.FindStringSubmatch(expr)
-		if !assert.Len(t, varMatched, 3) {
-			t.Fatal()
-		}
+		assert.Len(t, varMatched, 3)
 	}
 }
 
@@ -112,9 +85,7 @@ func TestRegexCompileAbnormalVariable(t *testing.T) {
 
 	for _, expr := range testData {
 		varMatched := regexCompileVariable.FindStringSubmatch(expr)
-		if !assert.Len(t, varMatched, 0) {
-			t.Fatal()
-		}
+		assert.Len(t, varMatched, 0)
 	}
 }
 
@@ -130,9 +101,7 @@ func TestRegexCompileFunction(t *testing.T) {
 
 	for _, expr := range testData {
 		varMatched := regexCompileFunction.FindStringSubmatch(expr)
-		if !assert.Len(t, varMatched, 3) {
-			t.Fatal()
-		}
+		assert.Len(t, varMatched, 3)
 	}
 }
 
@@ -152,9 +121,7 @@ func TestRegexCompileAbnormalFunction(t *testing.T) {
 
 	for _, expr := range testData {
 		varMatched := regexCompileFunction.FindStringSubmatch(expr)
-		if !assert.Len(t, varMatched, 0) {
-			t.Fatal()
-		}
+		assert.Len(t, varMatched, 0)
 	}
 }
 
@@ -214,12 +181,8 @@ func TestParseDataStringWithVariables(t *testing.T) {
 	parser := NewParser()
 	for _, data := range testData {
 		parsedData, err := parser.Parse(data.expr, variablesMapping)
-		if !assert.NoError(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expect, parsedData) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.expect, parsedData)
 	}
 }
 
@@ -239,12 +202,8 @@ func TestParseDataStringWithUndefinedVariables(t *testing.T) {
 	parser := NewParser()
 	for _, data := range testData {
 		parsedData, err := parser.Parse(data.expr, variablesMapping)
-		if !assert.Error(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expect, parsedData) {
-			t.Fatal()
-		}
+		assert.Error(t, err)
+		assert.Equal(t, data.expect, parsedData)
 	}
 }
 
@@ -284,12 +243,8 @@ func TestParseDataStringWithVariablesAbnormal(t *testing.T) {
 	parser := NewParser()
 	for _, data := range testData {
 		parsedData, err := parser.Parse(data.expr, variablesMapping)
-		if !assert.NoError(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expect, parsedData) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.expect, parsedData)
 	}
 }
 
@@ -315,12 +270,8 @@ func TestParseDataMapWithVariables(t *testing.T) {
 	parser := NewParser()
 	for _, data := range testData {
 		parsedData, err := parser.Parse(data.expr, variablesMapping)
-		if !assert.NoError(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expect, parsedData) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.expect, parsedData)
 	}
 }
 
@@ -349,12 +300,8 @@ func TestParseHeaders(t *testing.T) {
 	parser := NewParser()
 	for _, data := range testData {
 		parsedHeaders, err := parser.ParseHeaders(data.rawHeaders, variablesMapping)
-		if !assert.NoError(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expectHeaders, parsedHeaders) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.expectHeaders, parsedHeaders)
 	}
 }
 
@@ -378,9 +325,7 @@ func TestMergeVariables(t *testing.T) {
 
 	for _, data := range testData {
 		mergedVariables := mergeVariables(data.stepVariables, data.configVariables)
-		if !assert.Equal(t, data.expectVariables, mergedVariables) {
-			t.Fatal()
-		}
+		assert.Equal(t, data.expectVariables, mergedVariables)
 	}
 }
 
@@ -414,9 +359,7 @@ func TestMergeMap(t *testing.T) {
 
 	for _, data := range testData {
 		mergedMap := mergeMap(data.m, data.overriddenMap)
-		if !assert.Equal(t, data.expectMap, mergedMap) {
-			t.Fatal()
-		}
+		assert.Equal(t, data.expectMap, mergedMap)
 	}
 }
 
@@ -445,9 +388,7 @@ func TestMergeSlices(t *testing.T) {
 
 	for _, data := range testData {
 		mergedSlice := mergeSlices(data.slice, data.overriddenSlice)
-		if !assert.Equal(t, data.expectSlice, mergedSlice) {
-			t.Fatal()
-		}
+		assert.Equal(t, data.expectSlice, mergedSlice)
 	}
 }
 
@@ -484,9 +425,7 @@ func TestMergeValidators(t *testing.T) {
 
 	for _, data := range testData {
 		mergedValidators := mergeValidators(data.validators, data.overriddenValidators)
-		if !assert.Equal(t, data.expectValidators, mergedValidators) {
-			t.Fatal()
-		}
+		assert.Equal(t, data.expectValidators, mergedValidators)
 	}
 }
 
@@ -495,37 +434,23 @@ func TestCallBuiltinFunction(t *testing.T) {
 
 	// call function without arguments
 	_, err := parser.callFunc("get_timestamp")
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
+	assert.Nil(t, err)
 
 	// call function with one argument
 	timeStart := time.Now()
 	_, err = parser.callFunc("sleep", 1)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	if !assert.Greater(t, time.Since(timeStart), time.Duration(1)*time.Second) {
-		t.Fatal()
-	}
+	assert.Nil(t, err)
+	assert.Greater(t, time.Since(timeStart), time.Duration(1)*time.Second)
 
 	// call function with one argument
 	result, err := parser.callFunc("gen_random_string", 10)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, 10, len(result.(string))) {
-		t.Fatal()
-	}
+	assert.Nil(t, err)
+	assert.Equal(t, 10, len(result.(string)))
 
 	// call function with two argument
 	result, err = parser.callFunc("max", float64(10), 9.99)
-	if !assert.NoError(t, err) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, float64(10), result.(float64)) {
-		t.Fatal()
-	}
+	assert.Nil(t, err)
+	assert.Equal(t, float64(10), result.(float64))
 }
 
 func TestLiteralEval(t *testing.T) {
@@ -548,12 +473,8 @@ func TestLiteralEval(t *testing.T) {
 
 	for _, data := range testData {
 		value, err := literalEval(data.expr)
-		if !assert.NoError(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expect, value) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.expect, value)
 	}
 }
 
@@ -578,12 +499,8 @@ func TestParseFunctionArguments(t *testing.T) {
 
 	for _, data := range testData {
 		value, err := parseFunctionArguments(data.expr)
-		if !assert.NoError(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expect, value) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.expect, value)
 	}
 }
 
@@ -607,12 +524,8 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 	parser := NewParser()
 	for _, data := range testData1 {
 		value, err := parser.Parse(data.expr, variablesMapping)
-		if !assert.NoError(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expect, len(value.(string))) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.expect, len(value.(string)))
 	}
 
 	testData2 := []struct {
@@ -626,12 +539,8 @@ func TestParseDataStringWithFunctions(t *testing.T) {
 
 	for _, data := range testData2 {
 		value, err := parser.Parse(data.expr, variablesMapping)
-		if !assert.NoError(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expect, value) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.expect, value)
 	}
 }
 
@@ -652,9 +561,7 @@ func TestConvertString(t *testing.T) {
 
 	for _, data := range testData {
 		value := convertString(data.raw)
-		if !assert.Equal(t, data.expect, value) {
-			t.Fatal()
-		}
+		assert.Equal(t, data.expect, value)
 	}
 }
 
@@ -676,12 +583,8 @@ func TestParseVariables(t *testing.T) {
 	parser := NewParser()
 	for _, data := range testData {
 		value, err := parser.ParseVariables(data.rawVars)
-		if !assert.NoError(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expectVars, value) {
-			t.Fatal()
-		}
+		assert.Nil(t, err)
+		assert.Equal(t, data.expectVars, value)
 	}
 }
 
@@ -707,12 +610,8 @@ func TestParseVariablesAbnormal(t *testing.T) {
 	parser := NewParser()
 	for _, data := range testData {
 		value, err := parser.ParseVariables(data.rawVars)
-		if !assert.Error(t, err) {
-			t.Fatal()
-		}
-		if !assert.Equal(t, data.expectVars, value) {
-			t.Fatal()
-		}
+		assert.Error(t, err)
+		assert.Equal(t, data.expectVars, value)
 	}
 }
 
@@ -743,9 +642,7 @@ func TestExtractVariables(t *testing.T) {
 			varList = append(varList, varName)
 		}
 		sort.Strings(varList)
-		if !assert.Equal(t, data.expectVars, varList) {
-			t.Fatal()
-		}
+		assert.Equal(t, data.expectVars, varList)
 	}
 }
 
@@ -782,9 +679,7 @@ func TestFindallVariables(t *testing.T) {
 			varList = append(varList, varName)
 		}
 		sort.Strings(varList)
-		if !assert.Equal(t, data.expectVars, varList) {
-			t.Fatal()
-		}
+		assert.Equal(t, data.expectVars, varList)
 	}
 }
 
@@ -802,13 +697,9 @@ func TestSearchJmespath(t *testing.T) {
 	resp := http.Response{}
 	resp.Body = io.NopCloser(strings.NewReader(testText))
 	respObj, err := newHttpResponseObject(t, NewParser(), &resp)
-	if err != nil {
-		t.Fatal()
-	}
+	require.Nil(t, err)
 	for _, data := range testData {
-		if !assert.Equal(t, data.expected, respObj.searchJmespath(data.raw)) {
-			t.Fatal()
-		}
+		assert.Equal(t, data.expected, respObj.searchJmespath(data.raw))
 	}
 }
 
@@ -845,13 +736,9 @@ func TestSearchRegexp(t *testing.T) {
 	resp := http.Response{}
 	resp.Body = io.NopCloser(strings.NewReader(testText))
 	respObj, err := newHttpResponseObject(t, NewParser(), &resp)
-	if err != nil {
-		t.Fatal()
-	}
+	require.Nil(t, err)
 	for _, data := range testData {
-		if !assert.Equal(t, data.expected, respObj.searchRegexp(data.raw)) {
-			t.Fatal()
-		}
+		assert.Equal(t, data.expected, respObj.searchRegexp(data.raw))
 	}
 }
 
@@ -897,25 +784,13 @@ def Test5():	# exported function
     pass
 `
 	names, err := regexPyFunctionName.findAllFunctionNames(content)
-	if !assert.Nil(t, err) {
-		t.FailNow()
-	}
-	if !assert.Contains(t, names, "test_1") {
-		t.FailNow()
-	}
-	if !assert.Contains(t, names, "Test5") {
-		t.FailNow()
-	}
-	if !assert.Contains(t, names, "_test_2") {
-		t.FailNow()
-	}
-	if !assert.NotContains(t, names, "__test_3") {
-		t.FailNow()
-	}
+	assert.Nil(t, err)
+	assert.Contains(t, names, "test_1")
+	assert.Contains(t, names, "Test5")
+	assert.Contains(t, names, "_test_2")
+	assert.NotContains(t, names, "__test_3")
 	// commented out function
-	if !assert.NotContains(t, names, "test_4") {
-		t.FailNow()
-	}
+	assert.NotContains(t, names, "test_4")
 }
 
 func TestFindAllGoFunctionNames(t *testing.T) {
@@ -941,25 +816,13 @@ func _Test3() { // exported function
 // }
 `
 	names, err := regexGoFunctionName.findAllFunctionNames(content)
-	if !assert.Nil(t, err) {
-		t.FailNow()
-	}
-	if !assert.Contains(t, names, "Test1") {
-		t.FailNow()
-	}
-	if !assert.Contains(t, names, "testFunc2") {
-		t.FailNow()
-	}
-	if !assert.NotContains(t, names, "init") {
-		t.FailNow()
-	}
-	if !assert.Contains(t, names, "_Test3") {
-		t.FailNow()
-	}
+	assert.Nil(t, err)
+	assert.Contains(t, names, "Test1")
+	assert.Contains(t, names, "testFunc2")
+	assert.NotContains(t, names, "init")
+	assert.Contains(t, names, "_Test3")
 	// commented out function
-	if !assert.NotContains(t, names, "Test4") {
-		t.FailNow()
-	}
+	assert.NotContains(t, names, "Test4")
 }
 
 func TestFindAllGoFunctionNamesAbnormal(t *testing.T) {
@@ -973,7 +836,5 @@ func main() {	// should not define main() function
 }
 `
 	_, err := regexGoFunctionName.findAllFunctionNames(content)
-	if !assert.NotNil(t, err) {
-		t.FailNow()
-	}
+	assert.Error(t, err)
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var curlPath = "../../../examples/data/curl/curl_examples.txt"
+var curlPath = "../examples/data/curl/curl_examples.txt"
 
 func TestLoadCurlCase(t *testing.T) {
 	tCase, err := LoadCurlCase(curlPath)

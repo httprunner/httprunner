@@ -31,21 +31,15 @@ var (
 
 func TestRunRequestGetToStruct(t *testing.T) {
 	tStep := stepGET
-	if tStep.Request.Method != hrp.HTTP_GET {
-		t.Fatalf("tStep.Request.Method != GET")
-	}
-	if tStep.Request.URL != "/get" {
-		t.Fatalf("tStep.Request.URL != '/get'")
-	}
-	if tStep.Request.Params["foo1"] != "bar1" || tStep.Request.Params["foo2"] != "bar2" {
-		t.Fatalf("tStep.Request.Params mismatch")
-	}
-	if tStep.Request.Headers["User-Agent"] != "HttpRunnerPlus" {
-		t.Fatalf("tStep.Request.Headers mismatch")
-	}
-	if tStep.Request.Cookies["user"] != "debugtalk" {
-		t.Fatalf("tStep.Request.Cookies mismatch")
-	}
+	assert.Equal(t, tStep.Request.Method, hrp.HTTP_GET)
+	assert.Equal(t, tStep.Request.URL, "/get")
+
+	assert.Equal(t, tStep.Request.Params["foo1"], "bar1")
+	assert.Equal(t, tStep.Request.Params["foo2"], "bar2")
+
+	assert.Equal(t, tStep.Request.Headers["User-Agent"], "HttpRunnerPlus")
+	assert.Equal(t, tStep.Request.Cookies["user"], "debugtalk")
+
 	validator, ok := tStep.Validators[0].(hrp.Validator)
 	if !ok || validator.Check != "status_code" || validator.Expect != 200 {
 		t.Fatalf("tStep.Validators mismatch")
@@ -54,24 +48,16 @@ func TestRunRequestGetToStruct(t *testing.T) {
 
 func TestRunRequestPostDataToStruct(t *testing.T) {
 	tStep := stepPOSTData
-	if tStep.Request.Method != hrp.HTTP_POST {
-		t.Fatalf("tStep.Request.Method != POST")
-	}
-	if tStep.Request.URL != "/post" {
-		t.Fatalf("tStep.Request.URL != '/post'")
-	}
-	if tStep.Request.Params["foo1"] != "bar1" || tStep.Request.Params["foo2"] != "bar2" {
-		t.Fatalf("tStep.Request.Params mismatch")
-	}
-	if tStep.Request.Headers["User-Agent"] != "HttpRunnerPlus" {
-		t.Fatalf("tStep.Request.Headers mismatch")
-	}
-	if tStep.Request.Cookies["user"] != "debugtalk" {
-		t.Fatalf("tStep.Request.Cookies mismatch")
-	}
-	if tStep.Request.Body != "a=1&b=2" {
-		t.Fatalf("tStep.Request.Data mismatch")
-	}
+	assert.Equal(t, tStep.Request.Method, hrp.HTTP_POST)
+	assert.Equal(t, tStep.Request.URL, "/post")
+
+	assert.Equal(t, tStep.Request.Params["foo1"], "bar1")
+	assert.Equal(t, tStep.Request.Params["foo2"], "bar2")
+
+	assert.Equal(t, tStep.Request.Headers["User-Agent"], "HttpRunnerPlus")
+	assert.Equal(t, tStep.Request.Cookies["user"], "debugtalk")
+	assert.Equal(t, tStep.Request.Body, "a=1&b=2")
+
 	validator, ok := tStep.Validators[0].(hrp.Validator)
 	if !ok || validator.Check != "status_code" || validator.Expect != 200 {
 		t.Fatalf("tStep.Validators mismatch")
@@ -86,77 +72,33 @@ func TestRunRequestStatOn(t *testing.T) {
 	caseRunner, _ := hrp.NewRunner(t).SetHTTPStatOn().NewCaseRunner(testcase)
 	sessionRunner := caseRunner.NewSession()
 	summary, err := sessionRunner.Start(nil)
-	if err != nil {
-		t.Fatal()
-	}
+	assert.Nil(t, err)
 
 	stat := summary.Records[0].HttpStat
-	if !assert.GreaterOrEqual(t, stat["DNSLookup"], int64(0)) {
-		t.Fatal()
-	}
-	if !assert.Greater(t, stat["TCPConnection"], int64(0)) {
-		t.Fatal()
-	}
-	if !assert.Greater(t, stat["TLSHandshake"], int64(0)) {
-		t.Fatal()
-	}
-	if !assert.Greater(t, stat["ServerProcessing"], int64(0)) {
-		t.Fatal()
-	}
-	if !assert.GreaterOrEqual(t, stat["ContentTransfer"], int64(0)) {
-		t.Fatal()
-	}
-	if !assert.GreaterOrEqual(t, stat["NameLookup"], int64(0)) {
-		t.Fatal()
-	}
-	if !assert.Greater(t, stat["Connect"], int64(0)) {
-		t.Fatal()
-	}
-	if !assert.Greater(t, stat["Pretransfer"], int64(0)) {
-		t.Fatal()
-	}
-	if !assert.Greater(t, stat["StartTransfer"], int64(0)) {
-		t.Fatal()
-	}
-	if !assert.Greater(t, stat["Total"], int64(5)) {
-		t.Fatal()
-	}
-	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(3)) {
-		t.Fatal()
-	}
+	assert.GreaterOrEqual(t, stat["DNSLookup"], int64(0))
+	assert.Greater(t, stat["TCPConnection"], int64(0))
+	assert.Greater(t, stat["TLSHandshake"], int64(0))
+	assert.Greater(t, stat["ServerProcessing"], int64(0))
+	assert.GreaterOrEqual(t, stat["ContentTransfer"], int64(0))
+	assert.GreaterOrEqual(t, stat["NameLookup"], int64(0))
+	assert.Greater(t, stat["Connect"], int64(0))
+	assert.Greater(t, stat["Pretransfer"], int64(0))
+	assert.Greater(t, stat["StartTransfer"], int64(0))
+	assert.Greater(t, stat["Total"], int64(5))
+	assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(3))
 
 	// reuse connection
 	stat = summary.Records[1].HttpStat
-	if !assert.Equal(t, int64(0), stat["DNSLookup"]) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, int64(0), stat["TCPConnection"]) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, int64(0), stat["TLSHandshake"]) {
-		t.Fatal()
-	}
-	if !assert.Greater(t, stat["ServerProcessing"], int64(1)) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, int64(0), stat["NameLookup"]) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, int64(0), stat["Connect"]) {
-		t.Fatal()
-	}
-	if !assert.Equal(t, int64(0), stat["Pretransfer"]) {
-		t.Fatal()
-	}
-	if !assert.Greater(t, stat["StartTransfer"], int64(0)) {
-		t.Fatal()
-	}
-	if !assert.Greater(t, stat["Total"], int64(1)) {
-		t.Fatal()
-	}
-	if !assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(100)) {
-		t.Fatal()
-	}
+	assert.Equal(t, int64(0), stat["DNSLookup"])
+	assert.Equal(t, int64(0), stat["TCPConnection"])
+	assert.Equal(t, int64(0), stat["TLSHandshake"])
+	assert.Greater(t, stat["ServerProcessing"], int64(1))
+	assert.Equal(t, int64(0), stat["NameLookup"])
+	assert.Equal(t, int64(0), stat["Connect"])
+	assert.Equal(t, int64(0), stat["Pretransfer"])
+	assert.Greater(t, stat["StartTransfer"], int64(0))
+	assert.Greater(t, stat["Total"], int64(1))
+	assert.Less(t, stat["Total"]-summary.Records[0].Elapsed, int64(100))
 }
 
 func TestRunCaseWithTimeout(t *testing.T) {
@@ -175,9 +117,7 @@ func TestRunCaseWithTimeout(t *testing.T) {
 		},
 	}
 	err := r.Run(testcase1)
-	if !assert.NoError(t, err) { // assert no error
-		t.FailNow()
-	}
+	assert.Nil(t, err)
 
 	testcase2 := &hrp.TestCase{
 		Config: hrp.NewConfig("TestCase2").
@@ -191,9 +131,7 @@ func TestRunCaseWithTimeout(t *testing.T) {
 		},
 	}
 	err = r.Run(testcase2)
-	if !assert.Error(t, err) { // assert error
-		t.FailNow()
-	}
+	assert.Error(t, err)
 
 	// step timeout
 	testcase3 := &hrp.TestCase{
@@ -209,7 +147,5 @@ func TestRunCaseWithTimeout(t *testing.T) {
 		},
 	}
 	err = r.Run(testcase3)
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
+	assert.Nil(t, err)
 }
