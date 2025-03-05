@@ -307,9 +307,10 @@ func (wd *BrowserDriver) ScreenShot(options ...option.ActionOption) (*bytes.Buff
 	data := resp.Data.(map[string]interface{})
 	screenshotBase64 := data["screenshot"].(string)
 	screenRaw, err := base64.StdEncoding.DecodeString(screenshotBase64)
-	res := bytes.NewBuffer(screenRaw)
-
-	return res, err
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewBuffer(screenRaw), nil
 }
 
 func (wd *BrowserDriver) HttpPOST(data interface{}, pathElem ...string) (response *WebAgentResponse, err error) {

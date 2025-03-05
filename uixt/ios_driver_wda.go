@@ -334,19 +334,7 @@ func (wd *WDADriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer,
 		return nil, errors.Wrap(code.DeviceScreenShotError,
 			fmt.Sprintf("decode WDA screenshot data failed: %v", err))
 	}
-
-	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.ScreenShotFileName != "" {
-		// save screenshot to file
-		path, err := saveScreenShot(raw, actionOptions.ScreenShotFileName)
-		if err != nil {
-			return nil, errors.Wrapf(code.DeviceScreenShotError,
-				"save screenshot file failed %v", err)
-		}
-		log.Info().Str("path", path).Msg("screenshot saved")
-	}
-
-	return
+	return raw, nil
 }
 
 func (wd *WDADriver) toScale(x float64) float64 {
@@ -614,13 +602,13 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
 	var err error
-	actionOptions := option.NewActionOptions(opts...)
 	x, y, err = convertToAbsolutePoint(wd, x, y)
 	if err != nil {
 		return err
 	}
-	x, y = actionOptions.ApplyOffset(x, y)
 
+	actionOptions := option.NewActionOptions(opts...)
+	x, y = actionOptions.ApplyOffset(x, y)
 	x = wd.toScale(x)
 	y = wd.toScale(y)
 	data := map[string]interface{}{

@@ -42,7 +42,7 @@ func NewDriverSession() *DriverSession {
 	timeout := 30 * time.Second
 	session := &DriverSession{
 		ctx:     context.Background(),
-		ID:      "",
+		ID:      "<SessionNotInit>",
 		timeout: timeout,
 		client: &http.Client{
 			Timeout: timeout,

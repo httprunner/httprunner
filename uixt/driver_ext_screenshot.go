@@ -49,6 +49,21 @@ func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) ai.OCRTexts {
 func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
 	screenshotOptions := option.NewActionOptions(opts...)
 
+	// take screenshot
+	bufSource, err := dExt.ScreenShot()
+	if err != nil {
+		return nil, errors.Wrapf(code.DeviceScreenShotError,
+			"take screenshot failed %v", err)
+	}
+
+	// compress screenshot
+	compressBufSource, err := compressImageBuffer(bufSource)
+	if err != nil {
+		return nil, errors.Wrapf(code.DeviceScreenShotError,
+			"compress screenshot failed %v", err)
+	}
+
+	// save compressed screenshot to file
 	var fileName string
 	optionsList := screenshotOptions.List()
 	if screenshotOptions.ScreenShotFileName != "" {
@@ -58,57 +73,33 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 	} else {
 		fileName = builtin.GenNameWithTimestamp("%d_screenshot")
 	}
-
-	var bufSource *bytes.Buffer
-	var compressBufSource *bytes.Buffer
-	var imageResult *ai.CVResult
-	var imagePath string
-	var windowSize types.Size
-	var lastErr error
-
-	// get screenshot info with retry
-	for i := 0; i < 3; i++ {
-		imagePath = filepath.Join(config.GetConfig().ScreenShotsPath, fileName)
-		bufSource, err = dExt.ScreenShot(option.WithScreenShotFileName(imagePath))
+	imagePath := filepath.Join(config.GetConfig().ScreenShotsPath, fileName)
+	go func() {
+		path, err := saveScreenShot(compressBufSource, imagePath)
 		if err != nil {
-			lastErr = err
-			continue
+			log.Error().Err(err).Msg("save screenshot file failed")
+		} else {
+			log.Info().Str("path", path).Msg("screenshot saved")
 		}
-		compressBufSource, err = compressImageBuffer(bufSource)
-		if err != nil {
-			lastErr = err
-			continue
-		}
+	}()
 
-		windowSize, err = dExt.WindowSize()
-		if err != nil {
-			lastErr = errors.Wrap(code.DeviceGetInfoError, err.Error())
-			continue
-		}
-
-		screenResult = &ScreenResult{
-			bufSource:  compressBufSource,
-			ImagePath:  imagePath,
-			Tags:       nil,
-			Resolution: windowSize,
-		}
-		imageResult, err = dExt.CVService.ReadFromBuffer(compressBufSource, opts...)
-		if err != nil {
-			log.Error().Err(err).Msg("ReadFromBuffer from ImageService failed")
-			lastErr = err
-			continue
-		}
-		// success, break the loop
-		lastErr = nil
-		break
-	}
-	if lastErr != nil {
-		return nil, lastErr
+	windowSize, err := dExt.WindowSize()
+	if err != nil {
+		return nil, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 
-	// cache screen result
-	dExt.screenResults = append(dExt.screenResults, screenResult)
-
+	// read image from buffer with CV
+	screenResult = &ScreenResult{
+		bufSource:  compressBufSource,
+		ImagePath:  imagePath,
+		Tags:       nil,
+		Resolution: windowSize,
+	}
+	imageResult, err := dExt.CVService.ReadFromBuffer(compressBufSource, opts...)
+	if err != nil {
+		log.Error().Err(err).Msg("ReadFromBuffer from ImageService failed")
+		return nil, err
+	}
 	if imageResult != nil {
 		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 		screenResult.UploadedURL = imageResult.URL
@@ -127,6 +118,9 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 			}
 		}
 	}
+
+	// cache screen result
+	dExt.screenResults = append(dExt.screenResults, screenResult)
 
 	log.Debug().
 		Str("imagePath", imagePath).

@@ -237,18 +237,6 @@ func (hd *HDCDriver) ScreenShot(opts ...option.ActionOption) (*bytes.Buffer, err
 		return nil, err
 	}
 	rawBuffer := bytes.NewBuffer(raw)
-
-	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.ScreenShotFileName != "" {
-		// save screenshot to file
-		path, err := saveScreenShot(rawBuffer, actionOptions.ScreenShotFileName)
-		if err != nil {
-			return nil, errors.Wrapf(code.DeviceScreenShotError,
-				"save screenshot file failed %v", err)
-		}
-		log.Info().Str("path", path).Msg("screenshot saved")
-	}
-
 	return rawBuffer, nil
 }
 

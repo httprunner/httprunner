@@ -544,18 +544,6 @@ func (ad *ADBDriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer,
 			"adb screencap failed %v", err)
 	}
 	raw = bytes.NewBuffer(resp)
-
-	actionOptions := option.NewActionOptions(opts...)
-	if actionOptions.ScreenShotFileName != "" {
-		// save screenshot to file
-		path, err := saveScreenShot(raw, actionOptions.ScreenShotFileName)
-		if err != nil {
-			return nil, errors.Wrapf(code.DeviceScreenShotError,
-				"save screenshot file failed %v", err)
-		}
-		log.Info().Str("path", path).Msg("screenshot saved")
-	}
-
 	return raw, nil
 }
 
