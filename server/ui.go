@@ -2,8 +2,8 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func (r *Router) tapHandler(c *gin.Context) {

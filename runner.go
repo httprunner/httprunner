@@ -26,8 +26,8 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/internal/version"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/ai"
 )
 
 // Run starts to run testcase with default configs.

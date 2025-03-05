@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func (r *Router) screenshotHandler(c *gin.Context) {

@@ -5,7 +5,7 @@ package hrp
 import (
 	"testing"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func TestIOSSettingsAction(t *testing.T) {

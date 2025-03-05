@@ -4,14 +4,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/httprunner/funplugin/myexec"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
+	"github.com/httprunner/funplugin/myexec"
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/convert"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/convert"
 )
 
 var convertCmd = &cobra.Command{

@@ -22,9 +22,9 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/internal/httpstat"
 	"github.com/httprunner/httprunner/v5/internal/json"
-	"github.com/httprunner/httprunner/v5/pkg/httpstat"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 type HTTPMethod string

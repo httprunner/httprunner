@@ -10,8 +10,8 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 type MobileUI struct {

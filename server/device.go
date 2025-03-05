@@ -7,10 +7,11 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/danielpaulus/go-ios/ios"
 	"github.com/gin-gonic/gin"
-	"github.com/httprunner/httprunner/v5/pkg/gadb"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/pkg/gadb"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func (r *Router) listDeviceHandler(c *gin.Context) {

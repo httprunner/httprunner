@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v5/internal/sdk"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/uixt"
 )
 
 type Application struct {

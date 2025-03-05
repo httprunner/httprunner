@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
 	"github.com/httprunner/httprunner/v5/server"
+	"github.com/httprunner/httprunner/v5/uixt"
 )
 
 func (r *RouterExt) installAppHandler(c *gin.Context) {

@@ -5,10 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/driver_ext"
 	"github.com/httprunner/httprunner/v5/server"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/ai"
+	"github.com/httprunner/httprunner/v5/uixt/driver_ext"
 )
 
 func (r *RouterExt) GetDriver(c *gin.Context) (driverExt *driver_ext.StubXTDriver, err error) {

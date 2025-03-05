@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
+	"github.com/httprunner/httprunner/v5/uixt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"

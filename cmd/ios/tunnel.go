@@ -2,14 +2,15 @@ package ios
 
 import (
 	"context"
-	"github.com/danielpaulus/go-ios/ios"
-	"github.com/httprunner/httprunner/v5/internal/sdk"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/rs/zerolog/log"
-	"github.com/spf13/cobra"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/danielpaulus/go-ios/ios"
+	"github.com/httprunner/httprunner/v5/internal/sdk"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
 )
 
 var tunnelCmd = &cobra.Command{

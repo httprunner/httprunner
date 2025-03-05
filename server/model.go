@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 type TapRequest struct {

@@ -9,9 +9,9 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/pkg/uixt"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/ai"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/ai"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func (r *Router) GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error) {

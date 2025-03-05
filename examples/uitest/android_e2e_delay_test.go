@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/pkg/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func TestAndroidDouyinE2E(t *testing.T) {
