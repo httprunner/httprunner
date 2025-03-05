@@ -37,12 +37,12 @@ func initPlugin(path, venv string, logOn bool) (plugin funplugin.IPlugin, err er
 		Bool("logOn", logOn).Msg("init plugin")
 	// plugin file not found
 	if path == "" {
-		return nil, nil
+		return nil, errors.New("testcase path not specified")
 	}
 	pluginPath, err := LocatePlugin(path)
 	if err != nil {
 		log.Warn().Str("path", path).Msg("locate plugin failed")
-		return nil, nil
+		return nil, errors.Wrap(err, "locate plugin failed")
 	}
 
 	pluginMutex.Lock()

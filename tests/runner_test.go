@@ -63,7 +63,8 @@ func assertRunTestCases(t *testing.T) {
 	refCase := hrp.TestCasePath(demoTestCaseWithPluginJSONPath)
 	testcase1 := &hrp.TestCase{
 		Config: hrp.NewConfig("TestCase1").
-			SetBaseURL("https://postman-echo.com"),
+			SetBaseURL("https://postman-echo.com").
+			EnablePlugin(), // TODO: FIXME
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("testcase1-step1").
 				GET("/headers").
@@ -219,6 +220,7 @@ func TestRunCaseWithPluginJSON(t *testing.T) {
 	defer removeHashicorpGoPlugin()
 
 	testCase := hrp.TestCasePath(demoTestCaseWithPluginJSONPath)
+	// TODO: FIXME, enable plugin
 	err := hrp.NewRunner(nil).Run(&testCase) // hrp.Run(testCase)
 	if err != nil {
 		t.Fatal()
