@@ -792,6 +792,9 @@ func (ad *ADBDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string
 	}
 
 	duration := options.ScreenRecordDuration
+	if duration == 0 {
+		duration = options.Duration
+	}
 	audioOn := options.ScreenRecordWithAudio
 
 	// get android system version
