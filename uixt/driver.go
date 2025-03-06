@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "image/gif"
 	_ "image/png"
-	"time"
 
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
@@ -37,7 +36,7 @@ type IDriver interface {
 	ForegroundInfo() (app types.AppInfo, err error)
 	WindowSize() (types.Size, error)
 	ScreenShot(opts ...option.ActionOption) (*bytes.Buffer, error)
-	ScreenRecord(duration time.Duration) (videoPath string, err error)
+	ScreenRecord(opts ...option.ActionOption) (videoPath string, err error)
 	Source(srcOpt ...option.SourceOption) (string, error)
 	Orientation() (orientation types.Orientation, err error)
 	Rotation() (rotation types.Rotation, err error)

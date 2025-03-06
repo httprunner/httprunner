@@ -4,6 +4,7 @@ import "github.com/httprunner/httprunner/v5/uixt/types"
 
 type ScreenOptions struct {
 	ScreenShotOptions
+	ScreenRecordOptions
 	ScreenFilterOptions
 }
 
@@ -18,7 +19,7 @@ type ScreenShotOptions struct {
 	ScreenShotFileName           string   `json:"screenshot_file_name,omitempty" yaml:"screenshot_file_name,omitempty"`
 }
 
-func (o *ScreenShotOptions) Options() []ActionOption {
+func (o *ScreenShotOptions) GetScreenShotOptions() []ActionOption {
 	options := make([]ActionOption, 0)
 	if o == nil {
 		return options
@@ -122,6 +123,49 @@ func WithScreenOCRCluster(ocrCluster string) ActionOption {
 func WithScreenShotFileName(fileName string) ActionOption {
 	return func(o *ActionOptions) {
 		o.ScreenShotFileName = fileName
+	}
+}
+
+type ScreenRecordOptions struct {
+	ScreenRecordDuration  float64 `json:"screenrecord_duration,omitempty" yaml:"screenrecord_duration,omitempty"`
+	ScreenRecordWithAudio bool    `json:"screenrecord_with_audio,omitempty" yaml:"screenrecord_with_audio,omitempty"`
+	ScreenRecordPath      string  `json:"screenrecord_path,omitempty" yaml:"screenrecord_path,omitempty"`
+}
+
+func (o *ScreenRecordOptions) GetScreenRecordOptions() []ActionOption {
+	options := make([]ActionOption, 0)
+	if o == nil {
+		return options
+	}
+
+	// screen record options
+	if o.ScreenRecordDuration > 0 {
+		options = append(options, WithDuration(o.ScreenRecordDuration))
+	}
+	if o.ScreenRecordWithAudio {
+		options = append(options, WithScreenRecordAudio(true))
+	}
+	if o.ScreenRecordPath != "" {
+		options = append(options, WithScreenRecordPath(o.ScreenRecordPath))
+	}
+	return options
+}
+
+func WithScreenRecordDuation(duration float64) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenRecordDuration = duration
+	}
+}
+
+func WithScreenRecordAudio(audioOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenRecordWithAudio = audioOn
+	}
+}
+
+func WithScreenRecordPath(path string) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenRecordPath = path
 	}
 }
 

@@ -120,11 +120,10 @@ func (o *ActionOptions) Options() []ActionOption {
 		}
 	}
 
-	return options
-}
+	options = append(options, o.GetScreenShotOptions()...)
+	options = append(options, o.GetScreenRecordOptions()...)
 
-func (o *ActionOptions) GetScreenOptions() []ActionOption {
-	return o.ScreenOptions.Options()
+	return options
 }
 
 func (o *ActionOptions) ApplyOffset(absX, absY float64) (float64, float64) {

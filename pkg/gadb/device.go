@@ -745,7 +745,7 @@ func (d *Device) ScreenCap() ([]byte, error) {
 		time.Now().Unix())
 	_, err := d.RunShellCommandWithBytes("screencap", "-p", tempPath)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "screencap failed")
 	}
 
 	// remove temp file
@@ -755,5 +755,24 @@ func (d *Device) ScreenCap() ([]byte, error) {
 
 	buffer := bytes.NewBuffer(nil)
 	err = d.Pull(tempPath, buffer)
-	return buffer.Bytes(), err
+	if err != nil {
+		return nil, errors.Wrap(err, "pull video failed")
+	}
+	return buffer.Bytes(), nil
+}
+
+func (d *Device) ScreenRecord(seconds float64) ([]byte, error) {
+	videoPath := fmt.Sprintf("/sdcard/screenrecord_%d.mp4", time.Now().Unix())
+	_, err := d.RunShellCommandWithBytes("screenrecord",
+		"--time-limit", fmt.Sprintf("%.1f", seconds), videoPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "screenrecord failed")
+	}
+
+	buffer := bytes.NewBuffer(nil)
+	err = d.Pull(videoPath, buffer)
+	if err != nil {
+		return nil, errors.Wrap(err, "pull video failed")
+	}
+	return buffer.Bytes(), nil
 }

@@ -195,7 +195,7 @@ func TestDriver_ADB_ForegroundInfo(t *testing.T) {
 
 func TestDriver_ADB_ScreenRecord(t *testing.T) {
 	driver := setupADBDriverExt(t)
-	path, err := driver.ScreenRecord(5 * time.Second)
+	path, err := driver.ScreenRecord(option.WithScreenRecordDuation(5))
 	assert.Nil(t, err)
 	defer os.Remove(path)
 	t.Log(path)
