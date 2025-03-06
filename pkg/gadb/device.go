@@ -2,6 +2,7 @@ package gadb
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -761,16 +762,38 @@ func (d *Device) ScreenCap() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (d *Device) ScreenRecord(seconds float64) ([]byte, error) {
+func (d *Device) ScreenRecord(ctx context.Context) ([]byte, error) {
 	videoPath := fmt.Sprintf("/sdcard/screenrecord_%d.mp4", time.Now().Unix())
-	_, err := d.RunShellCommandWithBytes("screenrecord",
-		"--time-limit", fmt.Sprintf("%.1f", seconds), videoPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "screenrecord failed")
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := d.RunShellCommandWithBytes("screenrecord", videoPath)
+		done <- err
+	}()
+
+	select {
+	case <-ctx.Done():
+		// timeout or cancelled
+		pid, err := d.RunShellCommand("pidof", "screenrecord")
+		if err == nil && pid != "" {
+			// 发送 SIGINT 信号终止录屏
+			_, _ = d.RunShellCommand("kill", "-2", strings.TrimSpace(pid))
+		}
+		<-done // 等待进程完全退出
+	case err := <-done:
+		// adb screenrecord will exit on reached 180s
+		if err != nil {
+			return nil, errors.Wrap(err, "screenrecord failed")
+		}
 	}
 
+	// remove temp file
+	defer func() {
+		go d.RunShellCommand("rm", videoPath)
+	}()
+
 	buffer := bytes.NewBuffer(nil)
-	err = d.Pull(videoPath, buffer)
+	err := d.Pull(videoPath, buffer)
 	if err != nil {
 		return nil, errors.Wrap(err, "pull video failed")
 	}

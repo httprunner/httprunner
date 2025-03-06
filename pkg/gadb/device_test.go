@@ -4,6 +4,7 @@ package gadb
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"reflect"
 	"strings"
@@ -292,6 +293,36 @@ func TestDevice_Pull(t *testing.T) {
 		if err = os.WriteFile(userHomeDir+"/Desktop/hello.txt", buffer.Bytes(), DefaultFileMode); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestDevice_ScreenRecord(t *testing.T) {
+	setupDevices(t)
+
+	for _, dev := range devices {
+		// screen record with time limit 5 seconds
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		if _, err := dev.ScreenRecord(ctx); err != nil {
+			assert.Nil(t, err)
+		}
+		cancel()
+	}
+
+	for _, dev := range devices {
+		// screen record with cancel signal
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan error)
+		go func() {
+			_, err := dev.ScreenRecord(ctx)
+			done <- err
+		}()
+
+		// record for 3 seconds
+		time.Sleep(time.Second * 3)
+		cancel()
+
+		err := <-done
+		assert.Nil(t, err)
 	}
 }
 

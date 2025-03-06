@@ -1,6 +1,8 @@
 package option
 
-import "github.com/httprunner/httprunner/v5/uixt/types"
+import (
+	"github.com/httprunner/httprunner/v5/uixt/types"
+)
 
 type ScreenOptions struct {
 	ScreenShotOptions
