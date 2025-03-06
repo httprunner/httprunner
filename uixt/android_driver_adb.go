@@ -791,7 +791,7 @@ func (ad *ADBDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string
 		filePath = filepath.Join(config.GetConfig().ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
 	}
 
-	duration := options.Duration
+	duration := options.ScreenRecordDuration
 	audioOn := options.ScreenRecordWithAudio
 
 	// get android system version
@@ -806,7 +806,9 @@ func (ad *ADBDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string
 	}
 
 	var useAdbScreenRecord bool
-	if !audioOn {
+	if options.ScreenRecordWithScrcpy {
+		useAdbScreenRecord = false
+	} else if !audioOn {
 		log.Info().Bool("audioOn", audioOn).Msg("screen record with adb screenrecord by default")
 		useAdbScreenRecord = true
 	} else if sysVersion != 0 && sysVersion < 11 {
@@ -816,6 +818,17 @@ func (ad *ADBDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string
 			Msg("Audio disabled, it is only supported for Android >= 11, use adb screenrecord")
 		useAdbScreenRecord = true
 	}
+
+	defer func() {
+		if err == nil {
+			filePath, err = filepath.Abs(filePath)
+			if err != nil {
+				err = errors.Wrap(err, "get absolute path failed")
+			} else {
+				log.Info().Str("path", filePath).Msg("screen record success")
+			}
+		}
+	}()
 
 	if useAdbScreenRecord {
 		res, err := ad.Device.ScreenRecord(duration)
@@ -829,7 +842,7 @@ func (ad *ADBDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string
 	}
 
 	// screen record with audio
-	log.Info().Msg("screen record with audio, use scrcpy")
+	log.Info().Float64("duration(s)", duration).Msg("screen record with audio, use scrcpy")
 
 	file, err := os.Create(filePath)
 	if err != nil {
@@ -878,7 +891,7 @@ func (ad *ADBDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string
 		}
 	}
 
-	return filepath.Abs(filePath)
+	return filePath, nil
 }
 
 func (ad *ADBDriver) Setup() error {

@@ -127,9 +127,10 @@ func WithScreenShotFileName(fileName string) ActionOption {
 }
 
 type ScreenRecordOptions struct {
-	ScreenRecordDuration  float64 `json:"screenrecord_duration,omitempty" yaml:"screenrecord_duration,omitempty"`
-	ScreenRecordWithAudio bool    `json:"screenrecord_with_audio,omitempty" yaml:"screenrecord_with_audio,omitempty"`
-	ScreenRecordPath      string  `json:"screenrecord_path,omitempty" yaml:"screenrecord_path,omitempty"`
+	ScreenRecordDuration   float64 `json:"screenrecord_duration,omitempty" yaml:"screenrecord_duration,omitempty"`
+	ScreenRecordWithAudio  bool    `json:"screenrecord_with_audio,omitempty" yaml:"screenrecord_with_audio,omitempty"`
+	ScreenRecordWithScrcpy bool    `json:"screenrecord_with_scrcpy,omitempty" yaml:"screenrecord_with_scrcpy,omitempty"`
+	ScreenRecordPath       string  `json:"screenrecord_path,omitempty" yaml:"screenrecord_path,omitempty"`
 }
 
 func (o *ScreenRecordOptions) GetScreenRecordOptions() []ActionOption {
@@ -144,6 +145,9 @@ func (o *ScreenRecordOptions) GetScreenRecordOptions() []ActionOption {
 	}
 	if o.ScreenRecordWithAudio {
 		options = append(options, WithScreenRecordAudio(true))
+	}
+	if o.ScreenRecordWithScrcpy {
+		options = append(options, WithScreenRecordScrcpy(true))
 	}
 	if o.ScreenRecordPath != "" {
 		options = append(options, WithScreenRecordPath(o.ScreenRecordPath))
@@ -160,6 +164,12 @@ func WithScreenRecordDuation(duration float64) ActionOption {
 func WithScreenRecordAudio(audioOn bool) ActionOption {
 	return func(o *ActionOptions) {
 		o.ScreenRecordWithAudio = audioOn
+	}
+}
+
+func WithScreenRecordScrcpy(scrcpyOn bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenRecordWithScrcpy = scrcpyOn
 	}
 }
 
