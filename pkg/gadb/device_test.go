@@ -9,6 +9,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var devices []*Device
@@ -17,9 +20,7 @@ func setupDevices(t *testing.T) {
 	var err error
 	setupClient(t)
 	devices, err = adbClient.DeviceList()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.Nil(t, err)
 }
 
 func TestDevice_State(t *testing.T) {
@@ -116,6 +117,24 @@ func TestDevice_DeviceInfo(t *testing.T) {
 	for i := range devices {
 		dev := devices[i]
 		t.Log(dev.DeviceInfo())
+	}
+}
+
+func TestDevice_SdkVersion(t *testing.T) {
+	setupDevices(t)
+	for _, device := range devices {
+		sdkVersion, err := device.SdkVersion()
+		assert.Nil(t, err)
+		t.Log(device.Serial(), sdkVersion)
+	}
+}
+
+func TestDevice_SystemVersion(t *testing.T) {
+	setupDevices(t)
+	for _, device := range devices {
+		systemVersion, err := device.SystemVersion()
+		assert.Nil(t, err)
+		t.Log(device.Serial(), systemVersion)
 	}
 }
 

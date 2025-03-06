@@ -147,15 +147,28 @@ func (d *Device) Usb() (string, error) {
 	return "", errors.New("does not have attribute: usb")
 }
 
+func (d *Device) SystemVersion() (string, error) {
+	if d.HasAttribute("systemVersion") {
+		return d.attrs["systemVersion"], nil
+	}
+	systemVersion, err := d.RunShellCommand("getprop", "ro.build.version.release")
+	systemVersion = strings.TrimSpace(systemVersion)
+	if err != nil {
+		return "", errors.New("get android system version failed")
+	}
+	d.attrs["systemVersion"] = systemVersion
+	return systemVersion, nil
+}
+
 func (d *Device) SdkVersion() (string, error) {
 	if d.HasAttribute("sdkVersion") {
 		return d.attrs["sdkVersion"], nil
 	}
 	sdkVersion, err := d.RunShellCommand("getprop", "ro.build.version.sdk")
-	sdkVersion = strings.TrimSpace(sdkVersion)
 	if err != nil {
-		return "", errors.New("does not have attribute: sdkVersion")
+		return "", errors.New("get android sdk version failed")
 	}
+	sdkVersion = strings.TrimSpace(sdkVersion)
 	d.attrs["sdkVersion"] = sdkVersion
 	return sdkVersion, nil
 }
