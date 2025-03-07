@@ -19,8 +19,12 @@ function echoWarn() {
 }
 export -f echoError
 
+github_api_url="https://api.github.com/repos/httprunner/httprunner/releases/latest"
+
 function get_latest_version() {
-    curl -ksSL https://httprunner.oss-cn-beijing.aliyuncs.com/VERSION
+    # get latest release version from GitHub API
+    version=$(curl -s $github_api_url | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    echo "$version"
 }
 
 function get_os() {
@@ -59,28 +63,13 @@ function main() {
     pkg="hrp-$version-$os-$arch$pkg_suffix"
     echo "Download package: $pkg"
 
-    # download from aliyun OSS or github packages
-    aliyun_oss_url="https://httprunner.oss-cn-beijing.aliyuncs.com/$pkg"
-    github_url="https://github.com/httprunner/httprunner/releases/download/$version/$pkg"
-    valid_flag=false
-    for url in "$aliyun_oss_url" "$github_url"; do
-        if curl --output /dev/null --silent --head --fail "$url"; then
-            valid_flag=true
-            break
-        fi
-        echoWarn "Invalid download url: $url"
-    done
-
-    if [[ "$valid_flag" == false ]]; then
-        echoError "No available download url found, exit!"
-        exit 1
-    fi
-    echo "Download url: $url"
+    download_url=$(curl -s $github_api_url | grep "browser_download_url.*$pkg" | cut -d '"' -f 4)
+    echo "Download url: $download_url"
     echo
 
     echoInfo "Downloading..."
-    echo "$ curl -kL $url -o $pkg"
-    curl -kL $url -o "$pkg"
+    echo "$ curl -kL $download_url -o $pkg"
+    curl -kL $download_url -o "$pkg"
     echo
 
     # for windows, only extract package to current directory
