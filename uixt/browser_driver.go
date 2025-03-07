@@ -614,7 +614,7 @@ func (wd *BrowserDriver) GetSession() *DriverSession {
 	return nil
 }
 
-func (wd *BrowserDriver) ScreenRecord(duration time.Duration) (videoPath string, err error) {
+func (wd *BrowserDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string, err error) {
 	return
 }
 

@@ -253,7 +253,7 @@ func (hd *HDCDriver) StopCaptureLog() (result interface{}, err error) {
 	return hd.points, nil
 }
 
-func (hd *HDCDriver) ScreenRecord(duration time.Duration) (videoPath string, err error) {
+func (hd *HDCDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string, err error) {
 	return "", nil
 }
 

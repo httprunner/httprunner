@@ -364,11 +364,11 @@ func (s *StubIOSDriver) WindowSize() (types.Size, error) {
 	return s.WDADriver.WindowSize()
 }
 
-func (s *StubIOSDriver) ScreenRecord(duration time.Duration) (videoPath string, err error) {
+func (s *StubIOSDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string, err error) {
 	if err := s.SetupWda(); err != nil {
 		return "", errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
-	return s.WDADriver.ScreenRecord(duration)
+	return s.WDADriver.ScreenRecord(opts...)
 }
 
 func (s *StubIOSDriver) Orientation() (types.Orientation, error) {

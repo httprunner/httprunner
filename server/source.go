@@ -37,7 +37,7 @@ func (r *Router) screenResultHandler(c *gin.Context) {
 
 	var actionOptions []option.ActionOption
 	if screenReq.Options != nil {
-		actionOptions = screenReq.Options.Options()
+		actionOptions = screenReq.Options.GetScreenShotOptions()
 	}
 
 	screenResult, err := driver.GetScreenResult(actionOptions...)

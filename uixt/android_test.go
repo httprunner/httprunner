@@ -3,6 +3,7 @@
 package uixt
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -195,10 +196,52 @@ func TestDriver_ADB_ForegroundInfo(t *testing.T) {
 
 func TestDriver_ADB_ScreenRecord(t *testing.T) {
 	driver := setupADBDriverExt(t)
-	path, err := driver.ScreenRecord(5 * time.Second)
+
+	// adb screenrecord --time-limit 5
+	path1, err := driver.ScreenRecord(
+		option.WithScreenRecordDuation(5))
 	assert.Nil(t, err)
-	defer os.Remove(path)
-	t.Log(path)
+	defer os.Remove(path1)
+	t.Log(path1)
+
+	// scrcpy with time limit
+	path2, err := driver.ScreenRecord(
+		option.WithScreenRecordDuation(5),
+		option.WithScreenRecordAudio(true),
+	)
+	assert.Nil(t, err)
+	defer os.Remove(path2)
+	t.Log(path2)
+
+	// scrcpy with time limit
+	path3, err := driver.ScreenRecord(
+		option.WithScreenRecordDuation(5),
+		option.WithScreenRecordScrcpy(true),
+	)
+	assert.Nil(t, err)
+	defer os.Remove(path3)
+	t.Log(path3)
+
+	// scrcpy with cancel signal
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error)
+	go func() {
+		path4, err := driver.ScreenRecord(
+			option.WithContext(ctx),
+			option.WithScreenRecordScrcpy(true),
+		)
+		assert.Nil(t, err)
+		defer os.Remove(path4)
+		t.Log(path4)
+		done <- err
+	}()
+
+	// record for 3 seconds
+	time.Sleep(time.Second * 3)
+	cancel()
+
+	err = <-done
+	assert.Nil(t, err)
 }
 
 func TestDriver_ADB_Backspace(t *testing.T) {

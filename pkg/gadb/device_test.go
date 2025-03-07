@@ -4,11 +4,15 @@ package gadb
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var devices []*Device
@@ -17,9 +21,7 @@ func setupDevices(t *testing.T) {
 	var err error
 	setupClient(t)
 	devices, err = adbClient.DeviceList()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.Nil(t, err)
 }
 
 func TestDevice_State(t *testing.T) {
@@ -116,6 +118,24 @@ func TestDevice_DeviceInfo(t *testing.T) {
 	for i := range devices {
 		dev := devices[i]
 		t.Log(dev.DeviceInfo())
+	}
+}
+
+func TestDevice_SdkVersion(t *testing.T) {
+	setupDevices(t)
+	for _, device := range devices {
+		sdkVersion, err := device.SdkVersion()
+		assert.Nil(t, err)
+		t.Log(device.Serial(), sdkVersion)
+	}
+}
+
+func TestDevice_SystemVersion(t *testing.T) {
+	setupDevices(t)
+	for _, device := range devices {
+		systemVersion, err := device.SystemVersion()
+		assert.Nil(t, err)
+		t.Log(device.Serial(), systemVersion)
 	}
 }
 
@@ -273,6 +293,36 @@ func TestDevice_Pull(t *testing.T) {
 		if err = os.WriteFile(userHomeDir+"/Desktop/hello.txt", buffer.Bytes(), DefaultFileMode); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestDevice_ScreenRecord(t *testing.T) {
+	setupDevices(t)
+
+	for _, dev := range devices {
+		// screen record with time limit 5 seconds
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		if _, err := dev.ScreenRecord(ctx); err != nil {
+			assert.Nil(t, err)
+		}
+		cancel()
+	}
+
+	for _, dev := range devices {
+		// screen record with cancel signal
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan error)
+		go func() {
+			_, err := dev.ScreenRecord(ctx)
+			done <- err
+		}()
+
+		// record for 3 seconds
+		time.Sleep(time.Second * 3)
+		cancel()
+
+		err := <-done
+		assert.Nil(t, err)
 	}
 }
 

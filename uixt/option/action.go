@@ -1,12 +1,14 @@
 package option
 
 import (
+	"context"
 	"math/rand/v2"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 )
 
 type ActionOptions struct {
+	Context context.Context
 	// log
 	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"` // used to identify the action in log
 
@@ -33,6 +35,9 @@ func (o *ActionOptions) Options() []ActionOption {
 		return options
 	}
 
+	if o.Context != nil {
+		options = append(options, WithContext(o.Context))
+	}
 	if o.Identifier != "" {
 		options = append(options, WithIdentifier(o.Identifier))
 	}
@@ -120,11 +125,10 @@ func (o *ActionOptions) Options() []ActionOption {
 		}
 	}
 
-	return options
-}
+	options = append(options, o.GetScreenShotOptions()...)
+	options = append(options, o.GetScreenRecordOptions()...)
 
-func (o *ActionOptions) GetScreenOptions() []ActionOption {
-	return o.ScreenOptions.Options()
+	return options
 }
 
 func (o *ActionOptions) ApplyOffset(absX, absY float64) (float64, float64) {
@@ -206,6 +210,12 @@ func NewActionOptions(opts ...ActionOption) *ActionOptions {
 }
 
 type ActionOption func(o *ActionOptions)
+
+func WithContext(ctx context.Context) ActionOption {
+	return func(o *ActionOptions) {
+		o.Context = ctx
+	}
+}
 
 func WithCustomOption(key string, value interface{}) ActionOption {
 	return func(o *ActionOptions) {

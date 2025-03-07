@@ -3,6 +3,7 @@ package uixt
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -779,54 +780,127 @@ func (ad *ADBDriver) GetIme() (ime string, err error) {
 	return currentIme, nil
 }
 
-func (ad *ADBDriver) ScreenRecord(duration time.Duration) (videoPath string, err error) {
-	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
-	fileName := filepath.Join(config.GetConfig().ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
+func (ad *ADBDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string, err error) {
+	options := option.NewActionOptions(opts...)
 
-	file, err := os.Create(fileName)
-	if err != nil {
-		log.Error().Err(err)
-		return "", err
+	var filePath string
+	if options.ScreenRecordPath != "" {
+		filePath = options.ScreenRecordPath
+	} else {
+		timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
+		filePath = filepath.Join(config.GetConfig().ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
 	}
+
+	var ctx context.Context
+	if options.Context != nil {
+		ctx = options.Context
+	} else {
+		ctx = context.Background()
+	}
+
+	var cancel context.CancelFunc
+	duration := options.ScreenRecordDuration
+	if duration == 0 {
+		duration = options.Duration
+	}
+	if duration != 0 {
+		ctx, cancel = context.WithTimeout(ctx,
+			time.Duration(duration*float64(time.Second)))
+	} else {
+		ctx, cancel = context.WithCancel(ctx)
+	}
+	defer cancel()
+
+	// get android system version
+	var sysVersion int
+	if systemVersion, err := ad.Device.SystemVersion(); err == nil {
+		if version, err := strconv.Atoi(systemVersion); err == nil {
+			sysVersion = version
+		}
+	}
+	if sysVersion == 0 {
+		log.Warn().Err(err).Msg("get android system version failed")
+	}
+
+	var useAdbScreenRecord bool
+	audioOn := options.ScreenRecordWithAudio
+	if options.ScreenRecordWithScrcpy {
+		useAdbScreenRecord = false
+	} else if !audioOn {
+		log.Info().Bool("audioOn", audioOn).Msg("screen record with adb screenrecord by default")
+		useAdbScreenRecord = true
+	} else if sysVersion != 0 && sysVersion < 11 {
+		// scrcpy audio forwarding is supported for devices with Android 11 or higher
+		// https://github.com/Genymobile/scrcpy/blob/master/doc/audio.md
+		log.Warn().Bool("audioOn", audioOn).Int("version", sysVersion).
+			Msg("Audio disabled, it is only supported for Android >= 11, use adb screenrecord")
+		useAdbScreenRecord = true
+	}
+
 	defer func() {
-		_ = file.Close()
+		if err == nil {
+			filePath, err = filepath.Abs(filePath)
+			if err != nil {
+				err = errors.Wrap(err, "get absolute path failed")
+			} else {
+				log.Info().Str("path", filePath).Msg("screen record success")
+			}
+		}
 	}()
 
-	// scrcpy -s 7d21bb91 --record=file.mp4 -N
+	if useAdbScreenRecord {
+		// screen record with adb screenrecord
+		// adb screenrecord duration is limited in range [1,180] seconds
+		res, err := ad.Device.ScreenRecord(ctx)
+		if err != nil {
+			return "", errors.Wrap(err, "screen record failed")
+		}
+		if err := os.WriteFile(filePath, res, 0o644); err != nil {
+			return "", errors.Wrap(err, "write screen record file failed")
+		}
+		return filePath, nil
+	}
+
+	// screen record with scrcpy
+	log.Info().Float64("duration(s)", duration).Msg("screen record with scrcpy")
+
+	// start scrcpy
 	cmd := exec.Command(
 		"scrcpy",
 		"-s", ad.Device.Serial(),
-		fmt.Sprintf("--record=%s", fileName),
-		"-N",
+		fmt.Sprintf("--record=%s", filePath),
+		"--record-format=mp4",
+		"--max-fps=30",
+		"--no-playback", // Disable video and audio playback on the computer
 	)
 	cmd.Stdout = io.Discard
 	cmd.Stderr = io.Discard
-	// 启动命令
 	if err := cmd.Start(); err != nil {
-		log.Error().Err(err)
-		return "", err
+		return "", errors.Wrap(err, "start screen record failed")
 	}
-	timer := time.After(duration)
 
-	done := make(chan error)
+	done := make(chan error, 1)
 	go func() {
-		// 等待 ffmpeg 命令执行完毕
 		done <- cmd.Wait()
 	}()
+
 	select {
-	case <-timer:
-		// 超时，停止 scrcpy 进程
+	case <-ctx.Done():
+		// timeout or cancelled
+		log.Info().Msg("screen recording stopped")
 		if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
-			log.Error().Err(err)
+			log.Error().Err(err).Msg("failed to stop scrcpy process")
+			_ = cmd.Process.Kill() // 强制结束进程
 		}
+		<-done // 等待进程完全退出
 	case err := <-done:
-		// ffmpeg 正常结束
+		log.Info().Msg("scrcpy exited")
 		if err != nil {
-			log.Error().Err(err)
-			return "", err
+			return "", errors.Wrap(err, "screen record with scrcpy failed")
 		}
 	}
-	return filepath.Abs(fileName)
+
+	return filePath, nil
 }
 
 func (ad *ADBDriver) Setup() error {

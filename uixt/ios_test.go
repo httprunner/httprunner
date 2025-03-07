@@ -302,7 +302,7 @@ func TestDriver_WDA_AccessibleSource(t *testing.T) {
 
 func TestDriver_WDA_ScreenRecord(t *testing.T) {
 	driver := setupWDADriverExt(t)
-	path, err := driver.ScreenRecord(5 * time.Second)
+	path, err := driver.ScreenRecord(option.WithScreenRecordDuation(5))
 	assert.Nil(t, err)
 	t.Log(path)
 }

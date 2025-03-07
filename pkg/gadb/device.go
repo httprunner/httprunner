@@ -2,6 +2,7 @@ package gadb
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -147,15 +148,28 @@ func (d *Device) Usb() (string, error) {
 	return "", errors.New("does not have attribute: usb")
 }
 
+func (d *Device) SystemVersion() (string, error) {
+	if d.HasAttribute("systemVersion") {
+		return d.attrs["systemVersion"], nil
+	}
+	systemVersion, err := d.RunShellCommand("getprop", "ro.build.version.release")
+	systemVersion = strings.TrimSpace(systemVersion)
+	if err != nil {
+		return "", errors.New("get android system version failed")
+	}
+	d.attrs["systemVersion"] = systemVersion
+	return systemVersion, nil
+}
+
 func (d *Device) SdkVersion() (string, error) {
 	if d.HasAttribute("sdkVersion") {
 		return d.attrs["sdkVersion"], nil
 	}
 	sdkVersion, err := d.RunShellCommand("getprop", "ro.build.version.sdk")
-	sdkVersion = strings.TrimSpace(sdkVersion)
 	if err != nil {
-		return "", errors.New("does not have attribute: sdkVersion")
+		return "", errors.New("get android sdk version failed")
 	}
+	sdkVersion = strings.TrimSpace(sdkVersion)
 	d.attrs["sdkVersion"] = sdkVersion
 	return sdkVersion, nil
 }
@@ -732,7 +746,7 @@ func (d *Device) ScreenCap() ([]byte, error) {
 		time.Now().Unix())
 	_, err := d.RunShellCommandWithBytes("screencap", "-p", tempPath)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "screencap failed")
 	}
 
 	// remove temp file
@@ -742,5 +756,46 @@ func (d *Device) ScreenCap() ([]byte, error) {
 
 	buffer := bytes.NewBuffer(nil)
 	err = d.Pull(tempPath, buffer)
-	return buffer.Bytes(), err
+	if err != nil {
+		return nil, errors.Wrap(err, "pull video failed")
+	}
+	return buffer.Bytes(), nil
+}
+
+func (d *Device) ScreenRecord(ctx context.Context) ([]byte, error) {
+	videoPath := fmt.Sprintf("/sdcard/screenrecord_%d.mp4", time.Now().Unix())
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := d.RunShellCommandWithBytes("screenrecord", videoPath)
+		done <- err
+	}()
+
+	select {
+	case <-ctx.Done():
+		// timeout or cancelled
+		pid, err := d.RunShellCommand("pidof", "screenrecord")
+		if err == nil && pid != "" {
+			// 发送 SIGINT 信号终止录屏
+			_, _ = d.RunShellCommand("kill", "-2", strings.TrimSpace(pid))
+		}
+		<-done // 等待进程完全退出
+	case err := <-done:
+		// adb screenrecord will exit on reached 180s
+		if err != nil {
+			return nil, errors.Wrap(err, "screenrecord failed")
+		}
+	}
+
+	// remove temp file
+	defer func() {
+		go d.RunShellCommand("rm", videoPath)
+	}()
+
+	buffer := bytes.NewBuffer(nil)
+	err := d.Pull(videoPath, buffer)
+	if err != nil {
+		return nil, errors.Wrap(err, "pull video failed")
+	}
+	return buffer.Bytes(), nil
 }

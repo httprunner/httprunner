@@ -273,7 +273,7 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 	case ACTION_ScreenShot:
 		// take screenshot
 		log.Info().Msg("take screenshot for current screen")
-		_, err := dExt.GetScreenResult(action.GetScreenOptions()...)
+		_, err := dExt.GetScreenResult(action.GetScreenShotOptions()...)
 		return err
 	case ACTION_ClosePopups:
 		return dExt.ClosePopupsHandler()
