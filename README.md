@@ -65,14 +65,32 @@ $ hrp -h
 ██║  ██║   ██║      ██║   ██║     ██║  ██║╚██████╔╝██║ ╚████║██║ ╚████║███████╗██║  ██║
 ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝
 
-HttpRunner is an open source API testing tool that supports HTTP(S)/HTTP2/WebSocket/RPC
-network protocols, covering API testing, performance testing and digital experience
-monitoring (DEM) test types. Enjoy! ✨ 🚀 ✨
+HttpRunner: Enjoy your All-in-One Testing Solution ✨ 🚀 ✨
 
-License: Apache-2.0
+💡 Simple Yet Powerful
+   - Natural language driven test scenarios powered by LLM
+   - User-friendly SDK API with IDE auto-completion
+   - Intuitive GoTest/YAML/JSON/Text testcase format
+
+📌 Comprehensive Testing Capabilities
+   - UI Automation: Android/iOS/Harmony/Browser
+   - API Testing: HTTP(S)/HTTP2/WebSocket/RPC
+   - Load Testing: run API testcase concurrently with boomer
+
+🧩 High Scalability
+   - Plugin system for custom functions
+   - Distributed testing support
+   - Cross-platform: macOS/Linux/Windows
+
+🛠 Easy Integration
+   - CI/CD friendly with JSON logs and HTML reports
+   - Rich ecosystem tools
+
+Learn more:
 Website: https://httprunner.com
-Github: https://github.com/httprunner/httprunner
-Copyright 2017 debugtalk
+GitHub: https://github.com/httprunner/httprunner
+
+Copyright © 2017-present debugtalk. Apache-2.0 License.
 
 Usage:
   hrp [command]
@@ -92,7 +110,7 @@ Available Commands:
 
 Flags:
   -h, --help               help for hrp
-      --log-json           set log to json format
+      --log-json           set log to json format (default colorized console)
   -l, --log-level string   set log level (default "INFO")
       --venv string        specify python3 venv path
   -v, --version            version for hrp
