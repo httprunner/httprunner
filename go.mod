@@ -1,6 +1,6 @@
 module github.com/httprunner/httprunner/v5
 
-go 1.23.0
+go 1.22.0
 
 require (
 	github.com/Masterminds/semver v1.5.0
