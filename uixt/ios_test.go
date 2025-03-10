@@ -312,3 +312,19 @@ func TestDriver_WDA_Backspace(t *testing.T) {
 	err := driver.Backspace(3)
 	assert.Nil(t, err)
 }
+
+func TestDriver_WDA_PushImage(t *testing.T) {
+	driver := setupWDADriverExt(t)
+
+	screenshot, err := driver.ScreenShot()
+	assert.Nil(t, err)
+	path, err := saveScreenShot(screenshot, "1234")
+	require.Nil(t, err)
+	defer os.Remove(path)
+
+	err = driver.PushImage(path)
+	assert.Nil(t, err)
+
+	err = driver.ClearImages()
+	assert.Nil(t, err)
+}

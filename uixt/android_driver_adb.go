@@ -925,6 +925,7 @@ func (ad *ADBDriver) PushImage(localPath string) error {
 	if err := ad.Device.PushFile(localPath, remotePath); err != nil {
 		return err
 	}
+	// refresh
 	_, _ = ad.Device.RunShellCommand("am", "broadcast",
 		"-a", "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
 		"-d", fmt.Sprintf("file://%s", remotePath))

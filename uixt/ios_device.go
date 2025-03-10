@@ -24,6 +24,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 )
@@ -387,13 +388,7 @@ func (dev *IOSDevice) ListImages() (images []string, err error) {
 
 func (dev *IOSDevice) MountImage(imagePath string) (err error) {
 	log.Info().Str("imagePath", imagePath).Msg("mount ios developer image")
-	conn, err := imagemounter.NewImageMounter(dev.DeviceEntry)
-	if err != nil {
-		return errors.Wrap(code.DeviceConnectionError, err.Error())
-	}
-	defer conn.Close()
-
-	err = conn.MountImage(imagePath)
+	err = imagemounter.MountImage(dev.DeviceEntry, imagePath)
 	if err != nil {
 		return errors.Wrapf(code.DeviceConnectionError,
 			"mount ios developer image failed: %v", err)
@@ -402,8 +397,23 @@ func (dev *IOSDevice) MountImage(imagePath string) (err error) {
 	return nil
 }
 
+func (dev *IOSDevice) UnmountImage() (err error) {
+	log.Info().Msg("unmount ios developer image")
+	err = imagemounter.UnmountImage(dev.DeviceEntry)
+	if err != nil {
+		return errors.Wrapf(code.DeviceConnectionError,
+			"unmount ios developer image failed: %v", err)
+	}
+	log.Info().Msg("unmount ios developer image success")
+	return nil
+}
+
 func (dev *IOSDevice) AutoMountImage(baseDir string) (err error) {
 	log.Info().Str("baseDir", baseDir).Msg("auto mount ios developer image")
+	if err := builtin.EnsureFolderExists(baseDir); err != nil {
+		return errors.Wrap(err, "create developer disk image directory failed")
+	}
+
 	imagePath, err := imagemounter.DownloadImageFor(dev.DeviceEntry, baseDir)
 	if err != nil {
 		return errors.Wrapf(code.DeviceConnectionError,

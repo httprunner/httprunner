@@ -2,13 +2,14 @@ package ios
 
 import (
 	"fmt"
+	"os"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 )
 
@@ -31,6 +32,14 @@ var mountCmd = &cobra.Command{
 			return err
 		}
 
+		if unmountDeveloperDiskImage {
+			err := device.UnmountImage()
+			if err != nil {
+				return fmt.Errorf("unmount developer disk image failed: %v", err)
+			}
+			return nil
+		}
+
 		images, errImage := device.ListImages()
 		if err != nil {
 			return fmt.Errorf("list device images failed: %v", err)
@@ -47,12 +56,6 @@ var mountCmd = &cobra.Command{
 			return nil
 		}
 
-		log.Info().Str("dir", developerDiskImageDir).Msg("start to mount ios developer image")
-
-		if !builtin.IsFolderPathExists(developerDiskImageDir) {
-			return fmt.Errorf("developer disk image directory not exist: %s", developerDiskImageDir)
-		}
-
 		if err = device.AutoMountImage(developerDiskImageDir); err != nil {
 			return fmt.Errorf("mount developer disk image failed: %s", err)
 		}
@@ -62,15 +65,18 @@ var mountCmd = &cobra.Command{
 	},
 }
 
-const defaultDeveloperDiskImageDir = "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/DeviceSupport/"
-
 var (
-	developerDiskImageDir  string
-	listDeveloperDiskImage bool
+	developerDiskImageDir     string
+	listDeveloperDiskImage    bool
+	unmountDeveloperDiskImage bool
 )
 
 func init() {
+	home, _ := os.UserHomeDir()
+	defaultDeveloperDiskImageDir := path.Join(home, ".devimages")
+
 	mountCmd.Flags().BoolVar(&listDeveloperDiskImage, "list", false, "list developer disk images")
+	mountCmd.Flags().BoolVar(&unmountDeveloperDiskImage, "reset", false, "unmount developer disk images")
 	mountCmd.Flags().StringVarP(&developerDiskImageDir, "dir", "d", defaultDeveloperDiskImageDir, "specify developer disk image directory")
 	mountCmd.Flags().StringVarP(&udid, "udid", "u", "", "specify device by udid")
 	iosRootCmd.AddCommand(mountCmd)
