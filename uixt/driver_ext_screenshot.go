@@ -78,11 +78,11 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 		fmt.Sprintf("%s.%s", fileName, "jpeg"),
 	)
 	go func() {
-		path, err := saveScreenShot(compressBufSource, imagePath)
+		err := saveScreenShot(compressBufSource, imagePath)
 		if err != nil {
 			log.Error().Err(err).Msg("save screenshot file failed")
 		} else {
-			log.Info().Str("path", path).Msg("screenshot saved")
+			log.Info().Str("path", imagePath).Msg("screenshot saved")
 		}
 	}()
 
@@ -192,7 +192,7 @@ func (dExt *XTDriver) FindUIResult(opts ...option.ActionOption) (point ai.PointF
 }
 
 // saveScreenShot saves compressed image file with file name
-func saveScreenShot(raw *bytes.Buffer, screenshotPath string) (string, error) {
+func saveScreenShot(raw *bytes.Buffer, screenshotPath string) error {
 	// notice: screenshot data is a stream, so we need to copy it to a new buffer
 	copiedBuffer := &bytes.Buffer{}
 	if _, err := copiedBuffer.Write(raw.Bytes()); err != nil {
@@ -201,12 +201,12 @@ func saveScreenShot(raw *bytes.Buffer, screenshotPath string) (string, error) {
 
 	img, format, err := image.Decode(copiedBuffer)
 	if err != nil {
-		return "", errors.Wrap(err, "decode screenshot image failed")
+		return errors.Wrap(err, "decode screenshot image failed")
 	}
 
 	file, err := os.Create(screenshotPath)
 	if err != nil {
-		return "", errors.Wrap(err, "create screenshot image file failed")
+		return errors.Wrap(err, "create screenshot image file failed")
 	}
 	defer func() {
 		_ = file.Close()
@@ -228,10 +228,10 @@ func saveScreenShot(raw *bytes.Buffer, screenshotPath string) (string, error) {
 		}
 		err = gif.Encode(file, img, gifOptions)
 	default:
-		return "", fmt.Errorf("unsupported image format %s", format)
+		return fmt.Errorf("unsupported image format %s", format)
 	}
 	if err != nil {
-		return "", errors.Wrap(err, "save image file failed")
+		return errors.Wrap(err, "save image file failed")
 	}
 
 	var fileSize int64
@@ -243,7 +243,7 @@ func saveScreenShot(raw *bytes.Buffer, screenshotPath string) (string, error) {
 		Int("rawBytes", raw.Len()).Int64("saveBytes", fileSize).
 		Msg("save screenshot file success")
 
-	return screenshotPath, nil
+	return nil
 }
 
 func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error) {
