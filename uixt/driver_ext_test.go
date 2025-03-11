@@ -50,6 +50,11 @@ func TestDriverExt(t *testing.T) {
 	point, _ := driverExt.FindScreenText("hello")
 	t.Log(point)
 
+	err := driverExt.TapByCV(
+		option.WithScreenShotUITypes("deepseek_send"),
+		option.WithScope(0.8, 0.5, 1, 1))
+	assert.Nil(t, err)
+
 	// call IDriver methods
 	driverExt.GetDevice().Install("/path/to/app")
 	driverExt.GetDevice().GetPackageInfo("com.ss.android.ugc.aweme")
