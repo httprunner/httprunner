@@ -73,7 +73,10 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 	} else {
 		fileName = builtin.GenNameWithTimestamp("%d_screenshot")
 	}
-	imagePath := filepath.Join(config.GetConfig().ScreenShotsPath, fileName)
+	imagePath := filepath.Join(
+		config.GetConfig().ScreenShotsPath,
+		fmt.Sprintf("%s.%s", fileName, "jpeg"),
+	)
 	go func() {
 		path, err := saveScreenShot(compressBufSource, imagePath)
 		if err != nil {
@@ -189,7 +192,7 @@ func (dExt *XTDriver) FindUIResult(opts ...option.ActionOption) (point ai.PointF
 }
 
 // saveScreenShot saves compressed image file with file name
-func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
+func saveScreenShot(raw *bytes.Buffer, screenshotPath string) (string, error) {
 	// notice: screenshot data is a stream, so we need to copy it to a new buffer
 	copiedBuffer := &bytes.Buffer{}
 	if _, err := copiedBuffer.Write(raw.Bytes()); err != nil {
@@ -201,8 +204,6 @@ func saveScreenShot(raw *bytes.Buffer, fileName string) (string, error) {
 		return "", errors.Wrap(err, "decode screenshot image failed")
 	}
 
-	// The default format uses jpeg for compression
-	screenshotPath := filepath.Join(fmt.Sprintf("%s.%s", fileName, "jpeg"))
 	file, err := os.Create(screenshotPath)
 	if err != nil {
 		return "", errors.Wrap(err, "create screenshot image file failed")

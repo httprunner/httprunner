@@ -75,7 +75,7 @@ func TestDriver_ADB_ScreenShot(t *testing.T) {
 	driver := setupADBDriverExt(t)
 	screenshot, err := driver.ScreenShot()
 	assert.Nil(t, err)
-	path, err := saveScreenShot(screenshot, "1234")
+	path, err := saveScreenShot(screenshot, "1234.jpeg")
 	require.Nil(t, err)
 	defer os.Remove(path)
 	t.Logf("save screenshot to %s", path)
@@ -249,7 +249,7 @@ func TestDriver_ADB_PushImage(t *testing.T) {
 
 	screenshot, err := driver.ScreenShot()
 	assert.Nil(t, err)
-	path, err := saveScreenShot(screenshot, "1234")
+	path, err := saveScreenShot(screenshot, "1234.jpeg")
 	require.Nil(t, err)
 	defer os.Remove(path)
 
