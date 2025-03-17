@@ -193,4 +193,10 @@ func TestDriverExt_Action_Risk(t *testing.T) {
 
 	// tap random point in ocr text rect
 	err = driver.TapByOCR("首页", option.WithTapRandomRect(true))
+	assert.Nil(t, err)
+
+	err = driver.TapByCV(
+		option.WithScreenShotUITypes("deepseek_send"),
+		option.WithTapRandomRect(true))
+	assert.Nil(t, err)
 }

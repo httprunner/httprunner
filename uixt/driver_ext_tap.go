@@ -32,14 +32,21 @@ func (dExt *XTDriver) TapByOCR(text string, opts ...option.ActionOption) error {
 }
 
 func (dExt *XTDriver) TapByCV(opts ...option.ActionOption) error {
-	options := option.NewActionOptions(opts...)
+	actionOptions := option.NewActionOptions(opts...)
 
-	point, err := dExt.FindUIResult(opts...)
+	uiResult, err := dExt.FindUIResult(opts...)
 	if err != nil {
-		if options.IgnoreNotFoundError {
+		if actionOptions.IgnoreNotFoundError {
 			return nil
 		}
 		return err
+	}
+
+	var point ai.PointF
+	if actionOptions.TapRandomRect {
+		point = uiResult.RandomPoint()
+	} else {
+		point = uiResult.Center()
 	}
 
 	return dExt.TapAbsXY(point.X, point.Y, opts...)

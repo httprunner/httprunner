@@ -249,6 +249,15 @@ func (box Box) Center() PointF {
 	}
 }
 
+func (box Box) RandomPoint() PointF {
+	width, height := float64(box.Width), float64(box.Height)
+	point := PointF{
+		X: box.Point.X + width*rand.Float64(),
+		Y: box.Point.Y + height*rand.Float64(),
+	}
+	return point
+}
+
 type UIResults []UIResult
 
 func (u UIResults) FilterScope(scope option.AbsScope) (results UIResults) {

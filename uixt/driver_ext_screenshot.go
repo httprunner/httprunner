@@ -166,7 +166,7 @@ func (dExt *XTDriver) FindScreenText(text string, opts ...option.ActionOption) (
 	return textRect, nil
 }
 
-func (dExt *XTDriver) FindUIResult(opts ...option.ActionOption) (point ai.PointF, err error) {
+func (dExt *XTDriver) FindUIResult(opts ...option.ActionOption) (uiResult ai.UIResult, err error) {
 	options := option.NewActionOptions(opts...)
 	if options.ScreenShotFileName == "" {
 		opts = append(opts, option.WithScreenShotFileName(
@@ -182,11 +182,10 @@ func (dExt *XTDriver) FindUIResult(opts ...option.ActionOption) (point ai.PointF
 	if err != nil {
 		return
 	}
-	uiResult, err := uiResults.GetUIResult(opts...)
-	point = uiResult.Center()
+	uiResult, err = uiResults.GetUIResult(opts...)
 
 	log.Info().Interface("text", options.ScreenShotWithUITypes).
-		Interface("point", point).Msg("FindUIResult success")
+		Interface("uiResult", uiResult).Msg("FindUIResult success")
 	return
 }
 
