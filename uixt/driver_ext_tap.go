@@ -5,6 +5,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
+	"github.com/rs/zerolog/log"
 )
 
 func (dExt *XTDriver) TapByOCR(text string, opts ...option.ActionOption) error {
@@ -27,6 +28,8 @@ func (dExt *XTDriver) TapByOCR(text string, opts ...option.ActionOption) error {
 	} else {
 		point = textRect.Center()
 	}
+	log.Info().Str("text", text).Interface("rawTextRect", textRect).
+		Interface("tapPoint", point).Msg("TapByOCR success")
 
 	return dExt.TapAbsXY(point.X, point.Y, opts...)
 }
@@ -48,6 +51,8 @@ func (dExt *XTDriver) TapByCV(opts ...option.ActionOption) error {
 	} else {
 		point = uiResult.Center()
 	}
+	log.Info().Interface("rawUIResult", uiResult).
+		Interface("tapPoint", point).Msg("TapByCV success")
 
 	return dExt.TapAbsXY(point.X, point.Y, opts...)
 }

@@ -215,6 +215,7 @@ func (ud *UIA2Driver) WindowSize() (size types.Size, err error) {
 
 // Back simulates a short press on the BACK button.
 func (ud *UIA2Driver) Back() (err error) {
+	log.Info().Msg("UIA2Driver.Back")
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	urlStr := fmt.Sprintf("/session/%s/back", ud.Session.ID)
 	_, err = ud.Session.POST(nil, urlStr)
@@ -253,6 +254,7 @@ func (ud *UIA2Driver) Orientation() (orientation types.Orientation, err error) {
 }
 
 func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+	log.Info().Float64("x", x).Float64("y", y).Msg("UIA2Driver.DoubleTap")
 	var err error
 	x, y, err = convertToAbsolutePoint(ud, x, y)
 	if err != nil {
@@ -284,6 +286,7 @@ func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error
 }
 
 func (ud *UIA2Driver) TapXY(x, y float64, opts ...option.ActionOption) error {
+	log.Info().Float64("x", x).Float64("y", y).Msg("UIA2Driver.TapXY")
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
 	absX, absY, err := convertToAbsolutePoint(ud, x, y)
 	if err != nil {
@@ -293,6 +296,7 @@ func (ud *UIA2Driver) TapXY(x, y float64, opts ...option.ActionOption) error {
 }
 
 func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
+	log.Info().Float64("x", x).Float64("y", y).Msg("UIA2Driver.TapAbsXY")
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
 	actionOptions := option.NewActionOptions(opts...)
 	x, y = actionOptions.ApplyTapOffset(x, y)
@@ -324,6 +328,7 @@ func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error 
 }
 
 func (ud *UIA2Driver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
+	log.Info().Float64("x", x).Float64("y", y).Msg("UIA2Driver.TouchAndHold")
 	actionOptions := option.NewActionOptions(opts...)
 	x, y = actionOptions.ApplyTapOffset(x, y)
 	duration := actionOptions.Duration
@@ -348,6 +353,8 @@ func (ud *UIA2Driver) TouchAndHold(x, y float64, opts ...option.ActionOption) (e
 // Each step execution is throttled to 5 milliseconds per step, so for a 100
 // steps, the swipe will take around 0.5 seconds to complete.
 func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
+		Float64("toX", toX).Float64("toY", toY).Msg("UIA2Driver.Drag")
 	var err error
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ud, fromX, fromY, toX, toY)
 	if err != nil {
@@ -377,6 +384,8 @@ func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.Action
 //	`steps` is the number of move steps sent to the system
 func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
+	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
+		Float64("toX", toX).Float64("toY", toY).Msg("UIA2Driver.Swipe")
 	var err error
 	actionOptions := option.NewActionOptions(opts...)
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ud, fromX, fromY, toX, toY)
@@ -412,6 +421,8 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 }
 
 func (ud *UIA2Driver) SetPasteboard(contentType types.PasteboardType, content string) (err error) {
+	log.Info().Str("contentType", string(contentType)).
+		Str("content", content).Msg("UIA2Driver.SetPasteboard")
 	lbl := content
 
 	const defaultLabelLen = 10
@@ -458,6 +469,7 @@ func (ud *UIA2Driver) GetPasteboard(contentType types.PasteboardType) (raw *byte
 
 // SendKeys Android input does not support setting frequency.
 func (ud *UIA2Driver) Input(text string, opts ...option.ActionOption) (err error) {
+	log.Info().Str("text", text).Msg("UIA2Driver.Input")
 	// register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/keys"))
 	// https://github.com/appium/appium-uiautomator2-server/blob/master/app/src/main/java/io/appium/uiautomator2/handler/SendKeysToElement.java#L76-L85
 	err = ud.SendUnicodeKeys(text, opts...)
@@ -475,6 +487,7 @@ func (ud *UIA2Driver) Input(text string, opts ...option.ActionOption) (err error
 }
 
 func (ud *UIA2Driver) SendUnicodeKeys(text string, opts ...option.ActionOption) (err error) {
+	log.Info().Str("text", text).Msg("UIA2Driver.SendUnicodeKeys")
 	// If the Unicode IME is not installed, fall back to the old interface.
 	// There might be differences in the tracking schemes across different phones, and it is pending further verification.
 	// In release version: without the Unicode IME installed, the test cannot execute.
@@ -505,6 +518,7 @@ func (ud *UIA2Driver) SendUnicodeKeys(text string, opts ...option.ActionOption) 
 }
 
 func (ud *UIA2Driver) SendActionKey(text string, opts ...option.ActionOption) (err error) {
+	log.Info().Str("text", text).Msg("UIA2Driver.SendActionKey")
 	var actions []interface{}
 	for i, c := range text {
 		actions = append(actions, map[string]interface{}{"type": "keyDown", "value": string(c)},

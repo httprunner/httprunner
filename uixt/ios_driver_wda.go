@@ -108,7 +108,7 @@ func (wd *WDADriver) initMjpegClient() error {
 	}
 	mjpegHTTPConn, err := net.Dial(
 		"tcp",
-		fmt.Sprintf("%s:%d", host, localMjpegPort),
+		net.JoinHostPort(host, fmt.Sprintf("%d", localMjpegPort)),
 	)
 	if err != nil {
 		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
@@ -492,6 +492,7 @@ func (wd *WDADriver) AlertSendKeys(text string) (err error) {
 }
 
 func (wd *WDADriver) AppLaunch(bundleId string) (err error) {
+	log.Info().Str("bundleId", bundleId).Msg("WDADriver.AppLaunch")
 	// [[FBRoute POST:@"/wda/apps/launch"] respondWithTarget:self action:@selector(handleSessionAppLaunch:)]
 	data := make(map[string]interface{})
 	data["bundleId"] = bundleId
@@ -508,6 +509,7 @@ func (wd *WDADriver) AppLaunch(bundleId string) (err error) {
 }
 
 func (wd *WDADriver) AppLaunchUnattached(bundleId string) (err error) {
+	log.Info().Str("bundleId", bundleId).Msg("WDADriver.AppLaunchUnattached")
 	// [[FBRoute POST:@"/wda/apps/launchUnattached"].withoutSession respondWithTarget:self action:@selector(handleLaunchUnattachedApp:)]
 	data := map[string]interface{}{"bundleId": bundleId}
 	_, err = wd.Session.POST(data, "/wda/apps/launchUnattached")
@@ -519,6 +521,7 @@ func (wd *WDADriver) AppLaunchUnattached(bundleId string) (err error) {
 }
 
 func (wd *WDADriver) AppTerminate(bundleId string) (successful bool, err error) {
+	log.Info().Str("bundleId", bundleId).Msg("WDADriver.AppTerminate")
 	// [[FBRoute POST:@"/wda/apps/terminate"] respondWithTarget:self action:@selector(handleSessionAppTerminate:)]
 	data := map[string]interface{}{"bundleId": bundleId}
 	var rawResp DriverRawResponse
@@ -533,6 +536,7 @@ func (wd *WDADriver) AppTerminate(bundleId string) (successful bool, err error) 
 }
 
 func (wd *WDADriver) AppActivate(bundleId string) (err error) {
+	log.Info().Str("bundleId", bundleId).Msg("WDADriver.AppActivate")
 	// [[FBRoute POST:@"/wda/apps/activate"] respondWithTarget:self action:@selector(handleSessionAppActivate:)]
 	data := map[string]interface{}{"bundleId": bundleId}
 	urlStr := fmt.Sprintf("/session/%s/wda/apps/activate", wd.Session.ID)
@@ -541,6 +545,7 @@ func (wd *WDADriver) AppActivate(bundleId string) (err error) {
 }
 
 func (wd *WDADriver) AppDeactivate(second float64) (err error) {
+	log.Info().Float64("second", second).Msg("WDADriver.AppDeactivate")
 	// [[FBRoute POST:@"/wda/deactivateApp"] respondWithTarget:self action:@selector(handleDeactivateAppCommand:)]
 	if second < 3 {
 		second = 3.0
@@ -576,6 +581,7 @@ func (wd *WDADriver) ForegroundInfo() (appInfo types.AppInfo, err error) {
 }
 
 func (wd *WDADriver) TapXY(x, y float64, opts ...option.ActionOption) error {
+	log.Info().Float64("x", x).Float64("y", y).Msg("WDADriver.TapXY")
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 	absX, absY, err := convertToAbsolutePoint(wd, x, y)
 	if err != nil {
@@ -585,6 +591,7 @@ func (wd *WDADriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 }
 
 func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
+	log.Info().Float64("x", x).Float64("y", y).Msg("WDADriver.TapAbsXY")
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 	actionOptions := option.NewActionOptions(opts...)
 	x, y = actionOptions.ApplyTapOffset(x, y)
@@ -600,6 +607,7 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 }
 
 func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+	log.Info().Float64("x", x).Float64("y", y).Msg("WDADriver.DoubleTap")
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
 	var err error
 	x, y, err = convertToAbsolutePoint(wd, x, y)
@@ -622,6 +630,7 @@ func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 
 // FIXME: hold not work
 func (wd *WDADriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
+	log.Info().Float64("x", x).Float64("y", y).Msg("WDADriver.TouchAndHold")
 	actionOptions := option.NewActionOptions(opts...)
 	x, y = actionOptions.ApplyTapOffset(x, y)
 	if actionOptions.Duration == 0 {
@@ -631,6 +640,8 @@ func (wd *WDADriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 }
 
 func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
+		Float64("toX", toX).Float64("toY", toY).Msg("WDADriver.Drag")
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
 	var err error
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(wd, fromX, fromY, toX, toY)
@@ -692,6 +703,7 @@ func (wd *WDADriver) SetIme(ime string) error {
 }
 
 func (wd *WDADriver) Input(text string, opts ...option.ActionOption) (err error) {
+	log.Info().Str("text", text).Msg("WDADriver.Input")
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
 	data := map[string]interface{}{"value": strings.Split(text, "")}
 	option.MergeOptions(data, opts...)
@@ -701,6 +713,7 @@ func (wd *WDADriver) Input(text string, opts ...option.ActionOption) (err error)
 }
 
 func (wd *WDADriver) Backspace(count int, opts ...option.ActionOption) (err error) {
+	log.Info().Int("count", count).Msg("WDADriver.Backspace")
 	if count == 0 {
 		return nil
 	}
@@ -716,6 +729,7 @@ func (wd *WDADriver) AppClear(packageName string) error {
 
 // Back simulates a short press on the BACK button.
 func (wd *WDADriver) Back() (err error) {
+	log.Info().Msg("WDADriver.Back")
 	return wd.Swipe(0, 0.5, 0.6, 0.5)
 }
 
@@ -879,6 +893,7 @@ func (wd *WDADriver) triggerWDALog(data map[string]interface{}) (rawResp []byte,
 }
 
 func (wd *WDADriver) ScreenRecord(opts ...option.ActionOption) (videoPath string, err error) {
+	log.Info().Msg("WDADriver.ScreenRecord")
 	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
 	fileName := filepath.Join(config.GetConfig().ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
 
@@ -954,6 +969,7 @@ func (wd *WDADriver) StartCaptureLog(identifier ...string) error {
 }
 
 func (wd *WDADriver) PushImage(localPath string) error {
+	log.Info().Str("localPath", localPath).Msg("WDADriver.PushImage")
 	localFile, err := os.Open(localPath)
 	if err != nil {
 		return err
@@ -974,6 +990,7 @@ func (wd *WDADriver) PushImage(localPath string) error {
 }
 
 func (wd *WDADriver) ClearImages() error {
+	log.Info().Msg("WDADriver.ClearImages")
 	data := map[string]interface{}{}
 
 	_, err := wd.Session.POST(data, "/gtf/albums/clear")

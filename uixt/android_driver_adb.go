@@ -173,6 +173,7 @@ func (ad *ADBDriver) WindowSize() (size types.Size, err error) {
 
 // Back simulates a short press on the BACK button.
 func (ad *ADBDriver) Back() (err error) {
+	log.Info().Msg("ADBDriver.Back")
 	// adb shell input keyevent 4
 	_, err = ad.runShellCommand("input", "keyevent", fmt.Sprintf("%d", KCBack))
 	if err != nil {
@@ -200,10 +201,12 @@ func (ad *ADBDriver) Orientation() (orientation types.Orientation, err error) {
 }
 
 func (ad *ADBDriver) Home() (err error) {
+	log.Info().Msg("ADBDriver.Home")
 	return ad.PressKeyCode(KCHome, KMEmpty)
 }
 
 func (ad *ADBDriver) Unlock() (err error) {
+	log.Info().Msg("ADBDriver.Unlock")
 	// Notice: brighten should be executed before unlock
 	// brighten android device screen
 	if err := ad.PressKeyCode(KCWakeup, KMEmpty); err != nil {
@@ -219,6 +222,7 @@ func (ad *ADBDriver) Unlock() (err error) {
 }
 
 func (ad *ADBDriver) Backspace(count int, opts ...option.ActionOption) (err error) {
+	log.Info().Int("count", count).Msg("ADBDriver.Backspace")
 	if count == 0 {
 		return nil
 	}
@@ -263,6 +267,7 @@ func (ad *ADBDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta) (err error
 }
 
 func (ad *ADBDriver) AppLaunch(packageName string) (err error) {
+	log.Info().Str("packageName", packageName).Msg("ADBDriver.AppLaunch")
 	// 不指定 Activity 名称启动（启动主 Activity）
 	// adb shell monkey -p <packagename> -c android.intent.category.LAUNCHER 1
 	sOutput, err := ad.runShellCommand(
@@ -280,6 +285,7 @@ func (ad *ADBDriver) AppLaunch(packageName string) (err error) {
 }
 
 func (ad *ADBDriver) AppTerminate(packageName string) (successful bool, err error) {
+	log.Info().Str("packageName", packageName).Msg("ADBDriver.AppTerminate")
 	// 强制停止应用，停止 <packagename> 相关的进程
 	// adb shell am force-stop <packagename>
 	_, err = ad.runShellCommand("am", "force-stop", packageName)
@@ -291,6 +297,7 @@ func (ad *ADBDriver) AppTerminate(packageName string) (successful bool, err erro
 }
 
 func (ad *ADBDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
+	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.TapXY")
 	absX, absY, err := convertToAbsolutePoint(ad, x, y)
 	if err != nil {
 		return err
@@ -299,6 +306,7 @@ func (ad *ADBDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 }
 
 func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
+	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.TapAbsXY")
 	actionOptions := option.NewActionOptions(opts...)
 	x, y = actionOptions.ApplyTapOffset(x, y)
 
@@ -314,6 +322,7 @@ func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 }
 
 func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
+	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.DoubleTap")
 	var err error
 	x, y, err = convertToAbsolutePoint(ad, x, y)
 	if err != nil {
@@ -340,6 +349,7 @@ func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 }
 
 func (ad *ADBDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
+	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.TouchAndHold")
 	actionOptions := option.NewActionOptions(opts...)
 	x, y = actionOptions.ApplyTapOffset(x, y)
 	duration := 1000.0
@@ -360,6 +370,8 @@ func (ad *ADBDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 }
 
 func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
+	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
+		Float64("toX", toX).Float64("toY", toY).Msg("ADBDriver.Drag")
 	actionOptions := option.NewActionOptions(opts...)
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
 	if err != nil {
@@ -389,6 +401,8 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 }
 
 func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
+		Float64("toX", toX).Float64("toY", toY).Msg("ADBDriver.Swipe")
 	var err error
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
 	if err != nil {
@@ -419,6 +433,7 @@ func (ad *ADBDriver) ForceTouchFloat(x, y, pressure float64, second ...float64) 
 }
 
 func (ad *ADBDriver) Input(text string, opts ...option.ActionOption) error {
+	log.Info().Str("text", text).Msg("ADBDriver.Input")
 	err := ad.SendUnicodeKeys(text, opts...)
 	if err == nil {
 		return nil
@@ -436,6 +451,7 @@ func (ad *ADBDriver) input(text string, _ ...option.ActionOption) error {
 }
 
 func (ad *ADBDriver) SendUnicodeKeys(text string, opts ...option.ActionOption) (err error) {
+	log.Info().Str("text", text).Msg("ADBDriver.SendUnicodeKeys")
 	// If the Unicode IME is not installed, fall back to the old interface.
 	// There might be differences in the tracking schemes across different phones, and it is pending further verification.
 	// In release version: without the Unicode IME installed, the test cannot execute.
@@ -523,6 +539,7 @@ func (ad *ADBDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 }
 
 func (ad *ADBDriver) AppClear(packageName string) error {
+	log.Info().Str("packageName", packageName).Msg("ADBDriver.AppClear")
 	if _, err := ad.runShellCommand("pm", "clear", packageName); err != nil {
 		log.Error().Str("packageName", packageName).Err(err).Msg("failed to clear package cache")
 		return err
@@ -552,6 +569,7 @@ func (ad *ADBDriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer,
 }
 
 func (ad *ADBDriver) TapByHierarchy(text string, opts ...option.ActionOption) error {
+	log.Info().Str("text", text).Msg("ADBDriver.TapByHierarchy")
 	sourceTree, err := ad.sourceTree()
 	if err != nil {
 		return err
@@ -784,6 +802,7 @@ func (ad *ADBDriver) GetIme() (ime string, err error) {
 }
 
 func (ad *ADBDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string, err error) {
+	log.Info().Msg("ADBDriver.ScreenRecord")
 	options := option.NewActionOptions(opts...)
 
 	var filePath string
@@ -924,6 +943,7 @@ func (ad *ADBDriver) OpenUrl(url string) (err error) {
 }
 
 func (ad *ADBDriver) PushImage(localPath string) error {
+	log.Info().Str("localPath", localPath).Msg("ADBDriver.PushImage")
 	remotePath := path.Join("/sdcard/DCIM/Camera/", path.Base(localPath))
 	if err := ad.Device.PushFile(localPath, remotePath); err != nil {
 		return err
@@ -936,6 +956,7 @@ func (ad *ADBDriver) PushImage(localPath string) error {
 }
 
 func (ad *ADBDriver) ClearImages() error {
+	log.Info().Msg("ADBDriver.ClearImages")
 	_, _ = ad.Device.RunShellCommand("rm", "-rf", "/sdcard/DCIM/Camera/*")
 	return nil
 }

@@ -97,6 +97,7 @@ const (
 )
 
 func (hd *HDCDriver) Unlock() (err error) {
+	log.Info().Msg("HDCDriver.Unlock")
 	// Todo 检查是否锁屏 hdc shell hidumper -s RenderService -a screen
 	screenInfo, err := hd.Device.RunShellCommand("hidumper", "-s", "RenderService", "-a", "screen")
 	if err != nil {
@@ -124,6 +125,7 @@ func (hd *HDCDriver) AppLaunch(packageName string) error {
 }
 
 func (hd *HDCDriver) AppTerminate(packageName string) (bool, error) {
+	log.Info().Str("packageName", packageName).Msg("HDCDriver.AppTerminate")
 	_, err := hd.Device.RunShellCommand("aa", "force-stop", packageName)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to terminal app")
@@ -142,6 +144,7 @@ func (hd *HDCDriver) Orientation() (orientation types.Orientation, err error) {
 }
 
 func (hd *HDCDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
+	log.Info().Float64("x", x).Float64("y", y).Msg("HDCDriver.TapXY")
 	absX, absY, err := convertToAbsolutePoint(hd, x, y)
 	if err != nil {
 		return err
@@ -150,6 +153,7 @@ func (hd *HDCDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 }
 
 func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
+	log.Info().Float64("x", x).Float64("y", y).Msg("HDCDriver.TapAbsXY")
 	actionOptions := option.NewActionOptions(opts...)
 	x, y = actionOptions.ApplyTapOffset(x, y)
 
@@ -175,6 +179,8 @@ func (hd *HDCDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 
 // Swipe works like Drag, but `pressForDuration` value is 0
 func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
+		Float64("toX", toX).Float64("toY", toY).Msg("HDCDriver.Swipe")
 	var err error
 	actionOptions := option.NewActionOptions(opts...)
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(hd, fromX, fromY, toX, toY)
@@ -209,6 +215,7 @@ func (hd *HDCDriver) AppClear(packageName string) error {
 }
 
 func (hd *HDCDriver) Back() error {
+	log.Info().Msg("HDCDriver.Back")
 	return hd.uiDriver.PressBack()
 }
 
