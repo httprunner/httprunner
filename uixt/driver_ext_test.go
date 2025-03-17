@@ -47,8 +47,8 @@ func TestDriverExt(t *testing.T) {
 	driverExt.TapByOCR("推荐")
 	texts, _ := driverExt.GetScreenTexts()
 	t.Log(texts)
-	point, _ := driverExt.FindScreenText("hello")
-	t.Log(point)
+	textRect, _ := driverExt.FindScreenText("hello")
+	t.Log(textRect)
 
 	err := driverExt.TapByCV(
 		option.WithScreenShotUITypes("deepseek_send"),
@@ -98,13 +98,14 @@ func TestDriverExt_FindScreenText(t *testing.T) {
 func TestDriverExt_Seek(t *testing.T) {
 	driver := setupDriverExt(t)
 
-	point, err := driver.FindScreenText("首页")
+	textRect, err := driver.FindScreenText("首页")
 	assert.Nil(t, err)
 
 	size, err := driver.WindowSize()
 	assert.Nil(t, err)
 	width := size.Width
 
+	point := textRect.Center()
 	y := point.Y - 40
 	for i := 0; i < 5; i++ {
 		err := driver.Swipe(0.5, 0.8, 0.5, 0.2)
@@ -180,4 +181,6 @@ func TestDriverExt_Action_Risk(t *testing.T) {
 	err = driver.Swipe(0.5, 0.5, 0.5, 0.9,
 		option.WithSwipeOffset(-50, 50, -50, 50))
 	assert.Nil(t, err)
+
+	err = driver.TapByOCR("首页", option.WithTapOffset(-10, 10))
 }

@@ -86,13 +86,10 @@ func (t OCRText) Size() types.Size {
 }
 
 func (t OCRText) Center() PointF {
-	return getRectangleCenterPoint(t.Rect)
-}
-
-func getRectangleCenterPoint(rect image.Rectangle) (point PointF) {
+	rect := t.Rect
 	x, y := float64(rect.Min.X), float64(rect.Min.Y)
 	width, height := float64(rect.Dx()), float64(rect.Dy())
-	point = PointF{
+	point := PointF{
 		X: x + width*0.5,
 		Y: y + height*0.5,
 	}

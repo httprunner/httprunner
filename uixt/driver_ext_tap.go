@@ -12,13 +12,14 @@ func (dExt *XTDriver) TapByOCR(text string, opts ...option.ActionOption) error {
 		opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("tap_by_ocr_%s", text)))
 	}
 
-	point, err := dExt.FindScreenText(text, opts...)
+	textRect, err := dExt.FindScreenText(text, opts...)
 	if err != nil {
 		if actionOptions.IgnoreNotFoundError {
 			return nil
 		}
 		return err
 	}
+	point := textRect.Center()
 
 	return dExt.TapAbsXY(point.X, point.Y, opts...)
 }

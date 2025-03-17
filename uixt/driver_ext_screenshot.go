@@ -145,7 +145,7 @@ func (dExt *XTDriver) GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.O
 	return screenResult.Texts, nil
 }
 
-func (dExt *XTDriver) FindScreenText(text string, opts ...option.ActionOption) (point ai.PointF, err error) {
+func (dExt *XTDriver) FindScreenText(text string, opts ...option.ActionOption) (textRect ai.OCRText, err error) {
 	options := option.NewActionOptions(opts...)
 	if options.ScreenShotFileName == "" {
 		opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("find_screen_text_%s", text)))
@@ -155,16 +155,15 @@ func (dExt *XTDriver) FindScreenText(text string, opts ...option.ActionOption) (
 		return
 	}
 
-	result, err := ocrTexts.FindText(text, opts...)
+	textRect, err = ocrTexts.FindText(text, opts...)
 	if err != nil {
 		log.Warn().Msgf("FindText failed: %s", err.Error())
 		return
 	}
-	point = result.Center()
 
 	log.Info().Str("text", text).
-		Interface("point", point).Msgf("FindScreenText success")
-	return
+		Interface("textRect", textRect).Msgf("FindScreenText success")
+	return textRect, nil
 }
 
 func (dExt *XTDriver) FindUIResult(opts ...option.ActionOption) (point ai.PointF, err error) {
