@@ -99,9 +99,9 @@ func (o *ActionOptions) Options() []ActionOption {
 		// for tap [x,y] offset
 		options = append(options, WithTapOffset(o.TapOffset[0], o.TapOffset[1]))
 	}
-	if o.TapRandom {
+	if o.TapRandomRect {
 		// tap random point in OCR/CV rectangle
-		options = append(options, WithTapRandom(true))
+		options = append(options, WithTapRandomRect(true))
 	}
 	if len(o.SwipeOffset) == 4 {
 		// for swipe [fromX, fromY, toX, toY] offset
@@ -136,17 +136,17 @@ func (o *ActionOptions) Options() []ActionOption {
 	return options
 }
 
-func (o *ActionOptions) ApplyOffset(absX, absY float64) (float64, float64) {
+func (o *ActionOptions) ApplyTapOffset(absX, absY float64) (float64, float64) {
 	if len(o.TapOffset) == 2 {
 		absX += float64(o.TapOffset[0])
 		absY += float64(o.TapOffset[1])
 	}
-	absX += o.GenerateRandomOffset()
-	absY += o.GenerateRandomOffset()
+	absX += o.generateRandomOffset()
+	absY += o.generateRandomOffset()
 	return absX, absY
 }
 
-func (o *ActionOptions) GenerateRandomOffset() float64 {
+func (o *ActionOptions) generateRandomOffset() float64 {
 	if len(o.OffsetRandomRange) != 2 {
 		// invalid offset random range, should be [min, max]
 		return 0

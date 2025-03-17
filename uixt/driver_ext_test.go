@@ -173,8 +173,12 @@ func TestDriverExt_ClosePopupsHandler(t *testing.T) {
 func TestDriverExt_Action_Risk(t *testing.T) {
 	driver := setupADBDriverExt(t)
 
-	// tap point with offset
+	// tap point with constant offset
 	err := driver.TapXY(0.5, 0.5, option.WithTapOffset(-10, 10))
+	assert.Nil(t, err)
+
+	// tap point with random offset
+	err = driver.TapXY(0.5, 0.5, option.WithOffsetRandomRange(-10, 10))
 	assert.Nil(t, err)
 
 	// swipe direction with offset
@@ -183,5 +187,5 @@ func TestDriverExt_Action_Risk(t *testing.T) {
 	assert.Nil(t, err)
 
 	// tap random point in ocr text rect
-	err = driver.TapByOCR("首页", option.WithTapRandom(true))
+	err = driver.TapByOCR("首页", option.WithTapRandomRect(true))
 }

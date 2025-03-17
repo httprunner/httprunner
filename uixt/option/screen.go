@@ -216,8 +216,8 @@ type ScreenFilterOptions struct {
 	AbsScope AbsScope `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"`
 
 	Regex               bool  `json:"regex,omitempty" yaml:"regex,omitempty"`                             // use regex to match text
-	TapOffset           []int `json:"tap_offset,omitempty" yaml:"tap_offset,omitempty"`                   // tap with point offset
-	TapRandom           bool  `json:"tap_random,omitempty" yaml:"tap_random,omitempty"`                   // tap random point in text/image rectangle
+	TapOffset           []int `json:"tap_offset,omitempty" yaml:"tap_offset,omitempty"`                   // tap with absolute point offset
+	TapRandomRect       bool  `json:"tap_random_rect,omitempty" yaml:"tap_random_rect,omitempty"`         // tap random point in text/image rectangle
 	SwipeOffset         []int `json:"swipe_offset,omitempty" yaml:"swipe_offset,omitempty"`               // swipe with direction offset
 	OffsetRandomRange   []int `json:"offset_random_range,omitempty" yaml:"offset_random_range,omitempty"` // set random range [min, max] for tap/swipe points
 	Index               int   `json:"index,omitempty" yaml:"index,omitempty"`                             // index of the target element
@@ -248,11 +248,11 @@ func WithTapOffset(offsetX, offsetY int) ActionOption {
 	}
 }
 
-// WithTapRandom is used with TapByOCR and TapByCV
+// WithTapRandomRect is used with TapByOCR and TapByCV
 // when set true, tap random point in text/image rectangle
-func WithTapRandom(tapRandom bool) ActionOption {
+func WithTapRandomRect(tapRandom bool) ActionOption {
 	return func(o *ActionOptions) {
-		o.TapRandom = tapRandom
+		o.TapRandomRect = tapRandom
 	}
 }
 

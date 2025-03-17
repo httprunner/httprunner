@@ -259,7 +259,7 @@ func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error
 		return err
 	}
 	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyOffset(x, y)
+	x, y = actionOptions.ApplyTapOffset(x, y)
 
 	data := map[string]interface{}{
 		"actions": []interface{}{
@@ -295,7 +295,7 @@ func (ud *UIA2Driver) TapXY(x, y float64, opts ...option.ActionOption) error {
 func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
 	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyOffset(x, y)
+	x, y = actionOptions.ApplyTapOffset(x, y)
 
 	duration := 100.0
 	if actionOptions.PressDuration > 0 {
@@ -325,7 +325,7 @@ func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error 
 
 func (ud *UIA2Driver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
 	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyOffset(x, y)
+	x, y = actionOptions.ApplyTapOffset(x, y)
 	duration := actionOptions.Duration
 	if duration == 0 {
 		duration = 1.0

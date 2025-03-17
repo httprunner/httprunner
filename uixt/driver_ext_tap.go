@@ -22,7 +22,7 @@ func (dExt *XTDriver) TapByOCR(text string, opts ...option.ActionOption) error {
 	}
 
 	var point ai.PointF
-	if actionOptions.TapRandom {
+	if actionOptions.TapRandomRect {
 		point = textRect.RandomPoint()
 	} else {
 		point = textRect.Center()

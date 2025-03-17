@@ -300,7 +300,7 @@ func (ad *ADBDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 
 func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyOffset(x, y)
+	x, y = actionOptions.ApplyTapOffset(x, y)
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
@@ -320,7 +320,7 @@ func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 		return err
 	}
 	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyOffset(x, y)
+	x, y = actionOptions.ApplyTapOffset(x, y)
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
@@ -341,7 +341,7 @@ func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 
 func (ad *ADBDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (err error) {
 	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyOffset(x, y)
+	x, y = actionOptions.ApplyTapOffset(x, y)
 	duration := 1000.0
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration * 1000
