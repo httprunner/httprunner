@@ -641,6 +641,9 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	fromY = wd.toScale(fromY)
 	toX = wd.toScale(toX)
 	toY = wd.toScale(toY)
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
+
 	data := map[string]interface{}{
 		"fromX": math.Round(fromX*10) / 10,
 		"fromY": math.Round(fromY*10) / 10,

@@ -181,9 +181,14 @@ func TestDriverExt_Action_Risk(t *testing.T) {
 	err = driver.TapXY(0.5, 0.5, option.WithOffsetRandomRange(-10, 10))
 	assert.Nil(t, err)
 
-	// swipe direction with offset
+	// swipe direction with constant offset
 	err = driver.Swipe(0.5, 0.5, 0.5, 0.9,
 		option.WithSwipeOffset(-50, 50, -50, 50))
+	assert.Nil(t, err)
+
+	// swipe direction with random offset
+	err = driver.Swipe(0.5, 0.5, 0.5, 0.9,
+		option.WithOffsetRandomRange(-50, 50))
 	assert.Nil(t, err)
 
 	// tap random point in ocr text rect

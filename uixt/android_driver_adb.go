@@ -365,6 +365,7 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	if err != nil {
 		return err
 	}
+	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
 
 	duration := 200.0
 	if actionOptions.Duration > 0 {
@@ -393,6 +394,8 @@ func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	if err != nil {
 		return err
 	}
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
 
 	// adb shell input swipe fromX fromY toX toY
 	_, err = ad.runShellCommand(

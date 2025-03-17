@@ -146,6 +146,21 @@ func (o *ActionOptions) ApplyTapOffset(absX, absY float64) (float64, float64) {
 	return absX, absY
 }
 
+func (o *ActionOptions) ApplySwipeOffset(absFromX, absFromY, absToX, absToY float64) (
+	float64, float64, float64, float64) {
+	if len(o.SwipeOffset) == 4 {
+		absFromX += float64(o.SwipeOffset[0])
+		absFromY += float64(o.SwipeOffset[1])
+		absToX += float64(o.SwipeOffset[2])
+		absToY += float64(o.SwipeOffset[3])
+	}
+	absFromX += o.generateRandomOffset()
+	absFromY += o.generateRandomOffset()
+	absToX += o.generateRandomOffset()
+	absToY += o.generateRandomOffset()
+	return absFromX, absFromY, absToX, absToY
+}
+
 func (o *ActionOptions) generateRandomOffset() float64 {
 	if len(o.OffsetRandomRange) != 2 {
 		// invalid offset random range, should be [min, max]

@@ -181,6 +181,7 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	if err != nil {
 		return err
 	}
+	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
 
 	duration := 200
 	if actionOptions.PressDuration > 0 {

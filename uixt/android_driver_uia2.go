@@ -353,6 +353,9 @@ func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.Action
 	if err != nil {
 		return err
 	}
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
+
 	data := map[string]interface{}{
 		"startX": fromX,
 		"startY": fromY,
@@ -380,6 +383,7 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 	if err != nil {
 		return err
 	}
+	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
 
 	duration := 200.0
 	if actionOptions.PressDuration > 0 {
