@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"math"
+	"math/rand/v2"
 	"regexp"
 
 	"github.com/pkg/errors"
@@ -92,6 +93,17 @@ func (t OCRText) Center() PointF {
 	point := PointF{
 		X: x + width*0.5,
 		Y: y + height*0.5,
+	}
+	return point
+}
+
+func (t OCRText) RandomPoint() PointF {
+	rect := t.Rect
+	x, y := float64(rect.Min.X), float64(rect.Min.Y)
+	width, height := float64(rect.Dx()), float64(rect.Dy())
+	point := PointF{
+		X: x + width*rand.Float64(),
+		Y: y + height*rand.Float64(),
 	}
 	return point
 }

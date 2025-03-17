@@ -3,6 +3,7 @@ package uixt
 import (
 	"fmt"
 
+	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
@@ -19,7 +20,13 @@ func (dExt *XTDriver) TapByOCR(text string, opts ...option.ActionOption) error {
 		}
 		return err
 	}
-	point := textRect.Center()
+
+	var point ai.PointF
+	if actionOptions.TapRandom {
+		point = textRect.RandomPoint()
+	} else {
+		point = textRect.Center()
+	}
 
 	return dExt.TapAbsXY(point.X, point.Y, opts...)
 }

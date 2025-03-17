@@ -182,5 +182,6 @@ func TestDriverExt_Action_Risk(t *testing.T) {
 		option.WithSwipeOffset(-50, 50, -50, 50))
 	assert.Nil(t, err)
 
-	err = driver.TapByOCR("首页", option.WithTapOffset(-10, 10))
+	// tap random point in ocr text rect
+	err = driver.TapByOCR("首页", option.WithTapRandom(true))
 }

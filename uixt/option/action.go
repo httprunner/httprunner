@@ -99,6 +99,10 @@ func (o *ActionOptions) Options() []ActionOption {
 		// for tap [x,y] offset
 		options = append(options, WithTapOffset(o.TapOffset[0], o.TapOffset[1]))
 	}
+	if o.TapRandom {
+		// tap random point in OCR/CV rectangle
+		options = append(options, WithTapRandom(true))
+	}
 	if len(o.SwipeOffset) == 4 {
 		// for swipe [fromX, fromY, toX, toY] offset
 		options = append(options, WithSwipeOffset(
