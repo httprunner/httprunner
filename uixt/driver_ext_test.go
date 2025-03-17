@@ -168,3 +168,16 @@ func TestDriverExt_ClosePopupsHandler(t *testing.T) {
 	err := driver.ClosePopupsHandler()
 	assert.Nil(t, err)
 }
+
+func TestDriverExt_Action_Risk(t *testing.T) {
+	driver := setupADBDriverExt(t)
+
+	// tap point with offset
+	err := driver.TapXY(0.5, 0.5, option.WithTapOffset(-10, 10))
+	assert.Nil(t, err)
+
+	// swipe direction with offset
+	err = driver.Swipe(0.5, 0.5, 0.5, 0.9,
+		option.WithSwipeOffset(-50, 50, -50, 50))
+	assert.Nil(t, err)
+}

@@ -216,7 +216,8 @@ type ScreenFilterOptions struct {
 	AbsScope AbsScope `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"`
 
 	Regex               bool  `json:"regex,omitempty" yaml:"regex,omitempty"`                             // use regex to match text
-	Offset              []int `json:"offset,omitempty" yaml:"offset,omitempty"`                           // used to tap offset of point
+	TapOffset           []int `json:"tap_offset,omitempty" yaml:"tap_offset,omitempty"`                   // tap with point offset
+	SwipeOffset         []int `json:"swipe_offset,omitempty" yaml:"swipe_offset,omitempty"`               // swipe with direction offset
 	OffsetRandomRange   []int `json:"offset_random_range,omitempty" yaml:"offset_random_range,omitempty"` // set random range [min, max] for tap/swipe points
 	Index               int   `json:"index,omitempty" yaml:"index,omitempty"`                             // index of the target element
 	MatchOne            bool  `json:"match_one,omitempty" yaml:"match_one,omitempty"`
@@ -242,7 +243,7 @@ func WithAbsScope(x1, y1, x2, y2 int) ActionOption {
 // tap [x, y] with offset [offsetX, offsetY]
 func WithTapOffset(offsetX, offsetY int) ActionOption {
 	return func(o *ActionOptions) {
-		o.Offset = []int{offsetX, offsetY}
+		o.TapOffset = []int{offsetX, offsetY}
 	}
 }
 

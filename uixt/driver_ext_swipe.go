@@ -156,7 +156,7 @@ func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption)
 
 	actionOptions := option.NewActionOptions(opts...)
 	// tap app icon above the text
-	if len(actionOptions.Offset) == 0 {
+	if len(actionOptions.TapOffset) == 0 {
 		opts = append(opts, option.WithTapOffset(0, -25))
 	}
 	// set default swipe interval to 1 second

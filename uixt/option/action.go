@@ -95,13 +95,14 @@ func (o *ActionOptions) Options() []ActionOption {
 		options = append(options, WithScope(
 			o.Scope[0], o.Scope[1], o.Scope[2], o.Scope[3]))
 	}
-	if len(o.Offset) == 2 {
+	if len(o.TapOffset) == 2 {
 		// for tap [x,y] offset
-		options = append(options, WithTapOffset(o.Offset[0], o.Offset[1]))
-	} else if len(o.Offset) == 4 {
+		options = append(options, WithTapOffset(o.TapOffset[0], o.TapOffset[1]))
+	}
+	if len(o.SwipeOffset) == 4 {
 		// for swipe [fromX, fromY, toX, toY] offset
 		options = append(options, WithSwipeOffset(
-			o.Offset[0], o.Offset[1], o.Offset[2], o.Offset[3]))
+			o.SwipeOffset[0], o.SwipeOffset[1], o.SwipeOffset[2], o.SwipeOffset[3]))
 	}
 	if len(o.OffsetRandomRange) == 2 {
 		options = append(options, WithOffsetRandomRange(
@@ -132,9 +133,9 @@ func (o *ActionOptions) Options() []ActionOption {
 }
 
 func (o *ActionOptions) ApplyOffset(absX, absY float64) (float64, float64) {
-	if len(o.Offset) == 2 {
-		absX += float64(o.Offset[0])
-		absY += float64(o.Offset[1])
+	if len(o.TapOffset) == 2 {
+		absX += float64(o.TapOffset[0])
+		absY += float64(o.TapOffset[1])
 	}
 	absX += o.GenerateRandomOffset()
 	absY += o.GenerateRandomOffset()
@@ -276,7 +277,7 @@ func WithCustomDirection(sx, sy, ex, ey float64) ActionOption {
 // swipe [fromX, fromY, toX, toY] with offset [offsetFromX, offsetFromY, offsetToX, offsetToY]
 func WithSwipeOffset(offsetFromX, offsetFromY, offsetToX, offsetToY int) ActionOption {
 	return func(o *ActionOptions) {
-		o.Offset = []int{offsetFromX, offsetFromY, offsetToX, offsetToY}
+		o.SwipeOffset = []int{offsetFromX, offsetFromY, offsetToX, offsetToY}
 	}
 }
 
