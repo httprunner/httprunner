@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"math"
+	"math/rand/v2"
 	"regexp"
 
 	"github.com/pkg/errors"
@@ -86,15 +87,23 @@ func (t OCRText) Size() types.Size {
 }
 
 func (t OCRText) Center() PointF {
-	return getRectangleCenterPoint(t.Rect)
-}
-
-func getRectangleCenterPoint(rect image.Rectangle) (point PointF) {
+	rect := t.Rect
 	x, y := float64(rect.Min.X), float64(rect.Min.Y)
 	width, height := float64(rect.Dx()), float64(rect.Dy())
-	point = PointF{
+	point := PointF{
 		X: x + width*0.5,
 		Y: y + height*0.5,
+	}
+	return point
+}
+
+func (t OCRText) RandomPoint() PointF {
+	rect := t.Rect
+	x, y := float64(rect.Min.X), float64(rect.Min.Y)
+	width, height := float64(rect.Dx()), float64(rect.Dy())
+	point := PointF{
+		X: x + width*rand.Float64(),
+		Y: y + height*rand.Float64(),
 	}
 	return point
 }
@@ -238,6 +247,15 @@ func (box Box) Center() PointF {
 		X: box.Point.X + box.Width*0.5,
 		Y: box.Point.Y + box.Height*0.5,
 	}
+}
+
+func (box Box) RandomPoint() PointF {
+	width, height := float64(box.Width), float64(box.Height)
+	point := PointF{
+		X: box.Point.X + width*rand.Float64(),
+		Y: box.Point.Y + height*rand.Float64(),
+	}
+	return point
 }
 
 type UIResults []UIResult
