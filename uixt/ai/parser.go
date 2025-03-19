@@ -110,7 +110,6 @@ func (p *ActionParser) parseActionText(actionText, thought string) ([]ParsedActi
 		"left_double":  regexp.MustCompile(`left_double\(start_box='([^']+)'\)`),
 		"right_single": regexp.MustCompile(`right_single\(start_box='([^']+)'\)`),
 		"drag":         regexp.MustCompile(`drag\(start_box='([^']+)', end_box='([^']+)'\)`),
-		"hotkey":       regexp.MustCompile(`hotkey\(key='([^']+)'\)`),
 		"type":         regexp.MustCompile(`type\(content='([^']+)'\)`),
 		"scroll":       regexp.MustCompile(`scroll\(start_box='([^']+)', direction='([^']+)'\)`),
 		"wait":         regexp.MustCompile(`wait\(\)`),
@@ -155,10 +154,6 @@ func (p *ActionParser) parseActionText(actionText, thought string) ([]ParsedActi
 					return nil, errors.Wrapf(err, "normalize endBox failed: %s", matches[2])
 				}
 				action.ActionInputs["endBox"] = endBox
-			}
-		case ActionTypeHotkey:
-			if len(matches) > 1 {
-				action.ActionInputs["key"] = matches[1]
 			}
 		case ActionTypeType:
 			if len(matches) > 1 {

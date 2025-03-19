@@ -8,16 +8,13 @@ Thought: ...
 Action: ...
 
 ## Action Space
-click(start_box='[x1, y1, x2, y2]')
-left_double(start_box='[x1, y1, x2, y2]')
-right_single(start_box='[x1, y1, x2, y2]')
-drag(start_box='[x1, y1, x2, y2]', end_box='[x3, y3, x4, y4]')
-hotkey(key='')
-type(content='') #If you want to submit your input, use "\n" at the end of content.
-scroll(start_box='[x1, y1, x2, y2]', direction='down or up or right or left')
-wait() #Sleep for 5s and take a screenshot to check for any changes.
-finished()
-call_user() # Submit the task and call the user when the task is unsolvable, or when you need the user's help.
+click(start_box='<|box_start|>(x1,y1)<|box_end|>')
+long_press(start_box='<|box_start|>(x1,y1)<|box_end|>', time='')
+type(content='')
+drag(start_box='<|box_start|>(x1,y1)<|box_end|>', end_box='<|box_start|>(x3,y3)<|box_end|>')
+press_home()
+press_back()
+finished(content='') # Submit the task regardless of whether it succeeds or fails.
 
 ## Note
 - Use Chinese in Thought part.

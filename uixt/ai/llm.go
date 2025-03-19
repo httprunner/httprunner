@@ -55,5 +55,4 @@ const (
 	ActionTypeCallUser ActionType = "call_user"
 	ActionTypeType     ActionType = "type"
 	ActionTypeScroll   ActionType = "scroll"
-	ActionTypeHotkey   ActionType = "hotkey"
 )

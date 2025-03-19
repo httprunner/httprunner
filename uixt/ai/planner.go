@@ -167,13 +167,8 @@ func processVLMResponse(actions []ParsedAction) (*PlanningResult, error) {
 		case "drag":
 			validateCoordinateAction(&actions[i], "startBox")
 			validateCoordinateAction(&actions[i], "endBox")
-		case "scroll":
-			validateCoordinateAction(&actions[i], "startBox")
-			validateScrollDirection(&actions[i])
 		case "type":
 			validateTypeContent(&actions[i])
-		case "hotkey":
-			validateHotkeyAction(&actions[i])
 		case "wait", "finished", "call_user":
 			// these actions do not need extra parameters
 		default:
@@ -208,22 +203,12 @@ func extractActionSummary(actions []ParsedAction) string {
 		return "点击操作"
 	case "drag":
 		return "拖拽操作"
-	case "left_double":
-		return "双击操作"
-	case "right_single":
-		return "右键点击操作"
-	case "scroll":
-		direction, _ := action.ActionInputs["direction"].(string)
-		return fmt.Sprintf("滚动操作 (%s)", direction)
 	case "type":
 		content, _ := action.ActionInputs["content"].(string)
 		if len(content) > 20 {
 			content = content[:20] + "..."
 		}
 		return fmt.Sprintf("输入文本: %s", content)
-	case "hotkey":
-		key, _ := action.ActionInputs["key"].(string)
-		return fmt.Sprintf("快捷键: %s", key)
 	case "wait":
 		return "等待操作"
 	case "finished":
@@ -240,37 +225,12 @@ func validateCoordinateAction(action *ParsedAction, boxField string) {
 	// TODO
 }
 
-// validateScrollDirection 验证滚动方向
-func validateScrollDirection(action *ParsedAction) {
-	if direction, ok := action.ActionInputs["direction"].(string); !ok || direction == "" {
-		// default to down
-		action.ActionInputs["direction"] = "down"
-	} else {
-		switch strings.ToLower(direction) {
-		case "up", "down", "left", "right":
-			// keep original direction
-		default:
-			action.ActionInputs["direction"] = "down"
-			log.Warn().Str("direction", direction).Msg("invalid scroll direction, set to default")
-		}
-	}
-}
-
 // validateTypeContent 验证输入文本内容
 func validateTypeContent(action *ParsedAction) {
 	if content, ok := action.ActionInputs["content"]; !ok || content == "" {
 		// default to empty string
 		action.ActionInputs["content"] = ""
 		log.Warn().Msg("type action missing content parameter, set to default")
-	}
-}
-
-// validateHotkeyAction 验证快捷键动作
-func validateHotkeyAction(action *ParsedAction) {
-	if key, ok := action.ActionInputs["key"]; !ok || key == "" {
-		// 为空或缺失的键设置默认值
-		action.ActionInputs["key"] = "Enter"
-		log.Printf("警告: hotkey动作缺少key参数, 已设置默认值")
 	}
 }
 
