@@ -1,4 +1,4 @@
-package planner
+package ai
 
 import (
 	"encoding/json"

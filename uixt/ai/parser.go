@@ -1,4 +1,4 @@
-package planner
+package ai
 
 import (
 	"encoding/json"
@@ -36,7 +36,7 @@ func (p *ActionParser) Parse(predictionText string) ([]ParsedAction, error) {
 		return thoughtActions, nil
 	}
 
-	return nil, fmt.Errorf("no valid actions returned from VLM, jsonErr: %v, thoughtErr: %v", jsonErr, thoughtErr)
+	return nil, errors.Wrap(thoughtErr, "parse planner response failed")
 }
 
 // parseJSON tries to parse the response as JSON format
@@ -88,7 +88,7 @@ func (p *ActionParser) parseThoughtAction(predictionText string) ([]ParsedAction
 	// extract Action part, e.g. "click(start_box='(552,454)')"
 	actionMatch := actionRegex.FindStringSubmatch(predictionText)
 	if len(actionMatch) < 2 {
-		return nil, fmt.Errorf("no action found in the response")
+		return nil, errors.New("no action found in the response")
 	}
 
 	actionText := strings.TrimSpace(actionMatch[1])
@@ -105,7 +105,7 @@ func (p *ActionParser) parseActionText(actionText, thought string) ([]ParsedActi
 	}
 
 	// supported action types and regexes
-	actionRegexes := map[string]*regexp.Regexp{
+	actionRegexes := map[ActionType]*regexp.Regexp{
 		"click":        regexp.MustCompile(`click\(start_box='([^']+)'\)`),
 		"left_double":  regexp.MustCompile(`left_double\(start_box='([^']+)'\)`),
 		"right_single": regexp.MustCompile(`right_single\(start_box='([^']+)'\)`),
@@ -132,7 +132,7 @@ func (p *ActionParser) parseActionText(actionText, thought string) ([]ParsedActi
 
 		// parse parameters based on action type
 		switch actionType {
-		case "click", "left_double", "right_single":
+		case ActionTypeClick:
 			if len(matches) > 1 {
 				coord, err := p.normalizeCoordinates(matches[1])
 				if err != nil {
@@ -140,7 +140,7 @@ func (p *ActionParser) parseActionText(actionText, thought string) ([]ParsedActi
 				}
 				action.ActionInputs["startBox"] = coord
 			}
-		case "drag":
+		case ActionTypeDrag:
 			if len(matches) > 2 {
 				// handle start point
 				startBox, err := p.normalizeCoordinates(matches[1])
@@ -156,15 +156,15 @@ func (p *ActionParser) parseActionText(actionText, thought string) ([]ParsedActi
 				}
 				action.ActionInputs["endBox"] = endBox
 			}
-		case "hotkey":
+		case ActionTypeHotkey:
 			if len(matches) > 1 {
 				action.ActionInputs["key"] = matches[1]
 			}
-		case "type":
+		case ActionTypeType:
 			if len(matches) > 1 {
 				action.ActionInputs["content"] = matches[1]
 			}
-		case "scroll":
+		case ActionTypeScroll:
 			if len(matches) > 2 {
 				startBox, err := p.normalizeCoordinates(matches[1])
 				if err != nil {
@@ -173,7 +173,7 @@ func (p *ActionParser) parseActionText(actionText, thought string) ([]ParsedActi
 				action.ActionInputs["startBox"] = startBox
 				action.ActionInputs["direction"] = matches[2]
 			}
-		case "wait", "finished", "call_user":
+		case ActionTypeWait, ActionTypeFinished, ActionTypeCallUser:
 			// 这些动作没有额外参数
 		}
 

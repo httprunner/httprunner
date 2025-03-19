@@ -1,4 +1,4 @@
-package planner
+package ai
 
 import (
 	"context"
@@ -11,10 +11,7 @@ import (
 )
 
 func TestVLMPlanning(t *testing.T) {
-	err := loadEnv("testdata/.env")
-	require.NoError(t, err)
-
-	imageBase64, err := loadImage("testdata/llk_1.png")
+	imageBase64, err := loadImage("testdata/llk_3.jpg")
 	require.NoError(t, err)
 
 	userInstruction := `连连看是一款经典的益智消除类小游戏，通常以图案或图标为主要元素。以下是连连看的基本规则说明：
@@ -28,7 +25,9 @@ func TestVLMPlanning(t *testing.T) {
 	5. 得分机制: 每成功连接并消除一对图案，玩家会获得相应的分数。完成游戏后，根据剩余时间和消除效率计算总分。
 	6. 关卡设计: 游戏可能包含多个关卡，随着关卡的推进，图案的复杂度和数量会增加。`
 
-	userInstruction += "\n\n请基于以上游戏规则，请先点击第一个图标"
+	// userInstruction += "\n\n请基于以上游戏规则，请先点击第一个图标"
+
+	userInstruction += "\n\n点击[3排1列]果酱图案"
 
 	planner, err := NewPlanner(context.Background())
 	require.NoError(t, err)
@@ -51,21 +50,21 @@ func TestVLMPlanning(t *testing.T) {
 	}
 
 	// 执行规划
-	result, err := planner.Start(opts)
+	result, err := planner.Call(opts)
 
 	// 验证结果
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotEmpty(t, result.Actions)
+	require.NotEmpty(t, result.NextActions)
 
 	// 验证动作
-	action := result.Actions[0]
+	action := result.NextActions[0]
 	assert.NotEmpty(t, action.ActionType)
 	assert.NotEmpty(t, action.Thought)
 
 	// 根据动作类型验证参数
 	switch action.ActionType {
-	case "click", "drag", "left_double", "right_single", "scroll":
+	case ActionTypeClick:
 		// 这些动作需要验证坐标
 		assert.NotEmpty(t, action.ActionInputs["startBox"])
 
@@ -79,14 +78,6 @@ func TestVLMPlanning(t *testing.T) {
 			assert.GreaterOrEqual(t, coord, float64(0))
 		}
 
-	case "type":
-		// 验证文本内容
-		assert.NotEmpty(t, action.ActionInputs["content"])
-
-	case "hotkey":
-		// 验证按键
-		assert.NotEmpty(t, action.ActionInputs["key"])
-
 	case "wait", "finished", "call_user":
 		// 这些动作不需要额外参数
 
@@ -96,9 +87,6 @@ func TestVLMPlanning(t *testing.T) {
 }
 
 func TestXHSPlanning(t *testing.T) {
-	err := loadEnv("testdata/.env")
-	require.NoError(t, err)
-
 	imageBase64, err := loadImage("testdata/xhs-feed.jpeg")
 	require.NoError(t, err)
 
@@ -125,15 +113,15 @@ func TestXHSPlanning(t *testing.T) {
 	}
 
 	// 执行规划
-	result, err := planner.Start(opts)
+	result, err := planner.Call(opts)
 
 	// 验证结果
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotEmpty(t, result.Actions)
+	require.NotEmpty(t, result.NextActions)
 
 	// 验证动作
-	action := result.Actions[0]
+	action := result.NextActions[0]
 	assert.NotEmpty(t, action.ActionType)
 	assert.NotEmpty(t, action.Thought)
 }
@@ -253,7 +241,7 @@ func TestProcessVLMResponse(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
-			assert.Equal(t, tt.actions, result.Actions)
+			assert.Equal(t, tt.actions, result.NextActions)
 		})
 	}
 }

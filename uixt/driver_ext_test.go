@@ -123,6 +123,19 @@ func TestDriverExt_TapByOCR(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestDriverExt_TapByLLM(t *testing.T) {
+	driver := setupDriverExt(t)
+	err := driver.TapByLLM("点击第一个帖子的作者头像")
+	assert.Nil(t, err)
+}
+
+func TestDriverExt_PlanNextAction(t *testing.T) {
+	driver := setupDriverExt(t)
+	result, err := driver.PlanNextAction("启动抖音")
+	assert.Nil(t, err)
+	t.Log(result)
+}
+
 func TestDriverExt_prepareSwipeAction(t *testing.T) {
 	driver := setupDriverExt(t)
 

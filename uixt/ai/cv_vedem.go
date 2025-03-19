@@ -30,7 +30,7 @@ type APIResponseImage struct {
 }
 
 func NewVEDEMImageService() (*vedemCVService, error) {
-	if err := checkEnv(); err != nil {
+	if err := checkEnvCV(); err != nil {
 		return nil, err
 	}
 	return &vedemCVService{}, nil
@@ -230,7 +230,7 @@ func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.A
 	return imageResult, nil
 }
 
-func checkEnv() error {
+func checkEnvCV() error {
 	vedemImageURL := os.Getenv("VEDEM_IMAGE_URL")
 	if vedemImageURL == "" {
 		return errors.Wrap(code.CVEnvMissedError, "VEDEM_IMAGE_URL missed")

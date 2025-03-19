@@ -1,4 +1,4 @@
-package planner
+package ai
 
 import (
 	"bytes"
@@ -48,8 +48,8 @@ type Planner struct {
 	parser *ActionParser
 }
 
-// Start performs UI planning using Vision Language Model
-func (p *Planner) Start(opts *PlanningOptions) (*PlanningResult, error) {
+// Call performs UI planning using Vision Language Model
+func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	log.Info().Str("user_instruction", opts.UserInstruction).Msg("start VLM planning")
 
 	// validate input parameters
@@ -71,8 +71,8 @@ func (p *Planner) Start(opts *PlanningOptions) (*PlanningResult, error) {
 
 	log.Info().
 		Interface("summary", result.ActionSummary).
-		Interface("actions", result.Actions).
-		Msg("VLM planning completed")
+		Interface("actions", result.NextActions).
+		Msg("get VLM planning result")
 	return result, nil
 }
 
@@ -130,6 +130,7 @@ func (p *Planner) callVLMService(opts *PlanningOptions) (*schema.Message, error)
 	if err != nil {
 		return nil, fmt.Errorf("OpenAI API request failed: %w", err)
 	}
+	log.Info().Str("content", resp.Content).Msg("get VLM response")
 	return resp, nil
 }
 
@@ -184,7 +185,7 @@ func processVLMResponse(actions []ParsedAction) (*PlanningResult, error) {
 	actionSummary := extractActionSummary(actions)
 
 	return &PlanningResult{
-		Actions:       actions,
+		NextActions:   actions,
 		ActionSummary: actionSummary,
 	}, nil
 }

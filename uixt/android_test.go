@@ -24,7 +24,9 @@ func setupADBDriverExt(t *testing.T) *XTDriver {
 	driver, err := device.NewDriver()
 	require.Nil(t, err)
 	return NewXTDriver(driver,
-		ai.WithCVService(ai.CVServiceTypeVEDEM))
+		ai.WithCVService(ai.CVServiceTypeVEDEM),
+		ai.WithLLMService(ai.LLMServiceTypeUITARS),
+	)
 }
 
 func setupUIA2DriverExt(t *testing.T) *XTDriver {
