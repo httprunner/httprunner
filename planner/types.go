@@ -8,20 +8,12 @@ import (
 type PlanningOptions struct {
 	UserInstruction     string            `json:"user_instruction"`
 	ConversationHistory []*schema.Message `json:"conversation_history"`
-	Size                Size              `json:"size"`
-}
-
-// Size represents the dimensions of a screen
-type Size struct {
-	Width  int `json:"width"`
-	Height int `json:"height"`
 }
 
 // PlanningResult represents the result of planning
 type PlanningResult struct {
-	Actions       []interface{}  `json:"actions"`
-	RealActions   []ParsedAction `json:"real_actions"`
-	ActionSummary string         `json:"action_summary"`
+	Actions       []ParsedAction `json:"actions"`
+	ActionSummary string         `json:"summary"`
 }
 
 // VLMResponse represents the response from the Vision Language Model

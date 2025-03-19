@@ -20,37 +20,10 @@ import (
 
 // Error types
 var (
-	ErrInvalidInput          = fmt.Errorf("invalid input parameters")
 	ErrEmptyInstruction      = fmt.Errorf("user instruction is empty")
 	ErrNoConversationHistory = fmt.Errorf("conversation history is empty")
 	ErrInvalidImageData      = fmt.Errorf("invalid image data")
 )
-
-const uiTarsPlanningPrompt = `
-You are a GUI agent. You are given a task and your action history, with screenshots. You need to perform the next action to complete the task.
-
-## Output Format
-Thought: ...
-Action: ...
-
-## Action Space
-click(start_box='[x1, y1, x2, y2]')
-left_double(start_box='[x1, y1, x2, y2]')
-right_single(start_box='[x1, y1, x2, y2]')
-drag(start_box='[x1, y1, x2, y2]', end_box='[x3, y3, x4, y4]')
-hotkey(key='')
-type(content='') #If you want to submit your input, use "\n" at the end of content.
-scroll(start_box='[x1, y1, x2, y2]', direction='down or up or right or left')
-wait() #Sleep for 5s and take a screenshot to check for any changes.
-finished()
-call_user() # Submit the task and call the user when the task is unsolvable, or when you need the user's help.
-
-## Note
-- Use Chinese in Thought part.
-- Write a small plan and finally summarize your next action (with its target element) in one sentence in Thought part.
-
-## User Instruction
-`
 
 func NewPlanner(ctx context.Context) (*Planner, error) {
 	config, err := GetModelConfig()
@@ -61,36 +34,39 @@ func NewPlanner(ctx context.Context) (*Planner, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize OpenAI model: %w", err)
 	}
+	parser := NewActionParser(1000)
 	return &Planner{
-		ctx:   ctx,
-		model: model,
+		ctx:    ctx,
+		model:  model,
+		parser: parser,
 	}, nil
 }
 
 type Planner struct {
-	ctx   context.Context
-	model *openai.ChatModel
+	ctx    context.Context
+	model  *openai.ChatModel
+	parser *ActionParser
 }
 
 // Start performs UI planning using Vision Language Model
-func (p *Planner) Start(opts PlanningOptions) (*PlanningResult, error) {
+func (p *Planner) Start(opts *PlanningOptions) (*PlanningResult, error) {
 	log.Info().Str("user_instruction", opts.UserInstruction).Msg("start VLM planning")
 
-	// 1. validate input parameters
+	// validate input parameters
 	if err := validateInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate input parameters failed")
 	}
 
-	// 2. call VLM service
+	// call VLM service
 	resp, err := p.callVLMService(opts)
 	if err != nil {
 		return nil, errors.Wrap(err, "call VLM service failed")
 	}
 
-	// 3. process response
-	result, err := processVLMResponse(resp)
+	// parse result
+	result, err := p.parseResult(resp)
 	if err != nil {
-		return nil, errors.Wrap(err, "process VLM response failed")
+		return nil, errors.Wrap(err, "parse result failed")
 	}
 
 	log.Info().
@@ -100,17 +76,13 @@ func (p *Planner) Start(opts PlanningOptions) (*PlanningResult, error) {
 	return result, nil
 }
 
-func validateInput(opts PlanningOptions) error {
+func validateInput(opts *PlanningOptions) error {
 	if opts.UserInstruction == "" {
 		return ErrEmptyInstruction
 	}
 
 	if len(opts.ConversationHistory) == 0 {
 		return ErrNoConversationHistory
-	}
-
-	if opts.Size.Width <= 0 || opts.Size.Height <= 0 {
-		return ErrInvalidInput
 	}
 
 	// ensure at least one image URL
@@ -133,14 +105,14 @@ func validateInput(opts PlanningOptions) error {
 	}
 
 	if !hasImageURL {
-		return ErrInvalidInput
+		return ErrInvalidImageData
 	}
 
 	return nil
 }
 
 // callVLMService makes the actual call to the VLM service
-func (p *Planner) callVLMService(opts PlanningOptions) (*VLMResponse, error) {
+func (p *Planner) callVLMService(opts *PlanningOptions) (*schema.Message, error) {
 	log.Info().Msg("calling VLM service...")
 
 	// prepare prompt
@@ -158,87 +130,77 @@ func (p *Planner) callVLMService(opts PlanningOptions) (*VLMResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("OpenAI API request failed: %w", err)
 	}
+	return resp, nil
+}
 
+func (p *Planner) parseResult(msg *schema.Message) (*PlanningResult, error) {
 	// parse response
-	content := resp.Content
-	parser := NewActionParser(content, 1000) // 使用与 TypeScript 版本相同的 factor
-	actions, err := parser.Parse(content)
+	actions, err := p.parser.Parse(msg.Content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse actions: %w", err)
 	}
 
-	return &VLMResponse{
-		Actions: actions,
-	}, nil
+	// process response
+	result, err := processVLMResponse(actions)
+	if err != nil {
+		return nil, errors.Wrap(err, "process VLM response failed")
+	}
+
+	return result, nil
 }
 
 // processVLMResponse processes the VLM response and converts it to PlanningResult
-func processVLMResponse(resp *VLMResponse) (*PlanningResult, error) {
+func processVLMResponse(actions []ParsedAction) (*PlanningResult, error) {
 	log.Info().Msg("processing VLM response...")
-	if resp.Error != "" {
-		return nil, fmt.Errorf("VLM error: %s", resp.Error)
-	}
 
-	if len(resp.Actions) == 0 {
+	if len(actions) == 0 {
 		return nil, fmt.Errorf("no actions returned from VLM")
 	}
 
-	// 验证和后处理每个动作
-	for i := range resp.Actions {
-		// 验证动作类型
-		switch resp.Actions[i].ActionType {
+	// validate and post-process each action
+	for i := range actions {
+		// validate action type
+		switch actions[i].ActionType {
 		case "click", "left_double", "right_single":
-			validateCoordinateAction(&resp.Actions[i], "startBox")
+			validateCoordinateAction(&actions[i], "startBox")
 		case "drag":
-			validateCoordinateAction(&resp.Actions[i], "startBox")
-			validateCoordinateAction(&resp.Actions[i], "endBox")
+			validateCoordinateAction(&actions[i], "startBox")
+			validateCoordinateAction(&actions[i], "endBox")
 		case "scroll":
-			validateCoordinateAction(&resp.Actions[i], "startBox")
-			validateScrollDirection(&resp.Actions[i])
+			validateCoordinateAction(&actions[i], "startBox")
+			validateScrollDirection(&actions[i])
 		case "type":
-			validateTypeContent(&resp.Actions[i])
+			validateTypeContent(&actions[i])
 		case "hotkey":
-			validateHotkeyAction(&resp.Actions[i])
+			validateHotkeyAction(&actions[i])
 		case "wait", "finished", "call_user":
-			// 这些动作不需要额外参数
+			// these actions do not need extra parameters
 		default:
-			log.Printf("警告: 未知的动作类型: %s, 将尝试继续处理", resp.Actions[i].ActionType)
+			log.Printf("warning: unknown action type: %s, will try to continue processing", actions[i].ActionType)
 		}
 	}
 
-	// 提取动作摘要
-	actionSummary := extractActionSummary(resp.Actions)
-
-	// 将ParsedAction转换为接口类型
-	var actions []interface{}
-	for _, action := range resp.Actions {
-		actionMap := map[string]interface{}{
-			"actionType":   action.ActionType,
-			"actionInputs": action.ActionInputs,
-			"thought":      action.Thought,
-		}
-		actions = append(actions, actionMap)
-	}
+	// extract action summary
+	actionSummary := extractActionSummary(actions)
 
 	return &PlanningResult{
 		Actions:       actions,
-		RealActions:   resp.Actions,
 		ActionSummary: actionSummary,
 	}, nil
 }
 
-// extractActionSummary 从动作中提取摘要
+// extractActionSummary extracts the summary from the actions
 func extractActionSummary(actions []ParsedAction) string {
 	if len(actions) == 0 {
 		return ""
 	}
 
-	// 优先使用第一个动作的Thought作为摘要
+	// use the Thought of the first action as summary
 	if actions[0].Thought != "" {
 		return actions[0].Thought
 	}
 
-	// 如果没有Thought，则根据动作类型生成摘要
+	// if no Thought, generate summary from action type
 	action := actions[0]
 	switch action.ActionType {
 	case "click":
@@ -274,28 +236,21 @@ func extractActionSummary(actions []ParsedAction) string {
 
 // validateCoordinateAction 验证坐标类动作
 func validateCoordinateAction(action *ParsedAction, boxField string) {
-	if box, ok := action.ActionInputs[boxField]; !ok || box == "" {
-		// 为空或缺失的坐标设置默认值
-		action.ActionInputs[boxField] = "[0.5, 0.5]"
-		log.Printf("警告: %s动作缺少%s参数, 已设置默认值", action.ActionType, boxField)
-	}
+	// TODO
 }
 
 // validateScrollDirection 验证滚动方向
 func validateScrollDirection(action *ParsedAction) {
 	if direction, ok := action.ActionInputs["direction"].(string); !ok || direction == "" {
-		// 为空或缺失的方向设置默认值
+		// default to down
 		action.ActionInputs["direction"] = "down"
-		log.Printf("警告: scroll动作缺少direction参数, 已设置默认值")
 	} else {
-		// 标准化方向
 		switch strings.ToLower(direction) {
 		case "up", "down", "left", "right":
-			// 保持原样
+			// keep original direction
 		default:
-			// 非标准方向设为默认值
 			action.ActionInputs["direction"] = "down"
-			log.Printf("警告: 非标准滚动方向: %s, 已设置为down", direction)
+			log.Warn().Str("direction", direction).Msg("invalid scroll direction, set to default")
 		}
 	}
 }
@@ -303,9 +258,9 @@ func validateScrollDirection(action *ParsedAction) {
 // validateTypeContent 验证输入文本内容
 func validateTypeContent(action *ParsedAction) {
 	if content, ok := action.ActionInputs["content"]; !ok || content == "" {
-		// 为空或缺失的内容设置默认值
+		// default to empty string
 		action.ActionInputs["content"] = ""
-		log.Printf("警告: type动作缺少content参数, 已设置为空字符串")
+		log.Warn().Msg("type action missing content parameter, set to default")
 	}
 }
 

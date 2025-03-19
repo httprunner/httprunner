@@ -2,7 +2,7 @@ package planner
 
 import (
 	"context"
-	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/cloudwego/eino/schema"
@@ -14,7 +14,6 @@ func TestVLMPlanning(t *testing.T) {
 	err := loadEnv("testdata/.env")
 	require.NoError(t, err)
 
-	// imageBase64, err := loadImage("testdata/popup_risk_warning.png")
 	imageBase64, err := loadImage("testdata/llk_1.png")
 	require.NoError(t, err)
 
@@ -29,12 +28,12 @@ func TestVLMPlanning(t *testing.T) {
 	5. 得分机制: 每成功连接并消除一对图案，玩家会获得相应的分数。完成游戏后，根据剩余时间和消除效率计算总分。
 	6. 关卡设计: 游戏可能包含多个关卡，随着关卡的推进，图案的复杂度和数量会增加。`
 
-	userInstruction += "\n\n请基于以上游戏规则，给出下一步可点击的两个图标坐标"
+	userInstruction += "\n\n请基于以上游戏规则，请先点击第一个图标"
 
 	planner, err := NewPlanner(context.Background())
 	require.NoError(t, err)
 
-	opts := PlanningOptions{
+	opts := &PlanningOptions{
 		UserInstruction: userInstruction,
 		ConversationHistory: []*schema.Message{
 			{
@@ -49,10 +48,6 @@ func TestVLMPlanning(t *testing.T) {
 				},
 			},
 		},
-		Size: Size{
-			Width:  1920,
-			Height: 1080,
-		},
 	}
 
 	// 执行规划
@@ -61,10 +56,10 @@ func TestVLMPlanning(t *testing.T) {
 	// 验证结果
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotEmpty(t, result.RealActions)
+	require.NotEmpty(t, result.Actions)
 
 	// 验证动作
-	action := result.RealActions[0]
+	action := result.Actions[0]
 	assert.NotEmpty(t, action.ActionType)
 	assert.NotEmpty(t, action.Thought)
 
@@ -75,15 +70,13 @@ func TestVLMPlanning(t *testing.T) {
 		assert.NotEmpty(t, action.ActionInputs["startBox"])
 
 		// 验证坐标格式
-		var coords []float64
-		err = json.Unmarshal([]byte(action.ActionInputs["startBox"].(string)), &coords)
-		require.NoError(t, err)
+		coords, ok := action.ActionInputs["startBox"].([]float64)
+		require.True(t, ok)
 		require.True(t, len(coords) >= 2) // 至少有 x, y 坐标
 
 		// 验证坐标范围
 		for _, coord := range coords {
 			assert.GreaterOrEqual(t, coord, float64(0))
-			assert.LessOrEqual(t, coord, float64(1920)) // 最大屏幕宽度
 		}
 
 	case "type":
@@ -102,18 +95,61 @@ func TestVLMPlanning(t *testing.T) {
 	}
 }
 
+func TestXHSPlanning(t *testing.T) {
+	err := loadEnv("testdata/.env")
+	require.NoError(t, err)
+
+	imageBase64, err := loadImage("testdata/xhs-feed.jpeg")
+	require.NoError(t, err)
+
+	userInstruction := `点击第二个帖子的作者头像`
+
+	planner, err := NewPlanner(context.Background())
+	require.NoError(t, err)
+
+	opts := &PlanningOptions{
+		UserInstruction: userInstruction,
+		ConversationHistory: []*schema.Message{
+			{
+				Role: schema.User,
+				MultiContent: []schema.ChatMessagePart{
+					{
+						Type: "image_url",
+						ImageURL: &schema.ChatMessageImageURL{
+							URL: imageBase64,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// 执行规划
+	result, err := planner.Start(opts)
+
+	// 验证结果
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.NotEmpty(t, result.Actions)
+
+	// 验证动作
+	action := result.Actions[0]
+	assert.NotEmpty(t, action.ActionType)
+	assert.NotEmpty(t, action.Thought)
+}
+
 func TestValidateInput(t *testing.T) {
 	imageBase64, err := loadImage("testdata/popup_risk_warning.png")
 	require.NoError(t, err)
 
 	tests := []struct {
 		name    string
-		opts    PlanningOptions
+		opts    *PlanningOptions
 		wantErr error
 	}{
 		{
 			name: "valid input",
-			opts: PlanningOptions{
+			opts: &PlanningOptions{
 				UserInstruction: "点击继续使用按钮",
 				ConversationHistory: []*schema.Message{
 					{
@@ -128,13 +164,12 @@ func TestValidateInput(t *testing.T) {
 						},
 					},
 				},
-				Size: Size{Width: 100, Height: 100},
 			},
 			wantErr: nil,
 		},
 		{
 			name: "empty instruction",
-			opts: PlanningOptions{
+			opts: &PlanningOptions{
 				UserInstruction: "",
 				ConversationHistory: []*schema.Message{
 					{
@@ -142,32 +177,29 @@ func TestValidateInput(t *testing.T) {
 						Content: "",
 					},
 				},
-				Size: Size{Width: 100, Height: 100},
 			},
 			wantErr: ErrEmptyInstruction,
 		},
 		{
 			name: "empty conversation history",
-			opts: PlanningOptions{
+			opts: &PlanningOptions{
 				UserInstruction:     "点击立即卸载按钮",
 				ConversationHistory: []*schema.Message{},
-				Size:                Size{Width: 100, Height: 100},
 			},
 			wantErr: ErrNoConversationHistory,
 		},
 		{
-			name: "invalid size",
-			opts: PlanningOptions{
-				UserInstruction: "勾选不再提示选项",
+			name: "invalid image data",
+			opts: &PlanningOptions{
+				UserInstruction: "点击继续使用按钮",
 				ConversationHistory: []*schema.Message{
 					{
 						Role:    schema.User,
-						Content: "",
+						Content: "no image",
 					},
 				},
-				Size: Size{Width: 0, Height: 0},
 			},
-			wantErr: ErrInvalidInput,
+			wantErr: ErrInvalidImageData,
 		},
 	}
 
@@ -176,6 +208,7 @@ func TestValidateInput(t *testing.T) {
 			err := validateInput(tt.opts)
 			if tt.wantErr != nil {
 				assert.Error(t, err)
+				assert.Equal(t, tt.wantErr, err)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -186,40 +219,32 @@ func TestValidateInput(t *testing.T) {
 func TestProcessVLMResponse(t *testing.T) {
 	tests := []struct {
 		name    string
-		resp    *VLMResponse
+		actions []ParsedAction
 		wantErr bool
 	}{
 		{
 			name: "valid response",
-			resp: &VLMResponse{
-				Actions: []ParsedAction{
-					{
-						ActionType: "click",
-						ActionInputs: map[string]interface{}{
-							"startBox": "[0.5, 0.5]",
-						},
+			actions: []ParsedAction{
+				{
+					ActionType: "click",
+					ActionInputs: map[string]interface{}{
+						"startBox": []float64{0.5, 0.5},
 					},
+					Thought: "点击中心位置",
 				},
 			},
 			wantErr: false,
 		},
 		{
-			name: "error response",
-			resp: &VLMResponse{
-				Error: "test error",
-			},
-			wantErr: true,
-		},
-		{
 			name:    "empty actions",
-			resp:    &VLMResponse{},
+			actions: []ParsedAction{},
 			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := processVLMResponse(tt.resp)
+			result, err := processVLMResponse(tt.actions)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, result)
@@ -228,7 +253,7 @@ func TestProcessVLMResponse(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.NotNil(t, result)
-			assert.Equal(t, tt.resp.Actions, result.RealActions)
+			assert.Equal(t, tt.actions, result.Actions)
 		})
 	}
 }
@@ -237,7 +262,6 @@ func TestSavePositionImg(t *testing.T) {
 	imageBase64, err := loadImage("testdata/popup_risk_warning.png")
 	require.NoError(t, err)
 
-	tempFile := t.TempDir() + "/test.png"
 	params := struct {
 		InputImgBase64 string
 		Rect           struct {
@@ -254,10 +278,12 @@ func TestSavePositionImg(t *testing.T) {
 			X: 100,
 			Y: 100,
 		},
-		OutputPath: tempFile,
+		OutputPath: "testdata/output.png",
 	}
 
 	err = SavePositionImg(params)
-	assert.NoError(t, err)
-	// TODO: Add more assertions when SavePositionImg is implemented
+	require.NoError(t, err)
+
+	// cleanup
+	defer os.Remove(params.OutputPath)
 }

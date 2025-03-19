@@ -3,6 +3,7 @@ package planner
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -89,6 +90,20 @@ func GetEnvConfigInInt(key string, defaultValue int) int {
 	return intValue
 }
 
+// CustomTransport is a custom RoundTripper that adds headers to every request
+type CustomTransport struct {
+	Transport http.RoundTripper
+	Headers   map[string]string
+}
+
+// RoundTrip executes a single HTTP transaction and adds custom headers
+func (c *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	for key, value := range c.Headers {
+		req.Header.Set(key, value)
+	}
+	return c.Transport.RoundTrip(req)
+}
+
 // GetModelConfig get OpenAI config
 func GetModelConfig() (*openai.ChatModelConfig, error) {
 	envConfig := &OpenAIInitConfig{
@@ -104,7 +119,13 @@ func GetModelConfig() (*openai.ChatModelConfig, error) {
 	}
 
 	config := &openai.ChatModelConfig{
-		Timeout: defaultTimeout,
+		HTTPClient: &http.Client{
+			Timeout: defaultTimeout,
+			Transport: &CustomTransport{
+				Transport: http.DefaultTransport,
+				Headers:   envConfig.Headers,
+			},
+		},
 	}
 
 	if baseURL := GetEnvConfig(EnvOpenAIBaseURL); baseURL != "" {
