@@ -53,6 +53,11 @@ const (
 )
 
 func WithLLMService(service LLMServiceType) AIServiceOption {
+	if err := checkEnvLLM(); err != nil {
+		log.Error().Err(err).Msg("check LLM env failed")
+		os.Exit(code.GetErrorCode(err))
+	}
+
 	return func(opts *AIServices) {
 		if service == LLMServiceTypeGPT4o {
 			var err error

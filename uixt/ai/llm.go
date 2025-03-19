@@ -1,6 +1,8 @@
 package ai
 
-import "github.com/cloudwego/eino/schema"
+import (
+	"github.com/cloudwego/eino/schema"
+)
 
 type ILLMService interface {
 	Call(opts *PlanningOptions) (*PlanningResult, error)

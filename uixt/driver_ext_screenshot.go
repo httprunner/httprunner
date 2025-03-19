@@ -69,8 +69,11 @@ func (dExt *XTDriver) GetScreenShotBase64() (base64Str string, err error) {
 	if err != nil {
 		return "", err
 	}
+
+	// convert buffer to base64 string
 	base64Str = "data:image/jpeg;base64," +
 		base64.StdEncoding.EncodeToString(compressedBufSource.Bytes())
+
 	return base64Str, nil
 }
 

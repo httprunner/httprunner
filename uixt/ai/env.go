@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/joho/godotenv"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -25,10 +27,28 @@ type OpenAIInitConfig struct {
 const (
 	EnvOpenAIBaseURL        = "OPENAI_BASE_URL"
 	EnvOpenAIAPIKey         = "OPENAI_API_KEY"
-	EnvModelName            = "MIDSCENE_MODEL_NAME"
-	EnvOpenAIInitConfigJSON = "MIDSCENE_OPENAI_INIT_CONFIG_JSON"
-	EnvUseVLMUITars         = "MIDSCENE_USE_VLM_UI_TARS"
+	EnvModelName            = "LLM_MODEL_NAME"
+	EnvOpenAIInitConfigJSON = "OPENAI_INIT_CONFIG_JSON"
 )
+
+func checkEnvLLM() error {
+	openaiBaseURL := os.Getenv("OPENAI_BASE_URL")
+	if openaiBaseURL == "" {
+		return errors.Wrap(code.LLMEnvMissedError, "OPENAI_BASE_URL missed")
+	}
+	log.Info().Str("OPENAI_BASE_URL", openaiBaseURL).Msg("get env")
+	openaiAPIKey := os.Getenv("OPENAI_API_KEY")
+	if openaiAPIKey == "" {
+		return errors.Wrap(code.LLMEnvMissedError, "OPENAI_API_KEY missed")
+	}
+	log.Info().Str("OPENAI_API_KEY", maskAPIKey(openaiAPIKey)).Msg("get env")
+	modelName := os.Getenv("LLM_MODEL_NAME")
+	if modelName == "" {
+		return errors.Wrap(code.LLMEnvMissedError, "LLM_MODEL_NAME missed")
+	}
+	log.Info().Str("LLM_MODEL_NAME", modelName).Msg("get env")
+	return nil
+}
 
 // loadEnv loads environment variables from a file
 func loadEnv(envPath string) error {
@@ -163,8 +183,4 @@ func maskAPIKey(key string) string {
 	}
 
 	return key[:4] + "******" + key[len(key)-4:]
-}
-
-func IsUseVLMUITars() bool {
-	return GetEnvConfigInBool(EnvUseVLMUITars)
 }

@@ -1,6 +1,8 @@
 package ai
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestOption(t *testing.T) {
 	options := NewAIService(

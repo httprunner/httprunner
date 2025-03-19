@@ -104,7 +104,8 @@ var (
 	CVResponseError          = errors.New("CV parse response error")  // 83
 	CVResultNotFoundError    = errors.New("CV result not found")      // 84
 
-	StateUnknowError = errors.New("detect state failed") // 85
+	LLMEnvMissedError = errors.New("LLM env missed error") // 85
+	StateUnknowError  = errors.New("detect state failed")  // 89
 )
 
 // trackings related: [90, 100)
@@ -199,7 +200,8 @@ var errorsMap = map[error]int{
 	CVServiceConnectionError: 82,
 	CVResponseError:          83,
 	CVResultNotFoundError:    84,
-	StateUnknowError:         85,
+	LLMEnvMissedError:        85,
+	StateUnknowError:         89,
 
 	// trackings related
 	TrackingGetError:   90,

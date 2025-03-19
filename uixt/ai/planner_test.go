@@ -11,7 +11,7 @@ import (
 )
 
 func TestVLMPlanning(t *testing.T) {
-	imageBase64, err := loadImage("testdata/llk_3.jpg")
+	imageBase64, err := loadImage("testdata/llk_1.png")
 	require.NoError(t, err)
 
 	userInstruction := `连连看是一款经典的益智消除类小游戏，通常以图案或图标为主要元素。以下是连连看的基本规则说明：
@@ -25,9 +25,7 @@ func TestVLMPlanning(t *testing.T) {
 	5. 得分机制: 每成功连接并消除一对图案，玩家会获得相应的分数。完成游戏后，根据剩余时间和消除效率计算总分。
 	6. 关卡设计: 游戏可能包含多个关卡，随着关卡的推进，图案的复杂度和数量会增加。`
 
-	// userInstruction += "\n\n请基于以上游戏规则，请先点击第一个图标"
-
-	userInstruction += "\n\n点击[3排1列]果酱图案"
+	userInstruction += "\n\n请基于以上游戏规则，给出消除所有图案的行动序列"
 
 	planner, err := NewPlanner(context.Background())
 	require.NoError(t, err)
