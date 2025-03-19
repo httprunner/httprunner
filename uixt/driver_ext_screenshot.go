@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"image"
 	"image/gif"
@@ -45,10 +46,7 @@ func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) ai.OCRTexts {
 	})
 }
 
-// GetScreenResult takes a screenshot, returns the image recognition result
-func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
-	screenshotOptions := option.NewActionOptions(opts...)
-
+func (dExt *XTDriver) GetScreenShotBuffer() (compressedBufSource *bytes.Buffer, err error) {
 	// take screenshot
 	bufSource, err := dExt.ScreenShot()
 	if err != nil {
@@ -62,6 +60,29 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 		return nil, errors.Wrapf(code.DeviceScreenShotError,
 			"compress screenshot failed %v", err)
 	}
+
+	return compressBufSource, nil
+}
+
+func (dExt *XTDriver) GetScreenShotBase64() (base64Str string, err error) {
+	compressedBufSource, err := dExt.GetScreenShotBuffer()
+	if err != nil {
+		return "", err
+	}
+	base64Str = "data:image/jpeg;base64," +
+		base64.StdEncoding.EncodeToString(compressedBufSource.Bytes())
+	return base64Str, nil
+}
+
+// GetScreenResult takes a screenshot, returns the image recognition result
+func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
+	// get compressed screenshot buffer
+	compressBufSource, err := dExt.GetScreenShotBuffer()
+	if err != nil {
+		return nil, err
+	}
+
+	screenshotOptions := option.NewActionOptions(opts...)
 
 	// save compressed screenshot to file
 	var fileName string
