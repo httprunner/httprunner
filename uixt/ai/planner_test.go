@@ -12,7 +12,7 @@ import (
 )
 
 func TestVLMPlanning(t *testing.T) {
-	imageBase64, size, err := loadImage("testdata/llk_1.png")
+	imageBase64, size, err := loadImage("testdata/llk_3.png")
 	require.NoError(t, err)
 
 	userInstruction := `连连看是一款经典的益智消除类小游戏，通常以图案或图标为主要元素。以下是连连看的基本规则说明：
