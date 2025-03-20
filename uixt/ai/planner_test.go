@@ -25,7 +25,7 @@ func TestVLMPlanning(t *testing.T) {
 	5. 得分机制: 每成功连接并消除一对图案，玩家会获得相应的分数。完成游戏后，根据剩余时间和消除效率计算总分。
 	6. 关卡设计: 游戏可能包含多个关卡，随着关卡的推进，图案的复杂度和数量会增加。`
 
-	userInstruction += "\n\n请基于以上游戏规则，给出消除所有图案的行动序列"
+	userInstruction += "\n\n请基于以上游戏规则，请依次点击两个可消除的相同图案"
 
 	planner, err := NewPlanner(context.Background())
 	require.NoError(t, err)
