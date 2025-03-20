@@ -2,6 +2,7 @@ package ai
 
 import (
 	"github.com/cloudwego/eino/schema"
+	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
 type ILLMService interface {
@@ -22,6 +23,7 @@ func (s openaiLLMService) Call(opts *PlanningOptions) (*PlanningResult, error) {
 type PlanningOptions struct {
 	UserInstruction     string            `json:"user_instruction"`
 	ConversationHistory []*schema.Message `json:"conversation_history"`
+	Size                types.Size        `json:"size"`
 }
 
 // PlanningResult represents the result of planning

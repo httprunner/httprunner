@@ -9,12 +9,14 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
+	"math"
 	"os"
 	"strings"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
+	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -65,7 +67,7 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	}
 
 	// parse result
-	result, err := p.parseResult(resp)
+	result, err := p.parseResult(resp, opts.Size)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse result failed")
 	}
@@ -135,15 +137,15 @@ func (p *Planner) callVLMService(opts *PlanningOptions) (*schema.Message, error)
 	return resp, nil
 }
 
-func (p *Planner) parseResult(msg *schema.Message) (*PlanningResult, error) {
+func (p *Planner) parseResult(msg *schema.Message, size types.Size) (*PlanningResult, error) {
 	// parse response
-	actions, err := p.parser.Parse(msg.Content)
+	parseActions, err := p.parser.Parse(msg.Content)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse actions: %w", err)
 	}
 
 	// process response
-	result, err := processVLMResponse(actions)
+	result, err := processVLMResponse(parseActions, size)
 	if err != nil {
 		return nil, errors.Wrap(err, "process VLM response failed")
 	}
@@ -152,7 +154,7 @@ func (p *Planner) parseResult(msg *schema.Message) (*PlanningResult, error) {
 }
 
 // processVLMResponse processes the VLM response and converts it to PlanningResult
-func processVLMResponse(actions []ParsedAction) (*PlanningResult, error) {
+func processVLMResponse(actions []ParsedAction, size types.Size) (*PlanningResult, error) {
 	log.Info().Msg("processing VLM response...")
 
 	if len(actions) == 0 {
@@ -163,11 +165,17 @@ func processVLMResponse(actions []ParsedAction) (*PlanningResult, error) {
 	for i := range actions {
 		// validate action type
 		switch actions[i].ActionType {
-		case "click", "left_double", "right_single":
-			validateCoordinateAction(&actions[i], "startBox")
+		case "click":
+			if err := convertCoordinateAction(&actions[i], "startBox", size); err != nil {
+				return nil, errors.Wrap(err, "convert coordinate action failed")
+			}
 		case "drag":
-			validateCoordinateAction(&actions[i], "startBox")
-			validateCoordinateAction(&actions[i], "endBox")
+			if err := convertCoordinateAction(&actions[i], "startBox", size); err != nil {
+				return nil, errors.Wrap(err, "convert coordinate action failed")
+			}
+			if err := convertCoordinateAction(&actions[i], "endBox", size); err != nil {
+				return nil, errors.Wrap(err, "convert coordinate action failed")
+			}
 		case "type":
 			validateTypeContent(&actions[i])
 		case "wait", "finished", "call_user":
@@ -221,9 +229,38 @@ func extractActionSummary(actions []ParsedAction) string {
 	}
 }
 
-// validateCoordinateAction 验证坐标类动作
-func validateCoordinateAction(action *ParsedAction, boxField string) {
-	// TODO
+func convertCoordinateAction(action *ParsedAction, boxField string, size types.Size) error {
+	// The model generates a 2D coordinate output that represents relative positions.
+	// To convert these values to image-relative coordinates, divide each component by 1000 to obtain values in the range [0,1].
+	// The absolute coordinates required by the Action can be calculated by:
+	// - X absolute = X relative × image width / 1000
+	// - Y absolute = Y relative × image height / 1000
+
+	// get image width and height
+	imageWidth := size.Width
+	imageHeight := size.Height
+
+	box := action.ActionInputs[boxField]
+	coords, ok := box.([]float64)
+	if !ok {
+		log.Error().Interface("inputs", action.ActionInputs).Msg("invalid action inputs")
+		return fmt.Errorf("invalid action inputs")
+	}
+
+	if len(coords) == 2 {
+		coords[0] = math.Round((coords[0]/1000*float64(imageWidth))*10) / 10
+		coords[1] = math.Round((coords[1]/1000*float64(imageHeight))*10) / 10
+	} else if len(coords) == 4 {
+		coords[0] = math.Round((coords[0]/1000*float64(imageWidth))*10) / 10
+		coords[1] = math.Round((coords[1]/1000*float64(imageHeight))*10) / 10
+		coords[2] = math.Round((coords[2]/1000*float64(imageWidth))*10) / 10
+		coords[3] = math.Round((coords[3]/1000*float64(imageHeight))*10) / 10
+	} else {
+		log.Error().Interface("inputs", action.ActionInputs).Msg("invalid action inputs")
+		return fmt.Errorf("invalid action inputs")
+	}
+
+	return nil
 }
 
 // validateTypeContent 验证输入文本内容
@@ -303,11 +340,32 @@ func SavePositionImg(params struct {
 }
 
 // loadImage loads image and returns base64 encoded string
-func loadImage(imagePath string) (base64Str string, err error) {
-	imageData, err := os.ReadFile(imagePath)
+func loadImage(imagePath string) (base64Str string, size types.Size, err error) {
+	// Read the image file
+	imageFile, err := os.Open(imagePath)
 	if err != nil {
-		return "", err
+		return "", types.Size{}, fmt.Errorf("failed to open image file: %w", err)
 	}
-	base64Str = "data:image/png;base64," + base64.StdEncoding.EncodeToString(imageData)
-	return
+	defer imageFile.Close()
+
+	// Decode the image to get its resolution
+	imageData, format, err := image.Decode(imageFile)
+	if err != nil {
+		return "", types.Size{}, fmt.Errorf("failed to decode image: %w", err)
+	}
+
+	// Get the resolution of the image
+	width := imageData.Bounds().Dx()
+	height := imageData.Bounds().Dy()
+	size = types.Size{Width: width, Height: height}
+
+	// Convert image to base64
+	buf := new(bytes.Buffer)
+	if err := png.Encode(buf, imageData); err != nil {
+		return "", types.Size{}, fmt.Errorf("failed to encode image to buffer: %w", err)
+	}
+	base64Str = fmt.Sprintf("data:image/%s;base64,%s", format,
+		base64.StdEncoding.EncodeToString(buf.Bytes()))
+
+	return base64Str, size, nil
 }

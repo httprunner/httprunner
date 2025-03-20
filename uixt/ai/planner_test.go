@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/cloudwego/eino/schema"
+	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestVLMPlanning(t *testing.T) {
-	imageBase64, err := loadImage("testdata/llk_1.png")
+	imageBase64, size, err := loadImage("testdata/llk_1.png")
 	require.NoError(t, err)
 
 	userInstruction := `连连看是一款经典的益智消除类小游戏，通常以图案或图标为主要元素。以下是连连看的基本规则说明：
@@ -25,7 +26,7 @@ func TestVLMPlanning(t *testing.T) {
 	5. 得分机制: 每成功连接并消除一对图案，玩家会获得相应的分数。完成游戏后，根据剩余时间和消除效率计算总分。
 	6. 关卡设计: 游戏可能包含多个关卡，随着关卡的推进，图案的复杂度和数量会增加。`
 
-	userInstruction += "\n\n请基于以上游戏规则，请依次点击两个可消除的相同图案"
+	userInstruction += "\n\n请基于以上游戏规则，给出下一步可点击的两个图标坐标"
 
 	planner, err := NewPlanner(context.Background())
 	require.NoError(t, err)
@@ -45,6 +46,7 @@ func TestVLMPlanning(t *testing.T) {
 				},
 			},
 		},
+		Size: size,
 	}
 
 	// 执行规划
@@ -62,7 +64,7 @@ func TestVLMPlanning(t *testing.T) {
 
 	// 根据动作类型验证参数
 	switch action.ActionType {
-	case ActionTypeClick:
+	case "click", "drag", "left_double", "right_single", "scroll":
 		// 这些动作需要验证坐标
 		assert.NotEmpty(t, action.ActionInputs["startBox"])
 
@@ -76,6 +78,14 @@ func TestVLMPlanning(t *testing.T) {
 			assert.GreaterOrEqual(t, coord, float64(0))
 		}
 
+	case "type":
+		// 验证文本内容
+		assert.NotEmpty(t, action.ActionInputs["content"])
+
+	case "hotkey":
+		// 验证按键
+		assert.NotEmpty(t, action.ActionInputs["key"])
+
 	case "wait", "finished", "call_user":
 		// 这些动作不需要额外参数
 
@@ -85,10 +95,13 @@ func TestVLMPlanning(t *testing.T) {
 }
 
 func TestXHSPlanning(t *testing.T) {
-	imageBase64, err := loadImage("testdata/xhs-feed.jpeg")
+	err := loadEnv()
 	require.NoError(t, err)
 
-	userInstruction := `点击第二个帖子的作者头像`
+	imageBase64, size, err := loadImage("testdata/xhs-feed.jpeg")
+	require.NoError(t, err)
+
+	userInstruction := "点击第二个帖子的作者头像"
 
 	planner, err := NewPlanner(context.Background())
 	require.NoError(t, err)
@@ -108,6 +121,7 @@ func TestXHSPlanning(t *testing.T) {
 				},
 			},
 		},
+		Size: size,
 	}
 
 	// 执行规划
@@ -122,10 +136,41 @@ func TestXHSPlanning(t *testing.T) {
 	action := result.NextActions[0]
 	assert.NotEmpty(t, action.ActionType)
 	assert.NotEmpty(t, action.Thought)
+
+	// 根据动作类型验证参数
+	switch action.ActionType {
+	case "click", "drag", "left_double", "right_single", "scroll":
+		// 这些动作需要验证坐标
+		assert.NotEmpty(t, action.ActionInputs["startBox"])
+
+		// 验证坐标格式
+		coords, ok := action.ActionInputs["startBox"].([]float64)
+		require.True(t, ok)
+		require.True(t, len(coords) >= 2) // 至少有 x, y 坐标
+
+		// 验证坐标范围
+		for _, coord := range coords {
+			assert.GreaterOrEqual(t, coord, float64(0))
+		}
+
+	case "type":
+		// 验证文本内容
+		assert.NotEmpty(t, action.ActionInputs["content"])
+
+	case "hotkey":
+		// 验证按键
+		assert.NotEmpty(t, action.ActionInputs["key"])
+
+	case "wait", "finished", "call_user":
+		// 这些动作不需要额外参数
+
+	default:
+		t.Fatalf("未知的动作类型: %s", action.ActionType)
+	}
 }
 
 func TestValidateInput(t *testing.T) {
-	imageBase64, err := loadImage("testdata/popup_risk_warning.png")
+	imageBase64, size, err := loadImage("testdata/popup_risk_warning.png")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -150,6 +195,7 @@ func TestValidateInput(t *testing.T) {
 						},
 					},
 				},
+				Size: size,
 			},
 			wantErr: nil,
 		},
@@ -163,6 +209,7 @@ func TestValidateInput(t *testing.T) {
 						Content: "",
 					},
 				},
+				Size: size,
 			},
 			wantErr: ErrEmptyInstruction,
 		},
@@ -184,6 +231,7 @@ func TestValidateInput(t *testing.T) {
 						Content: "no image",
 					},
 				},
+				Size: size,
 			},
 			wantErr: ErrInvalidImageData,
 		},
@@ -228,9 +276,13 @@ func TestProcessVLMResponse(t *testing.T) {
 		},
 	}
 
+	size := types.Size{
+		Width:  1000,
+		Height: 1000,
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := processVLMResponse(tt.actions)
+			result, err := processVLMResponse(tt.actions, size)
 			if tt.wantErr {
 				assert.Error(t, err)
 				assert.Nil(t, result)
@@ -245,7 +297,7 @@ func TestProcessVLMResponse(t *testing.T) {
 }
 
 func TestSavePositionImg(t *testing.T) {
-	imageBase64, err := loadImage("testdata/popup_risk_warning.png")
+	imageBase64, _, err := loadImage("testdata/popup_risk_warning.png")
 	require.NoError(t, err)
 
 	params := struct {
@@ -272,4 +324,20 @@ func TestSavePositionImg(t *testing.T) {
 
 	// cleanup
 	defer os.Remove(params.OutputPath)
+}
+
+func TestLoadImage(t *testing.T) {
+	// Test PNG image
+	pngBase64, pngSize, err := loadImage("testdata/llk_1.png")
+	require.NoError(t, err)
+	assert.NotEmpty(t, pngBase64)
+	assert.Greater(t, pngSize.Width, 0)
+	assert.Greater(t, pngSize.Height, 0)
+
+	// Test JPEG image
+	jpegBase64, jpegSize, err := loadImage("testdata/xhs-feed.jpeg")
+	require.NoError(t, err)
+	assert.NotEmpty(t, jpegBase64)
+	assert.Greater(t, jpegSize.Width, 0)
+	assert.Greater(t, jpegSize.Height, 0)
 }
