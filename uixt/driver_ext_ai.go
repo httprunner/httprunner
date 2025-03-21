@@ -1,8 +1,14 @@
 package uixt
 
 import (
+	"encoding/base64"
+	"fmt"
+	"path/filepath"
+
 	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/pkg/errors"
@@ -46,10 +52,26 @@ func (dExt *XTDriver) PlanNextAction(text string, opts ...option.ActionOption) (
 		return nil, errors.New("LLM service is not initialized")
 	}
 
-	screenShotBase64, err := dExt.GetScreenShotBase64()
+	compressedBufSource, err := dExt.GetScreenShotBuffer()
 	if err != nil {
 		return nil, err
 	}
+
+	// convert buffer to base64 string
+	screenShotBase64 := "data:image/jpeg;base64," +
+		base64.StdEncoding.EncodeToString(compressedBufSource.Bytes())
+
+	// save screenshot to file
+	imagePath := filepath.Join(
+		config.GetConfig().ScreenShotsPath,
+		fmt.Sprintf("%s.jpeg", builtin.GenNameWithTimestamp("%d_screenshot")),
+	)
+	go func() {
+		err := saveScreenShot(compressedBufSource, imagePath)
+		if err != nil {
+			log.Error().Err(err).Msg("save screenshot file failed")
+		}
+	}()
 
 	size, err := dExt.IDriver.WindowSize()
 	if err != nil {

@@ -2,7 +2,6 @@ package uixt
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"image"
 	"image/gif"
@@ -63,19 +62,6 @@ func (dExt *XTDriver) GetScreenShotBuffer() (compressedBufSource *bytes.Buffer, 
 	return compressBufSource, nil
 }
 
-func (dExt *XTDriver) GetScreenShotBase64() (base64Str string, err error) {
-	compressedBufSource, err := dExt.GetScreenShotBuffer()
-	if err != nil {
-		return "", err
-	}
-
-	// convert buffer to base64 string
-	base64Str = "data:image/jpeg;base64," +
-		base64.StdEncoding.EncodeToString(compressedBufSource.Bytes())
-
-	return base64Str, nil
-}
-
 // GetScreenResult takes a screenshot, returns the image recognition result
 func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
 	// get compressed screenshot buffer
@@ -104,8 +90,6 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 		err := saveScreenShot(compressBufSource, imagePath)
 		if err != nil {
 			log.Error().Err(err).Msg("save screenshot file failed")
-		} else {
-			log.Info().Str("path", imagePath).Msg("screenshot saved")
 		}
 	}()
 

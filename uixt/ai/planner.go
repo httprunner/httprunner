@@ -13,6 +13,7 @@ import (
 	"math"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/cloudwego/eino/components/model"
@@ -76,8 +77,9 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 
 	// call model service, generate response
 	logRequest(p.history)
-	log.Info().Msg("calling model service...")
+	startTime := time.Now()
 	resp, err := p.model.Generate(p.ctx, p.history)
+	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).Msg("call model service")
 	if err != nil {
 		return nil, fmt.Errorf("request model service failed: %w", err)
 	}
