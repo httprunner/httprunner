@@ -93,9 +93,6 @@ func TestVLMPlanning(t *testing.T) {
 }
 
 func TestXHSPlanning(t *testing.T) {
-	err := loadEnv()
-	require.NoError(t, err)
-
 	imageBase64, size, err := loadImage("testdata/xhs-feed.jpeg")
 	require.NoError(t, err)
 
@@ -163,6 +160,39 @@ func TestXHSPlanning(t *testing.T) {
 	default:
 		t.Fatalf("未知的动作类型: %s", action.ActionType)
 	}
+}
+
+func TestChatList(t *testing.T) {
+	imageBase64, size, err := loadImage("testdata/chat_list.jpeg")
+	require.NoError(t, err)
+
+	userInstruction := "请结合图片的文字信息，请告诉我一共有多少个群聊，哪些群聊右下角有绿点"
+
+	planner, err := NewPlanner(context.Background())
+	require.NoError(t, err)
+
+	opts := &PlanningOptions{
+		UserInstruction: userInstruction,
+		Message: &schema.Message{
+			Role: schema.User,
+			MultiContent: []schema.ChatMessagePart{
+				{
+					Type: schema.ChatMessagePartTypeImageURL,
+					ImageURL: &schema.ChatMessageImageURL{
+						URL: imageBase64,
+					},
+				},
+			},
+		},
+		Size: size,
+	}
+
+	// 执行规划
+	result, err := planner.Call(opts)
+
+	// 验证结果
+	require.NoError(t, err)
+	require.NotNil(t, result)
 }
 
 func TestValidateInput(t *testing.T) {

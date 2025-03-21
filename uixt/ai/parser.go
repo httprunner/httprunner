@@ -113,7 +113,7 @@ func (p *ActionParser) parseActionText(actionText, thought string) ([]ParsedActi
 		"type":         regexp.MustCompile(`type\(content='([^']+)'\)`),
 		"scroll":       regexp.MustCompile(`scroll\(start_box='([^']+)', direction='([^']+)'\)`),
 		"wait":         regexp.MustCompile(`wait\(\)`),
-		"finished":     regexp.MustCompile(`finished\(\)`),
+		"finished":     regexp.MustCompile(`finished\(content='([^']+)'\)`),
 		"call_user":    regexp.MustCompile(`call_user\(\)`),
 	}
 
