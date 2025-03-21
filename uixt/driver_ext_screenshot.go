@@ -8,7 +8,6 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	_ "image/png"
 	"os"
 	"path/filepath"
 	"strings"

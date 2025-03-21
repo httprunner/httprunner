@@ -12,7 +12,7 @@ import (
 )
 
 func TestVLMPlanning(t *testing.T) {
-	imageBase64, size, err := loadImage("testdata/llk_3.png")
+	imageBase64, size, err := loadImage("testdata/llk_1.png")
 	require.NoError(t, err)
 
 	userInstruction := `连连看是一款经典的益智消除类小游戏，通常以图案或图标为主要元素。以下是连连看的基本规则说明：
@@ -33,15 +33,13 @@ func TestVLMPlanning(t *testing.T) {
 
 	opts := &PlanningOptions{
 		UserInstruction: userInstruction,
-		ConversationHistory: []*schema.Message{
-			{
-				Role: schema.User,
-				MultiContent: []schema.ChatMessagePart{
-					{
-						Type: "image_url",
-						ImageURL: &schema.ChatMessageImageURL{
-							URL: imageBase64,
-						},
+		Message: &schema.Message{
+			Role: schema.User,
+			MultiContent: []schema.ChatMessagePart{
+				{
+					Type: schema.ChatMessagePartTypeImageURL,
+					ImageURL: &schema.ChatMessageImageURL{
+						URL: imageBase64,
 					},
 				},
 			},
@@ -108,15 +106,13 @@ func TestXHSPlanning(t *testing.T) {
 
 	opts := &PlanningOptions{
 		UserInstruction: userInstruction,
-		ConversationHistory: []*schema.Message{
-			{
-				Role: schema.User,
-				MultiContent: []schema.ChatMessagePart{
-					{
-						Type: "image_url",
-						ImageURL: &schema.ChatMessageImageURL{
-							URL: imageBase64,
-						},
+		Message: &schema.Message{
+			Role: schema.User,
+			MultiContent: []schema.ChatMessagePart{
+				{
+					Type: schema.ChatMessagePartTypeImageURL,
+					ImageURL: &schema.ChatMessageImageURL{
+						URL: imageBase64,
 					},
 				},
 			},
@@ -182,15 +178,13 @@ func TestValidateInput(t *testing.T) {
 			name: "valid input",
 			opts: &PlanningOptions{
 				UserInstruction: "点击继续使用按钮",
-				ConversationHistory: []*schema.Message{
-					{
-						Role: schema.User,
-						MultiContent: []schema.ChatMessagePart{
-							{
-								Type: "image_url",
-								ImageURL: &schema.ChatMessageImageURL{
-									URL: imageBase64,
-								},
+				Message: &schema.Message{
+					Role: schema.User,
+					MultiContent: []schema.ChatMessagePart{
+						{
+							Type: "image_url",
+							ImageURL: &schema.ChatMessageImageURL{
+								URL: imageBase64,
 							},
 						},
 					},
@@ -203,11 +197,9 @@ func TestValidateInput(t *testing.T) {
 			name: "empty instruction",
 			opts: &PlanningOptions{
 				UserInstruction: "",
-				ConversationHistory: []*schema.Message{
-					{
-						Role:    schema.User,
-						Content: "",
-					},
+				Message: &schema.Message{
+					Role:    schema.User,
+					Content: "",
 				},
 				Size: size,
 			},
@@ -216,8 +208,8 @@ func TestValidateInput(t *testing.T) {
 		{
 			name: "empty conversation history",
 			opts: &PlanningOptions{
-				UserInstruction:     "点击立即卸载按钮",
-				ConversationHistory: []*schema.Message{},
+				UserInstruction: "点击立即卸载按钮",
+				Message:         &schema.Message{},
 			},
 			wantErr: ErrNoConversationHistory,
 		},
@@ -225,11 +217,9 @@ func TestValidateInput(t *testing.T) {
 			name: "invalid image data",
 			opts: &PlanningOptions{
 				UserInstruction: "点击继续使用按钮",
-				ConversationHistory: []*schema.Message{
-					{
-						Role:    schema.User,
-						Content: "no image",
-					},
+				Message: &schema.Message{
+					Role:    schema.User,
+					Content: "no image",
 				},
 				Size: size,
 			},

@@ -47,25 +47,41 @@ func NewPlanner(ctx context.Context) (*Planner, error) {
 }
 
 type Planner struct {
-	ctx    context.Context
-	model  model.ChatModel
-	parser *ActionParser
+	ctx     context.Context
+	model   model.ChatModel
+	parser  *ActionParser
+	history []*schema.Message // conversation history
 }
 
 // Call performs UI planning using Vision Language Model
 func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
-	log.Info().Str("user_instruction", opts.UserInstruction).Msg("start VLM planning")
-
 	// validate input parameters
 	if err := validateInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate input parameters failed")
 	}
 
-	// call VLM service
-	resp, err := p.callVLMService(opts)
-	if err != nil {
-		return nil, errors.Wrap(err, "call VLM service failed")
+	// prepare prompt
+	if len(p.history) == 0 {
+		// add system message
+		systemPrompt := uiTarsPlanningPrompt + opts.UserInstruction
+		p.history = []*schema.Message{
+			{
+				Role:    schema.System,
+				Content: systemPrompt,
+			},
+		}
 	}
+	// append user image message
+	p.appendConversationHistory(opts.Message)
+
+	// call model service, generate response
+	logRequest(p.history)
+	log.Info().Msg("calling model service...")
+	resp, err := p.model.Generate(p.ctx, p.history)
+	if err != nil {
+		return nil, fmt.Errorf("request model service failed: %w", err)
+	}
+	logResponse(resp)
 
 	// parse result
 	result, err := p.parseResult(resp, opts.Size)
@@ -73,10 +89,12 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 		return nil, errors.Wrap(err, "parse result failed")
 	}
 
-	log.Info().
-		Interface("summary", result.ActionSummary).
-		Interface("actions", result.NextActions).
-		Msg("get VLM planning result")
+	// append assistant message
+	p.appendConversationHistory(&schema.Message{
+		Role:    schema.Assistant,
+		Content: result.ActionSummary,
+	})
+
 	return result, nil
 }
 
@@ -85,57 +103,107 @@ func validateInput(opts *PlanningOptions) error {
 		return ErrEmptyInstruction
 	}
 
-	if len(opts.ConversationHistory) == 0 {
+	if opts.Message == nil {
 		return ErrNoConversationHistory
 	}
 
-	// ensure at least one image URL
-	hasImageURL := false
-	for _, msg := range opts.ConversationHistory {
-		if msg.Role == "user" {
-			// check MultiContent
-			if len(msg.MultiContent) > 0 {
-				for _, content := range msg.MultiContent {
-					if content.Type == "image_url" && content.ImageURL != nil {
-						hasImageURL = true
-						break
-					}
+	if opts.Message.Role == schema.User {
+		// check MultiContent
+		if len(opts.Message.MultiContent) > 0 {
+			for _, content := range opts.Message.MultiContent {
+				if content.Type == schema.ChatMessagePartTypeImageURL && content.ImageURL == nil {
+					return ErrInvalidImageData
 				}
 			}
 		}
-		if hasImageURL {
-			break
-		}
-	}
-
-	if !hasImageURL {
-		return ErrInvalidImageData
 	}
 
 	return nil
 }
 
-// callVLMService makes the actual call to the VLM service
-func (p *Planner) callVLMService(opts *PlanningOptions) (*schema.Message, error) {
-	log.Info().Msg("calling VLM service...")
-
-	// prepare prompt
-	systemPrompt := uiTarsPlanningPrompt + opts.UserInstruction
-	messages := []*schema.Message{
-		{
-			Role:    schema.System,
-			Content: systemPrompt,
-		},
+func logRequest(messages []*schema.Message) {
+	msgs := make([]*schema.Message, 0, len(messages))
+	for _, message := range messages {
+		msg := &schema.Message{
+			Role: message.Role,
+		}
+		if message.Content != "" {
+			msg.Content = message.Content
+		} else if len(message.MultiContent) > 0 {
+			for _, mc := range message.MultiContent {
+				switch mc.Type {
+				case schema.ChatMessagePartTypeImageURL:
+					// Create a copy of the ImageURL to avoid modifying the original message
+					imageURLCopy := *mc.ImageURL
+					if strings.HasPrefix(imageURLCopy.URL, "data:image/") {
+						imageURLCopy.URL = "<data:image/base64...>"
+					}
+					msg.MultiContent = append(msg.MultiContent, schema.ChatMessagePart{
+						Type:     mc.Type,
+						ImageURL: &imageURLCopy,
+					})
+				}
+			}
+		}
+		msgs = append(msgs, msg)
 	}
-	messages = append(messages, opts.ConversationHistory...)
+	log.Debug().Interface("messages", msgs).Msg("log request messages")
+}
 
-	// generate response
-	resp, err := p.model.Generate(p.ctx, messages)
-	if err != nil {
-		return nil, fmt.Errorf("OpenAI API request failed: %w", err)
+func logResponse(resp *schema.Message) {
+	log.Info().Str("role", string(resp.Role)).
+		Str("content", resp.Content).Msg("log response message")
+}
+
+// appendConversationHistory adds a message to the conversation history
+func (p *Planner) appendConversationHistory(msg *schema.Message) {
+	// for user image message:
+	// - keep at most 4 user image messages
+	// - delete the oldest user image message when the limit is reached
+	if msg.Role == schema.User {
+		// get all existing user messages
+		userImgCount := 0
+		firstUserImgIndex := -1
+
+		// calculate the number of user messages and find the index of the first user message
+		for i, item := range p.history {
+			if item.Role == schema.User {
+				userImgCount++
+				if firstUserImgIndex == -1 {
+					firstUserImgIndex = i
+				}
+			}
+		}
+
+		// if there are already 4 user messages, delete the first one before adding the new message
+		if userImgCount >= 4 && firstUserImgIndex >= 0 {
+			// delete the first user message
+			p.history = append(
+				p.history[:firstUserImgIndex],
+				p.history[firstUserImgIndex+1:]...,
+			)
+		}
+		// add the new user message to the history
+		p.history = append(p.history, msg)
 	}
-	log.Info().Str("content", resp.Content).Msg("get VLM response")
-	return resp, nil
+
+	// for assistant message:
+	// - keep at most the last 10 assistant messages
+	if msg.Role == schema.Assistant {
+		// add the new assistant message to the history
+		p.history = append(p.history, msg)
+
+		// if there are more than 10 assistant messages, remove the oldest ones
+		assistantMsgCount := 0
+		for i := len(p.history) - 1; i >= 0; i-- {
+			if p.history[i].Role == schema.Assistant {
+				assistantMsgCount++
+				if assistantMsgCount > 10 {
+					p.history = append(p.history[:i], p.history[i+1:]...)
+				}
+			}
+		}
+	}
 }
 
 func (p *Planner) parseResult(msg *schema.Message, size types.Size) (*PlanningResult, error) {
@@ -151,6 +219,10 @@ func (p *Planner) parseResult(msg *schema.Message, size types.Size) (*PlanningRe
 		return nil, errors.Wrap(err, "process VLM response failed")
 	}
 
+	log.Info().
+		Interface("summary", result.ActionSummary).
+		Interface("actions", result.NextActions).
+		Msg("get VLM planning result")
 	return result, nil
 }
 

@@ -21,9 +21,9 @@ func (s openaiLLMService) Call(opts *PlanningOptions) (*PlanningResult, error) {
 
 // PlanningOptions represents the input options for planning
 type PlanningOptions struct {
-	UserInstruction     string            `json:"user_instruction"`
-	ConversationHistory []*schema.Message `json:"conversation_history"`
-	Size                types.Size        `json:"size"`
+	UserInstruction string          `json:"user_instruction"` // append to system prompt
+	Message         *schema.Message `json:"message"`
+	Size            types.Size      `json:"size"`
 }
 
 // PlanningResult represents the result of planning
