@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
@@ -32,47 +33,46 @@ const (
 	EnvOpenAIInitConfigJSON = "OPENAI_INIT_CONFIG_JSON"
 )
 
-func init() {
-	err := loadEnv()
-	if err != nil {
-		log.Warn().Err(err).Msg("load .env file failed")
-	}
-}
+var once sync.Once
 
 // loadEnv loads environment variables from .env file
 // it will search for .env file from current working directory upward recursively
-func loadEnv() error {
-	// get current working directory
-	cwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("failed to get current working directory: %v", err)
-	}
+func loadEnv() {
+	once.Do(func() {
+		// get current working directory
+		cwd, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
 
-	// locate .env file from current working directory upward recursively
-	envPath := cwd
-	for {
-		envFile := filepath.Join(envPath, ".env")
-		if _, err := os.Stat(envFile); err == nil {
-			// found .env file
-			// override existing env variables
-			err = godotenv.Overload(envFile)
-			if err != nil {
-				return fmt.Errorf("failed to load env file: %v", err)
+		// locate .env file from current working directory upward recursively
+		envPath := cwd
+		for {
+			envFile := filepath.Join(envPath, ".env")
+			if _, err := os.Stat(envFile); err == nil {
+				// found .env file
+				// override existing env variables
+				err = godotenv.Overload(envFile)
+				if err != nil {
+					log.Fatal().Err(err).
+						Str("path", envFile).Msg("overload env file failed")
+				}
+				log.Info().Str("path", envFile).Msg("overload env success")
 			}
-			log.Info().Str("path", envFile).Msg("load env success")
-			return nil
-		}
 
-		// reached root directory
-		parent := filepath.Dir(envPath)
-		if parent == envPath {
-			return fmt.Errorf("no .env file found from current directory to root")
+			// reached root directory
+			parent := filepath.Dir(envPath)
+			if parent == envPath {
+				log.Info().Msg("no .env file found from current directory to root")
+				return
+			}
+			envPath = parent
 		}
-		envPath = parent
-	}
+	})
 }
 
 func checkEnvLLM() error {
+	loadEnv()
 	openaiBaseURL := os.Getenv("OPENAI_BASE_URL")
 	if openaiBaseURL == "" {
 		return errors.Wrap(code.LLMEnvMissedError, "OPENAI_BASE_URL missed")
@@ -156,6 +156,7 @@ func (c *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 // GetModelConfig get OpenAI config
 func GetModelConfig() (*openai.ChatModelConfig, error) {
+	loadEnv()
 	envConfig := &OpenAIInitConfig{
 		Headers: make(map[string]string),
 	}
