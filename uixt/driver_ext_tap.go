@@ -8,22 +8,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (dExt *XTDriver) TapByLLM(text string, opts ...option.ActionOption) error {
-	text = "[click] " + text
-	result, err := dExt.PlanNextAction(text, opts...)
-	if err != nil {
-		return err
-	}
-
-	action := result.NextActions[0]
-	if action.ActionType != ai.ActionTypeClick {
-		return fmt.Errorf("expected click action, got: %s", action.ActionType)
-	}
-
-	point := action.ActionInputs["startBox"].([]float64)
-	return dExt.TapAbsXY(point[0], point[1], opts...)
-}
-
 func (dExt *XTDriver) TapByOCR(text string, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.ScreenShotFileName == "" {

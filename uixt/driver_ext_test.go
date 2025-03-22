@@ -125,7 +125,7 @@ func TestDriverExt_TapByOCR(t *testing.T) {
 
 func TestDriverExt_TapByLLM(t *testing.T) {
 	driver := setupDriverExt(t)
-	err := driver.TapByLLM("点击第一个帖子的作者头像")
+	err := driver.AIAction("点击第一个帖子的作者头像")
 	assert.Nil(t, err)
 }
 

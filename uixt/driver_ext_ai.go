@@ -21,30 +21,38 @@ func (dExt *XTDriver) StartToGoal(text string, opts ...option.ActionOption) erro
 	for {
 		attempt++
 		log.Info().Int("attempt", attempt).Msg("planning attempt")
-
-		// plan next action
-		result, err := dExt.PlanNextAction(text, opts...)
-		if err != nil {
-			return errors.Wrap(err, "failed to get next action from planner")
-		}
-
-		// do actions
-		for _, action := range result.NextActions {
-			switch action.ActionType {
-			case ai.ActionTypeClick:
-				point := action.ActionInputs["startBox"].([]float64)
-				if err := dExt.TapAbsXY(point[0], point[1], opts...); err != nil {
-					return err
-				}
-			case ai.ActionTypeFinished:
-				return nil
-			}
+		if err := dExt.AIAction(text, opts...); err != nil {
+			return err
 		}
 
 		if options.MaxRetryTimes > 1 && attempt >= options.MaxRetryTimes {
 			return errors.New("reached max retry times")
 		}
 	}
+}
+
+func (dExt *XTDriver) AIAction(text string, opts ...option.ActionOption) error {
+	// plan next action
+	result, err := dExt.PlanNextAction(text, opts...)
+	if err != nil {
+		return err
+	}
+
+	// do actions
+	for _, action := range result.NextActions {
+		switch action.ActionType {
+		case ai.ActionTypeClick:
+			point := action.ActionInputs["startBox"].([]float64)
+			if err := dExt.TapAbsXY(point[0], point[1], opts...); err != nil {
+				return err
+			}
+		case ai.ActionTypeFinished:
+			log.Info().Msg("ai action done")
+			return nil
+		}
+	}
+
+	return nil
 }
 
 func (dExt *XTDriver) PlanNextAction(text string, opts ...option.ActionOption) (*ai.PlanningResult, error) {
