@@ -45,6 +45,7 @@ const (
 	ACTION_Input       ActionMethod = "input"
 	ACTION_Back        ActionMethod = "back"
 	ACTION_KeyCode     ActionMethod = "keycode"
+	ACTION_AIAction    ActionMethod = "ai_action" // action with ai
 
 	// custom actions
 	ACTION_SwipeToTapApp   ActionMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
@@ -64,12 +65,14 @@ const (
 	SelectorLabel         string = "ui_label"
 	SelectorOCR           string = "ui_ocr"
 	SelectorImage         string = "ui_image"
+	SelectorAI            string = "ui_ai" // ui query with ai
 	SelectorForegroundApp string = "ui_foreground_app"
 	// assertions
 	AssertionEqual     string = "equal"
 	AssertionNotEqual  string = "not_equal"
 	AssertionExists    string = "exists"
 	AssertionNotExists string = "not_exists"
+	AssertionAI        string = "ai_assert" // assert with ai
 )
 
 type MobileAction struct {
@@ -281,6 +284,11 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		fn := action.Fn
 		fn()
 		return nil
+	case ACTION_AIAction:
+		if prompt, ok := action.Params.(string); ok {
+			return dExt.AIAction(prompt, action.GetOptions()...)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_AIAction, action.Params)
 	default:
 		log.Warn().Str("action", string(action.Method)).Msg("action not implemented")
 		return errors.Wrapf(code.InvalidCaseError,

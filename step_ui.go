@@ -164,6 +164,18 @@ func (s *StepMobile) TapByUITypes(opts ...option.ActionOption) *StepMobile {
 	return s
 }
 
+// AIAction do actions with VLM
+func (s *StepMobile) AIAction(prompt string, opts ...option.ActionOption) *StepMobile {
+	action := uixt.MobileAction{
+		Method:  uixt.ACTION_AIAction,
+		Params:  prompt,
+		Options: option.NewActionOptions(opts...),
+	}
+
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
 // DoubleTapXY double taps the point {X,Y}, X & Y is percentage of coordinates
 func (s *StepMobile) DoubleTapXY(x, y float64, opts ...option.ActionOption) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
@@ -522,6 +534,21 @@ func (s *StepMobileUIValidation) AssertImageNotExists(expectedImagePath string, 
 		v.Message = msg[0]
 	} else {
 		v.Message = fmt.Sprintf("cv image [%s] should not exist", expectedImagePath)
+	}
+	s.Validators = append(s.Validators, v)
+	return s
+}
+
+func (s *StepMobileUIValidation) AssertByAI(prompt string, msg ...string) *StepMobileUIValidation {
+	v := Validator{
+		Check:  uixt.SelectorAI,
+		Assert: uixt.AssertionAI,
+		Expect: prompt,
+	}
+	if len(msg) > 0 {
+		v.Message = msg[0]
+	} else {
+		v.Message = fmt.Sprintf("assert ai prompt [%s] failed", prompt)
 	}
 	s.Validators = append(s.Validators, v)
 	return s
