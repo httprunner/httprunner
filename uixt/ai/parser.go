@@ -23,7 +23,7 @@ type ActionParser struct {
 
 // Parse parses the prediction text and extracts actions
 func (p *ActionParser) Parse(predictionText string) ([]ParsedAction, error) {
-	// try parsing JSON format, from VLM like GPT-4o
+	// try parsing JSON format, from VLM like openai/gpt-4o
 	var jsonActions []ParsedAction
 	jsonActions, jsonErr := p.parseJSON(predictionText)
 	if jsonErr == nil {

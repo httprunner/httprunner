@@ -8,10 +8,10 @@ Thought: ...
 Action: ...
 
 ## Action Space
-click(start_box='<|box_start|>(x1,y1)<|box_end|>')
-long_press(start_box='<|box_start|>(x1,y1)<|box_end|>', time='')
+click(start_box='[x1,y1]')
+long_press(start_box='[x1,y1]', time='')
 type(content='')
-drag(start_box='<|box_start|>(x1,y1)<|box_end|>', end_box='<|box_start|>(x3,y3)<|box_end|>')
+drag(start_box='[x1,y1]', end_box='[x2,y2]')
 press_home()
 press_back()
 finished(content='') # Submit the task regardless of whether it succeeds or fails.

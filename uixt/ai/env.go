@@ -58,6 +58,7 @@ func loadEnv() {
 						Str("path", envFile).Msg("overload env file failed")
 				}
 				log.Info().Str("path", envFile).Msg("overload env success")
+				return
 			}
 
 			// reached root directory
@@ -154,6 +155,12 @@ func (c *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return c.Transport.RoundTrip(req)
 }
 
+type OutputFormat struct {
+	Thought string `json:"thought"`
+	Action  string `json:"action"`
+	Error   string `json:"error,omitempty"`
+}
+
 // GetModelConfig get OpenAI config
 func GetModelConfig() (*openai.ChatModelConfig, error) {
 	loadEnv()
@@ -169,6 +176,11 @@ func GetModelConfig() (*openai.ChatModelConfig, error) {
 		}
 	}
 
+	// outputFormatSchema, err := openapi3gen.NewSchemaRefForValue(&OutputFormat{}, nil)
+	// if err != nil {
+	// 	log.Fatal().Err(err).Msg("NewSchemaRefForValue failed")
+	// }
+
 	config := &openai.ChatModelConfig{
 		HTTPClient: &http.Client{
 			Timeout: defaultTimeout,
@@ -177,6 +189,17 @@ func GetModelConfig() (*openai.ChatModelConfig, error) {
 				Headers:   envConfig.Headers,
 			},
 		},
+		// TODO: set structured response format
+		// https://github.com/cloudwego/eino-ext/blob/main/components/model/openai/examples/structured/structured.go
+		// ResponseFormat: &openai2.ChatCompletionResponseFormat{
+		// 	Type: openai2.ChatCompletionResponseFormatTypeJSONSchema,
+		// 	JSONSchema: &openai2.ChatCompletionResponseFormatJSONSchema{
+		// 		Name:        "thought_and_action",
+		// 		Description: "data that describes planning thought and action",
+		// 		Schema:      outputFormatSchema.Value,
+		// 		Strict:      false,
+		// 	},
+		// },
 	}
 
 	if baseURL := GetEnvConfig(EnvOpenAIBaseURL); baseURL != "" {

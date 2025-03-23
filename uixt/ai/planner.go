@@ -42,6 +42,7 @@ func NewPlanner(ctx context.Context) (*Planner, error) {
 	parser := NewActionParser(1000)
 	return &Planner{
 		ctx:    ctx,
+		config: config,
 		model:  model,
 		parser: parser,
 	}, nil
@@ -50,6 +51,7 @@ func NewPlanner(ctx context.Context) (*Planner, error) {
 type Planner struct {
 	ctx     context.Context
 	model   model.ChatModel
+	config  *openai.ChatModelConfig
 	parser  *ActionParser
 	history []*schema.Message // conversation history
 }
@@ -79,7 +81,8 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	logRequest(p.history)
 	startTime := time.Now()
 	resp, err := p.model.Generate(p.ctx, p.history)
-	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).Msg("call model service")
+	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
+		Str("model", p.config.Model).Msg("call model service")
 	if err != nil {
 		return nil, fmt.Errorf("request model service failed: %w", err)
 	}
@@ -153,8 +156,15 @@ func logRequest(messages []*schema.Message) {
 }
 
 func logResponse(resp *schema.Message) {
-	log.Info().Str("role", string(resp.Role)).
-		Str("content", resp.Content).Msg("log response message")
+	logger := log.Info().Str("role", string(resp.Role)).
+		Str("content", resp.Content)
+	if resp.ResponseMeta != nil {
+		logger = logger.Interface("response_meta", resp.ResponseMeta)
+	}
+	if resp.Extra != nil {
+		logger = logger.Interface("extra", resp.Extra)
+	}
+	logger.Msg("log response message")
 }
 
 // appendConversationHistory adds a message to the conversation history
