@@ -119,7 +119,7 @@ func TestDriverExt_Seek(t *testing.T) {
 
 func TestDriverExt_TapByOCR(t *testing.T) {
 	driver := setupDriverExt(t)
-	err := driver.TapByOCR("天气")
+	err := driver.TapByOCR("天气", option.WithScope(0, 0.7, 0.3, 1))
 	assert.Nil(t, err)
 }
 
