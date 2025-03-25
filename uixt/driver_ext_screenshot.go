@@ -150,6 +150,25 @@ func (dExt *XTDriver) FindScreenText(text string, opts ...option.ActionOption) (
 	if options.ScreenShotFileName == "" {
 		opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("find_screen_text_%s", text)))
 	}
+
+	// convert relative scope to absolute scope
+	if options.AbsScope == nil && len(options.Scope) == 4 {
+		windowSize, err := dExt.WindowSize()
+		if err != nil {
+			return ai.OCRText{}, err
+		}
+		absScope := option.AbsScope{
+			int(options.Scope[0] * float64(windowSize.Width)),
+			int(options.Scope[1] * float64(windowSize.Height)),
+			int(options.Scope[2] * float64(windowSize.Width)),
+			int(options.Scope[3] * float64(windowSize.Height)),
+		}
+		opts = append(opts, option.WithAbsScope(
+			absScope[0], absScope[1], absScope[2], absScope[3]))
+		log.Info().Interface("scope", options.Scope).
+			Interface("absScope", absScope).Msg("convert to abs scope")
+	}
+
 	ocrTexts, err := dExt.GetScreenTexts(opts...)
 	if err != nil {
 		return
