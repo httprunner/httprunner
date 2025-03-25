@@ -539,7 +539,7 @@ func (s *StepMobileUIValidation) AssertImageNotExists(expectedImagePath string, 
 	return s
 }
 
-func (s *StepMobileUIValidation) AssertByAI(prompt string, msg ...string) *StepMobileUIValidation {
+func (s *StepMobileUIValidation) AssertAI(prompt string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
 		Check:  uixt.SelectorAI,
 		Assert: uixt.AssertionAI,

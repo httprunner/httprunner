@@ -80,3 +80,21 @@ func TestAndroidAction(t *testing.T) {
 	err := hrp.NewRunner(t).Run(testCase)
 	assert.Nil(t, err)
 }
+
+func TestAIAction(t *testing.T) {
+	testCase := &hrp.TestCase{
+		Config: hrp.NewConfig("run ui action with ai"),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("launch settings").
+				Android().AIAction("进入手机系统设置").
+				Validate().
+				AssertAI("当前位于手机设置页面"),
+			hrp.NewStep("turn on fly mode").
+				Android().AIAction("开启飞行模式").
+				Validate().
+				AssertAI("飞行模式已开启"),
+		},
+	}
+	err := hrp.NewRunner(t).Run(testCase)
+	assert.Nil(t, err)
+}

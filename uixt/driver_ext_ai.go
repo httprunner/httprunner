@@ -55,6 +55,14 @@ func (dExt *XTDriver) AIAction(text string, opts ...option.ActionOption) error {
 	return nil
 }
 
+func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (string, error) {
+	return "", nil
+}
+
+func (dExt *XTDriver) AIAssert(text string, opts ...option.ActionOption) error {
+	return nil
+}
+
 func (dExt *XTDriver) PlanNextAction(text string, opts ...option.ActionOption) (*ai.PlanningResult, error) {
 	if dExt.LLMService == nil {
 		return nil, errors.New("LLM service is not initialized")

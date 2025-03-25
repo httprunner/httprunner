@@ -185,8 +185,12 @@ func (dExt *XTDriver) DoValidation(check, assert, expected string, message ...st
 	switch check {
 	case SelectorOCR:
 		err = dExt.assertOCR(expected, assert)
+	// case SelectorAI:
+	// 	// TODO
 	case SelectorForegroundApp:
 		err = dExt.assertForegroundApp(expected, assert)
+	default:
+		return fmt.Errorf("validator %s not implemented", check)
 	}
 
 	if err != nil {
@@ -198,7 +202,8 @@ func (dExt *XTDriver) DoValidation(check, assert, expected string, message ...st
 		return err
 	}
 
-	log.Info().Str("assert", assert).Str("expect", expected).Msg("validate success")
+	log.Info().Str("check", check).Str("assert", assert).
+		Str("expect", expected).Msg("validate success")
 	return nil
 }
 
