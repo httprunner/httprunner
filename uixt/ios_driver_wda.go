@@ -989,6 +989,11 @@ func (wd *WDADriver) PushImage(localPath string) error {
 	return err
 }
 
+func (wd *WDADriver) PullImages(localDir string) error {
+	log.Warn().Msg("PullImages not implemented in WDADriver")
+	return nil
+}
+
 func (wd *WDADriver) ClearImages() error {
 	log.Info().Msg("WDADriver.ClearImages")
 	data := map[string]interface{}{}

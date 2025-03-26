@@ -288,6 +288,11 @@ func (hd *HDCDriver) PushImage(localPath string) error {
 	return nil
 }
 
+func (hd *HDCDriver) PullImages(localDir string) error {
+	log.Warn().Msg("PullImages not implemented in HDCDriver")
+	return nil
+}
+
 func (hd *HDCDriver) ClearImages() error {
 	log.Warn().Msg("ClearImages not implemented in HDCDriver")
 	return nil

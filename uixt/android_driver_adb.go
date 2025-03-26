@@ -961,6 +961,75 @@ func (ad *ADBDriver) ClearImages() error {
 	return nil
 }
 
+// PullImages pulls all images from device's DCIM/Camera directory to local directory
+func (ad *ADBDriver) PullImages(localDir string) error {
+	log.Info().Str("localDir", localDir).Msg("ADBDriver.PullImages")
+	remoteDir := "/sdcard/DCIM/Camera/"
+
+	// create local directory if not exists
+	if err := os.MkdirAll(localDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create local directory: %w", err)
+	}
+
+	files, err := ad.Device.List(remoteDir)
+	if err != nil {
+		return fmt.Errorf("failed to list directory %s: %w", remoteDir, err)
+	}
+
+	for _, file := range files {
+		// filter image files by extension
+		ext := strings.ToLower(path.Ext(file.Name))
+		if !isImageFile(ext) {
+			continue
+		}
+
+		remotePath := path.Join(remoteDir, file.Name)
+		localPath := path.Join(localDir, file.Name)
+
+		// check if file already exists
+		if _, err := os.Stat(localPath); err == nil {
+			log.Debug().Str("localPath", localPath).Msg("file already exists, skipping")
+			continue
+		}
+
+		// create local file
+		f, err := os.Create(localPath)
+		if err != nil {
+			log.Error().Err(err).Str("localPath", localPath).Msg("failed to create local file")
+			continue
+		}
+		defer f.Close()
+
+		// pull image file
+		if err := ad.Device.Pull(remotePath, f); err != nil {
+			log.Error().Err(err).
+				Str("remotePath", remotePath).
+				Str("localPath", localPath).
+				Msg("failed to pull image")
+			continue // continue with next file
+		}
+		log.Info().
+			Str("remotePath", remotePath).
+			Str("localPath", localPath).
+			Msg("image pulled successfully")
+	}
+	return nil
+}
+
+// isImageFile checks if the file extension is an image format
+func isImageFile(ext string) bool {
+	imageExts := map[string]bool{
+		".jpg":  true,
+		".jpeg": true,
+		".png":  true,
+		".gif":  true,
+		".bmp":  true,
+		".webp": true,
+		".heic": true,
+	}
+	return imageExts[ext]
+}
+
 type ExportPoint struct {
 	Start     int         `json:"start" yaml:"start"`
 	End       int         `json:"end" yaml:"end"`

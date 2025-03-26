@@ -452,6 +452,10 @@ func (wd *BrowserDriver) PushImage(localPath string) error {
 	return errors.New("not support")
 }
 
+func (wd *BrowserDriver) PullImages(localDir string) error {
+	return errors.New("not support")
+}
+
 func (wd *BrowserDriver) Orientation() (orientation types.Orientation, err error) {
 	log.Warn().Msg("Orientation not implemented in ADBDriver")
 	return

@@ -260,6 +260,9 @@ func TestDriver_ADB_PushImage(t *testing.T) {
 	err = driver.PushImage(path)
 	assert.Nil(t, err)
 
+	err = driver.PullImages("./test")
+	assert.Nil(t, err)
+
 	err = driver.ClearImages()
 	assert.Nil(t, err)
 }
