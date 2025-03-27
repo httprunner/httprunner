@@ -944,78 +944,8 @@ func (ad *ADBDriver) OpenUrl(url string) (err error) {
 
 func (ad *ADBDriver) PushImage(localPath string) error {
 	log.Info().Str("localPath", localPath).Msg("ADBDriver.PushImage")
-	remotePath := path.Join("/sdcard/DCIM/Camera/", path.Base(localPath))
-	if err := ad.Device.PushFile(localPath, remotePath); err != nil {
-		return err
-	}
-	// refresh
-	_, _ = ad.Device.RunShellCommand("am", "broadcast",
-		"-a", "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
-		"-d", fmt.Sprintf("file://%s", remotePath))
-	return nil
-}
-
-func (ad *ADBDriver) ClearImages() error {
-	log.Info().Msg("ADBDriver.ClearImages")
-	_, _ = ad.Device.RunShellCommand("rm", "-rf", "/sdcard/DCIM/Camera/*")
-	return nil
-}
-
-func (ad *ADBDriver) PullFiles(localDir string, remoteDirs ...string) error {
-	log.Info().Str("localDir", localDir).Strs("remoteDirs", remoteDirs).Msg("ADBDriver.PullFiles")
-
-	// create local directory if not exists
-	if err := os.MkdirAll(localDir, 0o755); err != nil {
-		return fmt.Errorf("failed to create local directory: %w", err)
-	}
-
-	for _, remoteDir := range remoteDirs {
-		files, err := ad.Device.List(remoteDir)
-		if err != nil {
-			return fmt.Errorf("failed to list directory %s: %w", remoteDir, err)
-		}
-
-		for _, file := range files {
-			remotePath := path.Join(remoteDir, file.Name)
-			localPath := path.Join(localDir, file.Name)
-
-			// check if file already exists
-			if _, err := os.Stat(localPath); err == nil {
-				log.Debug().Str("localPath", localPath).Msg("file already exists, skipping")
-				continue
-			}
-
-			// create local file
-			f, err := os.Create(localPath)
-			if err != nil {
-				log.Error().Err(err).Str("localPath", localPath).Msg("failed to create local file")
-				continue
-			}
-			defer f.Close()
-
-			// pull image file
-			if err := ad.Device.Pull(remotePath, f); err != nil {
-				log.Error().Err(err).
-					Str("remotePath", remotePath).
-					Str("localPath", localPath).
-					Msg("failed to pull file")
-				continue // continue with next file
-			}
-			log.Info().
-				Str("remotePath", remotePath).
-				Str("localPath", localPath).
-				Msg("file pulled successfully")
-		}
-	}
-	return nil
-}
-
-func (ad *ADBDriver) ClearFiles(paths ...string) error {
-	log.Info().Strs("paths", paths).Msg("ADBDriver.ClearFiles")
-	for _, path := range paths {
-		_, _ = ad.Device.RunShellCommand("rm", "-rf", path)
-	}
-	return nil
+	remoteDir := "/sdcard/DCIM/Camera/"
+	return ad.PushFile(localPath, remoteDir)
 }
 
 // PullImages pulls all images from device's DCIM/Camera directory to local directory
@@ -1085,6 +1015,82 @@ func isImageFile(ext string) bool {
 		".heic": true,
 	}
 	return imageExts[ext]
+}
+
+func (ad *ADBDriver) ClearImages() error {
+	log.Info().Msg("ADBDriver.ClearImages")
+	_, _ = ad.Device.RunShellCommand("rm", "-rf", "/sdcard/DCIM/Camera/*")
+	return nil
+}
+
+func (ad *ADBDriver) PushFile(localPath string, remoteDir string) error {
+	log.Info().Str("localPath", localPath).Str("remoteDir", remoteDir).Msg("ADBDriver.PushFile")
+	remotePath := path.Join(remoteDir, path.Base(localPath))
+	if err := ad.Device.PushFile(localPath, remotePath); err != nil {
+		return err
+	}
+	// refresh
+	_, _ = ad.Device.RunShellCommand("am", "broadcast",
+		"-a", "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
+		"-d", fmt.Sprintf("file://%s", remotePath))
+	return nil
+}
+
+func (ad *ADBDriver) PullFiles(localDir string, remoteDirs ...string) error {
+	log.Info().Str("localDir", localDir).Strs("remoteDirs", remoteDirs).Msg("ADBDriver.PullFiles")
+
+	// create local directory if not exists
+	if err := os.MkdirAll(localDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create local directory: %w", err)
+	}
+
+	for _, remoteDir := range remoteDirs {
+		files, err := ad.Device.List(remoteDir)
+		if err != nil {
+			return fmt.Errorf("failed to list directory %s: %w", remoteDir, err)
+		}
+
+		for _, file := range files {
+			remotePath := path.Join(remoteDir, file.Name)
+			localPath := path.Join(localDir, file.Name)
+
+			// check if file already exists
+			if _, err := os.Stat(localPath); err == nil {
+				log.Debug().Str("localPath", localPath).Msg("file already exists, skipping")
+				continue
+			}
+
+			// create local file
+			f, err := os.Create(localPath)
+			if err != nil {
+				log.Error().Err(err).Str("localPath", localPath).Msg("failed to create local file")
+				continue
+			}
+			defer f.Close()
+
+			// pull image file
+			if err := ad.Device.Pull(remotePath, f); err != nil {
+				log.Error().Err(err).
+					Str("remotePath", remotePath).
+					Str("localPath", localPath).
+					Msg("failed to pull file")
+				continue // continue with next file
+			}
+			log.Info().
+				Str("remotePath", remotePath).
+				Str("localPath", localPath).
+				Msg("file pulled successfully")
+		}
+	}
+	return nil
+}
+
+func (ad *ADBDriver) ClearFiles(paths ...string) error {
+	log.Info().Strs("paths", paths).Msg("ADBDriver.ClearFiles")
+	for _, path := range paths {
+		_, _ = ad.Device.RunShellCommand("rm", "-rf", path)
+	}
+	return nil
 }
 
 type ExportPoint struct {

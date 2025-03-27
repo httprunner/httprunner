@@ -1002,6 +1002,11 @@ func (wd *WDADriver) ClearImages() error {
 	return err
 }
 
+func (wd *WDADriver) PushFile(localPath string, remoteDir string) error {
+	log.Warn().Msg("PushFile not implemented in WDADriver")
+	return nil
+}
+
 func (wd *WDADriver) PullFiles(localDir string, remoteDirs ...string) error {
 	log.Warn().Msg("PullFiles not implemented in WDADriver")
 	return nil

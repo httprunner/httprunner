@@ -72,6 +72,7 @@ type IDriver interface {
 	ClearImages() error
 
 	// files related
+	PushFile(localPath string, remoteDir string) error
 	PullFiles(localDir string, remoteDirs ...string) error
 	ClearFiles(paths ...string) error
 
