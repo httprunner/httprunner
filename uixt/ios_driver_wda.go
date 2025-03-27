@@ -1002,6 +1002,11 @@ func (wd *WDADriver) ClearImages() error {
 	return err
 }
 
+func (wd *WDADriver) ClearFiles(paths ...string) error {
+	log.Warn().Msg("ClearFiles not implemented in WDADriver")
+	return nil
+}
+
 type wdaResponse struct {
 	Status    int         `json:"status"`
 	SessionID string      `json:"sessionId"`

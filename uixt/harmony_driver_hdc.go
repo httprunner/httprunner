@@ -297,3 +297,8 @@ func (hd *HDCDriver) ClearImages() error {
 	log.Warn().Msg("ClearImages not implemented in HDCDriver")
 	return nil
 }
+
+func (hd *HDCDriver) ClearFiles(paths ...string) error {
+	log.Warn().Msg("ClearFiles not implemented in HDCDriver")
+	return nil
+}

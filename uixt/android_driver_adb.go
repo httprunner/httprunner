@@ -961,6 +961,14 @@ func (ad *ADBDriver) ClearImages() error {
 	return nil
 }
 
+func (ad *ADBDriver) ClearFiles(paths ...string) error {
+	log.Info().Strs("paths", paths).Msg("ADBDriver.ClearFiles")
+	for _, path := range paths {
+		_, _ = ad.Device.RunShellCommand("rm", "-rf", path)
+	}
+	return nil
+}
+
 // PullImages pulls all images from device's DCIM/Camera directory to local directory
 func (ad *ADBDriver) PullImages(localDir string) error {
 	log.Info().Str("localDir", localDir).Msg("ADBDriver.PullImages")

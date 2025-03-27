@@ -448,6 +448,10 @@ func (wd *BrowserDriver) ClearImages() error {
 	return errors.New("not support")
 }
 
+func (wd *BrowserDriver) ClearFiles(paths ...string) error {
+	return errors.New("not support")
+}
+
 func (wd *BrowserDriver) PushImage(localPath string) error {
 	return errors.New("not support")
 }
