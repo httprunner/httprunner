@@ -72,6 +72,7 @@ type IDriver interface {
 	ClearImages() error
 
 	// files related
+	PullFiles(localDir string, remoteDirs ...string) error
 	ClearFiles(paths ...string) error
 
 	// triggers the log capture and returns the log entries
