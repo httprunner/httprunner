@@ -288,7 +288,27 @@ func (hd *HDCDriver) PushImage(localPath string) error {
 	return nil
 }
 
+func (hd *HDCDriver) PullImages(localDir string) error {
+	log.Warn().Msg("PullImages not implemented in HDCDriver")
+	return nil
+}
+
 func (hd *HDCDriver) ClearImages() error {
 	log.Warn().Msg("ClearImages not implemented in HDCDriver")
+	return nil
+}
+
+func (hd *HDCDriver) PushFile(localPath string, remoteDir string) error {
+	log.Warn().Msg("PushFile not implemented in HDCDriver")
+	return nil
+}
+
+func (hd *HDCDriver) PullFiles(localDir string, remoteDirs ...string) error {
+	log.Warn().Msg("PullFiles not implemented in HDCDriver")
+	return nil
+}
+
+func (hd *HDCDriver) ClearFiles(paths ...string) error {
+	log.Warn().Msg("ClearFiles not implemented in HDCDriver")
 	return nil
 }

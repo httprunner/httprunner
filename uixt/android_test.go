@@ -24,7 +24,9 @@ func setupADBDriverExt(t *testing.T) *XTDriver {
 	driver, err := device.NewDriver()
 	require.Nil(t, err)
 	return NewXTDriver(driver,
-		ai.WithCVService(ai.CVServiceTypeVEDEM))
+		ai.WithCVService(ai.CVServiceTypeVEDEM),
+		ai.WithLLMService(ai.LLMServiceTypeUITARS),
+	)
 }
 
 func setupUIA2DriverExt(t *testing.T) *XTDriver {
@@ -256,6 +258,9 @@ func TestDriver_ADB_PushImage(t *testing.T) {
 	defer os.Remove(path)
 
 	err = driver.PushImage(path)
+	assert.Nil(t, err)
+
+	err = driver.PullImages("./test")
 	assert.Nil(t, err)
 
 	err = driver.ClearImages()

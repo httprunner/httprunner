@@ -68,7 +68,13 @@ type IDriver interface {
 
 	// image related
 	PushImage(localPath string) error
+	PullImages(localDir string) error
 	ClearImages() error
+
+	// files related
+	PushFile(localPath string, remoteDir string) error
+	PullFiles(localDir string, remoteDirs ...string) error
+	ClearFiles(paths ...string) error
 
 	// triggers the log capture and returns the log entries
 	StartCaptureLog(identifier ...string) error

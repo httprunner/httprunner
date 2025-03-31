@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"context"
 	"os"
 
 	"github.com/rs/zerolog/log"
@@ -46,11 +47,17 @@ func WithCVService(service CVServiceType) AIServiceOption {
 type LLMServiceType string
 
 const (
+	LLMServiceTypeUITARS     LLMServiceType = "ui-tars"
 	LLMServiceTypeGPT4o      LLMServiceType = "gpt-4o"
 	LLMServiceTypeDeepSeekV3 LLMServiceType = "deepseek-v3"
 )
 
 func WithLLMService(service LLMServiceType) AIServiceOption {
+	if err := checkEnvLLM(); err != nil {
+		log.Error().Err(err).Msg("check LLM env failed")
+		os.Exit(code.GetErrorCode(err))
+	}
+
 	return func(opts *AIServices) {
 		if service == LLMServiceTypeGPT4o {
 			var err error
@@ -58,6 +65,13 @@ func WithLLMService(service LLMServiceType) AIServiceOption {
 			if err != nil {
 				log.Error().Err(err).Msg("init gpt-4o llm service failed")
 				os.Exit(code.GetErrorCode(err))
+			}
+		}
+		if service == LLMServiceTypeUITARS {
+			var err error
+			opts.ILLMService, err = NewPlanner(context.Background())
+			if err != nil {
+				log.Error().Err(err).Msg("init ui-tars llm service failed")
 			}
 		}
 	}

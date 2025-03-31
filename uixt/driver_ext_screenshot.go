@@ -7,7 +7,6 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	_ "image/png"
 	"os"
 	"path/filepath"
 	"strings"
@@ -45,10 +44,7 @@ func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) ai.OCRTexts {
 	})
 }
 
-// GetScreenResult takes a screenshot, returns the image recognition result
-func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
-	screenshotOptions := option.NewActionOptions(opts...)
-
+func (dExt *XTDriver) GetScreenShotBuffer() (compressedBufSource *bytes.Buffer, err error) {
 	// take screenshot
 	bufSource, err := dExt.ScreenShot()
 	if err != nil {
@@ -62,6 +58,19 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 		return nil, errors.Wrapf(code.DeviceScreenShotError,
 			"compress screenshot failed %v", err)
 	}
+
+	return compressBufSource, nil
+}
+
+// GetScreenResult takes a screenshot, returns the image recognition result
+func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
+	// get compressed screenshot buffer
+	compressBufSource, err := dExt.GetScreenShotBuffer()
+	if err != nil {
+		return nil, err
+	}
+
+	screenshotOptions := option.NewActionOptions(opts...)
 
 	// save compressed screenshot to file
 	var fileName string
@@ -81,8 +90,6 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 		err := saveScreenShot(compressBufSource, imagePath)
 		if err != nil {
 			log.Error().Err(err).Msg("save screenshot file failed")
-		} else {
-			log.Info().Str("path", imagePath).Msg("screenshot saved")
 		}
 	}()
 

@@ -444,11 +444,27 @@ func (wd *BrowserDriver) AppClear(packageName string) error {
 	return errors.New("not support")
 }
 
+func (wd *BrowserDriver) PushImage(localPath string) error {
+	return errors.New("not support")
+}
+
+func (wd *BrowserDriver) PullImages(localDir string) error {
+	return errors.New("not support")
+}
+
 func (wd *BrowserDriver) ClearImages() error {
 	return errors.New("not support")
 }
 
-func (wd *BrowserDriver) PushImage(localPath string) error {
+func (wd *BrowserDriver) PushFile(localPath string, remoteDir string) error {
+	return errors.New("not support")
+}
+
+func (wd *BrowserDriver) PullFiles(localDir string, remoteDirs ...string) error {
+	return errors.New("not support")
+}
+
+func (wd *BrowserDriver) ClearFiles(paths ...string) error {
 	return errors.New("not support")
 }
 

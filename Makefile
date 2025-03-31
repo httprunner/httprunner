@@ -16,10 +16,12 @@ bump: ## bump hrp version, e.g. make bump version=4.0.0
 .PHONY: build
 build: ## build hrp cli tool
 	@echo "[info] build hrp cli tool"
+	go mod tidy
 	go build -ldflags "\
 		-s -w \
 		-X 'github.com/httprunner/httprunner/v5/internal/version.GitCommit=$(shell git rev-parse HEAD)' \
 		-X 'github.com/httprunner/httprunner/v5/internal/version.GitBranch=$(shell git rev-parse --abbrev-ref HEAD)' \
+		-X 'github.com/httprunner/httprunner/v5/internal/version.GitAuthor=$(shell git log -1 --pretty=format:%an)' \
 		-X 'github.com/httprunner/httprunner/v5/internal/version.BuildTime=$(shell date "+%y%m%d%H%M")'" \
 		-o output/hrp ./cmd/cli
 	./output/hrp -v
