@@ -19,6 +19,7 @@ var (
 	GitCommit = "unknown"
 	GitBranch = "unknown"
 	BuildTime = "unknown"
+	GitAuthor = "unknown"
 )
 
 func GetVersionInfo() string {
@@ -26,6 +27,6 @@ func GetVersionInfo() string {
 	if len(commitID) > 8 {
 		commitID = commitID[:8]
 	}
-	return fmt.Sprintf("%s (branch=%s, commit=%s, build=%s)",
-		VERSION, GitBranch, commitID, BuildTime)
+	return fmt.Sprintf("%s (branch=%s, commit=%s, author=%s, build=%s)",
+		VERSION, GitBranch, commitID, GitAuthor, BuildTime)
 }
