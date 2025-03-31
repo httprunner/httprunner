@@ -106,43 +106,8 @@ func LoadFileObject(path string, structObj interface{}) (err error) {
 		if err != nil {
 			err = errors.Wrap(code.LoadYAMLError, err.Error())
 		}
-	case ".env":
-		err = parseEnvContent(file, structObj)
-		if err != nil {
-			err = errors.Wrap(code.LoadEnvError, err.Error())
-		}
 	default:
 		err = code.UnsupportedFileExtension
 	}
 	return err
-}
-
-func parseEnvContent(file []byte, obj interface{}) error {
-	envMap := obj.(map[string]string)
-	lines := strings.Split(string(file), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			// empty line or comment line
-			continue
-		}
-		var kv []string
-		if strings.Contains(line, "=") {
-			kv = strings.SplitN(line, "=", 2)
-		} else if strings.Contains(line, ":") {
-			kv = strings.SplitN(line, ":", 2)
-		}
-		if len(kv) != 2 {
-			return errors.New(".env format error")
-		}
-
-		key := strings.TrimSpace(kv[0])
-		value := strings.TrimSpace(kv[1])
-		envMap[key] = value
-
-		// set env
-		log.Info().Str("key", key).Msg("set env")
-		os.Setenv(key, value)
-	}
-	return nil
 }

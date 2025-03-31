@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/joho/godotenv"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -108,8 +109,7 @@ func (tc *TestCaseDef) loadISteps() (*TestCase, error) {
 	// load .env file
 	dotEnvPath := filepath.Join(projectRootDir, ".env")
 	if builtin.IsFilePathExists(dotEnvPath) {
-		envVars := make(map[string]string)
-		err = LoadFileObject(dotEnvPath, envVars)
+		envVars, err := godotenv.Read(dotEnvPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to load .env file")
 		}

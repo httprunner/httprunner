@@ -15,6 +15,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
@@ -231,6 +232,9 @@ func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.A
 }
 
 func checkEnvCV() error {
+	if err := config.LoadEnv(); err != nil {
+		return errors.Wrap(code.LoadEnvError, err.Error())
+	}
 	vedemImageURL := os.Getenv("VEDEM_IMAGE_URL")
 	if vedemImageURL == "" {
 		return errors.Wrap(code.CVEnvMissedError, "VEDEM_IMAGE_URL missed")

@@ -43,7 +43,7 @@ func GetConfig() *Config {
 		var err error
 		cfg.RootDir, err = os.Getwd()
 		if err != nil {
-			panic(err)
+			log.Fatal().Err(err).Msg("get current working directory failed")
 		}
 
 		startTimeStr := cfg.StartTime.Format("20060102150405")
