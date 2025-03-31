@@ -63,7 +63,9 @@ func (p *ActionParser) parseJSON(predictionText string) ([]ParsedAction, error) 
 
 	// normalize actions
 	var normalizedActions []ParsedAction
-	for _, action := range response.Actions {
+	for i := range response.Actions {
+		// create a new variable, avoid implicit memory aliasing in for loop.
+		action := response.Actions[i]
 		if err := p.normalizeAction(&action); err != nil {
 			return nil, errors.Wrap(err, "failed to normalize action")
 		}
