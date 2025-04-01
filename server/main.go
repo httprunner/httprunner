@@ -1,9 +1,11 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"github.com/httprunner/httprunner/v5/internal/mcp"
 	"github.com/httprunner/httprunner/v5/uixt"
 
 	"github.com/gin-gonic/gin"
@@ -20,6 +22,24 @@ func NewRouter() *Router {
 
 type Router struct {
 	*gin.Engine
+	mcpHub *mcp.MCPHub
+}
+
+func (r *Router) InitMCPHub(configPath string) error {
+	mcpHub, err := mcp.NewMCPHub(configPath)
+	if err != nil {
+		log.Error().Err(err).Msg("init MCP hub failed")
+		return err
+	}
+
+	err = mcpHub.InitServers(context.Background())
+	if err != nil {
+		log.Error().Err(err).Msg("init MCP servers failed")
+		return err
+	}
+
+	r.mcpHub = mcpHub
+	return nil
 }
 
 func (r *Router) Init() {
@@ -29,6 +49,9 @@ func (r *Router) Init() {
 	r.Engine.POST("/", r.pingHandler)
 	r.Engine.GET("/api/v1/devices", r.listDeviceHandler)
 	r.Engine.POST("/api/v1/browser/create_browser", createBrowserHandler)
+
+	// tool operations
+	r.Engine.POST("/api/v1/tool/invoke", r.invokeToolHandler)
 
 	apiV1PlatformSerial := r.Group("/api/v1").Group("/:platform").Group("/:serial")
 
