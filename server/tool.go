@@ -7,7 +7,7 @@ import (
 )
 
 type ToolRequest struct {
-	ServerName string                 `json:"server_name"`
+	ServerName string                 `json:"mcp_server"`
 	ToolName   string                 `json:"tool_name"`
 	Args       map[string]interface{} `json:"args"`
 }
