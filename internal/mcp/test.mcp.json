@@ -1,0 +1,27 @@
+{
+    "mcpServers": {
+      "filesystem": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "/Users/debugtalk/Downloads/tmp"
+        ]
+      },
+      "weather": {
+        "command": "uv",
+        "args": [
+          "--directory",
+          "/Users/debugtalk/MyProjects/ByteDance/EvalTools/quickstart-resources/weather-server-python/",
+          "run",
+          "weather.py"
+        ],
+        "autoApprove": [
+          "get_forecast"
+        ],
+        "env": {
+          "ABC": "123"
+        }
+      }
+    }
+  }
