@@ -7,6 +7,7 @@ toolchain go1.23.7
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/andybalholm/brotli v1.0.4
+	github.com/bytedance/sonic v1.13.2
 	github.com/cloudwego/eino v0.3.16
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250314110024-9e89ba18146c
 	github.com/cloudwego/eino-ext/components/tool/mcp v0.0.0-20250328102648-b47e7f1587fa
@@ -38,7 +39,6 @@ require (
 )
 
 require (
-	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
