@@ -4,56 +4,25 @@
 [![codecov](https://codecov.io/gh/httprunner/httprunner/branch/master/graph/badge.svg)](https://codecov.io/gh/httprunner/httprunner)
 [![Go Reference](https://pkg.go.dev/badge/github.com/httprunner/httprunner.svg)](https://pkg.go.dev/github.com/httprunner/httprunner)
 [![downloads](https://pepy.tech/badge/httprunner)](https://pepy.tech/project/httprunner)
-[![pypi version](https://img.shields.io/pypi/v/httprunner.svg)](https://pypi.python.org/pypi/httprunner)
-[![pyversions](https://img.shields.io/pypi/pyversions/httprunner.svg)](https://pypi.python.org/pypi/httprunner)
 [![TesterHome](https://img.shields.io/badge/TTF-TesterHome-2955C5.svg)](https://testerhome.com/github_statistics)
 
-`HttpRunner` 是一个开源的 API 测试工具，支持 HTTP(S)/HTTP2/WebSocket/RPC 等网络协议，涵盖接口测试、性能测试、数字体验监测等测试类型。简单易用，功能强大，具有丰富的插件化机制和高度的可扩展能力。
+> ⚠️ HttpRunner v5 仅包含 Golang 版本，Python 版本的代码已迁移至 [httprunner/httprunner.py](https://github.com/httprunner/httprunner.py)
 
-![flow chart](https://httprunner.com/image/hrp-flow.jpg)
+`HttpRunner`（简称 hrp） 是一个开源测试框架，诞生于 2017 年，最开始应用于 API 接口、性能测试，后面逐步进化为了一款通用、可拓展的测试框架。
 
-[版本发布日志] | [English]
+在 2022 年，HttpRunner 开始新增支持 UI 自动化测试，当前已经支持了 Android/iOS/Harmony/Browser 多种系统平台，并在 v5 版本融入了大模型技术。
 
-## 设计理念
+HttpRunner 相比其它 UI 自动化框架，主要特点包括：
 
-相比于其它 API 测试工具，HttpRunner 最大的不同在于设计理念。
+- 采用纯视觉驱动方案（OCR/CV/LLM），追求通用性和尽可能低的性能损耗
+- 多端统一 API，降低学习和横向拓展的成本
+- 拥抱开源生态，充分复用开源组件
 
-- 约定大于配置：测试用例是标准结构化的，格式统一，方便协作和维护
-- 标准开放：基于开放的标准，支持与 [HAR]/Postman/Swagger/Curl/JMeter 等工具对接，轻松实现用例生成和转换
-- 一次投入多维复用：一套脚本可同时支持接口自动化测试、性能测试、数字体验监测等多种 API 测试需求
-- 融入最佳工程实践：不仅仅是一款测试工具，在功能中融入最佳工程实践，实现面向网络协议的一站式测试解决方案
+[HttpRunner v5 用户指南（更新中）](https://debugtalk.feishu.cn/wiki/RqGuw17bsizGTik9WuNcGQyhnaf)
 
-## 核心特性
+## 使用说明
 
-- 网络协议：完整支持 HTTP(S)/HTTP2/WebSocket，可扩展支持 TCP/UDP/RPC 等更多协议
-- 多格式可选：测试用例支持 YAML/JSON/go test/pytest 格式，并且支持格式互相转换
-- 双执行引擎：同时支持 golang/python 两个执行引擎，兼具 go 的高性能和 [pytest] 的丰富生态
-- 录制 & 生成：可使用 [HAR]/Postman/Swagger/curl 等生成测试用例；基于链式调用的方法提示也可快速编写测试用例
-- 复杂场景：基于 variables/extract/validate/hooks 机制可以方便地创建任意复杂的测试场景
-- 插件化机制：内置丰富的函数库，同时可以基于主流编程语言（go/python/java）编写自定义函数轻松实现更多能力
-- 性能测试：无需额外工作即可实现压力测试；单机可轻松支撑 `1w+` VUM，结合分布式负载能力可实现海量发压
-- 网络性能采集：在场景化接口测试的基础上，可额外采集网络链路性能指标（DNS 解析、TCP 连接、SSL 握手、网络传输等）
-- 一键部署：采用二进制命令行工具分发，无需环境依赖，一条命令即可在 macOS/Linux/Windows 快速完成安装部署
-
-## 用户声音
-
-基于 252 份调研问卷的统计结果，HttpRunner 用户的整体满意度评分 `4.3/5`，最喜欢的特性包括：
-
-- 简单易用：测试用例支持 YAML/JSON 标准化格式，可通过录制的方式快速生成用例，上手简单，使用方便
-- 功能强大：支持灵活的自定义函数和 hook 机制，参数变量、数据驱动、结果断言等机制一应俱全，轻松适应各种复杂场景
-- 设计理念：测试用例组织支持分层设计，格式统一，易于实现测试用例的维护和复用
-
-更多内容详见 [HttpRunner 首轮用户调研报告（2022.02）][user-survey-report]
-
-## 一键部署
-
-HttpRunner 二进制命令行工具已上传至阿里云 OSS，在系统终端中执行如下命令可完成安装部署。
-
-```bash
-$ bash -c "$(curl -ksSL https://httprunner.com/script/install.sh)"
-```
-
-安装成功后，你将获得一个 `hrp` 命令行工具，执行 `hrp -h` 即可查看到参数帮助说明。
+HttpRunner v5 安装完成后，你将获得一个 `hrp` 命令行工具，执行 `hrp -h` 即可查看到参数帮助说明。
 
 ```text
 $ hrp -h
