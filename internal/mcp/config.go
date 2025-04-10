@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 // MCPSettings represents the main configuration structure
@@ -43,6 +45,7 @@ func (c *ServerConfig) GetTimeoutDuration() time.Duration {
 
 // LoadSettings loads MCP settings from the config file
 func LoadSettings(path string) (*MCPSettings, error) {
+	log.Info().Str("path", path).Msg("load MCP settings")
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read settings file: %w", err)

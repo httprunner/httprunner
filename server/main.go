@@ -50,10 +50,10 @@ func (r *Router) Init() {
 	r.Engine.GET("/api/v1/devices", r.listDeviceHandler)
 	r.Engine.POST("/api/v1/browser/create_browser", createBrowserHandler)
 
-	// tool operations
-	r.Engine.POST("/api/v1/tool/invoke", r.invokeToolHandler)
-
 	apiV1PlatformSerial := r.Group("/api/v1").Group("/:platform").Group("/:serial")
+
+	// tool operations
+	apiV1PlatformSerial.POST("/tool/invoke", r.invokeToolHandler)
 
 	// UI operations
 	apiV1PlatformSerial.POST("/ui/tap", r.tapHandler)

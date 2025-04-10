@@ -82,6 +82,8 @@ func (h *MCPHub) connectToServer(ctx context.Context, serverName string, config 
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
+	log.Debug().Str("server", serverName).Msg("connecting to MCP server")
+
 	// Close existing connection if any
 	if existing, exists := h.connections[serverName]; exists {
 		if err := existing.Client.Close(); err != nil {
