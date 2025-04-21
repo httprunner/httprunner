@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -24,7 +25,6 @@ type ActionParser struct {
 // Parse parses the prediction text and extracts actions
 func (p *ActionParser) Parse(predictionText string) ([]ParsedAction, error) {
 	// try parsing JSON format, from VLM like openai/gpt-4o
-	var jsonActions []ParsedAction
 	jsonActions, jsonErr := p.parseJSON(predictionText)
 	if jsonErr == nil {
 		return jsonActions, nil
@@ -93,17 +93,17 @@ func (p *ActionParser) parseThoughtAction(predictionText string) ([]ParsedAction
 		return nil, errors.New("no action found in the response")
 	}
 
-	actionText := strings.TrimSpace(actionMatch[1])
+	actionsText := strings.TrimSpace(actionMatch[1])
 
 	// parse action type and parameters
-	return p.parseActionText(actionText, thought)
+	return p.parseActionText(actionsText, thought)
 }
 
 // parseActionText parses the action text to extract the action type and parameters
-func (p *ActionParser) parseActionText(actionText, thought string) ([]ParsedAction, error) {
+func (p *ActionParser) parseActionText(actionsText, thought string) ([]ParsedAction, error) {
 	// remove trailing comments
-	if idx := strings.Index(actionText, "#"); idx > 0 {
-		actionText = strings.TrimSpace(actionText[:idx])
+	if idx := strings.Index(actionsText, "#"); idx > 0 {
+		actionsText = strings.TrimSpace(actionsText[:idx])
 	}
 
 	// supported action types and regexes
@@ -119,62 +119,68 @@ func (p *ActionParser) parseActionText(actionText, thought string) ([]ParsedActi
 		"call_user":    regexp.MustCompile(`call_user\(\)`),
 	}
 
+	// one or multiple actions, separated by newline
+	// "click(start_box='<bbox>229 379 229 379</bbox>')
+	// "click(start_box='<bbox>229 379 229 379</bbox>')\n\nclick(start_box='<bbox>769 519 769 519</bbox>')"
 	parsedActions := make([]ParsedAction, 0)
-	for actionType, regex := range actionRegexes {
-		matches := regex.FindStringSubmatch(actionText)
-		if len(matches) == 0 {
-			continue
+	for _, actionText := range strings.Split(actionsText, "\n") {
+		actionText = strings.TrimSpace(actionText)
+		for actionType, regex := range actionRegexes {
+			matches := regex.FindStringSubmatch(actionText)
+			if len(matches) == 0 {
+				continue
+			}
+
+			var action ParsedAction
+			action.ActionType = actionType
+			action.ActionInputs = make(map[string]interface{})
+			action.Thought = thought
+
+			// parse parameters based on action type
+			switch actionType {
+			case ActionTypeClick:
+				if len(matches) > 1 {
+					coord, err := p.normalizeCoordinates(matches[1])
+					if err != nil {
+						return nil, errors.Wrapf(err, "normalize point failed: %s", matches[1])
+					}
+					action.ActionInputs["startBox"] = coord
+				}
+			case ActionTypeDrag:
+				if len(matches) > 2 {
+					// handle start point
+					startBox, err := p.normalizeCoordinates(matches[1])
+					if err != nil {
+						return nil, errors.Wrapf(err, "normalize startBox failed: %s", matches[1])
+					}
+					action.ActionInputs["startBox"] = startBox
+
+					// handle end point
+					endBox, err := p.normalizeCoordinates(matches[2])
+					if err != nil {
+						return nil, errors.Wrapf(err, "normalize endBox failed: %s", matches[2])
+					}
+					action.ActionInputs["endBox"] = endBox
+				}
+			case ActionTypeType:
+				if len(matches) > 1 {
+					action.ActionInputs["content"] = matches[1]
+				}
+			case ActionTypeScroll:
+				if len(matches) > 2 {
+					startBox, err := p.normalizeCoordinates(matches[1])
+					if err != nil {
+						return nil, errors.Wrapf(err, "normalize startBox failed: %s", matches[1])
+					}
+					action.ActionInputs["startBox"] = startBox
+					action.ActionInputs["direction"] = matches[2]
+				}
+			case ActionTypeWait, ActionTypeFinished, ActionTypeCallUser:
+				// 这些动作没有额外参数
+			}
+
+			parsedActions = append(parsedActions, action)
 		}
-
-		var action ParsedAction
-		action.ActionType = actionType
-		action.ActionInputs = make(map[string]interface{})
-		action.Thought = thought
-
-		// parse parameters based on action type
-		switch actionType {
-		case ActionTypeClick:
-			if len(matches) > 1 {
-				coord, err := p.normalizeCoordinates(matches[1])
-				if err != nil {
-					return nil, errors.Wrapf(err, "normalize point failed: %s", matches[1])
-				}
-				action.ActionInputs["startBox"] = coord
-			}
-		case ActionTypeDrag:
-			if len(matches) > 2 {
-				// handle start point
-				startBox, err := p.normalizeCoordinates(matches[1])
-				if err != nil {
-					return nil, errors.Wrapf(err, "normalize startBox failed: %s", matches[1])
-				}
-				action.ActionInputs["startBox"] = startBox
-
-				// handle end point
-				endBox, err := p.normalizeCoordinates(matches[2])
-				if err != nil {
-					return nil, errors.Wrapf(err, "normalize endBox failed: %s", matches[2])
-				}
-				action.ActionInputs["endBox"] = endBox
-			}
-		case ActionTypeType:
-			if len(matches) > 1 {
-				action.ActionInputs["content"] = matches[1]
-			}
-		case ActionTypeScroll:
-			if len(matches) > 2 {
-				startBox, err := p.normalizeCoordinates(matches[1])
-				if err != nil {
-					return nil, errors.Wrapf(err, "normalize startBox failed: %s", matches[1])
-				}
-				action.ActionInputs["startBox"] = startBox
-				action.ActionInputs["direction"] = matches[2]
-			}
-		case ActionTypeWait, ActionTypeFinished, ActionTypeCallUser:
-			// 这些动作没有额外参数
-		}
-
-		parsedActions = append(parsedActions, action)
 	}
 
 	if len(parsedActions) == 0 {
@@ -215,22 +221,47 @@ func (p *ActionParser) normalizeCoordinates(coordStr string) (coords []float64, 
 		return nil, fmt.Errorf("empty coordinate string")
 	}
 
-	if !strings.Contains(coordStr, ",") {
-		return nil, fmt.Errorf("invalid coordinate string: %s", coordStr)
+	// handle BBox format: <bbox>x1 y1 x2 y2</bbox>
+	bboxRegex := regexp.MustCompile(`<bbox>(\d+\s+\d+\s+\d+\s+\d+)</bbox>`)
+	bboxMatches := bboxRegex.FindStringSubmatch(coordStr)
+	if len(bboxMatches) > 1 {
+		// Extract space-separated values from inside the bbox tags
+		bboxContent := bboxMatches[1]
+		// Split by whitespace
+		parts := strings.Fields(bboxContent)
+		if len(parts) == 4 {
+			coords = make([]float64, 4)
+			for i, part := range parts {
+				val, e := strconv.ParseFloat(part, 64)
+				if e != nil {
+					return nil, fmt.Errorf("failed to parse coordinate value '%s': %w", part, e)
+				}
+				coords[i] = val
+			}
+			// 将 val 转换为 [x,y] 坐标
+			x := (coords[0] + coords[2]) / 2
+			y := (coords[1] + coords[3]) / 2
+			return []float64{x, y}, nil
+		}
 	}
 
-	// remove possible brackets and split coordinates
-	coordStr = strings.Trim(coordStr, "[]() \t")
+	// handle coordinate string, e.g. "[100, 200]", "(100, 200)"
+	if strings.Contains(coordStr, ",") {
+		// remove possible brackets and split coordinates
+		coordStr = strings.Trim(coordStr, "[]() \t")
 
-	// try parsing JSON array
-	jsonStr := coordStr
-	if !strings.HasPrefix(jsonStr, "[") {
-		jsonStr = "[" + coordStr + "]"
+		// try parsing JSON array
+		jsonStr := coordStr
+		if !strings.HasPrefix(jsonStr, "[") {
+			jsonStr = "[" + coordStr + "]"
+		}
+
+		err = json.Unmarshal([]byte(jsonStr), &coords)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse coordinate string: %w", err)
+		}
+		return coords, nil
 	}
 
-	err = json.Unmarshal([]byte(jsonStr), &coords)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse coordinate string: %w", err)
-	}
-	return coords, nil
+	return nil, fmt.Errorf("invalid coordinate string format: %s", coordStr)
 }
