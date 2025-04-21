@@ -56,7 +56,7 @@ func WithLLMService(service LLMServiceType) AIServiceOption {
 	return func(opts *AIServices) {
 		if service == LLMServiceTypeGPT4o {
 			var err error
-			opts.ILLMService, err = NewGPT4oLLMService()
+			opts.ILLMService, err = NewPlanner(context.Background())
 			if err != nil {
 				log.Error().Err(err).Msg("init gpt-4o llm service failed")
 				os.Exit(code.GetErrorCode(err))
@@ -64,9 +64,10 @@ func WithLLMService(service LLMServiceType) AIServiceOption {
 		}
 		if service == LLMServiceTypeUITARS {
 			var err error
-			opts.ILLMService, err = NewPlanner(context.Background())
+			opts.ILLMService, err = NewUITarsPlanner(context.Background())
 			if err != nil {
 				log.Error().Err(err).Msg("init ui-tars llm service failed")
+				os.Exit(code.GetErrorCode(err))
 			}
 		}
 	}

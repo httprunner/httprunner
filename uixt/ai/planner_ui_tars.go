@@ -13,17 +13,52 @@ import (
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
+	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	EnvArkBaseURL = "ARK_BASE_URL"
+	EnvArkAPIKey  = "ARK_API_KEY"
+	EnvArkModelID = "ARK_MODEL_ID"
+)
+
 func GetArkModelConfig() (*ark.ChatModelConfig, error) {
-	return &ark.ChatModelConfig{
-		APIKey: os.Getenv("ARK_API_KEY"),
-		Model:  os.Getenv("ARK_MODEL_ID"),
-	}, nil
+	if err := config.LoadEnv(); err != nil {
+		return nil, errors.Wrap(code.LoadEnvError, err.Error())
+	}
+
+	arkBaseURL := os.Getenv(EnvArkBaseURL)
+	arkAPIKey := os.Getenv(EnvArkAPIKey)
+	if arkAPIKey == "" {
+		return nil, errors.Wrapf(code.LLMEnvMissedError,
+			"env %s missed", EnvArkAPIKey)
+	}
+	modelName := os.Getenv(EnvArkModelID)
+	if modelName == "" {
+		return nil, errors.Wrapf(code.LLMEnvMissedError,
+			"env %s missed", EnvArkModelID)
+	}
+	timeout := defaultTimeout
+	modelConfig := &ark.ChatModelConfig{
+		BaseURL: arkBaseURL,
+		APIKey:  arkAPIKey,
+		Model:   modelName,
+		Timeout: &timeout,
+	}
+
+	// log config info
+	log.Info().Str("model", modelConfig.Model).
+		Str("baseURL", modelConfig.BaseURL).
+		Str("apiKey", maskAPIKey(modelConfig.APIKey)).
+		Str("timeout", defaultTimeout.String()).
+		Msg("get model config")
+
+	return modelConfig, nil
 }
 
 func NewUITarsPlanner(ctx context.Context) (*UITarsPlanner, error) {
@@ -113,7 +148,7 @@ func (p *UITarsPlanner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	logResponse(resp)
 
 	// parse result
-	result, err := parseResult(resp, opts.Size)
+	result, err := p.parseResult(resp, opts.Size)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse result failed")
 	}
@@ -127,58 +162,7 @@ func (p *UITarsPlanner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	return result, nil
 }
 
-// appendConversationHistory adds a message to the conversation history
-func appendConversationHistory(history []*schema.Message, msg *schema.Message) {
-	// for user image message:
-	// - keep at most 4 user image messages
-	// - delete the oldest user image message when the limit is reached
-	if msg.Role == schema.User {
-		// get all existing user messages
-		userImgCount := 0
-		firstUserImgIndex := -1
-
-		// calculate the number of user messages and find the index of the first user message
-		for i, item := range history {
-			if item.Role == schema.User {
-				userImgCount++
-				if firstUserImgIndex == -1 {
-					firstUserImgIndex = i
-				}
-			}
-		}
-
-		// if there are already 4 user messages, delete the first one before adding the new message
-		if userImgCount >= 4 && firstUserImgIndex >= 0 {
-			// delete the first user message
-			history = append(
-				history[:firstUserImgIndex],
-				history[firstUserImgIndex+1:]...,
-			)
-		}
-		// add the new user message to the history
-		history = append(history, msg)
-	}
-
-	// for assistant message:
-	// - keep at most the last 10 assistant messages
-	if msg.Role == schema.Assistant {
-		// add the new assistant message to the history
-		history = append(history, msg)
-
-		// if there are more than 10 assistant messages, remove the oldest ones
-		assistantMsgCount := 0
-		for i := len(history) - 1; i >= 0; i-- {
-			if history[i].Role == schema.Assistant {
-				assistantMsgCount++
-				if assistantMsgCount > 10 {
-					history = append(history[:i], history[i+1:]...)
-				}
-			}
-		}
-	}
-}
-
-func parseResult(msg *schema.Message, size types.Size) (*PlanningResult, error) {
+func (p *UITarsPlanner) parseResult(msg *schema.Message, size types.Size) (*PlanningResult, error) {
 	// parse Thought/Action format from UI-TARS
 	parseActions, thoughtErr := parseThoughtAction(msg.Content)
 	if thoughtErr != nil {
