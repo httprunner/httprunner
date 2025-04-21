@@ -1,5 +1,9 @@
 SHELL=/usr/bin/env bash
 
+MACOS_MIN   := 11.0
+TARGET_OS   := darwin
+TARGET_ARCH := amd64
+
 .DEFAULT_GOAL=help
 
 .PHONY: test
@@ -17,7 +21,7 @@ bump: ## bump hrp version, e.g. make bump version=4.0.0
 build: ## build hrp cli tool
 	@echo "[info] build hrp cli tool"
 	go mod tidy
-	go build -ldflags "\
+	GOOS=${TARGET_OS} GOARCH=${TARGET_ARCH} go build -ldflags "\
 		-s -w \
 		-X 'github.com/httprunner/httprunner/v5/internal/version.GitCommit=$(shell git rev-parse HEAD)' \
 		-X 'github.com/httprunner/httprunner/v5/internal/version.GitBranch=$(shell git rev-parse --abbrev-ref HEAD)' \
