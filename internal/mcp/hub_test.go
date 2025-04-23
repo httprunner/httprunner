@@ -34,9 +34,9 @@ func TestCallTool(t *testing.T) {
 	err = hub.InitServers(ctx)
 	require.NoError(t, err)
 
-	result, err := hub.InvokeTool(ctx, "weather", "get_alerts", map[string]interface{}{
-		"state": "CA",
-	})
+	result, err := hub.InvokeTool(ctx, "weather", "get_alerts",
+		map[string]interface{}{"state": "CA"},
+	)
 	require.NoError(t, err)
 	t.Logf("Result: %v", result)
 }

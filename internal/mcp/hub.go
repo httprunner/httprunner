@@ -1,8 +1,10 @@
 package mcp
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -92,7 +94,7 @@ func (h *MCPHub) connectToServer(ctx context.Context, serverName string, config 
 		delete(h.connections, serverName)
 	}
 
-	var mcpClient client.MCPClient
+	var mcpClient *client.Client
 	var err error
 
 	// create client
@@ -112,6 +114,16 @@ func (h *MCPHub) connectToServer(ctx context.Context, serverName string, config 
 	if err != nil {
 		return fmt.Errorf("failed to create client: %w", err)
 	}
+
+	// print MCP Server logs
+	stderr := client.GetStderr(mcpClient)
+	go func() {
+		scanner := bufio.NewScanner(stderr)
+		for scanner.Scan() {
+			fmt.Fprintf(os.Stderr, "MCP Server %s: %s\n",
+				serverName, scanner.Text())
+		}
+	}()
 
 	// prepare client init request
 	initRequest := mcp.InitializeRequest{}
@@ -196,6 +208,9 @@ func (h *MCPHub) GetTool(ctx context.Context, serverName, toolName string) (*mcp
 func (h *MCPHub) InvokeTool(ctx context.Context,
 	serverName, toolName string, arguments map[string]interface{},
 ) (*mcp.CallToolResult, error) {
+	log.Info().Str("tool", toolName).Interface("args", arguments).
+		Str("server", serverName).Msg("invoke tool")
+
 	conn, err := h.GetClient(serverName)
 	if err != nil {
 		return nil, errors.Wrapf(err,
