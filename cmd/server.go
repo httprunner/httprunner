@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/httprunner/httprunner/v5/server"
 	"github.com/spf13/cobra"
 )
@@ -13,6 +15,7 @@ var serverCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		router := server.NewRouter()
+		mcpConfigPath = os.ExpandEnv(mcpConfigPath)
 		if mcpConfigPath != "" {
 			router.InitMCPHub(mcpConfigPath)
 		}
@@ -28,5 +31,5 @@ var (
 func init() {
 	rootCmd.AddCommand(serverCmd)
 	serverCmd.Flags().IntVarP(&port, "port", "p", 8082, "port to run the server on")
-	serverCmd.Flags().StringVarP(&mcpConfigPath, "mcp-config", "c", "", "path to the MCP config file")
+	serverCmd.Flags().StringVarP(&mcpConfigPath, "mcp-config", "c", "$HOME/.hrp/mcp.json", "path to the MCP config file")
 }
