@@ -17,7 +17,7 @@ type BrowserDevice struct {
 func NewBrowserDevice(opts ...option.BrowserDeviceOption) (device *BrowserDevice, err error) {
 	options := option.NewBrowserDeviceOptions(opts...)
 	if options.BrowserID == "" {
-		browserInfo, err := CreateBrowser(3600)
+		browserInfo, err := CreateBrowser(3600, options.Width, options.Height)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create browser")
 			return nil, err
