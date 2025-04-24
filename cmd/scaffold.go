@@ -9,7 +9,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/scaffold"
 )
 
-var scaffoldCmd = &cobra.Command{
+var CmdScaffold = &cobra.Command{
 	Use:     "startproject $project_name",
 	Aliases: []string{"scaffold"},
 	Short:   "create a scaffold project",
@@ -49,10 +49,9 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(scaffoldCmd)
-	scaffoldCmd.Flags().BoolVarP(&force, "force", "f", false, "force to overwrite existing project")
-	scaffoldCmd.Flags().BoolVar(&genPythonPlugin, "py", true, "generate hashicorp python plugin")
-	scaffoldCmd.Flags().BoolVar(&genGoPlugin, "go", false, "generate hashicorp go plugin")
-	scaffoldCmd.Flags().BoolVar(&ignorePlugin, "ignore-plugin", false, "ignore function plugin")
-	scaffoldCmd.Flags().BoolVar(&empty, "empty", false, "generate empty project")
+	CmdScaffold.Flags().BoolVarP(&force, "force", "f", false, "force to overwrite existing project")
+	CmdScaffold.Flags().BoolVar(&genPythonPlugin, "py", true, "generate hashicorp python plugin")
+	CmdScaffold.Flags().BoolVar(&genGoPlugin, "go", false, "generate hashicorp go plugin")
+	CmdScaffold.Flags().BoolVar(&ignorePlugin, "ignore-plugin", false, "ignore function plugin")
+	CmdScaffold.Flags().BoolVar(&empty, "empty", false, "generate empty project")
 }

@@ -66,5 +66,5 @@ func init() {
 	installCmd.Flags().BoolVarP(&replace, "replace", "r", false, "replace existing application")
 	installCmd.Flags().BoolVarP(&downgrade, "downgrade", "d", false, "allow version code downgrade (debuggable packages only)")
 	installCmd.Flags().BoolVarP(&grant, "grant", "g", false, "grant all runtime permissions")
-	androidRootCmd.AddCommand(installCmd)
+	CmdAndroidRoot.AddCommand(installCmd)
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 )
 
-var convertCmd = &cobra.Command{
+var CmdConvert = &cobra.Command{
 	Use:          "convert $path...",
 	Short:        "convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases",
 	Args:         cobra.MinimumNArgs(1),
@@ -105,18 +105,16 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(convertCmd)
+	CmdConvert.Flags().BoolVar(&fromJSONFlag, "from-json", true, "load from json case format")
+	CmdConvert.Flags().BoolVar(&fromYAMLFlag, "from-yaml", false, "load from yaml case format")
+	CmdConvert.Flags().BoolVar(&fromHARFlag, "from-har", false, "load from HAR format")
+	CmdConvert.Flags().BoolVar(&fromPostmanFlag, "from-postman", false, "load from postman format")
+	CmdConvert.Flags().BoolVar(&fromCurlFlag, "from-curl", false, "load from curl format")
 
-	convertCmd.Flags().BoolVar(&fromJSONFlag, "from-json", true, "load from json case format")
-	convertCmd.Flags().BoolVar(&fromYAMLFlag, "from-yaml", false, "load from yaml case format")
-	convertCmd.Flags().BoolVar(&fromHARFlag, "from-har", false, "load from HAR format")
-	convertCmd.Flags().BoolVar(&fromPostmanFlag, "from-postman", false, "load from postman format")
-	convertCmd.Flags().BoolVar(&fromCurlFlag, "from-curl", false, "load from curl format")
+	CmdConvert.Flags().BoolVar(&toJSONFlag, "to-json", true, "convert to JSON case scripts")
+	CmdConvert.Flags().BoolVar(&toYAMLFlag, "to-yaml", false, "convert to YAML case scripts")
+	CmdConvert.Flags().BoolVar(&toPyTestFlag, "to-pytest", false, "convert to pytest scripts")
 
-	convertCmd.Flags().BoolVar(&toJSONFlag, "to-json", true, "convert to JSON case scripts")
-	convertCmd.Flags().BoolVar(&toYAMLFlag, "to-yaml", false, "convert to YAML case scripts")
-	convertCmd.Flags().BoolVar(&toPyTestFlag, "to-pytest", false, "convert to pytest scripts")
-
-	convertCmd.Flags().StringVarP(&outputDir, "output-dir", "d", "", "specify output directory")
-	convertCmd.Flags().StringVarP(&profilePath, "profile", "p", "", "specify profile path to override headers and cookies")
+	CmdConvert.Flags().StringVarP(&outputDir, "output-dir", "d", "", "specify output directory")
+	CmdConvert.Flags().StringVarP(&profilePath, "profile", "p", "", "specify profile path to override headers and cookies")
 }

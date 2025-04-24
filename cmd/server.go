@@ -8,7 +8,7 @@ import (
 )
 
 // serverCmd represents the server command
-var serverCmd = &cobra.Command{
+var CmdServer = &cobra.Command{
 	Use:   "server start",
 	Short: "start hrp server",
 	Long:  `start hrp server, call httprunner by HTTP`,
@@ -29,7 +29,6 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(serverCmd)
-	serverCmd.Flags().IntVarP(&port, "port", "p", 8082, "port to run the server on")
-	serverCmd.Flags().StringVarP(&mcpConfigPath, "mcp-config", "c", "$HOME/.hrp/mcp.json", "path to the MCP config file")
+	CmdServer.Flags().IntVarP(&port, "port", "p", 8082, "port to run the server on")
+	CmdServer.Flags().StringVarP(&mcpConfigPath, "mcp-config", "c", "$HOME/.hrp/mcp.json", "path to the MCP config file")
 }

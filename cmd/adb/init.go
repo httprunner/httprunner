@@ -9,7 +9,7 @@ import (
 
 var serial string
 
-var androidRootCmd = &cobra.Command{
+var CmdAndroidRoot = &cobra.Command{
 	Use:              "adb",
 	Short:            "simple utils for android device management",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {},
@@ -21,8 +21,4 @@ func getDevice(serial string) (*uixt.AndroidDevice, error) {
 		return nil, err
 	}
 	return device, nil
-}
-
-func Init(rootCmd *cobra.Command) {
-	rootCmd.AddCommand(androidRootCmd)
 }

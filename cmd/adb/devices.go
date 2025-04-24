@@ -57,5 +57,5 @@ func getAndroidDevices() (devices []*gadb.Device, err error) {
 }
 
 func init() {
-	androidRootCmd.AddCommand(listAndroidDevicesCmd)
+	CmdAndroidRoot.AddCommand(listAndroidDevicesCmd)
 }

@@ -74,5 +74,5 @@ var listDevicesCmd = &cobra.Command{
 var udid string
 
 func init() {
-	iosRootCmd.AddCommand(listDevicesCmd)
+	CmdIOSRoot.AddCommand(listDevicesCmd)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 // runCmd represents the run command
-var runCmd = &cobra.Command{
+var CmdRun = &cobra.Command{
 	Use:   "run $path...",
 	Short: "run API test with go engine",
 	Long:  `run yaml/json testcase files for API test`,
@@ -38,15 +38,14 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(runCmd)
-	runCmd.Flags().BoolVarP(&continueOnFailure, "continue-on-failure", "c", false, "continue running next step when failure occurs")
-	runCmd.Flags().BoolVar(&requestsLogOff, "log-requests-off", false, "turn off request & response details logging")
-	runCmd.Flags().BoolVar(&httpStatOn, "http-stat", false, "turn on HTTP latency stat (DNSLookup, TCP Connection, etc.)")
-	runCmd.Flags().BoolVar(&pluginLogOn, "log-plugin", false, "turn on plugin logging")
-	runCmd.Flags().StringVarP(&proxyUrl, "proxy-url", "p", "", "set proxy url")
-	runCmd.Flags().BoolVarP(&saveTests, "save-tests", "s", false, "save tests summary")
-	runCmd.Flags().BoolVarP(&genHTMLReport, "gen-html-report", "g", false, "generate html report")
-	runCmd.Flags().Float32Var(&caseTimeout, "case-timeout", 3600, "set testcase timeout (seconds)")
+	CmdRun.Flags().BoolVarP(&continueOnFailure, "continue-on-failure", "c", false, "continue running next step when failure occurs")
+	CmdRun.Flags().BoolVar(&requestsLogOff, "log-requests-off", false, "turn off request & response details logging")
+	CmdRun.Flags().BoolVar(&httpStatOn, "http-stat", false, "turn on HTTP latency stat (DNSLookup, TCP Connection, etc.)")
+	CmdRun.Flags().BoolVar(&pluginLogOn, "log-plugin", false, "turn on plugin logging")
+	CmdRun.Flags().StringVarP(&proxyUrl, "proxy-url", "p", "", "set proxy url")
+	CmdRun.Flags().BoolVarP(&saveTests, "save-tests", "s", false, "save tests summary")
+	CmdRun.Flags().BoolVarP(&genHTMLReport, "gen-html-report", "g", false, "generate html report")
+	CmdRun.Flags().Float32Var(&caseTimeout, "case-timeout", 3600, "set testcase timeout (seconds)")
 }
 
 func makeHRPRunner() *hrp.HRPRunner {

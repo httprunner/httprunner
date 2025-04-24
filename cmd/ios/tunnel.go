@@ -36,5 +36,5 @@ var tunnelCmd = &cobra.Command{
 }
 
 func init() {
-	iosRootCmd.AddCommand(tunnelCmd)
+	CmdIOSRoot.AddCommand(tunnelCmd)
 }

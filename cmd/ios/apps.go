@@ -71,5 +71,5 @@ var appType string
 func init() {
 	listAppsCmd.Flags().StringVarP(&udid, "udid", "u", "", "specify device by udid")
 	listAppsCmd.Flags().StringVarP(&appType, "type", "t", "user", "filter application type [user|system|internal|all]")
-	iosRootCmd.AddCommand(listAppsCmd)
+	CmdIOSRoot.AddCommand(listAppsCmd)
 }
