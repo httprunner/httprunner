@@ -24,6 +24,10 @@ func (r *Router) invokeToolHandler(c *gin.Context) {
 		return
 	}
 
+	// add platform and serial to tool invoke args
+	req.Args["platform"] = c.Param("platform")
+	req.Args["serial"] = c.Param("serial")
+
 	result, err := r.mcpHub.InvokeTool(c.Request.Context(),
 		req.ServerName, req.ToolName, req.Args)
 	if err != nil {
