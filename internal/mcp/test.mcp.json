@@ -1,27 +1,37 @@
 {
-    "mcpServers": {
-      "filesystem": {
-        "command": "npx",
-        "args": [
-          "-y",
-          "@modelcontextprotocol/server-filesystem",
-          "/Users/debugtalk/Downloads/tmp"
-        ]
+  "mcpServers": {
+      "shoots_ug_toolbox_install_helper": {
+          "args": [
+              "--directory",
+              "/Users/debugtalk/MyProjects/ByteDance/EvalTools/shoots-ug-box",
+              "run",
+              "install_helper.py"
+          ],
+          "command": "uv"
+      },
+      "shoots_ug_toolbox_utils_utils": {
+          "args": [
+              "--directory",
+              "/Users/debugtalk/MyProjects/ByteDance/EvalTools/shoots-ug-box",
+              "run",
+              "utils_utils.py"
+          ],
+          "command": "uv"
       },
       "weather": {
-        "command": "uv",
-        "args": [
-          "--directory",
-          "/Users/debugtalk/MyProjects/ByteDance/EvalTools/quickstart-resources/weather-server-python/",
-          "run",
-          "weather.py"
-        ],
-        "autoApprove": [
-          "get_forecast"
-        ],
-        "env": {
-          "ABC": "123"
-        }
+          "args": [
+              "--directory",
+              "/Users/debugtalk/MyProjects/ByteDance/EvalTools/shoots-ug-box",
+              "run",
+              "demo_weather.py"
+          ],
+          "autoApprove": [
+              "get_forecast"
+          ],
+          "command": "uv",
+          "env": {
+              "ABC": "123"
+          }
       }
-    }
   }
+}

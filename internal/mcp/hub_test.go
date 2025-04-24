@@ -38,6 +38,22 @@ func TestCallTool(t *testing.T) {
 		map[string]interface{}{"state": "CA"},
 	)
 	require.NoError(t, err)
+
+	result, err = hub.InvokeTool(ctx, "shoots_ug_toolbox_utils_utils", "get_udid",
+		map[string]interface{}{},
+	)
+	require.NoError(t, err)
+
+	result, err = hub.InvokeTool(ctx, "shoots_ug_toolbox_utils_utils", "is_login",
+		map[string]interface{}{},
+	)
+	require.NoError(t, err)
+
+	result, err = hub.InvokeTool(ctx, "shoots_ug_toolbox_utils_utils", "login_app_account",
+		map[string]interface{}{"phone": "a12342038903", "password": "a123456"},
+	)
+	require.NoError(t, err)
+
 	t.Logf("Result: %v", result)
 }
 
