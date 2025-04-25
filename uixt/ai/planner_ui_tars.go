@@ -44,11 +44,13 @@ func GetArkModelConfig() (*ark.ChatModelConfig, error) {
 			"env %s missed", EnvArkModelID)
 	}
 	timeout := defaultTimeout
+	temp := float32(0.7)
 	modelConfig := &ark.ChatModelConfig{
-		BaseURL: arkBaseURL,
-		APIKey:  arkAPIKey,
-		Model:   modelName,
-		Timeout: &timeout,
+		BaseURL:     arkBaseURL,
+		APIKey:      arkAPIKey,
+		Model:       modelName,
+		Temperature: &temp,
+		Timeout:     &timeout,
 	}
 
 	// log config info
