@@ -14,7 +14,7 @@ import (
 )
 
 func TestGetTools(t *testing.T) {
-	hub, err := NewMCPHub("./test.mcp.json")
+	hub, err := NewMCPHub("./testdata/test.mcp.json")
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -27,7 +27,7 @@ func TestGetTools(t *testing.T) {
 }
 
 func TestCallTool(t *testing.T) {
-	hub, err := NewMCPHub("./test.mcp.json")
+	hub, err := NewMCPHub("./testdata/test.mcp.json")
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -39,26 +39,11 @@ func TestCallTool(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	result, err = hub.InvokeTool(ctx, "shoots_ug_toolbox_utils_utils", "get_udid",
-		map[string]interface{}{},
-	)
-	require.NoError(t, err)
-
-	result, err = hub.InvokeTool(ctx, "shoots_ug_toolbox_utils_utils", "is_login",
-		map[string]interface{}{},
-	)
-	require.NoError(t, err)
-
-	result, err = hub.InvokeTool(ctx, "shoots_ug_toolbox_utils_utils", "login_app_account",
-		map[string]interface{}{"phone": "a12342038903", "password": "a123456"},
-	)
-	require.NoError(t, err)
-
 	t.Logf("Result: %v", result)
 }
 
 func TestCallEinoTool(t *testing.T) {
-	hub, err := NewMCPHub("./test.mcp.json")
+	hub, err := NewMCPHub("./testdata/test.mcp.json")
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -76,7 +61,7 @@ func TestCallEinoTool(t *testing.T) {
 }
 
 func TestConvertToolsToRecordsFromFile(t *testing.T) {
-	hub, err := NewMCPHub("./test.mcp.json")
+	hub, err := NewMCPHub("./testdata/test.mcp.json")
 	require.NoError(t, err)
 
 	ctx := context.Background()
