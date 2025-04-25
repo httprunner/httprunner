@@ -43,9 +43,16 @@ type BrowserInfo struct {
 	ContextId string `json:"context_id"`
 }
 
-func CreateBrowser(timeout int) (browserInfo *BrowserInfo, err error) {
+func CreateBrowser(timeout int, width, height int) (browserInfo *BrowserInfo, err error) {
 	data := map[string]interface{}{
 		"timeout": timeout,
+	}
+
+	if width > 0 && height > 0 {
+		data["size"] = map[string]int{
+			"width":  width,
+			"height": height,
+		}
 	}
 
 	var bsJSON []byte = nil
@@ -197,7 +204,7 @@ func (wd *BrowserDriver) HoverBySelector(selector string, options ...option.Acti
 	return err
 }
 
-func (wd *BrowserDriver) tapBySelector(selector string, options ...option.ActionOption) (err error) {
+func (wd *BrowserDriver) TapBySelector(selector string, options ...option.ActionOption) (err error) {
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -218,7 +225,7 @@ func (wd *BrowserDriver) RightClick(x, y float64) (err error) {
 	return err
 }
 
-func (wd *BrowserDriver) RightclickbySelector(selector string, options ...option.ActionOption) (err error) {
+func (wd *BrowserDriver) RightClickBySelector(selector string, options ...option.ActionOption) (err error) {
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -232,15 +239,47 @@ func (wd *BrowserDriver) RightclickbySelector(selector string, options ...option
 
 func (wd *BrowserDriver) GetElementTextBySelector(selector string, options ...option.ActionOption) (text string, err error) {
 	actionOptions := option.NewActionOptions(options...)
-	uri := "ui/element_text?selector=" + selector
+	baseURL := fmt.Sprintf("http://%s/api/v1/%s/element_text", BROWSER_LOCAL_ADDRESS, wd.sessionId)
+
+	// 使用 url.Values 构建查询参数
+	params := url.Values{}
+	params.Add("selector", selector)
 	if actionOptions.Index > 0 {
-		uri = uri + "&element_index=" + fmt.Sprintf("%v", actionOptions.Index)
+		params.Add("element_index", fmt.Sprintf("%v", actionOptions.Index))
 	}
-	resp, err := wd.HttpGet(http.MethodGet, wd.sessionId, uri)
+
+	// 构建完整的 URL
+	uri := fmt.Sprintf("%s?%s", baseURL, params.Encode())
+
+	// 使用 http.Get 直接请求
+	resp, err := http.Get(uri)
 	if err != nil {
 		return "", err
 	}
-	data := resp.Data.(map[string]interface{})
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New(resp.Status)
+	}
+
+	rawResp, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var result WebAgentResponse
+	if err = json.Unmarshal(rawResp, &result); err != nil {
+		return "", err
+	}
+
+	if result.Code != 0 {
+		return "", errors.New(result.Message)
+	}
+
+	data := result.Data.(map[string]interface{})
+	if data["text"] == nil {
+		return "", nil
+	}
 	return data["text"].(string), nil
 }
 
@@ -408,7 +447,7 @@ func (wd *BrowserDriver) Screen() (Screen, error) {
 }
 
 func (wd *BrowserDriver) Scale() (float64, error) {
-	return 0, errors.New("not support")
+	return 1, nil
 }
 
 // GetTimestamp returns the timestamp of the mobile device
@@ -418,26 +457,26 @@ func (wd *BrowserDriver) GetTimestamp() (timestamp int64, err error) {
 
 // Homescreen Forces the device under test to switch to the home screen
 func (wd *BrowserDriver) Homescreen() error {
-	return errors.New("not support")
+	return nil
 }
 
 func (wd *BrowserDriver) Unlock() (err error) {
-	return errors.New("not support")
+	return nil
 }
 
 // AppTerminate Terminate an application with the given package name.
 // Either `true` if the app has been successfully terminated or `false` if it was not running
 func (wd *BrowserDriver) AppTerminate(packageName string) (bool, error) {
-	return false, errors.New("not support")
+	return true, wd.DeleteSession()
 }
 
 // AssertForegroundApp returns nil if the given package and activity are in foreground
 func (wd *BrowserDriver) AssertForegroundApp(packageName string, activityType ...string) error {
-	return errors.New("not support")
+	return nil
 }
 
 func (wd *BrowserDriver) Back() error {
-	return errors.New("not support")
+	return wd.PressBack()
 }
 
 func (wd *BrowserDriver) AppClear(packageName string) error {
@@ -474,8 +513,8 @@ func (wd *BrowserDriver) Orientation() (orientation types.Orientation, err error
 }
 
 // Tap Sends a tap event at the coordinate.
-func (wd *BrowserDriver) Tap(x, y int, options ...option.ActionOption) error {
-	return errors.New("not support")
+func (wd *BrowserDriver) Tap(x, y float64, options ...option.ActionOption) error {
+	return wd.TapFloat(x, y, options...)
 }
 
 func (wd *BrowserDriver) TapFloat(x, y float64, options ...option.ActionOption) error {
@@ -523,11 +562,12 @@ func (wd *BrowserDriver) TouchAndHold(x, y float64, options ...option.ActionOpti
 
 // Swipe works like Drag, but `pressForDuration` value is 0
 func (wd *BrowserDriver) Swipe(fromX, fromY, toX, toY float64, options ...option.ActionOption) error {
-	return errors.New("not support")
+	log.Info().Msg(fmt.Sprintf("swipe from (%v, %v) to (%v, %v)", fromX, fromY, toX, toY))
+	return wd.Drag(fromX, fromY, toX, toY, options...)
 }
 
 func (wd *BrowserDriver) SwipeFloat(fromX, fromY, toX, toY float64, options ...option.ActionOption) error {
-	return errors.New("not support")
+	return wd.Drag(fromX, fromY, toX, toY, options...)
 }
 
 func (wd *BrowserDriver) SetIme(ime string) error {
@@ -611,7 +651,7 @@ func (wd *BrowserDriver) StartCaptureLog(identifier ...string) (err error) {
 }
 
 func (wd *BrowserDriver) StopCaptureLog() (result interface{}, err error) {
-	return nil, errors.New("not support")
+	return nil, nil
 }
 
 func (wd *BrowserDriver) RecordScreen(folderPath string, duration time.Duration) (videoPath string, err error) {
@@ -623,7 +663,7 @@ func (wd *BrowserDriver) TearDown() error {
 }
 
 func (wd *BrowserDriver) InitSession(capabilities option.Capabilities) error {
-	return errors.New("not support")
+	return nil
 }
 
 func (wd *BrowserDriver) GetSession() *DriverSession {
@@ -639,15 +679,20 @@ func (wd *BrowserDriver) Rotation() (rotation types.Rotation, err error) {
 }
 
 func (wd *BrowserDriver) SetRotation(rotation types.Rotation) error {
-	return errors.New("not support")
+	return nil
 }
 
 func (wd *BrowserDriver) Home() error {
-	return errors.New("not support")
+	return nil
 }
 
 func (wd *BrowserDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
-	return errors.New("not support")
+	data := map[string]interface{}{
+		"x": x,
+		"y": y,
+	}
+	_, err := wd.HttpPOST(data, wd.sessionId, "ui/double_tap")
+	return err
 }
 
 func (wd *BrowserDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {

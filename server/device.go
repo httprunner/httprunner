@@ -95,7 +95,7 @@ func createBrowserHandler(c *gin.Context) {
 		return
 	}
 
-	browserInfo, err := uixt.CreateBrowser(createBrowserReq.Timeout)
+	browserInfo, err := uixt.CreateBrowser(createBrowserReq.Timeout, createBrowserReq.Width, createBrowserReq.Height)
 	if err != nil {
 		RenderError(c, err)
 		return

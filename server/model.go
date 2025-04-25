@@ -105,4 +105,6 @@ type ScrollRequest struct {
 
 type CreateBrowserRequest struct {
 	Timeout int `json:"timeout"`
+	Width   int `json:"width"`
+	Height  int `json:"height"`
 }

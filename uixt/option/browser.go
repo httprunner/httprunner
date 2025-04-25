@@ -11,6 +11,8 @@ func NewBrowserDeviceOptions(opts ...BrowserDeviceOption) *BrowserDeviceOptions 
 type BrowserDeviceOptions struct {
 	BrowserID string `json:"browser_id,omitempty" yaml:"browser_id,omitempty"`
 	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	Width     int    `json:"width,omitempty" yaml:"width,omitempty"`
+	Height    int    `json:"height,omitempty" yaml:"height,omitempty"`
 }
 
 type BrowserDeviceOption func(*BrowserDeviceOptions)
@@ -18,5 +20,18 @@ type BrowserDeviceOption func(*BrowserDeviceOptions)
 func WithBrowserID(serial string) BrowserDeviceOption {
 	return func(device *BrowserDeviceOptions) {
 		device.BrowserID = serial
+	}
+}
+
+func WithBrowserLogOn(logOn bool) BrowserDeviceOption {
+	return func(device *BrowserDeviceOptions) {
+		device.LogOn = logOn
+	}
+}
+
+func WithBrowserPageSize(width, height int) BrowserDeviceOption {
+	return func(device *BrowserDeviceOptions) {
+		device.Width = width
+		device.Height = height
 	}
 }
