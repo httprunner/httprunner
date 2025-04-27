@@ -106,16 +106,6 @@ type combinedLLMService struct {
 	asserter IAsserter // 提供断言功能
 }
 
-// IPlanner 定义了规划功能接口
-type IPlanner interface {
-	Call(opts *PlanningOptions) (*PlanningResult, error)
-}
-
-// IAsserter 定义了断言功能接口
-type IAsserter interface {
-	Assert(opts *AssertOptions) (*AssertionResponse, error)
-}
-
 // Call 执行规划功能
 func (c *combinedLLMService) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	return c.planner.Call(opts)

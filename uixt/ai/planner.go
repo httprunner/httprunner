@@ -17,6 +17,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type IPlanner interface {
+	Call(opts *PlanningOptions) (*PlanningResult, error)
+}
+
 // PlanningOptions represents the input options for planning
 type PlanningOptions struct {
 	UserInstruction string          `json:"user_instruction"` // append to system prompt

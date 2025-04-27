@@ -15,6 +15,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type IAsserter interface {
+	Assert(opts *AssertOptions) (*AssertionResponse, error)
+}
+
 // UI-TARS assertion system prompt
 const uiTarsAssertionPrompt = `You are a senior testing engineer. User will give an assertion and a screenshot of a page. By carefully viewing the screenshot, please tell whether the assertion is truthy.
 
