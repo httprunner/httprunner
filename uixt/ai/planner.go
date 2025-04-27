@@ -17,10 +17,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type ILLMService interface {
-	Call(opts *PlanningOptions) (*PlanningResult, error)
-}
-
 // PlanningOptions represents the input options for planning
 type PlanningOptions struct {
 	UserInstruction string          `json:"user_instruction"` // append to system prompt
@@ -132,7 +128,7 @@ func logResponse(resp *schema.Message) {
 }
 
 // appendConversationHistory adds a message to the conversation history
-func appendConversationHistory(history []*schema.Message, msg *schema.Message) {
+func appendConversationHistory(history *[]*schema.Message, msg *schema.Message) {
 	// for user image message:
 	// - keep at most 4 user image messages
 	// - delete the oldest user image message when the limit is reached
@@ -142,7 +138,7 @@ func appendConversationHistory(history []*schema.Message, msg *schema.Message) {
 		firstUserImgIndex := -1
 
 		// calculate the number of user messages and find the index of the first user message
-		for i, item := range history {
+		for i, item := range *history {
 			if item.Role == schema.User {
 				userImgCount++
 				if firstUserImgIndex == -1 {
@@ -154,28 +150,28 @@ func appendConversationHistory(history []*schema.Message, msg *schema.Message) {
 		// if there are already 4 user messages, delete the first one before adding the new message
 		if userImgCount >= 4 && firstUserImgIndex >= 0 {
 			// delete the first user message
-			history = append(
-				history[:firstUserImgIndex],
-				history[firstUserImgIndex+1:]...,
+			*history = append(
+				(*history)[:firstUserImgIndex],
+				(*history)[firstUserImgIndex+1:]...,
 			)
 		}
 		// add the new user message to the history
-		history = append(history, msg)
+		*history = append(*history, msg)
 	}
 
 	// for assistant message:
 	// - keep at most the last 10 assistant messages
 	if msg.Role == schema.Assistant {
 		// add the new assistant message to the history
-		history = append(history, msg)
+		*history = append(*history, msg)
 
 		// if there are more than 10 assistant messages, remove the oldest ones
 		assistantMsgCount := 0
-		for i := len(history) - 1; i >= 0; i-- {
-			if history[i].Role == schema.Assistant {
+		for i := len(*history) - 1; i >= 0; i-- {
+			if (*history)[i].Role == schema.Assistant {
 				assistantMsgCount++
 				if assistantMsgCount > 10 {
-					history = append(history[:i], history[i+1:]...)
+					*history = append((*history)[:i], (*history)[i+1:]...)
 				}
 			}
 		}
@@ -247,37 +243,6 @@ func SavePositionImg(params struct {
 	}
 
 	return nil
-}
-
-// loadImage loads image and returns base64 encoded string
-func loadImage(imagePath string) (base64Str string, size types.Size, err error) {
-	// Read the image file
-	imageFile, err := os.Open(imagePath)
-	if err != nil {
-		return "", types.Size{}, fmt.Errorf("failed to open image file: %w", err)
-	}
-	defer imageFile.Close()
-
-	// Decode the image to get its resolution
-	imageData, format, err := image.Decode(imageFile)
-	if err != nil {
-		return "", types.Size{}, fmt.Errorf("failed to decode image: %w", err)
-	}
-
-	// Get the resolution of the image
-	width := imageData.Bounds().Dx()
-	height := imageData.Bounds().Dy()
-	size = types.Size{Width: width, Height: height}
-
-	// Convert image to base64
-	buf := new(bytes.Buffer)
-	if err := png.Encode(buf, imageData); err != nil {
-		return "", types.Size{}, fmt.Errorf("failed to encode image to buffer: %w", err)
-	}
-	base64Str = fmt.Sprintf("data:image/%s;base64,%s", format,
-		base64.StdEncoding.EncodeToString(buf.Bytes()))
-
-	return base64Str, size, nil
 }
 
 // maskAPIKey masks the API key

@@ -1,7 +1,13 @@
 package ai
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"fmt"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"os"
 	"testing"
 
@@ -407,4 +413,43 @@ func TestLoadImage(t *testing.T) {
 	assert.NotEmpty(t, jpegBase64)
 	assert.Greater(t, jpegSize.Width, 0)
 	assert.Greater(t, jpegSize.Height, 0)
+}
+
+// loadImage loads image and returns base64 encoded string
+func loadImage(imagePath string) (base64Str string, size types.Size, err error) {
+	// Read the image file
+	imageFile, err := os.Open(imagePath)
+	if err != nil {
+		return "", types.Size{}, fmt.Errorf("failed to open image file: %w", err)
+	}
+	defer imageFile.Close()
+
+	// Decode the image to get its resolution
+	imageData, format, err := image.Decode(imageFile)
+	if err != nil {
+		return "", types.Size{}, fmt.Errorf("failed to decode image: %w", err)
+	}
+
+	// Get the resolution of the image
+	width := imageData.Bounds().Dx()
+	height := imageData.Bounds().Dy()
+	size = types.Size{Width: width, Height: height}
+
+	// Convert image to base64
+	buf := new(bytes.Buffer)
+	// 根据图像格式选择正确的编码器
+	if format == "jpeg" || format == "jpg" {
+		if err := jpeg.Encode(buf, imageData, nil); err != nil {
+			return "", types.Size{}, fmt.Errorf("failed to encode image to buffer: %w", err)
+		}
+	} else {
+		// 默认使用 PNG 编码
+		if err := png.Encode(buf, imageData); err != nil {
+			return "", types.Size{}, fmt.Errorf("failed to encode image to buffer: %w", err)
+		}
+	}
+	base64Str = fmt.Sprintf("data:image/%s;base64,%s", format,
+		base64.StdEncoding.EncodeToString(buf.Bytes()))
+
+	return base64Str, size, nil
 }

@@ -145,7 +145,7 @@ func (p *UITarsPlanner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 		}
 	}
 	// append user image message
-	appendConversationHistory(p.history, opts.Message)
+	appendConversationHistory(&p.history, opts.Message)
 
 	// call model service, generate response
 	logRequest(p.history)
@@ -165,7 +165,7 @@ func (p *UITarsPlanner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	}
 
 	// append assistant message
-	appendConversationHistory(p.history, &schema.Message{
+	appendConversationHistory(&p.history, &schema.Message{
 		Role:    schema.Assistant,
 		Content: result.ActionSummary,
 	})
