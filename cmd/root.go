@@ -4,14 +4,11 @@ import (
 	"github.com/spf13/cobra"
 
 	hrp "github.com/httprunner/httprunner/v5"
-	"github.com/httprunner/httprunner/v5/cmd/adb"
-	"github.com/httprunner/httprunner/v5/cmd/ios"
-	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/version"
 )
 
 // rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
+var RootCmd = &cobra.Command{
 	Use:   "hrp",
 	Short: "All-in-One Testing Framework for API, UI and Performance",
 	Long: `
@@ -62,16 +59,8 @@ var (
 	venv     string
 )
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() int {
-	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "INFO", "set log level")
-	rootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format (default colorized console)")
-	rootCmd.PersistentFlags().StringVar(&venv, "venv", "", "specify python3 venv path")
-
-	ios.Init(rootCmd)
-	adb.Init(rootCmd)
-
-	err := rootCmd.Execute()
-	return code.GetErrorCode(err)
+func init() {
+	RootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "INFO", "set log level")
+	RootCmd.PersistentFlags().BoolVar(&logJSON, "log-json", false, "set log to json format (default colorized console)")
+	RootCmd.PersistentFlags().StringVar(&venv, "venv", "", "specify python3 venv path")
 }

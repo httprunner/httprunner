@@ -1,0 +1,27 @@
+{
+	"mcpServers": {
+		"filesystem": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@modelcontextprotocol/server-filesystem",
+				"/tmp"
+			]
+		},
+		"weather": {
+			"args": [
+				"--directory",
+				"/Users/debugtalk/MyProjects/HttpRunner-dev/httprunner/internal/mcp/testdata",
+				"run",
+				"demo_weather.py"
+			],
+			"autoApprove": [
+				"get_forecast"
+			],
+			"command": "uv",
+			"env": {
+				"ABC": "123"
+			}
+		}
+	}
+}

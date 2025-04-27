@@ -8,7 +8,7 @@ import (
 )
 
 type ActionOptions struct {
-	Context context.Context
+	Context context.Context `json:"-" yaml:"-"`
 	// log
 	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"` // used to identify the action in log
 

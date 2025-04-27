@@ -15,7 +15,8 @@ func TestAndroidDouyinFeedTest(t *testing.T) {
 			WithVariables(map[string]interface{}{
 				"device": "${ENV(SerialNumber)}",
 			}).
-			SetAndroid(option.WithSerialNumber("$device")),
+			SetAndroid(option.WithSerialNumber("$device"),
+				option.WithAdbLogOn(true)),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音").
 				Android().

@@ -13,7 +13,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 )
 
-var pytestCmd = &cobra.Command{
+var CmdPytest = &cobra.Command{
 	Use:                "pytest $path ...",
 	Short:              "run API test with pytest",
 	Args:               cobra.MinimumNArgs(1),
@@ -36,10 +36,6 @@ var pytestCmd = &cobra.Command{
 		}
 		return runPytest(args)
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(pytestCmd)
 }
 
 func runPytest(args []string) error {

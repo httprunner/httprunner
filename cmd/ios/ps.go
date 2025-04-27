@@ -46,5 +46,5 @@ var isAll bool
 func init() {
 	psCmd.Flags().StringVarP(&udid, "udid", "u", "", "specify device by udid")
 	psCmd.Flags().BoolVarP(&isAll, "all", "a", false, "print all processes including system processes")
-	iosRootCmd.AddCommand(psCmd)
+	CmdIOSRoot.AddCommand(psCmd)
 }

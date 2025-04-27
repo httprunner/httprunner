@@ -46,5 +46,5 @@ var screencapAndroidDevicesCmd = &cobra.Command{
 
 func init() {
 	screencapAndroidDevicesCmd.Flags().StringVarP(&serial, "serial", "s", "", "filter by device's serial")
-	androidRootCmd.AddCommand(screencapAndroidDevicesCmd)
+	CmdAndroidRoot.AddCommand(screencapAndroidDevicesCmd)
 }

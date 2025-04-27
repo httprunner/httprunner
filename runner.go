@@ -419,14 +419,14 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 	r.parametersIterator = parametersIterator
 
 	// parse android devices config
-	for _, androidDevice := range parsedConfig.Android {
-		err := r.parseDeviceConfig(androidDevice, parsedConfig.Variables)
+	for _, androidDeviceOptions := range parsedConfig.Android {
+		err := r.parseDeviceConfig(androidDeviceOptions, parsedConfig.Variables)
 		if err != nil {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse android config failed: %v", err))
 		}
 
-		device, err := uixt.NewAndroidDevice(androidDevice.Options.Options()...)
+		device, err := uixt.NewAndroidDevice(androidDeviceOptions.Options()...)
 		if err != nil {
 			return nil, errors.Wrap(err, "init android device failed")
 		}
@@ -436,17 +436,17 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		}
 
 		driverExt := uixt.NewXTDriver(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
-		r.uixtDrivers[androidDevice.Options.SerialNumber] = driverExt
+		r.uixtDrivers[androidDeviceOptions.SerialNumber] = driverExt
 	}
 	// parse iOS devices config
-	for _, iosDevice := range parsedConfig.IOS {
-		err := r.parseDeviceConfig(iosDevice, parsedConfig.Variables)
+	for _, iosDeviceOptions := range parsedConfig.IOS {
+		err := r.parseDeviceConfig(iosDeviceOptions, parsedConfig.Variables)
 		if err != nil {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse ios config failed: %v", err))
 		}
 
-		device, err := uixt.NewIOSDevice(iosDevice.Options.Options()...)
+		device, err := uixt.NewIOSDevice(iosDeviceOptions.Options()...)
 		if err != nil {
 			return nil, errors.Wrap(err, "init ios device failed")
 		}
@@ -456,17 +456,17 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		}
 
 		driverExt := uixt.NewXTDriver(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
-		r.uixtDrivers[iosDevice.Options.UDID] = driverExt
+		r.uixtDrivers[iosDeviceOptions.UDID] = driverExt
 	}
 	// parse harmony devices config
-	for _, harmonyDevice := range parsedConfig.Harmony {
-		err := r.parseDeviceConfig(harmonyDevice, parsedConfig.Variables)
+	for _, harmonyDeviceOptions := range parsedConfig.Harmony {
+		err := r.parseDeviceConfig(harmonyDeviceOptions, parsedConfig.Variables)
 		if err != nil {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse harmony config failed: %v", err))
 		}
 
-		device, err := uixt.NewHarmonyDevice(harmonyDevice.Options.Options()...)
+		device, err := uixt.NewHarmonyDevice(harmonyDeviceOptions.Options()...)
 		if err != nil {
 			return nil, errors.Wrap(err, "init harmony device failed")
 		}
@@ -476,7 +476,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		}
 
 		driverExt := uixt.NewXTDriver(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
-		r.uixtDrivers[harmonyDevice.Options.ConnectKey] = driverExt
+		r.uixtDrivers[harmonyDeviceOptions.ConnectKey] = driverExt
 	}
 
 	return parsedConfig, nil

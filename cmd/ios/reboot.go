@@ -40,5 +40,5 @@ var rebootCmd = &cobra.Command{
 
 func init() {
 	rebootCmd.Flags().StringVarP(&udid, "udid", "u", "", "specify device by udid")
-	iosRootCmd.AddCommand(rebootCmd)
+	CmdIOSRoot.AddCommand(rebootCmd)
 }

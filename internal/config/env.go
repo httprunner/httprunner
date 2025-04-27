@@ -5,15 +5,18 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 )
 
+var loadEnvOnce sync.Once
+
 // LoadEnv loads environment variables from .env file
 // it will search for .env file from current working directory upward recursively
 func LoadEnv() (err error) {
-	once.Do(func() {
+	loadEnvOnce.Do(func() {
 		// get current working directory
 		var cwd string
 		cwd, err = os.Getwd()

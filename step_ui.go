@@ -15,8 +15,8 @@ import (
 )
 
 type MobileUI struct {
-	OSType            string `json:"os_type,omitempty" yaml:"os_type,omitempty"` // ios or harmony or android
-	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"`   // android serial or ios udid
+	OSType            string `json:"os_type,omitempty" yaml:"os_type,omitempty"` // mobile device os type
+	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"`   // mobile device serial number
 	uixt.MobileAction `yaml:",inline"`
 	Actions           []uixt.MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 }

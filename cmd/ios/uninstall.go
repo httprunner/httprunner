@@ -56,5 +56,5 @@ func init() {
 	uninstallCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's serial")
 	uninstallCmd.Flags().StringVarP(&bundleId, "bundleId", "b", "", "bundleId to uninstall")
 
-	iosRootCmd.AddCommand(uninstallCmd)
+	CmdIOSRoot.AddCommand(uninstallCmd)
 }

@@ -30,12 +30,12 @@ type Config struct {
 }
 
 var (
-	globalConfig *Config
-	once         sync.Once
+	globalConfig  *Config
+	getConfigOnce sync.Once
 )
 
 func GetConfig() *Config {
-	once.Do(func() {
+	getConfigOnce.Do(func() {
 		cfg := &Config{
 			StartTime: time.Now(),
 		}

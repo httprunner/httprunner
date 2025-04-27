@@ -52,5 +52,5 @@ func init() {
 	xctestCmd.Flags().StringVarP(&bundleID, "bundleID", "b", "com.gtf.wda.runner.xctrunner", "specify ios bundleID")
 	xctestCmd.Flags().StringVarP(&testRunnerBundleID, "testRunnerBundleID", "t", "com.gtf.wda.runner.xctrunner", "specify ios testRunnerBundleID")
 	xctestCmd.Flags().StringVarP(&xctestConfig, "xctestConfig", "x", "GtfWdaRunner.xctest", "specify ios xctestConfig")
-	iosRootCmd.AddCommand(xctestCmd)
+	CmdIOSRoot.AddCommand(xctestCmd)
 }

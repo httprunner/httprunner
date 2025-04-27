@@ -7,7 +7,7 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
-var iosRootCmd = &cobra.Command{
+var CmdIOSRoot = &cobra.Command{
 	Use:   "ios",
 	Short: "simple utils for ios device management",
 }
@@ -18,8 +18,4 @@ func getDevice(udid string) (*uixt.IOSDevice, error) {
 		return nil, err
 	}
 	return device, nil
-}
-
-func Init(rootCmd *cobra.Command) {
-	rootCmd.AddCommand(iosRootCmd)
 }

@@ -1,5 +1,9 @@
 SHELL=/usr/bin/env bash
 
+MACOS_MIN   := 11.0
+TARGET_OS   := darwin
+TARGET_ARCH := amd64
+
 .DEFAULT_GOAL=help
 
 .PHONY: test
@@ -15,9 +19,17 @@ bump: ## bump hrp version, e.g. make bump version=4.0.0
 
 .PHONY: build
 build: ## build hrp cli tool
+	# =================== 参数说明 ===================
+	# CGO_ENABLED=0         : 完全禁用 CGO，强制使用纯 Go 实现
+	# -tags netgo,osusergo  : 使用 Go 的 net 和 user 包的纯 Go 实现，不依赖系统库
+	# -trimpath             : 从二进制文件中删除所有文件系统路径，增加安全性和可重现性
+	# -ldflags "-s -w"      :
+	#   -s                  : 忽略符号表和调试信息
+	#   -w                  : 忽略 DWARF 调试信息
+	# -extldflags "-static" : 传递给外部链接器的标志，强制静态链接
 	@echo "[info] build hrp cli tool"
 	go mod tidy
-	go build -ldflags "\
+	GOOS=${TARGET_OS} GOARCH=${TARGET_ARCH} CGO_ENABLED=0 go build -tags netgo,osusergo -trimpath -ldflags "\
 		-s -w \
 		-X 'github.com/httprunner/httprunner/v5/internal/version.GitCommit=$(shell git rev-parse HEAD)' \
 		-X 'github.com/httprunner/httprunner/v5/internal/version.GitBranch=$(shell git rev-parse --abbrev-ref HEAD)' \

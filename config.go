@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
@@ -23,26 +22,26 @@ func NewConfig(name string) *TConfig {
 
 // define struct for testcase config
 type TConfig struct {
-	Name              string                 `json:"name" yaml:"name"` // required
-	Verify            bool                   `json:"verify,omitempty" yaml:"verify,omitempty"`
-	BaseURL           string                 `json:"base_url,omitempty" yaml:"base_url,omitempty"`   // deprecated in v4.1, moved to env
-	Headers           map[string]string      `json:"headers,omitempty" yaml:"headers,omitempty"`     // public request headers
-	Environs          map[string]string      `json:"environs,omitempty" yaml:"environs,omitempty"`   // environment variables
-	Variables         map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"` // global variables
-	Parameters        map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
-	ThinkTimeSetting  *ThinkTimeConfig       `json:"think_time,omitempty" yaml:"think_time,omitempty"`
-	WebSocketSetting  *WebSocketConfig       `json:"websocket,omitempty" yaml:"websocket,omitempty"`
-	IOS               []*uixt.IOSDevice      `json:"ios,omitempty" yaml:"ios,omitempty"`
-	Android           []*uixt.AndroidDevice  `json:"android,omitempty" yaml:"android,omitempty"`
-	Harmony           []*uixt.HarmonyDevice  `json:"harmony,omitempty" yaml:"harmony,omitempty"`
-	RequestTimeout    float32                `json:"request_timeout,omitempty" yaml:"request_timeout,omitempty"` // request timeout in seconds
-	CaseTimeout       float32                `json:"case_timeout,omitempty" yaml:"case_timeout,omitempty"`       // testcase timeout in seconds
-	Export            []string               `json:"export,omitempty" yaml:"export,omitempty"`
-	Weight            int                    `json:"weight,omitempty" yaml:"weight,omitempty"`
-	Path              string                 `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
-	PluginSetting     *PluginConfig          `json:"plugin,omitempty" yaml:"plugin,omitempty"` // plugin config
-	IgnorePopup       bool                   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
+	Name              string                         `json:"name" yaml:"name"` // required
+	Verify            bool                           `json:"verify,omitempty" yaml:"verify,omitempty"`
+	BaseURL           string                         `json:"base_url,omitempty" yaml:"base_url,omitempty"`   // deprecated in v4.1, moved to env
+	Headers           map[string]string              `json:"headers,omitempty" yaml:"headers,omitempty"`     // public request headers
+	Environs          map[string]string              `json:"environs,omitempty" yaml:"environs,omitempty"`   // environment variables
+	Variables         map[string]interface{}         `json:"variables,omitempty" yaml:"variables,omitempty"` // global variables
+	Parameters        map[string]interface{}         `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	ParametersSetting *TParamsConfig                 `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
+	ThinkTimeSetting  *ThinkTimeConfig               `json:"think_time,omitempty" yaml:"think_time,omitempty"`
+	WebSocketSetting  *WebSocketConfig               `json:"websocket,omitempty" yaml:"websocket,omitempty"`
+	IOS               []*option.IOSDeviceOptions     `json:"ios,omitempty" yaml:"ios,omitempty"`
+	Android           []*option.AndroidDeviceOptions `json:"android,omitempty" yaml:"android,omitempty"`
+	Harmony           []*option.HarmonyDeviceOptions `json:"harmony,omitempty" yaml:"harmony,omitempty"`
+	RequestTimeout    float32                        `json:"request_timeout,omitempty" yaml:"request_timeout,omitempty"` // request timeout in seconds
+	CaseTimeout       float32                        `json:"case_timeout,omitempty" yaml:"case_timeout,omitempty"`       // testcase timeout in seconds
+	Export            []string                       `json:"export,omitempty" yaml:"export,omitempty"`
+	Weight            int                            `json:"weight,omitempty" yaml:"weight,omitempty"`
+	Path              string                         `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
+	PluginSetting     *PluginConfig                  `json:"plugin,omitempty" yaml:"plugin,omitempty"` // plugin config
+	IgnorePopup       bool                           `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
 }
 
 func (c *TConfig) Get() *TConfig {
@@ -120,63 +119,54 @@ func (c *TConfig) SetWebSocket(times, interval, timeout, size int64) *TConfig {
 
 func (c *TConfig) SetIOS(opts ...option.IOSDeviceOption) *TConfig {
 	iosOptions := option.NewIOSDeviceOptions(opts...)
-	device := &uixt.IOSDevice{
-		Options: iosOptions,
-	}
 
 	// each device can have its own settings
 	if iosOptions.UDID != "" {
-		c.IOS = append(c.IOS, device)
+		c.IOS = append(c.IOS, iosOptions)
 		return c
 	}
 
 	// device UDID is not specified, settings will be shared
 	if len(c.IOS) == 0 {
-		c.IOS = append(c.IOS, device)
+		c.IOS = append(c.IOS, iosOptions)
 	} else {
-		c.IOS[0] = device
+		c.IOS[0] = iosOptions
 	}
 	return c
 }
 
 func (c *TConfig) SetHarmony(opts ...option.HarmonyDeviceOption) *TConfig {
 	harmonyOptions := option.NewHarmonyDeviceOptions(opts...)
-	device := &uixt.HarmonyDevice{
-		Options: harmonyOptions,
-	}
 
 	// each device can have its own settings
 	if harmonyOptions.ConnectKey != "" {
-		c.Harmony = append(c.Harmony, device)
+		c.Harmony = append(c.Harmony, harmonyOptions)
 		return c
 	}
 
 	// device UDID is not specified, settings will be shared
 	if len(c.Harmony) == 0 {
-		c.Harmony = append(c.Harmony, device)
+		c.Harmony = append(c.Harmony, harmonyOptions)
 	} else {
-		c.Harmony[0] = device
+		c.Harmony[0] = harmonyOptions
 	}
 	return c
 }
 
 func (c *TConfig) SetAndroid(opts ...option.AndroidDeviceOption) *TConfig {
 	uiaOptions := option.NewAndroidDeviceOptions(opts...)
-	device := &uixt.AndroidDevice{
-		Options: uiaOptions,
-	}
 
 	// each device can have its own settings
 	if uiaOptions.SerialNumber != "" {
-		c.Android = append(c.Android, device)
+		c.Android = append(c.Android, uiaOptions)
 		return c
 	}
 
 	// device UDID is not specified, settings will be shared
 	if len(c.Android) == 0 {
-		c.Android = append(c.Android, device)
+		c.Android = append(c.Android, uiaOptions)
 	} else {
-		c.Android[0] = device
+		c.Android[0] = uiaOptions
 	}
 	return c
 }

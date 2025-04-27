@@ -49,5 +49,5 @@ var installCmd = &cobra.Command{
 func init() {
 	installCmd.Flags().StringVarP(&udid, "udid", "u", "", "filter by device's serial")
 
-	iosRootCmd.AddCommand(installCmd)
+	CmdIOSRoot.AddCommand(installCmd)
 }

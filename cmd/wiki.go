@@ -10,7 +10,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/wiki"
 )
 
-var wikiCmd = &cobra.Command{
+var CmdWiki = &cobra.Command{
 	Use:     "wiki",
 	Aliases: []string{"info", "docs", "doc"},
 	Short:   "visit https://httprunner.com",
@@ -25,8 +25,4 @@ var wikiCmd = &cobra.Command{
 		}()
 		return wiki.OpenWiki()
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(wikiCmd)
 }

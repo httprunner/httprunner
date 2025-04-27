@@ -2,25 +2,62 @@ package ai
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
-	_ "image/jpeg"
 	"image/png"
-	"math"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/cloudwego/eino-ext/components/model/openai"
-	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/uixt/types"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+)
+
+type ILLMService interface {
+	Call(opts *PlanningOptions) (*PlanningResult, error)
+}
+
+// PlanningOptions represents the input options for planning
+type PlanningOptions struct {
+	UserInstruction string          `json:"user_instruction"` // append to system prompt
+	Message         *schema.Message `json:"message"`
+	Size            types.Size      `json:"size"`
+}
+
+// PlanningResult represents the result of planning
+type PlanningResult struct {
+	NextActions   []ParsedAction `json:"actions"`
+	ActionSummary string         `json:"summary"`
+	Error         string         `json:"error,omitempty"`
+}
+
+// ParsedAction represents a parsed action from the VLM response
+type ParsedAction struct {
+	ActionType   ActionType             `json:"actionType"`
+	ActionInputs map[string]interface{} `json:"actionInputs"`
+	Thought      string                 `json:"thought"`
+}
+
+type ActionType string
+
+const (
+	ActionTypeClick    ActionType = "click"
+	ActionTypeTap      ActionType = "tap"
+	ActionTypeDrag     ActionType = "drag"
+	ActionTypeSwipe    ActionType = "swipe"
+	ActionTypeWait     ActionType = "wait"
+	ActionTypeFinished ActionType = "finished"
+	ActionTypeCallUser ActionType = "call_user"
+	ActionTypeType     ActionType = "type"
+	ActionTypeScroll   ActionType = "scroll"
+)
+
+const (
+	defaultTimeout = 60 * time.Second
 )
 
 // Error types
@@ -29,79 +66,6 @@ var (
 	ErrNoConversationHistory = fmt.Errorf("conversation history is empty")
 	ErrInvalidImageData      = fmt.Errorf("invalid image data")
 )
-
-func NewPlanner(ctx context.Context) (*Planner, error) {
-	config, err := GetModelConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create OpenAI config: %w", err)
-	}
-	model, err := openai.NewChatModel(ctx, config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize OpenAI model: %w", err)
-	}
-	parser := NewActionParser(1000)
-	return &Planner{
-		ctx:    ctx,
-		config: config,
-		model:  model,
-		parser: parser,
-	}, nil
-}
-
-type Planner struct {
-	ctx     context.Context
-	model   model.ChatModel
-	config  *openai.ChatModelConfig
-	parser  *ActionParser
-	history []*schema.Message // conversation history
-}
-
-// Call performs UI planning using Vision Language Model
-func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
-	// validate input parameters
-	if err := validateInput(opts); err != nil {
-		return nil, errors.Wrap(err, "validate input parameters failed")
-	}
-
-	// prepare prompt
-	if len(p.history) == 0 {
-		// add system message
-		systemPrompt := uiTarsPlanningPrompt + opts.UserInstruction
-		p.history = []*schema.Message{
-			{
-				Role:    schema.System,
-				Content: systemPrompt,
-			},
-		}
-	}
-	// append user image message
-	p.appendConversationHistory(opts.Message)
-
-	// call model service, generate response
-	logRequest(p.history)
-	startTime := time.Now()
-	resp, err := p.model.Generate(p.ctx, p.history)
-	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
-		Str("model", p.config.Model).Msg("call model service")
-	if err != nil {
-		return nil, fmt.Errorf("request model service failed: %w", err)
-	}
-	logResponse(resp)
-
-	// parse result
-	result, err := p.parseResult(resp, opts.Size)
-	if err != nil {
-		return nil, errors.Wrap(err, "parse result failed")
-	}
-
-	// append assistant message
-	p.appendConversationHistory(&schema.Message{
-		Role:    schema.Assistant,
-		Content: result.ActionSummary,
-	})
-
-	return result, nil
-}
 
 func validateInput(opts *PlanningOptions) error {
 	if opts.UserInstruction == "" {
@@ -168,7 +132,7 @@ func logResponse(resp *schema.Message) {
 }
 
 // appendConversationHistory adds a message to the conversation history
-func (p *Planner) appendConversationHistory(msg *schema.Message) {
+func appendConversationHistory(history []*schema.Message, msg *schema.Message) {
 	// for user image message:
 	// - keep at most 4 user image messages
 	// - delete the oldest user image message when the limit is reached
@@ -178,7 +142,7 @@ func (p *Planner) appendConversationHistory(msg *schema.Message) {
 		firstUserImgIndex := -1
 
 		// calculate the number of user messages and find the index of the first user message
-		for i, item := range p.history {
+		for i, item := range history {
 			if item.Role == schema.User {
 				userImgCount++
 				if firstUserImgIndex == -1 {
@@ -190,170 +154,31 @@ func (p *Planner) appendConversationHistory(msg *schema.Message) {
 		// if there are already 4 user messages, delete the first one before adding the new message
 		if userImgCount >= 4 && firstUserImgIndex >= 0 {
 			// delete the first user message
-			p.history = append(
-				p.history[:firstUserImgIndex],
-				p.history[firstUserImgIndex+1:]...,
+			history = append(
+				history[:firstUserImgIndex],
+				history[firstUserImgIndex+1:]...,
 			)
 		}
 		// add the new user message to the history
-		p.history = append(p.history, msg)
+		history = append(history, msg)
 	}
 
 	// for assistant message:
 	// - keep at most the last 10 assistant messages
 	if msg.Role == schema.Assistant {
 		// add the new assistant message to the history
-		p.history = append(p.history, msg)
+		history = append(history, msg)
 
 		// if there are more than 10 assistant messages, remove the oldest ones
 		assistantMsgCount := 0
-		for i := len(p.history) - 1; i >= 0; i-- {
-			if p.history[i].Role == schema.Assistant {
+		for i := len(history) - 1; i >= 0; i-- {
+			if history[i].Role == schema.Assistant {
 				assistantMsgCount++
 				if assistantMsgCount > 10 {
-					p.history = append(p.history[:i], p.history[i+1:]...)
+					history = append(history[:i], history[i+1:]...)
 				}
 			}
 		}
-	}
-}
-
-func (p *Planner) parseResult(msg *schema.Message, size types.Size) (*PlanningResult, error) {
-	// parse response
-	parseActions, err := p.parser.Parse(msg.Content)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse actions: %w", err)
-	}
-
-	// process response
-	result, err := processVLMResponse(parseActions, size)
-	if err != nil {
-		return nil, errors.Wrap(err, "process VLM response failed")
-	}
-
-	log.Info().
-		Interface("summary", result.ActionSummary).
-		Interface("actions", result.NextActions).
-		Msg("get VLM planning result")
-	return result, nil
-}
-
-// processVLMResponse processes the VLM response and converts it to PlanningResult
-func processVLMResponse(actions []ParsedAction, size types.Size) (*PlanningResult, error) {
-	log.Info().Msg("processing VLM response...")
-
-	if len(actions) == 0 {
-		return nil, fmt.Errorf("no actions returned from VLM")
-	}
-
-	// validate and post-process each action
-	for i := range actions {
-		// validate action type
-		switch actions[i].ActionType {
-		case "click":
-			if err := convertCoordinateAction(&actions[i], "startBox", size); err != nil {
-				return nil, errors.Wrap(err, "convert coordinate action failed")
-			}
-		case "drag":
-			if err := convertCoordinateAction(&actions[i], "startBox", size); err != nil {
-				return nil, errors.Wrap(err, "convert coordinate action failed")
-			}
-			if err := convertCoordinateAction(&actions[i], "endBox", size); err != nil {
-				return nil, errors.Wrap(err, "convert coordinate action failed")
-			}
-		case "type":
-			validateTypeContent(&actions[i])
-		case "wait", "finished", "call_user":
-			// these actions do not need extra parameters
-		default:
-			log.Printf("warning: unknown action type: %s, will try to continue processing", actions[i].ActionType)
-		}
-	}
-
-	// extract action summary
-	actionSummary := extractActionSummary(actions)
-
-	return &PlanningResult{
-		NextActions:   actions,
-		ActionSummary: actionSummary,
-	}, nil
-}
-
-// extractActionSummary extracts the summary from the actions
-func extractActionSummary(actions []ParsedAction) string {
-	if len(actions) == 0 {
-		return ""
-	}
-
-	// use the Thought of the first action as summary
-	if actions[0].Thought != "" {
-		return actions[0].Thought
-	}
-
-	// if no Thought, generate summary from action type
-	action := actions[0]
-	switch action.ActionType {
-	case "click":
-		return "点击操作"
-	case "drag":
-		return "拖拽操作"
-	case "type":
-		content, _ := action.ActionInputs["content"].(string)
-		if len(content) > 20 {
-			content = content[:20] + "..."
-		}
-		return fmt.Sprintf("输入文本: %s", content)
-	case "wait":
-		return "等待操作"
-	case "finished":
-		return "完成操作"
-	case "call_user":
-		return "请求用户协助"
-	default:
-		return fmt.Sprintf("执行 %s 操作", action.ActionType)
-	}
-}
-
-func convertCoordinateAction(action *ParsedAction, boxField string, size types.Size) error {
-	// The model generates a 2D coordinate output that represents relative positions.
-	// To convert these values to image-relative coordinates, divide each component by 1000 to obtain values in the range [0,1].
-	// The absolute coordinates required by the Action can be calculated by:
-	// - X absolute = X relative × image width / 1000
-	// - Y absolute = Y relative × image height / 1000
-
-	// get image width and height
-	imageWidth := size.Width
-	imageHeight := size.Height
-
-	box := action.ActionInputs[boxField]
-	coords, ok := box.([]float64)
-	if !ok {
-		log.Error().Interface("inputs", action.ActionInputs).Msg("invalid action inputs")
-		return fmt.Errorf("invalid action inputs")
-	}
-
-	if len(coords) == 2 {
-		coords[0] = math.Round((coords[0]/1000*float64(imageWidth))*10) / 10
-		coords[1] = math.Round((coords[1]/1000*float64(imageHeight))*10) / 10
-	} else if len(coords) == 4 {
-		coords[0] = math.Round((coords[0]/1000*float64(imageWidth))*10) / 10
-		coords[1] = math.Round((coords[1]/1000*float64(imageHeight))*10) / 10
-		coords[2] = math.Round((coords[2]/1000*float64(imageWidth))*10) / 10
-		coords[3] = math.Round((coords[3]/1000*float64(imageHeight))*10) / 10
-	} else {
-		log.Error().Interface("inputs", action.ActionInputs).Msg("invalid action inputs")
-		return fmt.Errorf("invalid action inputs")
-	}
-
-	return nil
-}
-
-// validateTypeContent 验证输入文本内容
-func validateTypeContent(action *ParsedAction) {
-	if content, ok := action.ActionInputs["content"]; !ok || content == "" {
-		// default to empty string
-		action.ActionInputs["content"] = ""
-		log.Warn().Msg("type action missing content parameter, set to default")
 	}
 }
 
@@ -453,4 +278,13 @@ func loadImage(imagePath string) (base64Str string, size types.Size, err error) 
 		base64.StdEncoding.EncodeToString(buf.Bytes()))
 
 	return base64Str, size, nil
+}
+
+// maskAPIKey masks the API key
+func maskAPIKey(key string) string {
+	if len(key) <= 8 {
+		return "******"
+	}
+
+	return key[:4] + "******" + key[len(key)-4:]
 }

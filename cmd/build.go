@@ -10,7 +10,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 )
 
-var buildCmd = &cobra.Command{
+var CmdBuild = &cobra.Command{
 	Use:   "build $path ...",
 	Short: "build plugin for testing",
 	Long:  `build python/go plugin for testing`,
@@ -33,7 +33,5 @@ var buildCmd = &cobra.Command{
 var output string
 
 func init() {
-	rootCmd.AddCommand(buildCmd)
-
-	buildCmd.Flags().StringVarP(&output, "output", "o", "", "funplugin product output path, default: cwd")
+	CmdBuild.Flags().StringVarP(&output, "output", "o", "", "funplugin product output path, default: cwd")
 }

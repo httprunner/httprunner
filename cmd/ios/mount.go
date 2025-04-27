@@ -79,5 +79,5 @@ func init() {
 	mountCmd.Flags().BoolVar(&unmountDeveloperDiskImage, "reset", false, "unmount developer disk images")
 	mountCmd.Flags().StringVarP(&developerDiskImageDir, "dir", "d", defaultDeveloperDiskImageDir, "specify developer disk image directory")
 	mountCmd.Flags().StringVarP(&udid, "udid", "u", "", "specify device by udid")
-	iosRootCmd.AddCommand(mountCmd)
+	CmdIOSRoot.AddCommand(mountCmd)
 }
