@@ -195,6 +195,53 @@ func TestChatList(t *testing.T) {
 	require.NotNil(t, result)
 }
 
+func TestHandleSwitch(t *testing.T) {
+	userInstruction := "发送框下方的联网搜索开关是开启状态" // 点击开启联网搜索开关
+	// 检查发送框下方的联网搜索开关，蓝色为开启状态，灰色为关闭状态；若开关处于关闭状态，则点击进行开启
+
+	planner, err := NewUITarsPlanner(context.Background())
+	require.NoError(t, err)
+
+	testCases := []struct {
+		imageFile  string
+		actionType ActionType
+	}{
+		{"testdata/deepseek_think_off.png", ActionTypeClick},
+		{"testdata/deepseek_think_on.png", ActionTypeFinished},
+		{"testdata/deepseek_network_on.png", ActionTypeFinished},
+	}
+
+	for _, tc := range testCases {
+		imageBase64, size, err := loadImage(tc.imageFile)
+		require.NoError(t, err)
+
+		opts := &PlanningOptions{
+			UserInstruction: userInstruction,
+			Message: &schema.Message{
+				Role: schema.User,
+				MultiContent: []schema.ChatMessagePart{
+					{
+						Type: schema.ChatMessagePartTypeImageURL,
+						ImageURL: &schema.ChatMessageImageURL{
+							URL: imageBase64,
+						},
+					},
+				},
+			},
+			Size: size,
+		}
+
+		// Execute planning
+		result, err := planner.Call(opts)
+
+		// Validate results
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Equal(t, result.NextActions[0].ActionType, tc.actionType,
+			"Unexpected action type for image file: %s", tc.imageFile)
+	}
+}
+
 func TestValidateInput(t *testing.T) {
 	imageBase64, size, err := loadImage("testdata/popup_risk_warning.png")
 	require.NoError(t, err)
