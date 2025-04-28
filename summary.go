@@ -95,7 +95,7 @@ func (s *Summary) GenHTMLReport() error {
 	}
 
 	reportPath := filepath.Join(reportsDir, "report.html")
-	file, err := os.OpenFile(reportPath, os.O_WRONLY|os.O_CREATE, 0o666)
+	file, err := os.OpenFile(reportPath, os.O_WRONLY|os.O_CREATE, 0o600)
 	if err != nil {
 		log.Error().Err(err).Msg("open file failed")
 		return err
