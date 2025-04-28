@@ -131,8 +131,10 @@ func logResponse(resp *schema.Message) {
 	logger.Msg("log response message")
 }
 
-// appendConversationHistory adds a message to the conversation history
-func appendConversationHistory(history *[]*schema.Message, msg *schema.Message) {
+type ConversationHistory []*schema.Message
+
+// Append adds a message to the conversation history
+func (h *ConversationHistory) Append(msg *schema.Message) {
 	// for user image message:
 	// - keep at most 4 user image messages
 	// - delete the oldest user image message when the limit is reached
@@ -142,7 +144,7 @@ func appendConversationHistory(history *[]*schema.Message, msg *schema.Message) 
 		firstUserImgIndex := -1
 
 		// calculate the number of user messages and find the index of the first user message
-		for i, item := range *history {
+		for i, item := range *h {
 			if item.Role == schema.User {
 				userImgCount++
 				if firstUserImgIndex == -1 {
@@ -154,28 +156,28 @@ func appendConversationHistory(history *[]*schema.Message, msg *schema.Message) 
 		// if there are already 4 user messages, delete the first one before adding the new message
 		if userImgCount >= 4 && firstUserImgIndex >= 0 {
 			// delete the first user message
-			*history = append(
-				(*history)[:firstUserImgIndex],
-				(*history)[firstUserImgIndex+1:]...,
+			*h = append(
+				(*h)[:firstUserImgIndex],
+				(*h)[firstUserImgIndex+1:]...,
 			)
 		}
 		// add the new user message to the history
-		*history = append(*history, msg)
+		*h = append(*h, msg)
 	}
 
 	// for assistant message:
 	// - keep at most the last 10 assistant messages
 	if msg.Role == schema.Assistant {
 		// add the new assistant message to the history
-		*history = append(*history, msg)
+		*h = append(*h, msg)
 
 		// if there are more than 10 assistant messages, remove the oldest ones
 		assistantMsgCount := 0
-		for i := len(*history) - 1; i >= 0; i-- {
-			if (*history)[i].Role == schema.Assistant {
+		for i := len(*h) - 1; i >= 0; i-- {
+			if (*h)[i].Role == schema.Assistant {
 				assistantMsgCount++
 				if assistantMsgCount > 10 {
-					*history = append((*history)[:i], (*history)[i+1:]...)
+					*h = append((*h)[:i], (*h)[i+1:]...)
 				}
 			}
 		}

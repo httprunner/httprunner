@@ -47,7 +47,7 @@ type UITarsAsserter struct {
 	model        *ark.ChatModel
 	config       *ark.ChatModelConfig
 	systemPrompt string
-	history      []*schema.Message // conversation history
+	history      ConversationHistory
 }
 
 // NewUITarsAsserter creates a new UITarsAsserter instance
@@ -87,7 +87,7 @@ func (a *UITarsAsserter) Assert(opts *AssertOptions) (*AssertionResponse, error)
 	}
 
 	// Reset history for each new assertion
-	a.history = []*schema.Message{
+	a.history = ConversationHistory{
 		{
 			Role:    schema.System,
 			Content: a.systemPrompt,
@@ -118,7 +118,7 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	}
 
 	// Append user message to history
-	appendConversationHistory(&a.history, userMsg)
+	a.history.Append(userMsg)
 
 	// Call model service, generate response
 	logRequest(a.history)
@@ -138,7 +138,7 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	}
 
 	// Append assistant message to history
-	appendConversationHistory(&a.history, &schema.Message{
+	a.history.Append(&schema.Message{
 		Role:    schema.Assistant,
 		Content: resp.Content,
 	})

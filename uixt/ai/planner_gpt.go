@@ -110,7 +110,7 @@ type Planner struct {
 	model        model.ToolCallingChatModel
 	config       *openai.ChatModelConfig
 	systemPrompt string
-	history      []*schema.Message // conversation history
+	history      ConversationHistory
 }
 
 // Call performs UI planning using Vision Language Model
@@ -124,7 +124,7 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	if len(p.history) == 0 {
 		// add system message
 		systemPrompt := uiTarsPlanningPrompt + opts.UserInstruction
-		p.history = []*schema.Message{
+		p.history = ConversationHistory{
 			{
 				Role:    schema.System,
 				Content: systemPrompt,
@@ -132,7 +132,7 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 		}
 	}
 	// append user image message
-	appendConversationHistory(&p.history, opts.Message)
+	p.history.Append(opts.Message)
 
 	// call model service, generate response
 	logRequest(p.history)
@@ -152,7 +152,7 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	}
 
 	// append assistant message
-	appendConversationHistory(&p.history, &schema.Message{
+	p.history.Append(&schema.Message{
 		Role:    schema.Assistant,
 		Content: result.ActionSummary,
 	})
