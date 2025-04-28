@@ -62,6 +62,7 @@ func WithLLMService(service LLMServiceType) AIServiceOption {
 	return func(opts *AIServices) {
 		switch service {
 		case LLMServiceTypeGPT4o:
+			// TODO: implement gpt-4o planner and asserter
 			planner, err := NewPlanner(context.Background())
 			if err != nil {
 				log.Error().Err(err).Msg("init gpt-4o planner failed")

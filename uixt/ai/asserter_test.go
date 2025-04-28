@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// 创建AI服务的辅助函数
 func createAIService(t *testing.T) *AIServices {
 	aiService := NewAIService(WithLLMService(LLMServiceTypeUITARS))
 	require.NotNil(t, aiService)
