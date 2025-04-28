@@ -18,7 +18,8 @@ HttpRunner 相比其它 UI 自动化框架，主要特点包括：
 - 多端统一 API，降低学习和横向拓展的成本
 - 拥抱开源生态，充分复用开源组件
 
-[HttpRunner v5 用户指南（更新中）](https://debugtalk.feishu.cn/wiki/RqGuw17bsizGTik9WuNcGQyhnaf)
+> [HttpRunner v5 用户指南（更新中）](https://debugtalk.feishu.cn/wiki/RqGuw17bsizGTik9WuNcGQyhnaf)
+> [HttpRunner DeepWiki](https://deepwiki.com/httprunner/httprunner)
 
 ## 使用说明
 
