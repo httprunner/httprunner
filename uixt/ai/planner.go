@@ -13,7 +13,9 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino/schema"
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/uixt/types"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -60,20 +62,13 @@ const (
 	defaultTimeout = 30 * time.Second
 )
 
-// Error types
-var (
-	ErrEmptyInstruction      = fmt.Errorf("user instruction is empty")
-	ErrNoConversationHistory = fmt.Errorf("conversation history is empty")
-	ErrInvalidImageData      = fmt.Errorf("invalid image data")
-)
-
-func validateInput(opts *PlanningOptions) error {
+func validatePlanningInput(opts *PlanningOptions) error {
 	if opts.UserInstruction == "" {
-		return ErrEmptyInstruction
+		return errors.Wrap(code.LLMPrepareRequestError, "user instruction is empty")
 	}
 
-	if opts.Message == nil {
-		return ErrNoConversationHistory
+	if opts.Message == nil || opts.Message.Role == "" {
+		return errors.Wrap(code.LLMPrepareRequestError, "user message is empty")
 	}
 
 	if opts.Message.Role == schema.User {
@@ -81,7 +76,7 @@ func validateInput(opts *PlanningOptions) error {
 		if len(opts.Message.MultiContent) > 0 {
 			for _, content := range opts.Message.MultiContent {
 				if content.Type == schema.ChatMessagePartTypeImageURL && content.ImageURL == nil {
-					return ErrInvalidImageData
+					return errors.Wrap(code.LLMPrepareRequestError, "invalid image data")
 				}
 			}
 		}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/schema"
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
@@ -76,14 +77,21 @@ type AssertOptions struct {
 	Size       types.Size `json:"size"`       // Screen dimensions
 }
 
+func validateAssertionInput(opts *AssertOptions) error {
+	if opts.Assertion == "" {
+		return errors.Wrap(code.LLMPrepareRequestError, "assertion text is required")
+	}
+	if opts.Screenshot == "" {
+		return errors.Wrap(code.LLMPrepareRequestError, "screenshot is required")
+	}
+	return nil
+}
+
 // Assert performs the assertion check on the screenshot
 func (a *UITarsAsserter) Assert(opts *AssertOptions) (*AssertionResponse, error) {
 	// Validate input parameters
-	if opts.Assertion == "" {
-		return nil, errors.New("assertion text is required")
-	}
-	if opts.Screenshot == "" {
-		return nil, errors.New("screenshot is required")
+	if err := validateAssertionInput(opts); err != nil {
+		return nil, errors.Wrap(err, "validate assertion parameters failed")
 	}
 
 	// Reset history for each new assertion
@@ -127,14 +135,14 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
 		Str("model", a.config.Model).Msg("call model service for assertion")
 	if err != nil {
-		return nil, fmt.Errorf("request model service failed: %w", err)
+		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
 	logResponse(resp)
 
 	// Parse result
 	result, err := parseAssertionResult(resp.Content)
 	if err != nil {
-		return nil, errors.Wrap(err, "parse assertion result failed")
+		return nil, errors.Wrap(code.LLMParseAssertionResponseError, err.Error())
 	}
 
 	// Append assistant message to history

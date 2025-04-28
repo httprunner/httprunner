@@ -129,8 +129,8 @@ type UITarsPlanner struct {
 // Call performs UI planning using Vision Language Model
 func (p *UITarsPlanner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	// validate input parameters
-	if err := validateInput(opts); err != nil {
-		return nil, errors.Wrap(err, "validate input parameters failed")
+	if err := validatePlanningInput(opts); err != nil {
+		return nil, errors.Wrap(err, "validate planning parameters failed")
 	}
 
 	// prepare prompt
@@ -154,14 +154,14 @@ func (p *UITarsPlanner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
 		Str("model", p.config.Model).Msg("call model service")
 	if err != nil {
-		return nil, fmt.Errorf("request model service failed: %w", err)
+		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
 	logResponse(resp)
 
 	// parse result
 	result, err := p.parseResult(resp, opts.Size)
 	if err != nil {
-		return nil, errors.Wrap(err, "parse result failed")
+		return nil, errors.Wrap(code.LLMParsePlanningResponseError, err.Error())
 	}
 
 	// append assistant message
