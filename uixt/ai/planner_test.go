@@ -418,7 +418,7 @@ func TestLoadImage(t *testing.T) {
 // loadImage loads image and returns base64 encoded string
 func loadImage(imagePath string) (base64Str string, size types.Size, err error) {
 	// Read the image file
-	imageFile, err := os.Open(imagePath)
+	imageFile, err := os.OpenFile(imagePath, os.O_RDONLY, 0o666)
 	if err != nil {
 		return "", types.Size{}, fmt.Errorf("failed to open image file: %w", err)
 	}
