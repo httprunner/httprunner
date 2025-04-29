@@ -49,6 +49,8 @@ type LLMServiceType string
 const (
 	LLMServiceTypeUITARS     LLMServiceType = "ui-tars"
 	LLMServiceTypeGPT4o      LLMServiceType = "gpt-4o"
+	LLMServiceTypeGPT4Vision LLMServiceType = "gpt-4-vision"
+	LLMServiceTypeQwenVL     LLMServiceType = "qwen-vl"
 	LLMServiceTypeDeepSeekV3 LLMServiceType = "deepseek-v3"
 )
 
@@ -58,45 +60,33 @@ type ILLMService interface {
 	Assert(opts *AssertOptions) (*AssertionResponse, error)
 }
 
-func WithLLMService(service LLMServiceType) AIServiceOption {
+func WithLLMService(modelType LLMServiceType) AIServiceOption {
 	return func(opts *AIServices) {
-		switch service {
+		// init planner
+		var planner IPlanner
+		var err error
+		switch modelType {
 		case LLMServiceTypeGPT4o:
 			// TODO: implement gpt-4o planner and asserter
-			planner, err := NewPlanner(context.Background())
-			if err != nil {
-				log.Error().Err(err).Msg("init gpt-4o planner failed")
-				os.Exit(code.GetErrorCode(err))
-			}
-
-			asserter, err := NewUITarsAsserter(context.Background())
-			if err != nil {
-				log.Error().Err(err).Msg("init ui-tars asserter failed")
-				os.Exit(code.GetErrorCode(err))
-			}
-
-			opts.ILLMService = &combinedLLMService{
-				planner:  planner,
-				asserter: asserter,
-			}
-
+			planner, err = NewPlanner(context.Background())
 		case LLMServiceTypeUITARS:
-			planner, err := NewUITarsPlanner(context.Background())
-			if err != nil {
-				log.Error().Err(err).Msg("init ui-tars planner failed")
-				os.Exit(code.GetErrorCode(err))
-			}
+			planner, err = NewUITarsPlanner(context.Background())
+		}
+		if err != nil {
+			log.Error().Err(err).Msgf("init %s planner failed", modelType)
+			os.Exit(code.GetErrorCode(err))
+		}
 
-			asserter, err := NewUITarsAsserter(context.Background())
-			if err != nil {
-				log.Error().Err(err).Msg("init ui-tars asserter failed")
-				os.Exit(code.GetErrorCode(err))
-			}
+		// init asserter
+		asserter, err := NewAsserter(context.Background(), modelType)
+		if err != nil {
+			log.Error().Err(err).Msgf("init %s asserter failed", modelType)
+			os.Exit(code.GetErrorCode(err))
+		}
 
-			opts.ILLMService = &combinedLLMService{
-				planner:  planner,
-				asserter: asserter,
-			}
+		opts.ILLMService = &combinedLLMService{
+			planner:  planner,
+			asserter: asserter,
 		}
 	}
 }

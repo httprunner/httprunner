@@ -4,89 +4,19 @@ import (
 	"context"
 	"fmt"
 	_ "image/jpeg"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
-	openai2 "github.com/cloudwego/eino-ext/libs/acl/openai"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
-	"github.com/getkin/kin-openapi/openapi3gen"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 )
-
-const (
-	EnvOpenAIBaseURL = "OPENAI_BASE_URL"
-	EnvOpenAIAPIKey  = "OPENAI_API_KEY"
-	EnvModelName     = "LLM_MODEL_NAME"
-)
-
-// GetOpenAIModelConfig get OpenAI config
-func GetOpenAIModelConfig() (*openai.ChatModelConfig, error) {
-	if err := config.LoadEnv(); err != nil {
-		return nil, errors.Wrap(code.LoadEnvError, err.Error())
-	}
-
-	openaiBaseURL := os.Getenv(EnvOpenAIBaseURL)
-	if openaiBaseURL == "" {
-		return nil, errors.Wrapf(code.LLMEnvMissedError,
-			"env %s missed", EnvOpenAIBaseURL)
-	}
-	openaiAPIKey := os.Getenv(EnvOpenAIAPIKey)
-	if openaiAPIKey == "" {
-		return nil, errors.Wrapf(code.LLMEnvMissedError,
-			"env %s missed", EnvOpenAIAPIKey)
-	}
-	modelName := os.Getenv(EnvModelName)
-	if modelName == "" {
-		return nil, errors.Wrapf(code.LLMEnvMissedError,
-			"env %s missed", EnvModelName)
-	}
-
-	type OutputFormat struct {
-		Thought string `json:"thought"`
-		Action  string `json:"action"`
-		Error   string `json:"error,omitempty"`
-	}
-	outputFormatSchema, err := openapi3gen.NewSchemaRefForValue(&OutputFormat{}, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	modelConfig := &openai.ChatModelConfig{
-		BaseURL: openaiBaseURL,
-		APIKey:  openaiAPIKey,
-		Model:   modelName,
-		Timeout: defaultTimeout,
-		// set structured response format
-		// https://github.com/cloudwego/eino-ext/blob/main/components/model/openai/examples/structured/structured.go
-		ResponseFormat: &openai2.ChatCompletionResponseFormat{
-			Type: openai2.ChatCompletionResponseFormatTypeJSONSchema,
-			JSONSchema: &openai2.ChatCompletionResponseFormatJSONSchema{
-				Name:        "thought_and_action",
-				Description: "data that describes planning thought and action",
-				Schema:      outputFormatSchema.Value,
-				Strict:      false,
-			},
-		},
-	}
-
-	// log config info
-	log.Info().Str("model", modelConfig.Model).
-		Str("baseURL", modelConfig.BaseURL).
-		Str("apiKey", maskAPIKey(modelConfig.APIKey)).
-		Str("timeout", defaultTimeout.String()).
-		Msg("get model config")
-
-	return modelConfig, nil
-}
 
 func NewPlanner(ctx context.Context) (*Planner, error) {
 	config, err := GetOpenAIModelConfig()
@@ -99,8 +29,8 @@ func NewPlanner(ctx context.Context) (*Planner, error) {
 	}
 	return &Planner{
 		ctx:          ctx,
-		config:       config,
 		model:        model,
+		modelType:    LLMServiceTypeGPT4o,
 		systemPrompt: uiTarsPlanningPrompt, // TODO: change prompt with function calling
 	}, nil
 }
@@ -108,8 +38,8 @@ func NewPlanner(ctx context.Context) (*Planner, error) {
 type Planner struct {
 	ctx          context.Context
 	model        model.ToolCallingChatModel
-	config       *openai.ChatModelConfig
 	systemPrompt string
+	modelType    LLMServiceType
 	history      ConversationHistory
 }
 
@@ -139,7 +69,7 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	startTime := time.Now()
 	resp, err := p.model.Generate(p.ctx, p.history)
 	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
-		Str("model", p.config.Model).Msg("call model service")
+		Str("model", string(p.modelType)).Msg("call model service")
 	if err != nil {
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
