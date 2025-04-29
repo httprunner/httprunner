@@ -536,7 +536,7 @@ func (d *Device) List(remotePath string) (devFileInfos []DeviceFileInfo, err err
 }
 
 func (d *Device) PushFile(localPath, remotePath string, modification ...time.Time) (err error) {
-	localFile, err := os.Open(localPath)
+	localFile, err := os.OpenFile(localPath, os.O_RDONLY, 0o600)
 	if err != nil {
 		return err
 	}
@@ -645,7 +645,7 @@ func (d *Device) installViaABBExec(apk io.ReadSeeker, args ...string) (raw []byt
 }
 
 func (d *Device) InstallAPK(apkPath string, args ...string) (string, error) {
-	apkFile, err := os.Open(apkPath)
+	apkFile, err := os.OpenFile(apkPath, os.O_RDONLY, 0o600)
 	if err != nil {
 		return "", errors.Wrap(err, fmt.Sprintf("open apk file %s failed", apkPath))
 	}

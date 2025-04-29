@@ -18,6 +18,9 @@ Compared to other UI automation frameworks, HttpRunner's main features include:
 - Unified API across multiple platforms, reducing learning and horizontal expansion costs
 - Embracing the open-source ecosystem, fully reusing open-source components
 
+> [HttpRunner v5 用户指南（更新中）](https://debugtalk.feishu.cn/wiki/RqGuw17bsizGTik9WuNcGQyhnaf)
+> [HttpRunner DeepWiki](https://deepwiki.com/httprunner/httprunner)
+
 ## Usage
 ```text
 $ hrp -h

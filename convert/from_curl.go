@@ -119,7 +119,7 @@ func LoadCurlCase(path string) (*hrp.TestCaseDef, error) {
 }
 
 func readFileLines(path string) ([]string, error) {
-	file, err := os.Open(path)
+	file, err := os.OpenFile(path, os.O_RDONLY, 0o600)
 	if err != nil {
 		log.Error().Err(err).Str("path", path).Msg("open file failed")
 		return nil, err

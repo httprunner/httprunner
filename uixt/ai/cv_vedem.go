@@ -52,7 +52,7 @@ func (s *vedemCVService) ReadFromPath(imagePath string, opts ...option.ActionOpt
 	imageResult *CVResult, err error) {
 	imageBuf, err := os.ReadFile(imagePath)
 	if err != nil {
-		err = errors.Wrap(code.CVRequestError,
+		err = errors.Wrap(code.CVPrepareRequestError,
 			fmt.Sprintf("read image file error: %v", err))
 		return
 	}
@@ -116,21 +116,21 @@ func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.A
 
 	formWriter, err := bodyWriter.CreateFormFile("image", "screenshot.png")
 	if err != nil {
-		err = errors.Wrap(code.CVRequestError,
+		err = errors.Wrap(code.CVPrepareRequestError,
 			fmt.Sprintf("create form file error: %v", err))
 		return
 	}
 
 	size, err := formWriter.Write(imageBuf.Bytes())
 	if err != nil {
-		err = errors.Wrap(code.CVRequestError,
+		err = errors.Wrap(code.CVPrepareRequestError,
 			fmt.Sprintf("write form error: %v", err))
 		return
 	}
 
 	err = bodyWriter.Close()
 	if err != nil {
-		err = errors.Wrap(code.CVRequestError,
+		err = errors.Wrap(code.CVPrepareRequestError,
 			fmt.Sprintf("close body writer error: %v", err))
 		return
 	}
@@ -146,7 +146,7 @@ func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.A
 
 		req, err = http.NewRequest("POST", os.Getenv("VEDEM_IMAGE_URL"), copiedBodyBuf)
 		if err != nil {
-			err = errors.Wrap(code.CVRequestError,
+			err = errors.Wrap(code.CVPrepareRequestError,
 				fmt.Sprintf("construct request error: %v", err))
 			return
 		}
@@ -192,7 +192,7 @@ func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.A
 		break
 	}
 	if resp == nil {
-		err = code.CVServiceConnectionError
+		err = code.CVRequestServiceError
 		return
 	}
 
@@ -200,13 +200,13 @@ func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.A
 
 	results, err := io.ReadAll(resp.Body)
 	if err != nil {
-		err = errors.Wrap(code.CVResponseError,
+		err = errors.Wrap(code.CVParseResponseError,
 			fmt.Sprintf("read response body error: %v", err))
 		return
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		err = errors.Wrap(code.CVResponseError,
+		err = errors.Wrap(code.CVParseResponseError,
 			fmt.Sprintf("unexpected response status code: %d, results: %v",
 				resp.StatusCode, string(results)))
 		return
@@ -215,13 +215,13 @@ func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.A
 	var imageResponse APIResponseImage
 	err = json.Unmarshal(results, &imageResponse)
 	if err != nil {
-		err = errors.Wrap(code.CVResponseError,
+		err = errors.Wrap(code.CVParseResponseError,
 			fmt.Sprintf("json unmarshal veDEM image response body error, response=%s", string(results)))
 		return
 	}
 
 	if imageResponse.Code != 0 {
-		err = errors.Wrap(code.CVResponseError,
+		err = errors.Wrap(code.CVParseResponseError,
 			fmt.Sprintf("unexpected response data code: %d, message: %s",
 				imageResponse.Code, imageResponse.Message))
 		return

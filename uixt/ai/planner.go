@@ -13,11 +13,12 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino/schema"
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/uixt/types"
-	"github.com/rs/zerolog/log"
+	"github.com/pkg/errors"
 )
 
-type ILLMService interface {
+type IPlanner interface {
 	Call(opts *PlanningOptions) (*PlanningResult, error)
 }
 
@@ -57,23 +58,16 @@ const (
 )
 
 const (
-	defaultTimeout = 60 * time.Second
+	defaultTimeout = 30 * time.Second
 )
 
-// Error types
-var (
-	ErrEmptyInstruction      = fmt.Errorf("user instruction is empty")
-	ErrNoConversationHistory = fmt.Errorf("conversation history is empty")
-	ErrInvalidImageData      = fmt.Errorf("invalid image data")
-)
-
-func validateInput(opts *PlanningOptions) error {
+func validatePlanningInput(opts *PlanningOptions) error {
 	if opts.UserInstruction == "" {
-		return ErrEmptyInstruction
+		return errors.Wrap(code.LLMPrepareRequestError, "user instruction is empty")
 	}
 
-	if opts.Message == nil {
-		return ErrNoConversationHistory
+	if opts.Message == nil || opts.Message.Role == "" {
+		return errors.Wrap(code.LLMPrepareRequestError, "user message is empty")
 	}
 
 	if opts.Message.Role == schema.User {
@@ -81,105 +75,13 @@ func validateInput(opts *PlanningOptions) error {
 		if len(opts.Message.MultiContent) > 0 {
 			for _, content := range opts.Message.MultiContent {
 				if content.Type == schema.ChatMessagePartTypeImageURL && content.ImageURL == nil {
-					return ErrInvalidImageData
+					return errors.Wrap(code.LLMPrepareRequestError, "invalid image data")
 				}
 			}
 		}
 	}
 
 	return nil
-}
-
-func logRequest(messages []*schema.Message) {
-	msgs := make([]*schema.Message, 0, len(messages))
-	for _, message := range messages {
-		msg := &schema.Message{
-			Role: message.Role,
-		}
-		if message.Content != "" {
-			msg.Content = message.Content
-		} else if len(message.MultiContent) > 0 {
-			for _, mc := range message.MultiContent {
-				switch mc.Type {
-				case schema.ChatMessagePartTypeImageURL:
-					// Create a copy of the ImageURL to avoid modifying the original message
-					imageURLCopy := *mc.ImageURL
-					if strings.HasPrefix(imageURLCopy.URL, "data:image/") {
-						imageURLCopy.URL = "<data:image/base64...>"
-					}
-					msg.MultiContent = append(msg.MultiContent, schema.ChatMessagePart{
-						Type:     mc.Type,
-						ImageURL: &imageURLCopy,
-					})
-				}
-			}
-		}
-		msgs = append(msgs, msg)
-	}
-	log.Debug().Interface("messages", msgs).Msg("log request messages")
-}
-
-func logResponse(resp *schema.Message) {
-	logger := log.Info().Str("role", string(resp.Role)).
-		Str("content", resp.Content)
-	if resp.ResponseMeta != nil {
-		logger = logger.Interface("response_meta", resp.ResponseMeta)
-	}
-	if resp.Extra != nil {
-		logger = logger.Interface("extra", resp.Extra)
-	}
-	logger.Msg("log response message")
-}
-
-// appendConversationHistory adds a message to the conversation history
-func appendConversationHistory(history []*schema.Message, msg *schema.Message) {
-	// for user image message:
-	// - keep at most 4 user image messages
-	// - delete the oldest user image message when the limit is reached
-	if msg.Role == schema.User {
-		// get all existing user messages
-		userImgCount := 0
-		firstUserImgIndex := -1
-
-		// calculate the number of user messages and find the index of the first user message
-		for i, item := range history {
-			if item.Role == schema.User {
-				userImgCount++
-				if firstUserImgIndex == -1 {
-					firstUserImgIndex = i
-				}
-			}
-		}
-
-		// if there are already 4 user messages, delete the first one before adding the new message
-		if userImgCount >= 4 && firstUserImgIndex >= 0 {
-			// delete the first user message
-			history = append(
-				history[:firstUserImgIndex],
-				history[firstUserImgIndex+1:]...,
-			)
-		}
-		// add the new user message to the history
-		history = append(history, msg)
-	}
-
-	// for assistant message:
-	// - keep at most the last 10 assistant messages
-	if msg.Role == schema.Assistant {
-		// add the new assistant message to the history
-		history = append(history, msg)
-
-		// if there are more than 10 assistant messages, remove the oldest ones
-		assistantMsgCount := 0
-		for i := len(history) - 1; i >= 0; i-- {
-			if history[i].Role == schema.Assistant {
-				assistantMsgCount++
-				if assistantMsgCount > 10 {
-					history = append(history[:i], history[i+1:]...)
-				}
-			}
-		}
-	}
 }
 
 // SavePositionImg saves an image with position markers
@@ -247,37 +149,6 @@ func SavePositionImg(params struct {
 	}
 
 	return nil
-}
-
-// loadImage loads image and returns base64 encoded string
-func loadImage(imagePath string) (base64Str string, size types.Size, err error) {
-	// Read the image file
-	imageFile, err := os.Open(imagePath)
-	if err != nil {
-		return "", types.Size{}, fmt.Errorf("failed to open image file: %w", err)
-	}
-	defer imageFile.Close()
-
-	// Decode the image to get its resolution
-	imageData, format, err := image.Decode(imageFile)
-	if err != nil {
-		return "", types.Size{}, fmt.Errorf("failed to decode image: %w", err)
-	}
-
-	// Get the resolution of the image
-	width := imageData.Bounds().Dx()
-	height := imageData.Bounds().Dy()
-	size = types.Size{Width: width, Height: height}
-
-	// Convert image to base64
-	buf := new(bytes.Buffer)
-	if err := png.Encode(buf, imageData); err != nil {
-		return "", types.Size{}, fmt.Errorf("failed to encode image to buffer: %w", err)
-	}
-	base64Str = fmt.Sprintf("data:image/%s;base64,%s", format,
-		base64.StdEncoding.EncodeToString(buf.Bytes()))
-
-	return base64Str, size, nil
 }
 
 // maskAPIKey masks the API key

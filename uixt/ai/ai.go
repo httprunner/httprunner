@@ -49,26 +49,60 @@ type LLMServiceType string
 const (
 	LLMServiceTypeUITARS     LLMServiceType = "ui-tars"
 	LLMServiceTypeGPT4o      LLMServiceType = "gpt-4o"
+	LLMServiceTypeGPT4Vision LLMServiceType = "gpt-4-vision"
+	LLMServiceTypeQwenVL     LLMServiceType = "qwen-vl"
 	LLMServiceTypeDeepSeekV3 LLMServiceType = "deepseek-v3"
 )
 
-func WithLLMService(service LLMServiceType) AIServiceOption {
+// ILLMService 定义了 LLM 服务接口，包括规划和断言功能
+type ILLMService interface {
+	Call(opts *PlanningOptions) (*PlanningResult, error)
+	Assert(opts *AssertOptions) (*AssertionResponse, error)
+}
+
+func WithLLMService(modelType LLMServiceType) AIServiceOption {
 	return func(opts *AIServices) {
-		if service == LLMServiceTypeGPT4o {
-			var err error
-			opts.ILLMService, err = NewPlanner(context.Background())
-			if err != nil {
-				log.Error().Err(err).Msg("init gpt-4o llm service failed")
-				os.Exit(code.GetErrorCode(err))
-			}
+		// init planner
+		var planner IPlanner
+		var err error
+		switch modelType {
+		case LLMServiceTypeGPT4o:
+			// TODO: implement gpt-4o planner and asserter
+			planner, err = NewPlanner(context.Background())
+		case LLMServiceTypeUITARS:
+			planner, err = NewUITarsPlanner(context.Background())
 		}
-		if service == LLMServiceTypeUITARS {
-			var err error
-			opts.ILLMService, err = NewUITarsPlanner(context.Background())
-			if err != nil {
-				log.Error().Err(err).Msg("init ui-tars llm service failed")
-				os.Exit(code.GetErrorCode(err))
-			}
+		if err != nil {
+			log.Error().Err(err).Msgf("init %s planner failed", modelType)
+			os.Exit(code.GetErrorCode(err))
+		}
+
+		// init asserter
+		asserter, err := NewAsserter(context.Background(), modelType)
+		if err != nil {
+			log.Error().Err(err).Msgf("init %s asserter failed", modelType)
+			os.Exit(code.GetErrorCode(err))
+		}
+
+		opts.ILLMService = &combinedLLMService{
+			planner:  planner,
+			asserter: asserter,
 		}
 	}
+}
+
+// combinedLLMService 实现了 ILLMService 接口，组合了规划和断言功能
+type combinedLLMService struct {
+	planner  IPlanner  // 提供规划功能
+	asserter IAsserter // 提供断言功能
+}
+
+// Call 执行规划功能
+func (c *combinedLLMService) Call(opts *PlanningOptions) (*PlanningResult, error) {
+	return c.planner.Call(opts)
+}
+
+// Assert 执行断言功能
+func (c *combinedLLMService) Assert(opts *AssertOptions) (*AssertionResponse, error) {
+	return c.asserter.Assert(opts)
 }

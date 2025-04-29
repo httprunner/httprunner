@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,54 +13,11 @@ import (
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
-
-const (
-	EnvArkBaseURL = "ARK_BASE_URL"
-	EnvArkAPIKey  = "ARK_API_KEY"
-	EnvArkModelID = "ARK_MODEL_ID"
-)
-
-func GetArkModelConfig() (*ark.ChatModelConfig, error) {
-	if err := config.LoadEnv(); err != nil {
-		return nil, errors.Wrap(code.LoadEnvError, err.Error())
-	}
-
-	arkBaseURL := os.Getenv(EnvArkBaseURL)
-	arkAPIKey := os.Getenv(EnvArkAPIKey)
-	if arkAPIKey == "" {
-		return nil, errors.Wrapf(code.LLMEnvMissedError,
-			"env %s missed", EnvArkAPIKey)
-	}
-	modelName := os.Getenv(EnvArkModelID)
-	if modelName == "" {
-		return nil, errors.Wrapf(code.LLMEnvMissedError,
-			"env %s missed", EnvArkModelID)
-	}
-	timeout := defaultTimeout
-	temp := float32(0.7)
-	modelConfig := &ark.ChatModelConfig{
-		BaseURL:     arkBaseURL,
-		APIKey:      arkAPIKey,
-		Model:       modelName,
-		Temperature: &temp,
-		Timeout:     &timeout,
-	}
-
-	// log config info
-	log.Info().Str("model", modelConfig.Model).
-		Str("baseURL", modelConfig.BaseURL).
-		Str("apiKey", maskAPIKey(modelConfig.APIKey)).
-		Str("timeout", defaultTimeout.String()).
-		Msg("get model config")
-
-	return modelConfig, nil
-}
 
 func NewUITarsPlanner(ctx context.Context) (*UITarsPlanner, error) {
 	config, err := GetArkModelConfig()
@@ -75,60 +31,32 @@ func NewUITarsPlanner(ctx context.Context) (*UITarsPlanner, error) {
 
 	return &UITarsPlanner{
 		ctx:          ctx,
-		config:       config,
 		model:        chatModel,
+		modelType:    LLMServiceTypeUITARS,
 		systemPrompt: uiTarsPlanningPrompt,
 	}, nil
 }
 
-// https://www.volcengine.com/docs/82379/1536429
-const uiTarsPlanningPrompt = `
-You are a GUI agent. You are given a task and your action history, with screenshots. You need to perform the next action to complete the task.
-
-## Output Format
-` + "```" + `
-Thought: ...
-Action: ...
-` + "```" + `
-
-## Action Space
-click(start_box='[x1, y1, x2, y2]')
-left_double(start_box='[x1, y1, x2, y2]')
-right_single(start_box='[x1, y1, x2, y2]')
-drag(start_box='[x1, y1, x2, y2]', end_box='[x3, y3, x4, y4]')
-hotkey(key='')
-type(content='') #If you want to submit your input, use "\n" at the end of ` + "`content`" + `.
-scroll(start_box='[x1, y1, x2, y2]', direction='down or up or right or left')
-wait() #Sleep for 5s and take a screenshot to check for any changes.
-finished(content='xxx') # Use escape characters \\', \\", and \\n in content part to ensure we can parse the content in normal python string format.
-
-## Note
-- Use Chinese in ` + "`Thought`" + ` part.
-- Write a small plan and finally summarize your next action (with its target element) in one sentence in ` + "`Thought`" + ` part.
-
-## User Instruction
-`
-
 type UITarsPlanner struct {
 	ctx          context.Context
 	model        model.ToolCallingChatModel
-	config       *ark.ChatModelConfig
 	systemPrompt string
-	history      []*schema.Message // conversation history
+	modelType    LLMServiceType
+	history      ConversationHistory
 }
 
 // Call performs UI planning using Vision Language Model
 func (p *UITarsPlanner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	// validate input parameters
-	if err := validateInput(opts); err != nil {
-		return nil, errors.Wrap(err, "validate input parameters failed")
+	if err := validatePlanningInput(opts); err != nil {
+		return nil, errors.Wrap(err, "validate planning parameters failed")
 	}
 
 	// prepare prompt
 	if len(p.history) == 0 {
 		// add system message
 		systemPrompt := uiTarsPlanningPrompt + opts.UserInstruction
-		p.history = []*schema.Message{
+		p.history = ConversationHistory{
 			{
 				Role:    schema.System,
 				Content: systemPrompt,
@@ -136,27 +64,27 @@ func (p *UITarsPlanner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 		}
 	}
 	// append user image message
-	appendConversationHistory(p.history, opts.Message)
+	p.history.Append(opts.Message)
 
 	// call model service, generate response
 	logRequest(p.history)
 	startTime := time.Now()
 	resp, err := p.model.Generate(p.ctx, p.history)
 	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
-		Str("model", p.config.Model).Msg("call model service")
+		Str("model", string(p.modelType)).Msg("call model service")
 	if err != nil {
-		return nil, fmt.Errorf("request model service failed: %w", err)
+		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
 	logResponse(resp)
 
 	// parse result
 	result, err := p.parseResult(resp, opts.Size)
 	if err != nil {
-		return nil, errors.Wrap(err, "parse result failed")
+		return nil, errors.Wrap(code.LLMParsePlanningResponseError, err.Error())
 	}
 
 	// append assistant message
-	appendConversationHistory(p.history, &schema.Message{
+	p.history.Append(&schema.Message{
 		Role:    schema.Assistant,
 		Content: result.ActionSummary,
 	})

@@ -55,14 +55,6 @@ func (dExt *XTDriver) AIAction(text string, opts ...option.ActionOption) error {
 	return nil
 }
 
-func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (string, error) {
-	return "", nil
-}
-
-func (dExt *XTDriver) AIAssert(text string, opts ...option.ActionOption) error {
-	return nil
-}
-
 func (dExt *XTDriver) PlanNextAction(text string, opts ...option.ActionOption) (*ai.PlanningResult, error) {
 	if dExt.LLMService == nil {
 		return nil, errors.New("LLM service is not initialized")
@@ -115,4 +107,46 @@ func (dExt *XTDriver) PlanNextAction(text string, opts ...option.ActionOption) (
 		return nil, errors.Wrap(err, "failed to get next action from planner")
 	}
 	return result, nil
+}
+
+func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (string, error) {
+	return "", nil
+}
+
+func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) error {
+	if dExt.LLMService == nil {
+		return errors.New("LLM service is not initialized")
+	}
+
+	compressedBufSource, err := dExt.GetScreenShotBuffer()
+	if err != nil {
+		return err
+	}
+
+	// convert buffer to base64 string
+	screenShotBase64 := "data:image/jpeg;base64," +
+		base64.StdEncoding.EncodeToString(compressedBufSource.Bytes())
+
+	// get window size
+	size, err := dExt.IDriver.WindowSize()
+	if err != nil {
+		return errors.Wrap(err, "get window size for AI assertion failed")
+	}
+
+	// execute assertion
+	assertOpts := &ai.AssertOptions{
+		Assertion:  assertion,
+		Screenshot: screenShotBase64,
+		Size:       size,
+	}
+	result, err := dExt.LLMService.Assert(assertOpts)
+	if err != nil {
+		return errors.Wrap(err, "AI assertion failed")
+	}
+
+	if !result.Pass {
+		return errors.New(result.Thought)
+	}
+
+	return nil
 }

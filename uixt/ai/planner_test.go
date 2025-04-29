@@ -1,11 +1,18 @@
 package ai
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"fmt"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"os"
 	"testing"
 
 	"github.com/cloudwego/eino/schema"
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -195,6 +202,53 @@ func TestChatList(t *testing.T) {
 	require.NotNil(t, result)
 }
 
+func TestHandleSwitch(t *testing.T) {
+	userInstruction := "发送框下方的联网搜索开关是开启状态" // 点击开启联网搜索开关
+	// 检查发送框下方的联网搜索开关，蓝色为开启状态，灰色为关闭状态；若开关处于关闭状态，则点击进行开启
+
+	planner, err := NewUITarsPlanner(context.Background())
+	require.NoError(t, err)
+
+	testCases := []struct {
+		imageFile  string
+		actionType ActionType
+	}{
+		{"testdata/deepseek_think_off.png", ActionTypeClick},
+		{"testdata/deepseek_think_on.png", ActionTypeFinished},
+		{"testdata/deepseek_network_on.png", ActionTypeFinished},
+	}
+
+	for _, tc := range testCases {
+		imageBase64, size, err := loadImage(tc.imageFile)
+		require.NoError(t, err)
+
+		opts := &PlanningOptions{
+			UserInstruction: userInstruction,
+			Message: &schema.Message{
+				Role: schema.User,
+				MultiContent: []schema.ChatMessagePart{
+					{
+						Type: schema.ChatMessagePartTypeImageURL,
+						ImageURL: &schema.ChatMessageImageURL{
+							URL: imageBase64,
+						},
+					},
+				},
+			},
+			Size: size,
+		}
+
+		// Execute planning
+		result, err := planner.Call(opts)
+
+		// Validate results
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Equal(t, result.NextActions[0].ActionType, tc.actionType,
+			"Unexpected action type for image file: %s", tc.imageFile)
+	}
+}
+
 func TestValidateInput(t *testing.T) {
 	imageBase64, size, err := loadImage("testdata/popup_risk_warning.png")
 	require.NoError(t, err)
@@ -212,7 +266,7 @@ func TestValidateInput(t *testing.T) {
 					Role: schema.User,
 					MultiContent: []schema.ChatMessagePart{
 						{
-							Type: "image_url",
+							Type: schema.ChatMessagePartTypeImageURL,
 							ImageURL: &schema.ChatMessageImageURL{
 								URL: imageBase64,
 							},
@@ -228,41 +282,46 @@ func TestValidateInput(t *testing.T) {
 			opts: &PlanningOptions{
 				UserInstruction: "",
 				Message: &schema.Message{
-					Role:    schema.User,
-					Content: "",
+					Role:         schema.User,
+					MultiContent: []schema.ChatMessagePart{},
 				},
 				Size: size,
 			},
-			wantErr: ErrEmptyInstruction,
+			wantErr: code.LLMPrepareRequestError,
 		},
 		{
 			name: "empty conversation history",
 			opts: &PlanningOptions{
 				UserInstruction: "点击立即卸载按钮",
 				Message:         &schema.Message{},
+				Size:            size,
 			},
-			wantErr: ErrNoConversationHistory,
+			wantErr: code.LLMPrepareRequestError,
 		},
 		{
 			name: "invalid image data",
 			opts: &PlanningOptions{
 				UserInstruction: "点击继续使用按钮",
 				Message: &schema.Message{
-					Role:    schema.User,
-					Content: "no image",
+					Role: schema.User,
+					MultiContent: []schema.ChatMessagePart{
+						{
+							Type: schema.ChatMessagePartTypeImageURL,
+							Text: "no image",
+						},
+					},
 				},
 				Size: size,
 			},
-			wantErr: ErrInvalidImageData,
+			wantErr: code.LLMPrepareRequestError,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateInput(tt.opts)
+			err := validatePlanningInput(tt.opts)
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr, err)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -360,4 +419,43 @@ func TestLoadImage(t *testing.T) {
 	assert.NotEmpty(t, jpegBase64)
 	assert.Greater(t, jpegSize.Width, 0)
 	assert.Greater(t, jpegSize.Height, 0)
+}
+
+// loadImage loads image and returns base64 encoded string
+func loadImage(imagePath string) (base64Str string, size types.Size, err error) {
+	// Read the image file
+	imageFile, err := os.OpenFile(imagePath, os.O_RDONLY, 0o600)
+	if err != nil {
+		return "", types.Size{}, fmt.Errorf("failed to open image file: %w", err)
+	}
+	defer imageFile.Close()
+
+	// Decode the image to get its resolution
+	imageData, format, err := image.Decode(imageFile)
+	if err != nil {
+		return "", types.Size{}, fmt.Errorf("failed to decode image: %w", err)
+	}
+
+	// Get the resolution of the image
+	width := imageData.Bounds().Dx()
+	height := imageData.Bounds().Dy()
+	size = types.Size{Width: width, Height: height}
+
+	// Convert image to base64
+	buf := new(bytes.Buffer)
+	// 根据图像格式选择正确的编码器
+	if format == "jpeg" || format == "jpg" {
+		if err := jpeg.Encode(buf, imageData, nil); err != nil {
+			return "", types.Size{}, fmt.Errorf("failed to encode image to buffer: %w", err)
+		}
+	} else {
+		// 默认使用 PNG 编码
+		if err := png.Encode(buf, imageData); err != nil {
+			return "", types.Size{}, fmt.Errorf("failed to encode image to buffer: %w", err)
+		}
+	}
+	base64Str = fmt.Sprintf("data:image/%s;base64,%s", format,
+		base64.StdEncoding.EncodeToString(buf.Bytes()))
+
+	return base64Str, size, nil
 }

@@ -96,16 +96,15 @@ var (
 	LoopActionNotFoundError               = errors.New("loop action not found error")                // 79
 )
 
-// AI related: [80, 90)
+// CV related: [80, 90)
 var (
-	CVEnvMissedError         = errors.New("CV env missed error")      // 80
-	CVRequestError           = errors.New("CV prepare request error") // 81
-	CVServiceConnectionError = errors.New("CV service connect error") // 82
-	CVResponseError          = errors.New("CV parse response error")  // 83
-	CVResultNotFoundError    = errors.New("CV result not found")      // 84
+	CVEnvMissedError      = errors.New("CV env missed error")      // 80
+	CVPrepareRequestError = errors.New("CV prepare request error") // 81
+	CVRequestServiceError = errors.New("CV request service error") // 82
+	CVParseResponseError  = errors.New("CV parse response error")  // 83
+	CVResultNotFoundError = errors.New("CV result not found")      // 84
 
-	LLMEnvMissedError = errors.New("LLM env missed error") // 85
-	StateUnknowError  = errors.New("detect state failed")  // 89
+	StateUnknowError = errors.New("detect state failed") // 85
 )
 
 // trackings related: [90, 100)
@@ -119,6 +118,15 @@ var (
 	RiskControlLogout            = errors.New("risk control logout")             // 100
 	RiskControlSlideVerification = errors.New("risk control slide verification") // 101
 	RiskControlAccountActivation = errors.New("risk control account activation") // 102
+)
+
+// LLM related: [110, 120)
+var (
+	LLMEnvMissedError              = errors.New("missed LLM env error")               // 110
+	LLMPrepareRequestError         = errors.New("prepare LLM request error")          // 111
+	LLMRequestServiceError         = errors.New("request LLM service error")          // 112
+	LLMParsePlanningResponseError  = errors.New("parse LLM planning response error")  // 113
+	LLMParseAssertionResponseError = errors.New("parse LLM assertion response error") // 114
 )
 
 var errorsMap = map[error]int{
@@ -194,14 +202,21 @@ var errorsMap = map[error]int{
 	MobileUIPopupError:                    78,
 	LoopActionNotFoundError:               79,
 
-	// AI related
-	CVEnvMissedError:         80,
-	CVRequestError:           81,
-	CVServiceConnectionError: 82,
-	CVResponseError:          83,
-	CVResultNotFoundError:    84,
-	LLMEnvMissedError:        85,
-	StateUnknowError:         89,
+	// CV related
+	CVEnvMissedError:      80,
+	CVPrepareRequestError: 81,
+	CVRequestServiceError: 82,
+	CVParseResponseError:  83,
+	CVResultNotFoundError: 84,
+
+	StateUnknowError: 85,
+
+	// LLM related
+	LLMEnvMissedError:              110,
+	LLMPrepareRequestError:         111,
+	LLMRequestServiceError:         112,
+	LLMParsePlanningResponseError:  113,
+	LLMParseAssertionResponseError: 114,
 
 	// trackings related
 	TrackingGetError:   90,
