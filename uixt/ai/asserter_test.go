@@ -10,7 +10,7 @@ import (
 )
 
 func createAsserter(t *testing.T) *Asserter {
-	asserter, err := NewAsserter(context.Background(), LLMServiceTypeUITARS)
+	asserter, err := NewAsserter(context.Background())
 	require.NoError(t, err)
 	return asserter
 }

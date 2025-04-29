@@ -30,7 +30,7 @@ func NewPlanner(ctx context.Context) (*Planner, error) {
 	return &Planner{
 		ctx:          ctx,
 		model:        model,
-		modelType:    LLMServiceTypeGPT4o,
+		modelType:    LLMServiceTypeGPT,
 		systemPrompt: uiTarsPlanningPrompt, // TODO: change prompt with function calling
 	}, nil
 }

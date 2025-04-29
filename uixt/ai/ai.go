@@ -49,10 +49,9 @@ func WithCVService(service CVServiceType) AIServiceOption {
 type LLMServiceType string
 
 const (
-	LLMServiceTypeUITARS     LLMServiceType = "ui-tars"
-	LLMServiceTypeGPT4o      LLMServiceType = "gpt-4o"
-	LLMServiceTypeGPT4Vision LLMServiceType = "gpt-4-vision"
-	LLMServiceTypeQwenVL     LLMServiceType = "qwen-vl"
+	LLMServiceTypeUITARS LLMServiceType = "ui-tars"
+	LLMServiceTypeGPT    LLMServiceType = "gpt"
+	LLMServiceTypeQwenVL LLMServiceType = "qwen-vl"
 )
 
 // ILLMService 定义了 LLM 服务接口，包括规划和断言功能
@@ -67,7 +66,7 @@ func WithLLMService(modelType LLMServiceType) AIServiceOption {
 		var planner IPlanner
 		var err error
 		switch modelType {
-		case LLMServiceTypeGPT4o:
+		case LLMServiceTypeGPT:
 			// TODO: implement gpt-4o planner and asserter
 			planner, err = NewPlanner(context.Background())
 		case LLMServiceTypeUITARS:
@@ -79,9 +78,9 @@ func WithLLMService(modelType LLMServiceType) AIServiceOption {
 		}
 
 		// init asserter
-		asserter, err := NewAsserter(context.Background(), modelType)
+		asserter, err := NewAsserter(context.Background())
 		if err != nil {
-			log.Error().Err(err).Msgf("init %s asserter failed", modelType)
+			log.Error().Err(err).Msg("init asserter failed")
 			os.Exit(code.GetErrorCode(err))
 		}
 
@@ -115,11 +114,14 @@ const (
 	EnvModelName     = "LLM_MODEL_NAME"
 )
 
+var EnvModelUse string
+
 // GetOpenAIModelConfig get OpenAI config
 func GetOpenAIModelConfig() (*openai.ChatModelConfig, error) {
 	if err := config.LoadEnv(); err != nil {
 		return nil, errors.Wrap(code.LoadEnvError, err.Error())
 	}
+	EnvModelUse = os.Getenv("LLM_MODEL_USE")
 
 	openaiBaseURL := os.Getenv(EnvOpenAIBaseURL)
 	if openaiBaseURL == "" {

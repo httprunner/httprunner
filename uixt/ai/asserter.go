@@ -43,14 +43,12 @@ type Asserter struct {
 	model        model.ToolCallingChatModel
 	systemPrompt string
 	history      ConversationHistory
-	modelType    LLMServiceType
 }
 
 // NewAsserter creates a new Asserter instance
-func NewAsserter(ctx context.Context, modelType LLMServiceType) (*Asserter, error) {
+func NewAsserter(ctx context.Context) (*Asserter, error) {
 	asserter := &Asserter{
 		ctx:          ctx,
-		modelType:    modelType,
 		systemPrompt: defaultAssertionPrompt,
 	}
 
@@ -59,12 +57,11 @@ func NewAsserter(ctx context.Context, modelType LLMServiceType) (*Asserter, erro
 		return nil, err
 	}
 
-	switch modelType {
-	case LLMServiceTypeUITARS:
+	if strings.Contains(EnvModelUse, string(LLMServiceTypeUITARS)) {
 		asserter.systemPrompt += "\n\n" + uiTarsAssertionResponseFormat
-	case LLMServiceTypeQwenVL:
+	} else if strings.Contains(EnvModelUse, string(LLMServiceTypeQwenVL)) {
 		asserter.systemPrompt += "\n\n" + defaultAssertionResponseJsonFormat
-	case LLMServiceTypeGPT4Vision, LLMServiceTypeGPT4o:
+	} else if strings.Contains(EnvModelUse, string(LLMServiceTypeGPT)) {
 		// define output format
 		type OutputFormat struct {
 			Thought string `json:"thought"`
@@ -86,8 +83,8 @@ func NewAsserter(ctx context.Context, modelType LLMServiceType) (*Asserter, erro
 				Strict:      false,
 			},
 		}
-	default:
-		return nil, errors.New("not supported model type for asserter")
+	} else {
+		return nil, fmt.Errorf("model type %s not supported for asserter", EnvModelUse)
 	}
 
 	asserter.model, err = openai.NewChatModel(ctx, config)
@@ -144,7 +141,7 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	startTime := time.Now()
 	resp, err := a.model.Generate(a.ctx, a.history)
 	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
-		Str("model", string(a.modelType)).Msg("call model service for assertion")
+		Str("model", EnvModelUse).Msg("call model service for assertion")
 	if err != nil {
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
