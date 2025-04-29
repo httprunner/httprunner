@@ -51,7 +51,6 @@ const (
 	LLMServiceTypeGPT4o      LLMServiceType = "gpt-4o"
 	LLMServiceTypeGPT4Vision LLMServiceType = "gpt-4-vision"
 	LLMServiceTypeQwenVL     LLMServiceType = "qwen-vl"
-	LLMServiceTypeDeepSeekV3 LLMServiceType = "deepseek-v3"
 )
 
 // ILLMService 定义了 LLM 服务接口，包括规划和断言功能

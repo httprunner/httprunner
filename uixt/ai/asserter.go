@@ -9,8 +9,10 @@ import (
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino-ext/components/model/openai"
+	openai2 "github.com/cloudwego/eino-ext/libs/acl/openai"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
+	"github.com/getkin/kin-openapi/openapi3gen"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/types"
@@ -50,7 +52,7 @@ func NewAsserter(ctx context.Context, modelType LLMServiceType) (*Asserter, erro
 	asserter := &Asserter{
 		ctx:          ctx,
 		modelType:    modelType,
-		systemPrompt: getAssertionSystemPrompt(modelType),
+		systemPrompt: defaultAssertionPrompt,
 	}
 
 	switch modelType {
@@ -59,32 +61,61 @@ func NewAsserter(ctx context.Context, modelType LLMServiceType) (*Asserter, erro
 		if err != nil {
 			return nil, err
 		}
+		asserter.systemPrompt += "\n\n" + uiTarsAssertionResponseFormat
 		asserter.model, err = ark.NewChatModel(ctx, config)
 		if err != nil {
 			return nil, err
 		}
+
 	case LLMServiceTypeGPT4Vision, LLMServiceTypeGPT4o:
 		config, err := GetOpenAIModelConfig()
 		if err != nil {
 			return nil, err
 		}
+
+		// define output format
+		type OutputFormat struct {
+			Thought string `json:"thought"`
+			Pass    bool   `json:"pass"`
+			Error   string `json:"error,omitempty"`
+		}
+		outputFormatSchema, err := openapi3gen.NewSchemaRefForValue(&OutputFormat{}, nil)
+		if err != nil {
+			return nil, err
+		}
+		// set structured response format
+		// https://github.com/cloudwego/eino-ext/blob/main/components/model/openai/examples/structured/structured.go
+		config.ResponseFormat = &openai2.ChatCompletionResponseFormat{
+			Type: openai2.ChatCompletionResponseFormatTypeJSONSchema,
+			JSONSchema: &openai2.ChatCompletionResponseFormatJSONSchema{
+				Name:        "assertion_result",
+				Description: "data that describes assertion result",
+				Schema:      outputFormatSchema.Value,
+				Strict:      false,
+			},
+		}
+
 		asserter.model, err = openai.NewChatModel(ctx, config)
 		if err != nil {
 			return nil, err
 		}
+
+	case LLMServiceTypeQwenVL:
+		config, err := GetOpenAIModelConfig()
+		if err != nil {
+			return nil, err
+		}
+		asserter.systemPrompt += "\n\n" + defaultAssertionResponseJsonFormat
+		asserter.model, err = openai.NewChatModel(ctx, config)
+		if err != nil {
+			return nil, err
+		}
+
 	default:
 		return nil, errors.New("not supported model type for asserter")
 	}
 
 	return asserter, nil
-}
-
-// getAssertionSystemPrompt returns the appropriate system prompt for the given model type
-func getAssertionSystemPrompt(modelType LLMServiceType) string {
-	if modelType == LLMServiceTypeUITARS {
-		return defaultAssertionPrompt + "\n\n" + uiTarsAssertionResponseFormat
-	}
-	return defaultAssertionPrompt + "\n\n" + defaultAssertionResponseJsonFormat
 }
 
 // Assert performs the assertion check on the screenshot

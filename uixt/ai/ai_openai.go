@@ -4,8 +4,6 @@ import (
 	"os"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
-	openai2 "github.com/cloudwego/eino-ext/libs/acl/openai"
-	"github.com/getkin/kin-openapi/openapi3gen"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/pkg/errors"
@@ -40,32 +38,13 @@ func GetOpenAIModelConfig() (*openai.ChatModelConfig, error) {
 			"env %s missed", EnvModelName)
 	}
 
-	type OutputFormat struct {
-		Thought string `json:"thought"`
-		Action  string `json:"action"`
-		Error   string `json:"error,omitempty"`
-	}
-	outputFormatSchema, err := openapi3gen.NewSchemaRefForValue(&OutputFormat{}, nil)
-	if err != nil {
-		return nil, err
-	}
-
+	temperature := float32(0.01)
 	modelConfig := &openai.ChatModelConfig{
-		BaseURL: openaiBaseURL,
-		APIKey:  openaiAPIKey,
-		Model:   modelName,
-		Timeout: defaultTimeout,
-		// set structured response format
-		// https://github.com/cloudwego/eino-ext/blob/main/components/model/openai/examples/structured/structured.go
-		ResponseFormat: &openai2.ChatCompletionResponseFormat{
-			Type: openai2.ChatCompletionResponseFormatTypeJSONSchema,
-			JSONSchema: &openai2.ChatCompletionResponseFormatJSONSchema{
-				Name:        "thought_and_action",
-				Description: "data that describes planning thought and action",
-				Schema:      outputFormatSchema.Value,
-				Strict:      false,
-			},
-		},
+		BaseURL:     openaiBaseURL,
+		APIKey:      openaiAPIKey,
+		Model:       modelName,
+		Timeout:     defaultTimeout,
+		Temperature: &temperature,
 	}
 
 	// log config info
