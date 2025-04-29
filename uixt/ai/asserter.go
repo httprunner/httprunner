@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	openai2 "github.com/cloudwego/eino-ext/libs/acl/openai"
 	"github.com/cloudwego/eino/components/model"
@@ -55,24 +54,17 @@ func NewAsserter(ctx context.Context, modelType LLMServiceType) (*Asserter, erro
 		systemPrompt: defaultAssertionPrompt,
 	}
 
+	config, err := GetOpenAIModelConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	switch modelType {
 	case LLMServiceTypeUITARS:
-		config, err := GetArkModelConfig()
-		if err != nil {
-			return nil, err
-		}
 		asserter.systemPrompt += "\n\n" + uiTarsAssertionResponseFormat
-		asserter.model, err = ark.NewChatModel(ctx, config)
-		if err != nil {
-			return nil, err
-		}
-
+	case LLMServiceTypeQwenVL:
+		asserter.systemPrompt += "\n\n" + defaultAssertionResponseJsonFormat
 	case LLMServiceTypeGPT4Vision, LLMServiceTypeGPT4o:
-		config, err := GetOpenAIModelConfig()
-		if err != nil {
-			return nil, err
-		}
-
 		// define output format
 		type OutputFormat struct {
 			Thought string `json:"thought"`
@@ -94,25 +86,13 @@ func NewAsserter(ctx context.Context, modelType LLMServiceType) (*Asserter, erro
 				Strict:      false,
 			},
 		}
-
-		asserter.model, err = openai.NewChatModel(ctx, config)
-		if err != nil {
-			return nil, err
-		}
-
-	case LLMServiceTypeQwenVL:
-		config, err := GetOpenAIModelConfig()
-		if err != nil {
-			return nil, err
-		}
-		asserter.systemPrompt += "\n\n" + defaultAssertionResponseJsonFormat
-		asserter.model, err = openai.NewChatModel(ctx, config)
-		if err != nil {
-			return nil, err
-		}
-
 	default:
 		return nil, errors.New("not supported model type for asserter")
+	}
+
+	asserter.model, err = openai.NewChatModel(ctx, config)
+	if err != nil {
+		return nil, err
 	}
 
 	return asserter, nil

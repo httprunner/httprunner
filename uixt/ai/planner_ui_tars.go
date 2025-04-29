@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudwego/eino-ext/components/model/ark"
+	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/code"
@@ -20,11 +20,11 @@ import (
 )
 
 func NewUITarsPlanner(ctx context.Context) (*UITarsPlanner, error) {
-	config, err := GetArkModelConfig()
+	config, err := GetOpenAIModelConfig()
 	if err != nil {
 		return nil, err
 	}
-	chatModel, err := ark.NewChatModel(ctx, config)
+	chatModel, err := openai.NewChatModel(ctx, config)
 	if err != nil {
 		return nil, err
 	}
