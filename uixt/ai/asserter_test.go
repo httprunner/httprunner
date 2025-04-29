@@ -27,19 +27,19 @@ func TestValidAssertions(t *testing.T) {
 	}{
 		{
 			name:       "深度思考功能已开启",
-			assertion:  "深度思考开关已开启（蓝色为开启状态，灰色为关闭状态）",
+			assertion:  "输入框下方的「深度思考」文字是蓝色的",
 			imagePath:  "testdata/deepseek_think_on.png",
 			expectPass: true,
 		},
 		{
 			name:       "深度思考功能未开启",
-			assertion:  "深度思考开关未开启（蓝色为开启状态，灰色为关闭状态）",
+			assertion:  "输入框下方的「深度思考」文字是灰色的",
 			imagePath:  "testdata/deepseek_think_off.png",
 			expectPass: true,
 		},
 		{
-			name:       "网络连接功能已开启",
-			assertion:  "网络连接开关已开启（蓝色为开启状态，灰色为关闭状态）",
+			name:       "联网搜索功能已开启",
+			assertion:  "输入框下方的「联网搜索」文字是蓝色的",
 			imagePath:  "testdata/deepseek_network_on.png",
 			expectPass: true,
 		},
