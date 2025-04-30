@@ -1,14 +1,6 @@
 package ai
 
 import (
-	"bytes"
-	"encoding/base64"
-	"fmt"
-	"image"
-	"image/color"
-	"image/draw"
-	"image/png"
-	"os"
 	"strings"
 
 	"github.com/cloudwego/eino/schema"
@@ -108,71 +100,4 @@ func logResponse(resp *schema.Message) {
 		logger = logger.Interface("extra", resp.Extra)
 	}
 	logger.Msg("log response message")
-}
-
-// SavePositionImg saves an image with position markers
-func SavePositionImg(params struct {
-	InputImgBase64 string
-	Rect           struct {
-		X float64
-		Y float64
-	}
-	OutputPath string
-}) error {
-	// 解码Base64图像
-	imgData := params.InputImgBase64
-	// 如果包含了数据URL前缀，去掉它
-	if strings.HasPrefix(imgData, "data:image/") {
-		parts := strings.Split(imgData, ",")
-		if len(parts) > 1 {
-			imgData = parts[1]
-		}
-	}
-
-	// 解码Base64
-	unbased, err := base64.StdEncoding.DecodeString(imgData)
-	if err != nil {
-		return fmt.Errorf("无法解码Base64图像: %w", err)
-	}
-
-	// 解码图像
-	reader := bytes.NewReader(unbased)
-	img, _, err := image.Decode(reader)
-	if err != nil {
-		return fmt.Errorf("无法解码图像数据: %w", err)
-	}
-
-	// 创建一个可以在其上绘制的图像
-	bounds := img.Bounds()
-	rgba := image.NewRGBA(bounds)
-	draw.Draw(rgba, bounds, img, bounds.Min, draw.Src)
-
-	// 在点击/拖动位置绘制标记
-	markRadius := 10
-	x, y := int(params.Rect.X), int(params.Rect.Y)
-
-	// 绘制红色圆圈
-	for i := -markRadius; i <= markRadius; i++ {
-		for j := -markRadius; j <= markRadius; j++ {
-			if i*i+j*j <= markRadius*markRadius {
-				if x+i >= 0 && x+i < bounds.Max.X && y+j >= 0 && y+j < bounds.Max.Y {
-					rgba.Set(x+i, y+j, color.RGBA{255, 0, 0, 255})
-				}
-			}
-		}
-	}
-
-	// 保存图像
-	outFile, err := os.Create(params.OutputPath)
-	if err != nil {
-		return fmt.Errorf("无法创建输出文件: %w", err)
-	}
-	defer outFile.Close()
-
-	// 编码为PNG并保存
-	if err := png.Encode(outFile, rgba); err != nil {
-		return fmt.Errorf("无法编码和保存图像: %w", err)
-	}
-
-	return nil
 }

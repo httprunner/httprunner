@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/stretchr/testify/assert"
@@ -50,7 +51,7 @@ func TestValidAssertions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			imageBase64, size, err := loadImage(tc.imagePath)
+			imageBase64, size, err := builtin.LoadImage(tc.imagePath)
 			require.NoError(t, err)
 
 			result, err := asserter.Assert(&AssertOptions{

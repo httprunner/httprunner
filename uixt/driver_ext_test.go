@@ -3,9 +3,11 @@
 package uixt
 
 import (
+	"os"
 	"testing"
 	"time"
 
+	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -250,4 +252,34 @@ func TestDriverExt_Action_Offset(t *testing.T) {
 		option.WithScreenShotUITypes("deepseek_send"),
 		option.WithTapRandomRect(true))
 	assert.Nil(t, err)
+}
+
+func TestSavePositionImg(t *testing.T) {
+	imageBase64, _, err := builtin.LoadImage("ai/testdata/popup_risk_warning.png")
+	require.NoError(t, err)
+
+	params := struct {
+		InputImgBase64 string
+		Rect           struct {
+			X float64
+			Y float64
+		}
+		OutputPath string
+	}{
+		InputImgBase64: imageBase64,
+		Rect: struct {
+			X float64
+			Y float64
+		}{
+			X: 500,
+			Y: 500,
+		},
+		OutputPath: "ai/testdata/output.png",
+	}
+
+	err = SavePositionImg(params)
+	require.NoError(t, err)
+
+	// cleanup
+	defer os.Remove(params.OutputPath)
 }
