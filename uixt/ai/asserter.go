@@ -41,28 +41,23 @@ type AssertionResponse struct {
 // Asserter handles assertion using different AI models
 type Asserter struct {
 	ctx          context.Context
+	modelConfig  *ModelConfig
 	model        model.ToolCallingChatModel
 	systemPrompt string
 	history      ConversationHistory
 }
 
 // NewAsserter creates a new Asserter instance
-func NewAsserter(ctx context.Context) (*Asserter, error) {
+func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, error) {
 	asserter := &Asserter{
 		ctx:          ctx,
+		modelConfig:  modelConfig,
 		systemPrompt: defaultAssertionPrompt,
 	}
 
-	config, err := GetOpenAIModelConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	if strings.Contains(EnvModelUse, string(option.LLMServiceTypeUITARS)) {
+	if modelConfig.ModelType == option.LLMServiceTypeUITARS {
 		asserter.systemPrompt += "\n\n" + uiTarsAssertionResponseFormat
-	} else if strings.Contains(EnvModelUse, string(option.LLMServiceTypeQwenVL)) {
-		asserter.systemPrompt += "\n\n" + defaultAssertionResponseJsonFormat
-	} else if strings.Contains(EnvModelUse, string(option.LLMServiceTypeGPT)) {
+	} else if modelConfig.ModelType == option.LLMServiceTypeGPT {
 		// define output format
 		type OutputFormat struct {
 			Thought string `json:"thought"`
@@ -71,11 +66,11 @@ func NewAsserter(ctx context.Context) (*Asserter, error) {
 		}
 		outputFormatSchema, err := openapi3gen.NewSchemaRefForValue(&OutputFormat{}, nil)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
 		}
 		// set structured response format
 		// https://github.com/cloudwego/eino-ext/blob/main/components/model/openai/examples/structured/structured.go
-		config.ResponseFormat = &openai2.ChatCompletionResponseFormat{
+		modelConfig.ChatModelConfig.ResponseFormat = &openai2.ChatCompletionResponseFormat{
 			Type: openai2.ChatCompletionResponseFormatTypeJSONSchema,
 			JSONSchema: &openai2.ChatCompletionResponseFormatJSONSchema{
 				Name:        "assertion_result",
@@ -85,12 +80,13 @@ func NewAsserter(ctx context.Context) (*Asserter, error) {
 			},
 		}
 	} else {
-		return nil, fmt.Errorf("model type %s not supported for asserter", EnvModelUse)
+		asserter.systemPrompt += "\n\n" + defaultAssertionResponseJsonFormat
 	}
 
-	asserter.model, err = openai.NewChatModel(ctx, config)
+	var err error
+	asserter.model, err = openai.NewChatModel(ctx, modelConfig.ChatModelConfig)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
 	}
 
 	return asserter, nil
@@ -142,7 +138,7 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	startTime := time.Now()
 	resp, err := a.model.Generate(a.ctx, a.history)
 	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
-		Str("model", EnvModelUse).Msg("call model service for assertion")
+		Str("model", string(a.modelConfig.ModelType)).Msg("call model service for assertion")
 	if err != nil {
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}

@@ -2,7 +2,6 @@ package ai
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
@@ -33,26 +32,22 @@ type PlanningResult struct {
 	Error         string         `json:"error,omitempty"`
 }
 
-func NewPlanner(ctx context.Context, modelType option.LLMServiceType) (*Planner, error) {
+func NewPlanner(ctx context.Context, modelConfig *ModelConfig) (*Planner, error) {
 	planner := &Planner{
-		ctx:       ctx,
-		modelType: modelType,
+		ctx:         ctx,
+		modelConfig: modelConfig,
 	}
 
-	config, err := GetOpenAIModelConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create OpenAI config: %w", err)
-	}
-
-	if modelType == option.LLMServiceTypeUITARS {
+	if modelConfig.ModelType == option.LLMServiceTypeUITARS {
 		planner.systemPrompt = uiTarsPlanningPrompt
 	} else {
 		planner.systemPrompt = defaultPlanningResponseJsonFormat
 	}
 
-	planner.model, err = openai.NewChatModel(ctx, config)
+	var err error
+	planner.model, err = openai.NewChatModel(ctx, modelConfig.ChatModelConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize OpenAI model: %w", err)
+		return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
 	}
 
 	return planner, nil
@@ -60,9 +55,9 @@ func NewPlanner(ctx context.Context, modelType option.LLMServiceType) (*Planner,
 
 type Planner struct {
 	ctx          context.Context
+	modelConfig  *ModelConfig
 	model        model.ToolCallingChatModel
 	systemPrompt string
-	modelType    option.LLMServiceType
 	history      ConversationHistory
 }
 
@@ -76,11 +71,10 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	// prepare prompt
 	if len(p.history) == 0 {
 		// add system message
-		systemPrompt := uiTarsPlanningPrompt + opts.UserInstruction
 		p.history = ConversationHistory{
 			{
 				Role:    schema.System,
-				Content: systemPrompt,
+				Content: p.systemPrompt + opts.UserInstruction,
 			},
 		}
 	}
@@ -92,7 +86,7 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	startTime := time.Now()
 	resp, err := p.model.Generate(p.ctx, p.history)
 	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
-		Str("model", string(p.modelType)).Msg("call model service")
+		Str("model", string(p.modelConfig.ModelType)).Msg("call model service")
 	if err != nil {
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
@@ -116,7 +110,7 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 func (p *Planner) parseResult(msg *schema.Message, size types.Size) (*PlanningResult, error) {
 	var parseActions []ParsedAction
 	var err error
-	if p.modelType == option.LLMServiceTypeUITARS {
+	if p.modelConfig.ModelType == option.LLMServiceTypeUITARS {
 		// parse Thought/Action format from UI-TARS
 		parseActions, err = parseThoughtAction(msg.Content)
 		if err != nil {

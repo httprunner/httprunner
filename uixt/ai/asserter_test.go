@@ -4,13 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func createAsserter(t *testing.T) *Asserter {
-	asserter, err := NewAsserter(context.Background())
+	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
+	require.NoError(t, err)
+	asserter, err := NewAsserter(context.Background(), modelConfig)
 	require.NoError(t, err)
 	return asserter
 }

@@ -20,11 +20,16 @@ type ILLMService interface {
 }
 
 func NewLLMService(modelType option.LLMServiceType) (ILLMService, error) {
-	planner, err := NewPlanner(context.Background(), modelType)
+	modelConfig, err := GetModelConfig(modelType)
 	if err != nil {
 		return nil, err
 	}
-	asserter, err := NewAsserter(context.Background())
+
+	planner, err := NewPlanner(context.Background(), modelConfig)
+	if err != nil {
+		return nil, err
+	}
+	asserter, err := NewAsserter(context.Background(), modelConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +41,7 @@ func NewLLMService(modelType option.LLMServiceType) (ILLMService, error) {
 }
 
 // combinedLLMService 实现了 ILLMService 接口，组合了规划和断言功能
+// ⭐️支持采用不同的模型服务进行规划和断言
 type combinedLLMService struct {
 	planner  IPlanner  // 提供规划功能
 	asserter IAsserter // 提供断言功能
@@ -58,18 +64,20 @@ const (
 	EnvModelName     = "LLM_MODEL_NAME"
 )
 
-var EnvModelUse string
-
 const (
 	defaultTimeout = 30 * time.Second
 )
 
-// GetOpenAIModelConfig get OpenAI config
-func GetOpenAIModelConfig() (*openai.ChatModelConfig, error) {
+type ModelConfig struct {
+	*openai.ChatModelConfig
+	ModelType option.LLMServiceType
+}
+
+// GetModelConfig get OpenAI config
+func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 	if err := config.LoadEnv(); err != nil {
 		return nil, errors.Wrap(code.LoadEnvError, err.Error())
 	}
-	EnvModelUse = os.Getenv("LLM_MODEL_USE")
 
 	openaiBaseURL := os.Getenv(EnvOpenAIBaseURL)
 	if openaiBaseURL == "" {
@@ -103,7 +111,10 @@ func GetOpenAIModelConfig() (*openai.ChatModelConfig, error) {
 		Str("timeout", defaultTimeout.String()).
 		Msg("get model config")
 
-	return modelConfig, nil
+	return &ModelConfig{
+		ChatModelConfig: modelConfig,
+		ModelType:       modelType,
+	}, nil
 }
 
 // maskAPIKey masks the API key
