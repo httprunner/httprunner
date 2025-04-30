@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 )
@@ -23,10 +22,12 @@ func setupADBDriverExt(t *testing.T) *XTDriver {
 	device.Options.LogOn = false
 	driver, err := device.NewDriver()
 	require.Nil(t, err)
-	return NewXTDriver(driver,
-		ai.WithCVService(ai.CVServiceTypeVEDEM),
-		ai.WithLLMService(ai.LLMServiceTypeUITARS),
+	driverExt, err := NewXTDriver(driver,
+		option.WithCVService(option.CVServiceTypeVEDEM),
+		option.WithLLMService(option.LLMServiceTypeUITARS),
 	)
+	require.Nil(t, err)
+	return driverExt
 }
 
 func setupUIA2DriverExt(t *testing.T) *XTDriver {
@@ -36,8 +37,10 @@ func setupUIA2DriverExt(t *testing.T) *XTDriver {
 	device.Options.LogOn = false
 	driver, err := device.NewDriver()
 	require.Nil(t, err)
-	return NewXTDriver(driver,
-		ai.WithCVService(ai.CVServiceTypeVEDEM))
+	driverExt, err := NewXTDriver(driver,
+		option.WithCVService(option.CVServiceTypeVEDEM))
+	require.Nil(t, err)
+	return driverExt
 }
 
 func TestDevice_Android_GetPackageInfo(t *testing.T) {

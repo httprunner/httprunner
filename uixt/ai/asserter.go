@@ -14,6 +14,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3gen"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -57,11 +58,11 @@ func NewAsserter(ctx context.Context) (*Asserter, error) {
 		return nil, err
 	}
 
-	if strings.Contains(EnvModelUse, string(LLMServiceTypeUITARS)) {
+	if strings.Contains(EnvModelUse, string(option.LLMServiceTypeUITARS)) {
 		asserter.systemPrompt += "\n\n" + uiTarsAssertionResponseFormat
-	} else if strings.Contains(EnvModelUse, string(LLMServiceTypeQwenVL)) {
+	} else if strings.Contains(EnvModelUse, string(option.LLMServiceTypeQwenVL)) {
 		asserter.systemPrompt += "\n\n" + defaultAssertionResponseJsonFormat
-	} else if strings.Contains(EnvModelUse, string(LLMServiceTypeGPT)) {
+	} else if strings.Contains(EnvModelUse, string(option.LLMServiceTypeGPT)) {
 		// define output format
 		type OutputFormat struct {
 			Thought string `json:"thought"`

@@ -19,9 +19,8 @@ func TestGetImageFromBuffer(t *testing.T) {
 	buf := new(bytes.Buffer)
 	buf.Read(file)
 
-	service := NewAIService(
-		WithCVService(CVServiceTypeVEDEM),
-	)
+	service, err := NewVEDEMImageService()
+	require.Nil(t, err)
 	cvResult, err := service.ReadFromBuffer(buf)
 	assert.Nil(t, err)
 	fmt.Println(fmt.Sprintf("cvResult: %v", cvResult))
@@ -29,9 +28,8 @@ func TestGetImageFromBuffer(t *testing.T) {
 
 func TestGetImageFromPath(t *testing.T) {
 	imagePath := "/Users/debugtalk/Downloads/s1.png"
-	service := NewAIService(
-		WithCVService(CVServiceTypeVEDEM),
-	)
+	service, err := NewVEDEMImageService()
+	require.Nil(t, err)
 	cvResult, err := service.ReadFromPath(imagePath)
 	assert.Nil(t, err)
 	fmt.Println(fmt.Sprintf("cvResult: %v", cvResult))

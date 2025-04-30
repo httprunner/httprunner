@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,8 +16,9 @@ func TestDriverExt_NewMethod1(t *testing.T) {
 	require.Nil(t, err)
 	driver, err := device.NewDriver()
 	require.Nil(t, err)
-	driverExt := NewXTDriver(driver,
-		ai.WithCVService(ai.CVServiceTypeVEDEM))
+	driverExt, err := NewXTDriver(driver,
+		option.WithCVService(option.CVServiceTypeVEDEM))
+	require.Nil(t, err)
 	driverExt.TapByOCR("推荐")
 }
 
@@ -27,16 +27,18 @@ func TestDriverExt_NewMethod2(t *testing.T) {
 	require.Nil(t, err)
 	driver, err := NewUIA2Driver(device)
 	require.Nil(t, err)
-	driverExt := NewXTDriver(driver,
-		ai.WithCVService(ai.CVServiceTypeVEDEM))
+	driverExt, err := NewXTDriver(driver,
+		option.WithCVService(option.CVServiceTypeVEDEM))
+	require.Nil(t, err)
 	driverExt.TapByOCR("推荐")
 }
 
 func TestDriverExt(t *testing.T) {
 	device, _ := NewAndroidDevice()
 	driver, _ := NewADBDriver(device)
-	driverExt := NewXTDriver(driver,
-		ai.WithCVService(ai.CVServiceTypeVEDEM))
+	driverExt, err := NewXTDriver(driver,
+		option.WithCVService(option.CVServiceTypeVEDEM))
+	require.Nil(t, err)
 
 	// call IDriver methods
 	driverExt.TapXY(0.2, 0.5)
@@ -50,7 +52,7 @@ func TestDriverExt(t *testing.T) {
 	textRect, _ := driverExt.FindScreenText("hello")
 	t.Log(textRect)
 
-	err := driverExt.TapByCV(
+	err = driverExt.TapByCV(
 		option.WithScreenShotUITypes("deepseek_send"),
 		option.WithScope(0.8, 0.5, 1, 1))
 	assert.Nil(t, err)

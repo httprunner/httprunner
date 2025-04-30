@@ -52,7 +52,7 @@ func launchAppDriver(pkgName string) (driverExt *uixt.XTDriver, err error) {
 
 	time.Sleep(15 * time.Second)
 
-	driverExt = uixt.NewXTDriver(driver)
+	driverExt, _ = uixt.NewXTDriver(driver)
 
 	// 处理弹窗
 	err = driverExt.ClosePopupsHandler()

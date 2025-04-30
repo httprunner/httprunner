@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v5/uixt"
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
@@ -53,8 +52,8 @@ func launchAppDriver(pkgName string) (driverExt *uixt.XTDriver, err error) {
 
 	time.Sleep(15 * time.Second)
 
-	driverExt = uixt.NewXTDriver(driver,
-		ai.WithCVService(ai.CVServiceTypeVEDEM))
+	driverExt, _ = uixt.NewXTDriver(driver,
+		option.WithCVService(option.CVServiceTypeVEDEM))
 
 	// 处理弹窗
 	err = driverExt.ClosePopupsHandler()

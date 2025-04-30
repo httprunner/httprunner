@@ -8,6 +8,7 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -81,16 +82,31 @@ type IDriver interface {
 	StopCaptureLog() (result interface{}, err error)
 }
 
-func NewXTDriver(driver IDriver, opts ...ai.AIServiceOption) *XTDriver {
-	services := ai.NewAIService(opts...)
+func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, error) {
 	driverExt := &XTDriver{
-		IDriver:    driver,
-		CVService:  services.ICVService,
-		LLMService: services.ILLMService,
-
+		IDriver:       driver,
 		screenResults: make([]*ScreenResult, 0),
 	}
-	return driverExt
+
+	services := option.NewAIServiceOptions(opts...)
+
+	var err error
+	if services.CVService != "" {
+		driverExt.CVService, err = ai.NewCVService(services.CVService)
+		if err != nil {
+			log.Error().Err(err).Msg("init vedem image service failed")
+			return nil, err
+		}
+	}
+	if services.LLMService != "" {
+		driverExt.LLMService, err = ai.NewLLMService(services.LLMService)
+		if err != nil {
+			log.Error().Err(err).Msg("init llm service failed")
+			return nil, err
+		}
+	}
+
+	return driverExt, nil
 }
 
 // XTDriver = IDriver + AI

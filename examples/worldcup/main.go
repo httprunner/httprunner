@@ -48,7 +48,7 @@ func initIOSDriver(uuid string) *uixt.XTDriver {
 		log.Fatal().Err(err).Msg("failed to init ios device")
 	}
 	driver, _ := device.NewDriver()
-	driverExt := uixt.NewXTDriver(driver)
+	driverExt, _ := uixt.NewXTDriver(driver)
 	return driverExt
 }
 
@@ -58,7 +58,7 @@ func initAndroidDriver(uuid string) *uixt.XTDriver {
 		log.Fatal().Err(err).Msg("failed to init android device")
 	}
 	driver, _ := device.NewDriver()
-	driverExt := uixt.NewXTDriver(driver)
+	driverExt, _ := uixt.NewXTDriver(driver)
 	return driverExt
 }
 
