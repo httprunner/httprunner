@@ -13,6 +13,7 @@ import (
 
 	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,7 +36,7 @@ func TestVLMPlanning(t *testing.T) {
 
 	userInstruction += "\n\n请基于以上游戏规则，给出下一步可点击的两个图标坐标"
 
-	planner, err := NewUITarsPlanner(context.Background())
+	planner, err := NewPlanner(context.Background(), option.LLMServiceTypeUITARS)
 	require.NoError(t, err)
 
 	opts := &PlanningOptions{
@@ -105,7 +106,7 @@ func TestXHSPlanning(t *testing.T) {
 
 	userInstruction := "点击第二个帖子的作者头像"
 
-	planner, err := NewUITarsPlanner(context.Background())
+	planner, err := NewPlanner(context.Background(), option.LLMServiceTypeUITARS)
 	require.NoError(t, err)
 
 	opts := &PlanningOptions{
@@ -175,7 +176,7 @@ func TestChatList(t *testing.T) {
 
 	userInstruction := "请结合图片的文字信息，请告诉我一共有多少个群聊，哪些群聊右下角有绿点"
 
-	planner, err := NewUITarsPlanner(context.Background())
+	planner, err := NewPlanner(context.Background(), option.LLMServiceTypeUITARS)
 	require.NoError(t, err)
 
 	opts := &PlanningOptions{
@@ -206,7 +207,7 @@ func TestHandleSwitch(t *testing.T) {
 	userInstruction := "发送框下方的联网搜索开关是开启状态" // 点击开启联网搜索开关
 	// 检查发送框下方的联网搜索开关，蓝色为开启状态，灰色为关闭状态；若开关处于关闭状态，则点击进行开启
 
-	planner, err := NewUITarsPlanner(context.Background())
+	planner, err := NewPlanner(context.Background(), option.LLMServiceTypeUITARS)
 	require.NoError(t, err)
 
 	testCases := []struct {

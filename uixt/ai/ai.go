@@ -3,55 +3,14 @@ package ai
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/config"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-)
-
-func NewAIService(opts ...AIServiceOption) *AIServices {
-	services := &AIServices{}
-	for _, option := range opts {
-		option(services)
-	}
-	return services
-}
-
-type AIServices struct {
-	ICVService
-	ILLMService
-}
-
-type AIServiceOption func(*AIServices)
-
-type CVServiceType string
-
-const (
-	CVServiceTypeVEDEM  CVServiceType = "vedem"
-	CVServiceTypeOpenCV CVServiceType = "opencv"
-)
-
-func WithCVService(service CVServiceType) AIServiceOption {
-	return func(opts *AIServices) {
-		if service == CVServiceTypeVEDEM {
-			var err error
-			opts.ICVService, err = NewVEDEMImageService()
-			if err != nil {
-				log.Error().Err(err).Msg("init vedem image service failed")
-				os.Exit(code.GetErrorCode(err))
-			}
-		}
-	}
-}
-
-type LLMServiceType string
-
-const (
-	LLMServiceTypeUITARS LLMServiceType = "ui-tars"
-	LLMServiceTypeGPT    LLMServiceType = "gpt"
-	LLMServiceTypeQwenVL LLMServiceType = "qwen-vl"
 )
 
 // ILLMService 定义了 LLM 服务接口，包括规划和断言功能
@@ -60,35 +19,20 @@ type ILLMService interface {
 	Assert(opts *AssertOptions) (*AssertionResponse, error)
 }
 
-func WithLLMService(modelType LLMServiceType) AIServiceOption {
-	return func(opts *AIServices) {
-		// init planner
-		var planner IPlanner
-		var err error
-		switch modelType {
-		case LLMServiceTypeGPT:
-			// TODO: implement gpt-4o planner and asserter
-			planner, err = NewPlanner(context.Background())
-		case LLMServiceTypeUITARS:
-			planner, err = NewUITarsPlanner(context.Background())
-		}
-		if err != nil {
-			log.Error().Err(err).Msgf("init %s planner failed", modelType)
-			os.Exit(code.GetErrorCode(err))
-		}
-
-		// init asserter
-		asserter, err := NewAsserter(context.Background())
-		if err != nil {
-			log.Error().Err(err).Msg("init asserter failed")
-			os.Exit(code.GetErrorCode(err))
-		}
-
-		opts.ILLMService = &combinedLLMService{
-			planner:  planner,
-			asserter: asserter,
-		}
+func NewLLMService(modelType option.LLMServiceType) (ILLMService, error) {
+	planner, err := NewPlanner(context.Background(), modelType)
+	if err != nil {
+		return nil, err
 	}
+	asserter, err := NewAsserter(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return &combinedLLMService{
+		planner:  planner,
+		asserter: asserter,
+	}, nil
 }
 
 // combinedLLMService 实现了 ILLMService 接口，组合了规划和断言功能
@@ -115,6 +59,10 @@ const (
 )
 
 var EnvModelUse string
+
+const (
+	defaultTimeout = 30 * time.Second
+)
 
 // GetOpenAIModelConfig get OpenAI config
 func GetOpenAIModelConfig() (*openai.ChatModelConfig, error) {
@@ -156,4 +104,13 @@ func GetOpenAIModelConfig() (*openai.ChatModelConfig, error) {
 		Msg("get model config")
 
 	return modelConfig, nil
+}
+
+// maskAPIKey masks the API key
+func maskAPIKey(key string) string {
+	if len(key) <= 8 {
+		return "******"
+	}
+
+	return key[:4] + "******" + key[len(key)-4:]
 }

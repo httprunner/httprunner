@@ -1,116 +1,38 @@
 package ai
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/cloudwego/eino-ext/components/model/openai"
-	"github.com/cloudwego/eino/components/model"
-	"github.com/cloudwego/eino/schema"
-	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
-func NewUITarsPlanner(ctx context.Context) (*UITarsPlanner, error) {
-	config, err := GetOpenAIModelConfig()
-	if err != nil {
-		return nil, err
-	}
-	chatModel, err := openai.NewChatModel(ctx, config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &UITarsPlanner{
-		ctx:          ctx,
-		model:        chatModel,
-		modelType:    LLMServiceTypeUITARS,
-		systemPrompt: uiTarsPlanningPrompt,
-	}, nil
+// ParsedAction represents a parsed action from the VLM response
+type ParsedAction struct {
+	ActionType   ActionType             `json:"actionType"`
+	ActionInputs map[string]interface{} `json:"actionInputs"`
+	Thought      string                 `json:"thought"`
 }
 
-type UITarsPlanner struct {
-	ctx          context.Context
-	model        model.ToolCallingChatModel
-	systemPrompt string
-	modelType    LLMServiceType
-	history      ConversationHistory
-}
+type ActionType string
 
-// Call performs UI planning using Vision Language Model
-func (p *UITarsPlanner) Call(opts *PlanningOptions) (*PlanningResult, error) {
-	// validate input parameters
-	if err := validatePlanningInput(opts); err != nil {
-		return nil, errors.Wrap(err, "validate planning parameters failed")
-	}
-
-	// prepare prompt
-	if len(p.history) == 0 {
-		// add system message
-		systemPrompt := uiTarsPlanningPrompt + opts.UserInstruction
-		p.history = ConversationHistory{
-			{
-				Role:    schema.System,
-				Content: systemPrompt,
-			},
-		}
-	}
-	// append user image message
-	p.history.Append(opts.Message)
-
-	// call model service, generate response
-	logRequest(p.history)
-	startTime := time.Now()
-	resp, err := p.model.Generate(p.ctx, p.history)
-	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
-		Str("model", string(p.modelType)).Msg("call model service")
-	if err != nil {
-		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
-	}
-	logResponse(resp)
-
-	// parse result
-	result, err := p.parseResult(resp, opts.Size)
-	if err != nil {
-		return nil, errors.Wrap(code.LLMParsePlanningResponseError, err.Error())
-	}
-
-	// append assistant message
-	p.history.Append(&schema.Message{
-		Role:    schema.Assistant,
-		Content: result.ActionSummary,
-	})
-
-	return result, nil
-}
-
-func (p *UITarsPlanner) parseResult(msg *schema.Message, size types.Size) (*PlanningResult, error) {
-	// parse Thought/Action format from UI-TARS
-	parseActions, thoughtErr := parseThoughtAction(msg.Content)
-	if thoughtErr != nil {
-		return nil, thoughtErr
-	}
-
-	// process response
-	result, err := processVLMResponse(parseActions, size)
-	if err != nil {
-		return nil, errors.Wrap(err, "process VLM response failed")
-	}
-
-	log.Info().
-		Interface("summary", result.ActionSummary).
-		Interface("actions", result.NextActions).
-		Msg("get VLM planning result")
-	return result, nil
-}
+const (
+	ActionTypeClick    ActionType = "click"
+	ActionTypeTap      ActionType = "tap"
+	ActionTypeDrag     ActionType = "drag"
+	ActionTypeSwipe    ActionType = "swipe"
+	ActionTypeWait     ActionType = "wait"
+	ActionTypeFinished ActionType = "finished"
+	ActionTypeCallUser ActionType = "call_user"
+	ActionTypeType     ActionType = "type"
+	ActionTypeScroll   ActionType = "scroll"
+)
 
 // parseThoughtAction parses the Thought/Action format response
 func parseThoughtAction(predictionText string) ([]ParsedAction, error) {
@@ -395,4 +317,65 @@ func validateTypeContent(action *ParsedAction) {
 		action.ActionInputs["content"] = ""
 		log.Warn().Msg("type action missing content parameter, set to default")
 	}
+}
+
+// parseJSON tries to parse the response as JSON format
+func parseJSON(predictionText string) ([]ParsedAction, error) {
+	predictionText = strings.TrimSpace(predictionText)
+	if strings.HasPrefix(predictionText, "```json") && strings.HasSuffix(predictionText, "```") {
+		predictionText = strings.TrimPrefix(predictionText, "```json")
+		predictionText = strings.TrimSuffix(predictionText, "```")
+	}
+	predictionText = strings.TrimSpace(predictionText)
+
+	var response PlanningResult
+	if err := json.Unmarshal([]byte(predictionText), &response); err != nil {
+		return nil, fmt.Errorf("failed to parse VLM response: %v", err)
+	}
+
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	if len(response.NextActions) == 0 {
+		return nil, errors.New("no actions returned from VLM")
+	}
+
+	// normalize actions
+	var normalizedActions []ParsedAction
+	for i := range response.NextActions {
+		// create a new variable, avoid implicit memory aliasing in for loop.
+		action := response.NextActions[i]
+		if err := normalizeAction(&action); err != nil {
+			return nil, errors.Wrap(err, "failed to normalize action")
+		}
+		normalizedActions = append(normalizedActions, action)
+	}
+
+	return normalizedActions, nil
+}
+
+// normalizeAction normalizes the coordinates in the action
+func normalizeAction(action *ParsedAction) error {
+	switch action.ActionType {
+	case "click", "drag":
+		// handle click and drag action coordinates
+		if startBox, ok := action.ActionInputs["startBox"].(string); ok {
+			normalized, err := normalizeCoordinates(startBox)
+			if err != nil {
+				return fmt.Errorf("failed to normalize startBox: %w", err)
+			}
+			action.ActionInputs["startBox"] = normalized
+		}
+
+		if endBox, ok := action.ActionInputs["endBox"].(string); ok {
+			normalized, err := normalizeCoordinates(endBox)
+			if err != nil {
+				return fmt.Errorf("failed to normalize endBox: %w", err)
+			}
+			action.ActionInputs["endBox"] = normalized
+		}
+	}
+
+	return nil
 }
