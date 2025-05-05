@@ -406,18 +406,9 @@ func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("ADBDriver.Swipe")
 	var err error
-	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err = handlerSwipe(ad, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
-	}
-	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(ad, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
-		}
 	}
 
 	// adb shell input swipe fromX fromY toX toY

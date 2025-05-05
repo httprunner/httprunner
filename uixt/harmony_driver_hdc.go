@@ -187,20 +187,11 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("HDCDriver.Swipe")
 	var err error
-	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(hd, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err = handlerSwipe(hd, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(hd, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
-		}
-	}
-
+	actionOptions := option.NewActionOptions(opts...)
 	duration := 200
 	if actionOptions.PressDuration > 0 {
 		duration = int(actionOptions.PressDuration * 1000)

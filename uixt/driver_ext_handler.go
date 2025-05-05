@@ -45,3 +45,23 @@ func handlerDrag(driver IDriver, rawFomX, rawFromY, rawToX, rawToY float64, opts
 
 	return fromX, fromY, toX, toY, nil
 }
+
+func handlerSwipe(driver IDriver, rawFomX, rawFromY, rawToX, rawToY float64, opts ...option.ActionOption) (
+	fromX, fromY, toX, toY float64, err error) {
+
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(driver, rawFomX, rawFromY, rawToX, rawToY)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
+
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(driver, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
+		}
+	}
+
+	return fromX, fromY, toX, toY, nil
+}
