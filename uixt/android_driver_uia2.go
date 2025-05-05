@@ -301,6 +301,13 @@ func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error 
 	actionOptions := option.NewActionOptions(opts...)
 	x, y = actionOptions.ApplyTapOffset(x, y)
 
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(ud, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
+		}
+	}
+
 	duration := 100.0
 	if actionOptions.PressDuration > 0 {
 		duration = actionOptions.PressDuration * 1000 // convert to ms
@@ -324,14 +331,6 @@ func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error 
 
 	urlStr := fmt.Sprintf("/session/%s/actions/tap", ud.Session.ID)
 	_, err := ud.Session.POST(data, urlStr)
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(ud, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
-		}
-	}
-
 	return err
 }
 
@@ -371,6 +370,13 @@ func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.Action
 	actionOptions := option.NewActionOptions(opts...)
 	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
 
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(ud, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
+		}
+	}
+
 	data := map[string]interface{}{
 		"startX": fromX,
 		"startY": fromY,
@@ -382,14 +388,6 @@ func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.Action
 	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
 	urlStr := fmt.Sprintf("/session/%s/touch/drag", ud.Session.ID)
 	_, err = ud.Session.POST(data, urlStr)
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(ud, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
-		}
-	}
-
 	return err
 }
 
@@ -409,6 +407,13 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 		return err
 	}
 	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
+
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(ud, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
+		}
+	}
 
 	duration := 200.0
 	if actionOptions.PressDuration > 0 {
@@ -433,14 +438,6 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 
 	urlStr := fmt.Sprintf("/session/%s/actions/swipe", ud.Session.ID)
 	_, err = ud.Session.POST(data, urlStr)
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(ud, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
-		}
-	}
-
 	return err
 }
 

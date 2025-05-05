@@ -113,12 +113,6 @@ func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.
 
 	actionOptions := option.NewActionOptions(options...)
 
-	if actionOptions.Duration > 0 {
-		data["duration"] = actionOptions.Duration
-	}
-
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/drag")
-
 	// mark UI operation
 	if actionOptions.MarkOperationEnabled {
 		if markErr := MarkUIOperation(wd, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
@@ -126,6 +120,11 @@ func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.
 		}
 	}
 
+	if actionOptions.Duration > 0 {
+		data["duration"] = actionOptions.Duration
+	}
+
+	_, err = wd.HttpPOST(data, wd.sessionId, "ui/drag")
 	return
 }
 
@@ -527,6 +526,14 @@ func (wd *BrowserDriver) Tap(x, y float64, options ...option.ActionOption) error
 
 func (wd *BrowserDriver) TapFloat(x, y float64, options ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(options...)
+
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(wd, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
+		}
+	}
+
 	duration := 0.1
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration
@@ -537,14 +544,6 @@ func (wd *BrowserDriver) TapFloat(x, y float64, options ...option.ActionOption) 
 		"duration": duration,
 	}
 	_, err := wd.HttpPOST(data, wd.sessionId, "ui/tap")
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(wd, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
-		}
-	}
-
 	return err
 }
 

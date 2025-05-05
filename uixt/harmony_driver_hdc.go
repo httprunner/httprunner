@@ -157,13 +157,6 @@ func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 	x, y = actionOptions.ApplyTapOffset(x, y)
 
-	if actionOptions.Identifier != "" {
-		startTime := int(time.Now().UnixMilli())
-		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
-	}
-	err := hd.uiDriver.InjectGesture(
-		ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
-
 	// mark UI operation
 	if actionOptions.MarkOperationEnabled {
 		if markErr := MarkUIOperation(hd, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
@@ -171,7 +164,12 @@ func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 		}
 	}
 
-	return err
+	if actionOptions.Identifier != "" {
+		startTime := int(time.Now().UnixMilli())
+		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
+	}
+	return hd.uiDriver.InjectGesture(
+		ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
 }
 
 func (hd *HDCDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
@@ -198,6 +196,13 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	}
 	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
 
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(hd, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
+		}
+	}
+
 	duration := 200
 	if actionOptions.PressDuration > 0 {
 		duration = int(actionOptions.PressDuration * 1000)
@@ -206,18 +211,9 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 		startTime := int(time.Now().UnixMilli())
 		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
 	}
-	err = hd.uiDriver.InjectGesture(
+	return hd.uiDriver.InjectGesture(
 		ghdc.NewGesture().Start(ghdc.Point{X: int(fromX), Y: int(fromY)}).
 			MoveTo(ghdc.Point{X: int(toX), Y: int(toY)}, duration))
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(hd, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
-		}
-	}
-
-	return err
 }
 
 func (hd *HDCDriver) SetIme(ime string) error {

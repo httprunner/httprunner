@@ -595,14 +595,6 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 	actionOptions := option.NewActionOptions(opts...)
 	x, y = actionOptions.ApplyTapOffset(x, y)
-	data := map[string]interface{}{
-		"x": wd.toScale(x),
-		"y": wd.toScale(y),
-	}
-	option.MergeOptions(data, opts...)
-
-	urlStr := fmt.Sprintf("/session/%s/wda/tap/0", wd.Session.ID)
-	_, err := wd.Session.POST(data, urlStr)
 
 	// mark UI operation
 	if actionOptions.MarkOperationEnabled {
@@ -611,6 +603,14 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 		}
 	}
 
+	data := map[string]interface{}{
+		"x": wd.toScale(x),
+		"y": wd.toScale(y),
+	}
+	option.MergeOptions(data, opts...)
+
+	urlStr := fmt.Sprintf("/session/%s/wda/tap/0", wd.Session.ID)
+	_, err := wd.Session.POST(data, urlStr)
 	return err
 }
 
@@ -663,6 +663,13 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	actionOptions := option.NewActionOptions(opts...)
 	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
 
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(wd, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
+		}
+	}
+
 	data := map[string]interface{}{
 		"fromX": math.Round(fromX*10) / 10,
 		"fromY": math.Round(fromY*10) / 10,
@@ -674,14 +681,6 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	urlStr := fmt.Sprintf("/session/%s/wda/dragfromtoforduration", wd.Session.ID)
 	_, err = wd.Session.POST(data, urlStr)
 	// _, err = wd.Session.POST(data, "/session", wd.Session.ID, "/wda/drag")
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(wd, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
-		}
-	}
-
 	return err
 }
 
