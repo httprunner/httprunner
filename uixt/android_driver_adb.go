@@ -374,20 +374,13 @@ func (ad *ADBDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("ADBDriver.Drag")
-	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
+
+	fromX, fromY, toX, toY, err = handlerDrag(ad, fromX, fromY, toX, toY, opts...)
 	if err != nil {
 		return err
 	}
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
 
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(ad, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
-		}
-	}
-
+	actionOptions := option.NewActionOptions(opts...)
 	duration := 200.0
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration * 1000

@@ -103,7 +103,13 @@ func NewBrowserDriver(device *BrowserDevice) (driver *BrowserDriver, err error) 
 	return driver, nil
 }
 
-func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.ActionOption) (err error) {
+func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	var err error
+	fromX, fromY, toX, toY, err = handlerDrag(wd, fromX, fromY, toX, toY, opts...)
+	if err != nil {
+		return err
+	}
+
 	data := map[string]interface{}{
 		"from_x": fromX,
 		"from_y": fromY,
@@ -111,21 +117,13 @@ func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.
 		"to_y":   toY,
 	}
 
-	actionOptions := option.NewActionOptions(options...)
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(wd, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
-		}
-	}
-
+	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.Duration > 0 {
 		data["duration"] = actionOptions.Duration
 	}
 
 	_, err = wd.HttpPOST(data, wd.sessionId, "ui/drag")
-	return
+	return err
 }
 
 func (wd *BrowserDriver) AppLaunch(packageName string) (err error) {

@@ -356,19 +356,11 @@ func (ud *UIA2Driver) TouchAndHold(x, y float64, opts ...option.ActionOption) (e
 func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("UIA2Driver.Drag")
+
 	var err error
-	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ud, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err = handlerDrag(ud, fromX, fromY, toX, toY, opts...)
 	if err != nil {
 		return err
-	}
-	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(ud, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
-		}
 	}
 
 	data := map[string]interface{}{
