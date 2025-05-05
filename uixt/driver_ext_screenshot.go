@@ -2,7 +2,6 @@ package uixt
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"image"
 	"image/color"
@@ -10,6 +9,7 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -298,69 +298,243 @@ func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error
 	return &buf, nil
 }
 
-// SavePositionImg saves an image with position markers
-func SavePositionImg(params struct {
-	InputImgBase64 string
-	Rect           struct {
-		X float64
-		Y float64
+// MarkUIOperation add operation mark for UI operation
+func MarkUIOperation(driver IDriver, actionType ActionMethod, actionCoordinates []float64) error {
+	if actionType == "" || len(actionCoordinates) == 0 {
+		return nil
 	}
-	OutputPath string
-}) error {
-	// 解码Base64图像
-	imgData := params.InputImgBase64
-	// 如果包含了数据URL前缀，去掉它
-	if strings.HasPrefix(imgData, "data:image/") {
-		parts := strings.Split(imgData, ",")
-		if len(parts) > 1 {
-			imgData = parts[1]
+
+	// get screenshot
+	compressedBufSource, err := driver.ScreenShot()
+	if err != nil {
+		return err
+	}
+
+	// create screenshot save path
+	timestamp := builtin.GenNameWithTimestamp("%d")
+	var imagePath string
+
+	if actionType == ACTION_TapAbsXY {
+		if len(actionCoordinates) != 2 {
+			return fmt.Errorf("invalid tap action coordinates: %v", actionCoordinates)
 		}
+		imagePath = filepath.Join(
+			config.GetConfig().ScreenShotsPath,
+			fmt.Sprintf("%s_tap_marked.png", timestamp),
+		)
+		x, y := actionCoordinates[0], actionCoordinates[1]
+		point := image.Point{X: int(x), Y: int(y)}
+		err = SaveImageWithCircleMarker(compressedBufSource, point, imagePath)
+	} else if actionType == ACTION_Swipe {
+		if len(actionCoordinates) != 4 {
+			return fmt.Errorf("invalid swipe action coordinates: %v", actionCoordinates)
+		}
+		imagePath = filepath.Join(
+			config.GetConfig().ScreenShotsPath,
+			fmt.Sprintf("%s_swipe_marked.png", timestamp),
+		)
+		fromX, fromY := actionCoordinates[0], actionCoordinates[1]
+		toX, toY := actionCoordinates[2], actionCoordinates[3]
+		from := image.Point{X: int(fromX), Y: int(fromY)}
+		to := image.Point{X: int(toX), Y: int(toY)}
+		err = SaveImageWithArrowMarker(compressedBufSource, from, to, imagePath)
 	}
-
-	// 解码Base64
-	unbased, err := base64.StdEncoding.DecodeString(imgData)
 	if err != nil {
-		return fmt.Errorf("无法解码Base64图像: %w", err)
+		log.Error().Err(err).Msg("mark UI operation failed")
+		return err
 	}
 
-	// 解码图像
-	reader := bytes.NewReader(unbased)
-	img, _, err := image.Decode(reader)
+	if imagePath != "" {
+		log.Info().Str("operation", string(actionType)).
+			Str("imagePath", imagePath).
+			Msg("mark UI operation success")
+	}
+
+	return nil
+}
+
+// SaveImageWithCircleMarker saves an image with circle marker
+func SaveImageWithCircleMarker(imgBuf *bytes.Buffer, point image.Point, outputPath string) error {
+	img, _, err := image.Decode(imgBuf)
 	if err != nil {
-		return fmt.Errorf("无法解码图像数据: %w", err)
+		return fmt.Errorf("failed to decode image data: %w", err)
 	}
-
-	// 创建一个可以在其上绘制的图像
 	bounds := img.Bounds()
 	rgba := image.NewRGBA(bounds)
 	draw.Draw(rgba, bounds, img, bounds.Min, draw.Src)
 
-	// 在点击/拖动位置绘制标记
-	markRadius := 30
-	x, y := int(params.Rect.X), int(params.Rect.Y)
+	// draw a red circle at the tap point
+	centerX := point.X
+	centerY := point.Y
+	radius := 20
+	lineWidth := 5
+	red := color.RGBA{255, 0, 0, 255}
 
-	// 绘制红色圆圈
-	for i := -markRadius; i <= markRadius; i++ {
-		for j := -markRadius; j <= markRadius; j++ {
-			if i*i+j*j <= markRadius*markRadius {
-				if x+i >= 0 && x+i < bounds.Max.X && y+j >= 0 && y+j < bounds.Max.Y {
-					rgba.Set(x+i, y+j, color.RGBA{255, 0, 0, 255})
-				}
+	for angle := 0.0; angle < 2*math.Pi; angle += 0.01 {
+		for w := 0; w < lineWidth; w++ {
+			r := float64(radius - w)
+			x := int(float64(centerX) + r*math.Cos(angle))
+			y := int(float64(centerY) + r*math.Sin(angle))
+			if x >= 0 && x < bounds.Max.X && y >= 0 && y < bounds.Max.Y {
+				rgba.Set(x, y, red)
 			}
 		}
 	}
 
-	// 保存图像
-	outFile, err := os.Create(params.OutputPath)
+	outFile, err := os.Create(outputPath)
 	if err != nil {
-		return fmt.Errorf("无法创建输出文件: %w", err)
+		return fmt.Errorf("failed to create output file: %w", err)
 	}
 	defer outFile.Close()
-
-	// 编码为PNG并保存
 	if err := png.Encode(outFile, rgba); err != nil {
-		return fmt.Errorf("无法编码和保存图像: %w", err)
+		return fmt.Errorf("failed to encode and save image: %w", err)
+	}
+	return nil
+}
+
+// SaveImageWithArrowMarker saves an image with an arrow marker
+func SaveImageWithArrowMarker(imgBuf *bytes.Buffer, from, to image.Point, outputPath string) error {
+	img, _, err := image.Decode(imgBuf)
+	if err != nil {
+		return fmt.Errorf("failed to decode image data: %w", err)
+	}
+	bounds := img.Bounds()
+	rgba := image.NewRGBA(bounds)
+	draw.Draw(rgba, bounds, img, bounds.Min, draw.Src)
+	drawArrow(rgba, from, to, color.RGBA{255, 0, 0, 255}, 5)
+	outFile, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %w", err)
+	}
+	defer outFile.Close()
+	if err := png.Encode(outFile, rgba); err != nil {
+		return fmt.Errorf("failed to encode and save image: %w", err)
+	}
+	return nil
+}
+
+// drawArrow draws an arrow from 'from' to 'to' on the image
+func drawArrow(rgba *image.RGBA, from, to image.Point, color color.RGBA, lineWidth int) {
+	bounds := rgba.Bounds()
+	dx, dy := to.X-from.X, to.Y-from.Y
+	steps := int(math.Sqrt(float64(dx*dx + dy*dy)))
+	if steps == 0 {
+		steps = 1
+	}
+	stepX, stepY := float64(dx)/float64(steps), float64(dy)/float64(steps)
+	// main line
+	for i := 0; i < steps; i++ {
+		x := int(float64(from.X) + stepX*float64(i))
+		y := int(float64(from.Y) + stepY*float64(i))
+		for w := 0; w < lineWidth; w++ {
+			offsetX, offsetY := 0, 0
+			if math.Abs(stepX) > math.Abs(stepY) {
+				offsetY = w - lineWidth/2
+			} else {
+				offsetX = w - lineWidth/2
+			}
+			drawX, drawY := x+offsetX, y+offsetY
+			if drawX >= 0 && drawX < bounds.Max.X && drawY >= 0 && drawY < bounds.Max.Y {
+				rgba.Set(drawX, drawY, color)
+			}
+		}
+	}
+	// arrow head
+	arrowLength := float64(steps) * 0.15
+	if arrowLength < 10 {
+		arrowLength = 10
+	} else if arrowLength > 30 {
+		arrowLength = 30
+	}
+	head := calculateArrowHead(float64(from.X), float64(from.Y), float64(to.X), float64(to.Y), arrowLength)
+	if head != nil {
+		for _, point := range head[:2] {
+			drawLineInImage(rgba, to.X, to.Y, int(point.X), int(point.Y), color, lineWidth, bounds)
+		}
+		for _, point := range head[1:] {
+			drawLineInImage(rgba, to.X, to.Y, int(point.X), int(point.Y), color, lineWidth, bounds)
+		}
+	}
+}
+
+// calculateArrowHead calculates the endpoint and arrowhead coordinates
+func calculateArrowHead(fromX, fromY, toX, toY float64, arrowLength float64) []struct{ X, Y float64 } {
+	// calculate direction vector
+	dx, dy := toX-fromX, toY-fromY
+	// calculate distance
+	length := math.Sqrt(dx*dx + dy*dy)
+	if length < 1e-6 {
+		return nil
 	}
 
-	return nil
+	// unit vector
+	dx, dy = dx/length, dy/length
+
+	// calculate orthogonal vector of arrow direction (counterclockwise 90 degrees)
+	orthX, orthY := -dy, dx
+
+	// calculate two wing points of arrow
+	headWidth := arrowLength * 0.5
+	backX, backY := toX-dx*arrowLength, toY-dy*arrowLength
+
+	// two wing points of arrow
+	leftWingX, leftWingY := backX+orthX*headWidth, backY+orthY*headWidth
+	rightWingX, rightWingY := backX-orthX*headWidth, backY-orthY*headWidth
+
+	return []struct{ X, Y float64 }{
+		{leftWingX, leftWingY},
+		{toX, toY},
+		{rightWingX, rightWingY},
+	}
+}
+
+// drawLineInImage draws a line on the image
+func drawLineInImage(img *image.RGBA, x0, y0, x1, y1 int, lineColor color.RGBA, lineWidth int, bounds image.Rectangle) {
+	// use Bresenham algorithm to draw line
+	dx, dy := math.Abs(float64(x1-x0)), math.Abs(float64(y1-y0))
+	sx, sy := 1, 1
+	if x0 >= x1 {
+		sx = -1
+	}
+	if y0 >= y1 {
+		sy = -1
+	}
+	err := dx - dy
+
+	for {
+		// draw point (consider line width)
+		for w := 0; w < lineWidth; w++ {
+			offsetX, offsetY := 0, 0
+
+			// decide offset direction based on line angle
+			if dx > dy {
+				// more horizontal line
+				offsetY = w - lineWidth/2
+			} else {
+				// more vertical line
+				offsetX = w - lineWidth/2
+			}
+
+			drawX, drawY := x0+offsetX, y0+offsetY
+			if drawX >= 0 && drawX < bounds.Max.X && drawY >= 0 && drawY < bounds.Max.Y {
+				img.Set(drawX, drawY, lineColor)
+			}
+		}
+
+		// end of line
+		if x0 == x1 && y0 == y1 {
+			break
+		}
+
+		// calculate next point
+		e2 := 2 * err
+		if e2 > -dy {
+			err = err - dy
+			x0 = x0 + sx
+		}
+		if e2 < dx {
+			err = err + dx
+			y0 = y0 + sy
+		}
+	}
 }

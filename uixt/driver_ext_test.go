@@ -3,11 +3,12 @@
 package uixt
 
 import (
+	"bytes"
+	"image"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -254,32 +255,50 @@ func TestDriverExt_Action_Offset(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestSavePositionImg(t *testing.T) {
-	imageBase64, _, err := builtin.LoadImage("ai/testdata/popup_risk_warning.png")
+func TestSaveImageWithCircle(t *testing.T) {
+	imgBytes, err := os.ReadFile("ai/testdata/llk_1.png")
+	require.NoError(t, err)
+	imgBuf := bytes.NewBuffer(imgBytes)
+
+	point := image.Point{X: 500, Y: 500}
+	outputPath := "ai/testdata/output.png"
+
+	err = SaveImageWithCircleMarker(imgBuf, point, outputPath)
 	require.NoError(t, err)
 
-	params := struct {
-		InputImgBase64 string
-		Rect           struct {
-			X float64
-			Y float64
-		}
-		OutputPath string
-	}{
-		InputImgBase64: imageBase64,
-		Rect: struct {
-			X float64
-			Y float64
-		}{
-			X: 500,
-			Y: 500,
-		},
-		OutputPath: "ai/testdata/output.png",
-	}
+	defer os.Remove(outputPath)
+}
 
-	err = SavePositionImg(params)
+func TestSaveImageWithArrow(t *testing.T) {
+	imgBytes, err := os.ReadFile("ai/testdata/llk_1.png")
+	require.NoError(t, err)
+	imgBuf := bytes.NewBuffer(imgBytes)
+
+	from := image.Point{X: 500, Y: 500}
+	to := image.Point{X: 1000, Y: 1000}
+	outputPath := "ai/testdata/output.png"
+
+	err = SaveImageWithArrowMarker(imgBuf, from, to, outputPath)
 	require.NoError(t, err)
 
-	// cleanup
-	defer os.Remove(params.OutputPath)
+	defer os.Remove(outputPath)
+}
+
+func TestMarkOperation(t *testing.T) {
+	driver := setupDriverExt(t)
+
+	opts := []option.ActionOption{option.WithMarkOperationEnabled(true)}
+
+	// tap point
+	err := driver.TapXY(0.5, 0.5, opts...)
+	assert.Nil(t, err)
+
+	err = driver.TapAbsXY(500, 800, opts...)
+	assert.Nil(t, err)
+
+	// swipe
+	err = driver.Swipe(0.2, 0.5, 0.8, 0.5, opts...)
+	assert.Nil(t, err)
+	err = driver.Swipe(0.3, 0.7, 0.3, 0.3, opts...)
+	assert.Nil(t, err)
 }

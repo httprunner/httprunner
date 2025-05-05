@@ -161,8 +161,17 @@ func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 		startTime := int(time.Now().UnixMilli())
 		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
 	}
-	return hd.uiDriver.InjectGesture(
+	err := hd.uiDriver.InjectGesture(
 		ghdc.NewGesture().Start(ghdc.Point{X: int(x), Y: int(y)}).Pause(100))
+
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(hd, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
+		}
+	}
+
+	return err
 }
 
 func (hd *HDCDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
@@ -197,9 +206,18 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 		startTime := int(time.Now().UnixMilli())
 		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
 	}
-	return hd.uiDriver.InjectGesture(
+	err = hd.uiDriver.InjectGesture(
 		ghdc.NewGesture().Start(ghdc.Point{X: int(fromX), Y: int(fromY)}).
 			MoveTo(ghdc.Point{X: int(toX), Y: int(toY)}, duration))
+
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(hd, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
+		}
+	}
+
+	return err
 }
 
 func (hd *HDCDriver) SetIme(ime string) error {

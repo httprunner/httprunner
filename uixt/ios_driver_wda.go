@@ -603,6 +603,14 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 
 	urlStr := fmt.Sprintf("/session/%s/wda/tap/0", wd.Session.ID)
 	_, err := wd.Session.POST(data, urlStr)
+
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(wd, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
+		}
+	}
+
 	return err
 }
 
@@ -666,6 +674,14 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	urlStr := fmt.Sprintf("/session/%s/wda/dragfromtoforduration", wd.Session.ID)
 	_, err = wd.Session.POST(data, urlStr)
 	// _, err = wd.Session.POST(data, "/session", wd.Session.ID, "/wda/drag")
+
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(wd, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
+		}
+	}
+
 	return err
 }
 

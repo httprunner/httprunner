@@ -313,8 +313,15 @@ func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
-	_, err := ad.runShellCommand(
-		"input", "tap", xStr, yStr)
+	_, err := ad.runShellCommand("input", "tap", xStr, yStr)
+
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(ad, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
+		}
+	}
+
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
 	}
@@ -394,6 +401,14 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
 		fmt.Sprintf("%d", int(duration)),
 	)
+
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(ad, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
+		}
+	}
+
 	if err != nil {
 		return errors.Wrap(err, "adb drag failed")
 	}
@@ -417,6 +432,14 @@ func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 		fmt.Sprintf("%.1f", fromX), fmt.Sprintf("%.1f", fromY),
 		fmt.Sprintf("%.1f", toX), fmt.Sprintf("%.1f", toY),
 	)
+
+	// mark UI operation
+	if actionOptions.MarkOperationEnabled {
+		if markErr := MarkUIOperation(ad, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
+			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
+		}
+	}
+
 	if err != nil {
 		return errors.Wrap(err, "adb swipe failed")
 	}
