@@ -133,8 +133,9 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 		}
 	}
 
-	// cache screen result
-	dExt.screenResults = append(dExt.screenResults, screenResult)
+	// save screen result to session
+	session := dExt.GetSession()
+	session.screenResults = append(session.screenResults, screenResult)
 
 	log.Debug().
 		Str("imagePath", imagePath).
@@ -313,7 +314,7 @@ func MarkUIOperation(driver IDriver, actionType ActionMethod, actionCoordinates 
 	}
 
 	// create screenshot save path
-	timestamp := builtin.GenNameWithTimestamp("%d")
+	timestamp := builtin.GenNameWithTimestamp("action_%d")
 	var imagePath string
 
 	if actionType == ACTION_TapAbsXY {
@@ -322,18 +323,18 @@ func MarkUIOperation(driver IDriver, actionType ActionMethod, actionCoordinates 
 		}
 		imagePath = filepath.Join(
 			config.GetConfig().ScreenShotsPath,
-			fmt.Sprintf("%s_tap_marked.png", timestamp),
+			fmt.Sprintf("%s_tap.png", timestamp),
 		)
 		x, y := actionCoordinates[0], actionCoordinates[1]
 		point := image.Point{X: int(x), Y: int(y)}
 		err = SaveImageWithCircleMarker(compressedBufSource, point, imagePath)
-	} else if actionType == ACTION_Swipe {
+	} else if actionType == ACTION_Swipe || actionType == ACTION_Drag {
 		if len(actionCoordinates) != 4 {
 			return fmt.Errorf("invalid swipe action coordinates: %v", actionCoordinates)
 		}
 		imagePath = filepath.Join(
 			config.GetConfig().ScreenShotsPath,
-			fmt.Sprintf("%s_swipe_marked.png", timestamp),
+			fmt.Sprintf("%s_%s.png", timestamp, actionType),
 		)
 		fromX, fromY := actionCoordinates[0], actionCoordinates[1]
 		toX, toY := actionCoordinates[2], actionCoordinates[3]
@@ -353,6 +354,13 @@ func MarkUIOperation(driver IDriver, actionType ActionMethod, actionCoordinates 
 			Str("imagePath", imagePath).
 			Int64("duration(ms)", time.Since(start).Milliseconds()).
 			Msg("mark UI operation success")
+
+		// save screenshot to session
+		session := driver.GetSession()
+		session.screenResults = append(session.screenResults, &ScreenResult{
+			bufSource: compressedBufSource,
+			ImagePath: imagePath,
+		})
 	}
 
 	return nil

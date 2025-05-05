@@ -84,8 +84,7 @@ type IDriver interface {
 
 func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, error) {
 	driverExt := &XTDriver{
-		IDriver:       driver,
-		screenResults: make([]*ScreenResult, 0),
+		IDriver: driver,
 	}
 
 	services := option.NewAIServiceOptions(opts...)
@@ -114,7 +113,4 @@ type XTDriver struct {
 	IDriver
 	CVService  ai.ICVService  // OCR/CV
 	LLMService ai.ILLMService // LLM
-
-	// cache screenshot results
-	screenResults []*ScreenResult
 }

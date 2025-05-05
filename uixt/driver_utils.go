@@ -117,11 +117,10 @@ func (dExt *XTDriver) GetData(withReset bool) map[string]interface{} {
 	session := dExt.GetSession()
 	data := map[string]interface{}{
 		"requests":       session.History(),
-		"screen_results": dExt.screenResults,
+		"screen_results": session.screenResults,
 	}
 	if withReset {
 		session.Reset()
-		dExt.screenResults = make([]*ScreenResult, 0)
 	}
 	return data
 }
