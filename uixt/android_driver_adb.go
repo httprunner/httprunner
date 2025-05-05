@@ -326,12 +326,10 @@ func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.DoubleTap")
 	var err error
-	x, y, err = convertToAbsolutePoint(ad, x, y)
+	x, y, err = handlerDoubleTap(ad, x, y, opts...)
 	if err != nil {
 		return err
 	}
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)

@@ -317,13 +317,13 @@ func MarkUIOperation(driver IDriver, actionType ActionMethod, actionCoordinates 
 	timestamp := builtin.GenNameWithTimestamp("action_%d")
 	var imagePath string
 
-	if actionType == ACTION_TapAbsXY {
+	if actionType == ACTION_TapAbsXY || actionType == ACTION_DoubleTapXY {
 		if len(actionCoordinates) != 2 {
 			return fmt.Errorf("invalid tap action coordinates: %v", actionCoordinates)
 		}
 		imagePath = filepath.Join(
 			config.GetConfig().ScreenShotsPath,
-			fmt.Sprintf("%s_tap.png", timestamp),
+			fmt.Sprintf("%s_%s.png", timestamp, actionType),
 		)
 		x, y := actionCoordinates[0], actionCoordinates[1]
 		point := image.Point{X: int(x), Y: int(y)}

@@ -256,12 +256,10 @@ func (ud *UIA2Driver) Orientation() (orientation types.Orientation, err error) {
 func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("UIA2Driver.DoubleTap")
 	var err error
-	x, y, err = convertToAbsolutePoint(ud, x, y)
+	x, y, err = handlerDoubleTap(ud, x, y, opts...)
 	if err != nil {
 		return err
 	}
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
 
 	data := map[string]interface{}{
 		"actions": []interface{}{
