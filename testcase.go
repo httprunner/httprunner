@@ -251,6 +251,12 @@ func (tc *TestCaseDef) loadISteps() (*TestCase, error) {
 				StepConfig: step.StepConfig,
 				Android:    step.Android,
 			})
+		} else if step.Browser != nil {
+			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
+				StepConfig: step.StepConfig,
+				Browser:    step.Browser,
+			})
+
 		} else if step.Shell != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepShell{
 				StepConfig: step.StepConfig,

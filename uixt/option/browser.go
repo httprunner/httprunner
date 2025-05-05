@@ -15,6 +15,19 @@ type BrowserDeviceOptions struct {
 	Height    int    `json:"height,omitempty" yaml:"height,omitempty"`
 }
 
+func (dev *BrowserDeviceOptions) Options() (deviceOptions []BrowserDeviceOption) {
+	if dev.BrowserID != "" {
+		deviceOptions = append(deviceOptions, WithBrowserID(dev.BrowserID))
+	}
+	if dev.LogOn {
+		deviceOptions = append(deviceOptions, WithBrowserLogOn(true))
+	}
+	if dev.Width > 0 && dev.Height > 0 {
+		deviceOptions = append(deviceOptions, WithBrowserPageSize(dev.Width, dev.Height))
+	}
+	return
+}
+
 type BrowserDeviceOption func(*BrowserDeviceOptions)
 
 func WithBrowserID(serial string) BrowserDeviceOption {

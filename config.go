@@ -35,6 +35,7 @@ type TConfig struct {
 	IOS               []*option.IOSDeviceOptions     `json:"ios,omitempty" yaml:"ios,omitempty"`
 	Android           []*option.AndroidDeviceOptions `json:"android,omitempty" yaml:"android,omitempty"`
 	Harmony           []*option.HarmonyDeviceOptions `json:"harmony,omitempty" yaml:"harmony,omitempty"`
+	Browser           []*option.BrowserDeviceOptions `json:"browser,omitempty" yaml:"browser,omitempty"`
 	RequestTimeout    float32                        `json:"request_timeout,omitempty" yaml:"request_timeout,omitempty"` // request timeout in seconds
 	CaseTimeout       float32                        `json:"case_timeout,omitempty" yaml:"case_timeout,omitempty"`       // testcase timeout in seconds
 	Export            []string                       `json:"export,omitempty" yaml:"export,omitempty"`
@@ -181,6 +182,24 @@ func (c *TConfig) SetAndroid(opts ...option.AndroidDeviceOption) *TConfig {
 		c.Android = append(c.Android, uiaOptions)
 	} else {
 		c.Android[0] = uiaOptions
+	}
+	return c
+}
+
+func (c *TConfig) SetBrowser(opts ...option.BrowserDeviceOption) *TConfig {
+	browserOptions := option.NewBrowserDeviceOptions(opts...)
+
+	// each device can have its own settings
+	if browserOptions.BrowserID != "" {
+		c.Browser = append(c.Browser, browserOptions)
+		return c
+	}
+
+	// device UDID is not specified, settings will be shared
+	if len(c.Browser) == 0 {
+		c.Browser = append(c.Browser, browserOptions)
+	} else {
+		c.Browser[0] = browserOptions
 	}
 	return c
 }

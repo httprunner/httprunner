@@ -270,14 +270,18 @@ func (s *DriverSession) Request(method string, urlStr string, rawBody []byte) (
 }
 
 func (s *DriverSession) SetupPortForward(localPort int) error {
-	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
-	if err != nil {
-		return fmt.Errorf("create tcp connection error %v", err)
-	}
+	// conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", localPort))
+	// if err != nil {
+	// 	return fmt.Errorf("create tcp connection error %v", err)
+	// }
 	s.client.Transport = &http.Transport{
-		DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-			return conn, nil
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return net.Dial(network, fmt.Sprintf("127.0.0.1:%d", localPort))
 		},
+		MaxIdleConns:        10,
+		IdleConnTimeout:     30 * time.Second,
+		DisableKeepAlives:   false,
+		TLSHandshakeTimeout: 10 * time.Second,
 	}
 	return nil
 }

@@ -56,3 +56,15 @@ func (dExt *XTDriver) TapByCV(opts ...option.ActionOption) error {
 
 	return dExt.TapAbsXY(point.X, point.Y, opts...)
 }
+
+func (dExt *XTDriver) RightClickByOCR(ocrText string, opts ...option.ActionOption) error {
+	actionOptions := option.NewActionOptions(opts...)
+	point, err := dExt.FindScreenText(ocrText, opts...)
+	if err != nil {
+		if actionOptions.IgnoreNotFoundError {
+			return nil
+		}
+		return err
+	}
+	return dExt.IDriver.(*BrowserDriver).RightClick(point.Center().X, point.Center().Y)
+}

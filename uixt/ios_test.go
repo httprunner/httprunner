@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/danielpaulus/go-ios/ios"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -48,6 +49,16 @@ func TestDriver_WDA_LazySetup(t *testing.T) {
 	assert.Nil(t, err)
 	err = driver.TapXY(0.5, 0.5)
 	assert.Nil(t, err)
+}
+
+func TestIOSDeviceList(t *testing.T) {
+	t.Logf("start test")
+	// get all attached ios devices
+	devices, err := ios.ListDevices()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%+v", devices)
 }
 
 func TestDevice_IOS_New(t *testing.T) {

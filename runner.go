@@ -498,6 +498,30 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		}
 		r.uixtDrivers[harmonyDeviceOptions.ConnectKey] = driverExt
 	}
+	// parse browser devices config
+	for _, browserDeviceOptions := range parsedConfig.Browser {
+		err := r.parseDeviceConfig(browserDeviceOptions, parsedConfig.Variables)
+		if err != nil {
+			return nil, errors.Wrap(code.InvalidCaseError,
+				fmt.Sprintf("parse browser config failed: %v", err))
+		}
+		device, err := uixt.NewBrowserDevice(browserDeviceOptions.Options()...)
+		if err != nil {
+			return nil, errors.Wrap(err, "init browser device failed")
+		}
+		if err := device.Setup(); err != nil {
+			return nil, err
+		}
+		driver, err := device.NewDriver()
+		if err != nil {
+			return nil, err
+		}
+		if err := driver.Setup(); err != nil {
+			return nil, err
+		}
+		driverExt := uixt.NewXTDriver(driver, aiOpts...)
+		r.uixtDrivers[browserDeviceOptions.BrowserID] = driverExt
+	}
 
 	return parsedConfig, nil
 }

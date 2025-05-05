@@ -20,6 +20,7 @@ const (
 	ACTION_LOG              ActionMethod = "log"
 	ACTION_AppInstall       ActionMethod = "install"
 	ACTION_AppUninstall     ActionMethod = "uninstall"
+	ACTION_LoginNoneUI      ActionMethod = "login_none_ui"
 	ACTION_AppClear         ActionMethod = "app_clear"
 	ACTION_AppStart         ActionMethod = "app_start"
 	ACTION_AppLaunch        ActionMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
@@ -35,18 +36,24 @@ const (
 	ACTION_CallFunction     ActionMethod = "call_function"
 
 	// UI handling
-	ACTION_Home        ActionMethod = "home"
-	ACTION_TapXY       ActionMethod = "tap_xy"
-	ACTION_TapAbsXY    ActionMethod = "tap_abs_xy"
-	ACTION_TapByOCR    ActionMethod = "tap_ocr"
-	ACTION_TapByCV     ActionMethod = "tap_cv"
-	ACTION_DoubleTapXY ActionMethod = "double_tap_xy"
-	ACTION_Swipe       ActionMethod = "swipe"
-	ACTION_Drag        ActionMethod = "drag"
-	ACTION_Input       ActionMethod = "input"
-	ACTION_Back        ActionMethod = "back"
-	ACTION_KeyCode     ActionMethod = "keycode"
-	ACTION_AIAction    ActionMethod = "ai_action" // action with ai
+	ACTION_Home                     ActionMethod = "home"
+	ACTION_TapXY                    ActionMethod = "tap_xy"
+	ACTION_TapAbsXY                 ActionMethod = "tap_abs_xy"
+	ACTION_TapByOCR                 ActionMethod = "tap_ocr"
+	ACTION_TapByCV                  ActionMethod = "tap_cv"
+	ACTION_DoubleTapXY              ActionMethod = "double_tap_xy"
+	ACTION_Swipe                    ActionMethod = "swipe"
+	ACTION_Drag                     ActionMethod = "drag"
+	ACTION_Input                    ActionMethod = "input"
+	ACTION_Back                     ActionMethod = "back"
+	ACTION_KeyCode                  ActionMethod = "keycode"
+	ACTION_AIAction                 ActionMethod = "ai_action" // action with ai
+	ACTION_TapBySelector            ActionMethod = "tap_by_selector"
+	ACTION_HoverBySelector          ActionMethod = "hover_by_selector"
+	ACTION_ClosePage                ActionMethod = "close_page"
+	ACTION_RightClick               ActionMethod = "right_click"
+	ACTION_RightClickBySelector     ActionMethod = "right_click_by_selector"
+	ACTION_GetElementTextBySelector ActionMethod = "get_element_text_by_selector"
 
 	// custom actions
 	ACTION_SwipeToTapApp   ActionMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
@@ -111,6 +118,13 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 	}()
 
 	switch action.Method {
+	case ACTION_LoginNoneUI:
+		if len(action.Params.([]interface{})) == 4 {
+			params := action.Params.([]interface{})
+			_, err = dExt.IDriver.(*BrowserDriver).LoginNoneUI(params[0].(string), params[1].(string), params[2].(string), params[3].(string))
+			return err
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_LoginNoneUI, action.Params)
 	case ACTION_AppInstall:
 		if app, ok := action.Params.(string); ok {
 			if err = dExt.GetDevice().Install(app,
@@ -170,6 +184,40 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
 	case ACTION_Home:
 		return dExt.Home()
+	case ACTION_RightClick:
+		if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil {
+			if len(params) != 2 {
+				return fmt.Errorf("invalid tap location params: %v", params)
+			}
+			x, y := params[0], params[1]
+			return dExt.IDriver.(*BrowserDriver).RightClick(x, y)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_RightClick, action.Params)
+	case ACTION_HoverBySelector:
+		if selector, ok := action.Params.(string); ok {
+			return dExt.IDriver.(*BrowserDriver).HoverBySelector(selector, action.GetOptions()...)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_HoverBySelector, action.Params)
+	case ACTION_TapBySelector:
+		if selector, ok := action.Params.(string); ok {
+			return dExt.IDriver.(*BrowserDriver).TapBySelector(selector, action.GetOptions()...)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_TapBySelector, action.Params)
+	case ACTION_RightClickBySelector:
+		if selector, ok := action.Params.(string); ok {
+			return dExt.IDriver.(*BrowserDriver).RightClickBySelector(selector, action.GetOptions()...)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_RightClickBySelector, action.Params)
+	case ACTION_ClosePage:
+		if param, ok := action.Params.(json.Number); ok {
+			paramInt64, _ := param.Int64()
+			return dExt.IDriver.(*BrowserDriver).ClosePage(int(paramInt64))
+		} else if param, ok := action.Params.(int64); ok {
+			return dExt.IDriver.(*BrowserDriver).ClosePage(int(param))
+		} else {
+			return dExt.IDriver.(*BrowserDriver).ClosePage(action.Params.(int))
+		}
+		// return fmt.Errorf("invalid %s params: %v", ACTION_ClosePage, action.Params)
 	case ACTION_SetIme:
 		if ime, ok := action.Params.(string); ok {
 			err = dExt.SetIme(ime)

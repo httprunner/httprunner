@@ -180,6 +180,24 @@ func (dExt *XTDriver) assertForegroundApp(appName, assert string) error {
 	return nil
 }
 
+func (dExt *XTDriver) assertSelector(selector, assert string) error {
+	switch assert {
+	case AssertionExists:
+		_, err := dExt.IDriver.(*BrowserDriver).IsElementExistBySelector(selector)
+		if err != nil {
+			return errors.Wrap(err, "assert ocr exists failed")
+		}
+	case AssertionNotExists:
+		_, err := dExt.IDriver.(*BrowserDriver).IsElementExistBySelector(selector)
+		if err == nil {
+			return errors.New("assert ocr not exists failed")
+		}
+	default:
+		return fmt.Errorf("unexpected assert method %s", assert)
+	}
+	return nil
+}
+
 func (dExt *XTDriver) DoValidation(check, assert, expected string, message ...string) (err error) {
 	switch check {
 	case SelectorOCR:
