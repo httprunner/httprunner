@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -303,6 +304,7 @@ func MarkUIOperation(driver IDriver, actionType ActionMethod, actionCoordinates 
 	if actionType == "" || len(actionCoordinates) == 0 {
 		return nil
 	}
+	start := time.Now()
 
 	// get screenshot
 	compressedBufSource, err := driver.ScreenShot()
@@ -340,13 +342,16 @@ func MarkUIOperation(driver IDriver, actionType ActionMethod, actionCoordinates 
 		err = SaveImageWithArrowMarker(compressedBufSource, from, to, imagePath)
 	}
 	if err != nil {
-		log.Error().Err(err).Msg("mark UI operation failed")
+		log.Error().Err(err).
+			Int64("duration(ms)", time.Since(start).Milliseconds()).
+			Msg("mark UI operation failed")
 		return err
 	}
 
 	if imagePath != "" {
 		log.Info().Str("operation", string(actionType)).
 			Str("imagePath", imagePath).
+			Int64("duration(ms)", time.Since(start).Milliseconds()).
 			Msg("mark UI operation success")
 	}
 
