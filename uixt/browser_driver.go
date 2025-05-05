@@ -524,26 +524,20 @@ func (wd *BrowserDriver) Tap(x, y float64, options ...option.ActionOption) error
 	return wd.TapFloat(x, y, options...)
 }
 
-func (wd *BrowserDriver) TapFloat(x, y float64, options ...option.ActionOption) error {
-	actionOptions := option.NewActionOptions(options...)
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(wd, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
-		}
+func (wd *BrowserDriver) TapFloat(x, y float64, opts ...option.ActionOption) error {
+	var err error
+	var duration float64
+	x, y, duration, err = handlerTapAbsXY(wd, x, y, opts...)
+	if err != nil {
+		return err
 	}
 
-	duration := 0.1
-	if actionOptions.Duration > 0 {
-		duration = actionOptions.Duration
-	}
 	data := map[string]interface{}{
 		"x":        x,
 		"y":        y,
 		"duration": duration,
 	}
-	_, err := wd.HttpPOST(data, wd.sessionId, "ui/tap")
+	_, err = wd.HttpPOST(data, wd.sessionId, "ui/tap")
 	return err
 }
 

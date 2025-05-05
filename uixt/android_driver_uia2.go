@@ -298,20 +298,14 @@ func (ud *UIA2Driver) TapXY(x, y float64, opts ...option.ActionOption) error {
 func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("UIA2Driver.TapAbsXY")
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
 
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(ud, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
-		}
+	var err error
+	var duration float64
+	x, y, duration, err = handlerTapAbsXY(ud, x, y, opts...)
+	if err != nil {
+		return err
 	}
 
-	duration := 100.0
-	if actionOptions.PressDuration > 0 {
-		duration = actionOptions.PressDuration * 1000 // convert to ms
-	}
 	data := map[string]interface{}{
 		"actions": []interface{}{
 			map[string]interface{}{
@@ -330,7 +324,7 @@ func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error 
 	option.MergeOptions(data, opts...)
 
 	urlStr := fmt.Sprintf("/session/%s/actions/tap", ud.Session.ID)
-	_, err := ud.Session.POST(data, urlStr)
+	_, err = ud.Session.POST(data, urlStr)
 	return err
 }
 

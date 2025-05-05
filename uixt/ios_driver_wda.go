@@ -593,14 +593,11 @@ func (wd *WDADriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("WDADriver.TapAbsXY")
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
 
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(wd, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
-		}
+	var err error
+	x, y, _, err = handlerTapAbsXY(wd, x, y, opts...)
+	if err != nil {
+		return err
 	}
 
 	data := map[string]interface{}{
@@ -610,7 +607,7 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	option.MergeOptions(data, opts...)
 
 	urlStr := fmt.Sprintf("/session/%s/wda/tap/0", wd.Session.ID)
-	_, err := wd.Session.POST(data, urlStr)
+	_, err = wd.Session.POST(data, urlStr)
 	return err
 }
 

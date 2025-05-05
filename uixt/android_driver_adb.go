@@ -307,20 +307,16 @@ func (ad *ADBDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 
 func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.TapAbsXY")
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
-
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(ad, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
-		}
+	var err error
+	x, y, _, err = handlerTapAbsXY(ad, x, y, opts...)
+	if err != nil {
+		return err
 	}
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
-	_, err := ad.runShellCommand("input", "tap", xStr, yStr)
+	_, err = ad.runShellCommand("input", "tap", xStr, yStr)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
 	}

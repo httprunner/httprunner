@@ -154,16 +154,14 @@ func (hd *HDCDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 
 func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("HDCDriver.TapAbsXY")
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
 
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
-		if markErr := MarkUIOperation(hd, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
-			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
-		}
+	var err error
+	x, y, _, err = handlerTapAbsXY(hd, x, y, opts...)
+	if err != nil {
+		return err
 	}
 
+	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.Identifier != "" {
 		startTime := int(time.Now().UnixMilli())
 		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
