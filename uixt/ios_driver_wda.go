@@ -978,7 +978,7 @@ func (wd *WDADriver) StartCaptureLog(identifier ...string) error {
 
 func (wd *WDADriver) PushImage(localPath string) error {
 	log.Info().Str("localPath", localPath).Msg("WDADriver.PushImage")
-	localFile, err := os.OpenFile(localPath, os.O_RDONLY, 0o600)
+	localFile, err := os.Open(localPath)
 	if err != nil {
 		return err
 	}

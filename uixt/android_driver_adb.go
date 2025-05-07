@@ -699,7 +699,7 @@ func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 			return pointRes, nil
 		}
 
-		reader, err := os.OpenFile(files[0], os.O_RDONLY, 0o600)
+		reader, err := os.Open(files[0])
 		if err != nil {
 			log.Info().Msg("open File error")
 			return pointRes, nil

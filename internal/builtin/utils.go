@@ -493,7 +493,7 @@ func RunCommandWithCallback(cmdName string, args []string, callback LineCallback
 // LoadImage loads image file and returns base64 encoded string and image size
 func LoadImage(imagePath string) (base64Str string, size types.Size, err error) {
 	// Read the image file
-	imageFile, err := os.OpenFile(imagePath, os.O_RDONLY, 0o600)
+	imageFile, err := os.Open(imagePath)
 	if err != nil {
 		return "", types.Size{}, fmt.Errorf("failed to open image file: %w", err)
 	}
