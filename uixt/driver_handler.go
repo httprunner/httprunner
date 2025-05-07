@@ -6,7 +6,7 @@ import (
 )
 
 func handlerTapAbsXY(driver IDriver, rawX, rawY float64, opts ...option.ActionOption) (
-	x, y, duration float64, err error) {
+	x, y float64, err error) {
 
 	actionOptions := option.NewActionOptions(opts...)
 	x, y = actionOptions.ApplyTapOffset(rawX, rawY)
@@ -18,12 +18,7 @@ func handlerTapAbsXY(driver IDriver, rawX, rawY float64, opts ...option.ActionOp
 		}
 	}
 
-	duration = 100.0
-	if actionOptions.PressDuration > 0 {
-		duration = actionOptions.PressDuration * 1000 // convert to ms
-	}
-
-	return x, y, duration, nil
+	return x, y, nil
 }
 
 func handlerDoubleTap(driver IDriver, rawX, rawY float64, opts ...option.ActionOption) (

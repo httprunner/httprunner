@@ -308,7 +308,7 @@ func (ad *ADBDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.TapAbsXY")
 	var err error
-	x, y, _, err = handlerTapAbsXY(ad, x, y, opts...)
+	x, y, err = handlerTapAbsXY(ad, x, y, opts...)
 	if err != nil {
 		return err
 	}

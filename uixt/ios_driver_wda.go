@@ -598,7 +598,7 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	y = wd.toScale(y)
 
 	var err error
-	x, y, _, err = handlerTapAbsXY(wd, x, y, opts...)
+	x, y, err = handlerTapAbsXY(wd, x, y, opts...)
 	if err != nil {
 		return err
 	}

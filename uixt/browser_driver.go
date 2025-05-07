@@ -524,10 +524,15 @@ func (wd *BrowserDriver) Tap(x, y float64, options ...option.ActionOption) error
 
 func (wd *BrowserDriver) TapFloat(x, y float64, opts ...option.ActionOption) error {
 	var err error
-	var duration float64
-	x, y, duration, err = handlerTapAbsXY(wd, x, y, opts...)
+	x, y, err = handlerTapAbsXY(wd, x, y, opts...)
 	if err != nil {
 		return err
+	}
+
+	actionOptions := option.NewActionOptions(opts...)
+	duration := 0.1
+	if actionOptions.Duration > 0 {
+		duration = actionOptions.Duration
 	}
 
 	data := map[string]interface{}{

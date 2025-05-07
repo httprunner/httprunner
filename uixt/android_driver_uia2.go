@@ -298,10 +298,15 @@ func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error 
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
 
 	var err error
-	var duration float64
-	x, y, duration, err = handlerTapAbsXY(ud, x, y, opts...)
+	x, y, err = handlerTapAbsXY(ud, x, y, opts...)
 	if err != nil {
 		return err
+	}
+
+	actionOptions := option.NewActionOptions(opts...)
+	duration := 100.0
+	if actionOptions.PressDuration > 0 {
+		duration = actionOptions.PressDuration * 1000 // convert to ms
 	}
 
 	data := map[string]interface{}{

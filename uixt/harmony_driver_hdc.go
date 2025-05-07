@@ -156,7 +156,7 @@ func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("HDCDriver.TapAbsXY")
 
 	var err error
-	x, y, _, err = handlerTapAbsXY(hd, x, y, opts...)
+	x, y, err = handlerTapAbsXY(hd, x, y, opts...)
 	if err != nil {
 		return err
 	}
