@@ -121,8 +121,12 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 	switch action.Method {
 	case ACTION_WebLoginNoneUI:
 		if len(action.Params.([]interface{})) == 4 {
+			driver, ok := dExt.IDriver.(*BrowserDriver)
+			if !ok {
+				return errors.New("invalid browser driver")
+			}
 			params := action.Params.([]interface{})
-			_, err = dExt.IDriver.(*BrowserDriver).LoginNoneUI(params[0].(string), params[1].(string), params[2].(string), params[3].(string))
+			_, err = driver.LoginNoneUI(params[0].(string), params[1].(string), params[2].(string), params[3].(string))
 			return err
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_WebLoginNoneUI, action.Params)
