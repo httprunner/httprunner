@@ -307,6 +307,7 @@ func (s *StepMobile) RightClick(x, y float64, options ...option.ActionOption) *S
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
+
 func (s *StepMobile) RightClickBySelector(selector string, options ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_RightClickBySelector,
@@ -316,6 +317,7 @@ func (s *StepMobile) RightClickBySelector(selector string, options ...option.Act
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
+
 func (s *StepMobile) HoverBySelector(selector string, options ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_HoverBySelector,
@@ -325,6 +327,7 @@ func (s *StepMobile) HoverBySelector(selector string, options ...option.ActionOp
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
+
 func (s *StepMobile) TapBySelector(selector string, options ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_TapBySelector,
@@ -334,6 +337,7 @@ func (s *StepMobile) TapBySelector(selector string, options ...option.ActionOpti
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
+
 func (s *StepMobile) ClosePage(idx int, options ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_ClosePage,
@@ -343,6 +347,7 @@ func (s *StepMobile) ClosePage(idx int, options ...option.ActionOption) *StepMob
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }
+
 func (s *StepMobile) GetElementTextBySelector(selector string, options ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_GetElementTextBySelector,

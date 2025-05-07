@@ -519,7 +519,10 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err := driver.Setup(); err != nil {
 			return nil, err
 		}
-		driverExt := uixt.NewXTDriver(driver, aiOpts...)
+		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
+		if err != nil {
+			return nil, errors.Wrap(err, "init browser XTDriver failed")
+		}
 		r.uixtDrivers[browserDeviceOptions.BrowserID] = driverExt
 	}
 
