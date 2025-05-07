@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -77,12 +78,13 @@ func (ud *UIA2Driver) Setup() error {
 	// }
 
 	// start uiautomator2 server
-	// go func() {
-	// 	if err := ud.startUIA2Server(); err != nil {
-	// 		log.Fatal().Err(err).Msg("start UIA2 failed")
-	// 	}
-	// }()
-	// time.Sleep(5 * time.Second) // wait for uiautomator2 server start
+	// Todo: keep-alive
+	go func() {
+		if err := ud.startUIA2Server(); err != nil {
+			log.Fatal().Err(err).Msg("start UIA2 failed")
+		}
+	}()
+	time.Sleep(5 * time.Second) // wait for uiautomator2 server start
 
 	// create new session
 	err = ud.InitSession(nil)

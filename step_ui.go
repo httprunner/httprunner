@@ -83,9 +83,9 @@ func (s *StepMobile) InstallApp(path string) *StepMobile {
 	return s
 }
 
-func (s *StepMobile) LoginNoneUI(packageName, phoneNumber string, captcha, password string) *StepMobile {
+func (s *StepMobile) WebLoginNoneUI(packageName, phoneNumber string, captcha, password string) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_LoginNoneUI,
+		Method: uixt.ACTION_WebLoginNoneUI,
 		Params: []string{packageName, phoneNumber, captcha, password},
 	})
 	return s
@@ -298,7 +298,7 @@ func (s *StepMobile) SwipeToTapTexts(texts interface{}, opts ...option.ActionOpt
 	return s
 }
 
-func (s *StepMobile) RightClick(x, y float64, options ...option.ActionOption) *StepMobile {
+func (s *StepMobile) SecondaryClick(x, y float64, options ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_SecondaryClick,
 		Params:  []float64{x, y},
@@ -308,7 +308,7 @@ func (s *StepMobile) RightClick(x, y float64, options ...option.ActionOption) *S
 	return s
 }
 
-func (s *StepMobile) RightClickBySelector(selector string, options ...option.ActionOption) *StepMobile {
+func (s *StepMobile) SecondaryClickBySelector(selector string, options ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_SecondaryClickBySelector,
 		Params:  selector,
@@ -338,7 +338,7 @@ func (s *StepMobile) TapBySelector(selector string, options ...option.ActionOpti
 	return s
 }
 
-func (s *StepMobile) ClosePage(idx int, options ...option.ActionOption) *StepMobile {
+func (s *StepMobile) WebCloseTab(idx int, options ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
 		Method:  uixt.ACTION_WebCloseTab,
 		Params:  idx,

@@ -20,7 +20,7 @@ const (
 	ACTION_LOG              ActionMethod = "log"
 	ACTION_AppInstall       ActionMethod = "install"
 	ACTION_AppUninstall     ActionMethod = "uninstall"
-	ACTION_LoginNoneUI      ActionMethod = "login_none_ui"
+	ACTION_WebLoginNoneUI   ActionMethod = "login_none_ui"
 	ACTION_AppClear         ActionMethod = "app_clear"
 	ACTION_AppStart         ActionMethod = "app_start"
 	ACTION_AppLaunch        ActionMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
@@ -119,13 +119,13 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 	}()
 
 	switch action.Method {
-	case ACTION_LoginNoneUI:
+	case ACTION_WebLoginNoneUI:
 		if len(action.Params.([]interface{})) == 4 {
 			params := action.Params.([]interface{})
 			_, err = dExt.IDriver.(*BrowserDriver).LoginNoneUI(params[0].(string), params[1].(string), params[2].(string), params[3].(string))
 			return err
 		}
-		return fmt.Errorf("invalid %s params: %v", ACTION_LoginNoneUI, action.Params)
+		return fmt.Errorf("invalid %s params: %v", ACTION_WebLoginNoneUI, action.Params)
 	case ACTION_AppInstall:
 		if app, ok := action.Params.(string); ok {
 			if err = dExt.GetDevice().Install(app,
