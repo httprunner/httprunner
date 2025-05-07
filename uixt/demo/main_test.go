@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/httprunner/httprunner/v5/uixt"
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
@@ -23,9 +22,10 @@ func TestIOSDemo(t *testing.T) {
 
 	driver, err := device.NewDriver()
 	assert.Nil(t, err)
-	driverExt := uixt.NewXTDriver(driver,
-		ai.WithCVService(ai.CVServiceTypeVEDEM),
+	driverExt, err := uixt.NewXTDriver(driver,
+		option.WithCVService(option.CVServiceTypeVEDEM),
 	)
+	assert.Nil(t, err)
 
 	// release session
 	defer func() {

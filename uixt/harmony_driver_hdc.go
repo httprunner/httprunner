@@ -154,9 +154,14 @@ func (hd *HDCDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 
 func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("HDCDriver.TapAbsXY")
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
 
+	var err error
+	x, y, err = handlerTapAbsXY(hd, x, y, opts...)
+	if err != nil {
+		return err
+	}
+
+	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.Identifier != "" {
 		startTime := int(time.Now().UnixMilli())
 		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})
@@ -182,13 +187,11 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("HDCDriver.Swipe")
 	var err error
-	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(hd, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err = handlerSwipe(hd, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
-
+	actionOptions := option.NewActionOptions(opts...)
 	duration := 200
 	if actionOptions.PressDuration > 0 {
 		duration = int(actionOptions.PressDuration * 1000)

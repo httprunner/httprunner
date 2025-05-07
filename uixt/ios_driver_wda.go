@@ -593,32 +593,40 @@ func (wd *WDADriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("WDADriver.TapAbsXY")
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
+
+	x = wd.toScale(x)
+	y = wd.toScale(y)
+
+	var err error
+	x, y, err = handlerTapAbsXY(wd, x, y, opts...)
+	if err != nil {
+		return err
+	}
+
 	data := map[string]interface{}{
-		"x": wd.toScale(x),
-		"y": wd.toScale(y),
+		"x": x,
+		"y": y,
 	}
 	option.MergeOptions(data, opts...)
 
 	urlStr := fmt.Sprintf("/session/%s/wda/tap/0", wd.Session.ID)
-	_, err := wd.Session.POST(data, urlStr)
+	_, err = wd.Session.POST(data, urlStr)
 	return err
 }
 
 func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("WDADriver.DoubleTap")
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
+
+	x = wd.toScale(x)
+	y = wd.toScale(y)
+
 	var err error
-	x, y, err = convertToAbsolutePoint(wd, x, y)
+	x, y, err = handlerDoubleTap(wd, x, y, opts...)
 	if err != nil {
 		return err
 	}
 
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
-	x = wd.toScale(x)
-	y = wd.toScale(y)
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
@@ -643,17 +651,17 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("WDADriver.Drag")
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
-	var err error
-	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(wd, fromX, fromY, toX, toY)
-	if err != nil {
-		return err
-	}
+
 	fromX = wd.toScale(fromX)
 	fromY = wd.toScale(fromY)
 	toX = wd.toScale(toX)
 	toY = wd.toScale(toY)
-	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
+
+	var err error
+	fromX, fromY, toX, toY, err = handlerDrag(wd, fromX, fromY, toX, toY, opts...)
+	if err != nil {
+		return err
+	}
 
 	data := map[string]interface{}{
 		"fromX": math.Round(fromX*10) / 10,
@@ -970,7 +978,7 @@ func (wd *WDADriver) StartCaptureLog(identifier ...string) error {
 
 func (wd *WDADriver) PushImage(localPath string) error {
 	log.Info().Str("localPath", localPath).Msg("WDADriver.PushImage")
-	localFile, err := os.OpenFile(localPath, os.O_RDONLY, 0o600)
+	localFile, err := os.Open(localPath)
 	if err != nil {
 		return err
 	}

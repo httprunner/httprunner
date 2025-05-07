@@ -8,6 +8,7 @@ type ScreenOptions struct {
 	ScreenShotOptions
 	ScreenRecordOptions
 	ScreenFilterOptions
+	MarkOperationOptions
 }
 
 type ScreenShotOptions struct {
@@ -271,5 +272,31 @@ func WithMatchOne(matchOne bool) ActionOption {
 func WithIndex(index int) ActionOption {
 	return func(o *ActionOptions) {
 		o.Index = index
+	}
+}
+
+// MarkOperationOptions contains options for marking UI operations
+type MarkOperationOptions struct {
+	// mark UI operation, enable/disable UI operation marking
+	MarkOperationEnabled bool `json:"mark_operation_enabled,omitempty" yaml:"mark_operation_enabled,omitempty"`
+}
+
+func (o *MarkOperationOptions) GetMarkOperationOptions() []ActionOption {
+	options := make([]ActionOption, 0)
+	if o == nil {
+		return options
+	}
+
+	if o.MarkOperationEnabled {
+		options = append(options, WithMarkOperationEnabled(true))
+	}
+
+	return options
+}
+
+// WithMarkOperationEnabled enables or disables UI operation marking
+func WithMarkOperationEnabled(enabled bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.MarkOperationEnabled = enabled
 	}
 }

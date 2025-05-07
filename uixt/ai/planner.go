@@ -1,21 +1,17 @@
 package ai
 
 import (
-	"bytes"
-	"encoding/base64"
-	"fmt"
-	"image"
-	"image/color"
-	"image/draw"
-	"image/png"
-	"os"
-	"strings"
+	"context"
 	"time"
 
+	"github.com/cloudwego/eino-ext/components/model/openai"
+	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 type IPlanner interface {
@@ -36,30 +32,110 @@ type PlanningResult struct {
 	Error         string         `json:"error,omitempty"`
 }
 
-// ParsedAction represents a parsed action from the VLM response
-type ParsedAction struct {
-	ActionType   ActionType             `json:"actionType"`
-	ActionInputs map[string]interface{} `json:"actionInputs"`
-	Thought      string                 `json:"thought"`
+func NewPlanner(ctx context.Context, modelConfig *ModelConfig) (*Planner, error) {
+	planner := &Planner{
+		ctx:         ctx,
+		modelConfig: modelConfig,
+	}
+
+	if modelConfig.ModelType == option.LLMServiceTypeUITARS {
+		planner.systemPrompt = uiTarsPlanningPrompt
+	} else {
+		planner.systemPrompt = defaultPlanningResponseJsonFormat
+	}
+
+	var err error
+	planner.model, err = openai.NewChatModel(ctx, modelConfig.ChatModelConfig)
+	if err != nil {
+		return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
+	}
+
+	return planner, nil
 }
 
-type ActionType string
+type Planner struct {
+	ctx          context.Context
+	modelConfig  *ModelConfig
+	model        model.ToolCallingChatModel
+	systemPrompt string
+	history      ConversationHistory
+}
 
-const (
-	ActionTypeClick    ActionType = "click"
-	ActionTypeTap      ActionType = "tap"
-	ActionTypeDrag     ActionType = "drag"
-	ActionTypeSwipe    ActionType = "swipe"
-	ActionTypeWait     ActionType = "wait"
-	ActionTypeFinished ActionType = "finished"
-	ActionTypeCallUser ActionType = "call_user"
-	ActionTypeType     ActionType = "type"
-	ActionTypeScroll   ActionType = "scroll"
-)
+// Call performs UI planning using Vision Language Model
+func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
+	// validate input parameters
+	if err := validatePlanningInput(opts); err != nil {
+		return nil, errors.Wrap(err, "validate planning parameters failed")
+	}
 
-const (
-	defaultTimeout = 30 * time.Second
-)
+	// prepare prompt
+	if len(p.history) == 0 {
+		// add system message
+		p.history = ConversationHistory{
+			{
+				Role:    schema.System,
+				Content: p.systemPrompt + opts.UserInstruction,
+			},
+		}
+	}
+	// append user image message
+	p.history.Append(opts.Message)
+
+	// call model service, generate response
+	logRequest(p.history)
+	startTime := time.Now()
+	resp, err := p.model.Generate(p.ctx, p.history)
+	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
+		Str("model", string(p.modelConfig.ModelType)).Msg("call model service")
+	if err != nil {
+		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
+	}
+	logResponse(resp)
+
+	// parse result
+	result, err := p.parseResult(resp, opts.Size)
+	if err != nil {
+		return nil, errors.Wrap(code.LLMParsePlanningResponseError, err.Error())
+	}
+
+	// append assistant message
+	p.history.Append(&schema.Message{
+		Role:    schema.Assistant,
+		Content: result.ActionSummary,
+	})
+
+	return result, nil
+}
+
+func (p *Planner) parseResult(msg *schema.Message, size types.Size) (*PlanningResult, error) {
+	var parseActions []ParsedAction
+	var err error
+	if p.modelConfig.ModelType == option.LLMServiceTypeUITARS {
+		// parse Thought/Action format from UI-TARS
+		parseActions, err = parseThoughtAction(msg.Content)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// parse JSON format, from VLM like openai/gpt-4o
+		parseActions, err = parseJSON(msg.Content)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// process response
+	result, err := processVLMResponse(parseActions, size)
+	if err != nil {
+		return nil, errors.Wrap(err, "process VLM response failed")
+	}
+
+	log.Info().
+		Interface("summary", result.ActionSummary).
+		Interface("actions", result.NextActions).
+		Msg("get VLM planning result")
+	return result, nil
+}
 
 func validatePlanningInput(opts *PlanningOptions) error {
 	if opts.UserInstruction == "" {
@@ -82,80 +158,4 @@ func validatePlanningInput(opts *PlanningOptions) error {
 	}
 
 	return nil
-}
-
-// SavePositionImg saves an image with position markers
-func SavePositionImg(params struct {
-	InputImgBase64 string
-	Rect           struct {
-		X float64
-		Y float64
-	}
-	OutputPath string
-}) error {
-	// 解码Base64图像
-	imgData := params.InputImgBase64
-	// 如果包含了数据URL前缀，去掉它
-	if strings.HasPrefix(imgData, "data:image/") {
-		parts := strings.Split(imgData, ",")
-		if len(parts) > 1 {
-			imgData = parts[1]
-		}
-	}
-
-	// 解码Base64
-	unbased, err := base64.StdEncoding.DecodeString(imgData)
-	if err != nil {
-		return fmt.Errorf("无法解码Base64图像: %w", err)
-	}
-
-	// 解码图像
-	reader := bytes.NewReader(unbased)
-	img, _, err := image.Decode(reader)
-	if err != nil {
-		return fmt.Errorf("无法解码图像数据: %w", err)
-	}
-
-	// 创建一个可以在其上绘制的图像
-	bounds := img.Bounds()
-	rgba := image.NewRGBA(bounds)
-	draw.Draw(rgba, bounds, img, bounds.Min, draw.Src)
-
-	// 在点击/拖动位置绘制标记
-	markRadius := 10
-	x, y := int(params.Rect.X), int(params.Rect.Y)
-
-	// 绘制红色圆圈
-	for i := -markRadius; i <= markRadius; i++ {
-		for j := -markRadius; j <= markRadius; j++ {
-			if i*i+j*j <= markRadius*markRadius {
-				if x+i >= 0 && x+i < bounds.Max.X && y+j >= 0 && y+j < bounds.Max.Y {
-					rgba.Set(x+i, y+j, color.RGBA{255, 0, 0, 255})
-				}
-			}
-		}
-	}
-
-	// 保存图像
-	outFile, err := os.Create(params.OutputPath)
-	if err != nil {
-		return fmt.Errorf("无法创建输出文件: %w", err)
-	}
-	defer outFile.Close()
-
-	// 编码为PNG并保存
-	if err := png.Encode(outFile, rgba); err != nil {
-		return fmt.Errorf("无法编码和保存图像: %w", err)
-	}
-
-	return nil
-}
-
-// maskAPIKey masks the API key
-func maskAPIKey(key string) string {
-	if len(key) <= 8 {
-		return "******"
-	}
-
-	return key[:4] + "******" + key[len(key)-4:]
 }

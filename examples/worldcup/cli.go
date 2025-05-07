@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/httprunner/httprunner/v5/uixt"
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
@@ -39,8 +38,8 @@ var rootCmd = &cobra.Command{
 			return errors.New("android or ios app bundldID is required")
 		}
 
-		driverExt := uixt.NewXTDriver(driver,
-			ai.WithCVService(ai.CVServiceTypeVEDEM),
+		driverExt, _ := uixt.NewXTDriver(driver,
+			option.WithCVService(option.CVServiceTypeVEDEM),
 		)
 
 		wc := NewWorldCupLive(driverExt, matchName, bundleID, duration, interval)

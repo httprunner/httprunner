@@ -103,7 +103,13 @@ func NewBrowserDriver(device *BrowserDevice) (driver *BrowserDriver, err error) 
 	return driver, nil
 }
 
-func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.ActionOption) (err error) {
+func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	var err error
+	fromX, fromY, toX, toY, err = handlerDrag(wd, fromX, fromY, toX, toY, opts...)
+	if err != nil {
+		return err
+	}
+
 	data := map[string]interface{}{
 		"from_x": fromX,
 		"from_y": fromY,
@@ -111,14 +117,13 @@ func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.
 		"to_y":   toY,
 	}
 
-	actionOptions := option.NewActionOptions(options...)
-
+	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.Duration > 0 {
 		data["duration"] = actionOptions.Duration
 	}
 
 	_, err = wd.HttpPOST(data, wd.sessionId, "ui/drag")
-	return
+	return err
 }
 
 func (wd *BrowserDriver) AppLaunch(packageName string) (err error) {
@@ -517,28 +522,40 @@ func (wd *BrowserDriver) Tap(x, y float64, options ...option.ActionOption) error
 	return wd.TapFloat(x, y, options...)
 }
 
-func (wd *BrowserDriver) TapFloat(x, y float64, options ...option.ActionOption) error {
-	actionOptions := option.NewActionOptions(options...)
+func (wd *BrowserDriver) TapFloat(x, y float64, opts ...option.ActionOption) error {
+	var err error
+	x, y, err = handlerTapAbsXY(wd, x, y, opts...)
+	if err != nil {
+		return err
+	}
+
+	actionOptions := option.NewActionOptions(opts...)
 	duration := 0.1
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration
 	}
+
 	data := map[string]interface{}{
 		"x":        x,
 		"y":        y,
 		"duration": duration,
 	}
-	_, err := wd.HttpPOST(data, wd.sessionId, "ui/tap")
+	_, err = wd.HttpPOST(data, wd.sessionId, "ui/tap")
 	return err
 }
 
 // DoubleTap Sends a double tap event at the coordinate.
 func (wd *BrowserDriver) DoubleTap(x, y float64, options ...option.ActionOption) error {
+	var err error
+	x, y, err = handlerDoubleTap(wd, x, y, options...)
+	if err != nil {
+		return err
+	}
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
 	}
-	_, err := wd.HttpPOST(data, wd.sessionId, "ui/double_tap")
+	_, err = wd.HttpPOST(data, wd.sessionId, "ui/double_tap")
 	return err
 }
 

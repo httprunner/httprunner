@@ -47,9 +47,9 @@ func NewDriverSession() *DriverSession {
 		client: &http.Client{
 			Timeout: timeout,
 		},
-		requests: make([]*DriverRequests, 0),
 		maxRetry: 5,
 	}
+	session.Reset()
 	return session
 }
 
@@ -66,10 +66,14 @@ type DriverSession struct {
 
 	// cache driver request and response
 	requests []*DriverRequests
+
+	// cache screenshot results
+	screenResults []*ScreenResult
 }
 
 func (s *DriverSession) Reset() {
 	s.requests = make([]*DriverRequests, 0)
+	s.screenResults = make([]*ScreenResult, 0)
 }
 
 func (s *DriverSession) SetBaseURL(baseUrl string) {

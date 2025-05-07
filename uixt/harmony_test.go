@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/httprunner/httprunner/v5/uixt/ai"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +16,9 @@ func setupHDCDriverExt(t *testing.T) *XTDriver {
 	require.Nil(t, err)
 	hdcDriver, err := NewHDCDriver(device)
 	require.Nil(t, err)
-	return NewXTDriver(hdcDriver, ai.WithCVService(ai.CVServiceTypeVEDEM))
+	driverExt, err := NewXTDriver(hdcDriver, option.WithCVService(option.CVServiceTypeVEDEM))
+	require.Nil(t, err)
+	return driverExt
 }
 
 func TestWindowSize(t *testing.T) {

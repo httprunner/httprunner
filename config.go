@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
@@ -43,8 +42,8 @@ type TConfig struct {
 	Path              string                         `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
 	PluginSetting     *PluginConfig                  `json:"plugin,omitempty" yaml:"plugin,omitempty"` // plugin config
 	IgnorePopup       bool                           `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
-	LLMService        ai.LLMServiceType              `json:"llm_service,omitempty" yaml:"llm_service,omitempty"`
-	CVService         ai.CVServiceType               `json:"cv_service,omitempty" yaml:"cv_service,omitempty"`
+	LLMService        option.LLMServiceType          `json:"llm_service,omitempty" yaml:"llm_service,omitempty"`
+	CVService         option.CVServiceType           `json:"cv_service,omitempty" yaml:"cv_service,omitempty"`
 }
 
 func (c *TConfig) Get() *TConfig {
@@ -112,13 +111,13 @@ func (c *TConfig) SetWeight(weight int) *TConfig {
 }
 
 // SetLLMService sets LLM service for current testcase.
-func (c *TConfig) SetLLMService(llmService ai.LLMServiceType) *TConfig {
+func (c *TConfig) SetLLMService(llmService option.LLMServiceType) *TConfig {
 	c.LLMService = llmService
 	return c
 }
 
 // SetCVService sets CV service for current testcase.
-func (c *TConfig) SetCVService(cvService ai.CVServiceType) *TConfig {
+func (c *TConfig) SetCVService(cvService option.CVServiceType) *TConfig {
 	c.CVService = cvService
 	return c
 }

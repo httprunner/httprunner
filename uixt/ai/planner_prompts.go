@@ -27,3 +27,5 @@ finished(content='xxx') # Use escape characters \\', \\", and \\n in content par
 
 ## User Instruction
 `
+
+const defaultPlanningResponseJsonFormat = ``

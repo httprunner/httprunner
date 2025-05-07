@@ -10,7 +10,6 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/uixt"
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
@@ -33,8 +32,12 @@ func (r *Router) GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error)
 		return
 	}
 
-	driverExt = uixt.NewXTDriver(driver,
-		ai.WithCVService(ai.CVServiceTypeVEDEM))
+	driverExt, err = uixt.NewXTDriver(driver,
+		option.WithCVService(option.CVServiceTypeVEDEM))
+	if err != nil {
+		RenderErrorInitDriver(c, err)
+		return
+	}
 	c.Set("driver", driverExt)
 	return driverExt, nil
 }

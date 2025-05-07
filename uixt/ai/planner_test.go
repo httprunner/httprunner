@@ -1,25 +1,20 @@
 package ai
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
-	"fmt"
-	"image"
-	"image/jpeg"
-	"image/png"
-	"os"
 	"testing"
 
 	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestVLMPlanning(t *testing.T) {
-	imageBase64, size, err := loadImage("testdata/llk_1.png")
+	imageBase64, size, err := builtin.LoadImage("testdata/llk_1.png")
 	require.NoError(t, err)
 
 	userInstruction := `连连看是一款经典的益智消除类小游戏，通常以图案或图标为主要元素。以下是连连看的基本规则说明：
@@ -35,7 +30,10 @@ func TestVLMPlanning(t *testing.T) {
 
 	userInstruction += "\n\n请基于以上游戏规则，给出下一步可点击的两个图标坐标"
 
-	planner, err := NewUITarsPlanner(context.Background())
+	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
+	require.NoError(t, err)
+
+	planner, err := NewPlanner(context.Background(), modelConfig)
 	require.NoError(t, err)
 
 	opts := &PlanningOptions{
@@ -100,12 +98,15 @@ func TestVLMPlanning(t *testing.T) {
 }
 
 func TestXHSPlanning(t *testing.T) {
-	imageBase64, size, err := loadImage("testdata/xhs-feed.jpeg")
+	imageBase64, size, err := builtin.LoadImage("testdata/xhs-feed.jpeg")
 	require.NoError(t, err)
 
 	userInstruction := "点击第二个帖子的作者头像"
 
-	planner, err := NewUITarsPlanner(context.Background())
+	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
+	require.NoError(t, err)
+
+	planner, err := NewPlanner(context.Background(), modelConfig)
 	require.NoError(t, err)
 
 	opts := &PlanningOptions{
@@ -170,12 +171,15 @@ func TestXHSPlanning(t *testing.T) {
 }
 
 func TestChatList(t *testing.T) {
-	imageBase64, size, err := loadImage("testdata/chat_list.jpeg")
+	imageBase64, size, err := builtin.LoadImage("testdata/chat_list.jpeg")
 	require.NoError(t, err)
 
 	userInstruction := "请结合图片的文字信息，请告诉我一共有多少个群聊，哪些群聊右下角有绿点"
 
-	planner, err := NewUITarsPlanner(context.Background())
+	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
+	require.NoError(t, err)
+
+	planner, err := NewPlanner(context.Background(), modelConfig)
 	require.NoError(t, err)
 
 	opts := &PlanningOptions{
@@ -206,7 +210,10 @@ func TestHandleSwitch(t *testing.T) {
 	userInstruction := "发送框下方的联网搜索开关是开启状态" // 点击开启联网搜索开关
 	// 检查发送框下方的联网搜索开关，蓝色为开启状态，灰色为关闭状态；若开关处于关闭状态，则点击进行开启
 
-	planner, err := NewUITarsPlanner(context.Background())
+	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
+	require.NoError(t, err)
+
+	planner, err := NewPlanner(context.Background(), modelConfig)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -219,7 +226,7 @@ func TestHandleSwitch(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		imageBase64, size, err := loadImage(tc.imageFile)
+		imageBase64, size, err := builtin.LoadImage(tc.imageFile)
 		require.NoError(t, err)
 
 		opts := &PlanningOptions{
@@ -250,7 +257,7 @@ func TestHandleSwitch(t *testing.T) {
 }
 
 func TestValidateInput(t *testing.T) {
-	imageBase64, size, err := loadImage("testdata/popup_risk_warning.png")
+	imageBase64, size, err := builtin.LoadImage("testdata/popup_risk_warning.png")
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -375,87 +382,18 @@ func TestProcessVLMResponse(t *testing.T) {
 	}
 }
 
-func TestSavePositionImg(t *testing.T) {
-	imageBase64, _, err := loadImage("testdata/popup_risk_warning.png")
-	require.NoError(t, err)
-
-	params := struct {
-		InputImgBase64 string
-		Rect           struct {
-			X float64
-			Y float64
-		}
-		OutputPath string
-	}{
-		InputImgBase64: imageBase64,
-		Rect: struct {
-			X float64
-			Y float64
-		}{
-			X: 100,
-			Y: 100,
-		},
-		OutputPath: "testdata/output.png",
-	}
-
-	err = SavePositionImg(params)
-	require.NoError(t, err)
-
-	// cleanup
-	defer os.Remove(params.OutputPath)
-}
-
 func TestLoadImage(t *testing.T) {
 	// Test PNG image
-	pngBase64, pngSize, err := loadImage("testdata/llk_1.png")
+	pngBase64, pngSize, err := builtin.LoadImage("testdata/llk_1.png")
 	require.NoError(t, err)
 	assert.NotEmpty(t, pngBase64)
 	assert.Greater(t, pngSize.Width, 0)
 	assert.Greater(t, pngSize.Height, 0)
 
 	// Test JPEG image
-	jpegBase64, jpegSize, err := loadImage("testdata/xhs-feed.jpeg")
+	jpegBase64, jpegSize, err := builtin.LoadImage("testdata/xhs-feed.jpeg")
 	require.NoError(t, err)
 	assert.NotEmpty(t, jpegBase64)
 	assert.Greater(t, jpegSize.Width, 0)
 	assert.Greater(t, jpegSize.Height, 0)
-}
-
-// loadImage loads image and returns base64 encoded string
-func loadImage(imagePath string) (base64Str string, size types.Size, err error) {
-	// Read the image file
-	imageFile, err := os.OpenFile(imagePath, os.O_RDONLY, 0o600)
-	if err != nil {
-		return "", types.Size{}, fmt.Errorf("failed to open image file: %w", err)
-	}
-	defer imageFile.Close()
-
-	// Decode the image to get its resolution
-	imageData, format, err := image.Decode(imageFile)
-	if err != nil {
-		return "", types.Size{}, fmt.Errorf("failed to decode image: %w", err)
-	}
-
-	// Get the resolution of the image
-	width := imageData.Bounds().Dx()
-	height := imageData.Bounds().Dy()
-	size = types.Size{Width: width, Height: height}
-
-	// Convert image to base64
-	buf := new(bytes.Buffer)
-	// 根据图像格式选择正确的编码器
-	if format == "jpeg" || format == "jpg" {
-		if err := jpeg.Encode(buf, imageData, nil); err != nil {
-			return "", types.Size{}, fmt.Errorf("failed to encode image to buffer: %w", err)
-		}
-	} else {
-		// 默认使用 PNG 编码
-		if err := png.Encode(buf, imageData); err != nil {
-			return "", types.Size{}, fmt.Errorf("failed to encode image to buffer: %w", err)
-		}
-	}
-	base64Str = fmt.Sprintf("data:image/%s;base64,%s", format,
-		base64.StdEncoding.EncodeToString(buf.Bytes()))
-
-	return base64Str, size, nil
 }

@@ -42,6 +42,7 @@ const (
 	ACTION_TapByCV     ActionMethod = "tap_cv"
 	ACTION_DoubleTapXY ActionMethod = "double_tap_xy"
 	ACTION_Swipe       ActionMethod = "swipe"
+	ACTION_Drag        ActionMethod = "drag"
 	ACTION_Input       ActionMethod = "input"
 	ACTION_Back        ActionMethod = "back"
 	ACTION_KeyCode     ActionMethod = "keycode"

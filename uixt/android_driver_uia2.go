@@ -256,12 +256,10 @@ func (ud *UIA2Driver) Orientation() (orientation types.Orientation, err error) {
 func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("UIA2Driver.DoubleTap")
 	var err error
-	x, y, err = convertToAbsolutePoint(ud, x, y)
+	x, y, err = handlerDoubleTap(ud, x, y, opts...)
 	if err != nil {
 		return err
 	}
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
 
 	data := map[string]interface{}{
 		"actions": []interface{}{
@@ -298,13 +296,19 @@ func (ud *UIA2Driver) TapXY(x, y float64, opts ...option.ActionOption) error {
 func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("UIA2Driver.TapAbsXY")
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
 
+	var err error
+	x, y, err = handlerTapAbsXY(ud, x, y, opts...)
+	if err != nil {
+		return err
+	}
+
+	actionOptions := option.NewActionOptions(opts...)
 	duration := 100.0
 	if actionOptions.PressDuration > 0 {
 		duration = actionOptions.PressDuration * 1000 // convert to ms
 	}
+
 	data := map[string]interface{}{
 		"actions": []interface{}{
 			map[string]interface{}{
@@ -323,7 +327,7 @@ func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error 
 	option.MergeOptions(data, opts...)
 
 	urlStr := fmt.Sprintf("/session/%s/actions/tap", ud.Session.ID)
-	_, err := ud.Session.POST(data, urlStr)
+	_, err = ud.Session.POST(data, urlStr)
 	return err
 }
 
@@ -355,13 +359,12 @@ func (ud *UIA2Driver) TouchAndHold(x, y float64, opts ...option.ActionOption) (e
 func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("UIA2Driver.Drag")
+
 	var err error
-	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ud, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err = handlerDrag(ud, fromX, fromY, toX, toY, opts...)
 	if err != nil {
 		return err
 	}
-	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
 
 	data := map[string]interface{}{
 		"startX": fromX,
@@ -387,13 +390,11 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("UIA2Driver.Swipe")
 	var err error
-	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ud, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err = handlerSwipe(ud, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
-
+	actionOptions := option.NewActionOptions(opts...)
 	duration := 200.0
 	if actionOptions.PressDuration > 0 {
 		duration = actionOptions.PressDuration * 1000 // ms

@@ -22,6 +22,13 @@ type ICVService interface {
 	ReadFromPath(imagePath string, opts ...option.ActionOption) (*CVResult, error)
 }
 
+func NewCVService(modelType option.CVServiceType) (ICVService, error) {
+	if modelType == option.CVServiceTypeVEDEM {
+		return NewVEDEMImageService()
+	}
+	return nil, errors.New("invalid cv service type")
+}
+
 type CVResult struct {
 	URL       string     `json:"url,omitempty"`       // image uploaded url
 	OCRResult OCRResults `json:"ocrResult,omitempty"` // OCR texts

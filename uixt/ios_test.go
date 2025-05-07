@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 )
@@ -23,7 +22,9 @@ func setupWDADriverExt(t *testing.T) *XTDriver {
 	require.Nil(t, err)
 	driver, err := device.NewDriver()
 	require.Nil(t, err)
-	return NewXTDriver(driver, ai.WithCVService(ai.CVServiceTypeVEDEM))
+	driverExt, err := NewXTDriver(driver, option.WithCVService(option.CVServiceTypeVEDEM))
+	require.Nil(t, err)
+	return driverExt
 }
 
 func TestDevice_IOS_Install(t *testing.T) {

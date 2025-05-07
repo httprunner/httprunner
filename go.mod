@@ -9,7 +9,6 @@ require (
 	github.com/andybalholm/brotli v1.0.4
 	github.com/bytedance/sonic v1.13.2
 	github.com/cloudwego/eino v0.3.26
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.6
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250417123744-154d7ca4d3cd
 	github.com/cloudwego/eino-ext/components/tool/mcp v0.0.0-20250328102648-b47e7f1587fa
 	github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250417123744-154d7ca4d3cd
@@ -42,6 +41,7 @@ require (
 )
 
 require (
+	github.com/bytedance/mockey v1.2.14 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
@@ -100,8 +100,6 @@ require (
 	github.com/tadglines/go-pkgs v0.0.0-20210623144937-b983b20f54f9 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
-	github.com/volcengine/volc-sdk-golang v1.0.23 // indirect
-	github.com/volcengine/volcengine-go-sdk v1.0.185 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352 // indirect

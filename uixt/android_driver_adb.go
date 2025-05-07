@@ -307,14 +307,16 @@ func (ad *ADBDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 
 func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.TapAbsXY")
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
+	var err error
+	x, y, err = handlerTapAbsXY(ad, x, y, opts...)
+	if err != nil {
+		return err
+	}
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
-	_, err := ad.runShellCommand(
-		"input", "tap", xStr, yStr)
+	_, err = ad.runShellCommand("input", "tap", xStr, yStr)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
 	}
@@ -324,12 +326,10 @@ func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.DoubleTap")
 	var err error
-	x, y, err = convertToAbsolutePoint(ad, x, y)
+	x, y, err = handlerDoubleTap(ad, x, y, opts...)
 	if err != nil {
 		return err
 	}
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
@@ -372,13 +372,13 @@ func (ad *ADBDriver) TouchAndHold(x, y float64, opts ...option.ActionOption) (er
 func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) (err error) {
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("ADBDriver.Drag")
-	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
+
+	fromX, fromY, toX, toY, err = handlerDrag(ad, fromX, fromY, toX, toY, opts...)
 	if err != nil {
 		return err
 	}
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
 
+	actionOptions := option.NewActionOptions(opts...)
 	duration := 200.0
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration * 1000
@@ -404,12 +404,10 @@ func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("ADBDriver.Swipe")
 	var err error
-	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(ad, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err = handlerSwipe(ad, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
 
 	// adb shell input swipe fromX fromY toX toY
 	_, err = ad.runShellCommand(
@@ -701,7 +699,7 @@ func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 			return pointRes, nil
 		}
 
-		reader, err := os.OpenFile(files[0], os.O_RDONLY, 0o600)
+		reader, err := os.Open(files[0])
 		if err != nil {
 			log.Info().Msg("open File error")
 			return pointRes, nil
