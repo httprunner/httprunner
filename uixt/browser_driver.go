@@ -143,7 +143,7 @@ func (wd *BrowserDriver) AppLaunch(packageName string) (err error) {
 		"url": packageName,
 	}
 	_, err = wd.Session.POST(data, wd.concatURL(wd.sessionId, "ui/page_launch"))
-	return nil
+	return err
 }
 
 func (wd *BrowserDriver) DeleteSession() (err error) {

@@ -75,6 +75,7 @@ const (
 	SelectorImage         string = "ui_image"
 	SelectorAI            string = "ui_ai" // ui query with ai
 	SelectorForegroundApp string = "ui_foreground_app"
+	SelectorSelector      string = "ui_selector"
 	// assertions
 	AssertionEqual     string = "equal"
 	AssertionNotEqual  string = "not_equal"

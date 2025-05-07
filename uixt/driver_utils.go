@@ -206,6 +206,8 @@ func (dExt *XTDriver) DoValidation(check, assert, expected string, message ...st
 		err = dExt.AIAssert(assert)
 	case SelectorForegroundApp:
 		err = dExt.assertForegroundApp(expected, assert)
+	case SelectorSelector:
+		err = dExt.assertSelector(expected, assert)
 	default:
 		return fmt.Errorf("validator %s not implemented", check)
 	}
