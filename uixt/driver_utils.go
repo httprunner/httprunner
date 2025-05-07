@@ -181,14 +181,18 @@ func (dExt *XTDriver) assertForegroundApp(appName, assert string) error {
 }
 
 func (dExt *XTDriver) assertSelector(selector, assert string) error {
+	driver, ok := dExt.IDriver.(*BrowserDriver)
+	if !ok {
+		return errors.New("assert selector only supports browser driver")
+	}
 	switch assert {
 	case AssertionExists:
-		_, err := dExt.IDriver.(*BrowserDriver).IsElementExistBySelector(selector)
+		_, err := driver.IsElementExistBySelector(selector)
 		if err != nil {
 			return errors.Wrap(err, "assert ocr exists failed")
 		}
 	case AssertionNotExists:
-		_, err := dExt.IDriver.(*BrowserDriver).IsElementExistBySelector(selector)
+		_, err := driver.IsElementExistBySelector(selector)
 		if err == nil {
 			return errors.New("assert ocr not exists failed")
 		}

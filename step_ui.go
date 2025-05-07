@@ -300,7 +300,7 @@ func (s *StepMobile) SwipeToTapTexts(texts interface{}, opts ...option.ActionOpt
 
 func (s *StepMobile) RightClick(x, y float64, options ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method:  uixt.ACTION_RightClick,
+		Method:  uixt.ACTION_SecondaryClick,
 		Params:  []float64{x, y},
 		Options: option.NewActionOptions(options...),
 	}
@@ -310,7 +310,7 @@ func (s *StepMobile) RightClick(x, y float64, options ...option.ActionOption) *S
 
 func (s *StepMobile) RightClickBySelector(selector string, options ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method:  uixt.ACTION_RightClickBySelector,
+		Method:  uixt.ACTION_SecondaryClickBySelector,
 		Params:  selector,
 		Options: option.NewActionOptions(options...),
 	}

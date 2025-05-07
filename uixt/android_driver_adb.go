@@ -566,15 +566,6 @@ func (ad *ADBDriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer,
 	return raw, nil
 }
 
-func (ad *ADBDriver) TapByHierarchy(text string, opts ...option.ActionOption) error {
-	log.Info().Str("text", text).Msg("ADBDriver.TapByHierarchy")
-	sourceTree, err := ad.sourceTree()
-	if err != nil {
-		return err
-	}
-	return ad.tapByTextUsingHierarchy(sourceTree, text, opts...)
-}
-
 func (ad *ADBDriver) Source(srcOpt ...option.SourceOption) (source string, err error) {
 	_, err = ad.runShellCommand("rm", "-rf", "/sdcard/window_dump.xml")
 	if err != nil {
@@ -1122,4 +1113,25 @@ func ConvertPoints(lines []string) (eps []ExportPoint) {
 		}
 	}
 	return
+}
+
+func (ad *ADBDriver) HoverBySelector(selector string, options ...option.ActionOption) (err error) {
+	return err
+}
+
+func (ad *ADBDriver) TapBySelector(text string, opts ...option.ActionOption) error {
+	log.Info().Str("text", text).Msg("ADBDriver.TapByHierarchy")
+	sourceTree, err := ad.sourceTree()
+	if err != nil {
+		return err
+	}
+	return ad.tapByTextUsingHierarchy(sourceTree, text, opts...)
+}
+
+func (ad *ADBDriver) SecondaryClick(x, y float64) (err error) {
+	return err
+}
+
+func (ad *ADBDriver) SecondaryClickBySelector(selector string, options ...option.ActionOption) (err error) {
+	return err
 }

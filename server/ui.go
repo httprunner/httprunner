@@ -40,7 +40,7 @@ func (r *Router) rightClickHandler(c *gin.Context) {
 		return
 	}
 	err = driver.IDriver.(*uixt.BrowserDriver).
-		RightClick(rightClickReq.X, rightClickReq.Y)
+		SecondaryClick(rightClickReq.X, rightClickReq.Y)
 	if err != nil {
 		RenderError(c, err)
 		return

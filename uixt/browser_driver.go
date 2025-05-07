@@ -181,7 +181,7 @@ func (wd *BrowserDriver) Scroll(delta int) (err error) {
 	data := map[string]interface{}{
 		"delta": delta,
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/scroll")
+	_, err = wd.Session.POST(data, wd.concatURL(wd.sessionId, "ui/scroll"))
 	return err
 }
 
@@ -200,7 +200,7 @@ func (wd *BrowserDriver) CreateNetListener() (*websocket.Conn, error) {
 	return c, err
 }
 
-func (wd *BrowserDriver) ClosePage(pageIndex int) (err error) {
+func (wd *BrowserDriver) CloseTab(pageIndex int) (err error) {
 	data := map[string]interface{}{
 		"page_index": pageIndex,
 	}
@@ -233,7 +233,7 @@ func (wd *BrowserDriver) TapBySelector(selector string, options ...option.Action
 	return err
 }
 
-func (wd *BrowserDriver) RightClick(x, y float64) (err error) {
+func (wd *BrowserDriver) SecondaryClick(x, y float64) (err error) {
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
@@ -242,7 +242,7 @@ func (wd *BrowserDriver) RightClick(x, y float64) (err error) {
 	return err
 }
 
-func (wd *BrowserDriver) RightClickBySelector(selector string, options ...option.ActionOption) (err error) {
+func (wd *BrowserDriver) SecondaryClickBySelector(selector string, options ...option.ActionOption) (err error) {
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -396,65 +396,11 @@ func (wd *BrowserDriver) ScreenShot(options ...option.ActionOption) (*bytes.Buff
 	return bytes.NewBuffer(screenRaw), nil
 }
 
-func (wd *BrowserDriver) HttpPOST(data interface{}, pathElem ...string) (response *WebAgentResponse, err error) {
-	var bsJSON []byte = nil
-	if data != nil {
-		if bsJSON, err = json.Marshal(data); err != nil {
-			return nil, err
-		}
-	}
-
-	return wd.httpRequest(http.MethodPost, wd.concatURL(pathElem...), bsJSON)
-}
-
-func (wd *BrowserDriver) HttpGet(data interface{}, pathElem ...string) (response *WebAgentResponse, err error) {
-	return wd.httpRequest(http.MethodGet, wd.concatURL(pathElem...), nil)
-}
-
 func (wd *BrowserDriver) concatURL(elem ...string) string {
 	tmp, _ := url.Parse(wd.urlPrefix.String())
 	commonPath := path.Join(append([]string{wd.urlPrefix.Path}, "api/v1/")...)
 	tmp.Path = path.Join(append([]string{commonPath}, elem...)...)
 	return tmp.String()
-}
-
-func (wd *BrowserDriver) httpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (response *WebAgentResponse, err error) {
-	req, err := http.NewRequest(method, rawURL, bytes.NewBuffer(rawBody))
-	req.Header.Set("Content-Type", "application/json")
-
-	if err != nil {
-		return nil, err
-	}
-
-	// 新建http client
-	client := &http.Client{
-		Timeout: 60 * time.Second, // 设置超时时间为5秒
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	rawResp, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
-	}
-
-	// 将结果解析为 JSON
-	var result WebAgentResponse
-	if err = json.Unmarshal(rawResp, &result); err != nil {
-		return nil, err
-	}
-
-	if result.Code != 0 {
-		log.Info().Msgf("%v", result.Message)
-		return nil, errors.New(result.Message)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	return &result, err
 }
 
 func (wd *BrowserDriver) Status() (deviceStatus types.DeviceStatus, err error) {
@@ -658,7 +604,7 @@ func (wd *BrowserDriver) ForegroundInfo() (app types.AppInfo, err error) {
 
 // PressBack Presses the back button
 func (wd *BrowserDriver) PressBack(options ...option.ActionOption) error {
-	_, err := wd.HttpPOST(map[string]interface{}{}, wd.sessionId, "ui/back")
+	_, err := wd.Session.POST(nil, wd.concatURL(wd.sessionId, "ui/back"))
 	return err
 }
 

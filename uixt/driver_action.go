@@ -50,9 +50,9 @@ const (
 	ACTION_AIAction                 ActionMethod = "ai_action" // action with ai
 	ACTION_TapBySelector            ActionMethod = "tap_by_selector"
 	ACTION_HoverBySelector          ActionMethod = "hover_by_selector"
-	ACTION_ClosePage                ActionMethod = "close_page"
-	ACTION_RightClick               ActionMethod = "right_click"
-	ACTION_RightClickBySelector     ActionMethod = "right_click_by_selector"
+	ACTION_WebCloseTab              ActionMethod = "web_close_tab"
+	ACTION_SecondaryClick           ActionMethod = "secondary_click"
+	ACTION_SecondaryClickBySelector ActionMethod = "secondary_click_by_selector"
 	ACTION_GetElementTextBySelector ActionMethod = "get_element_text_by_selector"
 
 	// custom actions
@@ -185,40 +185,40 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
 	case ACTION_Home:
 		return dExt.Home()
-	case ACTION_RightClick:
+	case ACTION_SecondaryClick:
 		if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil {
 			if len(params) != 2 {
 				return fmt.Errorf("invalid tap location params: %v", params)
 			}
 			x, y := params[0], params[1]
-			return dExt.IDriver.(*BrowserDriver).RightClick(x, y)
+			return dExt.SecondaryClick(x, y)
 		}
-		return fmt.Errorf("invalid %s params: %v", ACTION_RightClick, action.Params)
+		return fmt.Errorf("invalid %s params: %v", ACTION_SecondaryClick, action.Params)
 	case ACTION_HoverBySelector:
 		if selector, ok := action.Params.(string); ok {
-			return dExt.IDriver.(*BrowserDriver).HoverBySelector(selector, action.GetOptions()...)
+			return dExt.HoverBySelector(selector, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_HoverBySelector, action.Params)
 	case ACTION_TapBySelector:
 		if selector, ok := action.Params.(string); ok {
-			return dExt.IDriver.(*BrowserDriver).TapBySelector(selector, action.GetOptions()...)
+			return dExt.TapBySelector(selector, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid %s params: %v", ACTION_TapBySelector, action.Params)
-	case ACTION_RightClickBySelector:
+	case ACTION_SecondaryClickBySelector:
 		if selector, ok := action.Params.(string); ok {
-			return dExt.IDriver.(*BrowserDriver).RightClickBySelector(selector, action.GetOptions()...)
+			return dExt.SecondaryClickBySelector(selector, action.GetOptions()...)
 		}
-		return fmt.Errorf("invalid %s params: %v", ACTION_RightClickBySelector, action.Params)
-	case ACTION_ClosePage:
+		return fmt.Errorf("invalid %s params: %v", ACTION_SecondaryClickBySelector, action.Params)
+	case ACTION_WebCloseTab:
 		if param, ok := action.Params.(json.Number); ok {
 			paramInt64, _ := param.Int64()
-			return dExt.IDriver.(*BrowserDriver).ClosePage(int(paramInt64))
+			return dExt.IDriver.(*BrowserDriver).CloseTab(int(paramInt64))
 		} else if param, ok := action.Params.(int64); ok {
-			return dExt.IDriver.(*BrowserDriver).ClosePage(int(param))
+			return dExt.IDriver.(*BrowserDriver).CloseTab(int(param))
 		} else {
-			return dExt.IDriver.(*BrowserDriver).ClosePage(action.Params.(int))
+			return dExt.IDriver.(*BrowserDriver).CloseTab(action.Params.(int))
 		}
-		// return fmt.Errorf("invalid %s params: %v", ACTION_ClosePage, action.Params)
+		// return fmt.Errorf("invalid %s params: %v", ACTION_WebCloseTab, action.Params)
 	case ACTION_SetIme:
 		if ime, ok := action.Params.(string); ok {
 			err = dExt.SetIme(ime)
