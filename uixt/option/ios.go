@@ -2,6 +2,7 @@ package option
 
 type IOSDeviceOptions struct {
 	UDID         string `json:"udid,omitempty" yaml:"udid,omitempty"`
+	Wireless     bool   `json:"wireless,omitempty" yaml:"wireless,omitempty"`
 	WDAPort      int    `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
 	WDAMjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
@@ -19,6 +20,9 @@ type IOSDeviceOptions struct {
 func (dev *IOSDeviceOptions) Options() (deviceOptions []IOSDeviceOption) {
 	if dev.UDID != "" {
 		deviceOptions = append(deviceOptions, WithUDID(dev.UDID))
+	}
+	if dev.Wireless {
+		deviceOptions = append(deviceOptions, WithWireless(true))
 	}
 	if dev.WDAPort != 0 {
 		deviceOptions = append(deviceOptions, WithWDAPort(dev.WDAPort))
@@ -98,6 +102,12 @@ type IOSDeviceOption func(*IOSDeviceOptions)
 func WithUDID(udid string) IOSDeviceOption {
 	return func(device *IOSDeviceOptions) {
 		device.UDID = udid
+	}
+}
+
+func WithWireless(on bool) IOSDeviceOption {
+	return func(device *IOSDeviceOptions) {
+		device.Wireless = on
 	}
 }
 

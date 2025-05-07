@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -77,12 +78,13 @@ func (ud *UIA2Driver) Setup() error {
 	// }
 
 	// start uiautomator2 server
-	// go func() {
-	// 	if err := ud.startUIA2Server(); err != nil {
-	// 		log.Fatal().Err(err).Msg("start UIA2 failed")
-	// 	}
-	// }()
-	// time.Sleep(5 * time.Second) // wait for uiautomator2 server start
+	// Todo: keep-alive
+	go func() {
+		if err := ud.startUIA2Server(); err != nil {
+			log.Fatal().Err(err).Msg("start UIA2 failed")
+		}
+	}()
+	time.Sleep(5 * time.Second) // wait for uiautomator2 server start
 
 	// create new session
 	err = ud.InitSession(nil)
@@ -584,7 +586,7 @@ func (ud *UIA2Driver) Source(srcOpt ...option.SourceOption) (source string, err 
 }
 
 func (ud *UIA2Driver) startUIA2Server() error {
-	const maxRetries = 3
+	const maxRetries = 20
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		log.Info().Str("package", ud.Device.Options.UIA2ServerTestPackageName).
 			Int("attempt", attempt).Msg("start uiautomator server")
@@ -594,7 +596,7 @@ func (ud *UIA2Driver) startUIA2Server() error {
 		out, err := ud.Device.RunShellCommand("am", "instrument", "-w",
 			ud.Device.Options.UIA2ServerTestPackageName)
 		if err != nil {
-			return errors.Wrap(err, "start uiautomator server failed")
+			log.Error().Err(err).Int("retryCount", maxRetries).Msg("start uiautomator server failed, retrying...")
 		}
 		if strings.Contains(out, "Process crashed") {
 			log.Error().Msg("uiautomator server crashed, retrying...")

@@ -20,6 +20,7 @@ const (
 	ACTION_LOG              ActionMethod = "log"
 	ACTION_AppInstall       ActionMethod = "install"
 	ACTION_AppUninstall     ActionMethod = "uninstall"
+	ACTION_WebLoginNoneUI   ActionMethod = "login_none_ui"
 	ACTION_AppClear         ActionMethod = "app_clear"
 	ACTION_AppStart         ActionMethod = "app_start"
 	ACTION_AppLaunch        ActionMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
@@ -35,18 +36,24 @@ const (
 	ACTION_CallFunction     ActionMethod = "call_function"
 
 	// UI handling
-	ACTION_Home        ActionMethod = "home"
-	ACTION_TapXY       ActionMethod = "tap_xy"
-	ACTION_TapAbsXY    ActionMethod = "tap_abs_xy"
-	ACTION_TapByOCR    ActionMethod = "tap_ocr"
-	ACTION_TapByCV     ActionMethod = "tap_cv"
-	ACTION_DoubleTapXY ActionMethod = "double_tap_xy"
-	ACTION_Swipe       ActionMethod = "swipe"
-	ACTION_Drag        ActionMethod = "drag"
-	ACTION_Input       ActionMethod = "input"
-	ACTION_Back        ActionMethod = "back"
-	ACTION_KeyCode     ActionMethod = "keycode"
-	ACTION_AIAction    ActionMethod = "ai_action" // action with ai
+	ACTION_Home                     ActionMethod = "home"
+	ACTION_TapXY                    ActionMethod = "tap_xy"
+	ACTION_TapAbsXY                 ActionMethod = "tap_abs_xy"
+	ACTION_TapByOCR                 ActionMethod = "tap_ocr"
+	ACTION_TapByCV                  ActionMethod = "tap_cv"
+	ACTION_DoubleTapXY              ActionMethod = "double_tap_xy"
+	ACTION_Swipe                    ActionMethod = "swipe"
+	ACTION_Drag                     ActionMethod = "drag"
+	ACTION_Input                    ActionMethod = "input"
+	ACTION_Back                     ActionMethod = "back"
+	ACTION_KeyCode                  ActionMethod = "keycode"
+	ACTION_AIAction                 ActionMethod = "ai_action" // action with ai
+	ACTION_TapBySelector            ActionMethod = "tap_by_selector"
+	ACTION_HoverBySelector          ActionMethod = "hover_by_selector"
+	ACTION_WebCloseTab              ActionMethod = "web_close_tab"
+	ACTION_SecondaryClick           ActionMethod = "secondary_click"
+	ACTION_SecondaryClickBySelector ActionMethod = "secondary_click_by_selector"
+	ACTION_GetElementTextBySelector ActionMethod = "get_element_text_by_selector"
 
 	// custom actions
 	ACTION_SwipeToTapApp   ActionMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
@@ -68,6 +75,7 @@ const (
 	SelectorImage         string = "ui_image"
 	SelectorAI            string = "ui_ai" // ui query with ai
 	SelectorForegroundApp string = "ui_foreground_app"
+	SelectorSelector      string = "ui_selector"
 	// assertions
 	AssertionEqual     string = "equal"
 	AssertionNotEqual  string = "not_equal"
@@ -111,6 +119,17 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 	}()
 
 	switch action.Method {
+	case ACTION_WebLoginNoneUI:
+		if len(action.Params.([]interface{})) == 4 {
+			driver, ok := dExt.IDriver.(*BrowserDriver)
+			if !ok {
+				return errors.New("invalid browser driver")
+			}
+			params := action.Params.([]interface{})
+			_, err = driver.LoginNoneUI(params[0].(string), params[1].(string), params[2].(string), params[3].(string))
+			return err
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_WebLoginNoneUI, action.Params)
 	case ACTION_AppInstall:
 		if app, ok := action.Params.(string); ok {
 			if err = dExt.GetDevice().Install(app,
@@ -170,6 +189,40 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		return fmt.Errorf("app_terminate params should be bundleId(string), got %v", action.Params)
 	case ACTION_Home:
 		return dExt.Home()
+	case ACTION_SecondaryClick:
+		if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil {
+			if len(params) != 2 {
+				return fmt.Errorf("invalid tap location params: %v", params)
+			}
+			x, y := params[0], params[1]
+			return dExt.SecondaryClick(x, y)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_SecondaryClick, action.Params)
+	case ACTION_HoverBySelector:
+		if selector, ok := action.Params.(string); ok {
+			return dExt.HoverBySelector(selector, action.GetOptions()...)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_HoverBySelector, action.Params)
+	case ACTION_TapBySelector:
+		if selector, ok := action.Params.(string); ok {
+			return dExt.TapBySelector(selector, action.GetOptions()...)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_TapBySelector, action.Params)
+	case ACTION_SecondaryClickBySelector:
+		if selector, ok := action.Params.(string); ok {
+			return dExt.SecondaryClickBySelector(selector, action.GetOptions()...)
+		}
+		return fmt.Errorf("invalid %s params: %v", ACTION_SecondaryClickBySelector, action.Params)
+	case ACTION_WebCloseTab:
+		if param, ok := action.Params.(json.Number); ok {
+			paramInt64, _ := param.Int64()
+			return dExt.IDriver.(*BrowserDriver).CloseTab(int(paramInt64))
+		} else if param, ok := action.Params.(int64); ok {
+			return dExt.IDriver.(*BrowserDriver).CloseTab(int(param))
+		} else {
+			return dExt.IDriver.(*BrowserDriver).CloseTab(action.Params.(int))
+		}
+		// return fmt.Errorf("invalid %s params: %v", ACTION_WebCloseTab, action.Params)
 	case ACTION_SetIme:
 		if ime, ok := action.Params.(string); ok {
 			err = dExt.SetIme(ime)

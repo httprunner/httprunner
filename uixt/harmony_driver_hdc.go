@@ -315,3 +315,19 @@ func (hd *HDCDriver) ClearFiles(paths ...string) error {
 	log.Warn().Msg("ClearFiles not implemented in HDCDriver")
 	return nil
 }
+
+func (hd *HDCDriver) HoverBySelector(selector string, options ...option.ActionOption) (err error) {
+	return err
+}
+
+func (hd *HDCDriver) TapBySelector(text string, opts ...option.ActionOption) error {
+	return nil
+}
+
+func (hd *HDCDriver) SecondaryClick(x, y float64) (err error) {
+	return err
+}
+
+func (hd *HDCDriver) SecondaryClickBySelector(selector string, options ...option.ActionOption) (err error) {
+	return err
+}

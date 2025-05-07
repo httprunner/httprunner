@@ -28,8 +28,8 @@ type StepMobile struct {
 	Android *MobileUI `json:"android,omitempty" yaml:"android,omitempty"`
 	Harmony *MobileUI `json:"harmony,omitempty" yaml:"harmony,omitempty"`
 	IOS     *MobileUI `json:"ios,omitempty" yaml:"ios,omitempty"`
-
-	cache *MobileUI // used for caching
+	Browser *MobileUI `json:"browser,omitempty" yaml:"browser,omitempty"`
+	cache   *MobileUI // used for caching
 }
 
 // uniform interface for all types of mobile systems
@@ -49,6 +49,10 @@ func (s *StepMobile) obj() *MobileUI {
 	} else if s.Android != nil {
 		s.cache = s.Android
 		s.cache.OSType = string(StepTypeAndroid)
+		return s.cache
+	} else if s.Browser != nil {
+		s.cache = s.Browser
+		s.cache.OSType = string(stepTypeBrowser)
 		return s.cache
 	} else if s.Mobile != nil {
 		s.cache = s.Mobile
@@ -75,6 +79,14 @@ func (s *StepMobile) InstallApp(path string) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method: uixt.ACTION_AppInstall,
 		Params: path,
+	})
+	return s
+}
+
+func (s *StepMobile) WebLoginNoneUI(packageName, phoneNumber string, captcha, password string) *StepMobile {
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
+		Method: uixt.ACTION_WebLoginNoneUI,
+		Params: []string{packageName, phoneNumber, captcha, password},
 	})
 	return s
 }
@@ -282,6 +294,66 @@ func (s *StepMobile) SwipeToTapTexts(texts interface{}, opts ...option.ActionOpt
 		Options: option.NewActionOptions(opts...),
 	}
 
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+func (s *StepMobile) SecondaryClick(x, y float64, options ...option.ActionOption) *StepMobile {
+	action := uixt.MobileAction{
+		Method:  uixt.ACTION_SecondaryClick,
+		Params:  []float64{x, y},
+		Options: option.NewActionOptions(options...),
+	}
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+func (s *StepMobile) SecondaryClickBySelector(selector string, options ...option.ActionOption) *StepMobile {
+	action := uixt.MobileAction{
+		Method:  uixt.ACTION_SecondaryClickBySelector,
+		Params:  selector,
+		Options: option.NewActionOptions(options...),
+	}
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+func (s *StepMobile) HoverBySelector(selector string, options ...option.ActionOption) *StepMobile {
+	action := uixt.MobileAction{
+		Method:  uixt.ACTION_HoverBySelector,
+		Params:  selector,
+		Options: option.NewActionOptions(options...),
+	}
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+func (s *StepMobile) TapBySelector(selector string, options ...option.ActionOption) *StepMobile {
+	action := uixt.MobileAction{
+		Method:  uixt.ACTION_TapBySelector,
+		Params:  selector,
+		Options: option.NewActionOptions(options...),
+	}
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+func (s *StepMobile) WebCloseTab(idx int, options ...option.ActionOption) *StepMobile {
+	action := uixt.MobileAction{
+		Method:  uixt.ACTION_WebCloseTab,
+		Params:  idx,
+		Options: option.NewActionOptions(options...),
+	}
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+func (s *StepMobile) GetElementTextBySelector(selector string, options ...option.ActionOption) *StepMobile {
+	action := uixt.MobileAction{
+		Method:  uixt.ACTION_GetElementTextBySelector,
+		Params:  selector,
+		Options: option.NewActionOptions(options...),
+	}
 	s.obj().Actions = append(s.obj().Actions, action)
 	return s
 }

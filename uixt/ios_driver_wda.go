@@ -1053,3 +1053,19 @@ func (wd *WDADriver) StopCaptureLog() (result interface{}, err error) {
 func (wd *WDADriver) GetSession() *DriverSession {
 	return wd.Session
 }
+
+func (wd *WDADriver) HoverBySelector(selector string, options ...option.ActionOption) (err error) {
+	return err
+}
+
+func (wd *WDADriver) TapBySelector(text string, opts ...option.ActionOption) error {
+	return nil
+}
+
+func (wd *WDADriver) SecondaryClick(x, y float64) (err error) {
+	return err
+}
+
+func (wd *WDADriver) SecondaryClickBySelector(selector string, options ...option.ActionOption) (err error) {
+	return err
+}

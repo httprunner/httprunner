@@ -791,6 +791,17 @@ func (s *StepRequest) Harmony(opts ...option.HarmonyDeviceOption) *StepMobile {
 	}
 }
 
+// Browser creates a new browser step session
+func (s *StepRequest) Browser(opts ...option.BrowserDeviceOption) *StepMobile {
+	browserOptions := option.NewBrowserDeviceOptions(opts...)
+	return &StepMobile{
+		StepConfig: s.StepConfig,
+		Browser: &MobileUI{
+			Serial: browserOptions.BrowserID,
+		},
+	}
+}
+
 // Shell creates a new shell step session
 func (s *StepRequest) Shell(content string) *StepShell {
 	return &StepShell{

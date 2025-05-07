@@ -36,7 +36,7 @@ type CreateBrowserResponse struct {
 
 type BrowserDriver struct {
 	urlPrefix *url.URL
-	sessionId string
+	Session   *DriverSession
 }
 
 type BrowserInfo struct {
@@ -99,44 +99,53 @@ func NewBrowserDriver(device *BrowserDevice) (driver *BrowserDriver, err error) 
 	driver.urlPrefix = &url.URL{}
 	driver.urlPrefix.Host = BROWSER_LOCAL_ADDRESS
 	driver.urlPrefix.Scheme = "http"
-	driver.sessionId = device.UUID()
+	driver.Session = NewDriverSession()
+	driver.Session.ID = device.UUID()
 	return driver, nil
 }
 
-func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
-	var err error
-	fromX, fromY, toX, toY, err = handlerDrag(wd, fromX, fromY, toX, toY, opts...)
+func (wd *BrowserDriver) Setup() error {
+	err := wd.Session.SetupPortForward(8093)
 	if err != nil {
 		return err
 	}
+	wd.Session.SetBaseURL(BROWSER_LOCAL_ADDRESS)
+	return nil
+}
 
+func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.ActionOption) (err error) {
+	fromX, fromY, toX, toY, err = handlerDrag(wd, fromX, fromY, toX, toY, options...)
+	if err != nil {
+		return err
+	}
 	data := map[string]interface{}{
 		"from_x": fromX,
 		"from_y": fromY,
 		"to_x":   toX,
 		"to_y":   toY,
 	}
+	actionOptions := option.NewActionOptions(options...)
 
-	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.Duration > 0 {
 		data["duration"] = actionOptions.Duration
+	} else {
+		data["duration"] = 0.5
 	}
 
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/drag")
-	return err
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/drag"))
+	return
 }
 
 func (wd *BrowserDriver) AppLaunch(packageName string) (err error) {
 	data := map[string]interface{}{
 		"url": packageName,
 	}
-
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/page_launch")
-	return
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/page_launch"))
+	return err
 }
 
 func (wd *BrowserDriver) DeleteSession() (err error) {
-	url := wd.concatURL("context", wd.sessionId)
+	url := wd.concatURL("context", wd.Session.ID)
 
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
@@ -170,7 +179,7 @@ func (wd *BrowserDriver) Scroll(delta int) (err error) {
 	data := map[string]interface{}{
 		"delta": delta,
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/scroll")
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/scroll"))
 	return err
 }
 
@@ -184,16 +193,17 @@ func (wd *BrowserDriver) CreateNetListener() (*websocket.Conn, error) {
 	initMessage := fmt.Sprintf(`{
     "type":"create_net_listener",
     "context_id":"%v"
-	}`, wd.sessionId)
+	}`, wd.Session.ID)
 	err = c.WriteMessage(websocket.TextMessage, []byte(initMessage))
 	return c, err
 }
 
-func (wd *BrowserDriver) ClosePage(pageIndex int) (err error) {
+func (wd *BrowserDriver) CloseTab(pageIndex int) (err error) {
 	data := map[string]interface{}{
 		"page_index": pageIndex,
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/page_close")
+
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/page_close"))
 	return err
 }
 
@@ -205,7 +215,7 @@ func (wd *BrowserDriver) HoverBySelector(selector string, options ...option.Acti
 	if actionOptions.Index > 0 {
 		data["element_index"] = actionOptions.Index
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/hover")
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/hover"))
 	return err
 }
 
@@ -217,20 +227,20 @@ func (wd *BrowserDriver) TapBySelector(selector string, options ...option.Action
 	if actionOptions.Index > 0 {
 		data["element_index"] = actionOptions.Index
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/tap")
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/tap"))
 	return err
 }
 
-func (wd *BrowserDriver) RightClick(x, y float64) (err error) {
+func (wd *BrowserDriver) SecondaryClick(x, y float64) (err error) {
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/right_click")
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/right_click"))
 	return err
 }
 
-func (wd *BrowserDriver) RightClickBySelector(selector string, options ...option.ActionOption) (err error) {
+func (wd *BrowserDriver) SecondaryClickBySelector(selector string, options ...option.ActionOption) (err error) {
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -238,13 +248,13 @@ func (wd *BrowserDriver) RightClickBySelector(selector string, options ...option
 	if actionOptions.Index > 0 {
 		data["element_index"] = actionOptions.Index
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/right_click")
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/right_click"))
 	return err
 }
 
 func (wd *BrowserDriver) GetElementTextBySelector(selector string, options ...option.ActionOption) (text string, err error) {
 	actionOptions := option.NewActionOptions(options...)
-	baseURL := fmt.Sprintf("http://%s/api/v1/%s/element_text", BROWSER_LOCAL_ADDRESS, wd.sessionId)
+	baseURL := fmt.Sprintf("http://%s/api/v1/%s/element_text", BROWSER_LOCAL_ADDRESS, wd.Session.ID)
 
 	// 使用 url.Values 构建查询参数
 	params := url.Values{}
@@ -294,21 +304,41 @@ func (wd *BrowserDriver) GetPageUrl(options ...option.ActionOption) (text string
 	if actionOptions.Index > 0 {
 		uri = uri + "?page_index=" + fmt.Sprintf("%v", actionOptions.Index)
 	}
-	resp, err := wd.HttpGet(http.MethodGet, wd.sessionId, uri)
+	resp, err := wd.Session.GET(wd.concatURL(wd.Session.ID, uri))
 	if err != nil {
 		return "", err
 	}
-	data := resp.Data.(map[string]interface{})
+	data, err := resp.ValueConvertToJsonObject()
+	if err != nil {
+		return "", err
+	}
+	data = data["data"].(map[string]interface{})
 	return data["url"].(string), nil
 }
 
 func (wd *BrowserDriver) IsElementExistBySelector(selector string) (bool, error) {
-	resp, err := wd.HttpGet(wd.sessionId, "ui/element_exist", "?selector=", selector)
+	resp, err := wd.Session.GET(wd.concatURL("ui/element_exist", "?selector=", selector))
 	if err != nil {
 		return false, err
 	}
-	data := resp.Data.(map[string]interface{})
+	data, err := resp.ValueConvertToJsonObject()
+	if err != nil {
+		return false, err
+	}
+	data = data["data"].(map[string]interface{})
 	return data["exist"].(bool), nil
+}
+
+func (wd *BrowserDriver) LoginNoneUI(packageName, phoneNumber string, captcha, password string) (success bool, err error) {
+	data := map[string]interface{}{
+		"url":        packageName,
+		"web_cookie": password,
+	}
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "stub/login"))
+	if err != nil {
+		return false, err
+	}
+	return true, err
 }
 
 func (wd *BrowserDriver) Hover(x, y float64) (err error) {
@@ -316,7 +346,7 @@ func (wd *BrowserDriver) Hover(x, y float64) (err error) {
 		"x": x,
 		"y": y,
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/hover")
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/hover"))
 	return err
 }
 
@@ -324,86 +354,29 @@ func (wd *BrowserDriver) Input(text string, option ...option.ActionOption) (err 
 	data := map[string]interface{}{
 		"text": text,
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/input")
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/input"))
 	return err
 }
 
 // Source Return application elements tree
 func (wd *BrowserDriver) Source(srcOpt ...option.SourceOption) (string, error) {
-	resp, err := wd.HttpGet(http.MethodGet, wd.sessionId, "stub/source")
+	resp, err := wd.Session.GET(wd.concatURL(wd.Session.ID, "stub/source"))
 	if err != nil {
 		return "", err
 	}
 
-	jsonData, err := json.Marshal(resp.Data)
-	if err != nil {
-		return "", err
-	}
-
-	return string(jsonData), err
+	return resp.ValueConvertToString()
 }
 
 func (wd *BrowserDriver) ScreenShot(options ...option.ActionOption) (*bytes.Buffer, error) {
-	resp, err := wd.HttpGet(http.MethodGet, wd.sessionId, "screenshot")
+	resp, err := wd.Session.GET(wd.concatURL(wd.Session.ID, "screenshot"))
 	if err != nil {
 		return nil, err
-	}
-	data := resp.Data.(map[string]interface{})
-	screenshotBase64 := data["screenshot"].(string)
-	screenRaw, err := base64.StdEncoding.DecodeString(screenshotBase64)
-	if err != nil {
-		return nil, err
-	}
-	return bytes.NewBuffer(screenRaw), nil
-}
-
-func (wd *BrowserDriver) HttpPOST(data interface{}, pathElem ...string) (response *WebAgentResponse, err error) {
-	var bsJSON []byte = nil
-	if data != nil {
-		if bsJSON, err = json.Marshal(data); err != nil {
-			return nil, err
-		}
-	}
-
-	return wd.httpRequest(http.MethodPost, wd.concatURL(pathElem...), bsJSON)
-}
-
-func (wd *BrowserDriver) HttpGet(data interface{}, pathElem ...string) (response *WebAgentResponse, err error) {
-	return wd.httpRequest(http.MethodGet, wd.concatURL(pathElem...), nil)
-}
-
-func (wd *BrowserDriver) concatURL(elem ...string) string {
-	tmp, _ := url.Parse(wd.urlPrefix.String())
-	commonPath := path.Join(append([]string{wd.urlPrefix.Path}, "api/v1/")...)
-	tmp.Path = path.Join(append([]string{commonPath}, elem...)...)
-	return tmp.String()
-}
-
-func (wd *BrowserDriver) httpRequest(method string, rawURL string, rawBody []byte, disableRetry ...bool) (response *WebAgentResponse, err error) {
-	req, err := http.NewRequest(method, rawURL, bytes.NewBuffer(rawBody))
-	req.Header.Set("Content-Type", "application/json")
-
-	if err != nil {
-		return nil, err
-	}
-
-	// 新建http client
-	client := &http.Client{
-		Timeout: 60 * time.Second, // 设置超时时间为5秒
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	rawResp, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
 	}
 
 	// 将结果解析为 JSON
 	var result WebAgentResponse
-	if err = json.Unmarshal(rawResp, &result); err != nil {
+	if err = json.Unmarshal(resp, &result); err != nil {
 		return nil, err
 	}
 
@@ -412,10 +385,20 @@ func (wd *BrowserDriver) httpRequest(method string, rawURL string, rawBody []byt
 		return nil, errors.New(result.Message)
 	}
 
+	data := result.Data.(map[string]interface{})
+	screenshotBase64 := data["screenshot"].(string)
+	screenRaw, err := base64.StdEncoding.DecodeString(screenshotBase64)
 	if err != nil {
 		return nil, err
 	}
-	return &result, err
+	return bytes.NewBuffer(screenRaw), nil
+}
+
+func (wd *BrowserDriver) concatURL(elem ...string) string {
+	tmp, _ := url.Parse(wd.urlPrefix.String())
+	commonPath := path.Join(append([]string{wd.urlPrefix.Path}, "api/v1/")...)
+	tmp.Path = path.Join(append([]string{commonPath}, elem...)...)
+	return tmp.String()
 }
 
 func (wd *BrowserDriver) Status() (deviceStatus types.DeviceStatus, err error) {
@@ -434,11 +417,16 @@ func (wd *BrowserDriver) BatteryInfo() (batteryInfo types.BatteryInfo, err error
 }
 
 func (wd *BrowserDriver) WindowSize() (types.Size, error) {
-	resp, err := wd.HttpGet(http.MethodGet, wd.sessionId, "window_size")
+	resp, err := wd.Session.GET(wd.concatURL(wd.Session.ID, "window_size"))
 	if err != nil {
 		return types.Size{}, err
 	}
-	data := resp.Data.(map[string]interface{})
+
+	data, err := resp.ValueConvertToJsonObject()
+	if err != nil {
+		return types.Size{}, err
+	}
+	data = data["data"].(map[string]interface{})
 	width := data["width"]
 	height := data["height"]
 	return types.Size{
@@ -540,7 +528,8 @@ func (wd *BrowserDriver) TapFloat(x, y float64, opts ...option.ActionOption) err
 		"y":        y,
 		"duration": duration,
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/tap")
+
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/tap"))
 	return err
 }
 
@@ -555,7 +544,8 @@ func (wd *BrowserDriver) DoubleTap(x, y float64, options ...option.ActionOption)
 		"x": x,
 		"y": y,
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/double_tap")
+
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/double_tap"))
 	return err
 }
 
@@ -566,7 +556,7 @@ func (wd *BrowserDriver) UploadFile(x, y float64, FileUrl, FileFormat string) (e
 		"file_url":    FileUrl,
 		"file_format": FileFormat,
 	}
-	_, err = wd.HttpPOST(data, wd.sessionId, "ui/upload")
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/upload"))
 	return err
 }
 
@@ -602,10 +592,6 @@ func (wd *BrowserDriver) Clear(packageName string) error {
 	return errors.New("not support")
 }
 
-func (wd *BrowserDriver) Setup() error {
-	return nil
-}
-
 func (wd *BrowserDriver) GetDevice() IDevice {
 	return nil
 }
@@ -616,7 +602,7 @@ func (wd *BrowserDriver) ForegroundInfo() (app types.AppInfo, err error) {
 
 // PressBack Presses the back button
 func (wd *BrowserDriver) PressBack(options ...option.ActionOption) error {
-	_, err := wd.HttpPOST(map[string]interface{}{}, wd.sessionId, "ui/back")
+	_, err := wd.Session.POST(nil, wd.concatURL(wd.Session.ID, "ui/back"))
 	return err
 }
 
@@ -684,7 +670,7 @@ func (wd *BrowserDriver) InitSession(capabilities option.Capabilities) error {
 }
 
 func (wd *BrowserDriver) GetSession() *DriverSession {
-	return nil
+	return wd.Session
 }
 
 func (wd *BrowserDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string, err error) {
@@ -708,7 +694,7 @@ func (wd *BrowserDriver) TapXY(x, y float64, opts ...option.ActionOption) error 
 		"x": x,
 		"y": y,
 	}
-	_, err := wd.HttpPOST(data, wd.sessionId, "ui/double_tap")
+	_, err := wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/double_tap"))
 	return err
 }
 

@@ -15,6 +15,7 @@ const (
 	StepTypeAndroid     StepType = "android"
 	StepTypeHarmony     StepType = "harmony"
 	StepTypeIOS         StepType = "ios"
+	stepTypeBrowser     StepType = "browser"
 	StepTypeShell       StepType = "shell"
 	StepTypeFunction    StepType = "function"
 
@@ -47,6 +48,7 @@ type TStep struct {
 	Android     *MobileUI        `json:"android,omitempty" yaml:"android,omitempty"`
 	Harmony     *MobileUI        `json:"harmony,omitempty" yaml:"harmony,omitempty"`
 	IOS         *MobileUI        `json:"ios,omitempty" yaml:"ios,omitempty"`
+	Browser     *MobileUI        `json:"browser,omitempty" yaml:"browser,omitempty"`
 	Shell       *Shell           `json:"shell,omitempty" yaml:"shell,omitempty"`
 }
 

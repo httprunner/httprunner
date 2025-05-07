@@ -50,11 +50,17 @@ type IDriver interface {
 	Home() error
 	Unlock() error
 	Back() error
+	// hover
+	HoverBySelector(selector string, opts ...option.ActionOption) error
 	// tap
-	TapXY(x, y float64, opts ...option.ActionOption) error     // by percentage or absolute coordinate
-	TapAbsXY(x, y float64, opts ...option.ActionOption) error  // by absolute coordinate
+	TapXY(x, y float64, opts ...option.ActionOption) error    // by percentage or absolute coordinate
+	TapAbsXY(x, y float64, opts ...option.ActionOption) error // by absolute coordinate
+	TapBySelector(text string, opts ...option.ActionOption) error
 	DoubleTap(x, y float64, opts ...option.ActionOption) error // by absolute coordinate
 	TouchAndHold(x, y float64, opts ...option.ActionOption) error
+	// secondary click
+	SecondaryClick(x, y float64) error
+	SecondaryClickBySelector(selector string, options ...option.ActionOption) error
 	// swipe
 	Drag(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error
 	Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error // by percentage
