@@ -340,7 +340,7 @@ func (s *StepMobile) TapBySelector(selector string, options ...option.ActionOpti
 
 func (s *StepMobile) ClosePage(idx int, options ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method:  uixt.ACTION_ClosePage,
+		Method:  uixt.ACTION_WebCloseTab,
 		Params:  idx,
 		Options: option.NewActionOptions(options...),
 	}
