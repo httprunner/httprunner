@@ -66,7 +66,7 @@ func TestDriverExt(t *testing.T) {
 
 	// get original driver and call its methods
 	adbDriver := driverExt.IDriver.(*ADBDriver)
-	adbDriver.TapByHierarchy("hello")
+	adbDriver.TapBySelector("hello")
 	wdaDriver := driverExt.IDriver.(*WDADriver)
 	wdaDriver.GetMjpegClient()
 	wdaDriver.Scale()
