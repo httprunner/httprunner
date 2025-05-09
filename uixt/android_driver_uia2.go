@@ -362,11 +362,12 @@ func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.Action
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("UIA2Driver.Drag")
 
-	var err error
-	fromX, fromY, toX, toY, err = handlerDrag(ud, fromX, fromY, toX, toY, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY, err := preHandler_Drag(ud, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
+	defer postHandler(ud, actionOptions)
 
 	data := map[string]interface{}{
 		"startX": fromX,

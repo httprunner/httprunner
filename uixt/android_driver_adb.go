@@ -375,12 +375,13 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("ADBDriver.Drag")
 
-	fromX, fromY, toX, toY, err = handlerDrag(ad, fromX, fromY, toX, toY, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY, err = preHandler_Drag(ad, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
+	defer postHandler(ad, actionOptions)
 
-	actionOptions := option.NewActionOptions(opts...)
 	duration := 200.0
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration * 1000

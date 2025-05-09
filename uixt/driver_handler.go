@@ -48,18 +48,21 @@ func preHandler_DoubleTap(driver IDriver, options *option.ActionOptions, rawX, r
 	return x, y, nil
 }
 
-func handlerDrag(driver IDriver, rawFomX, rawFromY, rawToX, rawToY float64, opts ...option.ActionOption) (
+func preHandler_Drag(driver IDriver, options *option.ActionOptions, rawFomX, rawFromY, rawToX, rawToY float64) (
 	fromX, fromY, toX, toY float64, err error) {
 
-	actionOptions := option.NewActionOptions(opts...)
+	if options.PreHook != nil {
+		options.PreHook()
+	}
+
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(driver, rawFomX, rawFromY, rawToX, rawToY)
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY = options.ApplySwipeOffset(fromX, fromY, toX, toY)
 
 	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
+	if options.MarkOperationEnabled {
 		if markErr := MarkUIOperation(driver, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
 		}

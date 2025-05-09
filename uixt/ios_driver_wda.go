@@ -659,11 +659,12 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	toX = wd.toScale(toX)
 	toY = wd.toScale(toY)
 
-	var err error
-	fromX, fromY, toX, toY, err = handlerDrag(wd, fromX, fromY, toX, toY, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY, err := preHandler_Drag(wd, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
+	defer postHandler(wd, actionOptions)
 
 	data := map[string]interface{}{
 		"fromX": math.Round(fromX*10) / 10,

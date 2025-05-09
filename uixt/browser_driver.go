@@ -114,17 +114,19 @@ func (wd *BrowserDriver) Setup() error {
 }
 
 func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.ActionOption) (err error) {
-	fromX, fromY, toX, toY, err = handlerDrag(wd, fromX, fromY, toX, toY, options...)
+	actionOptions := option.NewActionOptions(options...)
+	fromX, fromY, toX, toY, err = preHandler_Drag(wd, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
+	defer postHandler(wd, actionOptions)
+
 	data := map[string]interface{}{
 		"from_x": fromX,
 		"from_y": fromY,
 		"to_x":   toX,
 		"to_y":   toY,
 	}
-	actionOptions := option.NewActionOptions(options...)
 
 	if actionOptions.Duration > 0 {
 		data["duration"] = actionOptions.Duration
