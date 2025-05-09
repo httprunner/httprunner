@@ -392,12 +392,14 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("UIA2Driver.Swipe")
-	var err error
-	fromX, fromY, toX, toY, err = handlerSwipe(ud, fromX, fromY, toX, toY)
+
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY, err := preHandler_Swipe(ud, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	actionOptions := option.NewActionOptions(opts...)
+	defer postHandler(ud, actionOptions)
+
 	duration := 200.0
 	if actionOptions.PressDuration > 0 {
 		duration = actionOptions.PressDuration * 1000 // ms

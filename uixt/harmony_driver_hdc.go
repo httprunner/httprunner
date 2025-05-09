@@ -185,12 +185,14 @@ func (hd *HDCDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("HDCDriver.Swipe")
-	var err error
-	fromX, fromY, toX, toY, err = handlerSwipe(hd, fromX, fromY, toX, toY)
+
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY, err := preHandler_Swipe(hd, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	actionOptions := option.NewActionOptions(opts...)
+	defer postHandler(hd, actionOptions)
+
 	duration := 200
 	if actionOptions.PressDuration > 0 {
 		duration = int(actionOptions.PressDuration * 1000)
