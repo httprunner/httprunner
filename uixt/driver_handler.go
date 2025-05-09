@@ -24,19 +24,22 @@ func preHandler_TapAbsXY(driver IDriver, options *option.ActionOptions, rawX, ra
 	return x, y, nil
 }
 
-func handlerDoubleTap(driver IDriver, rawX, rawY float64, opts ...option.ActionOption) (
+func preHandler_DoubleTap(driver IDriver, options *option.ActionOptions, rawX, rawY float64) (
 	x, y float64, err error) {
+
+	if options.PreHook != nil {
+		options.PreHook()
+	}
 
 	x, y, err = convertToAbsolutePoint(driver, rawX, rawY)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
+	x, y = options.ApplyTapOffset(x, y)
 
 	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
+	if options.MarkOperationEnabled {
 		if markErr := MarkUIOperation(driver, ACTION_DoubleTapXY, []float64{x, y}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark double tap operation")
 		}

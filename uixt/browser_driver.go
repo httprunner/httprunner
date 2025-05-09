@@ -535,11 +535,13 @@ func (wd *BrowserDriver) TapFloat(x, y float64, opts ...option.ActionOption) err
 
 // DoubleTap Sends a double tap event at the coordinate.
 func (wd *BrowserDriver) DoubleTap(x, y float64, options ...option.ActionOption) error {
-	var err error
-	x, y, err = handlerDoubleTap(wd, x, y, options...)
+	actionOptions := option.NewActionOptions(options...)
+	x, y, err := preHandler_DoubleTap(wd, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(wd, actionOptions)
+
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,

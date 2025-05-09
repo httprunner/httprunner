@@ -622,11 +622,12 @@ func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	x = wd.toScale(x)
 	y = wd.toScale(y)
 
-	var err error
-	x, y, err = handlerDoubleTap(wd, x, y, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	x, y, err := preHandler_DoubleTap(wd, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(wd, actionOptions)
 
 	data := map[string]interface{}{
 		"x": x,
