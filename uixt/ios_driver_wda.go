@@ -491,9 +491,14 @@ func (wd *WDADriver) AlertSendKeys(text string) (err error) {
 	return
 }
 
-func (wd *WDADriver) AppLaunch(bundleId string) (err error) {
+func (wd *WDADriver) AppLaunch(bundleId string, opts ...option.ActionOption) (err error) {
 	log.Info().Str("bundleId", bundleId).Msg("WDADriver.AppLaunch")
 	// [[FBRoute POST:@"/wda/apps/launch"] respondWithTarget:self action:@selector(handleSessionAppLaunch:)]
+
+	actionOptions := option.NewActionOptions(opts...)
+	preHandler_AppLaunch(wd, actionOptions)
+	defer postHandler(wd, actionOptions)
+
 	data := make(map[string]interface{})
 	data["bundleId"] = bundleId
 	data["environment"] = map[string]interface{}{
@@ -520,9 +525,14 @@ func (wd *WDADriver) AppLaunchUnattached(bundleId string) (err error) {
 	return nil
 }
 
-func (wd *WDADriver) AppTerminate(bundleId string) (successful bool, err error) {
+func (wd *WDADriver) AppTerminate(bundleId string, opts ...option.ActionOption) (successful bool, err error) {
 	log.Info().Str("bundleId", bundleId).Msg("WDADriver.AppTerminate")
 	// [[FBRoute POST:@"/wda/apps/terminate"] respondWithTarget:self action:@selector(handleSessionAppTerminate:)]
+
+	actionOptions := option.NewActionOptions(opts...)
+	preHandler_AppTerminate(wd, actionOptions)
+	defer postHandler(wd, actionOptions)
+
 	data := map[string]interface{}{"bundleId": bundleId}
 	var rawResp DriverRawResponse
 	urlStr := fmt.Sprintf("/session/%s/wda/apps/terminate", wd.Session.ID)
@@ -734,7 +744,7 @@ func (wd *WDADriver) Backspace(count int, opts ...option.ActionOption) (err erro
 	return
 }
 
-func (wd *WDADriver) AppClear(packageName string) error {
+func (wd *WDADriver) AppClear(packageName string, opts ...option.ActionOption) error {
 	return types.ErrDriverNotImplemented
 }
 
