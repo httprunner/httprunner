@@ -91,18 +91,20 @@ func (s *StepMobile) WebLoginNoneUI(packageName, phoneNumber string, captcha, pa
 	return s
 }
 
-func (s *StepMobile) AppLaunch(bundleId string) *StepMobile {
+func (s *StepMobile) AppLaunch(bundleId string, opts ...option.ActionOption) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_AppLaunch,
-		Params: bundleId,
+		Method:  uixt.ACTION_AppLaunch,
+		Params:  bundleId,
+		Options: option.NewActionOptions(opts...),
 	})
 	return s
 }
 
-func (s *StepMobile) AppTerminate(bundleId string) *StepMobile {
+func (s *StepMobile) AppTerminate(bundleId string, opts ...option.ActionOption) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_AppTerminate,
-		Params: bundleId,
+		Method:  uixt.ACTION_AppTerminate,
+		Params:  bundleId,
+		Options: option.NewActionOptions(opts...),
 	})
 	return s
 }

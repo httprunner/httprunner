@@ -134,6 +134,7 @@ func (o *ActionOptions) Options() []ActionOption {
 	options = append(options, o.GetScreenShotOptions()...)
 	options = append(options, o.GetScreenRecordOptions()...)
 	options = append(options, o.GetMarkOperationOptions()...)
+	options = append(options, o.GetHookOptions()...)
 
 	return options
 }
