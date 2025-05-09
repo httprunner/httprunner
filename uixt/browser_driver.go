@@ -511,13 +511,13 @@ func (wd *BrowserDriver) Tap(x, y float64, options ...option.ActionOption) error
 }
 
 func (wd *BrowserDriver) TapFloat(x, y float64, opts ...option.ActionOption) error {
-	var err error
-	x, y, err = handlerTapAbsXY(wd, x, y, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	x, y, err := preHandler_TapAbsXY(wd, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(wd, actionOptions)
 
-	actionOptions := option.NewActionOptions(opts...)
 	duration := 0.1
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration

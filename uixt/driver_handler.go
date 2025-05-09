@@ -5,14 +5,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func handlerTapAbsXY(driver IDriver, rawX, rawY float64, opts ...option.ActionOption) (
+func preHandler_TapAbsXY(driver IDriver, options *option.ActionOptions, rawX, rawY float64) (
 	x, y float64, err error) {
 
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(rawX, rawY)
+	if options.PreHook != nil {
+		options.PreHook()
+	}
+
+	x, y = options.ApplyTapOffset(rawX, rawY)
 
 	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
+	if options.MarkOperationEnabled {
 		if markErr := MarkUIOperation(driver, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
 		}
@@ -80,4 +83,10 @@ func handlerSwipe(driver IDriver, rawFomX, rawFromY, rawToX, rawToY float64, opt
 	}
 
 	return fromX, fromY, toX, toY, nil
+}
+
+func postHandler(_ IDriver, options *option.ActionOptions) {
+	if options.PostHook != nil {
+		options.PostHook()
+	}
 }

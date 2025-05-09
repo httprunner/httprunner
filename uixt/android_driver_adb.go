@@ -307,11 +307,12 @@ func (ad *ADBDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 
 func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.TapAbsXY")
-	var err error
-	x, y, err = handlerTapAbsXY(ad, x, y, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	x, y, err := preHandler_TapAbsXY(ad, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(ad, actionOptions)
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)

@@ -154,14 +154,13 @@ func (hd *HDCDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 
 func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("HDCDriver.TapAbsXY")
-
-	var err error
-	x, y, err = handlerTapAbsXY(hd, x, y, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	x, y, err := preHandler_TapAbsXY(hd, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(hd, actionOptions)
 
-	actionOptions := option.NewActionOptions(opts...)
 	if actionOptions.Identifier != "" {
 		startTime := int(time.Now().UnixMilli())
 		hd.points = append(hd.points, ExportPoint{Start: startTime, End: startTime + 100, Ext: actionOptions.Identifier, RunTime: 100})

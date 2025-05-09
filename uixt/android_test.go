@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -130,6 +131,33 @@ func TestDriver_ADB_DeviceInfo_TODO(t *testing.T) {
 func TestDriver_ADB_TapXY(t *testing.T) {
 	driver := setupADBDriverExt(t)
 	err := driver.TapXY(0.4, 0.5)
+	assert.Nil(t, err)
+}
+
+func TestDriver_ADB_TapXY_WithHook(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	x, y := 0.4, 0.5
+	err := driver.TapXY(x, y,
+		option.WithHooks(
+			func() {
+				log.Info().Msg("pre hook")
+				x += 1
+			},
+			func() {
+				log.Info().Msg("post hook")
+			},
+		),
+	)
+	assert.Nil(t, err)
+
+	err = driver.TapXY(0.4, 0.5,
+		option.WithPreHook(func() {
+			log.Info().Msg("pre hook")
+		}),
+		option.WithPostHook(func() {
+			log.Info().Msg("post hook")
+		}),
+	)
 	assert.Nil(t, err)
 }
 

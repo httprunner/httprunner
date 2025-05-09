@@ -597,11 +597,12 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	x = wd.toScale(x)
 	y = wd.toScale(y)
 
-	var err error
-	x, y, err = handlerTapAbsXY(wd, x, y, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	x, y, err := preHandler_TapAbsXY(wd, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(wd, actionOptions)
 
 	data := map[string]interface{}{
 		"x": x,
