@@ -29,7 +29,7 @@ func (dExt *XTDriver) TapByOCR(text string, opts ...option.ActionOption) error {
 		point = textRect.Center()
 	}
 	log.Info().Str("text", text).Interface("rawTextRect", textRect).
-		Interface("tapPoint", point).Msg("TapByOCR success")
+		Interface("tapPoint", point).Msg("TapByOCR")
 
 	return dExt.TapAbsXY(point.X, point.Y, opts...)
 }
@@ -52,7 +52,7 @@ func (dExt *XTDriver) TapByCV(opts ...option.ActionOption) error {
 		point = uiResult.Center()
 	}
 	log.Info().Interface("rawUIResult", uiResult).
-		Interface("tapPoint", point).Msg("TapByCV success")
+		Interface("tapPoint", point).Msg("TapByCV")
 
 	return dExt.TapAbsXY(point.X, point.Y, opts...)
 }

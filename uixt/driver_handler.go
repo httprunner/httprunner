@@ -1,9 +1,22 @@
 package uixt
 
 import (
+	"time"
+
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/rs/zerolog/log"
 )
+
+// Call custom function, used for pre/post hook for actions
+func (dExt *XTDriver) Call(desc string, fn func()) error {
+	startTime := time.Now()
+	fn()
+	log.Info().Str("desc", desc).
+		Int64("duration(ms)", time.Since(startTime).Milliseconds()).
+		Msg("function called")
+
+	return nil
+}
 
 func preHandler_TapAbsXY(driver IDriver, options *option.ActionOptions, rawX, rawY float64) (
 	x, y float64, err error) {
