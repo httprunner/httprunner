@@ -276,8 +276,8 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	return runErr
 }
 
-// NewCaseRunner initializes a CaseRunner for a given testcase.
-// Each testcase is associated with its own CaseRunner instance.
+// NewCaseRunner creates a new case runner for testcase.
+// each testcase has its own case runner
 // If the provided hrpRunner is nil, a default HRPRunner will be created and used.
 func NewCaseRunner(testcase TestCase, hrpRunner *HRPRunner) (*CaseRunner, error) {
 	if hrpRunner == nil {

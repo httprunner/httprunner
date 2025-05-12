@@ -87,7 +87,7 @@ const (
 type MobileAction struct {
 	Method  ActionMethod          `json:"method,omitempty" yaml:"method,omitempty"`
 	Params  interface{}           `json:"params,omitempty" yaml:"params,omitempty"`
-	Fn      func()                `json:"-" yaml:"-"` // only used for function action, not serialized
+	Fn      func()                `json:"-" yaml:"-"` // used for function action, not serialized
 	Options *option.ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
 	option.ActionOptions
 }
