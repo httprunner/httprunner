@@ -329,6 +329,27 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 	return caseRunner, nil
 }
 
+func NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
+	caseRunner := &CaseRunner{
+		TestCase: testcase,
+	}
+	// config := testcase.Config.Get()
+
+	// TODO: init parser plugin
+
+	// parse testcase config
+	parsedConfig, err := caseRunner.parseConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "parse testcase config failed")
+	}
+
+	// TODO: set request timeout in seconds
+	// TODO: set testcase timeout in seconds
+
+	caseRunner.TestCase.Config = parsedConfig
+	return caseRunner, nil
+}
+
 type CaseRunner struct {
 	TestCase // each testcase init its own CaseRunner
 
@@ -418,115 +439,128 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 	}
 	r.parametersIterator = parametersIterator
 
+	// register uixt drivers
+	if err := r.RegisterUIXTDrivers(parsedConfig); err != nil {
+		return nil, errors.Wrap(err, "register uixt drivers failed")
+	}
+
+	return parsedConfig, nil
+}
+
+func (r *CaseRunner) RegisterUIXTDrivers(config *TConfig) error {
 	// ai options
 	aiOpts := []option.AIServiceOption{}
-	if parsedConfig.LLMService != "" {
-		aiOpts = append(aiOpts, option.WithLLMService(option.LLMServiceType(parsedConfig.LLMService)))
+	if config.LLMService != "" {
+		aiOpts = append(aiOpts, option.WithLLMService(option.LLMServiceType(config.LLMService)))
 	}
-	if parsedConfig.CVService == "" {
+	if config.CVService == "" {
 		// default to vedem
-		parsedConfig.CVService = option.CVServiceTypeVEDEM
+		config.CVService = option.CVServiceTypeVEDEM
 	}
-	aiOpts = append(aiOpts, option.WithCVService(parsedConfig.CVService))
+	aiOpts = append(aiOpts, option.WithCVService(config.CVService))
 
 	// parse android devices config
-	for _, androidDeviceOptions := range parsedConfig.Android {
-		err := r.parseDeviceConfig(androidDeviceOptions, parsedConfig.Variables)
+	for _, androidDeviceOptions := range config.Android {
+		err := r.parseDeviceConfig(androidDeviceOptions, config.Variables)
 		if err != nil {
-			return nil, errors.Wrap(code.InvalidCaseError,
+			return errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse android config failed: %v", err))
 		}
 
 		device, err := uixt.NewAndroidDevice(androidDeviceOptions.Options()...)
 		if err != nil {
-			return nil, errors.Wrap(err, "init android device failed")
+			return errors.Wrap(err, "init android device failed")
 		}
 		driver, err := device.NewDriver()
 		if err != nil {
-			return nil, errors.Wrap(err, "init android driver failed")
+			return errors.Wrap(err, "init android driver failed")
 		}
 
 		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
 		if err != nil {
-			return nil, errors.Wrap(err, "init android XTDriver failed")
+			return errors.Wrap(err, "init android XTDriver failed")
 		}
-		r.uixtDrivers[androidDeviceOptions.SerialNumber] = driverExt
+		r.RegisterUIXTDriver(androidDeviceOptions.SerialNumber, driverExt)
 	}
 	// parse iOS devices config
-	for _, iosDeviceOptions := range parsedConfig.IOS {
-		err := r.parseDeviceConfig(iosDeviceOptions, parsedConfig.Variables)
+	for _, iosDeviceOptions := range config.IOS {
+		err := r.parseDeviceConfig(iosDeviceOptions, config.Variables)
 		if err != nil {
-			return nil, errors.Wrap(code.InvalidCaseError,
+			return errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse ios config failed: %v", err))
 		}
 
 		device, err := uixt.NewIOSDevice(iosDeviceOptions.Options()...)
 		if err != nil {
-			return nil, errors.Wrap(err, "init ios device failed")
+			return errors.Wrap(err, "init ios device failed")
 		}
 		driver, err := device.NewDriver()
 		if err != nil {
-			return nil, errors.Wrap(err, "init ios driver failed")
+			return errors.Wrap(err, "init ios driver failed")
 		}
 
 		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
 		if err != nil {
-			return nil, errors.Wrap(err, "init ios XTDriver failed")
+			return errors.Wrap(err, "init ios XTDriver failed")
 		}
-		r.uixtDrivers[iosDeviceOptions.UDID] = driverExt
+		r.RegisterUIXTDriver(iosDeviceOptions.UDID, driverExt)
 	}
 	// parse harmony devices config
-	for _, harmonyDeviceOptions := range parsedConfig.Harmony {
-		err := r.parseDeviceConfig(harmonyDeviceOptions, parsedConfig.Variables)
+	for _, harmonyDeviceOptions := range config.Harmony {
+		err := r.parseDeviceConfig(harmonyDeviceOptions, config.Variables)
 		if err != nil {
-			return nil, errors.Wrap(code.InvalidCaseError,
+			return errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse harmony config failed: %v", err))
 		}
 
 		device, err := uixt.NewHarmonyDevice(harmonyDeviceOptions.Options()...)
 		if err != nil {
-			return nil, errors.Wrap(err, "init harmony device failed")
+			return errors.Wrap(err, "init harmony device failed")
 		}
 		driver, err := device.NewDriver()
 		if err != nil {
-			return nil, errors.Wrap(err, "init harmony driver failed")
+			return errors.Wrap(err, "init harmony driver failed")
 		}
 
 		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
 		if err != nil {
-			return nil, errors.Wrap(err, "init harmony XTDriver failed")
+			return errors.Wrap(err, "init harmony XTDriver failed")
 		}
-		r.uixtDrivers[harmonyDeviceOptions.ConnectKey] = driverExt
+		r.RegisterUIXTDriver(harmonyDeviceOptions.ConnectKey, driverExt)
 	}
 	// parse browser devices config
-	for _, browserDeviceOptions := range parsedConfig.Browser {
-		err := r.parseDeviceConfig(browserDeviceOptions, parsedConfig.Variables)
+	for _, browserDeviceOptions := range config.Browser {
+		err := r.parseDeviceConfig(browserDeviceOptions, config.Variables)
 		if err != nil {
-			return nil, errors.Wrap(code.InvalidCaseError,
+			return errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse browser config failed: %v", err))
 		}
 		device, err := uixt.NewBrowserDevice(browserDeviceOptions.Options()...)
 		if err != nil {
-			return nil, errors.Wrap(err, "init browser device failed")
+			return errors.Wrap(err, "init browser device failed")
 		}
 		if err := device.Setup(); err != nil {
-			return nil, err
+			return err
 		}
 		driver, err := device.NewDriver()
 		if err != nil {
-			return nil, err
+			return errors.Wrap(err, "init browser driver failed")
 		}
 		if err := driver.Setup(); err != nil {
-			return nil, err
+			return errors.Wrap(err, "init browser driver failed")
 		}
 		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
 		if err != nil {
-			return nil, errors.Wrap(err, "init browser XTDriver failed")
+			return errors.Wrap(err, "init browser XTDriver failed")
 		}
-		r.uixtDrivers[browserDeviceOptions.BrowserID] = driverExt
+		r.RegisterUIXTDriver(browserDeviceOptions.BrowserID, driverExt)
 	}
 
-	return parsedConfig, nil
+	return nil
+}
+
+func (r *CaseRunner) RegisterUIXTDriver(serial string, driver *uixt.XTDriver) {
+	r.uixtDrivers[serial] = driver
 }
 
 func (r *CaseRunner) parseDeviceConfig(device interface{}, configVariables map[string]interface{}) error {
