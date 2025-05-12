@@ -69,7 +69,7 @@ func TestRunRequestStatOn(t *testing.T) {
 		Config:    hrp.NewConfig("test").SetBaseURL("https://postman-echo.com"),
 		TestSteps: []hrp.IStep{stepGET, stepPOSTData},
 	}
-	caseRunner, _ := hrp.NewRunner(t).SetHTTPStatOn().NewCaseRunner(testcase)
+	caseRunner, _ := hrp.NewCaseRunner(testcase, hrp.NewRunner(t).SetHTTPStatOn())
 	sessionRunner := caseRunner.NewSession()
 	summary, err := sessionRunner.Start(nil)
 	assert.Nil(t, err)

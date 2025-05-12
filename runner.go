@@ -228,7 +228,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	// run testcase one by one
 	for _, testcase := range testCases {
 		// each testcase has its own case runner
-		caseRunner, err := r.NewCaseRunner(*testcase)
+		caseRunner, err := NewCaseRunner(*testcase, r)
 		if err != nil {
 			log.Error().Err(err).Msg("[Run] init case runner failed")
 			return err
@@ -276,12 +276,16 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	return runErr
 }
 
-// NewCaseRunner creates a new case runner for testcase.
-// each testcase has its own case runner
-func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
+// NewCaseRunner initializes a CaseRunner for a given testcase.
+// Each testcase is associated with its own CaseRunner instance.
+// If the provided hrpRunner is nil, a default HRPRunner will be created and used.
+func NewCaseRunner(testcase TestCase, hrpRunner *HRPRunner) (*CaseRunner, error) {
+	if hrpRunner == nil {
+		hrpRunner = NewRunner(nil)
+	}
 	caseRunner := &CaseRunner{
 		TestCase:    testcase,
-		hrpRunner:   r,
+		hrpRunner:   hrpRunner,
 		parser:      NewParser(),
 		uixtDrivers: make(map[string]*uixt.XTDriver),
 	}
@@ -289,7 +293,7 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 
 	// init parser plugin
 	if config.PluginSetting != nil {
-		plugin, err := initPlugin(config.Path, r.venv, r.pluginLogOn)
+		plugin, err := initPlugin(config.Path, hrpRunner.venv, hrpRunner.pluginLogOn)
 		if err != nil {
 			return nil, errors.Wrap(err, "init plugin failed")
 		}
@@ -317,34 +321,13 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 	}
 
 	// set request timeout in seconds
-	if config.RequestTimeout != 0 {
-		r.SetRequestTimeout(config.RequestTimeout)
+	if parsedConfig.RequestTimeout != 0 {
+		hrpRunner.SetRequestTimeout(parsedConfig.RequestTimeout)
 	}
 	// set testcase timeout in seconds
-	if config.CaseTimeout != 0 {
-		r.SetCaseTimeout(config.CaseTimeout)
+	if parsedConfig.CaseTimeout != 0 {
+		hrpRunner.SetCaseTimeout(parsedConfig.CaseTimeout)
 	}
-
-	caseRunner.TestCase.Config = parsedConfig
-	return caseRunner, nil
-}
-
-func NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
-	caseRunner := &CaseRunner{
-		TestCase: testcase,
-	}
-	// config := testcase.Config.Get()
-
-	// TODO: init parser plugin
-
-	// parse testcase config
-	parsedConfig, err := caseRunner.parseConfig()
-	if err != nil {
-		return nil, errors.Wrap(err, "parse testcase config failed")
-	}
-
-	// TODO: set request timeout in seconds
-	// TODO: set testcase timeout in seconds
 
 	caseRunner.TestCase.Config = parsedConfig
 	return caseRunner, nil
