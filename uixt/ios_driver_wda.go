@@ -494,7 +494,6 @@ func (wd *WDADriver) AlertSendKeys(text string) (err error) {
 func (wd *WDADriver) AppLaunch(bundleId string) (err error) {
 	log.Info().Str("bundleId", bundleId).Msg("WDADriver.AppLaunch")
 	// [[FBRoute POST:@"/wda/apps/launch"] respondWithTarget:self action:@selector(handleSessionAppLaunch:)]
-
 	data := make(map[string]interface{})
 	data["bundleId"] = bundleId
 	data["environment"] = map[string]interface{}{

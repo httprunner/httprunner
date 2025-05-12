@@ -270,7 +270,6 @@ func (ad *ADBDriver) AppLaunch(packageName string) (err error) {
 	log.Info().Str("packageName", packageName).Msg("ADBDriver.AppLaunch")
 	// 不指定 Activity 名称启动（启动主 Activity）
 	// adb shell monkey -p <packagename> -c android.intent.category.LAUNCHER 1
-
 	sOutput, err := ad.runShellCommand(
 		"monkey", "-p", packageName, "-c", "android.intent.category.LAUNCHER", "1",
 	)
