@@ -138,11 +138,7 @@ func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.
 	return
 }
 
-func (wd *BrowserDriver) AppLaunch(packageName string, opts ...option.ActionOption) (err error) {
-	actionOptions := option.NewActionOptions(opts...)
-	preHandler_AppLaunch(wd, actionOptions)
-	defer postHandler(wd, actionOptions)
-
+func (wd *BrowserDriver) AppLaunch(packageName string) (err error) {
 	data := map[string]interface{}{
 		"url": packageName,
 	}
@@ -465,11 +461,7 @@ func (wd *BrowserDriver) Unlock() (err error) {
 
 // AppTerminate Terminate an application with the given package name.
 // Either `true` if the app has been successfully terminated or `false` if it was not running
-func (wd *BrowserDriver) AppTerminate(packageName string, opts ...option.ActionOption) (bool, error) {
-	actionOptions := option.NewActionOptions(opts...)
-	preHandler_AppTerminate(wd, actionOptions)
-	defer postHandler(wd, actionOptions)
-
+func (wd *BrowserDriver) AppTerminate(packageName string) (bool, error) {
 	return true, wd.DeleteSession()
 }
 
@@ -482,7 +474,7 @@ func (wd *BrowserDriver) Back() error {
 	return wd.PressBack()
 }
 
-func (wd *BrowserDriver) AppClear(packageName string, opts ...option.ActionOption) error {
+func (wd *BrowserDriver) AppClear(packageName string) error {
 	return errors.New("not support")
 }
 

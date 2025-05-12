@@ -266,14 +266,10 @@ func (ad *ADBDriver) PressKeyCode(keyCode KeyCode, metaState KeyMeta) (err error
 	return
 }
 
-func (ad *ADBDriver) AppLaunch(packageName string, opts ...option.ActionOption) (err error) {
+func (ad *ADBDriver) AppLaunch(packageName string) (err error) {
 	log.Info().Str("packageName", packageName).Msg("ADBDriver.AppLaunch")
 	// 不指定 Activity 名称启动（启动主 Activity）
 	// adb shell monkey -p <packagename> -c android.intent.category.LAUNCHER 1
-
-	actionOptions := option.NewActionOptions(opts...)
-	preHandler_AppLaunch(ad, actionOptions)
-	defer postHandler(ad, actionOptions)
 
 	sOutput, err := ad.runShellCommand(
 		"monkey", "-p", packageName, "-c", "android.intent.category.LAUNCHER", "1",
@@ -289,15 +285,10 @@ func (ad *ADBDriver) AppLaunch(packageName string, opts ...option.ActionOption) 
 	return nil
 }
 
-func (ad *ADBDriver) AppTerminate(packageName string, opts ...option.ActionOption) (successful bool, err error) {
+func (ad *ADBDriver) AppTerminate(packageName string) (successful bool, err error) {
 	log.Info().Str("packageName", packageName).Msg("ADBDriver.AppTerminate")
 	// 强制停止应用，停止 <packagename> 相关的进程
 	// adb shell am force-stop <packagename>
-
-	actionOptions := option.NewActionOptions(opts...)
-	preHandler_AppTerminate(ad, actionOptions)
-	defer postHandler(ad, actionOptions)
-
 	_, err = ad.runShellCommand("am", "force-stop", packageName)
 	if err != nil {
 		return false, errors.Wrap(err, "force-stop app failed")
@@ -551,7 +542,7 @@ func (ad *ADBDriver) SendKeysByAdbKeyBoard(text string) (err error) {
 	return
 }
 
-func (ad *ADBDriver) AppClear(packageName string, opts ...option.ActionOption) error {
+func (ad *ADBDriver) AppClear(packageName string) error {
 	log.Info().Str("packageName", packageName).Msg("ADBDriver.AppClear")
 	if _, err := ad.runShellCommand("pm", "clear", packageName); err != nil {
 		log.Error().Str("packageName", packageName).Err(err).Msg("failed to clear package cache")

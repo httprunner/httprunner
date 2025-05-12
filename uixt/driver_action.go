@@ -145,13 +145,13 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		}
 	case ACTION_AppClear:
 		if packageName, ok := action.Params.(string); ok {
-			if err = dExt.AppClear(packageName, action.GetOptions()...); err != nil {
+			if err = dExt.AppClear(packageName); err != nil {
 				return errors.Wrap(err, "failed to clear app")
 			}
 		}
 	case ACTION_AppLaunch:
 		if bundleId, ok := action.Params.(string); ok {
-			return dExt.AppLaunch(bundleId, action.GetOptions()...)
+			return dExt.AppLaunch(bundleId)
 		}
 		return fmt.Errorf("invalid %s params, should be bundleId(string), got %v",
 			ACTION_AppLaunch, action.Params)
@@ -177,7 +177,7 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		return fmt.Errorf("invalid %s params: %v", ACTION_SwipeToTapTexts, action.Params)
 	case ACTION_AppTerminate:
 		if bundleId, ok := action.Params.(string); ok {
-			success, err := dExt.AppTerminate(bundleId, action.GetOptions()...)
+			success, err := dExt.AppTerminate(bundleId)
 			if err != nil {
 				return errors.Wrap(err, "failed to terminate app")
 			}

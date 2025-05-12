@@ -119,22 +119,13 @@ func (hd *HDCDriver) Unlock() (err error) {
 	return hd.Swipe(500, 1500, 500, 500)
 }
 
-func (hd *HDCDriver) AppLaunch(packageName string, opts ...option.ActionOption) error {
-	actionOptions := option.NewActionOptions(opts...)
-	preHandler_AppLaunch(hd, actionOptions)
-	defer postHandler(hd, actionOptions)
-
+func (hd *HDCDriver) AppLaunch(packageName string) error {
 	// Todo
 	return types.ErrDriverNotImplemented
 }
 
-func (hd *HDCDriver) AppTerminate(packageName string, opts ...option.ActionOption) (bool, error) {
+func (hd *HDCDriver) AppTerminate(packageName string) (bool, error) {
 	log.Info().Str("packageName", packageName).Msg("HDCDriver.AppTerminate")
-
-	actionOptions := option.NewActionOptions(opts...)
-	preHandler_AppTerminate(hd, actionOptions)
-	defer postHandler(hd, actionOptions)
-
 	_, err := hd.Device.RunShellCommand("aa", "force-stop", packageName)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to terminal app")
@@ -223,7 +214,7 @@ func (hd *HDCDriver) Input(text string, opts ...option.ActionOption) error {
 	return hd.uiDriver.InputText(text)
 }
 
-func (hd *HDCDriver) AppClear(packageName string, opts ...option.ActionOption) error {
+func (hd *HDCDriver) AppClear(packageName string) error {
 	return types.ErrDriverNotImplemented
 }
 

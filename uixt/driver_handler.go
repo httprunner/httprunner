@@ -114,13 +114,5 @@ func preHandler_Swipe(driver IDriver, options *option.ActionOptions, rawFomX, ra
 	return fromX, fromY, toX, toY, nil
 }
 
-func preHandler_AppLaunch(_ IDriver, options *option.ActionOptions) (err error) {
-	return nil
-}
-
-func preHandler_AppTerminate(_ IDriver, options *option.ActionOptions) (err error) {
-	return nil
-}
-
 func postHandler(_ IDriver, options *option.ActionOptions) {
 }

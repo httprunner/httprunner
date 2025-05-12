@@ -69,9 +69,9 @@ type IDriver interface {
 	Backspace(count int, opts ...option.ActionOption) error
 
 	// app related
-	AppLaunch(packageName string, opts ...option.ActionOption) error
-	AppTerminate(packageName string, opts ...option.ActionOption) (bool, error)
-	AppClear(packageName string, opts ...option.ActionOption) error
+	AppLaunch(packageName string) error
+	AppTerminate(packageName string) (bool, error)
+	AppClear(packageName string) error
 
 	// image related
 	PushImage(localPath string) error
