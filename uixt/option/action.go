@@ -23,7 +23,6 @@ type ActionOptions struct {
 	Frequency     int         `json:"frequency,omitempty" yaml:"frequency,omitempty"`
 
 	ScreenOptions
-	HookOptions
 
 	// set custiom options such as textview, id, description
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
@@ -134,7 +133,6 @@ func (o *ActionOptions) Options() []ActionOption {
 	options = append(options, o.GetScreenShotOptions()...)
 	options = append(options, o.GetScreenRecordOptions()...)
 	options = append(options, o.GetMarkOperationOptions()...)
-	options = append(options, o.GetHookOptions()...)
 
 	return options
 }

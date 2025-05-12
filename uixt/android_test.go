@@ -136,28 +136,18 @@ func TestDriver_ADB_TapXY(t *testing.T) {
 
 func TestDriver_ADB_TapXY_WithHook(t *testing.T) {
 	driver := setupADBDriverExt(t)
-	x, y := 0.4, 0.5
-	err := driver.TapXY(x, y,
-		option.WithHooks(
-			func() {
-				log.Info().Msg("pre hook")
-				x += 1
-			},
-			func() {
-				log.Info().Msg("post hook")
-			},
-		),
-	)
+
+	err := driver.Call("pre hook", func() {
+		log.Info().Msg("pre hook")
+	}, option.WithTimeout(1))
 	assert.Nil(t, err)
 
-	err = driver.TapXY(0.4, 0.5,
-		option.WithPreHook(func() {
-			log.Info().Msg("pre hook")
-		}),
-		option.WithPostHook(func() {
-			log.Info().Msg("post hook")
-		}),
-	)
+	err = driver.TapXY(0.4, 0.5)
+	assert.Nil(t, err)
+
+	err = driver.Call("post hook", func() {
+		log.Info().Msg("post hook")
+	}, option.WithTimeout(1))
 	assert.Nil(t, err)
 }
 

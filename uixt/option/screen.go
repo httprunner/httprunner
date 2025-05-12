@@ -277,8 +277,8 @@ func WithIndex(index int) ActionOption {
 
 // MarkOperationOptions contains options for marking UI operations
 type MarkOperationOptions struct {
-	// mark UI operation, enable/disable UI operation marking
-	MarkOperationEnabled bool `json:"mark_operation_enabled,omitempty" yaml:"mark_operation_enabled,omitempty"`
+	PreMarkOperation  bool `json:"pre_mark_operation,omitempty" yaml:"pre_mark_operation,omitempty"`
+	PostMarkOperation bool `json:"post_mark_operation,omitempty" yaml:"post_mark_operation,omitempty"`
 }
 
 func (o *MarkOperationOptions) GetMarkOperationOptions() []ActionOption {
@@ -287,16 +287,26 @@ func (o *MarkOperationOptions) GetMarkOperationOptions() []ActionOption {
 		return options
 	}
 
-	if o.MarkOperationEnabled {
-		options = append(options, WithMarkOperationEnabled(true))
+	if o.PreMarkOperation {
+		options = append(options, WithPreMarkOperation(true))
+	}
+	if o.PostMarkOperation {
+		options = append(options, WithPostMarkOperation(true))
 	}
 
 	return options
 }
 
-// WithMarkOperationEnabled enables or disables UI operation marking
-func WithMarkOperationEnabled(enabled bool) ActionOption {
+// WithPreMarkOperation enables UI operation marking before action
+func WithPreMarkOperation(enabled bool) ActionOption {
 	return func(o *ActionOptions) {
-		o.MarkOperationEnabled = enabled
+		o.PreMarkOperation = enabled
+	}
+}
+
+// WithPostMarkOperation enables UI operation marking after action
+func WithPostMarkOperation(enabled bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.PostMarkOperation = enabled
 	}
 }

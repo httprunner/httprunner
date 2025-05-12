@@ -287,7 +287,7 @@ func TestSaveImageWithArrow(t *testing.T) {
 func TestMarkOperation(t *testing.T) {
 	driver := setupDriverExt(t)
 
-	opts := []option.ActionOption{option.WithMarkOperationEnabled(true)}
+	opts := []option.ActionOption{option.WithPreMarkOperation(true)}
 
 	// tap point
 	err := driver.TapXY(0.5, 0.5, opts...)
