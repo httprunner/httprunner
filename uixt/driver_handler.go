@@ -2,8 +2,11 @@ package uixt
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/rs/zerolog/log"
 )
@@ -104,7 +107,7 @@ func preHandler_Swipe(driver IDriver, options *option.ActionOptions, rawFomX, ra
 	}
 	fromX, fromY, toX, toY = options.ApplySwipeOffset(fromX, fromY, toX, toY)
 
-	// mark UI operation
+	// save screenshot before action and mark UI operation
 	if options.PreMarkOperation {
 		if markErr := MarkUIOperation(driver, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
@@ -114,5 +117,28 @@ func preHandler_Swipe(driver IDriver, options *option.ActionOptions, rawFomX, ra
 	return fromX, fromY, toX, toY, nil
 }
 
-func postHandler(_ IDriver, options *option.ActionOptions) {
+func postHandler(driver IDriver, actionType ActionMethod, options *option.ActionOptions) error {
+	// save screenshot after action
+	if options.PostMarkOperation {
+		// get compressed screenshot buffer
+		compressBufSource, err := getScreenShotBuffer(driver)
+		if err != nil {
+			return err
+		}
+
+		// save compressed screenshot to file
+		timestamp := builtin.GenNameWithTimestamp("%d")
+		imagePath := filepath.Join(
+			config.GetConfig().ScreenShotsPath,
+			fmt.Sprintf("action_%s_post_%s.png", timestamp, actionType),
+		)
+
+		go func() {
+			err := saveScreenShot(compressBufSource, imagePath)
+			if err != nil {
+				log.Error().Err(err).Msg("save screenshot file failed")
+			}
+		}()
+	}
+	return nil
 }

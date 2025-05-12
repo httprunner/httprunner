@@ -312,7 +312,7 @@ func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	if err != nil {
 		return err
 	}
-	defer postHandler(ad, actionOptions)
+	defer postHandler(ad, ACTION_TapAbsXY, actionOptions)
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
@@ -331,7 +331,7 @@ func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	if err != nil {
 		return err
 	}
-	defer postHandler(ad, actionOptions)
+	defer postHandler(ad, ACTION_DoubleTapXY, actionOptions)
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
@@ -380,7 +380,7 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	if err != nil {
 		return err
 	}
-	defer postHandler(ad, actionOptions)
+	defer postHandler(ad, ACTION_Drag, actionOptions)
 
 	duration := 200.0
 	if actionOptions.Duration > 0 {
@@ -412,7 +412,7 @@ func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	if err != nil {
 		return err
 	}
-	defer postHandler(ad, actionOptions)
+	defer postHandler(ad, ACTION_Swipe, actionOptions)
 
 	// adb shell input swipe fromX fromY toX toY
 	_, err = ad.runShellCommand(

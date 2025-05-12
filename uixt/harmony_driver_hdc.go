@@ -159,7 +159,7 @@ func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	if err != nil {
 		return err
 	}
-	defer postHandler(hd, actionOptions)
+	defer postHandler(hd, ACTION_TapAbsXY, actionOptions)
 
 	if actionOptions.Identifier != "" {
 		startTime := int(time.Now().UnixMilli())
@@ -191,7 +191,7 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	if err != nil {
 		return err
 	}
-	defer postHandler(hd, actionOptions)
+	defer postHandler(hd, ACTION_Swipe, actionOptions)
 
 	duration := 200
 	if actionOptions.PressDuration > 0 {
