@@ -336,7 +336,7 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		return dExt.ClosePopupsHandler()
 	case ACTION_CallFunction:
 		if funcDesc, ok := action.Params.(string); ok {
-			return dExt.Call(funcDesc, action.Fn)
+			return dExt.Call(funcDesc, action.Fn, action.GetOptions()...)
 		}
 		return fmt.Errorf("invalid function description: %v", action.Params)
 	case ACTION_AIAction:
