@@ -306,6 +306,13 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		} else if sd, ok := action.Params.(SleepConfig); ok {
 			sleepStrict(sd.StartTime, int64(sd.Seconds*1000))
 			return nil
+		} else if param, ok := action.Params.(string); ok {
+			seconds, err := builtin.ConvertToFloat64(param)
+			if err != nil {
+				return errors.Wrapf(err, "invalid sleep params: %v(%T)", action.Params, action.Params)
+			}
+			time.Sleep(time.Duration(seconds*1000) * time.Millisecond)
+			return nil
 		}
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
 	case ACTION_SleepMS:
