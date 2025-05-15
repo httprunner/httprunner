@@ -1,18 +1,56 @@
 package uixt
 
 import (
+	"fmt"
+	"path/filepath"
+	"time"
+
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/rs/zerolog/log"
 )
 
-func handlerTapAbsXY(driver IDriver, rawX, rawY float64, opts ...option.ActionOption) (
+// Call custom function, used for pre/post action hook
+func (dExt *XTDriver) Call(desc string, fn func(), opts ...option.ActionOption) error {
+	actionOptions := option.NewActionOptions(opts...)
+
+	startTime := time.Now()
+	defer func() {
+		log.Info().Str("desc", desc).
+			Int64("duration(ms)", time.Since(startTime).Milliseconds()).
+			Msg("function called")
+	}()
+
+	if actionOptions.Timeout == 0 {
+		// wait for function to finish
+		fn()
+		return nil
+	}
+
+	// set timeout for function execution
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		fn()
+	}()
+
+	select {
+	case <-done:
+		// function completed within timeout
+		return nil
+	case <-time.After(time.Duration(actionOptions.Timeout) * time.Second):
+		return fmt.Errorf("function execution exceeded timeout of %d seconds", actionOptions.Timeout)
+	}
+}
+
+func preHandler_TapAbsXY(driver IDriver, options *option.ActionOptions, rawX, rawY float64) (
 	x, y float64, err error) {
 
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(rawX, rawY)
+	x, y = options.ApplyTapOffset(rawX, rawY)
 
 	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
+	if options.PreMarkOperation {
 		if markErr := MarkUIOperation(driver, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
 		}
@@ -21,7 +59,7 @@ func handlerTapAbsXY(driver IDriver, rawX, rawY float64, opts ...option.ActionOp
 	return x, y, nil
 }
 
-func handlerDoubleTap(driver IDriver, rawX, rawY float64, opts ...option.ActionOption) (
+func preHandler_DoubleTap(driver IDriver, options *option.ActionOptions, rawX, rawY float64) (
 	x, y float64, err error) {
 
 	x, y, err = convertToAbsolutePoint(driver, rawX, rawY)
@@ -29,11 +67,10 @@ func handlerDoubleTap(driver IDriver, rawX, rawY float64, opts ...option.ActionO
 		return 0, 0, err
 	}
 
-	actionOptions := option.NewActionOptions(opts...)
-	x, y = actionOptions.ApplyTapOffset(x, y)
+	x, y = options.ApplyTapOffset(x, y)
 
 	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
+	if options.PreMarkOperation {
 		if markErr := MarkUIOperation(driver, ACTION_DoubleTapXY, []float64{x, y}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark double tap operation")
 		}
@@ -42,18 +79,17 @@ func handlerDoubleTap(driver IDriver, rawX, rawY float64, opts ...option.ActionO
 	return x, y, nil
 }
 
-func handlerDrag(driver IDriver, rawFomX, rawFromY, rawToX, rawToY float64, opts ...option.ActionOption) (
+func preHandler_Drag(driver IDriver, options *option.ActionOptions, rawFomX, rawFromY, rawToX, rawToY float64) (
 	fromX, fromY, toX, toY float64, err error) {
 
-	actionOptions := option.NewActionOptions(opts...)
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(driver, rawFomX, rawFromY, rawToX, rawToY)
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY = options.ApplySwipeOffset(fromX, fromY, toX, toY)
 
 	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
+	if options.PreMarkOperation {
 		if markErr := MarkUIOperation(driver, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
 		}
@@ -62,22 +98,47 @@ func handlerDrag(driver IDriver, rawFomX, rawFromY, rawToX, rawToY float64, opts
 	return fromX, fromY, toX, toY, nil
 }
 
-func handlerSwipe(driver IDriver, rawFomX, rawFromY, rawToX, rawToY float64, opts ...option.ActionOption) (
+func preHandler_Swipe(driver IDriver, options *option.ActionOptions, rawFomX, rawFromY, rawToX, rawToY float64) (
 	fromX, fromY, toX, toY float64, err error) {
 
-	actionOptions := option.NewActionOptions(opts...)
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(driver, rawFomX, rawFromY, rawToX, rawToY)
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}
-	fromX, fromY, toX, toY = actionOptions.ApplySwipeOffset(fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY = options.ApplySwipeOffset(fromX, fromY, toX, toY)
 
-	// mark UI operation
-	if actionOptions.MarkOperationEnabled {
+	// save screenshot before action and mark UI operation
+	if options.PreMarkOperation {
 		if markErr := MarkUIOperation(driver, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
 		}
 	}
 
 	return fromX, fromY, toX, toY, nil
+}
+
+func postHandler(driver IDriver, actionType ActionMethod, options *option.ActionOptions) error {
+	// save screenshot after action
+	if options.PostMarkOperation {
+		// get compressed screenshot buffer
+		compressBufSource, err := getScreenShotBuffer(driver)
+		if err != nil {
+			return err
+		}
+
+		// save compressed screenshot to file
+		timestamp := builtin.GenNameWithTimestamp("%d")
+		imagePath := filepath.Join(
+			config.GetConfig().ScreenShotsPath,
+			fmt.Sprintf("action_%s_post_%s.png", timestamp, actionType),
+		)
+
+		go func() {
+			err := saveScreenShot(compressBufSource, imagePath)
+			if err != nil {
+				log.Error().Err(err).Msg("save screenshot file failed")
+			}
+		}()
+	}
+	return nil
 }

@@ -60,7 +60,7 @@ func (dExt *XTDriver) PlanNextAction(text string, opts ...option.ActionOption) (
 		return nil, errors.New("LLM service is not initialized")
 	}
 
-	compressedBufSource, err := dExt.GetScreenShotBuffer()
+	compressedBufSource, err := getScreenShotBuffer(dExt.IDriver)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) er
 		return errors.New("LLM service is not initialized")
 	}
 
-	compressedBufSource, err := dExt.GetScreenShotBuffer()
+	compressedBufSource, err := getScreenShotBuffer(dExt.IDriver)
 	if err != nil {
 		return err
 	}

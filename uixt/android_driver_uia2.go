@@ -257,11 +257,12 @@ func (ud *UIA2Driver) Orientation() (orientation types.Orientation, err error) {
 
 func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("UIA2Driver.DoubleTap")
-	var err error
-	x, y, err = handlerDoubleTap(ud, x, y, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	x, y, err := preHandler_DoubleTap(ud, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(ud, ACTION_DoubleTapXY, actionOptions)
 
 	data := map[string]interface{}{
 		"actions": []interface{}{
@@ -298,14 +299,13 @@ func (ud *UIA2Driver) TapXY(x, y float64, opts ...option.ActionOption) error {
 func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("UIA2Driver.TapAbsXY")
 	// register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"))
-
-	var err error
-	x, y, err = handlerTapAbsXY(ud, x, y, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	x, y, err := preHandler_TapAbsXY(ud, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(ud, ACTION_TapAbsXY, actionOptions)
 
-	actionOptions := option.NewActionOptions(opts...)
 	duration := 100.0
 	if actionOptions.PressDuration > 0 {
 		duration = actionOptions.PressDuration * 1000 // convert to ms
@@ -362,11 +362,12 @@ func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.Action
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("UIA2Driver.Drag")
 
-	var err error
-	fromX, fromY, toX, toY, err = handlerDrag(ud, fromX, fromY, toX, toY, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY, err := preHandler_Drag(ud, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
+	defer postHandler(ud, ACTION_Drag, actionOptions)
 
 	data := map[string]interface{}{
 		"startX": fromX,
@@ -391,12 +392,14 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 	// register(postHandler, new Swipe("/wd/hub/session/:sessionId/touch/perform"))
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("UIA2Driver.Swipe")
-	var err error
-	fromX, fromY, toX, toY, err = handlerSwipe(ud, fromX, fromY, toX, toY)
+
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY, err := preHandler_Swipe(ud, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	actionOptions := option.NewActionOptions(opts...)
+	defer postHandler(ud, ACTION_Swipe, actionOptions)
+
 	duration := 200.0
 	if actionOptions.PressDuration > 0 {
 		duration = actionOptions.PressDuration * 1000 // ms

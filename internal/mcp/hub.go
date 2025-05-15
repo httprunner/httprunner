@@ -101,6 +101,7 @@ func (h *MCPHub) connectToServer(ctx context.Context, serverName string, config 
 	switch config.TransportType {
 	case "sse":
 		mcpClient, err = client.NewSSEMCPClient(config.URL)
+
 	case "stdio", "": // default to stdio
 		var env []string
 		for k, v := range config.Env {
@@ -108,22 +109,23 @@ func (h *MCPHub) connectToServer(ctx context.Context, serverName string, config 
 		}
 		mcpClient, err = client.NewStdioMCPClient(config.Command,
 			env, config.Args...)
+
+		// print MCP Server logs for stdio transport
+		stderr, _ := client.GetStderr(mcpClient)
+		go func() {
+			scanner := bufio.NewScanner(stderr)
+			for scanner.Scan() {
+				fmt.Fprintf(os.Stderr, "MCP Server %s: %s\n",
+					serverName, scanner.Text())
+			}
+		}()
+
 	default:
 		return fmt.Errorf("unsupported transport type: %s", config.TransportType)
 	}
 	if err != nil {
 		return fmt.Errorf("failed to create client: %w", err)
 	}
-
-	// print MCP Server logs
-	stderr := client.GetStderr(mcpClient)
-	go func() {
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			fmt.Fprintf(os.Stderr, "MCP Server %s: %s\n",
-				serverName, scanner.Text())
-		}
-	}()
 
 	// prepare client init request
 	initRequest := mcp.InitializeRequest{}

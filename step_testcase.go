@@ -80,7 +80,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	// merge & override extractors
 	config.Export = mergeSlices(s.StepExport, config.Export)
 
-	caseRunner, err := r.caseRunner.hrpRunner.NewCaseRunner(*copiedTestCase)
+	caseRunner, err := NewCaseRunner(*copiedTestCase, r.caseRunner.hrpRunner)
 	if err != nil {
 		log.Error().Err(err).Msg("create case runner failed")
 		return stepResult, err

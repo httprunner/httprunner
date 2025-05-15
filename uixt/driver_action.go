@@ -87,7 +87,7 @@ const (
 type MobileAction struct {
 	Method  ActionMethod          `json:"method,omitempty" yaml:"method,omitempty"`
 	Params  interface{}           `json:"params,omitempty" yaml:"params,omitempty"`
-	Fn      func()                `json:"-" yaml:"-"` // only used for function action, not serialized
+	Fn      func()                `json:"-" yaml:"-"` // used for function action, not serialized
 	Options *option.ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
 	option.ActionOptions
 }
@@ -306,6 +306,13 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 		} else if sd, ok := action.Params.(SleepConfig); ok {
 			sleepStrict(sd.StartTime, int64(sd.Seconds*1000))
 			return nil
+		} else if param, ok := action.Params.(string); ok {
+			seconds, err := builtin.ConvertToFloat64(param)
+			if err != nil {
+				return errors.Wrapf(err, "invalid sleep params: %v(%T)", action.Params, action.Params)
+			}
+			time.Sleep(time.Duration(seconds*1000) * time.Millisecond)
+			return nil
 		}
 		return fmt.Errorf("invalid sleep params: %v(%T)", action.Params, action.Params)
 	case ACTION_SleepMS:
@@ -335,9 +342,10 @@ func (dExt *XTDriver) DoAction(action MobileAction) (err error) {
 	case ACTION_ClosePopups:
 		return dExt.ClosePopupsHandler()
 	case ACTION_CallFunction:
-		fn := action.Fn
-		fn()
-		return nil
+		if funcDesc, ok := action.Params.(string); ok {
+			return dExt.Call(funcDesc, action.Fn, action.GetOptions()...)
+		}
+		return fmt.Errorf("invalid function description: %v", action.Params)
 	case ACTION_AIAction:
 		if prompt, ok := action.Params.(string); ok {
 			return dExt.AIAction(prompt, action.GetOptions()...)

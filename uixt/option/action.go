@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/rs/zerolog/log"
 )
 
 type ActionOptions struct {
@@ -72,10 +73,22 @@ func (o *ActionOptions) Options() []ActionOption {
 	case []interface{}:
 		// loaded from json case
 		// custom direction: [fromX, fromY, toX, toY]
-		sx, _ := builtin.Interface2Float64(v[0])
-		sy, _ := builtin.Interface2Float64(v[1])
-		ex, _ := builtin.Interface2Float64(v[2])
-		ey, _ := builtin.Interface2Float64(v[3])
+		sx, err := builtin.Interface2Float64(v[0])
+		if err != nil {
+			log.Error().Err(err).Interface("fromX", v[0]).Msg("convert float64 failed")
+		}
+		sy, err := builtin.Interface2Float64(v[1])
+		if err != nil {
+			log.Error().Err(err).Interface("fromY", v[1]).Msg("convert float64 failed")
+		}
+		ex, err := builtin.Interface2Float64(v[2])
+		if err != nil {
+			log.Error().Err(err).Interface("toX", v[2]).Msg("convert float64 failed")
+		}
+		ey, err := builtin.Interface2Float64(v[3])
+		if err != nil {
+			log.Error().Err(err).Interface("toY", v[3]).Msg("convert float64 failed")
+		}
 		options = append(options, WithCustomDirection(
 			sx, sy,
 			ex, ey,

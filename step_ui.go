@@ -447,12 +447,12 @@ func (s *StepMobile) ClosePopups(opts ...option.ActionOption) *StepMobile {
 	return s
 }
 
-func (s *StepMobile) Call(name string, fn func()) *StepMobile {
+func (s *StepMobile) Call(name string, fn func(), opts ...option.ActionOption) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method:  uixt.ACTION_CallFunction,
 		Params:  name, // function description
 		Fn:      fn,
-		Options: nil,
+		Options: option.NewActionOptions(opts...),
 	})
 	return s
 }

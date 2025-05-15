@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -228,7 +229,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	// run testcase one by one
 	for _, testcase := range testCases {
 		// each testcase has its own case runner
-		caseRunner, err := r.NewCaseRunner(*testcase)
+		caseRunner, err := NewCaseRunner(*testcase, r)
 		if err != nil {
 			log.Error().Err(err).Msg("[Run] init case runner failed")
 			return err
@@ -278,10 +279,14 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 
 // NewCaseRunner creates a new case runner for testcase.
 // each testcase has its own case runner
-func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
+// If the provided hrpRunner is nil, a default HRPRunner will be created and used.
+func NewCaseRunner(testcase TestCase, hrpRunner *HRPRunner) (*CaseRunner, error) {
+	if hrpRunner == nil {
+		hrpRunner = NewRunner(nil)
+	}
 	caseRunner := &CaseRunner{
 		TestCase:    testcase,
-		hrpRunner:   r,
+		hrpRunner:   hrpRunner,
 		parser:      NewParser(),
 		uixtDrivers: make(map[string]*uixt.XTDriver),
 	}
@@ -289,7 +294,7 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 
 	// init parser plugin
 	if config.PluginSetting != nil {
-		plugin, err := initPlugin(config.Path, r.venv, r.pluginLogOn)
+		plugin, err := initPlugin(config.Path, hrpRunner.venv, hrpRunner.pluginLogOn)
 		if err != nil {
 			return nil, errors.Wrap(err, "init plugin failed")
 		}
@@ -317,12 +322,12 @@ func (r *HRPRunner) NewCaseRunner(testcase TestCase) (*CaseRunner, error) {
 	}
 
 	// set request timeout in seconds
-	if config.RequestTimeout != 0 {
-		r.SetRequestTimeout(config.RequestTimeout)
+	if parsedConfig.RequestTimeout != 0 {
+		hrpRunner.SetRequestTimeout(parsedConfig.RequestTimeout)
 	}
 	// set testcase timeout in seconds
-	if config.CaseTimeout != 0 {
-		r.SetCaseTimeout(config.CaseTimeout)
+	if parsedConfig.CaseTimeout != 0 {
+		hrpRunner.SetCaseTimeout(parsedConfig.CaseTimeout)
 	}
 
 	caseRunner.TestCase.Config = parsedConfig
@@ -450,7 +455,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "init android XTDriver failed")
 		}
-		r.uixtDrivers[androidDeviceOptions.SerialNumber] = driverExt
+		r.RegisterUIXTDriver(androidDeviceOptions.SerialNumber, driverExt)
 	}
 	// parse iOS devices config
 	for _, iosDeviceOptions := range parsedConfig.IOS {
@@ -473,7 +478,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "init ios XTDriver failed")
 		}
-		r.uixtDrivers[iosDeviceOptions.UDID] = driverExt
+		r.RegisterUIXTDriver(iosDeviceOptions.UDID, driverExt)
 	}
 	// parse harmony devices config
 	for _, harmonyDeviceOptions := range parsedConfig.Harmony {
@@ -496,7 +501,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "init harmony XTDriver failed")
 		}
-		r.uixtDrivers[harmonyDeviceOptions.ConnectKey] = driverExt
+		r.RegisterUIXTDriver(harmonyDeviceOptions.ConnectKey, driverExt)
 	}
 	// parse browser devices config
 	for _, browserDeviceOptions := range parsedConfig.Browser {
@@ -509,24 +514,22 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "init browser device failed")
 		}
-		if err := device.Setup(); err != nil {
-			return nil, err
-		}
 		driver, err := device.NewDriver()
 		if err != nil {
-			return nil, err
-		}
-		if err := driver.Setup(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "init browser driver failed")
 		}
 		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
 		if err != nil {
 			return nil, errors.Wrap(err, "init browser XTDriver failed")
 		}
-		r.uixtDrivers[browserDeviceOptions.BrowserID] = driverExt
+		r.RegisterUIXTDriver(browserDeviceOptions.BrowserID, driverExt)
 	}
 
 	return parsedConfig, nil
+}
+
+func (r *CaseRunner) RegisterUIXTDriver(serial string, driver *uixt.XTDriver) {
+	r.uixtDrivers[serial] = driver
 }
 
 func (r *CaseRunner) parseDeviceConfig(device interface{}, configVariables map[string]interface{}) error {
@@ -705,14 +708,9 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 	log.Info().Str("step", stepName).Str("type", stepType).Msg("run step start")
 
 	// run times of step
-	loopTimes := step.Config().Loops
-	if loopTimes < 0 {
-		log.Warn().Int("loops", loopTimes).Msg("loop times should be positive, set to 1")
-		loopTimes = 1
-	} else if loopTimes == 0 {
-		loopTimes = 1
-	} else if loopTimes > 1 {
-		log.Info().Int("loops", loopTimes).Msg("run step with specified loop times")
+	loopTimes, err := r.getLoopTimes(step)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get loop times")
 	}
 
 	// run step with specified loop times
@@ -837,4 +835,40 @@ func (r *SessionRunner) GetSessionVariables() map[string]interface{} {
 
 func (r *SessionRunner) GetTransactions() map[string]map[TransactionType]time.Time {
 	return r.transactions
+}
+
+func (r *SessionRunner) getLoopTimes(step IStep) (int, error) {
+	loops := step.Config().Loops
+	if loops == nil {
+		// default run once
+		return 1, nil
+	}
+
+	loopTimes, err := loops.Value()
+	if err != nil {
+		parsed, err := r.caseRunner.parser.ParseString(
+			*loops.StringValue, step.Config().Variables)
+		if err != nil {
+			return 0, errors.Wrap(err, "failed to parse loop times")
+		}
+		switch v := parsed.(type) {
+		case int:
+			loopTimes = v
+		case string:
+			n, err := strconv.Atoi(v)
+			if err != nil {
+				return 0, errors.Wrap(err, "failed to parse loop times")
+			}
+			loopTimes = n
+		}
+	}
+	if loopTimes < 0 {
+		return 0, fmt.Errorf("loop times should be positive, got %d", loopTimes)
+	} else if loopTimes == 0 {
+		loopTimes = 1
+	} else if loopTimes > 1 {
+		log.Info().Int("loops", loopTimes).Msg("set multiple loop times")
+	}
+
+	return loopTimes, nil
 }

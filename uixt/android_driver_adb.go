@@ -307,11 +307,12 @@ func (ad *ADBDriver) TapXY(x, y float64, opts ...option.ActionOption) error {
 
 func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.TapAbsXY")
-	var err error
-	x, y, err = handlerTapAbsXY(ad, x, y, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	x, y, err := preHandler_TapAbsXY(ad, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(ad, ACTION_TapAbsXY, actionOptions)
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
@@ -325,11 +326,12 @@ func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 
 func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("ADBDriver.DoubleTap")
-	var err error
-	x, y, err = handlerDoubleTap(ad, x, y, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	x, y, err := preHandler_DoubleTap(ad, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(ad, ACTION_DoubleTapXY, actionOptions)
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
@@ -373,12 +375,13 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("ADBDriver.Drag")
 
-	fromX, fromY, toX, toY, err = handlerDrag(ad, fromX, fromY, toX, toY, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY, err = preHandler_Drag(ad, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
+	defer postHandler(ad, ACTION_Drag, actionOptions)
 
-	actionOptions := option.NewActionOptions(opts...)
 	duration := 200.0
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration * 1000
@@ -403,11 +406,13 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
 	log.Info().Float64("fromX", fromX).Float64("fromY", fromY).
 		Float64("toX", toX).Float64("toY", toY).Msg("ADBDriver.Swipe")
-	var err error
-	fromX, fromY, toX, toY, err = handlerSwipe(ad, fromX, fromY, toX, toY)
+
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY, err := preHandler_Swipe(ad, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
+	defer postHandler(ad, ACTION_Swipe, actionOptions)
 
 	// adb shell input swipe fromX fromY toX toY
 	_, err = ad.runShellCommand(

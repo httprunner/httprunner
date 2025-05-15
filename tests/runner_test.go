@@ -287,7 +287,7 @@ func TestSessionRunner(t *testing.T) {
 		},
 	}
 
-	caseRunner, _ := hrp.NewRunner(t).NewCaseRunner(testcase)
+	caseRunner, _ := hrp.NewCaseRunner(testcase, hrp.NewRunner(t))
 	sessionRunner := caseRunner.NewSession()
 	step := testcase.TestSteps[0]
 	if !assert.Equal(t, step.Config().Variables["varFoo"], "${max($a, $b)}") {

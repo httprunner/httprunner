@@ -48,28 +48,10 @@ func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) ai.OCRTexts {
 	})
 }
 
-func (dExt *XTDriver) GetScreenShotBuffer() (compressedBufSource *bytes.Buffer, err error) {
-	// take screenshot
-	bufSource, err := dExt.ScreenShot()
-	if err != nil {
-		return nil, errors.Wrapf(code.DeviceScreenShotError,
-			"take screenshot failed %v", err)
-	}
-
-	// compress screenshot
-	compressBufSource, err := compressImageBuffer(bufSource)
-	if err != nil {
-		return nil, errors.Wrapf(code.DeviceScreenShotError,
-			"compress screenshot failed %v", err)
-	}
-
-	return compressBufSource, nil
-}
-
 // GetScreenResult takes a screenshot, returns the image recognition result
 func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
 	// get compressed screenshot buffer
-	compressBufSource, err := dExt.GetScreenShotBuffer()
+	compressBufSource, err := getScreenShotBuffer(dExt.IDriver)
 	if err != nil {
 		return nil, err
 	}
@@ -220,6 +202,25 @@ func (dExt *XTDriver) FindUIResult(opts ...option.ActionOption) (uiResult ai.UIR
 	return
 }
 
+// getScreenShotBuffer takes a screenshot, returns the compressed image buffer
+func getScreenShotBuffer(driver IDriver) (compressedBufSource *bytes.Buffer, err error) {
+	// take screenshot
+	bufSource, err := driver.ScreenShot()
+	if err != nil {
+		return nil, errors.Wrapf(code.DeviceScreenShotError,
+			"take screenshot failed %v", err)
+	}
+
+	// compress screenshot
+	compressBufSource, err := compressImageBuffer(bufSource)
+	if err != nil {
+		return nil, errors.Wrapf(code.DeviceScreenShotError,
+			"compress screenshot failed %v", err)
+	}
+
+	return compressBufSource, nil
+}
+
 // saveScreenShot saves compressed image file with file name
 func saveScreenShot(raw *bytes.Buffer, screenshotPath string) error {
 	// notice: screenshot data is a stream, so we need to copy it to a new buffer
@@ -314,17 +315,16 @@ func MarkUIOperation(driver IDriver, actionType ActionMethod, actionCoordinates 
 	}
 
 	// create screenshot save path
-	timestamp := builtin.GenNameWithTimestamp("action_%d")
-	var imagePath string
+	timestamp := builtin.GenNameWithTimestamp("%d")
+	imagePath := filepath.Join(
+		config.GetConfig().ScreenShotsPath,
+		fmt.Sprintf("action_%s_pre_%s.png", timestamp, actionType),
+	)
 
 	if actionType == ACTION_TapAbsXY || actionType == ACTION_DoubleTapXY {
 		if len(actionCoordinates) != 2 {
 			return fmt.Errorf("invalid tap action coordinates: %v", actionCoordinates)
 		}
-		imagePath = filepath.Join(
-			config.GetConfig().ScreenShotsPath,
-			fmt.Sprintf("%s_%s.png", timestamp, actionType),
-		)
 		x, y := actionCoordinates[0], actionCoordinates[1]
 		point := image.Point{X: int(x), Y: int(y)}
 		err = SaveImageWithCircleMarker(compressedBufSource, point, imagePath)
@@ -332,10 +332,6 @@ func MarkUIOperation(driver IDriver, actionType ActionMethod, actionCoordinates 
 		if len(actionCoordinates) != 4 {
 			return fmt.Errorf("invalid swipe action coordinates: %v", actionCoordinates)
 		}
-		imagePath = filepath.Join(
-			config.GetConfig().ScreenShotsPath,
-			fmt.Sprintf("%s_%s.png", timestamp, actionType),
-		)
 		fromX, fromY := actionCoordinates[0], actionCoordinates[1]
 		toX, toY := actionCoordinates[2], actionCoordinates[3]
 		from := image.Point{X: int(fromX), Y: int(fromY)}

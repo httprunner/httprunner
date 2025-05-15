@@ -114,17 +114,19 @@ func (wd *BrowserDriver) Setup() error {
 }
 
 func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.ActionOption) (err error) {
-	fromX, fromY, toX, toY, err = handlerDrag(wd, fromX, fromY, toX, toY, options...)
+	actionOptions := option.NewActionOptions(options...)
+	fromX, fromY, toX, toY, err = preHandler_Drag(wd, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
+	defer postHandler(wd, ACTION_Drag, actionOptions)
+
 	data := map[string]interface{}{
 		"from_x": fromX,
 		"from_y": fromY,
 		"to_x":   toX,
 		"to_y":   toY,
 	}
-	actionOptions := option.NewActionOptions(options...)
 
 	if actionOptions.Duration > 0 {
 		data["duration"] = actionOptions.Duration
@@ -511,13 +513,13 @@ func (wd *BrowserDriver) Tap(x, y float64, options ...option.ActionOption) error
 }
 
 func (wd *BrowserDriver) TapFloat(x, y float64, opts ...option.ActionOption) error {
-	var err error
-	x, y, err = handlerTapAbsXY(wd, x, y, opts...)
+	actionOptions := option.NewActionOptions(opts...)
+	x, y, err := preHandler_TapAbsXY(wd, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(wd, ACTION_TapAbsXY, actionOptions)
 
-	actionOptions := option.NewActionOptions(opts...)
 	duration := 0.1
 	if actionOptions.Duration > 0 {
 		duration = actionOptions.Duration
@@ -535,11 +537,13 @@ func (wd *BrowserDriver) TapFloat(x, y float64, opts ...option.ActionOption) err
 
 // DoubleTap Sends a double tap event at the coordinate.
 func (wd *BrowserDriver) DoubleTap(x, y float64, options ...option.ActionOption) error {
-	var err error
-	x, y, err = handlerDoubleTap(wd, x, y, options...)
+	actionOptions := option.NewActionOptions(options...)
+	x, y, err := preHandler_DoubleTap(wd, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
+	defer postHandler(wd, ACTION_DoubleTapXY, actionOptions)
+
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,

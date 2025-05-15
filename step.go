@@ -1,6 +1,9 @@
 package hrp
 
-import "github.com/httprunner/httprunner/v5/uixt"
+import (
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/types"
+)
 
 type StepType string
 
@@ -31,7 +34,7 @@ type StepConfig struct {
 	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
 	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
 	StepExport    []string               `json:"export,omitempty" yaml:"export,omitempty"`
-	Loops         int                    `json:"loops,omitempty" yaml:"loops,omitempty"`
+	Loops         *types.IntOrString     `json:"loops,omitempty" yaml:"loops,omitempty"`
 	IgnorePopup   bool                   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
 }
 
