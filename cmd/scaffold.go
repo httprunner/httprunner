@@ -12,8 +12,8 @@ import (
 var CmdScaffold = &cobra.Command{
 	Use:     "startproject $project_name",
 	Aliases: []string{"scaffold"},
-	Short:   "create a scaffold project",
-	Args:    cobra.ExactValidArgs(1),
+	Short:   "Create a scaffold project",
+	Args:    cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !ignorePlugin && !genPythonPlugin && !genGoPlugin {
 			return errors.New("please specify function plugin type")

@@ -1,21 +1,22 @@
-## hrp server
+## hrp mcphost
 
-Start hrp server
+Export MCP server tools to JSON description
 
 ### Synopsis
 
-Start hrp server, call httprunner by HTTP
+Export all tools from MCP servers to JSON description.
+The tools will be exported with their descriptions, parameters, and return values.
 
 ```
-hrp server start [flags]
+hrp mcphost [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help                help for server
+      --dump string         path to save the exported tools JSON file (default "tools_records.json")
+  -h, --help                help for mcphost
   -c, --mcp-config string   path to the MCP config file (default "$HOME/.hrp/mcp.json")
-  -p, --port int            port to run the server on (default 8082)
 ```
 
 ### Options inherited from parent commands

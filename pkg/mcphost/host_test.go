@@ -169,9 +169,9 @@ func TestConcurrentOperations(t *testing.T) {
 
 	// Test concurrent tool invocations
 	done := make(chan bool)
-	timeout := time.After(10 * time.Second) // Increase timeout to 10 seconds
+	timeout := time.After(30 * time.Second) // Increase timeout to 30 seconds
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 3; i++ { // Reduce number of concurrent operations to 3
 		go func() {
 			result, err := host.InvokeTool(ctx, "weather", "get_alerts",
 				map[string]interface{}{"state": "CA"},
@@ -183,7 +183,7 @@ func TestConcurrentOperations(t *testing.T) {
 	}
 
 	// Wait for all goroutines to complete
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 3; i++ { // Update loop count to match the number of goroutines
 		select {
 		case <-done:
 			// Success

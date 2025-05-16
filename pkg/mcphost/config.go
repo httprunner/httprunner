@@ -99,6 +99,7 @@ func LoadMCPConfig(configPath string) (*MCPConfig, error) {
 		}
 		configPath = filepath.Join(homeDir, ".mcp.json")
 	}
+	configPath = os.ExpandEnv(configPath)
 
 	// Check if config file exists
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {

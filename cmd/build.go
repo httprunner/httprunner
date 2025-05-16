@@ -12,8 +12,8 @@ import (
 
 var CmdBuild = &cobra.Command{
 	Use:   "build $path ...",
-	Short: "build plugin for testing",
-	Long:  `build python/go plugin for testing`,
+	Short: "Build plugin for testing",
+	Long:  `Build python/go plugin for testing`,
 	Example: `  $ hrp build plugin/debugtalk.go
   $ hrp build plugin/debugtalk.py`,
 	Args: cobra.ExactArgs(1),
