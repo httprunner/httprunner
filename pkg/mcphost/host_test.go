@@ -56,11 +56,16 @@ func TestGetTools(t *testing.T) {
 	ctx := context.Background()
 	tools := host.GetTools(ctx)
 	assert.Equal(t, 2, len(tools))
-	assert.Contains(t, tools, "weather")
-	assert.Contains(t, tools, "filesystem")
 
 	// Verify weather tools
-	weatherTools := tools["weather"]
+	var weatherTools MCPTools
+	for _, tool := range tools {
+		if tool.ServerName == "weather" {
+			weatherTools = tool
+			break
+		}
+	}
+
 	assert.NoError(t, weatherTools.Err)
 	assert.NotEmpty(t, weatherTools.Tools)
 
@@ -207,9 +212,18 @@ func TestDisabledServer(t *testing.T) {
 	ctx := context.Background()
 	tools := host.GetTools(ctx)
 	assert.Equal(t, 2, len(tools))
-	assert.Contains(t, tools, "filesystem")
-	assert.Contains(t, tools, "weather")
-	assert.NotContains(t, tools, "disabled_server")
+
+	// Verify enabled servers in tools list
+	var foundFilesystem, foundWeather bool
+	for _, serverTools := range tools {
+		if serverTools.ServerName == "filesystem" {
+			foundFilesystem = true
+		} else if serverTools.ServerName == "weather" {
+			foundWeather = true
+		}
+	}
+	assert.True(t, foundFilesystem, "filesystem server not found in tools")
+	assert.True(t, foundWeather, "weather server not found in tools")
 
 	// Test getting tool from disabled server
 	tool, err := host.GetTool(ctx, "disabled_server", "some_tool")

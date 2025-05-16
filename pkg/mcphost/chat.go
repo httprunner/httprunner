@@ -24,16 +24,6 @@ import (
 	"golang.org/x/term"
 )
 
-// Chat represents a chat session with LLM
-type Chat struct {
-	model        model.ToolCallingChatModel
-	systemPrompt string
-	history      ai.ConversationHistory
-	renderer     *glamour.TermRenderer
-	host         *MCPHost
-	tools        []*schema.ToolInfo
-}
-
 // Tokyo Night theme colors
 var (
 	tokyoPurple = lipgloss.Color("99")  // #9d7cd8
@@ -114,20 +104,14 @@ func (h *MCPHost) NewChat(ctx context.Context, systemPromptFile string) (*Chat, 
 	}, nil
 }
 
-// loadSystemPrompt loads the system prompt from a JSON file
-func loadSystemPrompt(filePath string) (string, error) {
-	// Check if file exists
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return "", fmt.Errorf("system prompt file does not exist: %s", filePath)
-	}
-
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return "", fmt.Errorf("error reading prompt file: %v", err)
-	}
-
-	// Read file content directly as prompt
-	return string(data), nil
+// Chat represents a chat session with LLM
+type Chat struct {
+	model        model.ToolCallingChatModel
+	systemPrompt string
+	history      ai.ConversationHistory
+	renderer     *glamour.TermRenderer
+	host         *MCPHost
+	tools        []*schema.ToolInfo
 }
 
 // Start starts the chat session
@@ -335,23 +319,39 @@ func (c *Chat) showTools() {
 	width := getTerminalWidth()
 	contentWidth := width - 12
 	l := list.New().EnumeratorStyle(lipgloss.NewStyle().Foreground(tokyoPurple).MarginRight(1))
-	for server, tools := range results {
+	for _, serverTools := range results {
 		serverList := list.New().EnumeratorStyle(lipgloss.NewStyle().Foreground(tokyoCyan).MarginRight(1))
-		if tools.Err != nil {
-			serverList.Item(contentStyle.Render(fmt.Sprintf("Error: %v", tools.Err)))
-		} else if len(tools.Tools) == 0 {
+		if serverTools.Err != nil {
+			serverList.Item(contentStyle.Render(fmt.Sprintf("Error: %v", serverTools.Err)))
+		} else if len(serverTools.Tools) == 0 {
 			serverList.Item(contentStyle.Render("No tools available."))
 		} else {
-			for _, tool := range tools.Tools {
+			for _, tool := range serverTools.Tools {
 				descStyle := lipgloss.NewStyle().Foreground(tokyoFg).Width(contentWidth).Align(lipgloss.Left)
 				toolDesc := list.New().EnumeratorStyle(lipgloss.NewStyle().Foreground(tokyoGreen).MarginRight(1)).Item(descStyle.Render(tool.Description))
 				serverList.Item(toolNameStyle.Render(tool.Name)).Item(toolDesc)
 			}
 		}
-		l.Item(server).Item(serverList)
+		l.Item(serverTools.ServerName).Item(serverList)
 	}
 	containerStyle := lipgloss.NewStyle().Margin(2).Width(width)
 	fmt.Print("\n" + containerStyle.Render(l.String()) + "\n")
+}
+
+// loadSystemPrompt loads the system prompt from a JSON file
+func loadSystemPrompt(filePath string) (string, error) {
+	// Check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return "", fmt.Errorf("system prompt file does not exist: %s", filePath)
+	}
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("error reading prompt file: %v", err)
+	}
+
+	// Read file content directly as prompt
+	return string(data), nil
 }
 
 func readInput() (string, error) {

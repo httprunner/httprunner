@@ -109,20 +109,20 @@ func extractDocStringInfo(docstring string) DocStringInfo {
 	return info
 }
 
-// ConvertToolsToRecords converts map[string]MCPTools to a list of database records
-func ConvertToolsToRecords(toolsMap map[string]MCPTools) []MCPToolRecord {
+// ConvertToolsToRecords converts []MCPTools to a list of database records
+func ConvertToolsToRecords(tools []MCPTools) []MCPToolRecord {
 	var records []MCPToolRecord
 	now := time.Now()
 
-	for serverName, mcpTools := range toolsMap {
+	for _, mcpTools := range tools {
 		if mcpTools.Err != nil {
-			log.Error().Str("server", serverName).Err(mcpTools.Err).Msg("skip tools conversion due to error")
+			log.Error().Str("server", mcpTools.ServerName).Err(mcpTools.Err).Msg("skip tools conversion due to error")
 			continue
 		}
 
 		for _, tool := range mcpTools.Tools {
 			// Generate unique ID by combining server name and tool name
-			id := fmt.Sprintf("%s_%s", serverName, tool.Name)
+			id := fmt.Sprintf("%s_%s", mcpTools.ServerName, tool.Name)
 
 			// Extract docstring information
 			info := extractDocStringInfo(tool.Description)
@@ -142,7 +142,7 @@ func ConvertToolsToRecords(toolsMap map[string]MCPTools) []MCPToolRecord {
 
 			record := MCPToolRecord{
 				ToolID:        id,
-				ServerName:    serverName,
+				ServerName:    mcpTools.ServerName,
 				ToolName:      tool.Name,
 				Description:   info.Description,
 				Parameters:    paramsJSON,

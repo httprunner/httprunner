@@ -125,15 +125,15 @@ func TestExtractDocStringInfo(t *testing.T) {
 
 func TestConvertToolsToRecords(t *testing.T) {
 	tests := []struct {
-		name     string
-		toolsMap map[string]MCPTools
-		want     []MCPToolRecord
+		name  string
+		tools []MCPTools
+		want  []MCPToolRecord
 	}{
 		{
 			name: "convert weather tool",
-			toolsMap: map[string]MCPTools{
-				"weather": {
-					Name: "weather",
+			tools: []MCPTools{
+				{
+					ServerName: "weather",
 					Tools: []mcp.Tool{
 						{
 							Name: "get_alerts",
@@ -163,9 +163,9 @@ func TestConvertToolsToRecords(t *testing.T) {
 		},
 		{
 			name: "convert multiple tools",
-			toolsMap: map[string]MCPTools{
-				"ui": {
-					Name: "ui",
+			tools: []MCPTools{
+				{
+					ServerName: "ui",
 					Tools: []mcp.Tool{
 						{
 							Name: "swipe",
@@ -205,7 +205,7 @@ func TestConvertToolsToRecords(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ConvertToolsToRecords(tt.toolsMap)
+			got := ConvertToolsToRecords(tt.tools)
 
 			// Compare each record
 			require.Equal(t, len(tt.want), len(got))

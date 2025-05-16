@@ -21,9 +21,9 @@ import (
 
 // MCPTools represents tools from a single MCP server
 type MCPTools struct {
-	Name  string
-	Tools []mcp.Tool
-	Err   error
+	ServerName string
+	Tools      []mcp.Tool
+	Err        error
 }
 
 // MCPHost manages MCP server connections and tools
@@ -181,12 +181,12 @@ func (h *MCPHost) connectToServer(ctx context.Context, serverName string, config
 	return nil
 }
 
-// GetTools fetches available tools from all connected MCP servers
-func (h *MCPHost) GetTools(ctx context.Context) map[string]MCPTools {
+// GetTools returns all tools from all MCP servers
+func (h *MCPHost) GetTools(ctx context.Context) []MCPTools {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	results := make(map[string]MCPTools)
+	var results []MCPTools
 
 	for serverName, conn := range h.connections {
 		if conn.Config.IsDisabled() {
@@ -195,19 +195,15 @@ func (h *MCPHost) GetTools(ctx context.Context) map[string]MCPTools {
 
 		listResults, err := conn.Client.ListTools(ctx, mcp.ListToolsRequest{})
 		if err != nil {
-			results[serverName] = MCPTools{
-				Name:  serverName,
-				Tools: nil,
-				Err:   fmt.Errorf("failed to get tools: %w", err),
-			}
+			log.Error().Err(err).Str("server", serverName).Msg("failed to get tools")
 			continue
 		}
 
-		results[serverName] = MCPTools{
-			Name:  serverName,
-			Tools: listResults.Tools,
-			Err:   nil,
-		}
+		results = append(results, MCPTools{
+			ServerName: serverName,
+			Tools:      listResults.Tools,
+			Err:        nil,
+		})
 	}
 
 	return results
@@ -218,14 +214,28 @@ func (h *MCPHost) GetTool(ctx context.Context, serverName, toolName string) (*mc
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	mcpTools, exists := h.GetTools(ctx)[serverName]
-	if !exists {
+	// Get all tools
+	results := h.GetTools(ctx)
+
+	// Find the server's tools
+	var serverTools MCPTools
+	found := false
+	for _, tools := range results {
+		if tools.ServerName == serverName {
+			serverTools = tools
+			found = true
+			break
+		}
+	}
+	if !found {
 		return nil, fmt.Errorf("no connection found for server %s", serverName)
-	} else if mcpTools.Err != nil {
-		return nil, mcpTools.Err
+	}
+	if serverTools.Err != nil {
+		return nil, serverTools.Err
 	}
 
-	for _, tool := range mcpTools.Tools {
+	// Find the specific tool
+	for _, tool := range serverTools.Tools {
 		if tool.Name == toolName {
 			return &tool, nil
 		}
@@ -308,15 +318,14 @@ func (h *MCPHost) CloseServers() error {
 	return nil
 }
 
-// GetEinoTool returns an eino tool from the MCP server
+// GetEinoTool returns an eino tool for the given server and tool name
 func (h *MCPHost) GetEinoTool(ctx context.Context, serverName, toolName string) (tool.BaseTool, error) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	// filter MCP server by serverName
-	conn, exists := h.connections[serverName]
-	if !exists {
-		return nil, fmt.Errorf("no connection found for server %s", serverName)
+	conn, ok := h.connections[serverName]
+	if !ok {
+		return nil, fmt.Errorf("server not found: %s", serverName)
 	}
 
 	if conn.Config.IsDisabled() {
@@ -340,33 +349,33 @@ func (h *MCPHost) GetEinoTool(ctx context.Context, serverName, toolName string) 
 
 // GetEinoToolInfos convert MCP tools to eino tool infos
 func (h *MCPHost) GetEinoToolInfos(ctx context.Context) ([]*schema.ToolInfo, error) {
-	var allTools []*schema.ToolInfo
-	for serverName, serverTools := range h.GetTools(ctx) {
+	results := h.GetTools(ctx)
+	if len(results) == 0 {
+		return nil, fmt.Errorf("no MCP servers loaded")
+	}
+
+	var tools []*schema.ToolInfo
+	for _, serverTools := range results {
 		if serverTools.Err != nil {
-			log.Error().
-				Err(serverTools.Err).
-				Str("server", serverName).
-				Msg("Error fetching tools")
+			log.Error().Err(serverTools.Err).Str("server", serverTools.ServerName).Msg("failed to get tools")
 			continue
 		}
+
 		for _, tool := range serverTools.Tools {
-			einoTool, err := h.GetEinoTool(ctx, serverName, tool.Name)
+			einoTool, err := h.GetEinoTool(ctx, serverTools.ServerName, tool.Name)
 			if err != nil {
-				log.Error().Err(err).Msg("failed to get eino tool")
+				log.Error().Err(err).Str("server", serverTools.ServerName).Str("tool", tool.Name).Msg("failed to get eino tool")
 				continue
 			}
 			einoToolInfo, err := einoTool.Info(ctx)
 			if err != nil {
-				log.Error().Err(err).Msg("failed to get eino tool info")
+				log.Error().Err(err).Str("server", serverTools.ServerName).Str("tool", tool.Name).Msg("failed to get eino tool info")
 				continue
 			}
-			allTools = append(allTools, einoToolInfo)
+			tools = append(tools, einoToolInfo)
 		}
-		log.Info().
-			Str("server", serverName).
-			Int("count", len(serverTools.Tools)).
-			Msg("eino tool infos loaded")
 	}
 
-	return allTools, nil
+	log.Info().Int("count", len(tools)).Msg("eino tool infos loaded")
+	return tools, nil
 }
