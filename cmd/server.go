@@ -17,7 +17,7 @@ var CmdServer = &cobra.Command{
 		router := server.NewRouter()
 		mcpConfigPath = os.ExpandEnv(mcpConfigPath)
 		if mcpConfigPath != "" {
-			router.InitMCPHub(mcpConfigPath)
+			router.InitMCPHost(mcpConfigPath)
 		}
 		return router.Run(port)
 	},

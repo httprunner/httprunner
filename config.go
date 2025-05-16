@@ -42,6 +42,7 @@ type TConfig struct {
 	Weight            int                            `json:"weight,omitempty" yaml:"weight,omitempty"`
 	Path              string                         `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
 	PluginSetting     *PluginConfig                  `json:"plugin,omitempty" yaml:"plugin,omitempty"` // plugin config
+	MCPConfigPath     string                         `json:"mcp_config_path,omitempty" yaml:"mcp_config_path,omitempty"`
 	IgnorePopup       bool                           `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
 	LLMService        option.LLMServiceType          `json:"llm_service,omitempty" yaml:"llm_service,omitempty"`
 	CVService         option.CVServiceType           `json:"cv_service,omitempty" yaml:"cv_service,omitempty"`

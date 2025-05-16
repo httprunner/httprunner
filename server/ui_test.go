@@ -74,7 +74,7 @@ func TestTapHandler(t *testing.T) {
 
 func TestInvokeToolHandler(t *testing.T) {
 	router := NewRouter()
-	router.InitMCPHub("../internal/mcp/testdata/test.mcp.json")
+	router.InitMCPHost("../internal/mcp/testdata/test.mcp.json")
 
 	tests := []struct {
 		name       string

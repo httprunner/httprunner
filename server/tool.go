@@ -13,8 +13,8 @@ type ToolRequest struct {
 }
 
 func (r *Router) invokeToolHandler(c *gin.Context) {
-	if r.mcpHub == nil {
-		RenderError(c, errors.New("mcp hub not initialized"))
+	if r.mcpHost == nil {
+		RenderError(c, errors.New("mcp host not initialized"))
 		return
 	}
 
@@ -28,7 +28,7 @@ func (r *Router) invokeToolHandler(c *gin.Context) {
 	req.Args["platform"] = c.Param("platform")
 	req.Args["serial"] = c.Param("serial")
 
-	result, err := r.mcpHub.InvokeTool(c.Request.Context(),
+	result, err := r.mcpHost.InvokeTool(c.Request.Context(),
 		req.ServerName, req.ToolName, req.Args)
 	if err != nil {
 		RenderError(c, err)

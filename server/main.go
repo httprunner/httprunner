@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/internal/mcp"
+	"github.com/httprunner/httprunner/v5/pkg/mcphost"
 	"github.com/httprunner/httprunner/v5/uixt"
 
 	"github.com/gin-gonic/gin"
@@ -22,23 +22,23 @@ func NewRouter() *Router {
 
 type Router struct {
 	*gin.Engine
-	mcpHub *mcp.MCPHub
+	mcpHost *mcphost.MCPHost
 }
 
-func (r *Router) InitMCPHub(configPath string) error {
-	mcpHub, err := mcp.NewMCPHub(configPath)
+func (r *Router) InitMCPHost(configPath string) error {
+	mcpHost, err := mcphost.NewMCPHost(configPath)
 	if err != nil {
-		log.Error().Err(err).Msg("init MCP hub failed")
+		log.Error().Err(err).Msg("init MCP host failed")
 		return err
 	}
 
-	err = mcpHub.InitServers(context.Background())
+	err = mcpHost.InitServers(context.Background())
 	if err != nil {
 		log.Error().Err(err).Msg("init MCP servers failed")
 		return err
 	}
 
-	r.mcpHub = mcpHub
+	r.mcpHost = mcpHost
 	return nil
 }
 

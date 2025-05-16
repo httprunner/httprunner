@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"context"
 	"crypto/tls"
 	_ "embed"
 	"fmt"
@@ -28,6 +29,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/internal/version"
+	"github.com/httprunner/httprunner/v5/pkg/mcphost"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
@@ -313,6 +315,22 @@ func NewCaseRunner(testcase TestCase, hrpRunner *HRPRunner) (*CaseRunner, error)
 		log.Info().Str("pluginPath", pluginPath).
 			Str("pluginType", config.PluginSetting.Type).
 			Msg("plugin info loaded")
+	}
+
+	// init MCP servers
+	if config.MCPConfigPath != "" {
+		mcpHost, err := mcphost.NewMCPHost(config.MCPConfigPath)
+		if err != nil {
+			log.Error().Err(err).Msg("init MCP hub failed")
+			return nil, err
+		}
+		err = mcpHost.InitServers(context.Background())
+		if err != nil {
+			log.Error().Err(err).Msg("init MCP servers failed")
+			return nil, err
+		}
+		caseRunner.parser.MCPHost = mcpHost
+		log.Info().Str("mcpConfigPath", config.MCPConfigPath).Msg("mcp server loaded")
 	}
 
 	// parse testcase config
