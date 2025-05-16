@@ -24,17 +24,17 @@ func TestNewChat(t *testing.T) {
 	assert.NotNil(t, chat.tools)
 }
 
-// func TestRunPromptWithNoToolCall(t *testing.T) {
-// 	host, err := NewMCPHost("./testdata/test.mcp.json")
-// 	require.NoError(t, err)
+func TestRunPromptWithNoToolCall(t *testing.T) {
+	host, err := NewMCPHost("./testdata/test.mcp.json")
+	require.NoError(t, err)
 
-// 	chat, err := host.NewChat(context.Background(), "")
-// 	assert.NoError(t, err)
+	chat, err := host.NewChat(context.Background(), "")
+	assert.NoError(t, err)
 
-// 	err = chat.runPrompt("hi")
-// 	assert.NoError(t, err)
-// 	assert.True(t, len(chat.history) > 1)
-// }
+	err = chat.runPrompt("hi")
+	assert.NoError(t, err)
+	assert.True(t, len(chat.history) > 1)
+}
 
 // func TestRunPromptWithToolCall(t *testing.T) {
 // 	host, err := NewMCPHost("./testdata/test.mcp.json")

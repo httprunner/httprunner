@@ -311,9 +311,6 @@ func (p *Parser) CallMCPTool(ctx context.Context, serverName,
 		return nil, fmt.Errorf("mcphost is not initialized")
 	}
 
-	tools := p.MCPHost.GetTools(ctx)
-	log.Warn().Interface("tools", tools).Msg("tools")
-
 	result, err := p.MCPHost.InvokeTool(ctx, serverName, funcName, arguments)
 	if err != nil {
 		return nil, errors.Wrapf(err, "invoke tool %s/%s failed", serverName, funcName)

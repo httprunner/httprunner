@@ -1,7 +1,6 @@
 package mcphost
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/glamour/styles"
+	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/huh/spinner"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/list"
@@ -24,8 +24,8 @@ import (
 	"golang.org/x/term"
 )
 
-// Tokyo Night theme colors
 var (
+	// Tokyo Night theme colors
 	tokyoPurple = lipgloss.Color("99")  // #9d7cd8
 	tokyoCyan   = lipgloss.Color("73")  // #7dcfff
 	tokyoBlue   = lipgloss.Color("111") // #7aa2f7
@@ -35,6 +35,18 @@ var (
 	tokyoFg     = lipgloss.Color("189") // #c0caf5
 	tokyoGray   = lipgloss.Color("237") // #3b4261
 	tokyoBg     = lipgloss.Color("234") // #1a1b26
+
+	promptStyle = lipgloss.NewStyle().
+			Foreground(tokyoBlue).
+			PaddingLeft(2)
+
+	responseStyle = lipgloss.NewStyle().
+			Foreground(tokyoFg).
+			PaddingLeft(2)
+
+	errorStyle = lipgloss.NewStyle().
+			Foreground(tokyoRed).
+			Bold(true)
 
 	toolNameStyle = lipgloss.NewStyle().
 			Foreground(tokyoCyan).
@@ -127,10 +139,25 @@ func (c *Chat) Start() error {
 	c.showWelcome()
 
 	for {
-		fmt.Print("\nYou: ")
-		input, err := readInput()
+		var input string
+		err := huh.NewForm(huh.NewGroup(huh.NewText().
+			Title("Enter your prompt (Type /help for commands, Ctrl+C to quit)").
+			Value(&input).
+			CharLimit(5000)),
+		).WithWidth(getTerminalWidth()).
+			WithTheme(huh.ThemeCharm()).
+			Run()
 		if err != nil {
-			return err
+			// Check if it's a user abort (Ctrl+C)
+			if errors.Is(err, huh.ErrUserAborted) {
+				fmt.Println("\nGoodbye!")
+				return nil // Exit cleanly
+			}
+			return err // Return other errors normally
+		}
+
+		if input == "" {
+			continue
 		}
 
 		// Handle commands
@@ -150,6 +177,8 @@ func (c *Chat) Start() error {
 
 // runPrompt run prompt with MCP tools
 func (c *Chat) runPrompt(prompt string) error {
+	fmt.Printf("\n%s\n", promptStyle.Render("You: "+prompt))
+
 	// Create user message
 	userMsg := &schema.Message{
 		Role:    schema.User,
@@ -158,8 +187,12 @@ func (c *Chat) runPrompt(prompt string) error {
 	c.history = append(c.history, userMsg)
 	for {
 		ctx := context.Background()
-		spinner.New().Type(spinner.Dots).Title("Thinking...").Run()
-		resp, err := c.model.Generate(ctx, c.history)
+		var resp *schema.Message
+		var err error
+		action := func() {
+			resp, err = c.model.Generate(ctx, c.history)
+		}
+		_ = spinner.New().Title("Thinking...").Action(action).Run()
 		if err != nil {
 			return err
 		}
@@ -214,10 +247,11 @@ func (c *Chat) runPrompt(prompt string) error {
 
 		// Render and display response
 		if rendered, err := c.renderer.Render(resp.Content); err == nil {
-			fmt.Printf("\nAssistant: %s\n", rendered)
+			fmt.Printf("\n%s", responseStyle.Render("Assistant: "+rendered))
 		} else {
-			fmt.Printf("\nAssistant: %s\n", resp.Content)
+			fmt.Printf("\n%s", errorStyle.Render("Assistant: "+resp.Content))
 		}
+
 		return nil
 	}
 }
@@ -328,7 +362,9 @@ func (c *Chat) showTools() {
 		} else {
 			for _, tool := range serverTools.Tools {
 				descStyle := lipgloss.NewStyle().Foreground(tokyoFg).Width(contentWidth).Align(lipgloss.Left)
-				toolDesc := list.New().EnumeratorStyle(lipgloss.NewStyle().Foreground(tokyoGreen).MarginRight(1)).Item(descStyle.Render(tool.Description))
+				toolDesc := list.New().EnumeratorStyle(
+					lipgloss.NewStyle().Foreground(tokyoGreen).MarginRight(1),
+				).Item(descStyle.Render(tool.Description))
 				serverList.Item(toolNameStyle.Render(tool.Name)).Item(toolDesc)
 			}
 		}
@@ -352,15 +388,6 @@ func loadSystemPrompt(filePath string) (string, error) {
 
 	// Read file content directly as prompt
 	return string(data), nil
-}
-
-func readInput() (string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	input, err := reader.ReadString('\n')
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(input), nil
 }
 
 func getTerminalWidth() int {
