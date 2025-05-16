@@ -22,6 +22,11 @@
 			"env": {
 				"ABC": "123"
 			}
+		},
+		"disabled_server": {
+			"command": "echo",
+			"args": ["disabled"],
+			"disabled": true
 		}
 	}
 }
