@@ -11,39 +11,40 @@ import (
 // CmdMCPHost represents the mcphost command
 var CmdMCPHost = &cobra.Command{
 	Use:   "mcphost",
-	Short: "Export MCP server tools to JSON description",
-	Long: `Export all tools from MCP servers to JSON description.
-The tools will be exported with their descriptions, parameters, and return values.`,
+	Short: "Start a chat session to interact with MCP tools",
+	Long:  `mcphost is a command-line tool that allows you to interact with MCP tools.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Create MCP host
 		host, err := mcphost.NewMCPHost(mcpConfigPath)
 		if err != nil {
 			return fmt.Errorf("failed to create MCP host: %w", err)
 		}
-
-		// Initialize servers
-		ctx := context.Background()
-		if err := host.InitServers(ctx); err != nil {
-			return fmt.Errorf("failed to initialize MCP servers: %w", err)
-		}
 		defer host.CloseServers()
 
-		// Export tools to JSON
+		// If dump flag is set, dump MCP server tools to JSON file
 		if dumpPath != "" {
-			if err := host.ExportToolsToJSON(ctx, dumpPath); err != nil {
-				return err
-			}
+			return host.ExportToolsToJSON(context.Background(), dumpPath)
 		}
-		return nil
+
+		// Create chat session
+		chat, err := host.NewChat(context.Background(), systemPromptFile)
+		if err != nil {
+			return fmt.Errorf("failed to create chat session: %w", err)
+		}
+
+		// Start chat
+		return chat.Start()
 	},
 }
 
 var (
-	mcpConfigPath string
-	dumpPath      string
+	mcpConfigPath    string
+	dumpPath         string
+	systemPromptFile string
 )
 
 func init() {
 	CmdMCPHost.Flags().StringVarP(&mcpConfigPath, "mcp-config", "c", "$HOME/.hrp/mcp.json", "path to the MCP config file")
 	CmdMCPHost.Flags().StringVar(&dumpPath, "dump", "", "path to save the exported tools JSON file")
+	CmdMCPHost.Flags().StringVar(&systemPromptFile, "system-prompt", "", "path to system prompt JSON file")
 }

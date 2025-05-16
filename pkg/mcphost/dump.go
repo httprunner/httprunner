@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	mcpp "github.com/cloudwego/eino-ext/components/tool/mcp"
-	"github.com/cloudwego/eino/components/tool"
 	"github.com/rs/zerolog/log"
 )
 
@@ -184,34 +182,4 @@ func (h *MCPHost) ExportToolsToJSON(ctx context.Context, dumpPath string) error 
 	}
 	log.Info().Str("path", dumpPath).Msg("Tools records exported successfully")
 	return nil
-}
-
-// GetEinoTool returns an eino tool from the MCP server
-func (h *MCPHost) GetEinoTool(ctx context.Context, serverName, toolName string) (tool.BaseTool, error) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-
-	// filter MCP server by serverName
-	conn, exists := h.connections[serverName]
-	if !exists {
-		return nil, fmt.Errorf("no connection found for server %s", serverName)
-	}
-
-	if conn.Config.IsDisabled() {
-		return nil, fmt.Errorf("server %s is disabled", serverName)
-	}
-
-	// get tools from MCP server and convert to eino tools
-	tools, err := mcpp.GetTools(ctx, &mcpp.Config{
-		Cli:          conn.Client,
-		ToolNameList: []string{toolName},
-	})
-	if err != nil || len(tools) == 0 {
-		log.Error().Err(err).
-			Str("server", serverName).Str("tool", toolName).
-			Msg("get MCP tool failed")
-		return nil, err
-	}
-
-	return tools[0], nil
 }

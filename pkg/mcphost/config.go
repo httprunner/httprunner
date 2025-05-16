@@ -14,6 +14,7 @@ const (
 
 // MCPConfig represents the configuration for MCP servers
 type MCPConfig struct {
+	ConfigPath string                         `json:"-"`
 	MCPServers map[string]ServerConfigWrapper `json:"mcpServers"`
 }
 
@@ -120,6 +121,7 @@ func LoadMCPConfig(configPath string) (*MCPConfig, error) {
 	if err := json.Unmarshal(configData, &config); err != nil {
 		return nil, fmt.Errorf("error parsing config file: %w", err)
 	}
+	config.ConfigPath = configPath
 
 	return &config, nil
 }

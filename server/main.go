@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -31,13 +30,6 @@ func (r *Router) InitMCPHost(configPath string) error {
 		log.Error().Err(err).Msg("init MCP host failed")
 		return err
 	}
-
-	err = mcpHost.InitServers(context.Background())
-	if err != nil {
-		log.Error().Err(err).Msg("init MCP servers failed")
-		return err
-	}
-
 	r.mcpHost = mcpHost
 	return nil
 }

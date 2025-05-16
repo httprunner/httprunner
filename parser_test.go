@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -465,7 +466,7 @@ func TestCallMCPTool(t *testing.T) {
 
 	parser := caseRunner.GetParser()
 
-	resp, err := parser.CallMCPTool("filesystem", "read_file",
+	resp, err := parser.CallMCPTool(context.Background(), "filesystem", "read_file",
 		map[string]interface{}{"path": "internal/version/VERSION"})
 	assert.Nil(t, err)
 	t.Logf("resp: %v", resp)

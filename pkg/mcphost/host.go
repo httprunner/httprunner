@@ -9,6 +9,9 @@ import (
 	"strings"
 	"sync"
 
+	mcpp "github.com/cloudwego/eino-ext/components/tool/mcp"
+	"github.com/cloudwego/eino/components/tool"
+	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/internal/version"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -42,10 +45,18 @@ func NewMCPHost(configPath string) (*MCPHost, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &MCPHost{
+
+	host := &MCPHost{
 		connections: make(map[string]*Connection),
 		config:      config,
-	}, nil
+	}
+
+	// Initialize MCP servers
+	if err := host.InitServers(context.Background()); err != nil {
+		return nil, fmt.Errorf("failed to initialize MCP servers: %w", err)
+	}
+
+	return host, nil
 }
 
 // parseHeaders parses header strings into a map
@@ -295,4 +306,67 @@ func (h *MCPHost) CloseServers() error {
 	}
 
 	return nil
+}
+
+// GetEinoTool returns an eino tool from the MCP server
+func (h *MCPHost) GetEinoTool(ctx context.Context, serverName, toolName string) (tool.BaseTool, error) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	// filter MCP server by serverName
+	conn, exists := h.connections[serverName]
+	if !exists {
+		return nil, fmt.Errorf("no connection found for server %s", serverName)
+	}
+
+	if conn.Config.IsDisabled() {
+		return nil, fmt.Errorf("server %s is disabled", serverName)
+	}
+
+	// get tools from MCP server and convert to eino tools
+	tools, err := mcpp.GetTools(ctx, &mcpp.Config{
+		Cli:          conn.Client,
+		ToolNameList: []string{toolName},
+	})
+	if err != nil || len(tools) == 0 {
+		log.Error().Err(err).
+			Str("server", serverName).Str("tool", toolName).
+			Msg("get MCP tool failed")
+		return nil, err
+	}
+
+	return tools[0], nil
+}
+
+// GetEinoToolInfos convert MCP tools to eino tool infos
+func (h *MCPHost) GetEinoToolInfos(ctx context.Context) ([]*schema.ToolInfo, error) {
+	var allTools []*schema.ToolInfo
+	for serverName, serverTools := range h.GetTools(ctx) {
+		if serverTools.Err != nil {
+			log.Error().
+				Err(serverTools.Err).
+				Str("server", serverName).
+				Msg("Error fetching tools")
+			continue
+		}
+		for _, tool := range serverTools.Tools {
+			einoTool, err := h.GetEinoTool(ctx, serverName, tool.Name)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to get eino tool")
+				continue
+			}
+			einoToolInfo, err := einoTool.Info(ctx)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to get eino tool info")
+				continue
+			}
+			allTools = append(allTools, einoToolInfo)
+		}
+		log.Info().
+			Str("server", serverName).
+			Int("count", len(serverTools.Tools)).
+			Msg("eino tool infos loaded")
+	}
+
+	return allTools, nil
 }

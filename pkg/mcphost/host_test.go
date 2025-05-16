@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cloudwego/eino/components/tool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,10 +28,6 @@ func TestInitServers(t *testing.T) {
 	host, err := NewMCPHost("./testdata/test.mcp.json")
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	err = host.InitServers(ctx)
-	require.NoError(t, err)
-
 	// Verify connections are established
 	assert.Equal(t, 2, len(host.connections))
 	assert.Contains(t, host.connections, "filesystem")
@@ -39,10 +36,6 @@ func TestInitServers(t *testing.T) {
 
 func TestGetClient(t *testing.T) {
 	host, err := NewMCPHost("./testdata/test.mcp.json")
-	require.NoError(t, err)
-
-	ctx := context.Background()
-	err = host.InitServers(ctx)
 	require.NoError(t, err)
 
 	// Test getting existing client
@@ -61,9 +54,6 @@ func TestGetTools(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	err = host.InitServers(ctx)
-	require.NoError(t, err)
-
 	tools := host.GetTools(ctx)
 	assert.Equal(t, 2, len(tools))
 	assert.Contains(t, tools, "weather")
@@ -90,8 +80,6 @@ func TestGetTool(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	err = host.InitServers(ctx)
-	require.NoError(t, err)
 
 	// Test getting existing tool
 	tool, err := host.GetTool(ctx, "weather", "get_alerts")
@@ -115,8 +103,6 @@ func TestInvokeTool(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	err = host.InitServers(ctx)
-	require.NoError(t, err)
 
 	// Test invoking existing tool
 	result, err := host.InvokeTool(ctx, "weather", "get_alerts",
@@ -140,12 +126,23 @@ func TestInvokeTool(t *testing.T) {
 	assert.Nil(t, result)
 }
 
-func TestCloseServers(t *testing.T) {
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+func TestCallEinoTool(t *testing.T) {
+	hub, err := NewMCPHost("./testdata/test.mcp.json")
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	err = host.InitServers(ctx)
+	einoTool, err := hub.GetEinoTool(ctx, "weather", "get_alerts")
+	require.NoError(t, err)
+	t.Logf("Tool: %v", einoTool)
+
+	tool := einoTool.(tool.InvokableTool)
+	result, err := tool.InvokableRun(ctx, `{"state": "CA"}`)
+	require.NoError(t, err)
+	t.Logf("Result: %v", result)
+}
+
+func TestCloseServers(t *testing.T) {
+	host, err := NewMCPHost("./testdata/test.mcp.json")
 	require.NoError(t, err)
 
 	// Verify servers are connected
@@ -163,17 +160,14 @@ func TestConcurrentOperations(t *testing.T) {
 	host, err := NewMCPHost("./testdata/test.mcp.json")
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	err = host.InitServers(ctx)
-	require.NoError(t, err)
-
 	// Test concurrent tool invocations
 	done := make(chan bool)
 	timeout := time.After(30 * time.Second) // Increase timeout to 30 seconds
 
 	for i := 0; i < 3; i++ { // Reduce number of concurrent operations to 3
 		go func() {
-			result, err := host.InvokeTool(ctx, "weather", "get_alerts",
+			result, err := host.InvokeTool(
+				context.Background(), "weather", "get_alerts",
 				map[string]interface{}{"state": "CA"},
 			)
 			assert.NoError(t, err)
@@ -197,10 +191,6 @@ func TestDisabledServer(t *testing.T) {
 	host, err := NewMCPHost("./testdata/test.mcp.json")
 	require.NoError(t, err)
 
-	ctx := context.Background()
-	err = host.InitServers(ctx)
-	require.NoError(t, err)
-
 	// Verify only enabled servers are connected
 	assert.Equal(t, 2, len(host.connections))
 	assert.Contains(t, host.connections, "filesystem")
@@ -214,6 +204,7 @@ func TestDisabledServer(t *testing.T) {
 	assert.Nil(t, client)
 
 	// Test getting tools from disabled server
+	ctx := context.Background()
 	tools := host.GetTools(ctx)
 	assert.Equal(t, 2, len(tools))
 	assert.Contains(t, tools, "filesystem")

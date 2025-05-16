@@ -1,7 +1,6 @@
 package hrp
 
 import (
-	"context"
 	"crypto/tls"
 	_ "embed"
 	"fmt"
@@ -322,11 +321,6 @@ func NewCaseRunner(testcase TestCase, hrpRunner *HRPRunner) (*CaseRunner, error)
 		mcpHost, err := mcphost.NewMCPHost(config.MCPConfigPath)
 		if err != nil {
 			log.Error().Err(err).Msg("init MCP hub failed")
-			return nil, err
-		}
-		err = mcpHost.InitServers(context.Background())
-		if err != nil {
-			log.Error().Err(err).Msg("init MCP servers failed")
 			return nil, err
 		}
 		caseRunner.parser.MCPHost = mcpHost

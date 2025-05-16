@@ -24,13 +24,10 @@ import (
 )
 
 func NewParser() *Parser {
-	return &Parser{
-		ctx: context.Background(),
-	}
+	return &Parser{}
 }
 
 type Parser struct {
-	ctx     context.Context
 	Plugin  funplugin.IPlugin // plugin is used to call functions
 	MCPHost *mcphost.MCPHost
 }
@@ -308,15 +305,16 @@ func (p *Parser) CallFunc(funcName string, arguments ...interface{}) (interface{
 }
 
 // CallMCPTool calls a MCP tool on a specific MCP server
-func (p *Parser) CallMCPTool(serverName, funcName string, arguments map[string]interface{}) (interface{}, error) {
+func (p *Parser) CallMCPTool(ctx context.Context, serverName,
+	funcName string, arguments map[string]interface{}) (interface{}, error) {
 	if p.MCPHost == nil {
 		return nil, fmt.Errorf("mcphost is not initialized")
 	}
 
-	tools := p.MCPHost.GetTools(p.ctx)
+	tools := p.MCPHost.GetTools(ctx)
 	log.Warn().Interface("tools", tools).Msg("tools")
 
-	result, err := p.MCPHost.InvokeTool(p.ctx, serverName, funcName, arguments)
+	result, err := p.MCPHost.InvokeTool(ctx, serverName, funcName, arguments)
 	if err != nil {
 		return nil, errors.Wrapf(err, "invoke tool %s/%s failed", serverName, funcName)
 	}
