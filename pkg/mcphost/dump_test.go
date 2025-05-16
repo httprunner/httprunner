@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cloudwego/eino/components/tool"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -238,4 +239,22 @@ func TestConvertToolsToRecords(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCallEinoTool(t *testing.T) {
+	hub, err := NewMCPHost("./testdata/test.mcp.json")
+	require.NoError(t, err)
+
+	ctx := context.Background()
+	err = hub.InitServers(ctx)
+	require.NoError(t, err)
+
+	einoTool, err := hub.GetEinoTool(ctx, "weather", "get_alerts")
+	require.NoError(t, err)
+	t.Logf("Tool: %v", einoTool)
+
+	tool := einoTool.(tool.InvokableTool)
+	result, err := tool.InvokableRun(ctx, `{"state": "CA"}`)
+	require.NoError(t, err)
+	t.Logf("Result: %v", result)
 }
