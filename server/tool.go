@@ -14,7 +14,7 @@ type ToolRequest struct {
 
 func (r *Router) invokeToolHandler(c *gin.Context) {
 	if r.mcpHost == nil {
-		RenderError(c, errors.New("mcp host not initialized"))
+		RenderError(c, errors.New("mcphost not initialized"))
 		return
 	}
 

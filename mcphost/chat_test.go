@@ -11,7 +11,7 @@ import (
 
 func TestNewChat(t *testing.T) {
 	systemPromptFile := "test_system_prompt.txt"
-	_ = os.WriteFile(systemPromptFile, []byte("You are a helpful assistant."), 0o644)
+	_ = os.WriteFile(systemPromptFile, []byte("You are a helpful assistant."), 0o600)
 	defer os.Remove(systemPromptFile)
 
 	host, err := NewMCPHost("./testdata/test.mcp.json")

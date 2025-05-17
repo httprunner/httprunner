@@ -122,7 +122,7 @@ func ConvertToolsToRecords(tools []MCPTools) []MCPToolRecord {
 
 		for _, tool := range mcpTools.Tools {
 			// Generate unique ID by combining server name and tool name
-			id := fmt.Sprintf("%s_%s", mcpTools.ServerName, tool.Name)
+			id := fmt.Sprintf("%s__%s", mcpTools.ServerName, tool.Name)
 
 			// Extract docstring information
 			info := extractDocStringInfo(tool.Description)
@@ -172,7 +172,7 @@ func (h *MCPHost) ExportToolsToJSON(ctx context.Context, dumpPath string) error 
 	// create output directory
 	outputDir := filepath.Dir(dumpPath)
 	if outputDir != "." {
-		if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		if err := os.MkdirAll(outputDir, 0o754); err != nil {
 			return fmt.Errorf("failed to create output directory: %w", err)
 		}
 	}

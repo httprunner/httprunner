@@ -36,15 +36,6 @@ func (h *MCPHost) NewChat(ctx context.Context, systemPromptFile string) (*Chat, 
 		return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
 	}
 
-	// Create markdown renderer
-	renderer, err := glamour.NewTermRenderer(
-		glamour.WithStandardStyle(styles.TokyoNightStyle),
-		glamour.WithWordWrap(getTerminalWidth()),
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create markdown renderer")
-	}
-
 	// Load system prompt from file if provided
 	systemPrompt := "chat to interact with MCP tools"
 	if systemPromptFile != "" {
@@ -57,15 +48,23 @@ func (h *MCPHost) NewChat(ctx context.Context, systemPromptFile string) (*Chat, 
 		}
 	}
 
-	// convert MCP tools to eino tool infos
+	// Convert MCP tools to eino tool infos
 	einoTools, err := h.GetEinoToolInfos(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get eino tool infos")
 	}
-
 	toolCallingModel, err := model.WithTools(einoTools)
 	if err != nil {
 		return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
+	}
+
+	// Create markdown renderer
+	renderer, err := glamour.NewTermRenderer(
+		glamour.WithStandardStyle(styles.TokyoNightStyle),
+		glamour.WithWordWrap(getTerminalWidth()),
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create markdown renderer")
 	}
 
 	return &Chat{
