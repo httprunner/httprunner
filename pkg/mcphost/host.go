@@ -19,13 +19,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// MCPTools represents tools from a single MCP server
-type MCPTools struct {
-	ServerName string
-	Tools      []mcp.Tool
-	Err        error
-}
-
 // MCPHost manages MCP server connections and tools
 type MCPHost struct {
 	mu          sync.RWMutex
@@ -37,6 +30,13 @@ type MCPHost struct {
 type Connection struct {
 	Client client.MCPClient
 	Config ServerConfig
+}
+
+// MCPTools represents tools from a single MCP server
+type MCPTools struct {
+	ServerName string
+	Tools      []mcp.Tool
+	Err        error
 }
 
 // NewMCPHost creates a new MCPHost instance
@@ -59,46 +59,6 @@ func NewMCPHost(configPath string) (*MCPHost, error) {
 	return host, nil
 }
 
-// parseHeaders parses header strings into a map
-func parseHeaders(headerList []string) map[string]string {
-	headers := make(map[string]string)
-	for _, header := range headerList {
-		parts := strings.SplitN(header, ":", 2)
-		if len(parts) == 2 {
-			headers[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
-		}
-	}
-	return headers
-}
-
-// startStdioLog starts a goroutine to print stdio logs
-func startStdioLog(stderr io.Reader, serverName string) {
-	go func() {
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			fmt.Fprintf(os.Stderr, "MCP Server %s: %s\n", serverName, scanner.Text())
-		}
-	}()
-}
-
-// prepareClientInitRequest creates a standard initialization request
-func prepareClientInitRequest() mcp.InitializeRequest {
-	return mcp.InitializeRequest{
-		Params: struct {
-			ProtocolVersion string                 `json:"protocolVersion"`
-			Capabilities    mcp.ClientCapabilities `json:"capabilities"`
-			ClientInfo      mcp.Implementation     `json:"clientInfo"`
-		}{
-			ProtocolVersion: mcp.LATEST_PROTOCOL_VERSION,
-			Capabilities:    mcp.ClientCapabilities{},
-			ClientInfo: mcp.Implementation{
-				Name:    "hrp-mcphost",
-				Version: version.GetVersionInfo(),
-			},
-		},
-	}
-}
-
 // InitServers initializes all MCP servers
 func (h *MCPHost) InitServers(ctx context.Context) error {
 	for name, server := range h.config.MCPServers {
@@ -111,19 +71,6 @@ func (h *MCPHost) InitServers(ctx context.Context) error {
 		}
 	}
 	return nil
-}
-
-// GetClient returns the client for the specified server
-func (h *MCPHost) GetClient(serverName string) (client.MCPClient, error) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-
-	conn, exists := h.connections[serverName]
-	if !exists {
-		return nil, fmt.Errorf("no connection found for server %s", serverName)
-	}
-
-	return conn.Client, nil
 }
 
 // connectToServer establishes connection to a single MCP server
@@ -147,7 +94,8 @@ func (h *MCPHost) connectToServer(ctx context.Context, serverName string, config
 	// create client based on server type
 	switch cfg := config.(type) {
 	case SSEServerConfig:
-		mcpClient, err = client.NewSSEMCPClient(cfg.Url, client.WithHeaders(parseHeaders(cfg.Headers)))
+		mcpClient, err = client.NewSSEMCPClient(cfg.Url,
+			client.WithHeaders(parseHeaders(cfg.Headers)))
 	case STDIOServerConfig:
 		env := make([]string, 0, len(cfg.Env))
 		for k, v := range cfg.Env {
@@ -181,6 +129,37 @@ func (h *MCPHost) connectToServer(ctx context.Context, serverName string, config
 	return nil
 }
 
+// CloseServers closes all connected MCP servers
+func (h *MCPHost) CloseServers() error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	log.Info().Msg("Shutting down MCP servers...")
+	for name, conn := range h.connections {
+		if err := conn.Client.Close(); err != nil {
+			log.Error().Str("name", name).Err(err).Msg("Failed to close server")
+		} else {
+			delete(h.connections, name)
+			log.Info().Str("name", name).Msg("Server closed")
+		}
+	}
+
+	return nil
+}
+
+// GetClient returns the client for the specified server
+func (h *MCPHost) GetClient(serverName string) (client.MCPClient, error) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	conn, exists := h.connections[serverName]
+	if !exists {
+		return nil, fmt.Errorf("no connection found for server %s", serverName)
+	}
+
+	return conn.Client, nil
+}
+
 // GetTools returns all tools from all MCP servers
 func (h *MCPHost) GetTools(ctx context.Context) []MCPTools {
 	h.mu.RLock()
@@ -189,10 +168,6 @@ func (h *MCPHost) GetTools(ctx context.Context) []MCPTools {
 	var results []MCPTools
 
 	for serverName, conn := range h.connections {
-		if conn.Config.IsDisabled() {
-			continue
-		}
-
 		listResults, err := conn.Client.ListTools(ctx, mcp.ListToolsRequest{})
 		if err != nil {
 			log.Error().Err(err).Str("server", serverName).Msg("failed to get tools")
@@ -244,17 +219,6 @@ func (h *MCPHost) GetTool(ctx context.Context, serverName, toolName string) (*mc
 	return nil, fmt.Errorf("tool %s not found", toolName)
 }
 
-// handleToolError handles tool execution errors
-func handleToolError(result *mcp.CallToolResult) error {
-	if !result.IsError {
-		return nil
-	}
-	if len(result.Content) > 0 {
-		return fmt.Errorf("tool error: %v", result.Content[0])
-	}
-	return fmt.Errorf("tool error: unknown error")
-}
-
 // InvokeTool calls a tool with the given arguments
 func (h *MCPHost) InvokeTool(ctx context.Context,
 	serverName, toolName string, arguments map[string]any,
@@ -300,24 +264,6 @@ func (h *MCPHost) InvokeTool(ctx context.Context,
 	return result, nil
 }
 
-// CloseServers closes all connected MCP servers
-func (h *MCPHost) CloseServers() error {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	log.Info().Msg("Shutting down MCP servers...")
-	for name, conn := range h.connections {
-		if err := conn.Client.Close(); err != nil {
-			log.Error().Str("name", name).Err(err).Msg("Failed to close server")
-		} else {
-			delete(h.connections, name)
-			log.Info().Str("name", name).Msg("Server closed")
-		}
-	}
-
-	return nil
-}
-
 // GetEinoTool returns an eino tool for the given server and tool name
 func (h *MCPHost) GetEinoTool(ctx context.Context, serverName, toolName string) (tool.BaseTool, error) {
 	h.mu.RLock()
@@ -326,10 +272,6 @@ func (h *MCPHost) GetEinoTool(ctx context.Context, serverName, toolName string) 
 	conn, ok := h.connections[serverName]
 	if !ok {
 		return nil, fmt.Errorf("server not found: %s", serverName)
-	}
-
-	if conn.Config.IsDisabled() {
-		return nil, fmt.Errorf("server %s is disabled", serverName)
 	}
 
 	// get tools from MCP server and convert to eino tools
@@ -372,10 +314,62 @@ func (h *MCPHost) GetEinoToolInfos(ctx context.Context) ([]*schema.ToolInfo, err
 				log.Error().Err(err).Str("server", serverTools.ServerName).Str("tool", tool.Name).Msg("failed to get eino tool info")
 				continue
 			}
+			einoToolInfo.Name = fmt.Sprintf("%s__%s", serverTools.ServerName, tool.Name)
 			tools = append(tools, einoToolInfo)
 		}
 	}
 
 	log.Info().Int("count", len(tools)).Msg("eino tool infos loaded")
 	return tools, nil
+}
+
+// parseHeaders parses header strings into a map
+func parseHeaders(headerList []string) map[string]string {
+	headers := make(map[string]string)
+	for _, header := range headerList {
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) == 2 {
+			headers[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+		}
+	}
+	return headers
+}
+
+// startStdioLog starts a goroutine to print stdio logs
+func startStdioLog(stderr io.Reader, serverName string) {
+	go func() {
+		scanner := bufio.NewScanner(stderr)
+		for scanner.Scan() {
+			fmt.Fprintf(os.Stderr, "MCP Server %s: %s\n", serverName, scanner.Text())
+		}
+	}()
+}
+
+// prepareClientInitRequest creates a standard initialization request
+func prepareClientInitRequest() mcp.InitializeRequest {
+	return mcp.InitializeRequest{
+		Params: struct {
+			ProtocolVersion string                 `json:"protocolVersion"`
+			Capabilities    mcp.ClientCapabilities `json:"capabilities"`
+			ClientInfo      mcp.Implementation     `json:"clientInfo"`
+		}{
+			ProtocolVersion: mcp.LATEST_PROTOCOL_VERSION,
+			Capabilities:    mcp.ClientCapabilities{},
+			ClientInfo: mcp.Implementation{
+				Name:    "hrp-mcphost",
+				Version: version.GetVersionInfo(),
+			},
+		},
+	}
+}
+
+// handleToolError handles tool execution errors
+func handleToolError(result *mcp.CallToolResult) error {
+	if !result.IsError {
+		return nil
+	}
+	if len(result.Content) > 0 {
+		return fmt.Errorf("tool error: %v", result.Content[0])
+	}
+	return fmt.Errorf("tool error: unknown error")
 }

@@ -24,44 +24,6 @@ import (
 	"golang.org/x/term"
 )
 
-var (
-	// Tokyo Night theme colors
-	tokyoPurple = lipgloss.Color("99")  // #9d7cd8
-	tokyoCyan   = lipgloss.Color("73")  // #7dcfff
-	tokyoBlue   = lipgloss.Color("111") // #7aa2f7
-	tokyoGreen  = lipgloss.Color("120") // #73daca
-	tokyoRed    = lipgloss.Color("203") // #f7768e
-	tokyoOrange = lipgloss.Color("215") // #ff9e64
-	tokyoFg     = lipgloss.Color("189") // #c0caf5
-	tokyoGray   = lipgloss.Color("237") // #3b4261
-	tokyoBg     = lipgloss.Color("234") // #1a1b26
-
-	promptStyle = lipgloss.NewStyle().
-			Foreground(tokyoBlue).
-			PaddingLeft(2)
-
-	responseStyle = lipgloss.NewStyle().
-			Foreground(tokyoFg).
-			PaddingLeft(2)
-
-	errorStyle = lipgloss.NewStyle().
-			Foreground(tokyoRed).
-			Bold(true)
-
-	toolNameStyle = lipgloss.NewStyle().
-			Foreground(tokyoCyan).
-			Bold(true)
-
-	descriptionStyle = lipgloss.NewStyle().
-				Foreground(tokyoFg).
-				PaddingBottom(1)
-
-	contentStyle = lipgloss.NewStyle().
-			Background(tokyoBg).
-			PaddingLeft(4).
-			PaddingRight(4)
-)
-
 // NewChat creates a new chat session
 func (h *MCPHost) NewChat(ctx context.Context, systemPromptFile string) (*Chat, error) {
 	// Get model config from environment variables
@@ -170,7 +132,7 @@ func (c *Chat) Start() error {
 
 		// run prompt with MCP tools
 		if err := c.runPrompt(input); err != nil {
-			log.Error().Err(err).Msg("chat error")
+			log.Error().Err(err).Msg("run prompt error")
 		}
 	}
 }
@@ -185,75 +147,110 @@ func (c *Chat) runPrompt(prompt string) error {
 		Content: prompt,
 	}
 	c.history = append(c.history, userMsg)
-	for {
-		ctx := context.Background()
-		var resp *schema.Message
-		var err error
-		action := func() {
-			resp, err = c.model.Generate(ctx, c.history)
+
+	// Call LLM model to get response
+	ctx := context.Background()
+	var message *schema.Message
+	var modelErr error
+	_ = spinner.New().Title("Thinking...").Action(func() {
+		message, modelErr = c.model.Generate(ctx, c.history)
+	}).Run()
+	if modelErr != nil {
+		return modelErr
+	}
+
+	// Log usage statistics
+	if usage := message.ResponseMeta.Usage; usage != nil {
+		log.Debug().Int("input_tokens", usage.PromptTokens).
+			Int("output_tokens", usage.CompletionTokens).
+			Int("total_tokens", usage.TotalTokens).Msg("Usage statistics")
+	}
+
+	// Handle tool calls
+	toolCalls := message.ToolCalls
+	if len(toolCalls) > 0 {
+		return c.handleToolCalls(ctx, toolCalls)
+	}
+
+	// Add assistant's response to history
+	toolMsg := &schema.Message{
+		Role:    schema.Assistant,
+		Content: message.Content,
+	}
+	c.history = append(c.history, toolMsg)
+	c.renderContent("Assistant", message.Content)
+
+	return nil
+}
+
+func (c *Chat) handleToolCalls(ctx context.Context, toolCalls []schema.ToolCall) error {
+	for _, toolCall := range toolCalls {
+		serverToolName := toolCall.Function.Name
+		toolArgs := toolCall.Function.Arguments
+		log.Debug().Str("name", serverToolName).Str("args", toolArgs).Msg("handle tool call")
+
+		// Parse tool name
+		parts := strings.SplitN(serverToolName, "__", 2)
+		if len(parts) != 2 {
+			log.Error().Str("name", serverToolName).Msg("invalid tool name")
+			continue
 		}
-		_ = spinner.New().Title("Thinking...").Action(action).Run()
-		if err != nil {
-			return err
-		}
+		serverName, toolName := parts[0], parts[1]
 
-		// Handle tool calls
-		toolCalls := resp.ToolCalls
-		if len(toolCalls) > 0 {
-			for _, toolCall := range toolCalls {
-				parts := strings.SplitN(toolCall.Function.Name, "__", 2)
-				if len(parts) != 2 {
-					log.Error().Msgf("invalid tool name: %s", toolCall.Function.Name)
-					continue
-				}
-				serverName, toolName := parts[0], parts[1]
-				args := toolCall.Function.Arguments
-
-				// Unmarshal tool arguments from JSON string
-				var argsMap map[string]interface{}
-				if err := sonic.UnmarshalString(args, &argsMap); err != nil {
-					log.Error().Err(err).Str("args", args).Msg("failed to unmarshal tool arguments")
-					continue
-				}
-
-				result, err := c.host.InvokeTool(ctx, serverName, toolName, argsMap)
-				if err != nil {
-					log.Error().Err(err).Msg("tool call failed")
-					continue
-				}
-
-				// Format tool result
-				resultStr := ""
-				if result != nil && len(result.Content) > 0 {
-					for _, item := range result.Content {
-						resultStr += fmt.Sprintf("%v\n", item)
-					}
-				} else {
-					resultStr = fmt.Sprintf("%+v", result)
-				}
-
-				// Add tool result to history
-				toolMsg := &schema.Message{
-					Role:    schema.Assistant,
-					Content: resultStr,
-				}
-				c.history = append(c.history, toolMsg)
-			}
+		// Unmarshal tool arguments from JSON string
+		var argsMap map[string]interface{}
+		if err := sonic.UnmarshalString(toolArgs, &argsMap); err != nil {
+			log.Error().Err(err).Str("args", toolArgs).Msg("failed to unmarshal tool arguments")
 			continue
 		}
 
-		// Add assistant's response to history
-		c.history = append(c.history, resp)
-
-		// Render and display response
-		if rendered, err := c.renderer.Render(resp.Content); err == nil {
-			fmt.Printf("\n%s", responseStyle.Render("Assistant: "+rendered))
-		} else {
-			fmt.Printf("\n%s", errorStyle.Render("Assistant: "+resp.Content))
+		// Invoke tool
+		result, err := c.host.InvokeTool(ctx, serverName, toolName, argsMap)
+		if err != nil {
+			log.Error().Err(err).Msg("invoke tool failed")
+			continue
 		}
 
-		return nil
+		// Format tool result
+		resultStr := ""
+		if result != nil && len(result.Content) > 0 {
+			for _, item := range result.Content {
+				resultStr += fmt.Sprintf("%v\n", item)
+			}
+		} else {
+			resultStr = fmt.Sprintf("%+v", result)
+		}
+		c.renderContent("Tool result", resultStr)
+
+		// Add tool result to history
+		toolMsg := &schema.Message{
+			Role:       schema.Tool,
+			Content:    resultStr,
+			ToolCallID: toolCall.ID,
+		}
+		c.history = append(c.history, toolMsg)
 	}
+	return nil
+}
+
+// handleCommand handles commands
+func (c *Chat) handleCommand(cmd string) error {
+	switch cmd {
+	case "/help":
+		c.showWelcome()
+	case "/tools":
+		c.showTools()
+	case "/history":
+		c.showHistory()
+	case "/clear":
+		c.clearHistory()
+	case "/quit":
+		fmt.Println("Goodbye!")
+		os.Exit(0)
+	default:
+		fmt.Printf("Unknown command: %s\n", cmd)
+	}
+	return nil
 }
 
 // showWelcome show welcome and help information
@@ -278,31 +275,7 @@ You can also press Ctrl+C at any time to quit.
 - **mcp-config**: %s
 `, c.systemPrompt, c.host.config.ConfigPath)
 
-	str, err := c.renderer.Render(markdown)
-	if err != nil {
-		fmt.Println(markdown)
-	} else {
-		fmt.Print(str)
-	}
-}
-
-func (c *Chat) handleCommand(cmd string) error {
-	switch cmd {
-	case "/help":
-		c.showWelcome()
-	case "/tools":
-		c.showTools()
-	case "/history":
-		c.showHistory()
-	case "/clear":
-		c.clearHistory()
-	case "/quit":
-		fmt.Println("Goodbye!")
-		os.Exit(0)
-	default:
-		fmt.Printf("Unknown command: %s\n", cmd)
-	}
-	return nil
+	c.renderContent("", markdown)
 }
 
 func (c *Chat) showHistory() {
@@ -321,14 +294,7 @@ func (c *Chat) showHistory() {
 		if msg.Role == schema.Assistant {
 			role = "Assistant"
 		}
-
-		// Render message content as markdown
-		rendered, err := c.renderer.Render(msg.Content)
-		if err != nil {
-			rendered = msg.Content
-		}
-
-		fmt.Printf("\n%s: %s\n", role, rendered)
+		c.renderContent(role, msg.Content)
 	}
 }
 
@@ -374,6 +340,19 @@ func (c *Chat) showTools() {
 	fmt.Print("\n" + containerStyle.Render(l.String()) + "\n")
 }
 
+// Render and display content
+func (c *Chat) renderContent(title, content string) {
+	output, err := c.renderer.Render(content)
+	if err != nil {
+		log.Error().Err(err).Msg("render content failed")
+		output = content
+	}
+	if title != "" {
+		title = title + ": "
+	}
+	fmt.Printf("\n%s", responseStyle.Render(title+output))
+}
+
 // loadSystemPrompt loads the system prompt from a JSON file
 func loadSystemPrompt(filePath string) (string, error) {
 	// Check if file exists
@@ -397,3 +376,41 @@ func getTerminalWidth() int {
 	}
 	return width - 20
 }
+
+var (
+	// Tokyo Night theme colors
+	tokyoPurple = lipgloss.Color("99")  // #9d7cd8
+	tokyoCyan   = lipgloss.Color("73")  // #7dcfff
+	tokyoBlue   = lipgloss.Color("111") // #7aa2f7
+	tokyoGreen  = lipgloss.Color("120") // #73daca
+	tokyoRed    = lipgloss.Color("203") // #f7768e
+	tokyoOrange = lipgloss.Color("215") // #ff9e64
+	tokyoFg     = lipgloss.Color("189") // #c0caf5
+	tokyoGray   = lipgloss.Color("237") // #3b4261
+	tokyoBg     = lipgloss.Color("234") // #1a1b26
+
+	promptStyle = lipgloss.NewStyle().
+			Foreground(tokyoBlue).
+			PaddingLeft(2)
+
+	responseStyle = lipgloss.NewStyle().
+			Foreground(tokyoFg).
+			PaddingLeft(2)
+
+	errorStyle = lipgloss.NewStyle().
+			Foreground(tokyoRed).
+			Bold(true)
+
+	toolNameStyle = lipgloss.NewStyle().
+			Foreground(tokyoCyan).
+			Bold(true)
+
+	descriptionStyle = lipgloss.NewStyle().
+				Foreground(tokyoFg).
+				PaddingBottom(1)
+
+	contentStyle = lipgloss.NewStyle().
+			Background(tokyoBg).
+			PaddingLeft(4).
+			PaddingRight(4)
+)
