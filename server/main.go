@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/pkg/mcphost"
+	"github.com/httprunner/httprunner/v5/mcphost"
 	"github.com/httprunner/httprunner/v5/uixt"
 
 	"github.com/gin-gonic/gin"

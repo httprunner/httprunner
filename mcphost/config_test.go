@@ -25,6 +25,6 @@ func TestLoadSettings(t *testing.T) {
 
 	weatherConfig := settings.MCPServers["weather"].Config.(STDIOServerConfig)
 	assert.Equal(t, "uv", weatherConfig.Command)
-	assert.Equal(t, []string{"--directory", "/Users/debugtalk/MyProjects/HttpRunner-dev/httprunner/pkg/mcphost/testdata", "run", "demo_weather.py"}, weatherConfig.Args)
+	assert.Equal(t, []string{"--directory", "/Users/debugtalk/MyProjects/HttpRunner-dev/httprunner/mcphost/testdata", "run", "demo_weather.py"}, weatherConfig.Args)
 	assert.Equal(t, map[string]string{"ABC": "123"}, weatherConfig.Env)
 }

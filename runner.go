@@ -28,7 +28,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/internal/version"
-	"github.com/httprunner/httprunner/v5/pkg/mcphost"
+	"github.com/httprunner/httprunner/v5/mcphost"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )

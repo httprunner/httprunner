@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/httprunner/httprunner/v5/pkg/mcphost"
+	"github.com/httprunner/httprunner/v5/mcphost"
 	"github.com/spf13/cobra"
 )
 

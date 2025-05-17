@@ -11,7 +11,7 @@
 		"weather": {
 			"args": [
 				"--directory",
-				"/Users/debugtalk/MyProjects/HttpRunner-dev/httprunner/pkg/mcphost/testdata",
+				"/Users/debugtalk/MyProjects/HttpRunner-dev/httprunner/mcphost/testdata",
 				"run",
 				"demo_weather.py"
 			],

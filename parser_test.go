@@ -459,7 +459,7 @@ func TestCallMCPTool(t *testing.T) {
 	// Create a new case runner for testing
 	caseRunner, err := NewCaseRunner(TestCase{
 		Config: &TConfig{
-			MCPConfigPath: "pkg/mcphost/testdata/test.mcp.json",
+			MCPConfigPath: "mcphost/testdata/test.mcp.json",
 		},
 	}, nil)
 	require.Nil(t, err)

@@ -19,7 +19,7 @@ import (
 	"github.com/httprunner/funplugin/fungo"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/pkg/mcphost"
+	"github.com/httprunner/httprunner/v5/mcphost"
 	mcp2 "github.com/mark3labs/mcp-go/mcp"
 )
 
