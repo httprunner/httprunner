@@ -44,7 +44,7 @@ func (h *ConversationHistory) Append(msg *schema.Message) {
 
 	// for assistant message:
 	// - keep at most the last 10 assistant messages
-	if msg.Role == schema.Assistant {
+	if msg.Role == schema.Assistant || msg.Role == schema.Tool {
 		// add the new assistant message to the history
 		*h = append(*h, msg)
 
@@ -59,6 +59,13 @@ func (h *ConversationHistory) Append(msg *schema.Message) {
 			}
 		}
 	}
+}
+
+func (h *ConversationHistory) Clear() {
+	// Keep only the system message
+	systemMsg := (*h)[0]
+	*h = ConversationHistory{systemMsg}
+	log.Info().Msg("conversation history cleared")
 }
 
 func logRequest(messages ConversationHistory) {
@@ -94,7 +101,13 @@ func logResponse(resp *schema.Message) {
 	logger := log.Info().Str("role", string(resp.Role)).
 		Str("content", resp.Content)
 	if resp.ResponseMeta != nil {
-		logger = logger.Interface("response_meta", resp.ResponseMeta)
+		logger = logger.Str("finish_reason", resp.ResponseMeta.FinishReason)
+		// Log usage statistics
+		if usage := resp.ResponseMeta.Usage; usage != nil {
+			log.Debug().Int("input_tokens", usage.PromptTokens).
+				Int("output_tokens", usage.CompletionTokens).
+				Int("total_tokens", usage.TotalTokens).Msg("usage statistics")
+		}
 	}
 	if resp.Extra != nil {
 		logger = logger.Interface("extra", resp.Extra)

@@ -15,8 +15,8 @@ import (
 
 // ILLMService 定义了 LLM 服务接口，包括规划和断言功能
 type ILLMService interface {
-	Call(opts *PlanningOptions) (*PlanningResult, error)
-	Assert(opts *AssertOptions) (*AssertionResponse, error)
+	Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
+	Assert(ctx context.Context, opts *AssertOptions) (*AssertionResponse, error)
 }
 
 func NewLLMService(modelType option.LLMServiceType) (ILLMService, error) {
@@ -48,13 +48,13 @@ type combinedLLMService struct {
 }
 
 // Call 执行规划功能
-func (c *combinedLLMService) Call(opts *PlanningOptions) (*PlanningResult, error) {
-	return c.planner.Call(opts)
+func (c *combinedLLMService) Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error) {
+	return c.planner.Call(ctx, opts)
 }
 
 // Assert 执行断言功能
-func (c *combinedLLMService) Assert(opts *AssertOptions) (*AssertionResponse, error) {
-	return c.asserter.Assert(opts)
+func (c *combinedLLMService) Assert(ctx context.Context, opts *AssertOptions) (*AssertionResponse, error) {
+	return c.asserter.Assert(ctx, opts)
 }
 
 // LLM model config env variables
@@ -95,12 +95,14 @@ func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 			"env %s missed", EnvModelName)
 	}
 
-	temperature := float32(0.01)
+	maxTokens := 4096
+	temperature := float32(0.7)
 	modelConfig := &openai.ChatModelConfig{
 		BaseURL:     openaiBaseURL,
 		APIKey:      openaiAPIKey,
 		Model:       modelName,
 		Timeout:     defaultTimeout,
+		MaxTokens:   &maxTokens,
 		Temperature: &temperature,
 	}
 

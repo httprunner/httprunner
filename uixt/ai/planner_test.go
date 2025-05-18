@@ -53,7 +53,7 @@ func TestVLMPlanning(t *testing.T) {
 	}
 
 	// 执行规划
-	result, err := planner.Call(opts)
+	result, err := planner.Call(context.Background(), opts)
 
 	// 验证结果
 	require.NoError(t, err)
@@ -126,7 +126,7 @@ func TestXHSPlanning(t *testing.T) {
 	}
 
 	// 执行规划
-	result, err := planner.Call(opts)
+	result, err := planner.Call(context.Background(), opts)
 
 	// 验证结果
 	require.NoError(t, err)
@@ -199,7 +199,7 @@ func TestChatList(t *testing.T) {
 	}
 
 	// 执行规划
-	result, err := planner.Call(opts)
+	result, err := planner.Call(context.Background(), opts)
 
 	// 验证结果
 	require.NoError(t, err)
@@ -246,7 +246,7 @@ func TestHandleSwitch(t *testing.T) {
 		}
 
 		// Execute planning
-		result, err := planner.Call(opts)
+		result, err := planner.Call(context.Background(), opts)
 
 		// Validate results
 		require.NoError(t, err)

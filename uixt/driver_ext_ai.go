@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"path/filepath"
@@ -102,7 +103,7 @@ func (dExt *XTDriver) PlanNextAction(text string, opts ...option.ActionOption) (
 		Size: size,
 	}
 
-	result, err := dExt.LLMService.Call(planningOpts)
+	result, err := dExt.LLMService.Call(context.Background(), planningOpts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get next action from planner")
 	}
@@ -139,7 +140,7 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) er
 		Screenshot: screenShotBase64,
 		Size:       size,
 	}
-	result, err := dExt.LLMService.Assert(assertOpts)
+	result, err := dExt.LLMService.Assert(context.Background(), assertOpts)
 	if err != nil {
 		return errors.Wrap(err, "AI assertion failed")
 	}

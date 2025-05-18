@@ -8,10 +8,35 @@ import (
 	"strings"
 
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
+
+// LLMContentParser parses the content from the LLM response
+// parser is corresponding to the model type and system prompt
+type LLMContentParser interface {
+	SystemPrompt() string
+	Parse(content string, size types.Size) (*PlanningResult, error)
+}
+
+func NewLLMContentParser(modelType option.LLMServiceType) LLMContentParser {
+	switch modelType {
+	case option.LLMServiceTypeUITARS:
+		return &UITARSContentParser{
+			systemPrompt: uiTarsPlanningPrompt,
+		}
+	case option.LLMServiceTypeGPT:
+		return &JSONContentParser{
+			systemPrompt: defaultPlanningResponseJsonFormat,
+		}
+	default:
+		return &DefaultContentParser{
+			systemPrompt: defaultPlanningResponseStringFormat,
+		}
+	}
+}
 
 // ParsedAction represents a parsed action from the VLM response
 type ParsedAction struct {
@@ -34,20 +59,28 @@ const (
 	ActionTypeScroll   ActionType = "scroll"
 )
 
-// parseThoughtAction parses the Thought/Action format response
-func parseThoughtAction(predictionText string) ([]ParsedAction, error) {
+// UITARSContentParser parses the Thought/Action format response
+type UITARSContentParser struct {
+	systemPrompt string
+}
+
+func (p *UITARSContentParser) SystemPrompt() string {
+	return p.systemPrompt
+}
+
+func (p *UITARSContentParser) Parse(content string, size types.Size) (*PlanningResult, error) {
 	thoughtRegex := regexp.MustCompile(`(?is)Thought:(.+?)Action:`)
 	actionRegex := regexp.MustCompile(`(?is)Action:(.+)`)
 
 	// extract Thought part
-	thoughtMatch := thoughtRegex.FindStringSubmatch(predictionText)
+	thoughtMatch := thoughtRegex.FindStringSubmatch(content)
 	var thought string
 	if len(thoughtMatch) > 1 {
 		thought = strings.TrimSpace(thoughtMatch[1])
 	}
 
 	// extract Action part, e.g. "click(start_box='(552,454)')"
-	actionMatch := actionRegex.FindStringSubmatch(predictionText)
+	actionMatch := actionRegex.FindStringSubmatch(content)
 	if len(actionMatch) < 2 {
 		return nil, errors.New("no action found in the response")
 	}
@@ -55,7 +88,17 @@ func parseThoughtAction(predictionText string) ([]ParsedAction, error) {
 	actionsText := strings.TrimSpace(actionMatch[1])
 
 	// parse action type and parameters
-	return parseActionText(actionsText, thought)
+	parseActions, err := parseActionText(actionsText, thought)
+	if err != nil {
+		return nil, err
+	}
+
+	// process response
+	result, err := processVLMResponse(parseActions, size)
+	if err != nil {
+		return nil, errors.Wrap(err, "process VLM response failed")
+	}
+	return result, nil
 }
 
 // parseActionText parses the action text to extract the action type and parameters
@@ -319,17 +362,25 @@ func validateTypeContent(action *ParsedAction) {
 	}
 }
 
-// parseJSON tries to parse the response as JSON format
-func parseJSON(predictionText string) ([]ParsedAction, error) {
-	predictionText = strings.TrimSpace(predictionText)
-	if strings.HasPrefix(predictionText, "```json") && strings.HasSuffix(predictionText, "```") {
-		predictionText = strings.TrimPrefix(predictionText, "```json")
-		predictionText = strings.TrimSuffix(predictionText, "```")
+// JSONContentParser parses the response as JSON string format
+type JSONContentParser struct {
+	systemPrompt string
+}
+
+func (p *JSONContentParser) SystemPrompt() string {
+	return p.systemPrompt
+}
+
+func (p *JSONContentParser) Parse(content string, size types.Size) (*PlanningResult, error) {
+	content = strings.TrimSpace(content)
+	if strings.HasPrefix(content, "```json") && strings.HasSuffix(content, "```") {
+		content = strings.TrimPrefix(content, "```json")
+		content = strings.TrimSuffix(content, "```")
 	}
-	predictionText = strings.TrimSpace(predictionText)
+	content = strings.TrimSpace(content)
 
 	var response PlanningResult
-	if err := json.Unmarshal([]byte(predictionText), &response); err != nil {
+	if err := json.Unmarshal([]byte(content), &response); err != nil {
 		return nil, fmt.Errorf("failed to parse VLM response: %v", err)
 	}
 
@@ -352,7 +403,10 @@ func parseJSON(predictionText string) ([]ParsedAction, error) {
 		normalizedActions = append(normalizedActions, action)
 	}
 
-	return normalizedActions, nil
+	return &PlanningResult{
+		NextActions:   normalizedActions,
+		ActionSummary: response.ActionSummary,
+	}, nil
 }
 
 // normalizeAction normalizes the coordinates in the action
@@ -378,4 +432,51 @@ func normalizeAction(action *ParsedAction) error {
 	}
 
 	return nil
+}
+
+// DefaultContentParser parses the response as string format
+type DefaultContentParser struct {
+	systemPrompt string
+}
+
+func (p *DefaultContentParser) SystemPrompt() string {
+	return p.systemPrompt
+}
+
+func (p *DefaultContentParser) Parse(content string, size types.Size) (*PlanningResult, error) {
+	content = strings.TrimSpace(content)
+	if strings.HasPrefix(content, "```json") && strings.HasSuffix(content, "```") {
+		content = strings.TrimPrefix(content, "```json")
+		content = strings.TrimSuffix(content, "```")
+	}
+	content = strings.TrimSpace(content)
+
+	var response PlanningResult
+	if err := json.Unmarshal([]byte(content), &response); err != nil {
+		return nil, fmt.Errorf("failed to parse VLM response: %v", err)
+	}
+
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+
+	if len(response.NextActions) == 0 {
+		return nil, errors.New("no actions returned from VLM")
+	}
+
+	// normalize actions
+	var normalizedActions []ParsedAction
+	for i := range response.NextActions {
+		// create a new variable, avoid implicit memory aliasing in for loop.
+		action := response.NextActions[i]
+		if err := normalizeAction(&action); err != nil {
+			return nil, errors.Wrap(err, "failed to normalize action")
+		}
+		normalizedActions = append(normalizedActions, action)
+	}
+
+	return &PlanningResult{
+		NextActions:   normalizedActions,
+		ActionSummary: response.ActionSummary,
+	}, nil
 }

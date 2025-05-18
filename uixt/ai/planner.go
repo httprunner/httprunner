@@ -15,7 +15,7 @@ import (
 )
 
 type IPlanner interface {
-	Call(opts *PlanningOptions) (*PlanningResult, error)
+	Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
 }
 
 // PlanningOptions represents the input options for planning
@@ -27,21 +27,16 @@ type PlanningOptions struct {
 
 // PlanningResult represents the result of planning
 type PlanningResult struct {
-	NextActions   []ParsedAction `json:"actions"`
-	ActionSummary string         `json:"summary"`
-	Error         string         `json:"error,omitempty"`
+	ToolCalls     []schema.ToolCall `json:"tool_calls"` // TODO: merge to NextActions
+	NextActions   []ParsedAction    `json:"actions"`
+	ActionSummary string            `json:"summary"`
+	Error         string            `json:"error,omitempty"`
 }
 
 func NewPlanner(ctx context.Context, modelConfig *ModelConfig) (*Planner, error) {
 	planner := &Planner{
-		ctx:         ctx,
 		modelConfig: modelConfig,
-	}
-
-	if modelConfig.ModelType == option.LLMServiceTypeUITARS {
-		planner.systemPrompt = uiTarsPlanningPrompt
-	} else {
-		planner.systemPrompt = defaultPlanningResponseJsonFormat
+		parser:      NewLLMContentParser(modelConfig.ModelType),
 	}
 
 	var err error
@@ -54,27 +49,51 @@ func NewPlanner(ctx context.Context, modelConfig *ModelConfig) (*Planner, error)
 }
 
 type Planner struct {
-	ctx          context.Context
-	modelConfig  *ModelConfig
-	model        model.ToolCallingChatModel
-	systemPrompt string
-	history      ConversationHistory
+	modelConfig *ModelConfig
+	model       model.ToolCallingChatModel
+	parser      LLMContentParser
+	history     ConversationHistory
+	tools       []*schema.ToolInfo
+}
+
+func (p *Planner) SystemPrompt() string {
+	return p.parser.SystemPrompt()
+}
+
+func (p *Planner) History() *ConversationHistory {
+	return &p.history
+}
+
+func (p *Planner) RegisterTools(tools []*schema.ToolInfo) error {
+	if p.modelConfig.ModelType == option.LLMServiceTypeUITARS {
+		// tools have been registered in ui-tars system prompt
+		return nil
+	}
+
+	// register tools for models with function calling
+	toolCallingModel, err := p.model.WithTools(tools)
+	if err != nil {
+		return errors.Wrap(err, "failed to register tools")
+	}
+	p.tools = tools
+	p.model = toolCallingModel
+	return nil
 }
 
 // Call performs UI planning using Vision Language Model
-func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
+func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error) {
 	// validate input parameters
 	if err := validatePlanningInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate planning parameters failed")
 	}
 
 	// prepare prompt
-	if len(p.history) == 0 {
+	if len(p.history) == 0 && opts.UserInstruction != "" {
 		// add system message
 		p.history = ConversationHistory{
 			{
 				Role:    schema.System,
-				Content: p.systemPrompt + opts.UserInstruction,
+				Content: p.parser.SystemPrompt() + opts.UserInstruction,
 			},
 		}
 	}
@@ -84,50 +103,37 @@ func (p *Planner) Call(opts *PlanningOptions) (*PlanningResult, error) {
 	// call model service, generate response
 	logRequest(p.history)
 	startTime := time.Now()
-	resp, err := p.model.Generate(p.ctx, p.history)
+	message, err := p.model.Generate(ctx, p.history)
 	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
 		Str("model", string(p.modelConfig.ModelType)).Msg("call model service")
 	if err != nil {
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
-	logResponse(resp)
+	logResponse(message)
 
-	// parse result
-	result, err := p.parseResult(resp, opts.Size)
-	if err != nil {
-		return nil, errors.Wrap(code.LLMParsePlanningResponseError, err.Error())
+	// handle tool calls
+	if len(message.ToolCalls) > 0 {
+		// history will be appended with tool calls execution result
+		result := &PlanningResult{
+			ToolCalls:     message.ToolCalls,
+			ActionSummary: message.Content,
+		}
+		return result, nil
 	}
 
-	// append assistant message
-	p.history.Append(&schema.Message{
-		Role:    schema.Assistant,
-		Content: result.ActionSummary,
-	})
-
-	return result, nil
-}
-
-func (p *Planner) parseResult(msg *schema.Message, size types.Size) (*PlanningResult, error) {
-	var parseActions []ParsedAction
-	var err error
-	if p.modelConfig.ModelType == option.LLMServiceTypeUITARS {
-		// parse Thought/Action format from UI-TARS
-		parseActions, err = parseThoughtAction(msg.Content)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// parse JSON format, from VLM like openai/gpt-4o
-		parseActions, err = parseJSON(msg.Content)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// process response
-	result, err := processVLMResponse(parseActions, size)
+	// parse message content to actions (tool calls)
+	result, err := p.parser.Parse(message.Content, opts.Size)
 	if err != nil {
-		return nil, errors.Wrap(err, "process VLM response failed")
+		result = &PlanningResult{
+			ActionSummary: message.Content,
+			Error:         err.Error(),
+		}
+		log.Debug().Str("reason", err.Error()).Msg("parse content to actions failed")
+		// append assistant message
+		p.history.Append(&schema.Message{
+			Role:    schema.Assistant,
+			Content: message.Content,
+		})
 	}
 
 	log.Info().

@@ -54,7 +54,7 @@ func TestValidAssertions(t *testing.T) {
 			imageBase64, size, err := builtin.LoadImage(tc.imagePath)
 			require.NoError(t, err)
 
-			result, err := asserter.Assert(&AssertOptions{
+			result, err := asserter.Assert(context.Background(), &AssertOptions{
 				Assertion:  tc.assertion,
 				Screenshot: imageBase64,
 				Size:       size,
@@ -94,7 +94,7 @@ func TestInvalidParameters(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := asserter.Assert(&AssertOptions{
+			_, err := asserter.Assert(context.Background(), &AssertOptions{
 				Assertion:  tc.assertion,
 				Screenshot: tc.screenshot,
 				Size:       tc.size,

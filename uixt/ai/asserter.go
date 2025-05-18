@@ -22,7 +22,7 @@ import (
 
 // IAsserter interface defines the contract for assertion operations
 type IAsserter interface {
-	Assert(opts *AssertOptions) (*AssertionResponse, error)
+	Assert(ctx context.Context, opts *AssertOptions) (*AssertionResponse, error)
 }
 
 // AssertOptions represents the input options for assertion
@@ -40,7 +40,6 @@ type AssertionResponse struct {
 
 // Asserter handles assertion using different AI models
 type Asserter struct {
-	ctx          context.Context
 	modelConfig  *ModelConfig
 	model        model.ToolCallingChatModel
 	systemPrompt string
@@ -50,7 +49,6 @@ type Asserter struct {
 // NewAsserter creates a new Asserter instance
 func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, error) {
 	asserter := &Asserter{
-		ctx:          ctx,
 		modelConfig:  modelConfig,
 		systemPrompt: defaultAssertionPrompt,
 	}
@@ -93,7 +91,7 @@ func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, erro
 }
 
 // Assert performs the assertion check on the screenshot
-func (a *Asserter) Assert(opts *AssertOptions) (*AssertionResponse, error) {
+func (a *Asserter) Assert(ctx context.Context, opts *AssertOptions) (*AssertionResponse, error) {
 	// Validate input parameters
 	if err := validateAssertionInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate assertion parameters failed")
@@ -136,7 +134,7 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	// Call model service, generate response
 	logRequest(a.history)
 	startTime := time.Now()
-	resp, err := a.model.Generate(a.ctx, a.history)
+	resp, err := a.model.Generate(ctx, a.history)
 	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
 		Str("model", string(a.modelConfig.ModelType)).Msg("call model service for assertion")
 	if err != nil {

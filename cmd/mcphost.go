@@ -27,24 +27,22 @@ var CmdMCPHost = &cobra.Command{
 		}
 
 		// Create chat session
-		chat, err := host.NewChat(context.Background(), systemPromptFile)
+		chat, err := host.NewChat(context.Background())
 		if err != nil {
 			return fmt.Errorf("failed to create chat session: %w", err)
 		}
 
 		// Start chat
-		return chat.Start()
+		return chat.Start(context.Background())
 	},
 }
 
 var (
-	mcpConfigPath    string
-	dumpPath         string
-	systemPromptFile string
+	mcpConfigPath string
+	dumpPath      string
 )
 
 func init() {
 	CmdMCPHost.Flags().StringVarP(&mcpConfigPath, "mcp-config", "c", "$HOME/.hrp/mcp.json", "path to the MCP config file")
 	CmdMCPHost.Flags().StringVar(&dumpPath, "dump", "", "path to save the exported tools JSON file")
-	CmdMCPHost.Flags().StringVar(&systemPromptFile, "system-prompt", "", "path to system prompt JSON file")
 }
