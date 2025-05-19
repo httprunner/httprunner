@@ -207,7 +207,7 @@ func (dExt *XTDriver) DoValidation(check, assert, expected string, message ...st
 	case SelectorOCR:
 		err = dExt.assertOCR(expected, assert)
 	case SelectorAI:
-		err = dExt.AIAssert(assert)
+		err = dExt.AIAssert(expected)
 	case SelectorForegroundApp:
 		err = dExt.assertForegroundApp(expected, assert)
 	case SelectorSelector:
