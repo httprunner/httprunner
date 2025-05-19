@@ -22,7 +22,7 @@ import (
 
 // IAsserter interface defines the contract for assertion operations
 type IAsserter interface {
-	Assert(ctx context.Context, opts *AssertOptions) (*AssertionResponse, error)
+	Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error)
 }
 
 // AssertOptions represents the input options for assertion
@@ -32,8 +32,8 @@ type AssertOptions struct {
 	Size       types.Size `json:"size"`       // Screen dimensions
 }
 
-// AssertionResponse represents the response from an AI assertion
-type AssertionResponse struct {
+// AssertionResult represents the response from an AI assertion
+type AssertionResult struct {
 	Pass    bool   `json:"pass"`
 	Thought string `json:"thought"`
 }
@@ -91,7 +91,7 @@ func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, erro
 }
 
 // Assert performs the assertion check on the screenshot
-func (a *Asserter) Assert(ctx context.Context, opts *AssertOptions) (*AssertionResponse, error) {
+func (a *Asserter) Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error) {
 	// Validate input parameters
 	if err := validateAssertionInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate assertion parameters failed")
@@ -169,7 +169,7 @@ func validateAssertionInput(opts *AssertOptions) error {
 }
 
 // parseAssertionResult parses the model response into AssertionResponse
-func parseAssertionResult(content string) (*AssertionResponse, error) {
+func parseAssertionResult(content string) (*AssertionResult, error) {
 	// Extract JSON content from response
 	jsonContent := extractJSON(content)
 	if jsonContent == "" {
@@ -177,7 +177,7 @@ func parseAssertionResult(content string) (*AssertionResponse, error) {
 	}
 
 	// Parse JSON response
-	var result AssertionResponse
+	var result AssertionResult
 	if err := json.Unmarshal([]byte(jsonContent), &result); err != nil {
 		return nil, errors.Wrap(code.LLMParseAssertionResponseError, err.Error())
 	}

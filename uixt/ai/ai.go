@@ -16,7 +16,7 @@ import (
 // ILLMService 定义了 LLM 服务接口，包括规划和断言功能
 type ILLMService interface {
 	Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
-	Assert(ctx context.Context, opts *AssertOptions) (*AssertionResponse, error)
+	Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error)
 }
 
 func NewLLMService(modelType option.LLMServiceType) (ILLMService, error) {
@@ -53,7 +53,7 @@ func (c *combinedLLMService) Call(ctx context.Context, opts *PlanningOptions) (*
 }
 
 // Assert 执行断言功能
-func (c *combinedLLMService) Assert(ctx context.Context, opts *AssertOptions) (*AssertionResponse, error) {
+func (c *combinedLLMService) Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error) {
 	return c.asserter.Assert(ctx, opts)
 }
 
