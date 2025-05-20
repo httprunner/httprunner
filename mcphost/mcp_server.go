@@ -91,6 +91,16 @@ func (ums *MCPServer4XTDriver) addTools() {
 	ums.tools = append(ums.tools, listDevicesTool)
 	ums.handlerMap[listDevicesTool.Name] = ums.handleListAvailableDevices
 
+	// SelectDevice Tool
+	selectDeviceTool := mcp.NewTool("select_device",
+		mcp.WithDescription("Select a device to use from the list of available devices. Use the list_available_devices tool to get a list of available devices."),
+		mcp.WithString("platform", mcp.Enum("android", "ios"), mcp.Description("The type of device to select")),
+		mcp.WithString("serial", mcp.Description("The device serial/udid to select")),
+	)
+	ums.mcpServer.AddTool(selectDeviceTool, ums.handleSelectDevice)
+	ums.tools = append(ums.tools, selectDeviceTool)
+	ums.handlerMap[selectDeviceTool.Name] = ums.handleSelectDevice
+
 	// TapXY Tool
 	tapParams := append(
 		[]mcp.ToolOption{mcp.WithDescription("Taps on the device screen at the given coordinates.")},
@@ -158,6 +168,17 @@ func (ums *MCPServer4XTDriver) handleListAvailableDevices(ctx context.Context, r
 
 	jsonResult, _ := json.Marshal(deviceList)
 	return mcp.NewToolResultText(string(jsonResult)), nil
+}
+
+// handleSelectDevice handles the select_device tool call.
+func (ums *MCPServer4XTDriver) handleSelectDevice(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
+	if err != nil {
+		return nil, err
+	}
+
+	uuid := driverExt.IDriver.GetDevice().UUID()
+	return mcp.NewToolResultText(fmt.Sprintf("Selected device: %s", uuid)), nil
 }
 
 // handleTapXY handles the tap_xy tool call.
@@ -237,8 +258,8 @@ func (ums *MCPServer4XTDriver) handleScreenShot(ctx context.Context, request mcp
 func (ums *MCPServer4XTDriver) setupXTDriver(_ context.Context, args map[string]interface{}) (*uixt.XTDriver, error) {
 	platform, _ := args["platform"].(string)
 	serial, _ := args["serial"].(string)
-	if platform == "" || serial == "" {
-		return nil, fmt.Errorf("platform and serial are required")
+	if platform == "" {
+		platform = "android"
 	}
 
 	// Check if driver exists in cache
