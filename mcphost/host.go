@@ -61,6 +61,14 @@ func NewMCPHost(configPath string) (*MCPHost, error) {
 
 // InitServers initializes all MCP servers
 func (h *MCPHost) InitServers(ctx context.Context) error {
+	// initialize uixt MCP server
+	h.connections["uixt"] = &Connection{
+		Client: &MCPClient4XTDriver{
+			server: NewMCPServer(),
+		},
+		Config: nil,
+	}
+
 	for name, server := range h.config.MCPServers {
 		if server.Config.IsDisabled() {
 			continue
@@ -299,27 +307,33 @@ func (h *MCPHost) GetEinoToolInfos(ctx context.Context) ([]*schema.ToolInfo, err
 	var tools []*schema.ToolInfo
 	for _, serverTools := range results {
 		if serverTools.Err != nil {
-			log.Error().Err(serverTools.Err).Str("server", serverTools.ServerName).Msg("failed to get tools")
+			log.Error().Err(serverTools.Err).
+				Str("server", serverTools.ServerName).Msg("failed to get tools")
 			continue
 		}
 
+		var toolNames []string
 		for _, tool := range serverTools.Tools {
 			einoTool, err := h.GetEinoTool(ctx, serverTools.ServerName, tool.Name)
 			if err != nil {
-				log.Error().Err(err).Str("server", serverTools.ServerName).Str("tool", tool.Name).Msg("failed to get eino tool")
+				log.Error().Err(err).Str("server", serverTools.ServerName).
+					Str("tool", tool.Name).Msg("failed to get eino tool")
 				continue
 			}
 			einoToolInfo, err := einoTool.Info(ctx)
 			if err != nil {
-				log.Error().Err(err).Str("server", serverTools.ServerName).Str("tool", tool.Name).Msg("failed to get eino tool info")
+				log.Error().Err(err).Str("server", serverTools.ServerName).
+					Str("tool", tool.Name).Msg("failed to get eino tool info")
 				continue
 			}
 			einoToolInfo.Name = fmt.Sprintf("%s__%s", serverTools.ServerName, tool.Name)
 			tools = append(tools, einoToolInfo)
+			toolNames = append(toolNames, tool.Name)
 		}
+		log.Debug().Str("server", serverTools.ServerName).
+			Strs("tools", toolNames).Msg("loaded MCP tools")
 	}
 
-	log.Info().Int("count", len(tools)).Msg("eino tool infos loaded")
 	return tools, nil
 }
 

@@ -13,16 +13,49 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
+	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
 )
 
+// MCPClient4XTDriver is a minimal MCP client that only implements the methods used by the host
+type MCPClient4XTDriver struct {
+	client.MCPClient
+	server *MCPServer4XTDriver
+}
+
+func (c *MCPClient4XTDriver) ListTools(ctx context.Context, req mcp.ListToolsRequest) (*mcp.ListToolsResult, error) {
+	tools := c.server.ListTools()
+	return &mcp.ListToolsResult{Tools: tools}, nil
+}
+
+func (c *MCPClient4XTDriver) CallTool(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	handler := c.server.GetHandler(req.Params.Name)
+	if handler == nil {
+		return mcp.NewToolResultError(fmt.Sprintf("handler for tool %s not found", req.Params.Name)), nil
+	}
+	return handler(ctx, req)
+}
+
+func (c *MCPClient4XTDriver) Initialize(ctx context.Context, req mcp.InitializeRequest) (*mcp.InitializeResult, error) {
+	// no need to initialize for local server
+	return &mcp.InitializeResult{}, nil
+}
+
+func (c *MCPClient4XTDriver) Close() error {
+	// no need to close for local server
+	return nil
+}
+
+type toolCall = func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error)
+
 // MCPServer4XTDriver wraps a MCPServer to expose XTDriver functionality via MCP protocol.
 type MCPServer4XTDriver struct {
 	mcpServer   *server.MCPServer
-	driverCache sync.Map   // key is serial, value is *XTDriver
-	tools       []mcp.Tool // 本地维护的工具列表
+	driverCache sync.Map            // key is serial, value is *XTDriver
+	tools       []mcp.Tool          // tools list for uixt
+	handlerMap  map[string]toolCall // tool name to handler
 }
 
 // NewMCPServer creates a new MCP server for XTDriver and registers all tools.
@@ -33,7 +66,8 @@ func NewMCPServer() *MCPServer4XTDriver {
 		server.WithToolCapabilities(false),
 	)
 	s := &MCPServer4XTDriver{
-		mcpServer: mcpServer,
+		mcpServer:  mcpServer,
+		handlerMap: make(map[string]toolCall),
 	}
 	s.addTools()
 	return s
@@ -56,6 +90,7 @@ func (ums *MCPServer4XTDriver) addTools() {
 	tapXYTool := mcp.NewTool("tap_xy", tapParams...)
 	ums.mcpServer.AddTool(tapXYTool, ums.handleTapXY)
 	ums.tools = append(ums.tools, tapXYTool)
+	ums.handlerMap[tapXYTool.Name] = ums.handleTapXY
 	log.Info().Str("name", tapXYTool.Name).Msg("Register tool")
 
 	// Swipe Tool
@@ -67,6 +102,7 @@ func (ums *MCPServer4XTDriver) addTools() {
 	swipeTool := mcp.NewTool("swipe", swipeParams...)
 	ums.mcpServer.AddTool(swipeTool, ums.handleSwipe)
 	ums.tools = append(ums.tools, swipeTool)
+	ums.handlerMap[swipeTool.Name] = ums.handleSwipe
 	log.Info().Str("name", swipeTool.Name).Msg("Register tool")
 
 	// ScreenShot Tool
@@ -75,6 +111,7 @@ func (ums *MCPServer4XTDriver) addTools() {
 	)
 	ums.mcpServer.AddTool(screenShotTool, ums.handleScreenShot)
 	ums.tools = append(ums.tools, screenShotTool)
+	ums.handlerMap[screenShotTool.Name] = ums.handleScreenShot
 	log.Info().Str("name", screenShotTool.Name).Msg("Register tool")
 }
 
@@ -259,12 +296,12 @@ var commonToolOptions = []mcp.ToolOption{
 	mcp.WithString("serial", mcp.Required(), mcp.Description("Device serial/udid/browser id")),
 }
 
-// ListTools 返回所有注册的 mcp.Tool
+// ListTools returns all registered tools
 func (s *MCPServer4XTDriver) ListTools() []mcp.Tool {
 	return s.tools
 }
 
-// GetTool 根据名称返回 mcp.Tool 指针
+// GetTool returns a pointer to the mcp.Tool with the given name
 func (s *MCPServer4XTDriver) GetTool(name string) *mcp.Tool {
 	for i := range s.tools {
 		if s.tools[i].Name == name {
@@ -272,4 +309,12 @@ func (s *MCPServer4XTDriver) GetTool(name string) *mcp.Tool {
 		}
 	}
 	return nil
+}
+
+// GetHandler returns the tool handler for the given name
+func (s *MCPServer4XTDriver) GetHandler(name string) toolCall {
+	if s.handlerMap == nil {
+		return nil
+	}
+	return s.handlerMap[name]
 }
