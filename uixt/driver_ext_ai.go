@@ -119,7 +119,7 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) er
 		return errors.New("LLM service is not initialized")
 	}
 
-	screenShotBase64, err := getScreenShotBufferBase64(dExt.IDriver)
+	screenShotBase64, err := GetScreenShotBufferBase64(dExt.IDriver)
 	if err != nil {
 		return err
 	}

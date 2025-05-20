@@ -13,7 +13,7 @@ import (
 )
 
 func TestConvertToolsToRecordsFromFile(t *testing.T) {
-	hub, err := NewMCPHost("./testdata/test.mcp.json")
+	hub, err := NewMCPHost("./testdata/test.mcp.json", true)
 	require.NoError(t, err)
 
 	// use ExportToolsToJSON to dump tools to JSON file

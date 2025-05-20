@@ -13,6 +13,7 @@ import (
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/internal/version"
+	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/pkg/errors"
@@ -24,6 +25,8 @@ type MCPHost struct {
 	mu          sync.RWMutex
 	connections map[string]*Connection
 	config      *MCPConfig
+	withUIXT    bool
+	drivers     map[string]*uixt.XTDriver
 }
 
 // Connection represents a connection to an MCP server
@@ -40,7 +43,7 @@ type MCPTools struct {
 }
 
 // NewMCPHost creates a new MCPHost instance
-func NewMCPHost(configPath string) (*MCPHost, error) {
+func NewMCPHost(configPath string, withUIXT bool) (*MCPHost, error) {
 	config, err := LoadMCPConfig(configPath)
 	if err != nil {
 		return nil, err
@@ -49,6 +52,8 @@ func NewMCPHost(configPath string) (*MCPHost, error) {
 	host := &MCPHost{
 		connections: make(map[string]*Connection),
 		config:      config,
+		drivers:     make(map[string]*uixt.XTDriver),
+		withUIXT:    withUIXT,
 	}
 
 	// Initialize MCP servers
@@ -62,11 +67,13 @@ func NewMCPHost(configPath string) (*MCPHost, error) {
 // InitServers initializes all MCP servers
 func (h *MCPHost) InitServers(ctx context.Context) error {
 	// initialize uixt MCP server
-	h.connections["uixt"] = &Connection{
-		Client: &MCPClient4XTDriver{
-			server: NewMCPServer(),
-		},
-		Config: nil,
+	if h.withUIXT {
+		h.connections["uixt"] = &Connection{
+			Client: &MCPClient4XTDriver{
+				server: NewMCPServer(),
+			},
+			Config: nil,
+		}
 	}
 
 	for name, server := range h.config.MCPServers {
@@ -386,4 +393,31 @@ func handleToolError(result *mcp.CallToolResult) error {
 		return fmt.Errorf("tool error: %v", result.Content[0])
 	}
 	return fmt.Errorf("tool error: unknown error")
+}
+
+// ScreenshotBase64 get screenshot base64 for the given platform and serial
+func (h *MCPHost) ScreenshotBase64(ctx context.Context, platform, serial string) (string, error) {
+	driver, err := h.GetOrCreateDriver(platform, serial)
+	if err != nil {
+		return "", err
+	}
+	return uixt.GetScreenShotBufferBase64(driver)
+}
+
+// GetOrCreateDriver get or create a driver for the given platform and serial
+func (h *MCPHost) GetOrCreateDriver(platform, serial string) (*uixt.XTDriver, error) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	cacheKey := fmt.Sprintf("%s_%s", platform, serial)
+	if driver, ok := h.drivers[cacheKey]; ok {
+		return driver, nil
+	}
+
+	driverExt, err := initDriverExt(platform, serial)
+	if err != nil {
+		return nil, err
+	}
+	// store driver in cache
+	h.drivers[cacheKey] = driverExt
+	return driverExt, nil
 }

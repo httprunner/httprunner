@@ -12,20 +12,20 @@ import (
 
 func TestNewMCPHost(t *testing.T) {
 	// Test with valid config file
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+	host, err := NewMCPHost("./testdata/test.mcp.json", false)
 	require.NoError(t, err)
 	assert.NotNil(t, host)
 	assert.NotNil(t, host.config)
 	assert.NotEmpty(t, host.config.MCPServers)
 
 	// Test with non-existent config file
-	host, err = NewMCPHost("./testdata/non_existent.json")
+	host, err = NewMCPHost("./testdata/non_existent.json", false)
 	require.Error(t, err, "expected error when config file does not exist")
 	assert.Nil(t, host)
 }
 
 func TestInitServers(t *testing.T) {
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+	host, err := NewMCPHost("./testdata/test.mcp.json", false)
 	require.NoError(t, err)
 
 	// Verify connections are established
@@ -35,7 +35,7 @@ func TestInitServers(t *testing.T) {
 }
 
 func TestGetClient(t *testing.T) {
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+	host, err := NewMCPHost("./testdata/test.mcp.json", false)
 	require.NoError(t, err)
 
 	// Test getting existing client
@@ -50,7 +50,7 @@ func TestGetClient(t *testing.T) {
 }
 
 func TestGetTools(t *testing.T) {
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+	host, err := NewMCPHost("./testdata/test.mcp.json", false)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -81,7 +81,7 @@ func TestGetTools(t *testing.T) {
 }
 
 func TestGetTool(t *testing.T) {
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+	host, err := NewMCPHost("./testdata/test.mcp.json", false)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -104,7 +104,7 @@ func TestGetTool(t *testing.T) {
 }
 
 func TestInvokeTool(t *testing.T) {
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+	host, err := NewMCPHost("./testdata/test.mcp.json", false)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -132,7 +132,7 @@ func TestInvokeTool(t *testing.T) {
 }
 
 func TestCallEinoTool(t *testing.T) {
-	hub, err := NewMCPHost("./testdata/test.mcp.json")
+	hub, err := NewMCPHost("./testdata/test.mcp.json", false)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -147,7 +147,7 @@ func TestCallEinoTool(t *testing.T) {
 }
 
 func TestCloseServers(t *testing.T) {
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+	host, err := NewMCPHost("./testdata/test.mcp.json", false)
 	require.NoError(t, err)
 
 	// Verify servers are connected
@@ -162,7 +162,7 @@ func TestCloseServers(t *testing.T) {
 }
 
 func TestConcurrentOperations(t *testing.T) {
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+	host, err := NewMCPHost("./testdata/test.mcp.json", false)
 	require.NoError(t, err)
 
 	// Test concurrent tool invocations
@@ -193,7 +193,7 @@ func TestConcurrentOperations(t *testing.T) {
 }
 
 func TestDisabledServer(t *testing.T) {
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+	host, err := NewMCPHost("./testdata/test.mcp.json", false)
 	require.NoError(t, err)
 
 	// Verify only enabled servers are connected

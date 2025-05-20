@@ -222,8 +222,8 @@ func getScreenShotBuffer(driver IDriver) (compressedBufSource *bytes.Buffer, err
 	return compressBufSource, nil
 }
 
-// getScreenShotBufferBase64 takes a screenshot, returns the compressed image buffer in base64 format
-func getScreenShotBufferBase64(driver IDriver) (compressedBufBase64 string, err error) {
+// GetScreenShotBufferBase64 takes a screenshot, returns the compressed image buffer in base64 format
+func GetScreenShotBufferBase64(driver IDriver) (compressedBufBase64 string, err error) {
 	compressBufSource, err := getScreenShotBuffer(driver)
 	if err != nil {
 		return "", err

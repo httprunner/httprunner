@@ -9,7 +9,7 @@ import (
 )
 
 func TestRunPromptWithNoToolCall(t *testing.T) {
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+	host, err := NewMCPHost("./testdata/test.mcp.json", true)
 	require.NoError(t, err)
 
 	chat, err := host.NewChat(context.Background())
@@ -21,7 +21,7 @@ func TestRunPromptWithNoToolCall(t *testing.T) {
 }
 
 func TestRunPromptWithToolCall(t *testing.T) {
-	host, err := NewMCPHost("./testdata/test.mcp.json")
+	host, err := NewMCPHost("./testdata/test.mcp.json", true)
 	require.NoError(t, err)
 
 	chat, err := host.NewChat(context.Background())

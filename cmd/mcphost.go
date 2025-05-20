@@ -15,7 +15,7 @@ var CmdMCPHost = &cobra.Command{
 	Long:  `mcphost is a command-line tool that allows you to interact with MCP tools.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Create MCP host
-		host, err := mcphost.NewMCPHost(mcpConfigPath)
+		host, err := mcphost.NewMCPHost(mcpConfigPath, withUIXT)
 		if err != nil {
 			return fmt.Errorf("failed to create MCP host: %w", err)
 		}
@@ -40,9 +40,11 @@ var CmdMCPHost = &cobra.Command{
 var (
 	mcpConfigPath string
 	dumpPath      string
+	withUIXT      bool
 )
 
 func init() {
 	CmdMCPHost.Flags().StringVarP(&mcpConfigPath, "mcp-config", "c", "$HOME/.hrp/mcp.json", "path to the MCP config file")
 	CmdMCPHost.Flags().StringVar(&dumpPath, "dump", "", "path to save the exported tools JSON file")
+	CmdMCPHost.Flags().BoolVar(&withUIXT, "with-uixt", false, "start built-in uixt MCP server")
 }

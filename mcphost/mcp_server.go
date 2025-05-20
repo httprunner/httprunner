@@ -126,7 +126,8 @@ func (ums *MCPServer4XTDriver) handleTapXY(ctx context.Context, request mcp.Call
 		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 	}
 	if tapReq.Duration > 0 {
-		err := driverExt.Drag(tapReq.X, tapReq.Y, tapReq.X, tapReq.Y, option.WithDuration(tapReq.Duration))
+		err := driverExt.Drag(tapReq.X, tapReq.Y, tapReq.X, tapReq.Y,
+			option.WithDuration(tapReq.Duration))
 		if err != nil {
 			return mcp.NewToolResultError("Tap failed: " + err.Error()), nil
 		}
@@ -136,7 +137,9 @@ func (ums *MCPServer4XTDriver) handleTapXY(ctx context.Context, request mcp.Call
 			return mcp.NewToolResultError("Tap failed: " + err.Error()), nil
 		}
 	}
-	return mcp.NewToolResultText("Tap successful."), nil
+	return mcp.NewToolResultText(
+		fmt.Sprintf("tap (%f,%f) success", tapReq.X, tapReq.Y),
+	), nil
 }
 
 // handleSwipe handles the swipe tool call.
@@ -153,11 +156,15 @@ func (ums *MCPServer4XTDriver) handleSwipe(ctx context.Context, request mcp.Call
 	if swipeReq.Duration > 0 {
 		actionOptions = append(actionOptions, option.WithDuration(swipeReq.Duration/1000.0))
 	}
-	err = driverExt.Swipe(swipeReq.FromX, swipeReq.FromY, swipeReq.ToX, swipeReq.ToY, actionOptions...)
+	err = driverExt.Swipe(swipeReq.FromX, swipeReq.FromY,
+		swipeReq.ToX, swipeReq.ToY, actionOptions...)
 	if err != nil {
 		return mcp.NewToolResultError("Swipe failed: " + err.Error()), nil
 	}
-	return mcp.NewToolResultText("Swipe successful."), nil
+	return mcp.NewToolResultText(
+		fmt.Sprintf("swipe (%f,%f)->(%f,%f) success",
+			swipeReq.FromX, swipeReq.FromY, swipeReq.ToX, swipeReq.ToY),
+	), nil
 }
 
 // handleScreenShot handles the screenshot tool call.
@@ -198,6 +205,16 @@ func (ums *MCPServer4XTDriver) setupXTDriver(_ context.Context, args map[string]
 		}
 	}
 
+	driverExt, err := initDriverExt(platform, serial)
+	if err != nil {
+		return nil, err
+	}
+	// store driver in cache
+	ums.driverCache.Store(cacheKey, driverExt)
+	return driverExt, nil
+}
+
+func initDriverExt(platform, serial string) (*uixt.XTDriver, error) {
 	// init device
 	var device uixt.IDevice
 	var err error
