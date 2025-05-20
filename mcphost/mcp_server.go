@@ -1,4 +1,4 @@
-package server
+package mcphost
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/version"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
@@ -20,7 +21,8 @@ import (
 // MCPServer4XTDriver wraps a MCPServer to expose XTDriver functionality via MCP protocol.
 type MCPServer4XTDriver struct {
 	mcpServer   *server.MCPServer
-	driverCache sync.Map // key is serial, value is *XTDriver
+	driverCache sync.Map   // key is serial, value is *XTDriver
+	tools       []mcp.Tool // 本地维护的工具列表
 }
 
 // NewMCPServer creates a new MCP server for XTDriver and registers all tools.
@@ -50,9 +52,10 @@ func (ums *MCPServer4XTDriver) addTools() {
 		[]mcp.ToolOption{mcp.WithDescription("Taps on the device screen at the given coordinates.")},
 		commonToolOptions...,
 	)
-	tapParams = append(tapParams, generateMCPOptions(TapRequest{})...)
+	tapParams = append(tapParams, generateMCPOptions(types.TapRequest{})...)
 	tapXYTool := mcp.NewTool("tap_xy", tapParams...)
 	ums.mcpServer.AddTool(tapXYTool, ums.handleTapXY)
+	ums.tools = append(ums.tools, tapXYTool)
 	log.Info().Str("name", tapXYTool.Name).Msg("Register tool")
 
 	// Swipe Tool
@@ -60,9 +63,10 @@ func (ums *MCPServer4XTDriver) addTools() {
 		[]mcp.ToolOption{mcp.WithDescription("Swipes on the device screen from one point to another.")},
 		commonToolOptions...,
 	)
-	swipeParams = append(swipeParams, generateMCPOptions(DragRequest{})...)
+	swipeParams = append(swipeParams, generateMCPOptions(types.DragRequest{})...)
 	swipeTool := mcp.NewTool("swipe", swipeParams...)
 	ums.mcpServer.AddTool(swipeTool, ums.handleSwipe)
+	ums.tools = append(ums.tools, swipeTool)
 	log.Info().Str("name", swipeTool.Name).Msg("Register tool")
 
 	// ScreenShot Tool
@@ -70,6 +74,7 @@ func (ums *MCPServer4XTDriver) addTools() {
 		mcp.WithDescription("Takes a screenshot of the device screen and returns it as a base64 encoded string."),
 	)
 	ums.mcpServer.AddTool(screenShotTool, ums.handleScreenShot)
+	ums.tools = append(ums.tools, screenShotTool)
 	log.Info().Str("name", screenShotTool.Name).Msg("Register tool")
 }
 
@@ -79,7 +84,7 @@ func (ums *MCPServer4XTDriver) handleTapXY(ctx context.Context, request mcp.Call
 	if err != nil {
 		return nil, err
 	}
-	var tapReq TapRequest
+	var tapReq types.TapRequest
 	if err := mapToStruct(request.Params.Arguments, &tapReq); err != nil {
 		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 	}
@@ -103,7 +108,7 @@ func (ums *MCPServer4XTDriver) handleSwipe(ctx context.Context, request mcp.Call
 	if err != nil {
 		return nil, err
 	}
-	var swipeReq DragRequest
+	var swipeReq types.DragRequest
 	if err := mapToStruct(request.Params.Arguments, &swipeReq); err != nil {
 		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 	}
@@ -252,4 +257,19 @@ func mapToStruct(m map[string]interface{}, out interface{}) error {
 var commonToolOptions = []mcp.ToolOption{
 	mcp.WithString("platform", mcp.Required(), mcp.Description("Device platform: android/ios/browser")),
 	mcp.WithString("serial", mcp.Required(), mcp.Description("Device serial/udid/browser id")),
+}
+
+// ListTools 返回所有注册的 mcp.Tool
+func (s *MCPServer4XTDriver) ListTools() []mcp.Tool {
+	return s.tools
+}
+
+// GetTool 根据名称返回 mcp.Tool 指针
+func (s *MCPServer4XTDriver) GetTool(name string) *mcp.Tool {
+	for i := range s.tools {
+		if s.tools[i].Name == name {
+			return &s.tools[i]
+		}
+	}
+	return nil
 }
