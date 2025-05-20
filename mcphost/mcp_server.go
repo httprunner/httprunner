@@ -9,7 +9,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/danielpaulus/go-ios/ios"
 	"github.com/httprunner/httprunner/v5/internal/version"
+	"github.com/httprunner/httprunner/v5/pkg/gadb"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
@@ -81,6 +83,14 @@ func (s *MCPServer4XTDriver) Start() error {
 
 // addTools registers all MCP tools.
 func (ums *MCPServer4XTDriver) addTools() {
+	// ListAvailableDevices Tool
+	listDevicesTool := mcp.NewTool("list_available_devices",
+		mcp.WithDescription("List all available devices. If there are more than one device returned, you need to let the user select one of them."),
+	)
+	ums.mcpServer.AddTool(listDevicesTool, ums.handleListAvailableDevices)
+	ums.tools = append(ums.tools, listDevicesTool)
+	ums.handlerMap[listDevicesTool.Name] = ums.handleListAvailableDevices
+
 	// TapXY Tool
 	tapParams := append(
 		[]mcp.ToolOption{mcp.WithDescription("Taps on the device screen at the given coordinates.")},
@@ -113,6 +123,41 @@ func (ums *MCPServer4XTDriver) addTools() {
 	ums.tools = append(ums.tools, screenShotTool)
 	ums.handlerMap[screenShotTool.Name] = ums.handleScreenShot
 	log.Info().Str("name", screenShotTool.Name).Msg("Register tool")
+}
+
+// handleListAvailableDevices handles the list_available_devices tool call.
+func (ums *MCPServer4XTDriver) handleListAvailableDevices(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	deviceList := make(map[string][]string)
+	if client, err := gadb.NewClient(); err == nil {
+		if androidDevices, err := client.DeviceList(); err == nil {
+			serialList := make([]string, 0, len(androidDevices))
+			for _, device := range androidDevices {
+				serialList = append(serialList, device.Serial())
+			}
+			deviceList["androidDevices"] = serialList
+		}
+	}
+	if iosDevices, err := ios.ListDevices(); err == nil {
+		serialList := make([]string, 0, len(iosDevices.DeviceList))
+		for _, dev := range iosDevices.DeviceList {
+			device, err := uixt.NewIOSDevice(
+				option.WithUDID(dev.Properties.SerialNumber))
+			if err != nil {
+				continue
+			}
+			properties := device.Properties
+			err = ios.Pair(dev)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to pair device")
+				continue
+			}
+			serialList = append(serialList, properties.SerialNumber)
+		}
+		deviceList["iosDevices"] = serialList
+	}
+
+	jsonResult, _ := json.Marshal(deviceList)
+	return mcp.NewToolResultText(string(jsonResult)), nil
 }
 
 // handleTapXY handles the tap_xy tool call.
