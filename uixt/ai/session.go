@@ -97,20 +97,20 @@ func logRequest(messages ConversationHistory) {
 	log.Debug().Interface("messages", msgs).Msg("log request messages")
 }
 
-func logResponse(resp *schema.Message) {
-	logger := log.Info().Str("role", string(resp.Role)).
-		Str("content", resp.Content)
-	if resp.ResponseMeta != nil {
-		logger = logger.Str("finish_reason", resp.ResponseMeta.FinishReason)
+func logResponse(message *schema.Message) {
+	logger := log.Info().Str("role", string(message.Role)).
+		Str("content", message.Content)
+	if message.ResponseMeta != nil {
+		logger = logger.Str("finish_reason", message.ResponseMeta.FinishReason)
 		// Log usage statistics
-		if usage := resp.ResponseMeta.Usage; usage != nil {
+		if usage := message.ResponseMeta.Usage; usage != nil {
 			log.Debug().Int("input_tokens", usage.PromptTokens).
 				Int("output_tokens", usage.CompletionTokens).
 				Int("total_tokens", usage.TotalTokens).Msg("usage statistics")
 		}
 	}
-	if resp.Extra != nil {
-		logger = logger.Interface("extra", resp.Extra)
+	if message.Extra != nil {
+		logger = logger.Interface("extra", message.Extra)
 	}
 	logger.Msg("log response message")
 }

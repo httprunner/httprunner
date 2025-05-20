@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"image"
 	"image/color"
@@ -219,6 +220,20 @@ func getScreenShotBuffer(driver IDriver) (compressedBufSource *bytes.Buffer, err
 	}
 
 	return compressBufSource, nil
+}
+
+// getScreenShotBufferBase64 takes a screenshot, returns the compressed image buffer in base64 format
+func getScreenShotBufferBase64(driver IDriver) (compressedBufBase64 string, err error) {
+	compressBufSource, err := getScreenShotBuffer(driver)
+	if err != nil {
+		return "", err
+	}
+
+	// convert buffer to base64 string
+	screenShotBase64 := "data:image/jpeg;base64," +
+		base64.StdEncoding.EncodeToString(compressBufSource.Bytes())
+
+	return screenShotBase64, nil
 }
 
 // saveScreenShot saves compressed image file with file name

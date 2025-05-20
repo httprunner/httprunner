@@ -119,14 +119,10 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) er
 		return errors.New("LLM service is not initialized")
 	}
 
-	compressedBufSource, err := getScreenShotBuffer(dExt.IDriver)
+	screenShotBase64, err := getScreenShotBufferBase64(dExt.IDriver)
 	if err != nil {
 		return err
 	}
-
-	// convert buffer to base64 string
-	screenShotBase64 := "data:image/jpeg;base64," +
-		base64.StdEncoding.EncodeToString(compressedBufSource.Bytes())
 
 	// get window size
 	size, err := dExt.IDriver.WindowSize()

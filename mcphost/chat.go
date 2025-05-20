@@ -234,9 +234,9 @@ You can also press Ctrl+C at any time to quit.
 
 ## Configurations
 
-- **system-prompt**: %s
 - **mcp-config**: %s
-`, c.planner.SystemPrompt(), c.host.config.ConfigPath)
+- **system-prompt**: %s
+`, c.host.config.ConfigPath, c.planner.SystemPrompt())
 
 	c.renderContent("", markdown)
 }
