@@ -5,10 +5,9 @@ import (
 )
 
 type TapRequest struct {
-	X        float64               `json:"x" binding:"required"`
-	Y        float64               `json:"y" binding:"required"`
-	Duration float64               `json:"duration"`
-	Options  *option.ActionOptions `json:"options,omitempty"`
+	X        float64 `json:"x" binding:"required" desc:"X coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	Y        float64 `json:"y" binding:"required" desc:"Y coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	Duration float64 `json:"duration" desc:"Tap duration in seconds (optional)"`
 }
 
 type uploadRequest struct {
@@ -19,13 +18,12 @@ type uploadRequest struct {
 }
 
 type DragRequest struct {
-	FromX         float64               `json:"from_x" binding:"required"`
-	FromY         float64               `json:"from_y" binding:"required"`
-	ToX           float64               `json:"to_x" binding:"required"`
-	ToY           float64               `json:"to_y" binding:"required"`
-	Duration      float64               `json:"duration"`
-	PressDuration float64               `json:"press_duration"`
-	Options       *option.ActionOptions `json:"options,omitempty"`
+	FromX         float64 `json:"from_x" binding:"required" desc:"Starting X-coordinate (percentage, 0.0 to 1.0)"`
+	FromY         float64 `json:"from_y" binding:"required" desc:"Starting Y-coordinate (percentage, 0.0 to 1.0)"`
+	ToX           float64 `json:"to_x" binding:"required" desc:"Ending X-coordinate (percentage, 0.0 to 1.0)"`
+	ToY           float64 `json:"to_y" binding:"required" desc:"Ending Y-coordinate (percentage, 0.0 to 1.0)"`
+	Duration      float64 `json:"duration" desc:"Swipe duration in milliseconds (optional)"`
+	PressDuration float64 `json:"press_duration" desc:"Press duration in milliseconds (optional)"`
 }
 
 type InputRequest struct {

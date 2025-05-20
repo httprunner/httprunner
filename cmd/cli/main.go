@@ -22,6 +22,7 @@ func addAllCommands() {
 	cmd.RootCmd.AddCommand(cmd.CmdServer)
 	cmd.RootCmd.AddCommand(cmd.CmdWiki)
 	cmd.RootCmd.AddCommand(cmd.CmdMCPHost)
+	cmd.RootCmd.AddCommand(cmd.CmdMCPServer)
 
 	cmd.RootCmd.AddCommand(ios.CmdIOSRoot)
 	cmd.RootCmd.AddCommand(adb.CmdAndroidRoot)
