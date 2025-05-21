@@ -5,6 +5,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
 func (r *Router) foregroundAppHandler(c *gin.Context) {
@@ -50,7 +51,7 @@ func (r *Router) appInfoHandler(c *gin.Context) {
 }
 
 func (r *Router) clearAppHandler(c *gin.Context) {
-	var appClearReq AppClearRequest
+	var appClearReq types.AppClearRequest
 	if err := c.ShouldBindJSON(&appClearReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -69,7 +70,7 @@ func (r *Router) clearAppHandler(c *gin.Context) {
 }
 
 func (r *Router) launchAppHandler(c *gin.Context) {
-	var appLaunchReq AppLaunchRequest
+	var appLaunchReq types.AppLaunchRequest
 	if err := c.ShouldBindJSON(&appLaunchReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -87,7 +88,7 @@ func (r *Router) launchAppHandler(c *gin.Context) {
 }
 
 func (r *Router) terminalAppHandler(c *gin.Context) {
-	var appTerminalReq AppTerminalRequest
+	var appTerminalReq types.AppTerminalRequest
 	if err := c.ShouldBindJSON(&appTerminalReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return

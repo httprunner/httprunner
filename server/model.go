@@ -24,18 +24,6 @@ type KeycodeRequest struct {
 	Keycode int `json:"keycode" binding:"required"`
 }
 
-type AppClearRequest struct {
-	PackageName string `json:"packageName" binding:"required"`
-}
-
-type AppLaunchRequest struct {
-	PackageName string `json:"packageName" binding:"required"`
-}
-
-type AppTerminalRequest struct {
-	PackageName string `json:"packageName" binding:"required"`
-}
-
 type AppInstallRequest struct {
 	AppUrl             string `json:"appUrl" binding:"required"`
 	MappingUrl         string `json:"mappingUrl"`

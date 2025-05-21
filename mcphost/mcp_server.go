@@ -102,12 +102,25 @@ func (ums *MCPServer4XTDriver) addTools() {
 	ums.handlerMap[selectDeviceTool.Name] = ums.handleSelectDevice
 
 	// ListPackages Tool
-	listPackagesTool := mcp.NewTool("list_packages",
-		mcp.WithDescription("List all the apps/packages on the device."),
+	listPackagesParams := append(
+		[]mcp.ToolOption{mcp.WithDescription("List all the apps/packages on the device.")},
+		commonToolOptions...,
 	)
+	listPackagesTool := mcp.NewTool("list_packages", listPackagesParams...)
 	ums.mcpServer.AddTool(listPackagesTool, ums.handleListPackages)
 	ums.tools = append(ums.tools, listPackagesTool)
 	ums.handlerMap[listPackagesTool.Name] = ums.handleListPackages
+
+	// LaunchApp Tool
+	launchAppParams := append(
+		[]mcp.ToolOption{mcp.WithDescription("Launch an app on mobile device. Use this to open a specific app. You can find the package name of the app by calling list_packages.")},
+		commonToolOptions...,
+	)
+	launchAppParams = append(launchAppParams, generateMCPOptions(types.AppLaunchRequest{})...)
+	launchAppTool := mcp.NewTool("launch_app", launchAppParams...)
+	ums.mcpServer.AddTool(launchAppTool, ums.handleLaunchApp)
+	ums.tools = append(ums.tools, launchAppTool)
+	ums.handlerMap[launchAppTool.Name] = ums.handleLaunchApp
 
 	// TapXY Tool
 	tapParams := append(
@@ -203,6 +216,27 @@ func (ums *MCPServer4XTDriver) handleListPackages(ctx context.Context, request m
 	return mcp.NewToolResultText(fmt.Sprintf("Device packages: %v", apps)), nil
 }
 
+// handleLaunchApp handles the launch_app tool call.
+func (ums *MCPServer4XTDriver) handleLaunchApp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
+	if err != nil {
+		return nil, err
+	}
+	var appLaunchReq types.AppLaunchRequest
+	if err := mapToStruct(request.Params.Arguments, &appLaunchReq); err != nil {
+		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
+	}
+	packageName := appLaunchReq.PackageName
+	if packageName == "" {
+		return mcp.NewToolResultError("package_name is required"), nil
+	}
+	err = driverExt.AppLaunch(packageName)
+	if err != nil {
+		return mcp.NewToolResultError("Launch app failed: " + err.Error()), nil
+	}
+	return mcp.NewToolResultText(fmt.Sprintf("Launched app success: %s", packageName)), nil
+}
+
 // handleTapXY handles the tap_xy tool call.
 func (ums *MCPServer4XTDriver) handleTapXY(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
@@ -281,6 +315,7 @@ func (ums *MCPServer4XTDriver) setupXTDriver(_ context.Context, args map[string]
 	platform, _ := args["platform"].(string)
 	serial, _ := args["serial"].(string)
 	if platform == "" {
+		log.Warn().Msg("platform is not set, using android as default")
 		platform = "android"
 	}
 

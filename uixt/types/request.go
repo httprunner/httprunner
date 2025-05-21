@@ -14,3 +14,15 @@ type DragRequest struct {
 	Duration      float64 `json:"duration" desc:"Swipe duration in milliseconds (optional)"`
 	PressDuration float64 `json:"press_duration" desc:"Press duration in milliseconds (optional)"`
 }
+
+type AppClearRequest struct {
+	PackageName string `json:"packageName" binding:"required"`
+}
+
+type AppLaunchRequest struct {
+	PackageName string `json:"packageName" binding:"required" desc:"The package name of the app to launch"`
+}
+
+type AppTerminalRequest struct {
+	PackageName string `json:"packageName" binding:"required"`
+}
