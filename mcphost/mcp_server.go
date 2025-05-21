@@ -133,6 +133,16 @@ func (ums *MCPServer4XTDriver) addTools() {
 	ums.tools = append(ums.tools, terminateAppTool)
 	ums.handlerMap[terminateAppTool.Name] = ums.handleTerminateApp
 
+	// GetScreenSize Tool
+	getScreenSizeParams := append(
+		[]mcp.ToolOption{mcp.WithDescription("Get the screen size of the mobile device in pixels")},
+		commonToolOptions...,
+	)
+	getScreenSizeTool := mcp.NewTool("get_screen_size", getScreenSizeParams...)
+	ums.mcpServer.AddTool(getScreenSizeTool, ums.handleGetScreenSize)
+	ums.tools = append(ums.tools, getScreenSizeTool)
+	ums.handlerMap[getScreenSizeTool.Name] = ums.handleGetScreenSize
+
 	// TapXY Tool
 	tapParams := append(
 		[]mcp.ToolOption{mcp.WithDescription("Taps on the device screen at the given coordinates.")},
@@ -267,6 +277,21 @@ func (ums *MCPServer4XTDriver) handleTerminateApp(ctx context.Context, request m
 		return mcp.NewToolResultError("Terminate app failed: " + err.Error()), nil
 	}
 	return mcp.NewToolResultText(fmt.Sprintf("Terminated app success: %s", packageName)), nil
+}
+
+// handleGetScreenSize handles the get_screen_size tool call.
+func (ums *MCPServer4XTDriver) handleGetScreenSize(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
+	if err != nil {
+		return nil, err
+	}
+	screenSize, err := driverExt.IDriver.WindowSize()
+	if err != nil {
+		return mcp.NewToolResultError("Get screen size failed: " + err.Error()), nil
+	}
+	return mcp.NewToolResultText(
+		fmt.Sprintf("Screen size: %d x %d pixels", screenSize.Width, screenSize.Height),
+	), nil
 }
 
 // handleTapXY handles the tap_xy tool call.
