@@ -167,10 +167,10 @@ func (ums *MCPServer4XTDriver) addTools() {
 
 	// Swipe Tool
 	swipeParams := append(
-		[]mcp.ToolOption{mcp.WithDescription("Swipes on the device screen from one point to another.")},
+		[]mcp.ToolOption{mcp.WithDescription("Swipe on the screen")},
 		commonToolOptions...,
 	)
-	swipeParams = append(swipeParams, generateMCPOptions(types.DragRequest{})...)
+	swipeParams = append(swipeParams, generateMCPOptions(types.SwipeRequest{})...)
 	swipeTool := mcp.NewTool("swipe", swipeParams...)
 	ums.mcpServer.AddTool(swipeTool, ums.handleSwipe)
 	ums.tools = append(ums.tools, swipeTool)
@@ -354,22 +354,54 @@ func (ums *MCPServer4XTDriver) handleSwipe(ctx context.Context, request mcp.Call
 	if err != nil {
 		return nil, err
 	}
-	var swipeReq types.DragRequest
+	var swipeReq types.SwipeRequest
 	if err := mapToStruct(request.Params.Arguments, &swipeReq); err != nil {
 		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 	}
-	actionOptions := []option.ActionOption{}
-	if swipeReq.Duration > 0 {
-		actionOptions = append(actionOptions, option.WithDuration(swipeReq.Duration/1000.0))
+
+	// enum direction: up, down, left, right
+	switch swipeReq.Direction {
+	case "up":
+		err = driverExt.Swipe(0.5, 0.5, 0.5, 0.1)
+	case "down":
+		err = driverExt.Swipe(0.5, 0.5, 0.5, 0.9)
+	case "left":
+		err = driverExt.Swipe(0.5, 0.5, 0.1, 0.5)
+	case "right":
+		err = driverExt.Swipe(0.5, 0.5, 0.9, 0.5)
+	default:
+		return mcp.NewToolResultError(fmt.Sprintf("get unexpected swipe direction: %s", swipeReq.Direction)), nil
 	}
-	err = driverExt.Swipe(swipeReq.FromX, swipeReq.FromY,
-		swipeReq.ToX, swipeReq.ToY, actionOptions...)
+	if err != nil {
+		return mcp.NewToolResultError("Swipe failed: " + err.Error()), nil
+	}
+	return mcp.NewToolResultText(
+		fmt.Sprintf("swipe %s success", swipeReq.Direction),
+	), nil
+}
+
+// handleDrag handles the drag tool call.
+func (ums *MCPServer4XTDriver) handleDrag(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
+	if err != nil {
+		return nil, err
+	}
+	var dragReq types.DragRequest
+	if err := mapToStruct(request.Params.Arguments, &dragReq); err != nil {
+		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
+	}
+	actionOptions := []option.ActionOption{}
+	if dragReq.Duration > 0 {
+		actionOptions = append(actionOptions, option.WithDuration(dragReq.Duration/1000.0))
+	}
+	err = driverExt.Swipe(dragReq.FromX, dragReq.FromY,
+		dragReq.ToX, dragReq.ToY, actionOptions...)
 	if err != nil {
 		return mcp.NewToolResultError("Swipe failed: " + err.Error()), nil
 	}
 	return mcp.NewToolResultText(
 		fmt.Sprintf("swipe (%f,%f)->(%f,%f) success",
-			swipeReq.FromX, swipeReq.FromY, swipeReq.ToX, swipeReq.ToY),
+			dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY),
 	), nil
 }
 

@@ -15,6 +15,10 @@ type DragRequest struct {
 	PressDuration float64 `json:"press_duration" desc:"Press duration in milliseconds (optional)"`
 }
 
+type SwipeRequest struct {
+	Direction string `json:"direction" binding:"required" desc:"The direction of the swipe. Supported directions: up, down, left, right"`
+}
+
 type AppClearRequest struct {
 	PackageName string `json:"packageName" binding:"required"`
 }
