@@ -332,17 +332,11 @@ func (ums *MCPServer4XTDriver) handleTapXY(ctx context.Context, request mcp.Call
 	if err := mapToStruct(request.Params.Arguments, &tapReq); err != nil {
 		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 	}
-	if tapReq.Duration > 0 {
-		err := driverExt.Drag(tapReq.X, tapReq.Y, tapReq.X, tapReq.Y,
-			option.WithDuration(tapReq.Duration))
-		if err != nil {
-			return mcp.NewToolResultError("Tap failed: " + err.Error()), nil
-		}
-	} else {
-		err := driverExt.TapXY(tapReq.X, tapReq.Y)
-		if err != nil {
-			return mcp.NewToolResultError("Tap failed: " + err.Error()), nil
-		}
+	err = driverExt.TapXY(tapReq.X, tapReq.Y,
+		option.WithDuration(tapReq.Duration),
+		option.WithPreMarkOperation(true))
+	if err != nil {
+		return mcp.NewToolResultError("Tap failed: " + err.Error()), nil
 	}
 	return mcp.NewToolResultText(
 		fmt.Sprintf("tap (%f,%f) success", tapReq.X, tapReq.Y),
@@ -360,16 +354,22 @@ func (ums *MCPServer4XTDriver) handleSwipe(ctx context.Context, request mcp.Call
 		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 	}
 
+	options := []option.ActionOption{
+		option.WithPreMarkOperation(true),
+		option.WithDuration(swipeReq.Duration),
+		option.WithPressDuration(swipeReq.PressDuration),
+	}
+
 	// enum direction: up, down, left, right
 	switch swipeReq.Direction {
 	case "up":
-		err = driverExt.Swipe(0.5, 0.5, 0.5, 0.1)
+		err = driverExt.Swipe(0.5, 0.5, 0.5, 0.1, options...)
 	case "down":
-		err = driverExt.Swipe(0.5, 0.5, 0.5, 0.9)
+		err = driverExt.Swipe(0.5, 0.5, 0.5, 0.9, options...)
 	case "left":
-		err = driverExt.Swipe(0.5, 0.5, 0.1, 0.5)
+		err = driverExt.Swipe(0.5, 0.5, 0.1, 0.5, options...)
 	case "right":
-		err = driverExt.Swipe(0.5, 0.5, 0.9, 0.5)
+		err = driverExt.Swipe(0.5, 0.5, 0.9, 0.5, options...)
 	default:
 		return mcp.NewToolResultError(fmt.Sprintf("get unexpected swipe direction: %s", swipeReq.Direction)), nil
 	}
