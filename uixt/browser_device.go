@@ -57,6 +57,10 @@ func (dev *BrowserDevice) Uninstall(packageName string) error {
 	return errors.New("not support")
 }
 
+func (dev *BrowserDevice) ListPackages() ([]string, error) {
+	return nil, errors.New("not support")
+}
+
 func (dev *BrowserDevice) GetPackageInfo(packageName string) (types.AppInfo, error) {
 	return types.AppInfo{}, errors.New("not support")
 }

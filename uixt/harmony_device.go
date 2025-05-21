@@ -95,6 +95,10 @@ func (dev *HarmonyDevice) Uninstall(packageName string) error {
 	return nil
 }
 
+func (dev *HarmonyDevice) ListPackages() ([]string, error) {
+	return nil, errors.New("not implemented")
+}
+
 func (dev *HarmonyDevice) GetPackageInfo(packageName string) (types.AppInfo, error) {
 	log.Warn().Msg("get package info not implemented for harmony device, skip")
 	return types.AppInfo{}, nil

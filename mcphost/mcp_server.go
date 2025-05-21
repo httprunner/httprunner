@@ -101,6 +101,14 @@ func (ums *MCPServer4XTDriver) addTools() {
 	ums.tools = append(ums.tools, selectDeviceTool)
 	ums.handlerMap[selectDeviceTool.Name] = ums.handleSelectDevice
 
+	// ListPackages Tool
+	listPackagesTool := mcp.NewTool("list_packages",
+		mcp.WithDescription("List all the apps/packages on the device."),
+	)
+	ums.mcpServer.AddTool(listPackagesTool, ums.handleListPackages)
+	ums.tools = append(ums.tools, listPackagesTool)
+	ums.handlerMap[listPackagesTool.Name] = ums.handleListPackages
+
 	// TapXY Tool
 	tapParams := append(
 		[]mcp.ToolOption{mcp.WithDescription("Taps on the device screen at the given coordinates.")},
@@ -179,6 +187,20 @@ func (ums *MCPServer4XTDriver) handleSelectDevice(ctx context.Context, request m
 
 	uuid := driverExt.IDriver.GetDevice().UUID()
 	return mcp.NewToolResultText(fmt.Sprintf("Selected device: %s", uuid)), nil
+}
+
+// handleListPackages handles the list_packages tool call.
+func (ums *MCPServer4XTDriver) handleListPackages(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
+	if err != nil {
+		return nil, err
+	}
+
+	apps, err := driverExt.IDriver.GetDevice().ListPackages()
+	if err != nil {
+		return nil, err
+	}
+	return mcp.NewToolResultText(fmt.Sprintf("Device packages: %v", apps)), nil
 }
 
 // handleTapXY handles the tap_xy tool call.
