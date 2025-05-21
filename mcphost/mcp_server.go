@@ -143,9 +143,19 @@ func (ums *MCPServer4XTDriver) addTools() {
 	ums.tools = append(ums.tools, getScreenSizeTool)
 	ums.handlerMap[getScreenSizeTool.Name] = ums.handleGetScreenSize
 
+	// PressButton Tool
+	pressButtonParams := append(
+		[]mcp.ToolOption{mcp.WithDescription("Press a button on device")},
+		commonToolOptions...,
+	)
+	pressButtonTool := mcp.NewTool("press_button", pressButtonParams...)
+	ums.mcpServer.AddTool(pressButtonTool, ums.handlePressButton)
+	ums.tools = append(ums.tools, pressButtonTool)
+	ums.handlerMap[pressButtonTool.Name] = ums.handlePressButton
+
 	// TapXY Tool
 	tapParams := append(
-		[]mcp.ToolOption{mcp.WithDescription("Taps on the device screen at the given coordinates.")},
+		[]mcp.ToolOption{mcp.WithDescription("Click on the screen at given x,y coordinates")},
 		commonToolOptions...,
 	)
 	tapParams = append(tapParams, generateMCPOptions(types.TapRequest{})...)
@@ -292,6 +302,23 @@ func (ums *MCPServer4XTDriver) handleGetScreenSize(ctx context.Context, request 
 	return mcp.NewToolResultText(
 		fmt.Sprintf("Screen size: %d x %d pixels", screenSize.Width, screenSize.Height),
 	), nil
+}
+
+// handlePressButton handles the press_button tool call.
+func (ums *MCPServer4XTDriver) handlePressButton(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
+	if err != nil {
+		return nil, err
+	}
+	var pressButtonReq types.PressButtonRequest
+	if err := mapToStruct(request.Params.Arguments, &pressButtonReq); err != nil {
+		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
+	}
+	err = driverExt.PressButton(pressButtonReq.Button)
+	if err != nil {
+		return mcp.NewToolResultError("Press button failed: " + err.Error()), nil
+	}
+	return mcp.NewToolResultText(fmt.Sprintf("Pressed button: %s", pressButtonReq.Button)), nil
 }
 
 // handleTapXY handles the tap_xy tool call.

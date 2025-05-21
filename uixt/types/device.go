@@ -174,13 +174,15 @@ func (bs BatteryStatus) String() string {
 	}
 }
 
-// DeviceButton A physical button on an iOS device.
+// DeviceButton A physical button on a device.
 type DeviceButton string
 
 const (
 	DeviceButtonHome       DeviceButton = "home"
 	DeviceButtonVolumeUp   DeviceButton = "volumeUp"
 	DeviceButtonVolumeDown DeviceButton = "volumeDown"
+	DeviceButtonEnter      DeviceButton = "enter" // use "\n" for ios
+	DeviceButtonBack       DeviceButton = "back"  // android only
 )
 
 type NotificationType string

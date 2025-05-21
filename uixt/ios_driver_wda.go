@@ -744,9 +744,14 @@ func (wd *WDADriver) Back() (err error) {
 	return wd.Swipe(0, 0.5, 0.6, 0.5)
 }
 
-func (wd *WDADriver) PressButton(devBtn types.DeviceButton) (err error) {
+func (wd *WDADriver) PressButton(button types.DeviceButton) (err error) {
 	// [[FBRoute POST:@"/wda/pressButton"] respondWithTarget:self action:@selector(handlePressButtonCommand:)]
-	data := map[string]interface{}{"name": devBtn}
+
+	if button == types.DeviceButtonEnter {
+		return wd.Input("\n")
+	}
+
+	data := map[string]interface{}{"name": button}
 	urlStr := fmt.Sprintf("/session/%s/wda/pressButton", wd.Session.ID)
 	_, err = wd.Session.POST(data, urlStr)
 	return

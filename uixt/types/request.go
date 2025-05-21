@@ -26,3 +26,7 @@ type AppLaunchRequest struct {
 type AppTerminateRequest struct {
 	PackageName string `json:"packageName" binding:"required" desc:"The package name of the app to terminate"`
 }
+
+type PressButtonRequest struct {
+	Button DeviceButton `json:"button" binding:"required" desc:"The button to press. Supported buttons: BACK (android only), HOME, VOLUME_UP, VOLUME_DOWN, ENTER."`
+}

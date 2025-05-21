@@ -50,6 +50,8 @@ type IDriver interface {
 	Home() error
 	Unlock() error
 	Back() error
+	PressButton(button types.DeviceButton) error
+
 	// hover
 	HoverBySelector(selector string, opts ...option.ActionOption) error
 	// tap

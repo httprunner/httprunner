@@ -610,7 +610,7 @@ func (wd *BrowserDriver) PressBack(options ...option.ActionOption) error {
 	return err
 }
 
-func (wd *BrowserDriver) PressKeyCode(keyCode KeyCode) (err error) {
+func (wd *BrowserDriver) PressButton(button types.DeviceButton) error {
 	return errors.New("not support")
 }
 

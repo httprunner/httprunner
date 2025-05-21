@@ -936,6 +936,23 @@ func (ad *ADBDriver) OpenUrl(url string) (err error) {
 	return
 }
 
+var androidButtonMap = map[types.DeviceButton]string{
+	types.DeviceButtonBack:       "KEYCODE_BACK",
+	types.DeviceButtonHome:       "KEYCODE_HOME",
+	types.DeviceButtonEnter:      "KEYCODE_ENTER",
+	types.DeviceButtonVolumeUp:   "KEYCODE_VOLUME_UP",
+	types.DeviceButtonVolumeDown: "KEYCODE_VOLUME_DOWN",
+}
+
+func (ad *ADBDriver) PressButton(button types.DeviceButton) error {
+	buttonName, ok := androidButtonMap[button]
+	if !ok {
+		return fmt.Errorf("unsupported button: %s", button)
+	}
+	_, err := ad.runShellCommand("input", "keyevent", buttonName)
+	return err
+}
+
 func (ad *ADBDriver) PushImage(localPath string) error {
 	log.Info().Str("localPath", localPath).Msg("ADBDriver.PushImage")
 	remoteDir := "/sdcard/DCIM/Camera/"

@@ -231,6 +231,22 @@ func (hd *HDCDriver) PressHarmonyKeyCode(keyCode ghdc.KeyCode) (err error) {
 	return hd.uiDriver.PressKey(keyCode)
 }
 
+var harmonyButtonMap = map[types.DeviceButton]ghdc.KeyCode{
+	types.DeviceButtonBack:       ghdc.KEYCODE_BACK,
+	types.DeviceButtonHome:       ghdc.KEYCODE_HOME,
+	types.DeviceButtonEnter:      ghdc.KEYCODE_ENTER,
+	types.DeviceButtonVolumeUp:   ghdc.KEYCODE_VOLUME_UP,
+	types.DeviceButtonVolumeDown: ghdc.KEYCODE_VOLUME_DOWN,
+}
+
+func (hd *HDCDriver) PressButton(button types.DeviceButton) (err error) {
+	keyCode, ok := harmonyButtonMap[button]
+	if !ok {
+		return fmt.Errorf("unsupported button: %s", button)
+	}
+	return hd.uiDriver.PressKey(keyCode)
+}
+
 func (hd *HDCDriver) ScreenShot(opts ...option.ActionOption) (*bytes.Buffer, error) {
 	tempDir := os.TempDir()
 	screenshotPath := fmt.Sprintf("%s/screenshot_%d.png", tempDir, time.Now().Unix())
