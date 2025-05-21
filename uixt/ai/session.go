@@ -100,6 +100,15 @@ func logRequest(messages ConversationHistory) {
 func logResponse(message *schema.Message) {
 	logger := log.Info().Str("role", string(message.Role)).
 		Str("content", message.Content)
+
+	var toolCalls []string
+	if len(message.ToolCalls) > 0 {
+		for _, toolCall := range message.ToolCalls {
+			toolCalls = append(toolCalls, toolCall.Function.Name)
+		}
+		logger = logger.Strs("tool_calls", toolCalls)
+	}
+
 	if message.ResponseMeta != nil {
 		logger = logger.Str("finish_reason", message.ResponseMeta.FinishReason)
 		// Log usage statistics

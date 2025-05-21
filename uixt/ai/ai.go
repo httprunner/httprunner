@@ -95,14 +95,12 @@ func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 			"env %s missed", EnvModelName)
 	}
 
-	maxTokens := 4096
 	temperature := float32(0.7)
 	modelConfig := &openai.ChatModelConfig{
 		BaseURL:     openaiBaseURL,
 		APIKey:      openaiAPIKey,
 		Model:       modelName,
 		Timeout:     defaultTimeout,
-		MaxTokens:   &maxTokens,
 		Temperature: &temperature,
 	}
 

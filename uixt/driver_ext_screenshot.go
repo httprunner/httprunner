@@ -292,6 +292,7 @@ func saveScreenShot(raw *bytes.Buffer, screenshotPath string) error {
 }
 
 func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error) {
+	rawSize := raw.Len()
 	// decode image from buffer
 	img, format, err := image.Decode(raw)
 	if err != nil {
@@ -311,6 +312,10 @@ func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error
 	default:
 		return nil, fmt.Errorf("unsupported image format: %s", format)
 	}
+
+	compressedSize := buf.Len()
+	log.Debug().Int("rawSize", rawSize).Int("compressedSize", compressedSize).
+		Msg("compress image buffer")
 
 	// return compressed image buffer
 	return &buf, nil

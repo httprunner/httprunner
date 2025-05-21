@@ -16,6 +16,7 @@ import (
 	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/term"
@@ -174,24 +175,46 @@ func (c *Chat) handleToolCalls(ctx context.Context, toolCalls []schema.ToolCall)
 			continue
 		}
 
-		// Format tool result
-		resultStr := ""
+		// Format tool result, append message to history
+		renderStr := ""
 		if result != nil && len(result.Content) > 0 {
 			for _, item := range result.Content {
-				resultStr += fmt.Sprintf("%v\n", item)
+				if contentMap, ok := item.(mcp.TextContent); ok {
+					renderStr += contentMap.Text + "\n"
+					toolMsg := &schema.Message{
+						Role:       schema.Tool,
+						ToolCallID: toolCall.ID,
+						Content:    contentMap.Text,
+					}
+					c.planner.History().Append(toolMsg)
+				} else if contentMap, ok := item.(mcp.ImageContent); ok {
+					renderStr += "<data:image/base64...>\n" // base64-encoded image data
+					toolMsg := &schema.Message{
+						Role:       schema.Tool,
+						ToolCallID: toolCall.ID,
+						MultiContent: []schema.ChatMessagePart{
+							{
+								Type: schema.ChatMessagePartTypeImageURL,
+								ImageURL: &schema.ChatMessageImageURL{
+									URL:      contentMap.Data,
+									MIMEType: contentMap.MIMEType,
+								},
+							},
+						},
+					}
+					c.planner.History().Append(toolMsg)
+				}
 			}
 		} else {
-			resultStr = fmt.Sprintf("%+v", result)
+			renderStr = fmt.Sprintf("%+v", result)
+			toolMsg := &schema.Message{
+				Role:       schema.Tool,
+				ToolCallID: toolCall.ID,
+				Content:    renderStr,
+			}
+			c.planner.History().Append(toolMsg)
 		}
-		c.renderContent("Tool Result", resultStr)
-
-		// Add tool result to history
-		toolMsg := &schema.Message{
-			Role:       schema.Tool,
-			Content:    resultStr,
-			ToolCallID: toolCall.ID,
-		}
-		c.planner.History().Append(toolMsg)
+		c.renderContent("Tool Result", renderStr)
 	}
 	return nil
 }
