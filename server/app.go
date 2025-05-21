@@ -88,8 +88,8 @@ func (r *Router) launchAppHandler(c *gin.Context) {
 }
 
 func (r *Router) terminalAppHandler(c *gin.Context) {
-	var appTerminalReq types.AppTerminalRequest
-	if err := c.ShouldBindJSON(&appTerminalReq); err != nil {
+	var appTerminateReq types.AppTerminateRequest
+	if err := c.ShouldBindJSON(&appTerminateReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
@@ -97,7 +97,7 @@ func (r *Router) terminalAppHandler(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	_, err = driver.AppTerminate(appTerminalReq.PackageName)
+	_, err = driver.AppTerminate(appTerminateReq.PackageName)
 	if err != nil {
 		RenderError(c, err)
 		return

@@ -23,6 +23,6 @@ type AppLaunchRequest struct {
 	PackageName string `json:"packageName" binding:"required" desc:"The package name of the app to launch"`
 }
 
-type AppTerminalRequest struct {
-	PackageName string `json:"packageName" binding:"required"`
+type AppTerminateRequest struct {
+	PackageName string `json:"packageName" binding:"required" desc:"The package name of the app to terminate"`
 }

@@ -122,6 +122,17 @@ func (ums *MCPServer4XTDriver) addTools() {
 	ums.tools = append(ums.tools, launchAppTool)
 	ums.handlerMap[launchAppTool.Name] = ums.handleLaunchApp
 
+	// TerminateApp Tool
+	terminateAppParams := append(
+		[]mcp.ToolOption{mcp.WithDescription("Stop and terminate an app on mobile device")},
+		commonToolOptions...,
+	)
+	terminateAppParams = append(terminateAppParams, generateMCPOptions(types.AppTerminateRequest{})...)
+	terminateAppTool := mcp.NewTool("terminate_app", terminateAppParams...)
+	ums.mcpServer.AddTool(terminateAppTool, ums.handleTerminateApp)
+	ums.tools = append(ums.tools, terminateAppTool)
+	ums.handlerMap[terminateAppTool.Name] = ums.handleTerminateApp
+
 	// TapXY Tool
 	tapParams := append(
 		[]mcp.ToolOption{mcp.WithDescription("Taps on the device screen at the given coordinates.")},
@@ -235,6 +246,27 @@ func (ums *MCPServer4XTDriver) handleLaunchApp(ctx context.Context, request mcp.
 		return mcp.NewToolResultError("Launch app failed: " + err.Error()), nil
 	}
 	return mcp.NewToolResultText(fmt.Sprintf("Launched app success: %s", packageName)), nil
+}
+
+// handleTerminateApp handles the terminate_app tool call.
+func (ums *MCPServer4XTDriver) handleTerminateApp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
+	if err != nil {
+		return nil, err
+	}
+	var appTerminateReq types.AppTerminateRequest
+	if err := mapToStruct(request.Params.Arguments, &appTerminateReq); err != nil {
+		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
+	}
+	packageName := appTerminateReq.PackageName
+	if packageName == "" {
+		return mcp.NewToolResultError("package_name is required"), nil
+	}
+	_, err = driverExt.AppTerminate(packageName)
+	if err != nil {
+		return mcp.NewToolResultError("Terminate app failed: " + err.Error()), nil
+	}
+	return mcp.NewToolResultText(fmt.Sprintf("Terminated app success: %s", packageName)), nil
 }
 
 // handleTapXY handles the tap_xy tool call.
