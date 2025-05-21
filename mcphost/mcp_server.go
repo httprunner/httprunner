@@ -2,7 +2,6 @@ package mcphost
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -178,9 +177,11 @@ func (ums *MCPServer4XTDriver) addTools() {
 	log.Info().Str("name", swipeTool.Name).Msg("Register tool")
 
 	// ScreenShot Tool
-	screenShotTool := mcp.NewTool("screenshot",
-		mcp.WithDescription("Takes a screenshot of the device screen and returns it as a base64 encoded string."),
+	takeScreenShotParams := append(
+		[]mcp.ToolOption{mcp.WithDescription("Take a screenshot of the mobile device. Use this to understand what's on screen. Do not cache this result.")},
+		commonToolOptions...,
 	)
+	screenShotTool := mcp.NewTool("take_screenshot", takeScreenShotParams...)
 	ums.mcpServer.AddTool(screenShotTool, ums.handleScreenShot)
 	ums.tools = append(ums.tools, screenShotTool)
 	ums.handlerMap[screenShotTool.Name] = ums.handleScreenShot
@@ -407,23 +408,20 @@ func (ums *MCPServer4XTDriver) handleDrag(ctx context.Context, request mcp.CallT
 
 // handleScreenShot handles the screenshot tool call.
 func (ums *MCPServer4XTDriver) handleScreenShot(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	log.Info().Msg("Executing ScreenShot")
+	log.Info().Msg("take screenshot")
 	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
 	if err != nil {
 		return nil, err
 	}
-	buffer, err := driverExt.ScreenShot()
+
+	bufferBase64, err := uixt.GetScreenShotBufferBase64(driverExt.IDriver)
 	if err != nil {
 		log.Error().Err(err).Msg("ScreenShot failed")
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to take screenshot: %v", err)), nil
 	}
-	if buffer == nil || buffer.Len() == 0 {
-		log.Error().Msg("Screenshot buffer is nil or empty")
-		return mcp.NewToolResultError("Screenshot returned empty buffer"), nil
-	}
-	encodedString := base64.StdEncoding.EncodeToString(buffer.Bytes())
-	log.Info().Int("image_size_bytes", len(buffer.Bytes())).Int("base64_len", len(encodedString)).Msg("Screenshot successful")
-	return mcp.NewToolResultText(encodedString), nil
+	log.Debug().Int("imageBytes", len(bufferBase64)).Msg("take screenshot success")
+
+	return mcp.NewToolResultImage("screenshot", bufferBase64, "image/jpeg"), nil
 }
 
 // setupXTDriver initializes an XTDriver based on the platform and serial.

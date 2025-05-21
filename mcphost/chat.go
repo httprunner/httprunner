@@ -112,7 +112,7 @@ func (c *Chat) runPrompt(ctx context.Context, prompt string) error {
 
 	// Create user message
 	planningOpts := &ai.PlanningOptions{
-		UserInstruction: "chat with MCP tools",
+		UserInstruction: prompt,
 		Message: &schema.Message{
 			Role:    schema.User,
 			Content: prompt,

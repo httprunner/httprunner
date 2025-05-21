@@ -394,30 +394,3 @@ func handleToolError(result *mcp.CallToolResult) error {
 	}
 	return fmt.Errorf("tool error: unknown error")
 }
-
-// ScreenshotBase64 get screenshot base64 for the given platform and serial
-func (h *MCPHost) ScreenshotBase64(ctx context.Context, platform, serial string) (string, error) {
-	driver, err := h.GetOrCreateDriver(platform, serial)
-	if err != nil {
-		return "", err
-	}
-	return uixt.GetScreenShotBufferBase64(driver)
-}
-
-// GetOrCreateDriver get or create a driver for the given platform and serial
-func (h *MCPHost) GetOrCreateDriver(platform, serial string) (*uixt.XTDriver, error) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-	cacheKey := fmt.Sprintf("%s_%s", platform, serial)
-	if driver, ok := h.drivers[cacheKey]; ok {
-		return driver, nil
-	}
-
-	driverExt, err := initDriverExt(platform, serial)
-	if err != nil {
-		return nil, err
-	}
-	// store driver in cache
-	h.drivers[cacheKey] = driverExt
-	return driverExt, nil
-}
