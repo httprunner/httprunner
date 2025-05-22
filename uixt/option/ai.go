@@ -31,9 +31,10 @@ func WithCVService(service CVServiceType) AIServiceOption {
 type LLMServiceType string
 
 const (
-	LLMServiceTypeUITARS LLMServiceType = "ui-tars"
-	LLMServiceTypeGPT    LLMServiceType = "gpt"
-	LLMServiceTypeQwenVL LLMServiceType = "qwen-vl"
+	LLMServiceTypeUITARS   LLMServiceType = "ui-tars" // not support function calling and json response
+	LLMServiceTypeDoubaoVL LLMServiceType = "doubao-vision"
+	LLMServiceTypeGPT      LLMServiceType = "gpt"
+	LLMServiceTypeQwenVL   LLMServiceType = "qwen-vl"
 )
 
 func WithLLMService(modelType LLMServiceType) AIServiceOption {

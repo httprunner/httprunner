@@ -30,7 +30,14 @@ finished(content='xxx') # Use escape characters \\', \\", and \\n in content par
 `
 
 // system prompt for JSONContentParser
-const defaultPlanningResponseJsonFormat = `You are a versatile professional in software UI automation.`
+const defaultPlanningResponseJsonFormat = `You are a versatile professional in software UI automation.
+
+## Output Format
+` + "```" + `
+Thought: ...
+Action: ...
+` + "```" + `
+`
 
 const defaultPlanningResponseStringFormat = `
 You are a helpful assistant.

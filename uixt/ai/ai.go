@@ -95,13 +95,16 @@ func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 			"env %s missed", EnvModelName)
 	}
 
-	temperature := float32(0.7)
+	// https://www.volcengine.com/docs/82379/1536429
+	temperature := float32(0)
+	topP := float32(0.7)
 	modelConfig := &openai.ChatModelConfig{
 		BaseURL:     openaiBaseURL,
 		APIKey:      openaiAPIKey,
 		Model:       modelName,
 		Timeout:     defaultTimeout,
 		Temperature: &temperature,
+		TopP:        &topP,
 	}
 
 	// log config info

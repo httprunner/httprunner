@@ -55,7 +55,7 @@ func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, erro
 
 	if modelConfig.ModelType == option.LLMServiceTypeUITARS {
 		asserter.systemPrompt += "\n\n" + uiTarsAssertionResponseFormat
-	} else if modelConfig.ModelType == option.LLMServiceTypeGPT {
+	} else if modelConfig.ModelType == option.LLMServiceTypeDoubaoVL {
 		// define output format
 		type OutputFormat struct {
 			Thought string `json:"thought"`

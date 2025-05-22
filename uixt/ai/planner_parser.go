@@ -27,7 +27,7 @@ func NewLLMContentParser(modelType option.LLMServiceType) LLMContentParser {
 		return &UITARSContentParser{
 			systemPrompt: uiTarsPlanningPrompt,
 		}
-	case option.LLMServiceTypeGPT:
+	case option.LLMServiceTypeDoubaoVL:
 		return &JSONContentParser{
 			systemPrompt: defaultPlanningResponseJsonFormat,
 		}

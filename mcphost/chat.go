@@ -25,7 +25,7 @@ import (
 // NewChat creates a new chat session
 func (h *MCPHost) NewChat(ctx context.Context) (*Chat, error) {
 	// Get model config from environment variables
-	modelConfig, err := ai.GetModelConfig(option.LLMServiceTypeGPT)
+	modelConfig, err := ai.GetModelConfig(option.LLMServiceTypeUITARS)
 	if err != nil {
 		return nil, err
 	}
