@@ -40,14 +40,14 @@ func (dExt *XTDriver) AIAction(text string, opts ...option.ActionOption) error {
 	}
 
 	// do actions
-	for _, action := range result.NextActions {
+	for _, action := range result.Actions {
 		switch action.ActionType {
-		case ai.ActionTypeClick:
+		case "click":
 			point := action.ActionInputs["startBox"].([]float64)
 			if err := dExt.TapAbsXY(point[0], point[1], opts...); err != nil {
 				return err
 			}
-		case ai.ActionTypeFinished:
+		case "finished":
 			log.Info().Msg("ai action done")
 			return nil
 		}

@@ -12,14 +12,14 @@ Action: ...
 ` + "```" + `
 
 ## Action Space
-click(start_box='[x1, y1, x2, y2]')
-left_double(start_box='[x1, y1, x2, y2]')
-right_single(start_box='[x1, y1, x2, y2]')
-drag(start_box='[x1, y1, x2, y2]', end_box='[x3, y3, x4, y4]')
-hotkey(key='')
-type(content='') #If you want to submit your input, use "\n" at the end of ` + "`content`" + `.
-scroll(start_box='[x1, y1, x2, y2]', direction='down or up or right or left')
-wait() #Sleep for 5s and take a screenshot to check for any changes.
+click(point='<point>x1 y1</point>')
+long_press(point='<point>x1 y1</point>')
+type(content='') #If you want to submit your input, use "\\n" at the end of ` + "`content`" + `.
+scroll(point='<point>x1 y1</point>', direction='down or up or right or left')
+open_app(app_name=\'\')
+drag(start_point='<point>x1 y1</point>', end_point='<point>x2 y2</point>')
+press_home()
+press_back()
 finished(content='xxx') # Use escape characters \\', \\", and \\n in content part to ensure we can parse the content in normal python string format.
 
 ## Note
@@ -30,11 +30,4 @@ finished(content='xxx') # Use escape characters \\', \\", and \\n in content par
 `
 
 // system prompt for JSONContentParser
-const defaultPlanningResponseJsonFormat = `You are a versatile professional in software UI automation.
-
-## Output Format
-` + "```" + `
-Thought: ...
-Action: ...
-` + "```" + `
-`
+const defaultPlanningResponseJsonFormat = `You are a GUI agent. You are given a task and your action history, with screenshots. You need to perform the next action to complete the task.`

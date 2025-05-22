@@ -28,7 +28,7 @@ type PlanningOptions struct {
 // PlanningResult represents the result of planning
 type PlanningResult struct {
 	ToolCalls     []schema.ToolCall `json:"tool_calls"` // TODO: merge to NextActions
-	NextActions   []ParsedAction    `json:"actions"`
+	Actions       []Action          `json:"actions"`
 	ActionSummary string            `json:"summary"`
 	Error         string            `json:"error,omitempty"`
 }
@@ -138,7 +138,7 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 
 	log.Info().
 		Interface("summary", result.ActionSummary).
-		Interface("actions", result.NextActions).
+		Interface("actions", result.Actions).
 		Msg("get VLM planning result")
 	return result, nil
 }
