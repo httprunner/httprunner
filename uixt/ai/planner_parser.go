@@ -27,13 +27,9 @@ func NewLLMContentParser(modelType option.LLMServiceType) LLMContentParser {
 		return &UITARSContentParser{
 			systemPrompt: uiTarsPlanningPrompt,
 		}
-	case option.LLMServiceTypeDoubaoVL:
+	default:
 		return &JSONContentParser{
 			systemPrompt: defaultPlanningResponseJsonFormat,
-		}
-	default:
-		return &DefaultContentParser{
-			systemPrompt: defaultPlanningResponseStringFormat,
 		}
 	}
 }
@@ -432,51 +428,4 @@ func normalizeAction(action *ParsedAction) error {
 	}
 
 	return nil
-}
-
-// DefaultContentParser parses the response as string format
-type DefaultContentParser struct {
-	systemPrompt string
-}
-
-func (p *DefaultContentParser) SystemPrompt() string {
-	return p.systemPrompt
-}
-
-func (p *DefaultContentParser) Parse(content string, size types.Size) (*PlanningResult, error) {
-	content = strings.TrimSpace(content)
-	if strings.HasPrefix(content, "```json") && strings.HasSuffix(content, "```") {
-		content = strings.TrimPrefix(content, "```json")
-		content = strings.TrimSuffix(content, "```")
-	}
-	content = strings.TrimSpace(content)
-
-	var response PlanningResult
-	if err := json.Unmarshal([]byte(content), &response); err != nil {
-		return nil, fmt.Errorf("failed to parse VLM response: %v", err)
-	}
-
-	if response.Error != "" {
-		return nil, errors.New(response.Error)
-	}
-
-	if len(response.NextActions) == 0 {
-		return nil, errors.New("no actions returned from VLM")
-	}
-
-	// normalize actions
-	var normalizedActions []ParsedAction
-	for i := range response.NextActions {
-		// create a new variable, avoid implicit memory aliasing in for loop.
-		action := response.NextActions[i]
-		if err := normalizeAction(&action); err != nil {
-			return nil, errors.Wrap(err, "failed to normalize action")
-		}
-		normalizedActions = append(normalizedActions, action)
-	}
-
-	return &PlanningResult{
-		NextActions:   normalizedActions,
-		ActionSummary: response.ActionSummary,
-	}, nil
 }

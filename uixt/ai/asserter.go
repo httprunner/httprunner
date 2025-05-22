@@ -54,8 +54,8 @@ func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, erro
 	}
 
 	if modelConfig.ModelType == option.LLMServiceTypeUITARS {
-		asserter.systemPrompt += "\n\n" + uiTarsAssertionResponseFormat
-	} else if modelConfig.ModelType == option.LLMServiceTypeDoubaoVL {
+		asserter.systemPrompt += "\n" + uiTarsAssertionResponseFormat
+	} else {
 		// define output format
 		type OutputFormat struct {
 			Thought string `json:"thought"`
@@ -77,8 +77,6 @@ func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, erro
 				Strict:      false,
 			},
 		}
-	} else {
-		asserter.systemPrompt += "\n\n" + defaultAssertionResponseJsonFormat
 	}
 
 	var err error
@@ -134,16 +132,16 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	// Call model service, generate response
 	logRequest(a.history)
 	startTime := time.Now()
-	resp, err := a.model.Generate(ctx, a.history)
+	message, err := a.model.Generate(ctx, a.history)
 	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
 		Str("model", string(a.modelConfig.ModelType)).Msg("call model service for assertion")
 	if err != nil {
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
-	logResponse(resp)
+	logResponse(message)
 
 	// Parse result
-	result, err := parseAssertionResult(resp.Content)
+	result, err := parseAssertionResult(message.Content)
 	if err != nil {
 		return nil, errors.Wrap(code.LLMParseAssertionResponseError, err.Error())
 	}
@@ -151,7 +149,7 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	// Append assistant message to history
 	a.history.Append(&schema.Message{
 		Role:    schema.Assistant,
-		Content: resp.Content,
+		Content: message.Content,
 	})
 
 	return result, nil

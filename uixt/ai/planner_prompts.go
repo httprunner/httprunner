@@ -38,7 +38,3 @@ Thought: ...
 Action: ...
 ` + "```" + `
 `
-
-const defaultPlanningResponseStringFormat = `
-You are a helpful assistant.
-`
