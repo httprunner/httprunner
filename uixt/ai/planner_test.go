@@ -29,7 +29,7 @@ func TestVLMPlanning(t *testing.T) {
 
 	userInstruction += "\n\n请基于以上游戏规则，给出下一步可点击的两个图标坐标"
 
-	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
+	modelConfig, err := GetModelConfig(option.LLMServiceTypeDoubaoVL)
 	require.NoError(t, err)
 
 	planner, err := NewPlanner(context.Background(), modelConfig)
@@ -63,7 +63,7 @@ func TestVLMPlanning(t *testing.T) {
 	toolCall := result.ToolCalls[0]
 	assert.NotEmpty(t, toolCall.Function.Name)
 	assert.NotEmpty(t, result.Thought)
-	assert.NotEmpty(t, result.Text)
+	assert.NotEmpty(t, result.Content)
 }
 
 func TestXHSPlanning(t *testing.T) {
@@ -100,13 +100,13 @@ func TestXHSPlanning(t *testing.T) {
 	// 验证结果
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotEmpty(t, result.Actions)
+	require.NotEmpty(t, result.ToolCalls)
 
 	// 验证动作
-	action := result.Actions[0]
-	assert.NotEmpty(t, action.ActionType)
+	toolCall := result.ToolCalls[0]
+	assert.NotEmpty(t, toolCall.Function.Name)
 	assert.NotEmpty(t, result.Thought)
-	assert.NotEmpty(t, result.Text)
+	assert.NotEmpty(t, result.Content)
 }
 
 func TestChatList(t *testing.T) {
@@ -146,9 +146,7 @@ func TestChatList(t *testing.T) {
 }
 
 func TestHandleSwitch(t *testing.T) {
-	userInstruction := "发送框下方的联网搜索开关是开启状态" // 点击开启联网搜索开关
-	// 检查发送框下方的联网搜索开关，蓝色为开启状态，灰色为关闭状态；若开关处于关闭状态，则点击进行开启
-
+	userInstruction := "检查发送框下方的联网搜索开关，蓝色为开启状态，灰色为关闭状态；若开关处于关闭状态，则点击进行开启"
 	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
 	require.NoError(t, err)
 
@@ -159,9 +157,9 @@ func TestHandleSwitch(t *testing.T) {
 		imageFile  string
 		actionType string
 	}{
-		{"testdata/deepseek_think_off.png", "finished"},
-		{"testdata/deepseek_think_on.png", "finished"},
-		{"testdata/deepseek_network_on.png", "finished"},
+		{"testdata/deepseek_think_off.png", "click"},     // 关闭状态，需要点击开启
+		{"testdata/deepseek_think_on.png", "click"},      // 关闭状态，需要点击开启
+		{"testdata/deepseek_network_on.png", "finished"}, // 开启状态，无需操作
 	}
 
 	for _, tc := range testCases {
@@ -190,7 +188,7 @@ func TestHandleSwitch(t *testing.T) {
 		// Validate results
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		require.Equal(t, result.Actions[0].ActionType, tc.actionType,
+		require.Equal(t, result.ToolCalls[0].Function.Name, tc.actionType,
 			"Unexpected action type for image file: %s", tc.imageFile)
 	}
 }

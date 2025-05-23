@@ -28,10 +28,9 @@ type PlanningOptions struct {
 // PlanningResult represents the result of planning
 type PlanningResult struct {
 	ToolCalls     []schema.ToolCall `json:"tool_calls"`
-	Actions       []Action          `json:"actions"` // TODO: merge to ToolCalls
 	ActionSummary string            `json:"summary"`
 	Thought       string            `json:"thought"`
-	Text          string            `json:"text"`
+	Content       string            `json:"content"` // original content from model
 	Error         string            `json:"error,omitempty"`
 }
 
