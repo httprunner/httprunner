@@ -1,6 +1,7 @@
 package ai
 
-// system prompt for doubao-1.5-ui-tars on volcengine.com
+// system prompt for UITARSContentParser
+// doubao-1.5-ui-tars on volcengine.com
 // https://www.volcengine.com/docs/82379/1536429
 const doubao_1_5_ui_tars_planning_prompt = `
 You are a GUI agent. You are given a task and your action history, with screenshots. You need to perform the next action to complete the task.
@@ -32,7 +33,7 @@ finished(content='xxx') # Use escape characters \\', \\", and \\n in content par
 
 // system prompt for UITARSContentParser
 // https://github.com/bytedance/UI-TARS/blob/main/codes/ui_tars/prompt.py
-const uiTarsPlanningPrompt = `
+const _ = `
 You are a GUI agent. You are given a task and your action history, with screenshots. You need to perform the next action to complete the task.
 
 ## Output Format
@@ -60,6 +61,7 @@ finished(content='xxx') # Use escape characters \\', \\", and \\n in content par
 `
 
 // system prompt for JSONContentParser
+// doubao-1.5-thinking-vision-pro on volcengine.com
 const defaultPlanningResponseJsonFormat = `You are a GUI agent. You are given a task and your action history, with screenshots. You need to perform the next action to complete the task.
 
 Target: User will give you a screenshot, an instruction and some previous logs indicating what have been done. Please tell what the next one action is (or null if no action should be done) to do the tasks the instruction requires.

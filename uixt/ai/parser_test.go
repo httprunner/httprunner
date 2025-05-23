@@ -95,12 +95,17 @@ func TestNormalizeCoordinatesFormat(t *testing.T) {
 			expected: "(100,200,150,250)",
 		},
 		{
-			name:     "bracket format",
+			name:     "bracket format with spaces",
 			input:    "[100, 200, 150, 250]",
 			expected: "(100,200,150,250)",
 		},
 		{
-			name:     "bracket format with spaces",
+			name:     "bracket format without spaces",
+			input:    "[100,200,150,250]",
+			expected: "(100,200,150,250)",
+		},
+		{
+			name:     "bracket format with irregular spaces",
 			input:    "[100,  200,  150,  250]",
 			expected: "(100,200,150,250)",
 		},
@@ -110,14 +115,123 @@ func TestNormalizeCoordinatesFormat(t *testing.T) {
 			expected: "(100,200) and (300,400)",
 		},
 		{
-			name:     "no coordinates",
+			name:     "mixed formats",
+			input:    "<point>100 200</point> and [300, 400, 350, 450]",
+			expected: "(100,200) and (300,400,350,450)",
+		},
+		{
+			name:     "documentation_example_coordinates",
+			input:    "<point>235 512</point>",
+			expected: "(235,512)",
+		},
+		{
+			name:     "documentation_example_bbox",
+			input:    "<bbox>235 512 451 553</bbox>",
+			expected: "(235,512,451,553)",
+		},
+		{
+			name:     "mobile_coordinates_point",
+			input:    "<point>200 600</point>",
+			expected: "(200,600)",
+		},
+		{
+			name:     "tablet_coordinates_bbox",
+			input:    "<bbox>750 400 800 450</bbox>",
+			expected: "(750,400,800,450)",
+		},
+		// Note: Bracket format with 2 coordinates is NOT supported by the function
+		// Only 4-coordinate bracket format is supported
+		{
+			name:     "bracket_format_two_coordinates_not_converted",
+			input:    "[100, 200]",
+			expected: "[100, 200]", // Function doesn't convert this format
+		},
+		// Note: Decimal coordinates are NOT supported by the regex (only \d+ is matched)
+		{
+			name:     "point_tag_with_decimals_not_converted",
+			input:    "<point>100.5 200.7</point>",
+			expected: "<point>100.5 200.7</point>", // Function doesn't convert decimals
+		},
+		{
+			name:     "bbox_tag_with_decimals_not_converted",
+			input:    "<bbox>100.5 200.7 150.3 250.9</bbox>",
+			expected: "<bbox>100.5 200.7 150.3 250.9</bbox>", // Function doesn't convert decimals
+		},
+		{
+			name:     "bracket_format_with_decimals_not_converted",
+			input:    "[100.5, 200.7, 150.3, 250.9]",
+			expected: "[100.5, 200.7, 150.3, 250.9]", // Function doesn't convert decimals
+		},
+		{
+			name:     "multiple_bracket_formats",
+			input:    "[100, 200] and [300, 400, 350, 450]",
+			expected: "[100, 200] and (300,400,350,450)", // Only 4-coord format converted
+		},
+		{
+			name:     "multiple_bbox_tags",
+			input:    "<bbox>100 200 150 250</bbox> then <bbox>300 400 350 450</bbox>",
+			expected: "(100,200,150,250) then (300,400,350,450)",
+		},
+		{
+			name:     "edge_case_zero_coordinates",
+			input:    "<point>0 0</point>",
+			expected: "(0,0)",
+		},
+		{
+			name:     "edge_case_maximum_coordinates",
+			input:    "<point>1000 1000</point>",
+			expected: "(1000,1000)",
+		},
+		{
+			name:     "complex_mixed_formats",
+			input:    "click <point>100 200</point> then drag [300, 400, 350, 450] to <bbox>500 600 550 650</bbox>",
+			expected: "click (100,200) then drag (300,400,350,450) to (500,600,550,650)",
+		},
+		{
+			name:     "no_coordinates",
 			input:    "click on button",
 			expected: "click on button",
 		},
 		{
-			name:     "mixed formats",
-			input:    "<point>100 200</point> and [300, 400, 350, 450]",
-			expected: "(100,200) and (300,400,350,450)",
+			name:     "empty_string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "only_text_no_tags",
+			input:    "some random text without coordinates",
+			expected: "some random text without coordinates",
+		},
+		// Note: Extra spaces in brackets with 4 coords are NOT handled properly by the regex
+		{
+			name:     "bracket_format_with_extra_spaces_not_converted",
+			input:    "[  100  ,  200  ,  150  ,  250  ]",
+			expected: "[  100  ,  200  ,  150  ,  250  ]", // Function regex doesn't handle extra spaces
+		},
+		{
+			name:     "large_coordinates",
+			input:    "<point>1920 1080</point>",
+			expected: "(1920,1080)",
+		},
+		{
+			name:     "ultrawide_coordinates",
+			input:    "<bbox>0 0 3440 1440</bbox>",
+			expected: "(0,0,3440,1440)",
+		},
+		{
+			name:     "real_world_action_example",
+			input:    "Action: click(start_box='<point>235 512</point>')",
+			expected: "Action: click(start_box='(235,512)')",
+		},
+		{
+			name:     "real_world_drag_example",
+			input:    "Action: drag(start_box='[100, 200, 150, 250]', end_box='<bbox>300 400 350 450</bbox>')",
+			expected: "Action: drag(start_box='(100,200,150,250)', end_box='(300,400,350,450)')",
+		},
+		{
+			name:     "real_world_example_1",
+			input:    "<point>235 512</point>",
+			expected: "(235,512)", // Should be string format for normalizeCoordinatesFormat
 		},
 	}
 
@@ -131,44 +245,156 @@ func TestNormalizeCoordinatesFormat(t *testing.T) {
 
 // Test convertRelativeToAbsolute function
 func TestConvertRelativeToAbsolute(t *testing.T) {
-	size := types.Size{Width: 1000, Height: 2000}
-
 	tests := []struct {
 		name           string
+		size           types.Size
 		relativeCoord  float64
 		isXCoord       bool
 		expectedResult float64
+		description    string
 	}{
 		{
-			name:           "x coordinate conversion",
+			name:           "standard_1000x2000_x_coordinate",
+			size:           types.Size{Width: 1000, Height: 2000},
 			relativeCoord:  500, // 500/1000 * 1000 = 500
 			isXCoord:       true,
 			expectedResult: 500.0,
+			description:    "Standard case: X coordinate conversion",
 		},
 		{
-			name:           "y coordinate conversion",
+			name:           "standard_1000x2000_y_coordinate",
+			size:           types.Size{Width: 1000, Height: 2000},
 			relativeCoord:  500, // 500/1000 * 2000 = 1000
 			isXCoord:       false,
 			expectedResult: 1000.0,
+			description:    "Standard case: Y coordinate conversion",
 		},
 		{
-			name:           "x coordinate with rounding",
+			name:           "example_from_documentation_x",
+			size:           types.Size{Width: 1920, Height: 1080},
+			relativeCoord:  235, // round(1920*235/1000) = 451
+			isXCoord:       true,
+			expectedResult: 451.2, // 实际计算值为451.2，测试精确值
+			description:    "Documentation example: X coordinate (235, 512) on 1920x1080",
+		},
+		{
+			name:           "example_from_documentation_y",
+			size:           types.Size{Width: 1920, Height: 1080},
+			relativeCoord:  512, // round(1080*512/1000) = 553
+			isXCoord:       false,
+			expectedResult: 553.0, // 实际计算值为553.0
+			description:    "Documentation example: Y coordinate (235, 512) on 1920x1080",
+		},
+		{
+			name:           "mobile_device_x_coordinate",
+			size:           types.Size{Width: 375, Height: 812},
+			relativeCoord:  200, // 200/1000 * 375 = 75
+			isXCoord:       true,
+			expectedResult: 75.0,
+			description:    "Mobile device: iPhone X size X coordinate",
+		},
+		{
+			name:           "mobile_device_y_coordinate",
+			size:           types.Size{Width: 375, Height: 812},
+			relativeCoord:  600, // 600/1000 * 812 = 487.2
+			isXCoord:       false,
+			expectedResult: 487.2,
+			description:    "Mobile device: iPhone X size Y coordinate",
+		},
+		{
+			name:           "tablet_device_x_coordinate",
+			size:           types.Size{Width: 1024, Height: 768},
+			relativeCoord:  750, // 750/1000 * 1024 = 768
+			isXCoord:       true,
+			expectedResult: 768.0,
+			description:    "Tablet device: iPad size X coordinate",
+		},
+		{
+			name:           "tablet_device_y_coordinate",
+			size:           types.Size{Width: 1024, Height: 768},
+			relativeCoord:  400, // 400/1000 * 768 = 307.2
+			isXCoord:       false,
+			expectedResult: 307.2,
+			description:    "Tablet device: iPad size Y coordinate",
+		},
+		{
+			name:           "edge_case_zero_coordinate",
+			size:           types.Size{Width: 1920, Height: 1080},
+			relativeCoord:  0, // 0/1000 * width/height = 0
+			isXCoord:       true,
+			expectedResult: 0.0,
+			description:    "Edge case: Zero coordinate",
+		},
+		{
+			name:           "edge_case_maximum_coordinate_x",
+			size:           types.Size{Width: 1920, Height: 1080},
+			relativeCoord:  1000, // 1000/1000 * 1920 = 1920
+			isXCoord:       true,
+			expectedResult: 1920.0,
+			description:    "Edge case: Maximum X coordinate (1000 -> full width)",
+		},
+		{
+			name:           "edge_case_maximum_coordinate_y",
+			size:           types.Size{Width: 1920, Height: 1080},
+			relativeCoord:  1000, // 1000/1000 * 1080 = 1080
+			isXCoord:       false,
+			expectedResult: 1080.0,
+			description:    "Edge case: Maximum Y coordinate (1000 -> full height)",
+		},
+		{
+			name:           "rounding_precision_test_x",
+			size:           types.Size{Width: 1000, Height: 1000},
 			relativeCoord:  333, // 333/1000 * 1000 = 333
 			isXCoord:       true,
 			expectedResult: 333.0,
+			description:    "Precision test: X coordinate with rounding",
 		},
 		{
-			name:           "y coordinate with rounding",
+			name:           "rounding_precision_test_y",
+			size:           types.Size{Width: 1000, Height: 2000},
 			relativeCoord:  750, // 750/1000 * 2000 = 1500
 			isXCoord:       false,
 			expectedResult: 1500.0,
+			description:    "Precision test: Y coordinate with rounding",
+		},
+		{
+			name:           "small_screen_x_coordinate",
+			size:           types.Size{Width: 480, Height: 800},
+			relativeCoord:  125, // 125/1000 * 480 = 60
+			isXCoord:       true,
+			expectedResult: 60.0,
+			description:    "Small screen: X coordinate conversion",
+		},
+		{
+			name:           "small_screen_y_coordinate",
+			size:           types.Size{Width: 480, Height: 800},
+			relativeCoord:  875, // 875/1000 * 800 = 700
+			isXCoord:       false,
+			expectedResult: 700.0,
+			description:    "Small screen: Y coordinate conversion",
+		},
+		{
+			name:           "ultrawide_monitor_x_coordinate",
+			size:           types.Size{Width: 3440, Height: 1440},
+			relativeCoord:  450, // 450/1000 * 3440 = 1548
+			isXCoord:       true,
+			expectedResult: 1548.0,
+			description:    "Ultrawide monitor: X coordinate conversion",
+		},
+		{
+			name:           "ultrawide_monitor_y_coordinate",
+			size:           types.Size{Width: 3440, Height: 1440},
+			relativeCoord:  720, // 720/1000 * 1440 = 1036.8
+			isXCoord:       false,
+			expectedResult: 1036.8,
+			description:    "Ultrawide monitor: Y coordinate conversion",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := convertRelativeToAbsolute(tt.relativeCoord, tt.isXCoord, size)
-			assert.Equal(t, tt.expectedResult, result)
+			result := convertRelativeToAbsolute(tt.relativeCoord, tt.isXCoord, tt.size)
+			assert.Equal(t, tt.expectedResult, result, "Test case: %s", tt.description)
 		})
 	}
 }
@@ -428,69 +654,177 @@ func TestNormalizeStringParam(t *testing.T) {
 
 // Test normalizeStringCoordinates function
 func TestNormalizeStringCoordinates(t *testing.T) {
-	size := types.Size{Width: 1000, Height: 1000}
-
 	tests := []struct {
 		name        string
 		coordStr    string
+		size        types.Size
 		expected    []float64
 		expectError bool
+		description string
 	}{
 		{
-			name:     "simple coordinate string",
-			coordStr: "100,200,150,250",
-			expected: []float64{100.0, 200.0, 150.0, 250.0},
+			name:        "simple_coordinate_string",
+			coordStr:    "100,200,150,250",
+			size:        types.Size{Width: 1000, Height: 1000},
+			expected:    []float64{100.0, 200.0, 150.0, 250.0},
+			description: "Simple comma-separated coordinate string",
 		},
 		{
-			name:     "coordinate string with spaces",
-			coordStr: " 100 , 200 , 150 , 250 ",
-			expected: []float64{100.0, 200.0, 150.0, 250.0},
+			name:        "coordinate_string_with_spaces",
+			coordStr:    " 100 , 200 , 150 , 250 ",
+			size:        types.Size{Width: 1000, Height: 1000},
+			expected:    []float64{100.0, 200.0, 150.0, 250.0},
+			description: "Coordinate string with spaces",
 		},
 		{
-			name:     "point tag format",
-			coordStr: "<point>100 200</point>",
-			expected: []float64{100.0, 200.0},
+			name:        "documentation_example_point_tag",
+			coordStr:    "<point>235 512</point>",
+			size:        types.Size{Width: 1920, Height: 1080},
+			expected:    []float64{451.2, 553.0}, // 235/1000*1920=451.2, 512/1000*1080=553.0
+			description: "Documentation example: point tag on 1920x1080",
 		},
 		{
-			name:     "bbox tag format",
-			coordStr: "<bbox>100 200 150 250</bbox>",
-			expected: []float64{100.0, 200.0, 150.0, 250.0},
+			name:        "documentation_example_bbox_tag",
+			coordStr:    "<bbox>235 512 451 553</bbox>",
+			size:        types.Size{Width: 1920, Height: 1080},
+			expected:    []float64{451.2, 553.0, 865.9, 597.2}, // All converted from relative to absolute
+			description: "Documentation example: bbox tag on 1920x1080",
 		},
 		{
-			name:     "bracket format",
-			coordStr: "[100, 200, 150, 250]",
-			expected: []float64{100.0, 200.0, 150.0, 250.0},
+			name:        "mobile_device_point",
+			coordStr:    "<point>200 600</point>",
+			size:        types.Size{Width: 375, Height: 812},
+			expected:    []float64{75.0, 487.2}, // 200/1000*375=75, 600/1000*812=487.2
+			description: "Mobile device: iPhone X point coordinate",
 		},
 		{
-			name:        "empty string",
+			name:        "mobile_device_bbox",
+			coordStr:    "<bbox>200 600 400 800</bbox>",
+			size:        types.Size{Width: 375, Height: 812},
+			expected:    []float64{75.0, 487.2, 150.0, 649.6}, // Mobile device bbox
+			description: "Mobile device: iPhone X bbox coordinate",
+		},
+		{
+			name:        "tablet_device_coordinates",
+			coordStr:    "[750, 400, 800, 450]",
+			size:        types.Size{Width: 1024, Height: 768},
+			expected:    []float64{768.0, 307.2, 819.2, 345.6}, // Tablet coordinates
+			description: "Tablet device: iPad coordinate conversion",
+		},
+		{
+			name:        "bracket_format_two_coords",
+			coordStr:    "[100, 200]",
+			size:        types.Size{Width: 1000, Height: 1000},
+			expected:    []float64{100.0, 200.0},
+			description: "Bracket format with two coordinates",
+		},
+		{
+			name:        "bracket_format_four_coords",
+			coordStr:    "[100, 200, 150, 250]",
+			size:        types.Size{Width: 1000, Height: 1000},
+			expected:    []float64{100.0, 200.0, 150.0, 250.0},
+			description: "Bracket format with four coordinates",
+		},
+		{
+			name:        "edge_case_zero_coordinates",
+			coordStr:    "0,0,0,0",
+			size:        types.Size{Width: 1920, Height: 1080},
+			expected:    []float64{0.0, 0.0, 0.0, 0.0},
+			description: "Edge case: all zero coordinates",
+		},
+		{
+			name:        "edge_case_maximum_coordinates",
+			coordStr:    "1000,1000,1000,1000",
+			size:        types.Size{Width: 1920, Height: 1080},
+			expected:    []float64{1920.0, 1080.0, 1920.0, 1080.0}, // Maximum relative coords -> screen edges
+			description: "Edge case: maximum coordinates (1000 -> screen edges)",
+		},
+		{
+			name:        "ultrawide_monitor_coords",
+			coordStr:    "<point>450 720</point>",
+			size:        types.Size{Width: 3440, Height: 1440},
+			expected:    []float64{1548.0, 1036.8}, // 450/1000*3440=1548, 720/1000*1440=1036.8
+			description: "Ultrawide monitor: coordinate conversion",
+		},
+		{
+			name:        "small_screen_coordinates",
+			coordStr:    "<bbox>125 875 250 950</bbox>",
+			size:        types.Size{Width: 480, Height: 800},
+			expected:    []float64{60.0, 700.0, 120.0, 760.0}, // Small screen bbox
+			description: "Small screen: coordinate conversion",
+		},
+		{
+			name:        "real_world_example_1",
+			coordStr:    "<point>235 512</point>",
+			size:        types.Size{Width: 1920, Height: 1080},
+			expected:    []float64{451.2, 553.0}, // Real documentation example
+			description: "Real world: documentation example coordinates",
+		},
+		{
+			name:        "real_world_example_2",
+			coordStr:    "[375, 600, 425, 650]",
+			size:        types.Size{Width: 1080, Height: 1920},
+			expected:    []float64{405.0, 1152.0, 459.0, 1248.0}, // Portrait mobile bbox
+			description: "Real world: portrait mobile bbox",
+		},
+		// Error cases - decimal coordinates are not supported by the regex (\d+ only matches integers)
+		{
+			name:        "empty_string",
 			coordStr:    "",
+			size:        types.Size{Width: 1000, Height: 1000},
 			expectError: true,
+			description: "Error case: empty string",
 		},
 		{
-			name:        "invalid coordinate string",
+			name:        "invalid_coordinate_string",
 			coordStr:    "abc,def",
+			size:        types.Size{Width: 1000, Height: 1000},
 			expectError: true,
+			description: "Error case: invalid coordinate string",
 		},
 		{
-			name:        "insufficient coordinates",
+			name:        "insufficient_coordinates",
 			coordStr:    "100",
+			size:        types.Size{Width: 1000, Height: 1000},
 			expectError: true,
+			description: "Error case: insufficient coordinates",
+		},
+		{
+			name:        "invalid_bracket_format",
+			coordStr:    "[abc, def]",
+			size:        types.Size{Width: 1000, Height: 1000},
+			expectError: true,
+			description: "Error case: invalid bracket format",
+		},
+		{
+			name:        "invalid_point_tag",
+			coordStr:    "<point>abc def</point>",
+			size:        types.Size{Width: 1000, Height: 1000},
+			expectError: true,
+			description: "Error case: invalid point tag",
+		},
+		{
+			name:        "invalid_bbox_tag",
+			coordStr:    "<bbox>abc def ghi jkl</bbox>",
+			size:        types.Size{Width: 1000, Height: 1000},
+			expectError: true,
+			description: "Error case: invalid bbox tag",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := normalizeStringCoordinates(tt.coordStr, size)
+			result, err := normalizeStringCoordinates(tt.coordStr, tt.size)
 
 			if tt.expectError {
-				assert.Error(t, err)
+				assert.Error(t, err, "Test case: %s", tt.description)
 				return
 			}
 
-			assert.NoError(t, err)
-			assert.Equal(t, len(tt.expected), len(result))
+			assert.NoError(t, err, "Test case: %s", tt.description)
+			assert.Equal(t, len(tt.expected), len(result), "Test case: %s", tt.description)
 			for i, expected := range tt.expected {
-				assert.Equal(t, expected, result[i])
+				assert.Equal(t, expected, result[i], "Test case: %s - coordinate %d", tt.description, i)
 			}
 		})
 	}

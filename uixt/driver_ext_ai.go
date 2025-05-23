@@ -10,6 +10,7 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
+	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/pkg/errors"
@@ -40,10 +41,15 @@ func (dExt *XTDriver) AIAction(text string, opts ...option.ActionOption) error {
 	}
 
 	// do actions
-	for _, action := range result.Actions {
-		switch action.ActionType {
+	for _, action := range result.ToolCalls {
+		switch action.Function.Name {
 		case "click":
-			point := action.ActionInputs["startBox"].([]float64)
+			arguments := make(map[string]interface{})
+			err := json.Unmarshal([]byte(action.Function.Arguments), &arguments)
+			if err != nil {
+				return err
+			}
+			point := arguments["startBox"].([]float64)
 			if err := dExt.TapAbsXY(point[0], point[1], opts...); err != nil {
 				return err
 			}
