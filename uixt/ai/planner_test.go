@@ -57,12 +57,13 @@ func TestVLMPlanning(t *testing.T) {
 	// 验证结果
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotEmpty(t, result.Actions)
+	require.NotEmpty(t, result.ToolCalls)
 
 	// 验证动作
-	action := result.Actions[0]
-	assert.NotEmpty(t, action.ActionType)
-	assert.NotEmpty(t, action.Thought)
+	toolCall := result.ToolCalls[0]
+	assert.NotEmpty(t, toolCall.Function.Name)
+	assert.NotEmpty(t, result.Thought)
+	assert.NotEmpty(t, result.Text)
 }
 
 func TestXHSPlanning(t *testing.T) {
@@ -104,7 +105,8 @@ func TestXHSPlanning(t *testing.T) {
 	// 验证动作
 	action := result.Actions[0]
 	assert.NotEmpty(t, action.ActionType)
-	assert.NotEmpty(t, action.Thought)
+	assert.NotEmpty(t, result.Thought)
+	assert.NotEmpty(t, result.Text)
 }
 
 func TestChatList(t *testing.T) {

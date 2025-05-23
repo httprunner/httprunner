@@ -30,4 +30,31 @@ func TestParseActionToStructureOutput(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, result.Actions[0].ActionType, "click")
 	assert.Contains(t, result.Actions[0].ActionInputs, "start_box")
+
+	// Test new bracket format
+	text = "Thought: 我需要点击这个按钮\nAction: click(start_box='[100, 200, 150, 250]')"
+	result, err = parser.Parse(text, types.Size{Height: 1000, Width: 1000})
+	assert.Nil(t, err)
+	assert.Equal(t, result.Actions[0].ActionType, "click")
+	assert.Contains(t, result.Actions[0].ActionInputs, "start_box")
+	coords := result.Actions[0].ActionInputs["start_box"].([]float64)
+	assert.Equal(t, 4, len(coords))
+	assert.Equal(t, 100.0, coords[0])
+	assert.Equal(t, 200.0, coords[1])
+	assert.Equal(t, 150.0, coords[2])
+	assert.Equal(t, 250.0, coords[3])
+
+	// Test drag operation with both start_box and end_box
+	text = "Thought: 我需要拖拽元素\nAction: drag(start_box='[100, 200, 150, 250]', end_box='[300, 400, 350, 450]')"
+	result, err = parser.Parse(text, types.Size{Height: 1000, Width: 1000})
+	assert.Nil(t, err)
+	assert.Equal(t, result.Actions[0].ActionType, "drag")
+	assert.Contains(t, result.Actions[0].ActionInputs, "start_box")
+	assert.Contains(t, result.Actions[0].ActionInputs, "end_box")
+	startCoords := result.Actions[0].ActionInputs["start_box"].([]float64)
+	endCoords := result.Actions[0].ActionInputs["end_box"].([]float64)
+	assert.Equal(t, 4, len(startCoords))
+	assert.Equal(t, 4, len(endCoords))
+	assert.Equal(t, 100.0, startCoords[0])
+	assert.Equal(t, 300.0, endCoords[0])
 }

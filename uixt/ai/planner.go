@@ -27,9 +27,11 @@ type PlanningOptions struct {
 
 // PlanningResult represents the result of planning
 type PlanningResult struct {
-	ToolCalls     []schema.ToolCall `json:"tool_calls"` // TODO: merge to NextActions
-	Actions       []Action          `json:"actions"`
+	ToolCalls     []schema.ToolCall `json:"tool_calls"`
+	Actions       []Action          `json:"actions"` // TODO: merge to ToolCalls
 	ActionSummary string            `json:"summary"`
+	Thought       string            `json:"thought"`
+	Text          string            `json:"text"`
 	Error         string            `json:"error,omitempty"`
 }
 
@@ -53,7 +55,6 @@ type Planner struct {
 	model       model.ToolCallingChatModel
 	parser      LLMContentParser
 	history     ConversationHistory
-	tools       []*schema.ToolInfo
 }
 
 func (p *Planner) SystemPrompt() string {
@@ -75,7 +76,6 @@ func (p *Planner) RegisterTools(tools []*schema.ToolInfo) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to register tools")
 	}
-	p.tools = tools
 	p.model = toolCallingModel
 	return nil
 }
@@ -138,7 +138,7 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 
 	log.Info().
 		Interface("summary", result.ActionSummary).
-		Interface("actions", result.Actions).
+		Interface("tool_calls", result.ToolCalls).
 		Msg("get VLM planning result")
 	return result, nil
 }

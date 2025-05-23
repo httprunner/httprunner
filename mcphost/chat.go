@@ -156,7 +156,7 @@ func (c *Chat) handleToolCalls(ctx context.Context, toolCalls []schema.ToolCall)
 		serverName, toolName := parts[0], parts[1]
 
 		// Unmarshal tool arguments from JSON string
-		var argsMap map[string]interface{}
+		var argsMap map[string]any
 		if err := sonic.UnmarshalString(toolArgs, &argsMap); err != nil {
 			log.Error().Err(err).Str("args", toolArgs).Msg("failed to unmarshal tool arguments")
 			continue

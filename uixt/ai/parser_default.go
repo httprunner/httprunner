@@ -23,7 +23,7 @@ func NewLLMContentParser(modelType option.LLMServiceType) LLMContentParser {
 	switch modelType {
 	case option.LLMServiceTypeUITARS:
 		return &UITARSContentParser{
-			systemPrompt: uiTarsPlanningPrompt,
+			systemPrompt: doubao_1_5_ui_tars_planning_prompt,
 		}
 	default:
 		return &JSONContentParser{
