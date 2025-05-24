@@ -112,6 +112,12 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 
 	// handle tool calls
 	if len(message.ToolCalls) > 0 {
+		// append tool call message
+		p.history.Append(&schema.Message{
+			Role:      schema.Tool,
+			Content:   message.Content,
+			ToolCalls: message.ToolCalls,
+		})
 		// history will be appended with tool calls execution result
 		result := &PlanningResult{
 			ToolCalls:     message.ToolCalls,
@@ -132,6 +138,13 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 		p.history.Append(&schema.Message{
 			Role:    schema.Assistant,
 			Content: message.Content,
+		})
+	} else {
+		// append tool call message
+		p.history.Append(&schema.Message{
+			Role:      schema.Tool,
+			Content:   result.Content,
+			ToolCalls: result.ToolCalls,
 		})
 	}
 

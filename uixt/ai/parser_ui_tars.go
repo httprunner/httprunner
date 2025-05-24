@@ -370,7 +370,7 @@ func convertActionsToToolCalls(actions []Action) []schema.ToolCall {
 			ID:   action.ActionType + "_" + strconv.FormatInt(time.Now().Unix(), 10),
 			Type: "function",
 			Function: schema.FunctionCall{
-				Name:      action.ActionType,
+				Name:      "uixt__" + action.ActionType,
 				Arguments: string(jsonArgs),
 			},
 		})
