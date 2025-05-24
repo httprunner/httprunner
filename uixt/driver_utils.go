@@ -130,23 +130,23 @@ func (dExt *XTDriver) assertOCR(text, assert string) error {
 	opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("assert_ocr_%s", text)))
 
 	switch assert {
-	case AssertionEqual:
+	case option.AssertionEqual:
 		_, err := dExt.FindScreenText(text, opts...)
 		if err != nil {
 			return errors.Wrap(err, "assert ocr equal failed")
 		}
-	case AssertionNotEqual:
+	case option.AssertionNotEqual:
 		_, err := dExt.FindScreenText(text, opts...)
 		if err == nil {
 			return errors.New("assert ocr not equal failed")
 		}
-	case AssertionExists:
+	case option.AssertionExists:
 		opts = append(opts, option.WithRegex(true))
 		_, err := dExt.FindScreenText(text, opts...)
 		if err != nil {
 			return errors.Wrap(err, "assert ocr exists failed")
 		}
-	case AssertionNotExists:
+	case option.AssertionNotExists:
 		opts = append(opts, option.WithRegex(true))
 		_, err := dExt.FindScreenText(text, opts...)
 		if err == nil {
@@ -166,11 +166,11 @@ func (dExt *XTDriver) assertForegroundApp(appName, assert string) error {
 	}
 
 	switch assert {
-	case AssertionEqual:
+	case option.AssertionEqual:
 		if app.PackageName != appName {
 			return errors.Wrap(err, "assert foreground app equal failed")
 		}
-	case AssertionNotEqual:
+	case option.AssertionNotEqual:
 		if app.PackageName == appName {
 			return errors.New("assert foreground app not equal failed")
 		}
@@ -186,12 +186,12 @@ func (dExt *XTDriver) assertSelector(selector, assert string) error {
 		return errors.New("assert selector only supports browser driver")
 	}
 	switch assert {
-	case AssertionExists:
+	case option.AssertionExists:
 		_, err := driver.IsElementExistBySelector(selector)
 		if err != nil {
 			return errors.Wrap(err, "assert ocr exists failed")
 		}
-	case AssertionNotExists:
+	case option.AssertionNotExists:
 		_, err := driver.IsElementExistBySelector(selector)
 		if err == nil {
 			return errors.New("assert ocr not exists failed")
@@ -204,13 +204,13 @@ func (dExt *XTDriver) assertSelector(selector, assert string) error {
 
 func (dExt *XTDriver) DoValidation(check, assert, expected string, message ...string) (err error) {
 	switch check {
-	case SelectorOCR:
+	case option.SelectorOCR:
 		err = dExt.assertOCR(expected, assert)
-	case SelectorAI:
+	case option.SelectorAI:
 		err = dExt.AIAssert(assert)
-	case SelectorForegroundApp:
+	case option.SelectorForegroundApp:
 		err = dExt.assertForegroundApp(expected, assert)
-	case SelectorSelector:
+	case option.SelectorSelector:
 		err = dExt.assertSelector(expected, assert)
 	default:
 		return fmt.Errorf("validator %s not implemented", check)

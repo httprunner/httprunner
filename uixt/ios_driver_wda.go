@@ -602,7 +602,7 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_TapAbsXY, actionOptions)
+	defer postHandler(wd, option.ACTION_TapAbsXY, actionOptions)
 
 	data := map[string]interface{}{
 		"x": x,
@@ -627,7 +627,7 @@ func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_DoubleTapXY, actionOptions)
+	defer postHandler(wd, option.ACTION_DoubleTapXY, actionOptions)
 
 	data := map[string]interface{}{
 		"x": x,
@@ -664,7 +664,7 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_Drag, actionOptions)
+	defer postHandler(wd, option.ACTION_Drag, actionOptions)
 
 	data := map[string]interface{}{
 		"fromX": math.Round(fromX*10) / 10,

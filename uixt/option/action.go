@@ -8,6 +8,76 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type ActionMethod string
+
+const (
+	ACTION_LOG              ActionMethod = "log"
+	ACTION_AppInstall       ActionMethod = "install"
+	ACTION_AppUninstall     ActionMethod = "uninstall"
+	ACTION_WebLoginNoneUI   ActionMethod = "login_none_ui"
+	ACTION_AppClear         ActionMethod = "app_clear"
+	ACTION_AppStart         ActionMethod = "app_start"
+	ACTION_AppLaunch        ActionMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
+	ACTION_AppTerminate     ActionMethod = "app_terminate"
+	ACTION_AppStop          ActionMethod = "app_stop"
+	ACTION_ScreenShot       ActionMethod = "screenshot"
+	ACTION_Sleep            ActionMethod = "sleep"
+	ACTION_SleepMS          ActionMethod = "sleep_ms"
+	ACTION_SleepRandom      ActionMethod = "sleep_random"
+	ACTION_SetIme           ActionMethod = "set_ime"
+	ACTION_GetSource        ActionMethod = "get_source"
+	ACTION_GetForegroundApp ActionMethod = "get_foreground_app"
+	ACTION_CallFunction     ActionMethod = "call_function"
+
+	// UI handling
+	ACTION_Home                     ActionMethod = "home"
+	ACTION_TapXY                    ActionMethod = "tap_xy"
+	ACTION_TapAbsXY                 ActionMethod = "tap_abs_xy"
+	ACTION_TapByOCR                 ActionMethod = "tap_ocr"
+	ACTION_TapByCV                  ActionMethod = "tap_cv"
+	ACTION_DoubleTapXY              ActionMethod = "double_tap_xy"
+	ACTION_Swipe                    ActionMethod = "swipe"
+	ACTION_Drag                     ActionMethod = "drag"
+	ACTION_Input                    ActionMethod = "input"
+	ACTION_Back                     ActionMethod = "back"
+	ACTION_KeyCode                  ActionMethod = "keycode"
+	ACTION_AIAction                 ActionMethod = "ai_action" // action with ai
+	ACTION_TapBySelector            ActionMethod = "tap_by_selector"
+	ACTION_HoverBySelector          ActionMethod = "hover_by_selector"
+	ACTION_WebCloseTab              ActionMethod = "web_close_tab"
+	ACTION_SecondaryClick           ActionMethod = "secondary_click"
+	ACTION_SecondaryClickBySelector ActionMethod = "secondary_click_by_selector"
+	ACTION_GetElementTextBySelector ActionMethod = "get_element_text_by_selector"
+
+	// custom actions
+	ACTION_SwipeToTapApp   ActionMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap
+	ACTION_SwipeToTapText  ActionMethod = "swipe_to_tap_text"  // swipe up & down to find text and tap
+	ACTION_SwipeToTapTexts ActionMethod = "swipe_to_tap_texts" // swipe up & down to find text and tap
+	ACTION_ClosePopups     ActionMethod = "close_popups"
+	ACTION_EndToEndDelay   ActionMethod = "live_e2e"
+	ACTION_InstallApp      ActionMethod = "install_app"
+	ACTION_UninstallApp    ActionMethod = "uninstall_app"
+	ACTION_DownloadApp     ActionMethod = "download_app"
+)
+
+const (
+	// UI validation
+	// selectors
+	SelectorName          string = "ui_name"
+	SelectorLabel         string = "ui_label"
+	SelectorOCR           string = "ui_ocr"
+	SelectorImage         string = "ui_image"
+	SelectorAI            string = "ui_ai" // ui query with ai
+	SelectorForegroundApp string = "ui_foreground_app"
+	SelectorSelector      string = "ui_selector"
+	// assertions
+	AssertionEqual     string = "equal"
+	AssertionNotEqual  string = "not_equal"
+	AssertionExists    string = "exists"
+	AssertionNotExists string = "not_exists"
+	AssertionAI        string = "ai_assert" // assert with ai
+)
+
 type ActionOptions struct {
 	Context context.Context `json:"-" yaml:"-"`
 	// log

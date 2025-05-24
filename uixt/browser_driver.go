@@ -119,7 +119,7 @@ func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_Drag, actionOptions)
+	defer postHandler(wd, option.ACTION_Drag, actionOptions)
 
 	data := map[string]interface{}{
 		"from_x": fromX,
@@ -518,7 +518,7 @@ func (wd *BrowserDriver) TapFloat(x, y float64, opts ...option.ActionOption) err
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_TapAbsXY, actionOptions)
+	defer postHandler(wd, option.ACTION_TapAbsXY, actionOptions)
 
 	duration := 0.1
 	if actionOptions.Duration > 0 {
@@ -542,7 +542,7 @@ func (wd *BrowserDriver) DoubleTap(x, y float64, options ...option.ActionOption)
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_DoubleTapXY, actionOptions)
+	defer postHandler(wd, option.ACTION_DoubleTapXY, actionOptions)
 
 	data := map[string]interface{}{
 		"x": x,

@@ -51,7 +51,7 @@ func preHandler_TapAbsXY(driver IDriver, options *option.ActionOptions, rawX, ra
 
 	// mark UI operation
 	if options.PreMarkOperation {
-		if markErr := MarkUIOperation(driver, ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
+		if markErr := MarkUIOperation(driver, option.ACTION_TapAbsXY, []float64{x, y}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark tap operation")
 		}
 	}
@@ -71,7 +71,7 @@ func preHandler_DoubleTap(driver IDriver, options *option.ActionOptions, rawX, r
 
 	// mark UI operation
 	if options.PreMarkOperation {
-		if markErr := MarkUIOperation(driver, ACTION_DoubleTapXY, []float64{x, y}); markErr != nil {
+		if markErr := MarkUIOperation(driver, option.ACTION_DoubleTapXY, []float64{x, y}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark double tap operation")
 		}
 	}
@@ -90,7 +90,7 @@ func preHandler_Drag(driver IDriver, options *option.ActionOptions, rawFomX, raw
 
 	// mark UI operation
 	if options.PreMarkOperation {
-		if markErr := MarkUIOperation(driver, ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
+		if markErr := MarkUIOperation(driver, option.ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark drag operation")
 		}
 	}
@@ -109,7 +109,7 @@ func preHandler_Swipe(driver IDriver, options *option.ActionOptions, rawFomX, ra
 
 	// save screenshot before action and mark UI operation
 	if options.PreMarkOperation {
-		if markErr := MarkUIOperation(driver, ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
+		if markErr := MarkUIOperation(driver, option.ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
 		}
 	}
@@ -117,7 +117,7 @@ func preHandler_Swipe(driver IDriver, options *option.ActionOptions, rawFomX, ra
 	return fromX, fromY, toX, toY, nil
 }
 
-func postHandler(driver IDriver, actionType ActionMethod, options *option.ActionOptions) error {
+func postHandler(driver IDriver, actionType option.ActionMethod, options *option.ActionOptions) error {
 	// save screenshot after action
 	if options.PostMarkOperation {
 		// get compressed screenshot buffer

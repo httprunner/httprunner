@@ -94,7 +94,7 @@ func convertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, e
 	return mcp.CallToolRequest{}, nil
 }
 
-func (dExt *XTDriver) DoAction2(action MobileAction) (err error) {
+func (dExt *XTDriver) ExecuteAction(action MobileAction) (err error) {
 	// convert action to call tool request
 	req, err := convertActionToCallToolRequest(action)
 	if err != nil {

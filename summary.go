@@ -15,7 +15,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/version"
-	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func NewSummary() *Summary {
@@ -28,7 +28,7 @@ func NewSummary() *Summary {
 		Success: true,
 		Stat: &Stat{
 			TestSteps: TestStepStat{
-				Actions: make(map[uixt.ActionMethod]int),
+				Actions: make(map[option.ActionMethod]int),
 			},
 		},
 		Time: &TestCaseTime{
@@ -146,10 +146,10 @@ type TestCaseStat struct {
 }
 
 type TestStepStat struct {
-	Total     int                       `json:"total" yaml:"total"`
-	Successes int                       `json:"successes" yaml:"successes"`
-	Failures  int                       `json:"failures" yaml:"failures"`
-	Actions   map[uixt.ActionMethod]int `json:"actions" yaml:"actions"` // record action stats
+	Total     int                         `json:"total" yaml:"total"`
+	Successes int                         `json:"successes" yaml:"successes"`
+	Failures  int                         `json:"failures" yaml:"failures"`
+	Actions   map[option.ActionMethod]int `json:"actions" yaml:"actions"` // record action stats
 }
 
 type TestCaseTime struct {
@@ -167,7 +167,7 @@ func NewCaseSummary() *TestCaseSummary {
 	return &TestCaseSummary{
 		Success: true,
 		Stat: &TestStepStat{
-			Actions: make(map[uixt.ActionMethod]int),
+			Actions: make(map[option.ActionMethod]int),
 		},
 		Time: &TestCaseTime{
 			StartAt: time.Now(),
