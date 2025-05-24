@@ -1,4 +1,4 @@
-package mcphost
+package uixt
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"github.com/danielpaulus/go-ios/ios"
 	"github.com/httprunner/httprunner/v5/internal/version"
 	"github.com/httprunner/httprunner/v5/pkg/gadb"
-	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/mark3labs/mcp-go/client"
@@ -23,16 +22,16 @@ import (
 // MCPClient4XTDriver is a minimal MCP client that only implements the methods used by the host
 type MCPClient4XTDriver struct {
 	client.MCPClient
-	server *MCPServer4XTDriver
+	Server *MCPServer4XTDriver
 }
 
 func (c *MCPClient4XTDriver) ListTools(ctx context.Context, req mcp.ListToolsRequest) (*mcp.ListToolsResult, error) {
-	tools := c.server.ListTools()
+	tools := c.Server.ListTools()
 	return &mcp.ListToolsResult{Tools: tools}, nil
 }
 
 func (c *MCPClient4XTDriver) CallTool(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	handler := c.server.GetHandler(req.Params.Name)
+	handler := c.Server.GetHandler(req.Params.Name)
 	if handler == nil {
 		return mcp.NewToolResultError(fmt.Sprintf("handler for tool %s not found", req.Params.Name)), nil
 	}
@@ -47,16 +46,6 @@ func (c *MCPClient4XTDriver) Initialize(ctx context.Context, req mcp.InitializeR
 func (c *MCPClient4XTDriver) Close() error {
 	// no need to close for local server
 	return nil
-}
-
-type toolCall = func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error)
-
-// MCPServer4XTDriver wraps a MCPServer to expose XTDriver functionality via MCP protocol.
-type MCPServer4XTDriver struct {
-	mcpServer   *server.MCPServer
-	driverCache sync.Map            // key is serial, value is *XTDriver
-	tools       []mcp.Tool          // tools list for uixt
-	handlerMap  map[string]toolCall // tool name to handler
 }
 
 // NewMCPServer creates a new MCP server for XTDriver and registers all tools.
@@ -74,10 +63,43 @@ func NewMCPServer() *MCPServer4XTDriver {
 	return s
 }
 
+type toolCall = func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error)
+
+// MCPServer4XTDriver wraps a MCPServer to expose XTDriver functionality via MCP protocol.
+type MCPServer4XTDriver struct {
+	mcpServer   *server.MCPServer
+	driverCache sync.Map            // key is serial, value is *XTDriver
+	tools       []mcp.Tool          // tools list for uixt
+	handlerMap  map[string]toolCall // tool name to handler
+}
+
 // Start runs the MCP server (blocking).
 func (s *MCPServer4XTDriver) Start() error {
 	log.Info().Msg("Starting HttpRunner UIXT MCP Server...")
 	return server.ServeStdio(s.mcpServer)
+}
+
+// ListTools returns all registered tools
+func (s *MCPServer4XTDriver) ListTools() []mcp.Tool {
+	return s.tools
+}
+
+// GetTool returns a pointer to the mcp.Tool with the given name
+func (s *MCPServer4XTDriver) GetTool(name string) *mcp.Tool {
+	for i := range s.tools {
+		if s.tools[i].Name == name {
+			return &s.tools[i]
+		}
+	}
+	return nil
+}
+
+// GetHandler returns the tool handler for the given name
+func (s *MCPServer4XTDriver) GetHandler(name string) toolCall {
+	if s.handlerMap == nil {
+		return nil
+	}
+	return s.handlerMap[name]
 }
 
 // addTools registers all MCP tools.
@@ -203,7 +225,7 @@ func (ums *MCPServer4XTDriver) handleListAvailableDevices(ctx context.Context, r
 	if iosDevices, err := ios.ListDevices(); err == nil {
 		serialList := make([]string, 0, len(iosDevices.DeviceList))
 		for _, dev := range iosDevices.DeviceList {
-			device, err := uixt.NewIOSDevice(
+			device, err := NewIOSDevice(
 				option.WithUDID(dev.Properties.SerialNumber))
 			if err != nil {
 				continue
@@ -414,7 +436,7 @@ func (ums *MCPServer4XTDriver) handleScreenShot(ctx context.Context, request mcp
 		return nil, err
 	}
 
-	bufferBase64, err := uixt.GetScreenShotBufferBase64(driverExt.IDriver)
+	bufferBase64, err := GetScreenShotBufferBase64(driverExt.IDriver)
 	if err != nil {
 		log.Error().Err(err).Msg("ScreenShot failed")
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to take screenshot: %v", err)), nil
@@ -425,7 +447,7 @@ func (ums *MCPServer4XTDriver) handleScreenShot(ctx context.Context, request mcp
 }
 
 // setupXTDriver initializes an XTDriver based on the platform and serial.
-func (ums *MCPServer4XTDriver) setupXTDriver(_ context.Context, args map[string]interface{}) (*uixt.XTDriver, error) {
+func (ums *MCPServer4XTDriver) setupXTDriver(_ context.Context, args map[string]interface{}) (*XTDriver, error) {
 	platform, _ := args["platform"].(string)
 	serial, _ := args["serial"].(string)
 	if platform == "" {
@@ -436,7 +458,7 @@ func (ums *MCPServer4XTDriver) setupXTDriver(_ context.Context, args map[string]
 	// Check if driver exists in cache
 	cacheKey := fmt.Sprintf("%s_%s", platform, serial)
 	if cachedDriver, ok := ums.driverCache.Load(cacheKey); ok {
-		if driverExt, ok := cachedDriver.(*uixt.XTDriver); ok {
+		if driverExt, ok := cachedDriver.(*XTDriver); ok {
 			log.Info().Str("platform", platform).Str("serial", serial).Msg("Using cached driver")
 			return driverExt, nil
 		}
@@ -451,22 +473,22 @@ func (ums *MCPServer4XTDriver) setupXTDriver(_ context.Context, args map[string]
 	return driverExt, nil
 }
 
-func initDriverExt(platform, serial string) (*uixt.XTDriver, error) {
+func initDriverExt(platform, serial string) (*XTDriver, error) {
 	// init device
-	var device uixt.IDevice
+	var device IDevice
 	var err error
 	switch strings.ToLower(platform) {
 	case "android":
-		device, err = uixt.NewAndroidDevice(option.WithSerialNumber(serial))
+		device, err = NewAndroidDevice(option.WithSerialNumber(serial))
 	case "ios":
-		device, err = uixt.NewIOSDevice(
+		device, err = NewIOSDevice(
 			option.WithUDID(serial),
 			option.WithWDAPort(8700),
 			option.WithWDAMjpegPort(8800),
 			option.WithResetHomeOnStartup(false),
 		)
 	case "browser":
-		device, err = uixt.NewBrowserDevice(option.WithBrowserID(serial))
+		device, err = NewBrowserDevice(option.WithBrowserID(serial))
 	default:
 		return nil, fmt.Errorf("invalid platform: %s", platform)
 	}
@@ -487,7 +509,7 @@ func initDriverExt(platform, serial string) (*uixt.XTDriver, error) {
 	}
 
 	// init XTDriver
-	driverExt, err := uixt.NewXTDriver(driver,
+	driverExt, err := NewXTDriver(driver,
 		option.WithCVService(option.CVServiceTypeVEDEM))
 	if err != nil {
 		return nil, fmt.Errorf("init XT driver failed: %w", err)
@@ -548,27 +570,4 @@ func mapToStruct(m map[string]interface{}, out interface{}) error {
 var commonToolOptions = []mcp.ToolOption{
 	mcp.WithString("platform", mcp.Required(), mcp.Description("Device platform: android/ios/browser")),
 	mcp.WithString("serial", mcp.Required(), mcp.Description("Device serial/udid/browser id")),
-}
-
-// ListTools returns all registered tools
-func (s *MCPServer4XTDriver) ListTools() []mcp.Tool {
-	return s.tools
-}
-
-// GetTool returns a pointer to the mcp.Tool with the given name
-func (s *MCPServer4XTDriver) GetTool(name string) *mcp.Tool {
-	for i := range s.tools {
-		if s.tools[i].Name == name {
-			return &s.tools[i]
-		}
-	}
-	return nil
-}
-
-// GetHandler returns the tool handler for the given name
-func (s *MCPServer4XTDriver) GetHandler(name string) toolCall {
-	if s.handlerMap == nil {
-		return nil
-	}
-	return s.handlerMap[name]
 }

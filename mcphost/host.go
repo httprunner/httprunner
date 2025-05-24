@@ -69,8 +69,8 @@ func (h *MCPHost) InitServers(ctx context.Context) error {
 	// initialize uixt MCP server
 	if h.withUIXT {
 		h.connections["uixt"] = &Connection{
-			Client: &MCPClient4XTDriver{
-				server: NewMCPServer(),
+			Client: &uixt.MCPClient4XTDriver{
+				Server: uixt.NewMCPServer(),
 			},
 			Config: nil,
 		}
