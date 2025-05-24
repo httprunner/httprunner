@@ -162,7 +162,7 @@ func (r *Router) dragHandler(c *gin.Context) {
 }
 
 func (r *Router) inputHandler(c *gin.Context) {
-	var inputReq InputRequest
+	var inputReq types.InputRequest
 	if err := c.ShouldBindJSON(&inputReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return

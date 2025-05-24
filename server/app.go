@@ -22,7 +22,7 @@ func (r *Router) foregroundAppHandler(c *gin.Context) {
 }
 
 func (r *Router) appInfoHandler(c *gin.Context) {
-	var appInfoReq AppInfoRequest
+	var appInfoReq types.AppInfoRequest
 	if err := c.ShouldBindQuery(&appInfoReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -106,7 +106,7 @@ func (r *Router) terminalAppHandler(c *gin.Context) {
 }
 
 func (r *Router) uninstallAppHandler(c *gin.Context) {
-	var appUninstallReq AppUninstallRequest
+	var appUninstallReq types.AppUninstallRequest
 	if err := c.ShouldBindJSON(&appUninstallReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return

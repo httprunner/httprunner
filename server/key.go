@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
 func (r *Router) unlockHandler(c *gin.Context) {
@@ -33,7 +34,7 @@ func (r *Router) homeHandler(c *gin.Context) {
 }
 
 func (r *Router) backspaceHandler(c *gin.Context) {
-	var deleteReq DeleteRequest
+	var deleteReq types.DeleteRequest
 	if err := c.ShouldBindJSON(&deleteReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -54,7 +55,7 @@ func (r *Router) backspaceHandler(c *gin.Context) {
 }
 
 func (r *Router) keycodeHandler(c *gin.Context) {
-	var keycodeReq KeycodeRequest
+	var keycodeReq types.KeycodeRequest
 	if err := c.ShouldBindJSON(&keycodeReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return

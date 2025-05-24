@@ -29,6 +29,40 @@ type SwipeRequest struct {
 	PressDuration float64 `json:"press_duration" desc:"Press duration in milliseconds (optional)"`
 }
 
+type InputRequest struct {
+	TargetDeviceRequest
+	Text      string `json:"text" binding:"required"`
+	Frequency int    `json:"frequency"` // only iOS
+}
+
+type DeleteRequest struct {
+	TargetDeviceRequest
+	Count int `json:"count" binding:"required"`
+}
+
+type KeycodeRequest struct {
+	TargetDeviceRequest
+	Keycode int `json:"keycode" binding:"required"`
+}
+
+type AppInstallRequest struct {
+	TargetDeviceRequest
+	AppUrl             string `json:"appUrl" binding:"required"`
+	MappingUrl         string `json:"mappingUrl"`
+	ResourceMappingUrl string `json:"resourceMappingUrl"`
+	PackageName        string `json:"packageName"`
+}
+
+type AppInfoRequest struct {
+	TargetDeviceRequest
+	PackageName string `form:"packageName" binding:"required"`
+}
+
+type AppUninstallRequest struct {
+	TargetDeviceRequest
+	PackageName string `json:"packageName" binding:"required"`
+}
+
 type AppClearRequest struct {
 	TargetDeviceRequest
 	PackageName string `json:"packageName" binding:"required"`
