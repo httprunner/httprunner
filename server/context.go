@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -45,42 +44,10 @@ func (r *Router) GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error)
 func (r *Router) GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
 	platform := c.Param("platform")
 	serial := c.Param("serial")
-	if serial == "" {
+	device, err = uixt.NewDevice(platform, serial)
+	if err != nil {
 		RenderErrorInitDriver(c, err)
 		return
-	}
-	switch strings.ToLower(platform) {
-	case "android":
-		device, err = uixt.NewAndroidDevice(
-			option.WithSerialNumber(serial))
-		if err != nil {
-			RenderErrorInitDriver(c, err)
-			return
-		}
-	case "ios":
-		device, err = uixt.NewIOSDevice(
-			option.WithUDID(serial),
-			option.WithWDAPort(8700),
-			option.WithWDAMjpegPort(8800),
-			option.WithResetHomeOnStartup(false),
-		)
-		if err != nil {
-			RenderErrorInitDriver(c, err)
-			return
-		}
-	case "browser":
-		device, err = uixt.NewBrowserDevice(option.WithBrowserID(serial))
-		if err != nil {
-			RenderErrorInitDriver(c, err)
-			return
-		}
-	default:
-		err = fmt.Errorf("[%s]: invalid platform", c.HandlerName())
-		return
-	}
-	err = device.Setup()
-	if err != nil {
-		log.Error().Err(err).Msg("setup device failed")
 	}
 	c.Set("device", device)
 	return device, nil

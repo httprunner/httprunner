@@ -9,44 +9,15 @@ import (
 	"sync"
 
 	"github.com/danielpaulus/go-ios/ios"
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/mark3labs/mcp-go/server"
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v5/internal/version"
 	"github.com/httprunner/httprunner/v5/pkg/gadb"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
-	"github.com/mark3labs/mcp-go/client"
-	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/mark3labs/mcp-go/server"
-	"github.com/rs/zerolog/log"
 )
-
-// MCPClient4XTDriver is a minimal MCP client that only implements the methods used by the host
-type MCPClient4XTDriver struct {
-	client.MCPClient
-	Server *MCPServer4XTDriver
-}
-
-func (c *MCPClient4XTDriver) ListTools(ctx context.Context, req mcp.ListToolsRequest) (*mcp.ListToolsResult, error) {
-	tools := c.Server.ListTools()
-	return &mcp.ListToolsResult{Tools: tools}, nil
-}
-
-func (c *MCPClient4XTDriver) CallTool(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	handler := c.Server.GetHandler(req.Params.Name)
-	if handler == nil {
-		return mcp.NewToolResultError(fmt.Sprintf("handler for tool %s not found", req.Params.Name)), nil
-	}
-	return handler(ctx, req)
-}
-
-func (c *MCPClient4XTDriver) Initialize(ctx context.Context, req mcp.InitializeRequest) (*mcp.InitializeResult, error) {
-	// no need to initialize for local server
-	return &mcp.InitializeResult{}, nil
-}
-
-func (c *MCPClient4XTDriver) Close() error {
-	// no need to close for local server
-	return nil
-}
 
 // NewMCPServer creates a new MCP server for XTDriver and registers all tools.
 func NewMCPServer() *MCPServer4XTDriver {
@@ -59,7 +30,7 @@ func NewMCPServer() *MCPServer4XTDriver {
 		mcpServer:  mcpServer,
 		handlerMap: make(map[string]toolCall),
 	}
-	s.addTools()
+	s.registerTools()
 	return s
 }
 
@@ -67,10 +38,9 @@ type toolCall = func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult,
 
 // MCPServer4XTDriver wraps a MCPServer to expose XTDriver functionality via MCP protocol.
 type MCPServer4XTDriver struct {
-	mcpServer   *server.MCPServer
-	driverCache sync.Map            // key is serial, value is *XTDriver
-	tools       []mcp.Tool          // tools list for uixt
-	handlerMap  map[string]toolCall // tool name to handler
+	mcpServer  *server.MCPServer
+	tools      []mcp.Tool          // tools list for uixt
+	handlerMap map[string]toolCall // tool name to handler
 }
 
 // Start runs the MCP server (blocking).
@@ -102,352 +72,479 @@ func (s *MCPServer4XTDriver) GetHandler(name string) toolCall {
 	return s.handlerMap[name]
 }
 
-// addTools registers all MCP tools.
-func (ums *MCPServer4XTDriver) addTools() {
+// registerTools registers all MCP tools.
+func (ums *MCPServer4XTDriver) registerTools() {
 	// ListAvailableDevices Tool
-	listDevicesTool := mcp.NewTool("list_available_devices",
-		mcp.WithDescription("List all available devices. If there are more than one device returned, you need to let the user select one of them."),
-	)
-	ums.mcpServer.AddTool(listDevicesTool, ums.handleListAvailableDevices)
-	ums.tools = append(ums.tools, listDevicesTool)
-	ums.handlerMap[listDevicesTool.Name] = ums.handleListAvailableDevices
+	ums.registerTool(&ToolListAvailableDevices{})
 
 	// SelectDevice Tool
-	selectDeviceTool := mcp.NewTool("select_device",
-		mcp.WithDescription("Select a device to use from the list of available devices. Use the list_available_devices tool to get a list of available devices."),
-		mcp.WithString("platform", mcp.Enum("android", "ios"), mcp.Description("The type of device to select")),
-		mcp.WithString("serial", mcp.Description("The device serial/udid to select")),
-	)
-	ums.mcpServer.AddTool(selectDeviceTool, ums.handleSelectDevice)
-	ums.tools = append(ums.tools, selectDeviceTool)
-	ums.handlerMap[selectDeviceTool.Name] = ums.handleSelectDevice
+	ums.registerTool(&ToolSelectDevice{})
 
 	// ListPackages Tool
-	listPackagesParams := append(
-		[]mcp.ToolOption{mcp.WithDescription("List all the apps/packages on the device.")},
-		commonToolOptions...,
-	)
-	listPackagesTool := mcp.NewTool("list_packages", listPackagesParams...)
-	ums.mcpServer.AddTool(listPackagesTool, ums.handleListPackages)
-	ums.tools = append(ums.tools, listPackagesTool)
-	ums.handlerMap[listPackagesTool.Name] = ums.handleListPackages
+	ums.registerTool(&ToolListPackages{})
 
 	// LaunchApp Tool
-	launchAppParams := append(
-		[]mcp.ToolOption{mcp.WithDescription("Launch an app on mobile device. Use this to open a specific app. You can find the package name of the app by calling list_packages.")},
-		commonToolOptions...,
-	)
-	launchAppParams = append(launchAppParams, generateMCPOptions(types.AppLaunchRequest{})...)
-	launchAppTool := mcp.NewTool("launch_app", launchAppParams...)
-	ums.mcpServer.AddTool(launchAppTool, ums.handleLaunchApp)
-	ums.tools = append(ums.tools, launchAppTool)
-	ums.handlerMap[launchAppTool.Name] = ums.handleLaunchApp
+	ums.registerTool(&ToolLaunchApp{})
 
 	// TerminateApp Tool
-	terminateAppParams := append(
-		[]mcp.ToolOption{mcp.WithDescription("Stop and terminate an app on mobile device")},
-		commonToolOptions...,
-	)
-	terminateAppParams = append(terminateAppParams, generateMCPOptions(types.AppTerminateRequest{})...)
-	terminateAppTool := mcp.NewTool("terminate_app", terminateAppParams...)
-	ums.mcpServer.AddTool(terminateAppTool, ums.handleTerminateApp)
-	ums.tools = append(ums.tools, terminateAppTool)
-	ums.handlerMap[terminateAppTool.Name] = ums.handleTerminateApp
+	ums.registerTool(&ToolTerminateApp{})
 
 	// GetScreenSize Tool
-	getScreenSizeParams := append(
-		[]mcp.ToolOption{mcp.WithDescription("Get the screen size of the mobile device in pixels")},
-		commonToolOptions...,
-	)
-	getScreenSizeTool := mcp.NewTool("get_screen_size", getScreenSizeParams...)
-	ums.mcpServer.AddTool(getScreenSizeTool, ums.handleGetScreenSize)
-	ums.tools = append(ums.tools, getScreenSizeTool)
-	ums.handlerMap[getScreenSizeTool.Name] = ums.handleGetScreenSize
+	ums.registerTool(&ToolGetScreenSize{})
 
 	// PressButton Tool
-	pressButtonParams := append(
-		[]mcp.ToolOption{mcp.WithDescription("Press a button on device")},
-		commonToolOptions...,
-	)
-	pressButtonTool := mcp.NewTool("press_button", pressButtonParams...)
-	ums.mcpServer.AddTool(pressButtonTool, ums.handlePressButton)
-	ums.tools = append(ums.tools, pressButtonTool)
-	ums.handlerMap[pressButtonTool.Name] = ums.handlePressButton
+	ums.registerTool(&ToolPressButton{})
 
 	// TapXY Tool
-	tapParams := append(
-		[]mcp.ToolOption{mcp.WithDescription("Click on the screen at given x,y coordinates")},
-		commonToolOptions...,
-	)
-	tapParams = append(tapParams, generateMCPOptions(types.TapRequest{})...)
-	tapXYTool := mcp.NewTool("tap_xy", tapParams...)
-	ums.mcpServer.AddTool(tapXYTool, ums.handleTapXY)
-	ums.tools = append(ums.tools, tapXYTool)
-	ums.handlerMap[tapXYTool.Name] = ums.handleTapXY
-	log.Info().Str("name", tapXYTool.Name).Msg("Register tool")
+	ums.registerTool(&ToolTapXY{})
 
 	// Swipe Tool
-	swipeParams := append(
-		[]mcp.ToolOption{mcp.WithDescription("Swipe on the screen")},
-		commonToolOptions...,
-	)
-	swipeParams = append(swipeParams, generateMCPOptions(types.SwipeRequest{})...)
-	swipeTool := mcp.NewTool("swipe", swipeParams...)
-	ums.mcpServer.AddTool(swipeTool, ums.handleSwipe)
-	ums.tools = append(ums.tools, swipeTool)
-	ums.handlerMap[swipeTool.Name] = ums.handleSwipe
-	log.Info().Str("name", swipeTool.Name).Msg("Register tool")
+	ums.registerTool(&ToolSwipe{})
+
+	// Drag Tool
+	ums.registerTool(&ToolDrag{})
 
 	// ScreenShot Tool
-	takeScreenShotParams := append(
-		[]mcp.ToolOption{mcp.WithDescription("Take a screenshot of the mobile device. Use this to understand what's on screen. Do not cache this result.")},
-		commonToolOptions...,
-	)
-	screenShotTool := mcp.NewTool("take_screenshot", takeScreenShotParams...)
-	ums.mcpServer.AddTool(screenShotTool, ums.handleScreenShot)
-	ums.tools = append(ums.tools, screenShotTool)
-	ums.handlerMap[screenShotTool.Name] = ums.handleScreenShot
-	log.Info().Str("name", screenShotTool.Name).Msg("Register tool")
+	ums.registerTool(&ToolScreenShot{})
 }
 
-// handleListAvailableDevices handles the list_available_devices tool call.
-func (ums *MCPServer4XTDriver) handleListAvailableDevices(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	deviceList := make(map[string][]string)
-	if client, err := gadb.NewClient(); err == nil {
-		if androidDevices, err := client.DeviceList(); err == nil {
-			serialList := make([]string, 0, len(androidDevices))
-			for _, device := range androidDevices {
-				serialList = append(serialList, device.Serial())
+func (ums *MCPServer4XTDriver) registerTool(tool ActionTool) {
+	options := []mcp.ToolOption{
+		mcp.WithDescription(tool.Description()),
+	}
+	options = append(options, tool.Options()...)
+	mcpTool := mcp.NewTool(tool.Name(), options...)
+	ums.mcpServer.AddTool(mcpTool, tool.Implement())
+	ums.tools = append(ums.tools, mcpTool)
+	ums.handlerMap[tool.Name()] = tool.Implement()
+	log.Debug().Str("name", tool.Name()).Msg("register tool")
+}
+
+type ActionTool interface {
+	Name() string
+	Description() string
+	Options() []mcp.ToolOption
+	Implement() toolCall
+}
+
+// ToolListAvailableDevices implements the list_available_devices tool call.
+type ToolListAvailableDevices struct{}
+
+func (t *ToolListAvailableDevices) Name() string {
+	return "list_available_devices"
+}
+
+func (t *ToolListAvailableDevices) Description() string {
+	return "List all available devices. If there are more than one device returned, you need to let the user select one of them."
+}
+
+func (t *ToolListAvailableDevices) Options() []mcp.ToolOption {
+	return []mcp.ToolOption{}
+}
+
+func (t *ToolListAvailableDevices) Implement() toolCall {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		deviceList := make(map[string][]string)
+		if client, err := gadb.NewClient(); err == nil {
+			if androidDevices, err := client.DeviceList(); err == nil {
+				serialList := make([]string, 0, len(androidDevices))
+				for _, device := range androidDevices {
+					serialList = append(serialList, device.Serial())
+				}
+				deviceList["androidDevices"] = serialList
 			}
-			deviceList["androidDevices"] = serialList
 		}
-	}
-	if iosDevices, err := ios.ListDevices(); err == nil {
-		serialList := make([]string, 0, len(iosDevices.DeviceList))
-		for _, dev := range iosDevices.DeviceList {
-			device, err := NewIOSDevice(
-				option.WithUDID(dev.Properties.SerialNumber))
-			if err != nil {
-				continue
+		if iosDevices, err := ios.ListDevices(); err == nil {
+			serialList := make([]string, 0, len(iosDevices.DeviceList))
+			for _, dev := range iosDevices.DeviceList {
+				device, err := NewIOSDevice(
+					option.WithUDID(dev.Properties.SerialNumber))
+				if err != nil {
+					continue
+				}
+				properties := device.Properties
+				err = ios.Pair(dev)
+				if err != nil {
+					log.Error().Err(err).Msg("failed to pair device")
+					continue
+				}
+				serialList = append(serialList, properties.SerialNumber)
 			}
-			properties := device.Properties
-			err = ios.Pair(dev)
-			if err != nil {
-				log.Error().Err(err).Msg("failed to pair device")
-				continue
-			}
-			serialList = append(serialList, properties.SerialNumber)
+			deviceList["iosDevices"] = serialList
 		}
-		deviceList["iosDevices"] = serialList
-	}
 
-	jsonResult, _ := json.Marshal(deviceList)
-	return mcp.NewToolResultText(string(jsonResult)), nil
+		jsonResult, _ := json.Marshal(deviceList)
+		return mcp.NewToolResultText(string(jsonResult)), nil
+	}
 }
 
-// handleSelectDevice handles the select_device tool call.
-func (ums *MCPServer4XTDriver) handleSelectDevice(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
-	if err != nil {
-		return nil, err
-	}
+// ToolSelectDevice implements the select_device tool call.
+type ToolSelectDevice struct{}
 
-	uuid := driverExt.IDriver.GetDevice().UUID()
-	return mcp.NewToolResultText(fmt.Sprintf("Selected device: %s", uuid)), nil
+func (t *ToolSelectDevice) Name() string {
+	return "select_device"
 }
 
-// handleListPackages handles the list_packages tool call.
-func (ums *MCPServer4XTDriver) handleListPackages(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
-	if err != nil {
-		return nil, err
-	}
-
-	apps, err := driverExt.IDriver.GetDevice().ListPackages()
-	if err != nil {
-		return nil, err
-	}
-	return mcp.NewToolResultText(fmt.Sprintf("Device packages: %v", apps)), nil
+func (t *ToolSelectDevice) Description() string {
+	return "Select a device to use from the list of available devices. Use the list_available_devices tool to get a list of available devices."
 }
 
-// handleLaunchApp handles the launch_app tool call.
-func (ums *MCPServer4XTDriver) handleLaunchApp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
-	if err != nil {
-		return nil, err
+func (t *ToolSelectDevice) Options() []mcp.ToolOption {
+	return []mcp.ToolOption{
+		mcp.WithString("platform", mcp.Enum("android", "ios"), mcp.Description("The type of device to select")),
+		mcp.WithString("serial", mcp.Description("The device serial/udid to select")),
 	}
-	var appLaunchReq types.AppLaunchRequest
-	if err := mapToStruct(request.Params.Arguments, &appLaunchReq); err != nil {
-		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
-	}
-	packageName := appLaunchReq.PackageName
-	if packageName == "" {
-		return mcp.NewToolResultError("package_name is required"), nil
-	}
-	err = driverExt.AppLaunch(packageName)
-	if err != nil {
-		return mcp.NewToolResultError("Launch app failed: " + err.Error()), nil
-	}
-	return mcp.NewToolResultText(fmt.Sprintf("Launched app success: %s", packageName)), nil
 }
 
-// handleTerminateApp handles the terminate_app tool call.
-func (ums *MCPServer4XTDriver) handleTerminateApp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
-	if err != nil {
-		return nil, err
+func (t *ToolSelectDevice) Implement() toolCall {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, err
+		}
+
+		uuid := driverExt.IDriver.GetDevice().UUID()
+		return mcp.NewToolResultText(fmt.Sprintf("Selected device: %s", uuid)), nil
 	}
-	var appTerminateReq types.AppTerminateRequest
-	if err := mapToStruct(request.Params.Arguments, &appTerminateReq); err != nil {
-		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
-	}
-	packageName := appTerminateReq.PackageName
-	if packageName == "" {
-		return mcp.NewToolResultError("package_name is required"), nil
-	}
-	_, err = driverExt.AppTerminate(packageName)
-	if err != nil {
-		return mcp.NewToolResultError("Terminate app failed: " + err.Error()), nil
-	}
-	return mcp.NewToolResultText(fmt.Sprintf("Terminated app success: %s", packageName)), nil
 }
 
-// handleGetScreenSize handles the get_screen_size tool call.
-func (ums *MCPServer4XTDriver) handleGetScreenSize(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
-	if err != nil {
-		return nil, err
-	}
-	screenSize, err := driverExt.IDriver.WindowSize()
-	if err != nil {
-		return mcp.NewToolResultError("Get screen size failed: " + err.Error()), nil
-	}
-	return mcp.NewToolResultText(
-		fmt.Sprintf("Screen size: %d x %d pixels", screenSize.Width, screenSize.Height),
-	), nil
+// ToolListPackages implements the list_packages tool call.
+type ToolListPackages struct{}
+
+func (t *ToolListPackages) Name() string {
+	return "list_packages"
 }
 
-// handlePressButton handles the press_button tool call.
-func (ums *MCPServer4XTDriver) handlePressButton(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
-	if err != nil {
-		return nil, err
-	}
-	var pressButtonReq types.PressButtonRequest
-	if err := mapToStruct(request.Params.Arguments, &pressButtonReq); err != nil {
-		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
-	}
-	err = driverExt.PressButton(pressButtonReq.Button)
-	if err != nil {
-		return mcp.NewToolResultError("Press button failed: " + err.Error()), nil
-	}
-	return mcp.NewToolResultText(fmt.Sprintf("Pressed button: %s", pressButtonReq.Button)), nil
+func (t *ToolListPackages) Description() string {
+	return "List all the apps/packages on the device."
 }
 
-// handleTapXY handles the tap_xy tool call.
-func (ums *MCPServer4XTDriver) handleTapXY(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
-	if err != nil {
-		return nil, err
-	}
-	var tapReq types.TapRequest
-	if err := mapToStruct(request.Params.Arguments, &tapReq); err != nil {
-		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
-	}
-	err = driverExt.TapXY(tapReq.X, tapReq.Y,
-		option.WithDuration(tapReq.Duration),
-		option.WithPreMarkOperation(true))
-	if err != nil {
-		return mcp.NewToolResultError("Tap failed: " + err.Error()), nil
-	}
-	return mcp.NewToolResultText(
-		fmt.Sprintf("tap (%f,%f) success", tapReq.X, tapReq.Y),
-	), nil
+func (t *ToolListPackages) Options() []mcp.ToolOption {
+	return generateMCPOptions(&types.TargetDeviceRequest{})
 }
 
-// handleSwipe handles the swipe tool call.
-func (ums *MCPServer4XTDriver) handleSwipe(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
-	if err != nil {
-		return nil, err
-	}
-	var swipeReq types.SwipeRequest
-	if err := mapToStruct(request.Params.Arguments, &swipeReq); err != nil {
-		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
-	}
+func (t *ToolListPackages) Implement() toolCall {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, err
+		}
 
-	options := []option.ActionOption{
-		option.WithPreMarkOperation(true),
-		option.WithDuration(swipeReq.Duration),
-		option.WithPressDuration(swipeReq.PressDuration),
+		apps, err := driverExt.IDriver.GetDevice().ListPackages()
+		if err != nil {
+			return nil, err
+		}
+		return mcp.NewToolResultText(fmt.Sprintf("Device packages: %v", apps)), nil
 	}
-
-	// enum direction: up, down, left, right
-	switch swipeReq.Direction {
-	case "up":
-		err = driverExt.Swipe(0.5, 0.5, 0.5, 0.1, options...)
-	case "down":
-		err = driverExt.Swipe(0.5, 0.5, 0.5, 0.9, options...)
-	case "left":
-		err = driverExt.Swipe(0.5, 0.5, 0.1, 0.5, options...)
-	case "right":
-		err = driverExt.Swipe(0.5, 0.5, 0.9, 0.5, options...)
-	default:
-		return mcp.NewToolResultError(fmt.Sprintf("get unexpected swipe direction: %s", swipeReq.Direction)), nil
-	}
-	if err != nil {
-		return mcp.NewToolResultError("Swipe failed: " + err.Error()), nil
-	}
-	return mcp.NewToolResultText(
-		fmt.Sprintf("swipe %s success", swipeReq.Direction),
-	), nil
 }
 
-// handleDrag handles the drag tool call.
-func (ums *MCPServer4XTDriver) handleDrag(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
-	if err != nil {
-		return nil, err
-	}
-	var dragReq types.DragRequest
-	if err := mapToStruct(request.Params.Arguments, &dragReq); err != nil {
-		return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
-	}
-	actionOptions := []option.ActionOption{}
-	if dragReq.Duration > 0 {
-		actionOptions = append(actionOptions, option.WithDuration(dragReq.Duration/1000.0))
-	}
-	err = driverExt.Swipe(dragReq.FromX, dragReq.FromY,
-		dragReq.ToX, dragReq.ToY, actionOptions...)
-	if err != nil {
-		return mcp.NewToolResultError("Swipe failed: " + err.Error()), nil
-	}
-	return mcp.NewToolResultText(
-		fmt.Sprintf("swipe (%f,%f)->(%f,%f) success",
-			dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY),
-	), nil
+// ToolLaunchApp implements the launch_app tool call.
+type ToolLaunchApp struct{}
+
+func (t *ToolLaunchApp) Name() string {
+	return "launch_app"
 }
 
-// handleScreenShot handles the screenshot tool call.
-func (ums *MCPServer4XTDriver) handleScreenShot(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	log.Info().Msg("take screenshot")
-	driverExt, err := ums.setupXTDriver(ctx, request.Params.Arguments)
-	if err != nil {
-		return nil, err
-	}
-
-	bufferBase64, err := GetScreenShotBufferBase64(driverExt.IDriver)
-	if err != nil {
-		log.Error().Err(err).Msg("ScreenShot failed")
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to take screenshot: %v", err)), nil
-	}
-	log.Debug().Int("imageBytes", len(bufferBase64)).Msg("take screenshot success")
-
-	return mcp.NewToolResultImage("screenshot", bufferBase64, "image/jpeg"), nil
+func (t *ToolLaunchApp) Description() string {
+	return "Launch an app on mobile device. Use this to open a specific app. You can find the package name of the app by calling list_packages."
 }
+
+func (t *ToolLaunchApp) Options() []mcp.ToolOption {
+	return generateMCPOptions(&types.AppLaunchRequest{})
+}
+
+func (t *ToolLaunchApp) Implement() toolCall {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, err
+		}
+		var appLaunchReq types.AppLaunchRequest
+		if err := mapToStruct(request.Params.Arguments, &appLaunchReq); err != nil {
+			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
+		}
+		packageName := appLaunchReq.PackageName
+		if packageName == "" {
+			return mcp.NewToolResultError("package_name is required"), nil
+		}
+		err = driverExt.AppLaunch(packageName)
+		if err != nil {
+			return mcp.NewToolResultError("Launch app failed: " + err.Error()), nil
+		}
+		return mcp.NewToolResultText(fmt.Sprintf("Launched app success: %s", packageName)), nil
+	}
+}
+
+// ToolTerminateApp implements the terminate_app tool call.
+type ToolTerminateApp struct{}
+
+func (t *ToolTerminateApp) Name() string {
+	return "terminate_app"
+}
+
+func (t *ToolTerminateApp) Description() string {
+	return "Stop and terminate an app on mobile device"
+}
+
+func (t *ToolTerminateApp) Options() []mcp.ToolOption {
+	return generateMCPOptions(&types.AppTerminateRequest{})
+}
+
+func (t *ToolTerminateApp) Implement() toolCall {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, err
+		}
+		var appTerminateReq types.AppTerminateRequest
+		if err := mapToStruct(request.Params.Arguments, &appTerminateReq); err != nil {
+			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
+		}
+		packageName := appTerminateReq.PackageName
+		if packageName == "" {
+			return mcp.NewToolResultError("package_name is required"), nil
+		}
+		_, err = driverExt.AppTerminate(packageName)
+		if err != nil {
+			return mcp.NewToolResultError("Terminate app failed: " + err.Error()), nil
+		}
+		return mcp.NewToolResultText(fmt.Sprintf("Terminated app success: %s", packageName)), nil
+	}
+}
+
+// ToolGetScreenSize implements the get_screen_size tool call.
+type ToolGetScreenSize struct{}
+
+func (t *ToolGetScreenSize) Name() string {
+	return "get_screen_size"
+}
+
+func (t *ToolGetScreenSize) Description() string {
+	return "Get the screen size of the mobile device in pixels"
+}
+
+func (t *ToolGetScreenSize) Options() []mcp.ToolOption {
+	return generateMCPOptions(&types.TargetDeviceRequest{})
+}
+
+func (t *ToolGetScreenSize) Implement() toolCall {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, err
+		}
+
+		screenSize, err := driverExt.IDriver.WindowSize()
+		if err != nil {
+			return mcp.NewToolResultError("Get screen size failed: " + err.Error()), nil
+		}
+		return mcp.NewToolResultText(
+			fmt.Sprintf("Screen size: %d x %d pixels", screenSize.Width, screenSize.Height),
+		), nil
+	}
+}
+
+// ToolPressButton implements the press_button tool call.
+type ToolPressButton struct{}
+
+func (t *ToolPressButton) Name() string {
+	return "press_button"
+}
+
+func (t *ToolPressButton) Description() string {
+	return "Press a button on the device"
+}
+
+func (t *ToolPressButton) Options() []mcp.ToolOption {
+	return generateMCPOptions(&types.PressButtonRequest{})
+}
+
+func (t *ToolPressButton) Implement() toolCall {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, err
+		}
+		var pressButtonReq types.PressButtonRequest
+		if err := mapToStruct(request.Params.Arguments, &pressButtonReq); err != nil {
+			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
+		}
+		err = driverExt.PressButton(pressButtonReq.Button)
+		if err != nil {
+			return mcp.NewToolResultError("Press button failed: " + err.Error()), nil
+		}
+		return mcp.NewToolResultText(fmt.Sprintf("Pressed button: %s", pressButtonReq.Button)), nil
+	}
+}
+
+// ToolTapXY implements the tap_xy tool call.
+type ToolTapXY struct{}
+
+func (t *ToolTapXY) Name() string {
+	return "tap_xy"
+}
+
+func (t *ToolTapXY) Description() string {
+	return "Click on the screen at given x,y coordinates"
+}
+
+func (t *ToolTapXY) Options() []mcp.ToolOption {
+	return generateMCPOptions(&types.TapRequest{})
+}
+
+func (t *ToolTapXY) Implement() toolCall {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return mcp.NewToolResultError("Tap failed: " + err.Error()), nil
+		}
+		var tapReq types.TapRequest
+		if err := mapToStruct(request.Params.Arguments, &tapReq); err != nil {
+			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
+		}
+		err = driverExt.TapXY(tapReq.X, tapReq.Y,
+			option.WithDuration(tapReq.Duration),
+			option.WithPreMarkOperation(true))
+		if err != nil {
+			return mcp.NewToolResultError("Tap failed: " + err.Error()), nil
+		}
+		return mcp.NewToolResultText(
+			fmt.Sprintf("tap (%f,%f) success", tapReq.X, tapReq.Y),
+		), nil
+	}
+}
+
+// ToolSwipe implements the swipe tool call.
+type ToolSwipe struct{}
+
+func (t *ToolSwipe) Name() string {
+	return "swipe"
+}
+
+func (t *ToolSwipe) Description() string {
+	return "Swipe on the screen"
+}
+
+func (t *ToolSwipe) Options() []mcp.ToolOption {
+	return generateMCPOptions(&types.SwipeRequest{})
+}
+
+func (t *ToolSwipe) Implement() toolCall {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return mcp.NewToolResultError("Swipe failed: " + err.Error()), nil
+		}
+		var swipeReq types.SwipeRequest
+		if err := mapToStruct(request.Params.Arguments, &swipeReq); err != nil {
+			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
+		}
+
+		options := []option.ActionOption{
+			option.WithPreMarkOperation(true),
+			option.WithDuration(swipeReq.Duration),
+			option.WithPressDuration(swipeReq.PressDuration),
+		}
+
+		// enum direction: up, down, left, right
+		switch swipeReq.Direction {
+		case "up":
+			err = driverExt.Swipe(0.5, 0.5, 0.5, 0.1, options...)
+		case "down":
+			err = driverExt.Swipe(0.5, 0.5, 0.5, 0.9, options...)
+		case "left":
+			err = driverExt.Swipe(0.5, 0.5, 0.1, 0.5, options...)
+		case "right":
+			err = driverExt.Swipe(0.5, 0.5, 0.9, 0.5, options...)
+		default:
+			return mcp.NewToolResultError(fmt.Sprintf("get unexpected swipe direction: %s", swipeReq.Direction)), nil
+		}
+		if err != nil {
+			return mcp.NewToolResultError("Swipe failed: " + err.Error()), nil
+		}
+		return mcp.NewToolResultText(
+			fmt.Sprintf("swipe %s success", swipeReq.Direction),
+		), nil
+	}
+}
+
+// ToolDrag implements the drag tool call.
+type ToolDrag struct{}
+
+func (t *ToolDrag) Name() string {
+	return "drag"
+}
+
+func (t *ToolDrag) Description() string {
+	return "Drag on the mobile device"
+}
+
+func (t *ToolDrag) Options() []mcp.ToolOption {
+	return generateMCPOptions(&types.DragRequest{})
+}
+
+func (t *ToolDrag) Implement() toolCall {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, err
+		}
+		var dragReq types.DragRequest
+		if err := mapToStruct(request.Params.Arguments, &dragReq); err != nil {
+			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
+		}
+		actionOptions := []option.ActionOption{}
+		if dragReq.Duration > 0 {
+			actionOptions = append(actionOptions, option.WithDuration(dragReq.Duration/1000.0))
+		}
+		err = driverExt.Swipe(dragReq.FromX, dragReq.FromY,
+			dragReq.ToX, dragReq.ToY, actionOptions...)
+		if err != nil {
+			return mcp.NewToolResultError("Swipe failed: " + err.Error()), nil
+		}
+		return mcp.NewToolResultText(
+			fmt.Sprintf("swipe (%f,%f)->(%f,%f) success",
+				dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY),
+		), nil
+	}
+}
+
+// ToolScreenShot implements the screenshot tool call.
+type ToolScreenShot struct{}
+
+func (t *ToolScreenShot) Name() string {
+	return "screenshot"
+}
+
+func (t *ToolScreenShot) Description() string {
+	return "Take a screenshot of the mobile device. Use this to understand what's on screen. Do not cache this result."
+}
+
+func (t *ToolScreenShot) Options() []mcp.ToolOption {
+	return generateMCPOptions(&types.TargetDeviceRequest{})
+}
+
+func (t *ToolScreenShot) Implement() toolCall {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, err
+		}
+		bufferBase64, err := GetScreenShotBufferBase64(driverExt.IDriver)
+		if err != nil {
+			log.Error().Err(err).Msg("ScreenShot failed")
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to take screenshot: %v", err)), nil
+		}
+		log.Debug().Int("imageBytes", len(bufferBase64)).Msg("take screenshot success")
+
+		return mcp.NewToolResultImage("screenshot", bufferBase64, "image/jpeg"), nil
+	}
+}
+
+var driverCache sync.Map // key is serial, value is *XTDriver
 
 // setupXTDriver initializes an XTDriver based on the platform and serial.
-func (ums *MCPServer4XTDriver) setupXTDriver(_ context.Context, args map[string]interface{}) (*XTDriver, error) {
+func setupXTDriver(_ context.Context, args map[string]interface{}) (*XTDriver, error) {
 	platform, _ := args["platform"].(string)
 	serial, _ := args["serial"].(string)
 	if platform == "" {
@@ -457,46 +554,26 @@ func (ums *MCPServer4XTDriver) setupXTDriver(_ context.Context, args map[string]
 
 	// Check if driver exists in cache
 	cacheKey := fmt.Sprintf("%s_%s", platform, serial)
-	if cachedDriver, ok := ums.driverCache.Load(cacheKey); ok {
+	if cachedDriver, ok := driverCache.Load(cacheKey); ok {
 		if driverExt, ok := cachedDriver.(*XTDriver); ok {
 			log.Info().Str("platform", platform).Str("serial", serial).Msg("Using cached driver")
 			return driverExt, nil
 		}
 	}
 
-	driverExt, err := initDriverExt(platform, serial)
+	driverExt, err := NewDriverExt(platform, serial)
 	if err != nil {
 		return nil, err
 	}
 	// store driver in cache
-	ums.driverCache.Store(cacheKey, driverExt)
+	driverCache.Store(cacheKey, driverExt)
 	return driverExt, nil
 }
 
-func initDriverExt(platform, serial string) (*XTDriver, error) {
-	// init device
-	var device IDevice
-	var err error
-	switch strings.ToLower(platform) {
-	case "android":
-		device, err = NewAndroidDevice(option.WithSerialNumber(serial))
-	case "ios":
-		device, err = NewIOSDevice(
-			option.WithUDID(serial),
-			option.WithWDAPort(8700),
-			option.WithWDAMjpegPort(8800),
-			option.WithResetHomeOnStartup(false),
-		)
-	case "browser":
-		device, err = NewBrowserDevice(option.WithBrowserID(serial))
-	default:
-		return nil, fmt.Errorf("invalid platform: %s", platform)
-	}
+func NewDriverExt(platform, serial string) (*XTDriver, error) {
+	device, err := NewDevice(platform, serial)
 	if err != nil {
-		return nil, fmt.Errorf("init device failed: %w", err)
-	}
-	if err := device.Setup(); err != nil {
-		return nil, fmt.Errorf("setup device failed: %w", err)
+		return nil, err
 	}
 
 	// init driver
@@ -515,6 +592,42 @@ func initDriverExt(platform, serial string) (*XTDriver, error) {
 		return nil, fmt.Errorf("init XT driver failed: %w", err)
 	}
 	return driverExt, nil
+}
+
+func NewDevice(platform, serial string) (device IDevice, err error) {
+	if serial == "" {
+		return nil, fmt.Errorf("serial is empty")
+	}
+	switch strings.ToLower(platform) {
+	case "android":
+		device, err = NewAndroidDevice(
+			option.WithSerialNumber(serial))
+		if err != nil {
+			return
+		}
+	case "ios":
+		device, err = NewIOSDevice(
+			option.WithUDID(serial),
+			option.WithWDAPort(8700),
+			option.WithWDAMjpegPort(8800),
+			option.WithResetHomeOnStartup(false),
+		)
+		if err != nil {
+			return
+		}
+	case "browser":
+		device, err = NewBrowserDevice(option.WithBrowserID(serial))
+		if err != nil {
+			return
+		}
+	default:
+		return nil, fmt.Errorf("invalid platform: %s", platform)
+	}
+	err = device.Setup()
+	if err != nil {
+		log.Error().Err(err).Msg("setup device failed")
+	}
+	return device, nil
 }
 
 // generateMCPOptions generates mcp.NewTool parameters from a struct type.
@@ -564,10 +677,4 @@ func mapToStruct(m map[string]interface{}, out interface{}) error {
 		return err
 	}
 	return json.Unmarshal(b, out)
-}
-
-// commonToolOptions is the common tool options for all tools.
-var commonToolOptions = []mcp.ToolOption{
-	mcp.WithString("platform", mcp.Required(), mcp.Description("Device platform: android/ios/browser")),
-	mcp.WithString("serial", mcp.Required(), mcp.Description("Device serial/udid/browser id")),
 }

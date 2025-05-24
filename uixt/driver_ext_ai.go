@@ -13,6 +13,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -42,20 +43,28 @@ func (dExt *XTDriver) AIAction(text string, opts ...option.ActionOption) error {
 
 	// do actions
 	for _, action := range result.ToolCalls {
-		switch action.Function.Name {
-		case "click":
-			arguments := make(map[string]interface{})
-			err := json.Unmarshal([]byte(action.Function.Arguments), &arguments)
-			if err != nil {
-				return err
-			}
-			point := arguments["startBox"].([]float64)
-			if err := dExt.TapAbsXY(point[0], point[1], opts...); err != nil {
-				return err
-			}
-		case "finished":
-			log.Info().Msg("ai action done")
-			return nil
+		// call eino tool
+		arguments := make(map[string]interface{})
+		err := json.Unmarshal([]byte(action.Function.Arguments), &arguments)
+		if err != nil {
+			return err
+		}
+		req := mcp.CallToolRequest{
+			Params: struct {
+				Name      string         `json:"name"`
+				Arguments map[string]any `json:"arguments,omitempty"`
+				Meta      *struct {
+					ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
+				} `json:"_meta,omitempty"`
+			}{
+				Name:      action.Function.Name,
+				Arguments: arguments,
+			},
+		}
+
+		_, err = dExt.client.CallTool(context.Background(), req)
+		if err != nil {
+			return err
 		}
 	}
 
