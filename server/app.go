@@ -5,7 +5,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/uixt"
-	"github.com/httprunner/httprunner/v5/uixt/types"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func (r *Router) foregroundAppHandler(c *gin.Context) {
@@ -22,7 +22,7 @@ func (r *Router) foregroundAppHandler(c *gin.Context) {
 }
 
 func (r *Router) appInfoHandler(c *gin.Context) {
-	var appInfoReq types.AppInfoRequest
+	var appInfoReq option.AppInfoRequest
 	if err := c.ShouldBindQuery(&appInfoReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -51,7 +51,7 @@ func (r *Router) appInfoHandler(c *gin.Context) {
 }
 
 func (r *Router) clearAppHandler(c *gin.Context) {
-	var appClearReq types.AppClearRequest
+	var appClearReq option.AppClearRequest
 	if err := c.ShouldBindJSON(&appClearReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -70,7 +70,7 @@ func (r *Router) clearAppHandler(c *gin.Context) {
 }
 
 func (r *Router) launchAppHandler(c *gin.Context) {
-	var appLaunchReq types.AppLaunchRequest
+	var appLaunchReq option.AppLaunchRequest
 	if err := c.ShouldBindJSON(&appLaunchReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -88,7 +88,7 @@ func (r *Router) launchAppHandler(c *gin.Context) {
 }
 
 func (r *Router) terminalAppHandler(c *gin.Context) {
-	var appTerminateReq types.AppTerminateRequest
+	var appTerminateReq option.AppTerminateRequest
 	if err := c.ShouldBindJSON(&appTerminateReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -106,7 +106,7 @@ func (r *Router) terminalAppHandler(c *gin.Context) {
 }
 
 func (r *Router) uninstallAppHandler(c *gin.Context) {
-	var appUninstallReq types.AppUninstallRequest
+	var appUninstallReq option.AppUninstallRequest
 	if err := c.ShouldBindJSON(&appUninstallReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return

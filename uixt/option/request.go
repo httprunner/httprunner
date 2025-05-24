@@ -1,4 +1,13 @@
-package types
+package option
+
+import (
+	"reflect"
+	"strings"
+
+	"github.com/httprunner/httprunner/v5/uixt/types"
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/rs/zerolog/log"
+)
 
 type TargetDeviceRequest struct {
 	Platform string `json:"platform" binding:"required" desc:"Device platform: android/ios/browser"`
@@ -80,5 +89,45 @@ type AppTerminateRequest struct {
 
 type PressButtonRequest struct {
 	TargetDeviceRequest
-	Button DeviceButton `json:"button" binding:"required" desc:"The button to press. Supported buttons: BACK (android only), HOME, VOLUME_UP, VOLUME_DOWN, ENTER."`
+	Button types.DeviceButton `json:"button" binding:"required" desc:"The button to press. Supported buttons: BACK (android only), HOME, VOLUME_UP, VOLUME_DOWN, ENTER."`
+}
+
+// NewMCPOptions generates mcp.NewTool parameters from a struct type.
+// It automatically generates mcp.NewTool parameters based on the struct fields and their desc tags.
+func NewMCPOptions(t interface{}) (options []mcp.ToolOption) {
+	tType := reflect.TypeOf(t)
+	for i := 0; i < tType.NumField(); i++ {
+		field := tType.Field(i)
+		jsonTag := field.Tag.Get("json")
+		if jsonTag == "" || jsonTag == "-" {
+			continue
+		}
+		name := strings.Split(jsonTag, ",")[0]
+		binding := field.Tag.Get("binding")
+		required := strings.Contains(binding, "required")
+		desc := field.Tag.Get("desc")
+		switch field.Type.Kind() {
+		case reflect.Float64, reflect.Float32, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			if required {
+				options = append(options, mcp.WithNumber(name, mcp.Required(), mcp.Description(desc)))
+			} else {
+				options = append(options, mcp.WithNumber(name, mcp.Description(desc)))
+			}
+		case reflect.String:
+			if required {
+				options = append(options, mcp.WithString(name, mcp.Required(), mcp.Description(desc)))
+			} else {
+				options = append(options, mcp.WithString(name, mcp.Description(desc)))
+			}
+		case reflect.Bool:
+			if required {
+				options = append(options, mcp.WithBoolean(name, mcp.Required(), mcp.Description(desc)))
+			} else {
+				options = append(options, mcp.WithBoolean(name, mcp.Description(desc)))
+			}
+		default:
+			log.Warn().Str("field_type", field.Type.String()).Msg("Unsupported field type")
+		}
+	}
+	return options
 }

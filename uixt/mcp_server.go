@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 	"sync"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/version"
 	"github.com/httprunner/httprunner/v5/pkg/gadb"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
 // NewMCPServer creates a new MCP server for XTDriver and registers all tools.
@@ -220,7 +218,7 @@ func (t *ToolListPackages) Description() string {
 }
 
 func (t *ToolListPackages) Options() []mcp.ToolOption {
-	return generateMCPOptions(&types.TargetDeviceRequest{})
+	return option.NewMCPOptions(&option.TargetDeviceRequest{})
 }
 
 func (t *ToolListPackages) Implement() toolCall {
@@ -250,7 +248,7 @@ func (t *ToolLaunchApp) Description() string {
 }
 
 func (t *ToolLaunchApp) Options() []mcp.ToolOption {
-	return generateMCPOptions(&types.AppLaunchRequest{})
+	return option.NewMCPOptions(&option.AppLaunchRequest{})
 }
 
 func (t *ToolLaunchApp) Implement() toolCall {
@@ -259,7 +257,7 @@ func (t *ToolLaunchApp) Implement() toolCall {
 		if err != nil {
 			return nil, err
 		}
-		var appLaunchReq types.AppLaunchRequest
+		var appLaunchReq option.AppLaunchRequest
 		if err := mapToStruct(request.Params.Arguments, &appLaunchReq); err != nil {
 			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 		}
@@ -287,7 +285,7 @@ func (t *ToolTerminateApp) Description() string {
 }
 
 func (t *ToolTerminateApp) Options() []mcp.ToolOption {
-	return generateMCPOptions(&types.AppTerminateRequest{})
+	return option.NewMCPOptions(&option.AppTerminateRequest{})
 }
 
 func (t *ToolTerminateApp) Implement() toolCall {
@@ -296,7 +294,7 @@ func (t *ToolTerminateApp) Implement() toolCall {
 		if err != nil {
 			return nil, err
 		}
-		var appTerminateReq types.AppTerminateRequest
+		var appTerminateReq option.AppTerminateRequest
 		if err := mapToStruct(request.Params.Arguments, &appTerminateReq); err != nil {
 			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 		}
@@ -324,7 +322,7 @@ func (t *ToolGetScreenSize) Description() string {
 }
 
 func (t *ToolGetScreenSize) Options() []mcp.ToolOption {
-	return generateMCPOptions(&types.TargetDeviceRequest{})
+	return option.NewMCPOptions(&option.TargetDeviceRequest{})
 }
 
 func (t *ToolGetScreenSize) Implement() toolCall {
@@ -356,7 +354,7 @@ func (t *ToolPressButton) Description() string {
 }
 
 func (t *ToolPressButton) Options() []mcp.ToolOption {
-	return generateMCPOptions(&types.PressButtonRequest{})
+	return option.NewMCPOptions(&option.PressButtonRequest{})
 }
 
 func (t *ToolPressButton) Implement() toolCall {
@@ -365,7 +363,7 @@ func (t *ToolPressButton) Implement() toolCall {
 		if err != nil {
 			return nil, err
 		}
-		var pressButtonReq types.PressButtonRequest
+		var pressButtonReq option.PressButtonRequest
 		if err := mapToStruct(request.Params.Arguments, &pressButtonReq); err != nil {
 			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 		}
@@ -389,7 +387,7 @@ func (t *ToolTapXY) Description() string {
 }
 
 func (t *ToolTapXY) Options() []mcp.ToolOption {
-	return generateMCPOptions(&types.TapRequest{})
+	return option.NewMCPOptions(&option.TapRequest{})
 }
 
 func (t *ToolTapXY) Implement() toolCall {
@@ -398,7 +396,7 @@ func (t *ToolTapXY) Implement() toolCall {
 		if err != nil {
 			return mcp.NewToolResultError("Tap failed: " + err.Error()), nil
 		}
-		var tapReq types.TapRequest
+		var tapReq option.TapRequest
 		if err := mapToStruct(request.Params.Arguments, &tapReq); err != nil {
 			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 		}
@@ -426,7 +424,7 @@ func (t *ToolSwipe) Description() string {
 }
 
 func (t *ToolSwipe) Options() []mcp.ToolOption {
-	return generateMCPOptions(&types.SwipeRequest{})
+	return option.NewMCPOptions(&option.SwipeRequest{})
 }
 
 func (t *ToolSwipe) Implement() toolCall {
@@ -435,7 +433,7 @@ func (t *ToolSwipe) Implement() toolCall {
 		if err != nil {
 			return mcp.NewToolResultError("Swipe failed: " + err.Error()), nil
 		}
-		var swipeReq types.SwipeRequest
+		var swipeReq option.SwipeRequest
 		if err := mapToStruct(request.Params.Arguments, &swipeReq); err != nil {
 			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 		}
@@ -480,7 +478,7 @@ func (t *ToolDrag) Description() string {
 }
 
 func (t *ToolDrag) Options() []mcp.ToolOption {
-	return generateMCPOptions(&types.DragRequest{})
+	return option.NewMCPOptions(&option.DragRequest{})
 }
 
 func (t *ToolDrag) Implement() toolCall {
@@ -489,7 +487,7 @@ func (t *ToolDrag) Implement() toolCall {
 		if err != nil {
 			return nil, err
 		}
-		var dragReq types.DragRequest
+		var dragReq option.DragRequest
 		if err := mapToStruct(request.Params.Arguments, &dragReq); err != nil {
 			return mcp.NewToolResultError("parse parameters error: " + err.Error()), nil
 		}
@@ -521,7 +519,7 @@ func (t *ToolScreenShot) Description() string {
 }
 
 func (t *ToolScreenShot) Options() []mcp.ToolOption {
-	return generateMCPOptions(&types.TargetDeviceRequest{})
+	return option.NewMCPOptions(&option.TargetDeviceRequest{})
 }
 
 func (t *ToolScreenShot) Implement() toolCall {
@@ -628,46 +626,6 @@ func NewDevice(platform, serial string) (device IDevice, err error) {
 		log.Error().Err(err).Msg("setup device failed")
 	}
 	return device, nil
-}
-
-// generateMCPOptions generates mcp.NewTool parameters from a struct type.
-// It automatically generates mcp.NewTool parameters based on the struct fields and their desc tags.
-func generateMCPOptions(t interface{}) (options []mcp.ToolOption) {
-	tType := reflect.TypeOf(t)
-	for i := 0; i < tType.NumField(); i++ {
-		field := tType.Field(i)
-		jsonTag := field.Tag.Get("json")
-		if jsonTag == "" || jsonTag == "-" {
-			continue
-		}
-		name := strings.Split(jsonTag, ",")[0]
-		binding := field.Tag.Get("binding")
-		required := strings.Contains(binding, "required")
-		desc := field.Tag.Get("desc")
-		switch field.Type.Kind() {
-		case reflect.Float64, reflect.Float32, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			if required {
-				options = append(options, mcp.WithNumber(name, mcp.Required(), mcp.Description(desc)))
-			} else {
-				options = append(options, mcp.WithNumber(name, mcp.Description(desc)))
-			}
-		case reflect.String:
-			if required {
-				options = append(options, mcp.WithString(name, mcp.Required(), mcp.Description(desc)))
-			} else {
-				options = append(options, mcp.WithString(name, mcp.Description(desc)))
-			}
-		case reflect.Bool:
-			if required {
-				options = append(options, mcp.WithBoolean(name, mcp.Required(), mcp.Description(desc)))
-			} else {
-				options = append(options, mcp.WithBoolean(name, mcp.Description(desc)))
-			}
-		default:
-			log.Warn().Str("field_type", field.Type.String()).Msg("Unsupported field type")
-		}
-	}
-	return options
 }
 
 // mapToStruct convert map[string]interface{} to target struct

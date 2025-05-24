@@ -4,11 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
 func (r *Router) tapHandler(c *gin.Context) {
-	var tapReq types.TapRequest
+	var tapReq option.TapRequest
 	if err := c.ShouldBindJSON(&tapReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -31,7 +30,7 @@ func (r *Router) tapHandler(c *gin.Context) {
 }
 
 func (r *Router) rightClickHandler(c *gin.Context) {
-	var rightClickReq types.TapRequest
+	var rightClickReq option.TapRequest
 	if err := c.ShouldBindJSON(&rightClickReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -118,7 +117,7 @@ func (r *Router) scrollHandler(c *gin.Context) {
 }
 
 func (r *Router) doubleTapHandler(c *gin.Context) {
-	var tapReq types.TapRequest
+	var tapReq option.TapRequest
 	if err := c.ShouldBindJSON(&tapReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -138,7 +137,7 @@ func (r *Router) doubleTapHandler(c *gin.Context) {
 }
 
 func (r *Router) dragHandler(c *gin.Context) {
-	var dragReq types.DragRequest
+	var dragReq option.DragRequest
 	if err := c.ShouldBindJSON(&dragReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -162,7 +161,7 @@ func (r *Router) dragHandler(c *gin.Context) {
 }
 
 func (r *Router) inputHandler(c *gin.Context) {
-	var inputReq types.InputRequest
+	var inputReq option.InputRequest
 	if err := c.ShouldBindJSON(&inputReq); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return

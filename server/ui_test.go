@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/httprunner/httprunner/v5/uixt/types"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,14 +18,14 @@ func TestTapHandler(t *testing.T) {
 	tests := []struct {
 		name       string
 		path       string
-		tapReq     types.TapRequest
+		tapReq     option.TapRequest
 		wantStatus int
 		wantResp   HttpResponse
 	}{
 		{
 			name: "tap abs xy",
 			path: fmt.Sprintf("/api/v1/android/%s/ui/tap", "4622ca24"),
-			tapReq: types.TapRequest{
+			tapReq: option.TapRequest{
 				X:        500,
 				Y:        800,
 				Duration: 0,
@@ -40,7 +40,7 @@ func TestTapHandler(t *testing.T) {
 		{
 			name: "tap relative xy",
 			path: fmt.Sprintf("/api/v1/android/%s/ui/tap", "4622ca24"),
-			tapReq: types.TapRequest{
+			tapReq: option.TapRequest{
 				X:        0.5,
 				Y:        0.6,
 				Duration: 0,
