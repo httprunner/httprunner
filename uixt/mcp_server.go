@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/danielpaulus/go-ios/ios"
@@ -286,6 +285,272 @@ func (t *ToolSelectDevice) ConvertActionToCallToolRequest(action MobileAction) (
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
+// ToolTapXY implements the tap_xy tool call.
+type ToolTapXY struct{}
+
+func (t *ToolTapXY) Name() option.ActionMethod {
+	return option.ACTION_TapXY
+}
+
+func (t *ToolTapXY) Description() string {
+	return "Click on the screen at given x,y coordinates"
+}
+
+func (t *ToolTapXY) Options() []mcp.ToolOption {
+	return option.NewMCPOptions(option.TapRequest{})
+}
+
+func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		var tapReq option.TapRequest
+		if err := mapToStruct(request.Params.Arguments, &tapReq); err != nil {
+			return nil, fmt.Errorf("parse parameters error: %w", err)
+		}
+
+		// Tap action logic
+		log.Info().Float64("x", tapReq.X).Float64("y", tapReq.Y).Msg("tapping at coordinates")
+		opts := []option.ActionOption{
+			option.WithDuration(tapReq.Duration),
+			option.WithPreMarkOperation(true),
+		}
+
+		err = driverExt.TapXY(tapReq.X, tapReq.Y, opts...)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Tap failed: %s", err.Error())), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at coordinates (%.2f, %.2f)", tapReq.X, tapReq.Y)), nil
+	}
+}
+
+func (t *ToolTapXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
+		x, y := params[0], params[1]
+		arguments := map[string]any{
+			"x": x,
+			"y": y,
+		}
+		// Add duration if available from action options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap params: %v", action.Params)
+}
+
+// ToolTapAbsXY implements the tap_abs_xy tool call.
+type ToolTapAbsXY struct{}
+
+func (t *ToolTapAbsXY) Name() option.ActionMethod {
+	return option.ACTION_TapAbsXY
+}
+
+func (t *ToolTapAbsXY) Description() string {
+	return "Tap at absolute pixel coordinates"
+}
+
+func (t *ToolTapAbsXY) Options() []mcp.ToolOption {
+	return option.NewMCPOptions(option.TapAbsXYRequest{})
+}
+
+func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		var tapAbsReq option.TapAbsXYRequest
+		if err := mapToStruct(request.Params.Arguments, &tapAbsReq); err != nil {
+			return nil, fmt.Errorf("parse parameters error: %w", err)
+		}
+
+		// Tap absolute XY action logic
+		log.Info().Float64("x", tapAbsReq.X).Float64("y", tapAbsReq.Y).Msg("tapping at absolute coordinates")
+		opts := []option.ActionOption{}
+		if tapAbsReq.Duration > 0 {
+			opts = append(opts, option.WithDuration(tapAbsReq.Duration))
+		}
+
+		err = driverExt.TapAbsXY(tapAbsReq.X, tapAbsReq.Y, opts...)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Tap absolute XY failed: %s", err.Error())), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at absolute coordinates (%.0f, %.0f)", tapAbsReq.X, tapAbsReq.Y)), nil
+	}
+}
+
+func (t *ToolTapAbsXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
+		x, y := params[0], params[1]
+		arguments := map[string]any{
+			"x": x,
+			"y": y,
+		}
+		// Add duration if available
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap abs params: %v", action.Params)
+}
+
+// ToolTapByOCR implements the tap_by_ocr tool call.
+type ToolTapByOCR struct{}
+
+func (t *ToolTapByOCR) Name() option.ActionMethod {
+	return option.ACTION_TapByOCR
+}
+
+func (t *ToolTapByOCR) Description() string {
+	return "Tap on text found by OCR recognition"
+}
+
+func (t *ToolTapByOCR) Options() []mcp.ToolOption {
+	return option.NewMCPOptions(option.TapByOCRRequest{})
+}
+
+func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		var ocrReq option.TapByOCRRequest
+		if err := mapToStruct(request.Params.Arguments, &ocrReq); err != nil {
+			return nil, fmt.Errorf("parse parameters error: %w", err)
+		}
+
+		// Tap by OCR action logic
+		log.Info().Str("text", ocrReq.Text).Msg("tapping by OCR")
+		err = driverExt.TapByOCR(ocrReq.Text)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Tap by OCR failed: %s", err.Error())), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped on OCR text: %s", ocrReq.Text)), nil
+	}
+}
+
+func (t *ToolTapByOCR) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if text, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"text": text,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by OCR params: %v", action.Params)
+}
+
+// ToolTapByCV implements the tap_by_cv tool call.
+type ToolTapByCV struct{}
+
+func (t *ToolTapByCV) Name() option.ActionMethod {
+	return option.ACTION_TapByCV
+}
+
+func (t *ToolTapByCV) Description() string {
+	return "Tap on element found by computer vision"
+}
+
+func (t *ToolTapByCV) Options() []mcp.ToolOption {
+	return option.NewMCPOptions(option.TapByCVRequest{})
+}
+
+func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		var cvReq option.TapByCVRequest
+		if err := mapToStruct(request.Params.Arguments, &cvReq); err != nil {
+			return nil, fmt.Errorf("parse parameters error: %w", err)
+		}
+
+		// Tap by CV action logic
+		log.Info().Str("imagePath", cvReq.ImagePath).Msg("tapping by CV")
+
+		// For TapByCV, we need to check if there are UI types in the options
+		// In the original DoAction, it requires ScreenShotWithUITypes to be set
+		// We'll add a basic implementation that triggers CV recognition
+		err = driverExt.TapByCV()
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Tap by CV failed: %s", err.Error())), nil
+		}
+
+		return mcp.NewToolResultText("Successfully tapped by computer vision"), nil
+	}
+}
+
+func (t *ToolTapByCV) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	// For TapByCV, the original action might not have params but relies on options
+	arguments := map[string]any{
+		"imagePath": "", // Will be handled by the tool based on UI types
+	}
+	return buildMCPCallToolRequest(t.Name(), arguments), nil
+}
+
+// ToolDoubleTapXY implements the double_tap_xy tool call.
+type ToolDoubleTapXY struct{}
+
+func (t *ToolDoubleTapXY) Name() option.ActionMethod {
+	return option.ACTION_DoubleTapXY
+}
+
+func (t *ToolDoubleTapXY) Description() string {
+	return "Double tap at given coordinates"
+}
+
+func (t *ToolDoubleTapXY) Options() []mcp.ToolOption {
+	return option.NewMCPOptions(option.DoubleTapXYRequest{})
+}
+
+func (t *ToolDoubleTapXY) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		var doubleTapReq option.DoubleTapXYRequest
+		if err := mapToStruct(request.Params.Arguments, &doubleTapReq); err != nil {
+			return nil, fmt.Errorf("parse parameters error: %w", err)
+		}
+
+		// Double tap XY action logic
+		log.Info().Float64("x", doubleTapReq.X).Float64("y", doubleTapReq.Y).Msg("double tapping at coordinates")
+		err = driverExt.DoubleTap(doubleTapReq.X, doubleTapReq.Y)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Double tap failed: %s", err.Error())), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully double tapped at (%.2f, %.2f)", doubleTapReq.X, doubleTapReq.Y)), nil
+	}
+}
+
+func (t *ToolDoubleTapXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
+		x, y := params[0], params[1]
+		arguments := map[string]any{
+			"x": x,
+			"y": y,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid double tap params: %v", action.Params)
+}
+
 // ToolListPackages implements the list_packages tool call.
 type ToolListPackages struct{}
 
@@ -427,6 +692,42 @@ func (t *ToolTerminateApp) ConvertActionToCallToolRequest(action MobileAction) (
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app terminate params: %v", action.Params)
 }
 
+// ToolScreenShot implements the screenshot tool call.
+type ToolScreenShot struct{}
+
+func (t *ToolScreenShot) Name() option.ActionMethod {
+	return option.ACTION_ScreenShot
+}
+
+func (t *ToolScreenShot) Description() string {
+	return "Take a screenshot of the mobile device. Use this to understand what's on screen. Do not cache this result."
+}
+
+func (t *ToolScreenShot) Options() []mcp.ToolOption {
+	return option.NewMCPOptions(option.TargetDeviceRequest{})
+}
+
+func (t *ToolScreenShot) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, err
+		}
+		bufferBase64, err := GetScreenShotBufferBase64(driverExt.IDriver)
+		if err != nil {
+			log.Error().Err(err).Msg("ScreenShot failed")
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to take screenshot: %v", err)), nil
+		}
+		log.Debug().Int("imageBytes", len(bufferBase64)).Msg("take screenshot success")
+
+		return mcp.NewToolResultImage("screenshot", bufferBase64, "image/jpeg"), nil
+	}
+}
+
+func (t *ToolScreenShot) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
 // ToolGetScreenSize implements the get_screen_size tool call.
 type ToolGetScreenSize struct{}
 
@@ -509,65 +810,6 @@ func (t *ToolPressButton) ConvertActionToCallToolRequest(action MobileAction) (m
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid press button params: %v", action.Params)
-}
-
-// ToolTapXY implements the tap_xy tool call.
-type ToolTapXY struct{}
-
-func (t *ToolTapXY) Name() option.ActionMethod {
-	return option.ACTION_TapXY
-}
-
-func (t *ToolTapXY) Description() string {
-	return "Click on the screen at given x,y coordinates"
-}
-
-func (t *ToolTapXY) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TapRequest{})
-}
-
-func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
-		if err != nil {
-			return nil, fmt.Errorf("setup driver failed: %w", err)
-		}
-
-		var tapReq option.TapRequest
-		if err := mapToStruct(request.Params.Arguments, &tapReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
-		}
-
-		// Tap action logic
-		log.Info().Float64("x", tapReq.X).Float64("y", tapReq.Y).Msg("tapping at coordinates")
-		opts := []option.ActionOption{
-			option.WithDuration(tapReq.Duration),
-			option.WithPreMarkOperation(true),
-		}
-
-		err = driverExt.TapXY(tapReq.X, tapReq.Y, opts...)
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Tap failed: %s", err.Error())), nil
-		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at coordinates (%.2f, %.2f)", tapReq.X, tapReq.Y)), nil
-	}
-}
-
-func (t *ToolTapXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
-		x, y := params[0], params[1]
-		arguments := map[string]any{
-			"x": x,
-			"y": y,
-		}
-		// Add duration if available from action options
-		if duration := action.ActionOptions.Duration; duration > 0 {
-			arguments["duration"] = duration
-		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
-	}
-	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap params: %v", action.Params)
 }
 
 // ToolSwipeDirection implements the swipe tool call.
@@ -659,6 +901,228 @@ func (t *ToolSwipeDirection) ConvertActionToCallToolRequest(action MobileAction)
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v", action.Params)
 }
 
+// ToolSwipeCoordinate implements the swipe_advanced tool call.
+type ToolSwipeCoordinate struct{}
+
+func (t *ToolSwipeCoordinate) Name() option.ActionMethod {
+	return option.ACTION_SwipeCoordinate
+}
+
+func (t *ToolSwipeCoordinate) Description() string {
+	return "Perform advanced swipe with custom coordinates and timing"
+}
+
+func (t *ToolSwipeCoordinate) Options() []mcp.ToolOption {
+	return option.NewMCPOptions(option.SwipeAdvancedRequest{})
+}
+
+func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		var swipeAdvReq option.SwipeAdvancedRequest
+		if err := mapToStruct(request.Params.Arguments, &swipeAdvReq); err != nil {
+			return nil, fmt.Errorf("parse parameters error: %w", err)
+		}
+
+		// Advanced swipe action logic using prepareSwipeAction like the original DoAction
+		log.Info().
+			Float64("fromX", swipeAdvReq.FromX).Float64("fromY", swipeAdvReq.FromY).
+			Float64("toX", swipeAdvReq.ToX).Float64("toY", swipeAdvReq.ToY).
+			Msg("performing advanced swipe")
+
+		params := []float64{swipeAdvReq.FromX, swipeAdvReq.FromY, swipeAdvReq.ToX, swipeAdvReq.ToY}
+		opts := []option.ActionOption{}
+		if swipeAdvReq.Duration > 0 {
+			opts = append(opts, option.WithDuration(swipeAdvReq.Duration))
+		}
+		if swipeAdvReq.PressDuration > 0 {
+			opts = append(opts, option.WithPressDuration(swipeAdvReq.PressDuration))
+		}
+
+		swipeAction := prepareSwipeAction(driverExt, params, opts...)
+		err = swipeAction(driverExt)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Advanced swipe failed: %s", err.Error())), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed advanced swipe from (%.2f, %.2f) to (%.2f, %.2f)",
+			swipeAdvReq.FromX, swipeAdvReq.FromY, swipeAdvReq.ToX, swipeAdvReq.ToY)), nil
+	}
+}
+
+func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if paramSlice, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(paramSlice) == 4 {
+		arguments := map[string]any{
+			"fromX": paramSlice[0],
+			"fromY": paramSlice[1],
+			"toX":   paramSlice[2],
+			"toY":   paramSlice[3],
+		}
+		// Add duration and press duration from options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
+			arguments["pressDuration"] = pressDuration
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe advanced params: %v", action.Params)
+}
+
+// ToolSwipeToTapApp implements the swipe_to_tap_app tool call.
+type ToolSwipeToTapApp struct{}
+
+func (t *ToolSwipeToTapApp) Name() option.ActionMethod {
+	return option.ACTION_SwipeToTapApp
+}
+
+func (t *ToolSwipeToTapApp) Description() string {
+	return "Swipe to find and tap an app by name"
+}
+
+func (t *ToolSwipeToTapApp) Options() []mcp.ToolOption {
+	return option.NewMCPOptions(option.SwipeToTapAppRequest{})
+}
+
+func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		var swipeAppReq option.SwipeToTapAppRequest
+		if err := mapToStruct(request.Params.Arguments, &swipeAppReq); err != nil {
+			return nil, fmt.Errorf("parse parameters error: %w", err)
+		}
+
+		// Swipe to tap app action logic
+		log.Info().Str("appName", swipeAppReq.AppName).Msg("swipe to tap app")
+		err = driverExt.SwipeToTapApp(swipeAppReq.AppName)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap app failed: %s", err.Error())), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped app: %s", swipeAppReq.AppName)), nil
+	}
+}
+
+func (t *ToolSwipeToTapApp) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if appName, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"appName": appName,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap app params: %v", action.Params)
+}
+
+// ToolSwipeToTapText implements the swipe_to_tap_text tool call.
+type ToolSwipeToTapText struct{}
+
+func (t *ToolSwipeToTapText) Name() option.ActionMethod {
+	return option.ACTION_SwipeToTapText
+}
+
+func (t *ToolSwipeToTapText) Description() string {
+	return "Swipe to find and tap text on screen"
+}
+
+func (t *ToolSwipeToTapText) Options() []mcp.ToolOption {
+	return option.NewMCPOptions(option.SwipeToTapTextRequest{})
+}
+
+func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		var swipeTextReq option.SwipeToTapTextRequest
+		if err := mapToStruct(request.Params.Arguments, &swipeTextReq); err != nil {
+			return nil, fmt.Errorf("parse parameters error: %w", err)
+		}
+
+		// Swipe to tap text action logic
+		log.Info().Str("text", swipeTextReq.Text).Msg("swipe to tap text")
+		err = driverExt.SwipeToTapTexts([]string{swipeTextReq.Text})
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap text failed: %s", err.Error())), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped text: %s", swipeTextReq.Text)), nil
+	}
+}
+
+func (t *ToolSwipeToTapText) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if text, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"text": text,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap text params: %v", action.Params)
+}
+
+// ToolSwipeToTapTexts implements the swipe_to_tap_texts tool call.
+type ToolSwipeToTapTexts struct{}
+
+func (t *ToolSwipeToTapTexts) Name() option.ActionMethod {
+	return option.ACTION_SwipeToTapTexts
+}
+
+func (t *ToolSwipeToTapTexts) Description() string {
+	return "Swipe to find and tap one of multiple texts on screen"
+}
+
+func (t *ToolSwipeToTapTexts) Options() []mcp.ToolOption {
+	return option.NewMCPOptions(option.SwipeToTapTextsRequest{})
+}
+
+func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		var swipeTextsReq option.SwipeToTapTextsRequest
+		if err := mapToStruct(request.Params.Arguments, &swipeTextsReq); err != nil {
+			return nil, fmt.Errorf("parse parameters error: %w", err)
+		}
+
+		// Swipe to tap texts action logic
+		log.Info().Strs("texts", swipeTextsReq.Texts).Msg("swipe to tap texts")
+		err = driverExt.SwipeToTapTexts(swipeTextsReq.Texts)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap texts failed: %s", err.Error())), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped one of texts: %v", swipeTextsReq.Texts)), nil
+	}
+}
+
+func (t *ToolSwipeToTapTexts) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	var texts []string
+	if textsSlice, ok := action.Params.([]string); ok {
+		texts = textsSlice
+	} else if textsInterface, err := builtin.ConvertToStringSlice(action.Params); err == nil {
+		texts = textsInterface
+	} else {
+		return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap texts params: %v", action.Params)
+	}
+	arguments := map[string]any{
+		"texts": texts,
+	}
+	return buildMCPCallToolRequest(t.Name(), arguments), nil
+}
+
 // ToolDrag implements the drag tool call.
 type ToolDrag struct{}
 
@@ -722,71 +1186,6 @@ func (t *ToolDrag) ConvertActionToCallToolRequest(action MobileAction) (mcp.Call
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid drag params: %v", action.Params)
-}
-
-// ToolScreenShot implements the screenshot tool call.
-type ToolScreenShot struct{}
-
-func (t *ToolScreenShot) Name() option.ActionMethod {
-	return option.ACTION_ScreenShot
-}
-
-func (t *ToolScreenShot) Description() string {
-	return "Take a screenshot of the mobile device. Use this to understand what's on screen. Do not cache this result."
-}
-
-func (t *ToolScreenShot) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TargetDeviceRequest{})
-}
-
-func (t *ToolScreenShot) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
-		if err != nil {
-			return nil, err
-		}
-		bufferBase64, err := GetScreenShotBufferBase64(driverExt.IDriver)
-		if err != nil {
-			log.Error().Err(err).Msg("ScreenShot failed")
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to take screenshot: %v", err)), nil
-		}
-		log.Debug().Int("imageBytes", len(bufferBase64)).Msg("take screenshot success")
-
-		return mcp.NewToolResultImage("screenshot", bufferBase64, "image/jpeg"), nil
-	}
-}
-
-func (t *ToolScreenShot) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
-}
-
-var driverCache sync.Map // key is serial, value is *XTDriver
-
-// setupXTDriver initializes an XTDriver based on the platform and serial.
-func setupXTDriver(_ context.Context, args map[string]any) (*XTDriver, error) {
-	platform, _ := args["platform"].(string)
-	serial, _ := args["serial"].(string)
-	if platform == "" {
-		log.Warn().Msg("platform is not set, using android as default")
-		platform = "android"
-	}
-
-	// Check if driver exists in cache
-	cacheKey := fmt.Sprintf("%s_%s", platform, serial)
-	if cachedDriver, ok := driverCache.Load(cacheKey); ok {
-		if driverExt, ok := cachedDriver.(*XTDriver); ok {
-			log.Info().Str("platform", platform).Str("serial", serial).Msg("Using cached driver")
-			return driverExt, nil
-		}
-	}
-
-	driverExt, err := NewDriverExt(platform, serial)
-	if err != nil {
-		return nil, err
-	}
-	// store driver in cache
-	driverCache.Store(cacheKey, driverExt)
-	return driverExt, nil
 }
 
 func NewDriverExt(platform, serial string) (*XTDriver, error) {
@@ -982,66 +1381,6 @@ func (t *ToolInput) ConvertActionToCallToolRequest(action MobileAction) (mcp.Cal
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
-// ToolSleep implements the sleep tool call.
-type ToolSleep struct{}
-
-func (t *ToolSleep) Name() option.ActionMethod {
-	return option.ACTION_Sleep
-}
-
-func (t *ToolSleep) Description() string {
-	return "Sleep for a specified number of seconds"
-}
-
-func (t *ToolSleep) Options() []mcp.ToolOption {
-	return []mcp.ToolOption{
-		mcp.WithNumber("seconds", mcp.Description("Number of seconds to sleep")),
-	}
-}
-
-func (t *ToolSleep) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		seconds, ok := request.Params.Arguments["seconds"]
-		if !ok {
-			return nil, fmt.Errorf("seconds parameter is required")
-		}
-
-		// Sleep action logic
-		log.Info().Interface("seconds", seconds).Msg("sleeping")
-
-		var duration time.Duration
-		switch v := seconds.(type) {
-		case float64:
-			duration = time.Duration(v*1000) * time.Millisecond
-		case int:
-			duration = time.Duration(v) * time.Second
-		case int64:
-			duration = time.Duration(v) * time.Second
-		case string:
-			s, err := builtin.ConvertToFloat64(v)
-			if err != nil {
-				return nil, fmt.Errorf("invalid sleep duration: %v", v)
-			}
-			duration = time.Duration(s*1000) * time.Millisecond
-		default:
-			return nil, fmt.Errorf("unsupported sleep duration type: %T", v)
-		}
-
-		time.Sleep(duration)
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully slept for %v seconds", seconds)), nil
-	}
-}
-
-func (t *ToolSleep) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	arguments := map[string]any{
-		"seconds": action.Params,
-	}
-	return buildMCPCallToolRequest(t.Name(), arguments), nil
-}
-
-// Additional ActionTool implementations for DoAction migration
-
 // ToolWebLoginNoneUI implements the web_login_none_ui tool call.
 type ToolWebLoginNoneUI struct{}
 
@@ -1231,155 +1570,6 @@ func (t *ToolAppClear) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app clear params: %v", action.Params)
-}
-
-// ToolSwipeToTapApp implements the swipe_to_tap_app tool call.
-type ToolSwipeToTapApp struct{}
-
-func (t *ToolSwipeToTapApp) Name() option.ActionMethod {
-	return option.ACTION_SwipeToTapApp
-}
-
-func (t *ToolSwipeToTapApp) Description() string {
-	return "Swipe to find and tap an app by name"
-}
-
-func (t *ToolSwipeToTapApp) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SwipeToTapAppRequest{})
-}
-
-func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
-		if err != nil {
-			return nil, fmt.Errorf("setup driver failed: %w", err)
-		}
-
-		var swipeAppReq option.SwipeToTapAppRequest
-		if err := mapToStruct(request.Params.Arguments, &swipeAppReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
-		}
-
-		// Swipe to tap app action logic
-		log.Info().Str("appName", swipeAppReq.AppName).Msg("swipe to tap app")
-		err = driverExt.SwipeToTapApp(swipeAppReq.AppName)
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap app failed: %s", err.Error())), nil
-		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped app: %s", swipeAppReq.AppName)), nil
-	}
-}
-
-func (t *ToolSwipeToTapApp) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	if appName, ok := action.Params.(string); ok {
-		arguments := map[string]any{
-			"appName": appName,
-		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
-	}
-	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap app params: %v", action.Params)
-}
-
-// ToolSwipeToTapText implements the swipe_to_tap_text tool call.
-type ToolSwipeToTapText struct{}
-
-func (t *ToolSwipeToTapText) Name() option.ActionMethod {
-	return option.ACTION_SwipeToTapText
-}
-
-func (t *ToolSwipeToTapText) Description() string {
-	return "Swipe to find and tap text on screen"
-}
-
-func (t *ToolSwipeToTapText) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SwipeToTapTextRequest{})
-}
-
-func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
-		if err != nil {
-			return nil, fmt.Errorf("setup driver failed: %w", err)
-		}
-
-		var swipeTextReq option.SwipeToTapTextRequest
-		if err := mapToStruct(request.Params.Arguments, &swipeTextReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
-		}
-
-		// Swipe to tap text action logic
-		log.Info().Str("text", swipeTextReq.Text).Msg("swipe to tap text")
-		err = driverExt.SwipeToTapTexts([]string{swipeTextReq.Text})
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap text failed: %s", err.Error())), nil
-		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped text: %s", swipeTextReq.Text)), nil
-	}
-}
-
-func (t *ToolSwipeToTapText) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	if text, ok := action.Params.(string); ok {
-		arguments := map[string]any{
-			"text": text,
-		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
-	}
-	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap text params: %v", action.Params)
-}
-
-// ToolSwipeToTapTexts implements the swipe_to_tap_texts tool call.
-type ToolSwipeToTapTexts struct{}
-
-func (t *ToolSwipeToTapTexts) Name() option.ActionMethod {
-	return option.ACTION_SwipeToTapTexts
-}
-
-func (t *ToolSwipeToTapTexts) Description() string {
-	return "Swipe to find and tap one of multiple texts on screen"
-}
-
-func (t *ToolSwipeToTapTexts) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SwipeToTapTextsRequest{})
-}
-
-func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
-		if err != nil {
-			return nil, fmt.Errorf("setup driver failed: %w", err)
-		}
-
-		var swipeTextsReq option.SwipeToTapTextsRequest
-		if err := mapToStruct(request.Params.Arguments, &swipeTextsReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
-		}
-
-		// Swipe to tap texts action logic
-		log.Info().Strs("texts", swipeTextsReq.Texts).Msg("swipe to tap texts")
-		err = driverExt.SwipeToTapTexts(swipeTextsReq.Texts)
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap texts failed: %s", err.Error())), nil
-		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped one of texts: %v", swipeTextsReq.Texts)), nil
-	}
-}
-
-func (t *ToolSwipeToTapTexts) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	var texts []string
-	if textsSlice, ok := action.Params.([]string); ok {
-		texts = textsSlice
-	} else if textsInterface, err := builtin.ConvertToStringSlice(action.Params); err == nil {
-		texts = textsInterface
-	} else {
-		return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap texts params: %v", action.Params)
-	}
-	arguments := map[string]any{
-		"texts": texts,
-	}
-	return buildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
 // ToolSecondaryClick implements the secondary_click tool call.
@@ -1732,284 +1922,62 @@ func (t *ToolGetSource) ConvertActionToCallToolRequest(action MobileAction) (mcp
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid get source params: %v", action.Params)
 }
 
-// ToolTapAbsXY implements the tap_abs_xy tool call.
-type ToolTapAbsXY struct{}
+// ToolSleep implements the sleep tool call.
+type ToolSleep struct{}
 
-func (t *ToolTapAbsXY) Name() option.ActionMethod {
-	return option.ACTION_TapAbsXY
+func (t *ToolSleep) Name() option.ActionMethod {
+	return option.ACTION_Sleep
 }
 
-func (t *ToolTapAbsXY) Description() string {
-	return "Tap at absolute pixel coordinates"
+func (t *ToolSleep) Description() string {
+	return "Sleep for a specified number of seconds"
 }
 
-func (t *ToolTapAbsXY) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TapAbsXYRequest{})
+func (t *ToolSleep) Options() []mcp.ToolOption {
+	return []mcp.ToolOption{
+		mcp.WithNumber("seconds", mcp.Description("Number of seconds to sleep")),
+	}
 }
 
-func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
+func (t *ToolSleep) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
-		if err != nil {
-			return nil, fmt.Errorf("setup driver failed: %w", err)
+		seconds, ok := request.Params.Arguments["seconds"]
+		if !ok {
+			return nil, fmt.Errorf("seconds parameter is required")
 		}
 
-		var tapAbsReq option.TapAbsXYRequest
-		if err := mapToStruct(request.Params.Arguments, &tapAbsReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		// Sleep action logic
+		log.Info().Interface("seconds", seconds).Msg("sleeping")
+
+		var duration time.Duration
+		switch v := seconds.(type) {
+		case float64:
+			duration = time.Duration(v*1000) * time.Millisecond
+		case int:
+			duration = time.Duration(v) * time.Second
+		case int64:
+			duration = time.Duration(v) * time.Second
+		case string:
+			s, err := builtin.ConvertToFloat64(v)
+			if err != nil {
+				return nil, fmt.Errorf("invalid sleep duration: %v", v)
+			}
+			duration = time.Duration(s*1000) * time.Millisecond
+		default:
+			return nil, fmt.Errorf("unsupported sleep duration type: %T", v)
 		}
 
-		// Tap absolute XY action logic
-		log.Info().Float64("x", tapAbsReq.X).Float64("y", tapAbsReq.Y).Msg("tapping at absolute coordinates")
-		opts := []option.ActionOption{}
-		if tapAbsReq.Duration > 0 {
-			opts = append(opts, option.WithDuration(tapAbsReq.Duration))
-		}
+		time.Sleep(duration)
 
-		err = driverExt.TapAbsXY(tapAbsReq.X, tapAbsReq.Y, opts...)
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Tap absolute XY failed: %s", err.Error())), nil
-		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at absolute coordinates (%.0f, %.0f)", tapAbsReq.X, tapAbsReq.Y)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully slept for %v seconds", seconds)), nil
 	}
 }
 
-func (t *ToolTapAbsXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
-		x, y := params[0], params[1]
-		arguments := map[string]any{
-			"x": x,
-			"y": y,
-		}
-		// Add duration if available
-		if duration := action.ActionOptions.Duration; duration > 0 {
-			arguments["duration"] = duration
-		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
-	}
-	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap abs params: %v", action.Params)
-}
-
-// ToolTapByOCR implements the tap_by_ocr tool call.
-type ToolTapByOCR struct{}
-
-func (t *ToolTapByOCR) Name() option.ActionMethod {
-	return option.ACTION_TapByOCR
-}
-
-func (t *ToolTapByOCR) Description() string {
-	return "Tap on text found by OCR recognition"
-}
-
-func (t *ToolTapByOCR) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TapByOCRRequest{})
-}
-
-func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
-		if err != nil {
-			return nil, fmt.Errorf("setup driver failed: %w", err)
-		}
-
-		var ocrReq option.TapByOCRRequest
-		if err := mapToStruct(request.Params.Arguments, &ocrReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
-		}
-
-		// Tap by OCR action logic
-		log.Info().Str("text", ocrReq.Text).Msg("tapping by OCR")
-		err = driverExt.TapByOCR(ocrReq.Text)
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Tap by OCR failed: %s", err.Error())), nil
-		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped on OCR text: %s", ocrReq.Text)), nil
-	}
-}
-
-func (t *ToolTapByOCR) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	if text, ok := action.Params.(string); ok {
-		arguments := map[string]any{
-			"text": text,
-		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
-	}
-	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by OCR params: %v", action.Params)
-}
-
-// ToolTapByCV implements the tap_by_cv tool call.
-type ToolTapByCV struct{}
-
-func (t *ToolTapByCV) Name() option.ActionMethod {
-	return option.ACTION_TapByCV
-}
-
-func (t *ToolTapByCV) Description() string {
-	return "Tap on element found by computer vision"
-}
-
-func (t *ToolTapByCV) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TapByCVRequest{})
-}
-
-func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
-		if err != nil {
-			return nil, fmt.Errorf("setup driver failed: %w", err)
-		}
-
-		var cvReq option.TapByCVRequest
-		if err := mapToStruct(request.Params.Arguments, &cvReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
-		}
-
-		// Tap by CV action logic
-		log.Info().Str("imagePath", cvReq.ImagePath).Msg("tapping by CV")
-
-		// For TapByCV, we need to check if there are UI types in the options
-		// In the original DoAction, it requires ScreenShotWithUITypes to be set
-		// We'll add a basic implementation that triggers CV recognition
-		err = driverExt.TapByCV()
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Tap by CV failed: %s", err.Error())), nil
-		}
-
-		return mcp.NewToolResultText("Successfully tapped by computer vision"), nil
-	}
-}
-
-func (t *ToolTapByCV) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	// For TapByCV, the original action might not have params but relies on options
+func (t *ToolSleep) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
 	arguments := map[string]any{
-		"imagePath": "", // Will be handled by the tool based on UI types
+		"seconds": action.Params,
 	}
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
-}
-
-// ToolDoubleTapXY implements the double_tap_xy tool call.
-type ToolDoubleTapXY struct{}
-
-func (t *ToolDoubleTapXY) Name() option.ActionMethod {
-	return option.ACTION_DoubleTapXY
-}
-
-func (t *ToolDoubleTapXY) Description() string {
-	return "Double tap at given coordinates"
-}
-
-func (t *ToolDoubleTapXY) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.DoubleTapXYRequest{})
-}
-
-func (t *ToolDoubleTapXY) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
-		if err != nil {
-			return nil, fmt.Errorf("setup driver failed: %w", err)
-		}
-
-		var doubleTapReq option.DoubleTapXYRequest
-		if err := mapToStruct(request.Params.Arguments, &doubleTapReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
-		}
-
-		// Double tap XY action logic
-		log.Info().Float64("x", doubleTapReq.X).Float64("y", doubleTapReq.Y).Msg("double tapping at coordinates")
-		err = driverExt.DoubleTap(doubleTapReq.X, doubleTapReq.Y)
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Double tap failed: %s", err.Error())), nil
-		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully double tapped at (%.2f, %.2f)", doubleTapReq.X, doubleTapReq.Y)), nil
-	}
-}
-
-func (t *ToolDoubleTapXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
-		x, y := params[0], params[1]
-		arguments := map[string]any{
-			"x": x,
-			"y": y,
-		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
-	}
-	return mcp.CallToolRequest{}, fmt.Errorf("invalid double tap params: %v", action.Params)
-}
-
-// ToolSwipeCoordinate implements the swipe_advanced tool call.
-type ToolSwipeCoordinate struct{}
-
-func (t *ToolSwipeCoordinate) Name() option.ActionMethod {
-	return option.ACTION_SwipeCoordinate
-}
-
-func (t *ToolSwipeCoordinate) Description() string {
-	return "Perform advanced swipe with custom coordinates and timing"
-}
-
-func (t *ToolSwipeCoordinate) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SwipeAdvancedRequest{})
-}
-
-func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
-		if err != nil {
-			return nil, fmt.Errorf("setup driver failed: %w", err)
-		}
-
-		var swipeAdvReq option.SwipeAdvancedRequest
-		if err := mapToStruct(request.Params.Arguments, &swipeAdvReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
-		}
-
-		// Advanced swipe action logic using prepareSwipeAction like the original DoAction
-		log.Info().
-			Float64("fromX", swipeAdvReq.FromX).Float64("fromY", swipeAdvReq.FromY).
-			Float64("toX", swipeAdvReq.ToX).Float64("toY", swipeAdvReq.ToY).
-			Msg("performing advanced swipe")
-
-		params := []float64{swipeAdvReq.FromX, swipeAdvReq.FromY, swipeAdvReq.ToX, swipeAdvReq.ToY}
-		opts := []option.ActionOption{}
-		if swipeAdvReq.Duration > 0 {
-			opts = append(opts, option.WithDuration(swipeAdvReq.Duration))
-		}
-		if swipeAdvReq.PressDuration > 0 {
-			opts = append(opts, option.WithPressDuration(swipeAdvReq.PressDuration))
-		}
-
-		swipeAction := prepareSwipeAction(driverExt, params, opts...)
-		err = swipeAction(driverExt)
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Advanced swipe failed: %s", err.Error())), nil
-		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed advanced swipe from (%.2f, %.2f) to (%.2f, %.2f)",
-			swipeAdvReq.FromX, swipeAdvReq.FromY, swipeAdvReq.ToX, swipeAdvReq.ToY)), nil
-	}
-}
-
-func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	if paramSlice, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(paramSlice) == 4 {
-		arguments := map[string]any{
-			"fromX": paramSlice[0],
-			"fromY": paramSlice[1],
-			"toX":   paramSlice[2],
-			"toY":   paramSlice[3],
-		}
-		// Add duration and press duration from options
-		if duration := action.ActionOptions.Duration; duration > 0 {
-			arguments["duration"] = duration
-		}
-		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
-			arguments["pressDuration"] = pressDuration
-		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
-	}
-	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe advanced params: %v", action.Params)
 }
 
 // ToolSleepMS implements the sleep_ms tool call.
