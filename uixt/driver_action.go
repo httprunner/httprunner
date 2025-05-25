@@ -7,7 +7,6 @@ import (
 type MobileAction struct {
 	Method  option.ActionMethod   `json:"method,omitempty" yaml:"method,omitempty"`
 	Params  interface{}           `json:"params,omitempty" yaml:"params,omitempty"`
-	Fn      func()                `json:"-" yaml:"-"` // used for function action, not serialized
 	Options *option.ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
 	option.ActionOptions
 }

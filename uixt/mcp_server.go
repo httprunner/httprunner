@@ -142,7 +142,6 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolSetIme{})
 	s.registerTool(&ToolGetSource{})
 	s.registerTool(&ToolClosePopups{})
-	s.registerTool(&ToolCallFunction{})
 	s.registerTool(&ToolAIAction{})
 
 	// PC/Web actions
@@ -2100,56 +2099,6 @@ func (t *ToolClosePopups) Implement() server.ToolHandlerFunc {
 
 func (t *ToolClosePopups) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
-}
-
-// ToolCallFunction implements the call_function tool call.
-type ToolCallFunction struct{}
-
-func (t *ToolCallFunction) Name() option.ActionMethod {
-	return option.ACTION_CallFunction
-}
-
-func (t *ToolCallFunction) Description() string {
-	return "Call a custom function with description"
-}
-
-func (t *ToolCallFunction) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.CallFunctionRequest{})
-}
-
-func (t *ToolCallFunction) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
-		if err != nil {
-			return nil, fmt.Errorf("setup driver failed: %w", err)
-		}
-
-		var funcReq option.CallFunctionRequest
-		if err := mapToStruct(request.Params.Arguments, &funcReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
-		}
-
-		// Call function action logic
-		// Note: The function (fn) parameter is not available in MCP calls
-		// This is a simplified implementation that only logs the description
-		log.Info().Str("description", funcReq.Description).Msg("calling function")
-		err = driverExt.Call(funcReq.Description, nil)
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Call function failed: %s", err.Error())), nil
-		}
-
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully called function: %s", funcReq.Description)), nil
-	}
-}
-
-func (t *ToolCallFunction) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
-	if description, ok := action.Params.(string); ok {
-		arguments := map[string]any{
-			"description": description,
-		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
-	}
-	return mcp.CallToolRequest{}, fmt.Errorf("invalid call function params: %v", action.Params)
 }
 
 // ToolAIAction implements the ai_action tool call.

@@ -29,7 +29,6 @@ const (
 	ACTION_SetIme           ActionMethod = "set_ime"
 	ACTION_GetSource        ActionMethod = "get_source"
 	ACTION_GetForegroundApp ActionMethod = "get_foreground_app"
-	ACTION_CallFunction     ActionMethod = "call_function"
 
 	// UI handling
 	ACTION_Home                     ActionMethod = "home"
