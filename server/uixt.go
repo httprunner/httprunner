@@ -19,7 +19,7 @@ func (r *Router) uixtActionHandler(c *gin.Context) {
 		return
 	}
 
-	if err = dExt.DoAction(req); err != nil {
+	if err = dExt.ExecuteAction(req); err != nil {
 		log.Err(err).Interface("action", req).
 			Msg("exec uixt action failed")
 		RenderError(c, err)
@@ -42,7 +42,7 @@ func (r *Router) uixtActionsHandler(c *gin.Context) {
 	}
 
 	for _, action := range actions {
-		if err = dExt.DoAction(action); err != nil {
+		if err = dExt.ExecuteAction(action); err != nil {
 			log.Err(err).Interface("action", action).
 				Msg("exec uixt action failed")
 			RenderError(c, err)

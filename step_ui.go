@@ -809,7 +809,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				continue
 			}
 
-			err = uiDriver.DoAction(action)
+			err = uiDriver.ExecuteAction(action)
 			actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 			if err != nil {
