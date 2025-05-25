@@ -212,7 +212,7 @@ func (s *StepMobile) Back() *StepMobile {
 // Swipe drags from [sx, sy] to [ex, ey]
 func (s *StepMobile) Swipe(sx, sy, ex, ey float64, opts ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method:  option.ACTION_Swipe,
+		Method:  option.ACTION_SwipeCoordinate,
 		Params:  []float64{sx, sy, ex, ey},
 		Options: option.NewActionOptions(opts...),
 	}
@@ -223,7 +223,7 @@ func (s *StepMobile) Swipe(sx, sy, ex, ey float64, opts ...option.ActionOption) 
 
 func (s *StepMobile) SwipeUp(opts ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method:  option.ACTION_Swipe,
+		Method:  option.ACTION_SwipeDirection,
 		Params:  "up",
 		Options: option.NewActionOptions(opts...),
 	}
@@ -234,7 +234,7 @@ func (s *StepMobile) SwipeUp(opts ...option.ActionOption) *StepMobile {
 
 func (s *StepMobile) SwipeDown(opts ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method:  option.ACTION_Swipe,
+		Method:  option.ACTION_SwipeDirection,
 		Params:  "down",
 		Options: option.NewActionOptions(opts...),
 	}
@@ -245,7 +245,7 @@ func (s *StepMobile) SwipeDown(opts ...option.ActionOption) *StepMobile {
 
 func (s *StepMobile) SwipeLeft(opts ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method:  option.ACTION_Swipe,
+		Method:  option.ACTION_SwipeDirection,
 		Params:  "left",
 		Options: option.NewActionOptions(opts...),
 	}
@@ -256,7 +256,7 @@ func (s *StepMobile) SwipeLeft(opts ...option.ActionOption) *StepMobile {
 
 func (s *StepMobile) SwipeRight(opts ...option.ActionOption) *StepMobile {
 	action := uixt.MobileAction{
-		Method:  option.ACTION_Swipe,
+		Method:  option.ACTION_SwipeDirection,
 		Params:  "right",
 		Options: option.NewActionOptions(opts...),
 	}

@@ -62,7 +62,7 @@ func (dExt *XTDriver) AIAction(text string, opts ...option.ActionOption) error {
 			},
 		}
 
-		_, err = dExt.client.CallTool(context.Background(), req)
+		_, err = dExt.Client.CallTool(context.Background(), req)
 		if err != nil {
 			return err
 		}

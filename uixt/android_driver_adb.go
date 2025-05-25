@@ -408,11 +408,11 @@ func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 		Float64("toX", toX).Float64("toY", toY).Msg("ADBDriver.Swipe")
 
 	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err := preHandler_Swipe(ad, actionOptions, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err := preHandler_Swipe(ad, option.ACTION_SwipeCoordinate, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	defer postHandler(ad, option.ACTION_Swipe, actionOptions)
+	defer postHandler(ad, option.ACTION_SwipeCoordinate, actionOptions)
 
 	// adb shell input swipe fromX fromY toX toY
 	_, err = ad.runShellCommand(

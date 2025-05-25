@@ -394,11 +394,11 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 		Float64("toX", toX).Float64("toY", toY).Msg("UIA2Driver.Swipe")
 
 	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err := preHandler_Swipe(ud, actionOptions, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err := preHandler_Swipe(ud, option.ACTION_SwipeCoordinate, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	defer postHandler(ud, option.ACTION_Swipe, actionOptions)
+	defer postHandler(ud, option.ACTION_SwipeCoordinate, actionOptions)
 
 	duration := 200.0
 	if actionOptions.PressDuration > 0 {

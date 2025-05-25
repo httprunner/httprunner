@@ -12,15 +12,17 @@ type ActionMethod string
 
 const (
 	ACTION_LOG              ActionMethod = "log"
-	ACTION_AppInstall       ActionMethod = "install"
-	ACTION_AppUninstall     ActionMethod = "uninstall"
-	ACTION_WebLoginNoneUI   ActionMethod = "login_none_ui"
+	ACTION_ListPackages     ActionMethod = "list_packages"
+	ACTION_AppInstall       ActionMethod = "app_install"
+	ACTION_AppUninstall     ActionMethod = "app_uninstall"
+	ACTION_WebLoginNoneUI   ActionMethod = "web_login_none_ui"
 	ACTION_AppClear         ActionMethod = "app_clear"
 	ACTION_AppStart         ActionMethod = "app_start"
 	ACTION_AppLaunch        ActionMethod = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
 	ACTION_AppTerminate     ActionMethod = "app_terminate"
 	ACTION_AppStop          ActionMethod = "app_stop"
 	ACTION_ScreenShot       ActionMethod = "screenshot"
+	ACTION_GetScreenSize    ActionMethod = "get_screen_size"
 	ACTION_Sleep            ActionMethod = "sleep"
 	ACTION_SleepMS          ActionMethod = "sleep_ms"
 	ACTION_SleepRandom      ActionMethod = "sleep_random"
@@ -33,12 +35,14 @@ const (
 	ACTION_Home                     ActionMethod = "home"
 	ACTION_TapXY                    ActionMethod = "tap_xy"
 	ACTION_TapAbsXY                 ActionMethod = "tap_abs_xy"
-	ACTION_TapByOCR                 ActionMethod = "tap_ocr"
-	ACTION_TapByCV                  ActionMethod = "tap_cv"
+	ACTION_TapByOCR                 ActionMethod = "tap_by_ocr"
+	ACTION_TapByCV                  ActionMethod = "tap_by_cv"
 	ACTION_DoubleTapXY              ActionMethod = "double_tap_xy"
-	ACTION_Swipe                    ActionMethod = "swipe"
+	ACTION_SwipeDirection           ActionMethod = "swipe_direction"  // swipe by direction (up, down, left, right)
+	ACTION_SwipeCoordinate          ActionMethod = "swipe_coordinate" // swipe by coordinates (fromX, fromY, toX, toY)
 	ACTION_Drag                     ActionMethod = "drag"
 	ACTION_Input                    ActionMethod = "input"
+	ACTION_PressButton              ActionMethod = "press_button"
 	ACTION_Back                     ActionMethod = "back"
 	ACTION_KeyCode                  ActionMethod = "keycode"
 	ACTION_AIAction                 ActionMethod = "ai_action" // action with ai
@@ -48,6 +52,10 @@ const (
 	ACTION_SecondaryClick           ActionMethod = "secondary_click"
 	ACTION_SecondaryClickBySelector ActionMethod = "secondary_click_by_selector"
 	ACTION_GetElementTextBySelector ActionMethod = "get_element_text_by_selector"
+
+	// device actions
+	ACTION_ListAvailableDevices ActionMethod = "list_available_devices"
+	ACTION_SelectDevice         ActionMethod = "select_device"
 
 	// custom actions
 	ACTION_SwipeToTapApp   ActionMethod = "swipe_to_tap_app"   // swipe left & right to find app and tap

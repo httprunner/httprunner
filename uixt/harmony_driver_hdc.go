@@ -187,11 +187,11 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 		Float64("toX", toX).Float64("toY", toY).Msg("HDCDriver.Swipe")
 
 	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err := preHandler_Swipe(hd, actionOptions, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err := preHandler_Swipe(hd, option.ACTION_SwipeCoordinate, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	defer postHandler(hd, option.ACTION_Swipe, actionOptions)
+	defer postHandler(hd, option.ACTION_SwipeCoordinate, actionOptions)
 
 	duration := 200
 	if actionOptions.PressDuration > 0 {

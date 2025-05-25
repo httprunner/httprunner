@@ -46,20 +46,18 @@ func NewMCPServer() *MCPServer4XTDriver {
 		server.WithToolCapabilities(false),
 	)
 	s := &MCPServer4XTDriver{
-		mcpServer:  mcpServer,
-		handlerMap: make(map[string]toolCall),
+		mcpServer:     mcpServer,
+		actionToolMap: make(map[option.ActionMethod]ActionTool),
 	}
 	s.registerTools()
 	return s
 }
 
-type toolCall = func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error)
-
 // MCPServer4XTDriver wraps a MCPServer to expose XTDriver functionality via MCP protocol.
 type MCPServer4XTDriver struct {
-	mcpServer  *server.MCPServer
-	tools      []mcp.Tool          // tools list for uixt
-	handlerMap map[string]toolCall // tool name to handler
+	mcpServer     *server.MCPServer
+	mcpTools      []mcp.Tool                         // tools list for uixt
+	actionToolMap map[option.ActionMethod]ActionTool // action method to tool mapping
 }
 
 // Start runs the MCP server (blocking).
@@ -70,126 +68,140 @@ func (s *MCPServer4XTDriver) Start() error {
 
 // ListTools returns all registered tools
 func (s *MCPServer4XTDriver) ListTools() []mcp.Tool {
-	return s.tools
+	return s.mcpTools
 }
 
 // GetTool returns a pointer to the mcp.Tool with the given name
 func (s *MCPServer4XTDriver) GetTool(name string) *mcp.Tool {
-	for i := range s.tools {
-		if s.tools[i].Name == name {
-			return &s.tools[i]
+	for i := range s.mcpTools {
+		if s.mcpTools[i].Name == name {
+			return &s.mcpTools[i]
 		}
 	}
 	return nil
 }
 
-// GetHandler returns the tool handler for the given name
-func (s *MCPServer4XTDriver) GetHandler(name string) toolCall {
-	if s.handlerMap == nil {
+// GetToolByActionMethod returns the tool that handles the given action method
+func (s *MCPServer4XTDriver) GetToolByActionMethod(actionMethod option.ActionMethod) ActionTool {
+	if s.actionToolMap == nil {
 		return nil
 	}
-	return s.handlerMap[name]
+	return s.actionToolMap[actionMethod]
 }
 
 // registerTools registers all MCP tools.
-func (ums *MCPServer4XTDriver) registerTools() {
-	// ListAvailableDevices Tool
-	ums.registerTool(&ToolListAvailableDevices{})
+func (s *MCPServer4XTDriver) registerTools() {
+	// Device Tool
+	s.registerTool(&ToolListAvailableDevices{}) // ListAvailableDevices
+	s.registerTool(&ToolSelectDevice{})         // SelectDevice
 
-	// SelectDevice Tool
-	ums.registerTool(&ToolSelectDevice{})
-
-	// ListPackages Tool
-	ums.registerTool(&ToolListPackages{})
-
-	// LaunchApp Tool
-	ums.registerTool(&ToolLaunchApp{})
-
-	// TerminateApp Tool
-	ums.registerTool(&ToolTerminateApp{})
-
-	// GetScreenSize Tool
-	ums.registerTool(&ToolGetScreenSize{})
-
-	// PressButton Tool
-	ums.registerTool(&ToolPressButton{})
-
-	// TapXY Tool
-	ums.registerTool(&ToolTapXY{})
+	// Tap Tools
+	s.registerTool(&ToolTapXY{})       // tap xy
+	s.registerTool(&ToolTapAbsXY{})    // tap abs xy
+	s.registerTool(&ToolTapByOCR{})    // tap by OCR
+	s.registerTool(&ToolTapByCV{})     // tap by CV
+	s.registerTool(&ToolDoubleTapXY{}) // double tap xy
 
 	// Swipe Tool
-	ums.registerTool(&ToolSwipe{})
+	s.registerTool(&ToolSwipeDirection{})  // swipe direction, up/down/left/right
+	s.registerTool(&ToolSwipeCoordinate{}) // swipe coordinate, [fromX, fromY, toX, toY]
+	s.registerTool(&ToolSwipeToTapApp{})
+	s.registerTool(&ToolSwipeToTapText{})
+	s.registerTool(&ToolSwipeToTapTexts{})
 
 	// Drag Tool
-	ums.registerTool(&ToolDrag{})
-
-	// ScreenShot Tool
-	ums.registerTool(&ToolScreenShot{})
-
-	// Home Tool
-	ums.registerTool(&ToolHome{})
-
-	// Back Tool
-	ums.registerTool(&ToolBack{})
+	s.registerTool(&ToolDrag{})
 
 	// Input Tool
-	ums.registerTool(&ToolInput{})
+	s.registerTool(&ToolInput{})
+
+	// ScreenShot Tool
+	s.registerTool(&ToolScreenShot{})
+
+	// GetScreenSize Tool
+	s.registerTool(&ToolGetScreenSize{})
+
+	// PressButton Tool
+	s.registerTool(&ToolPressButton{})
+	s.registerTool(&ToolHome{}) // Home
+	s.registerTool(&ToolBack{}) // Back
+
+	// App actions
+	s.registerTool(&ToolListPackages{}) // ListPackages
+	s.registerTool(&ToolLaunchApp{})    // LaunchApp
+	s.registerTool(&ToolTerminateApp{}) // TerminateApp
+	s.registerTool(&ToolAppInstall{})   // AppInstall
+	s.registerTool(&ToolAppUninstall{}) // AppUninstall
+	s.registerTool(&ToolAppClear{})     // AppClear
 
 	// Sleep Tool
-	ums.registerTool(&ToolSleep{})
+	s.registerTool(&ToolSleep{})
+	s.registerTool(&ToolSleepMS{})
+	s.registerTool(&ToolSleepRandom{})
 
-	// Register all missing tools from DoAction
-	ums.registerTool(&ToolWebLoginNoneUI{})
-	ums.registerTool(&ToolAppInstall{})
-	ums.registerTool(&ToolAppUninstall{})
-	ums.registerTool(&ToolAppClear{})
-	ums.registerTool(&ToolSwipeToTapApp{})
-	ums.registerTool(&ToolSwipeToTapText{})
-	ums.registerTool(&ToolSwipeToTapTexts{})
-	ums.registerTool(&ToolSecondaryClick{})
-	ums.registerTool(&ToolHoverBySelector{})
-	ums.registerTool(&ToolTapBySelector{})
-	ums.registerTool(&ToolSecondaryClickBySelector{})
-	ums.registerTool(&ToolWebCloseTab{})
-	ums.registerTool(&ToolSetIme{})
-	ums.registerTool(&ToolGetSource{})
-	ums.registerTool(&ToolTapAbsXY{})
-	ums.registerTool(&ToolTapByOCR{})
-	ums.registerTool(&ToolTapByCV{})
-	ums.registerTool(&ToolDoubleTapXY{})
-	ums.registerTool(&ToolSwipeAdvanced{})
-	ums.registerTool(&ToolSleepMS{})
-	ums.registerTool(&ToolSleepRandom{})
-	ums.registerTool(&ToolClosePopups{})
-	ums.registerTool(&ToolCallFunction{})
-	ums.registerTool(&ToolAIAction{})
+	// Utils tools
+	s.registerTool(&ToolSetIme{})
+	s.registerTool(&ToolGetSource{})
+	s.registerTool(&ToolClosePopups{})
+	s.registerTool(&ToolCallFunction{})
+	s.registerTool(&ToolAIAction{})
+
+	// PC/Web actions
+	s.registerTool(&ToolWebLoginNoneUI{})
+	s.registerTool(&ToolSecondaryClick{})
+	s.registerTool(&ToolHoverBySelector{})
+	s.registerTool(&ToolTapBySelector{})
+	s.registerTool(&ToolSecondaryClickBySelector{})
+	s.registerTool(&ToolWebCloseTab{})
 }
 
-func (ums *MCPServer4XTDriver) registerTool(tool ActionTool) {
+func (s *MCPServer4XTDriver) registerTool(tool ActionTool) {
 	options := []mcp.ToolOption{
 		mcp.WithDescription(tool.Description()),
 	}
 	options = append(options, tool.Options()...)
-	mcpTool := mcp.NewTool(tool.Name(), options...)
-	ums.mcpServer.AddTool(mcpTool, tool.Implement())
-	ums.tools = append(ums.tools, mcpTool)
-	ums.handlerMap[tool.Name()] = tool.Implement()
-	log.Debug().Str("name", tool.Name()).Msg("register tool")
+
+	toolName := string(tool.Name())
+	mcpTool := mcp.NewTool(toolName, options...)
+	s.mcpServer.AddTool(mcpTool, tool.Implement())
+
+	s.mcpTools = append(s.mcpTools, mcpTool)
+	s.actionToolMap[tool.Name()] = tool
+
+	log.Debug().Str("name", toolName).Str("type", toolName).Msg("register tool")
 }
 
 // ActionTool interface defines the contract for MCP tools
 type ActionTool interface {
-	Name() string
+	Name() option.ActionMethod
 	Description() string
 	Options() []mcp.ToolOption
-	Implement() toolCall
+	Implement() server.ToolHandlerFunc
+	// ConvertActionToCallToolRequest converts MobileAction to mcp.CallToolRequest
+	ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error)
+}
+
+// buildMCPCallToolRequest is a helper function to build mcp.CallToolRequest
+func buildMCPCallToolRequest(toolName option.ActionMethod, arguments map[string]any) mcp.CallToolRequest {
+	return mcp.CallToolRequest{
+		Params: struct {
+			Name      string         `json:"name"`
+			Arguments map[string]any `json:"arguments,omitempty"`
+			Meta      *struct {
+				ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
+			} `json:"_meta,omitempty"`
+		}{
+			Name:      string(toolName),
+			Arguments: arguments,
+		},
+	}
 }
 
 // ToolListAvailableDevices implements the list_available_devices tool call.
 type ToolListAvailableDevices struct{}
 
-func (t *ToolListAvailableDevices) Name() string {
-	return "list_available_devices"
+func (t *ToolListAvailableDevices) Name() option.ActionMethod {
+	return option.ACTION_ListAvailableDevices
 }
 
 func (t *ToolListAvailableDevices) Description() string {
@@ -200,7 +212,7 @@ func (t *ToolListAvailableDevices) Options() []mcp.ToolOption {
 	return []mcp.ToolOption{}
 }
 
-func (t *ToolListAvailableDevices) Implement() toolCall {
+func (t *ToolListAvailableDevices) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		deviceList := make(map[string][]string)
 		if client, err := gadb.NewClient(); err == nil {
@@ -236,11 +248,15 @@ func (t *ToolListAvailableDevices) Implement() toolCall {
 	}
 }
 
+func (t *ToolListAvailableDevices) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
 // ToolSelectDevice implements the select_device tool call.
 type ToolSelectDevice struct{}
 
-func (t *ToolSelectDevice) Name() string {
-	return "select_device"
+func (t *ToolSelectDevice) Name() option.ActionMethod {
+	return option.ACTION_SelectDevice
 }
 
 func (t *ToolSelectDevice) Description() string {
@@ -254,7 +270,7 @@ func (t *ToolSelectDevice) Options() []mcp.ToolOption {
 	}
 }
 
-func (t *ToolSelectDevice) Implement() toolCall {
+func (t *ToolSelectDevice) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -266,11 +282,15 @@ func (t *ToolSelectDevice) Implement() toolCall {
 	}
 }
 
+func (t *ToolSelectDevice) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
 // ToolListPackages implements the list_packages tool call.
 type ToolListPackages struct{}
 
-func (t *ToolListPackages) Name() string {
-	return "list_packages"
+func (t *ToolListPackages) Name() option.ActionMethod {
+	return option.ACTION_ListPackages
 }
 
 func (t *ToolListPackages) Description() string {
@@ -281,7 +301,7 @@ func (t *ToolListPackages) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.TargetDeviceRequest{})
 }
 
-func (t *ToolListPackages) Implement() toolCall {
+func (t *ToolListPackages) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -296,11 +316,15 @@ func (t *ToolListPackages) Implement() toolCall {
 	}
 }
 
+func (t *ToolListPackages) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
 // ToolLaunchApp implements the launch_app tool call.
 type ToolLaunchApp struct{}
 
-func (t *ToolLaunchApp) Name() string {
-	return "launch_app"
+func (t *ToolLaunchApp) Name() option.ActionMethod {
+	return option.ACTION_AppLaunch
 }
 
 func (t *ToolLaunchApp) Description() string {
@@ -311,7 +335,7 @@ func (t *ToolLaunchApp) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.AppLaunchRequest{})
 }
 
-func (t *ToolLaunchApp) Implement() toolCall {
+func (t *ToolLaunchApp) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -338,11 +362,21 @@ func (t *ToolLaunchApp) Implement() toolCall {
 	}
 }
 
+func (t *ToolLaunchApp) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if packageName, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"packageName": packageName,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid app launch params: %v", action.Params)
+}
+
 // ToolTerminateApp implements the terminate_app tool call.
 type ToolTerminateApp struct{}
 
-func (t *ToolTerminateApp) Name() string {
-	return "terminate_app"
+func (t *ToolTerminateApp) Name() option.ActionMethod {
+	return option.ACTION_AppTerminate
 }
 
 func (t *ToolTerminateApp) Description() string {
@@ -353,7 +387,7 @@ func (t *ToolTerminateApp) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.AppTerminateRequest{})
 }
 
-func (t *ToolTerminateApp) Implement() toolCall {
+func (t *ToolTerminateApp) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -383,11 +417,21 @@ func (t *ToolTerminateApp) Implement() toolCall {
 	}
 }
 
+func (t *ToolTerminateApp) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if packageName, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"packageName": packageName,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid app terminate params: %v", action.Params)
+}
+
 // ToolGetScreenSize implements the get_screen_size tool call.
 type ToolGetScreenSize struct{}
 
-func (t *ToolGetScreenSize) Name() string {
-	return "get_screen_size"
+func (t *ToolGetScreenSize) Name() option.ActionMethod {
+	return option.ACTION_GetScreenSize
 }
 
 func (t *ToolGetScreenSize) Description() string {
@@ -398,7 +442,7 @@ func (t *ToolGetScreenSize) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.TargetDeviceRequest{})
 }
 
-func (t *ToolGetScreenSize) Implement() toolCall {
+func (t *ToolGetScreenSize) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -415,11 +459,15 @@ func (t *ToolGetScreenSize) Implement() toolCall {
 	}
 }
 
+func (t *ToolGetScreenSize) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
 // ToolPressButton implements the press_button tool call.
 type ToolPressButton struct{}
 
-func (t *ToolPressButton) Name() string {
-	return "press_button"
+func (t *ToolPressButton) Name() option.ActionMethod {
+	return option.ACTION_PressButton
 }
 
 func (t *ToolPressButton) Description() string {
@@ -430,7 +478,7 @@ func (t *ToolPressButton) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.PressButtonRequest{})
 }
 
-func (t *ToolPressButton) Implement() toolCall {
+func (t *ToolPressButton) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -453,11 +501,21 @@ func (t *ToolPressButton) Implement() toolCall {
 	}
 }
 
+func (t *ToolPressButton) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if button, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"button": button,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid press button params: %v", action.Params)
+}
+
 // ToolTapXY implements the tap_xy tool call.
 type ToolTapXY struct{}
 
-func (t *ToolTapXY) Name() string {
-	return "tap_xy"
+func (t *ToolTapXY) Name() option.ActionMethod {
+	return option.ACTION_TapXY
 }
 
 func (t *ToolTapXY) Description() string {
@@ -468,7 +526,7 @@ func (t *ToolTapXY) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.TapRequest{})
 }
 
-func (t *ToolTapXY) Implement() toolCall {
+func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -496,22 +554,38 @@ func (t *ToolTapXY) Implement() toolCall {
 	}
 }
 
-// ToolSwipe implements the swipe tool call.
-type ToolSwipe struct{}
-
-func (t *ToolSwipe) Name() string {
-	return "swipe"
+func (t *ToolTapXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
+		x, y := params[0], params[1]
+		arguments := map[string]any{
+			"x": x,
+			"y": y,
+		}
+		// Add duration if available from action options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap params: %v", action.Params)
 }
 
-func (t *ToolSwipe) Description() string {
+// ToolSwipeDirection implements the swipe tool call.
+type ToolSwipeDirection struct{}
+
+func (t *ToolSwipeDirection) Name() option.ActionMethod {
+	return option.ACTION_SwipeDirection
+}
+
+func (t *ToolSwipeDirection) Description() string {
 	return "Swipe on the screen"
 }
 
-func (t *ToolSwipe) Options() []mcp.ToolOption {
+func (t *ToolSwipeDirection) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SwipeRequest{})
 }
 
-func (t *ToolSwipe) Implement() toolCall {
+func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -567,11 +641,29 @@ func (t *ToolSwipe) Implement() toolCall {
 	}
 }
 
+func (t *ToolSwipeDirection) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	// Handle direction swipe like "up", "down", "left", "right"
+	if direction, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"direction": direction,
+		}
+		// Add duration and press duration from options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
+			arguments["pressDuration"] = pressDuration
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v", action.Params)
+}
+
 // ToolDrag implements the drag tool call.
 type ToolDrag struct{}
 
-func (t *ToolDrag) Name() string {
-	return "drag"
+func (t *ToolDrag) Name() option.ActionMethod {
+	return option.ACTION_Drag
 }
 
 func (t *ToolDrag) Description() string {
@@ -582,7 +674,7 @@ func (t *ToolDrag) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.DragRequest{})
 }
 
-func (t *ToolDrag) Implement() toolCall {
+func (t *ToolDrag) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -615,11 +707,28 @@ func (t *ToolDrag) Implement() toolCall {
 	}
 }
 
+func (t *ToolDrag) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if paramSlice, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(paramSlice) == 4 {
+		arguments := map[string]any{
+			"fromX": paramSlice[0],
+			"fromY": paramSlice[1],
+			"toX":   paramSlice[2],
+			"toY":   paramSlice[3],
+		}
+		// Add duration from options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration * 1000 // convert to milliseconds
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid drag params: %v", action.Params)
+}
+
 // ToolScreenShot implements the screenshot tool call.
 type ToolScreenShot struct{}
 
-func (t *ToolScreenShot) Name() string {
-	return "screenshot"
+func (t *ToolScreenShot) Name() option.ActionMethod {
+	return option.ACTION_ScreenShot
 }
 
 func (t *ToolScreenShot) Description() string {
@@ -630,7 +739,7 @@ func (t *ToolScreenShot) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.TargetDeviceRequest{})
 }
 
-func (t *ToolScreenShot) Implement() toolCall {
+func (t *ToolScreenShot) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -647,10 +756,14 @@ func (t *ToolScreenShot) Implement() toolCall {
 	}
 }
 
+func (t *ToolScreenShot) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
 var driverCache sync.Map // key is serial, value is *XTDriver
 
 // setupXTDriver initializes an XTDriver based on the platform and serial.
-func setupXTDriver(_ context.Context, args map[string]interface{}) (*XTDriver, error) {
+func setupXTDriver(_ context.Context, args map[string]any) (*XTDriver, error) {
 	platform, _ := args["platform"].(string)
 	serial, _ := args["serial"].(string)
 	if platform == "" {
@@ -736,8 +849,8 @@ func NewDevice(platform, serial string) (device IDevice, err error) {
 	return device, nil
 }
 
-// mapToStruct convert map[string]interface{} to target struct
-func mapToStruct(m map[string]interface{}, out interface{}) error {
+// mapToStruct convert map[string]any to target struct
+func mapToStruct(m map[string]any, out interface{}) error {
 	b, err := json.Marshal(m)
 	if err != nil {
 		return err
@@ -748,8 +861,8 @@ func mapToStruct(m map[string]interface{}, out interface{}) error {
 // ToolHome implements the home tool call.
 type ToolHome struct{}
 
-func (t *ToolHome) Name() string {
-	return "home"
+func (t *ToolHome) Name() option.ActionMethod {
+	return option.ACTION_Home
 }
 
 func (t *ToolHome) Description() string {
@@ -760,7 +873,7 @@ func (t *ToolHome) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.TargetDeviceRequest{})
 }
 
-func (t *ToolHome) Implement() toolCall {
+func (t *ToolHome) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -778,11 +891,15 @@ func (t *ToolHome) Implement() toolCall {
 	}
 }
 
+func (t *ToolHome) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
 // ToolBack implements the back tool call.
 type ToolBack struct{}
 
-func (t *ToolBack) Name() string {
-	return "back"
+func (t *ToolBack) Name() option.ActionMethod {
+	return option.ACTION_Back
 }
 
 func (t *ToolBack) Description() string {
@@ -793,7 +910,7 @@ func (t *ToolBack) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.TargetDeviceRequest{})
 }
 
-func (t *ToolBack) Implement() toolCall {
+func (t *ToolBack) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -811,11 +928,15 @@ func (t *ToolBack) Implement() toolCall {
 	}
 }
 
+func (t *ToolBack) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
 // ToolInput implements the input tool call.
 type ToolInput struct{}
 
-func (t *ToolInput) Name() string {
-	return "input"
+func (t *ToolInput) Name() option.ActionMethod {
+	return option.ACTION_Input
 }
 
 func (t *ToolInput) Description() string {
@@ -826,7 +947,7 @@ func (t *ToolInput) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.InputRequest{})
 }
 
-func (t *ToolInput) Implement() toolCall {
+func (t *ToolInput) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -853,11 +974,19 @@ func (t *ToolInput) Implement() toolCall {
 	}
 }
 
+func (t *ToolInput) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	text := fmt.Sprintf("%v", action.Params)
+	arguments := map[string]any{
+		"text": text,
+	}
+	return buildMCPCallToolRequest(t.Name(), arguments), nil
+}
+
 // ToolSleep implements the sleep tool call.
 type ToolSleep struct{}
 
-func (t *ToolSleep) Name() string {
-	return "sleep"
+func (t *ToolSleep) Name() option.ActionMethod {
+	return option.ACTION_Sleep
 }
 
 func (t *ToolSleep) Description() string {
@@ -870,7 +999,7 @@ func (t *ToolSleep) Options() []mcp.ToolOption {
 	}
 }
 
-func (t *ToolSleep) Implement() toolCall {
+func (t *ToolSleep) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		seconds, ok := request.Params.Arguments["seconds"]
 		if !ok {
@@ -904,13 +1033,20 @@ func (t *ToolSleep) Implement() toolCall {
 	}
 }
 
+func (t *ToolSleep) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	arguments := map[string]any{
+		"seconds": action.Params,
+	}
+	return buildMCPCallToolRequest(t.Name(), arguments), nil
+}
+
 // Additional ActionTool implementations for DoAction migration
 
 // ToolWebLoginNoneUI implements the web_login_none_ui tool call.
 type ToolWebLoginNoneUI struct{}
 
-func (t *ToolWebLoginNoneUI) Name() string {
-	return "web_login_none_ui"
+func (t *ToolWebLoginNoneUI) Name() option.ActionMethod {
+	return option.ACTION_WebLoginNoneUI
 }
 
 func (t *ToolWebLoginNoneUI) Description() string {
@@ -921,7 +1057,7 @@ func (t *ToolWebLoginNoneUI) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.WebLoginNoneUIRequest{})
 }
 
-func (t *ToolWebLoginNoneUI) Implement() toolCall {
+func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -949,11 +1085,15 @@ func (t *ToolWebLoginNoneUI) Implement() toolCall {
 	}
 }
 
+func (t *ToolWebLoginNoneUI) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
 // ToolAppInstall implements the app_install tool call.
 type ToolAppInstall struct{}
 
-func (t *ToolAppInstall) Name() string {
-	return "app_install"
+func (t *ToolAppInstall) Name() option.ActionMethod {
+	return option.ACTION_AppInstall
 }
 
 func (t *ToolAppInstall) Description() string {
@@ -964,7 +1104,7 @@ func (t *ToolAppInstall) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.AppInstallRequest{})
 }
 
-func (t *ToolAppInstall) Implement() toolCall {
+func (t *ToolAppInstall) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -987,11 +1127,21 @@ func (t *ToolAppInstall) Implement() toolCall {
 	}
 }
 
+func (t *ToolAppInstall) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if appUrl, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"appUrl": appUrl,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid app install params: %v", action.Params)
+}
+
 // ToolAppUninstall implements the app_uninstall tool call.
 type ToolAppUninstall struct{}
 
-func (t *ToolAppUninstall) Name() string {
-	return "app_uninstall"
+func (t *ToolAppUninstall) Name() option.ActionMethod {
+	return option.ACTION_AppUninstall
 }
 
 func (t *ToolAppUninstall) Description() string {
@@ -1002,7 +1152,7 @@ func (t *ToolAppUninstall) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.AppUninstallRequest{})
 }
 
-func (t *ToolAppUninstall) Implement() toolCall {
+func (t *ToolAppUninstall) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1025,11 +1175,21 @@ func (t *ToolAppUninstall) Implement() toolCall {
 	}
 }
 
+func (t *ToolAppUninstall) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if packageName, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"packageName": packageName,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid app uninstall params: %v", action.Params)
+}
+
 // ToolAppClear implements the app_clear tool call.
 type ToolAppClear struct{}
 
-func (t *ToolAppClear) Name() string {
-	return "app_clear"
+func (t *ToolAppClear) Name() option.ActionMethod {
+	return option.ACTION_AppClear
 }
 
 func (t *ToolAppClear) Description() string {
@@ -1040,7 +1200,7 @@ func (t *ToolAppClear) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.AppClearRequest{})
 }
 
-func (t *ToolAppClear) Implement() toolCall {
+func (t *ToolAppClear) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1063,11 +1223,21 @@ func (t *ToolAppClear) Implement() toolCall {
 	}
 }
 
+func (t *ToolAppClear) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if packageName, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"packageName": packageName,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid app clear params: %v", action.Params)
+}
+
 // ToolSwipeToTapApp implements the swipe_to_tap_app tool call.
 type ToolSwipeToTapApp struct{}
 
-func (t *ToolSwipeToTapApp) Name() string {
-	return "swipe_to_tap_app"
+func (t *ToolSwipeToTapApp) Name() option.ActionMethod {
+	return option.ACTION_SwipeToTapApp
 }
 
 func (t *ToolSwipeToTapApp) Description() string {
@@ -1078,7 +1248,7 @@ func (t *ToolSwipeToTapApp) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SwipeToTapAppRequest{})
 }
 
-func (t *ToolSwipeToTapApp) Implement() toolCall {
+func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1101,11 +1271,21 @@ func (t *ToolSwipeToTapApp) Implement() toolCall {
 	}
 }
 
+func (t *ToolSwipeToTapApp) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if appName, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"appName": appName,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap app params: %v", action.Params)
+}
+
 // ToolSwipeToTapText implements the swipe_to_tap_text tool call.
 type ToolSwipeToTapText struct{}
 
-func (t *ToolSwipeToTapText) Name() string {
-	return "swipe_to_tap_text"
+func (t *ToolSwipeToTapText) Name() option.ActionMethod {
+	return option.ACTION_SwipeToTapText
 }
 
 func (t *ToolSwipeToTapText) Description() string {
@@ -1116,7 +1296,7 @@ func (t *ToolSwipeToTapText) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SwipeToTapTextRequest{})
 }
 
-func (t *ToolSwipeToTapText) Implement() toolCall {
+func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1139,11 +1319,21 @@ func (t *ToolSwipeToTapText) Implement() toolCall {
 	}
 }
 
+func (t *ToolSwipeToTapText) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if text, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"text": text,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap text params: %v", action.Params)
+}
+
 // ToolSwipeToTapTexts implements the swipe_to_tap_texts tool call.
 type ToolSwipeToTapTexts struct{}
 
-func (t *ToolSwipeToTapTexts) Name() string {
-	return "swipe_to_tap_texts"
+func (t *ToolSwipeToTapTexts) Name() option.ActionMethod {
+	return option.ACTION_SwipeToTapTexts
 }
 
 func (t *ToolSwipeToTapTexts) Description() string {
@@ -1154,7 +1344,7 @@ func (t *ToolSwipeToTapTexts) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SwipeToTapTextsRequest{})
 }
 
-func (t *ToolSwipeToTapTexts) Implement() toolCall {
+func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1177,11 +1367,26 @@ func (t *ToolSwipeToTapTexts) Implement() toolCall {
 	}
 }
 
+func (t *ToolSwipeToTapTexts) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	var texts []string
+	if textsSlice, ok := action.Params.([]string); ok {
+		texts = textsSlice
+	} else if textsInterface, err := builtin.ConvertToStringSlice(action.Params); err == nil {
+		texts = textsInterface
+	} else {
+		return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap texts params: %v", action.Params)
+	}
+	arguments := map[string]any{
+		"texts": texts,
+	}
+	return buildMCPCallToolRequest(t.Name(), arguments), nil
+}
+
 // ToolSecondaryClick implements the secondary_click tool call.
 type ToolSecondaryClick struct{}
 
-func (t *ToolSecondaryClick) Name() string {
-	return "secondary_click"
+func (t *ToolSecondaryClick) Name() option.ActionMethod {
+	return option.ACTION_SecondaryClick
 }
 
 func (t *ToolSecondaryClick) Description() string {
@@ -1192,7 +1397,7 @@ func (t *ToolSecondaryClick) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SecondaryClickRequest{})
 }
 
-func (t *ToolSecondaryClick) Implement() toolCall {
+func (t *ToolSecondaryClick) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1215,11 +1420,22 @@ func (t *ToolSecondaryClick) Implement() toolCall {
 	}
 }
 
+func (t *ToolSecondaryClick) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
+		arguments := map[string]any{
+			"x": params[0],
+			"y": params[1],
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click params: %v", action.Params)
+}
+
 // ToolHoverBySelector implements the hover_by_selector tool call.
 type ToolHoverBySelector struct{}
 
-func (t *ToolHoverBySelector) Name() string {
-	return "hover_by_selector"
+func (t *ToolHoverBySelector) Name() option.ActionMethod {
+	return option.ACTION_HoverBySelector
 }
 
 func (t *ToolHoverBySelector) Description() string {
@@ -1230,7 +1446,7 @@ func (t *ToolHoverBySelector) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SelectorRequest{})
 }
 
-func (t *ToolHoverBySelector) Implement() toolCall {
+func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1253,11 +1469,21 @@ func (t *ToolHoverBySelector) Implement() toolCall {
 	}
 }
 
+func (t *ToolHoverBySelector) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if selector, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"selector": selector,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid hover by selector params: %v", action.Params)
+}
+
 // ToolTapBySelector implements the tap_by_selector tool call.
 type ToolTapBySelector struct{}
 
-func (t *ToolTapBySelector) Name() string {
-	return "tap_by_selector"
+func (t *ToolTapBySelector) Name() option.ActionMethod {
+	return option.ACTION_TapBySelector
 }
 
 func (t *ToolTapBySelector) Description() string {
@@ -1268,7 +1494,7 @@ func (t *ToolTapBySelector) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SelectorRequest{})
 }
 
-func (t *ToolTapBySelector) Implement() toolCall {
+func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1291,11 +1517,21 @@ func (t *ToolTapBySelector) Implement() toolCall {
 	}
 }
 
+func (t *ToolTapBySelector) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if selector, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"selector": selector,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by selector params: %v", action.Params)
+}
+
 // ToolSecondaryClickBySelector implements the secondary_click_by_selector tool call.
 type ToolSecondaryClickBySelector struct{}
 
-func (t *ToolSecondaryClickBySelector) Name() string {
-	return "secondary_click_by_selector"
+func (t *ToolSecondaryClickBySelector) Name() option.ActionMethod {
+	return option.ACTION_SecondaryClickBySelector
 }
 
 func (t *ToolSecondaryClickBySelector) Description() string {
@@ -1306,7 +1542,7 @@ func (t *ToolSecondaryClickBySelector) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SelectorRequest{})
 }
 
-func (t *ToolSecondaryClickBySelector) Implement() toolCall {
+func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1329,11 +1565,21 @@ func (t *ToolSecondaryClickBySelector) Implement() toolCall {
 	}
 }
 
+func (t *ToolSecondaryClickBySelector) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if selector, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"selector": selector,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click by selector params: %v", action.Params)
+}
+
 // ToolWebCloseTab implements the web_close_tab tool call.
 type ToolWebCloseTab struct{}
 
-func (t *ToolWebCloseTab) Name() string {
-	return "web_close_tab"
+func (t *ToolWebCloseTab) Name() option.ActionMethod {
+	return option.ACTION_WebCloseTab
 }
 
 func (t *ToolWebCloseTab) Description() string {
@@ -1344,7 +1590,7 @@ func (t *ToolWebCloseTab) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.WebCloseTabRequest{})
 }
 
-func (t *ToolWebCloseTab) Implement() toolCall {
+func (t *ToolWebCloseTab) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1372,11 +1618,29 @@ func (t *ToolWebCloseTab) Implement() toolCall {
 	}
 }
 
+func (t *ToolWebCloseTab) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	var tabIndex int
+	if param, ok := action.Params.(json.Number); ok {
+		paramInt64, _ := param.Int64()
+		tabIndex = int(paramInt64)
+	} else if param, ok := action.Params.(int64); ok {
+		tabIndex = int(param)
+	} else if param, ok := action.Params.(int); ok {
+		tabIndex = param
+	} else {
+		return mcp.CallToolRequest{}, fmt.Errorf("invalid web close tab params: %v", action.Params)
+	}
+	arguments := map[string]any{
+		"tabIndex": tabIndex,
+	}
+	return buildMCPCallToolRequest(t.Name(), arguments), nil
+}
+
 // ToolSetIme implements the set_ime tool call.
 type ToolSetIme struct{}
 
-func (t *ToolSetIme) Name() string {
-	return "set_ime"
+func (t *ToolSetIme) Name() option.ActionMethod {
+	return option.ACTION_SetIme
 }
 
 func (t *ToolSetIme) Description() string {
@@ -1387,7 +1651,7 @@ func (t *ToolSetIme) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SetImeRequest{})
 }
 
-func (t *ToolSetIme) Implement() toolCall {
+func (t *ToolSetIme) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1410,11 +1674,21 @@ func (t *ToolSetIme) Implement() toolCall {
 	}
 }
 
+func (t *ToolSetIme) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if ime, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"ime": ime,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid set ime params: %v", action.Params)
+}
+
 // ToolGetSource implements the get_source tool call.
 type ToolGetSource struct{}
 
-func (t *ToolGetSource) Name() string {
-	return "get_source"
+func (t *ToolGetSource) Name() option.ActionMethod {
+	return option.ACTION_GetSource
 }
 
 func (t *ToolGetSource) Description() string {
@@ -1425,7 +1699,7 @@ func (t *ToolGetSource) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.GetSourceRequest{})
 }
 
-func (t *ToolGetSource) Implement() toolCall {
+func (t *ToolGetSource) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1448,11 +1722,21 @@ func (t *ToolGetSource) Implement() toolCall {
 	}
 }
 
+func (t *ToolGetSource) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if packageName, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"packageName": packageName,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid get source params: %v", action.Params)
+}
+
 // ToolTapAbsXY implements the tap_abs_xy tool call.
 type ToolTapAbsXY struct{}
 
-func (t *ToolTapAbsXY) Name() string {
-	return "tap_abs_xy"
+func (t *ToolTapAbsXY) Name() option.ActionMethod {
+	return option.ACTION_TapAbsXY
 }
 
 func (t *ToolTapAbsXY) Description() string {
@@ -1463,7 +1747,7 @@ func (t *ToolTapAbsXY) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.TapAbsXYRequest{})
 }
 
-func (t *ToolTapAbsXY) Implement() toolCall {
+func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1491,11 +1775,27 @@ func (t *ToolTapAbsXY) Implement() toolCall {
 	}
 }
 
+func (t *ToolTapAbsXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
+		x, y := params[0], params[1]
+		arguments := map[string]any{
+			"x": x,
+			"y": y,
+		}
+		// Add duration if available
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap abs params: %v", action.Params)
+}
+
 // ToolTapByOCR implements the tap_by_ocr tool call.
 type ToolTapByOCR struct{}
 
-func (t *ToolTapByOCR) Name() string {
-	return "tap_by_ocr"
+func (t *ToolTapByOCR) Name() option.ActionMethod {
+	return option.ACTION_TapByOCR
 }
 
 func (t *ToolTapByOCR) Description() string {
@@ -1506,7 +1806,7 @@ func (t *ToolTapByOCR) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.TapByOCRRequest{})
 }
 
-func (t *ToolTapByOCR) Implement() toolCall {
+func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1529,11 +1829,21 @@ func (t *ToolTapByOCR) Implement() toolCall {
 	}
 }
 
+func (t *ToolTapByOCR) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if text, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"text": text,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by OCR params: %v", action.Params)
+}
+
 // ToolTapByCV implements the tap_by_cv tool call.
 type ToolTapByCV struct{}
 
-func (t *ToolTapByCV) Name() string {
-	return "tap_by_cv"
+func (t *ToolTapByCV) Name() option.ActionMethod {
+	return option.ACTION_TapByCV
 }
 
 func (t *ToolTapByCV) Description() string {
@@ -1544,7 +1854,7 @@ func (t *ToolTapByCV) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.TapByCVRequest{})
 }
 
-func (t *ToolTapByCV) Implement() toolCall {
+func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1571,11 +1881,19 @@ func (t *ToolTapByCV) Implement() toolCall {
 	}
 }
 
+func (t *ToolTapByCV) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	// For TapByCV, the original action might not have params but relies on options
+	arguments := map[string]any{
+		"imagePath": "", // Will be handled by the tool based on UI types
+	}
+	return buildMCPCallToolRequest(t.Name(), arguments), nil
+}
+
 // ToolDoubleTapXY implements the double_tap_xy tool call.
 type ToolDoubleTapXY struct{}
 
-func (t *ToolDoubleTapXY) Name() string {
-	return "double_tap_xy"
+func (t *ToolDoubleTapXY) Name() option.ActionMethod {
+	return option.ACTION_DoubleTapXY
 }
 
 func (t *ToolDoubleTapXY) Description() string {
@@ -1586,7 +1904,7 @@ func (t *ToolDoubleTapXY) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.DoubleTapXYRequest{})
 }
 
-func (t *ToolDoubleTapXY) Implement() toolCall {
+func (t *ToolDoubleTapXY) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1609,22 +1927,34 @@ func (t *ToolDoubleTapXY) Implement() toolCall {
 	}
 }
 
-// ToolSwipeAdvanced implements the swipe_advanced tool call.
-type ToolSwipeAdvanced struct{}
-
-func (t *ToolSwipeAdvanced) Name() string {
-	return "swipe_advanced"
+func (t *ToolDoubleTapXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
+		x, y := params[0], params[1]
+		arguments := map[string]any{
+			"x": x,
+			"y": y,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid double tap params: %v", action.Params)
 }
 
-func (t *ToolSwipeAdvanced) Description() string {
+// ToolSwipeCoordinate implements the swipe_advanced tool call.
+type ToolSwipeCoordinate struct{}
+
+func (t *ToolSwipeCoordinate) Name() option.ActionMethod {
+	return option.ACTION_SwipeCoordinate
+}
+
+func (t *ToolSwipeCoordinate) Description() string {
 	return "Perform advanced swipe with custom coordinates and timing"
 }
 
-func (t *ToolSwipeAdvanced) Options() []mcp.ToolOption {
+func (t *ToolSwipeCoordinate) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SwipeAdvancedRequest{})
 }
 
-func (t *ToolSwipeAdvanced) Implement() toolCall {
+func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1662,11 +1992,31 @@ func (t *ToolSwipeAdvanced) Implement() toolCall {
 	}
 }
 
+func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if paramSlice, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(paramSlice) == 4 {
+		arguments := map[string]any{
+			"fromX": paramSlice[0],
+			"fromY": paramSlice[1],
+			"toX":   paramSlice[2],
+			"toY":   paramSlice[3],
+		}
+		// Add duration and press duration from options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
+			arguments["pressDuration"] = pressDuration
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe advanced params: %v", action.Params)
+}
+
 // ToolSleepMS implements the sleep_ms tool call.
 type ToolSleepMS struct{}
 
-func (t *ToolSleepMS) Name() string {
-	return "sleep_ms"
+func (t *ToolSleepMS) Name() option.ActionMethod {
+	return option.ACTION_SleepMS
 }
 
 func (t *ToolSleepMS) Description() string {
@@ -1677,7 +2027,7 @@ func (t *ToolSleepMS) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SleepMSRequest{})
 }
 
-func (t *ToolSleepMS) Implement() toolCall {
+func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		var sleepReq option.SleepMSRequest
 		if err := mapToStruct(request.Params.Arguments, &sleepReq); err != nil {
@@ -1692,11 +2042,26 @@ func (t *ToolSleepMS) Implement() toolCall {
 	}
 }
 
+func (t *ToolSleepMS) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	var milliseconds int64
+	if param, ok := action.Params.(json.Number); ok {
+		milliseconds, _ = param.Int64()
+	} else if param, ok := action.Params.(int64); ok {
+		milliseconds = param
+	} else {
+		return mcp.CallToolRequest{}, fmt.Errorf("invalid sleep ms params: %v", action.Params)
+	}
+	arguments := map[string]any{
+		"milliseconds": milliseconds,
+	}
+	return buildMCPCallToolRequest(t.Name(), arguments), nil
+}
+
 // ToolSleepRandom implements the sleep_random tool call.
 type ToolSleepRandom struct{}
 
-func (t *ToolSleepRandom) Name() string {
-	return "sleep_random"
+func (t *ToolSleepRandom) Name() option.ActionMethod {
+	return option.ACTION_SleepRandom
 }
 
 func (t *ToolSleepRandom) Description() string {
@@ -1707,7 +2072,7 @@ func (t *ToolSleepRandom) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.SleepRandomRequest{})
 }
 
-func (t *ToolSleepRandom) Implement() toolCall {
+func (t *ToolSleepRandom) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		var sleepRandomReq option.SleepRandomRequest
 		if err := mapToStruct(request.Params.Arguments, &sleepRandomReq); err != nil {
@@ -1722,11 +2087,21 @@ func (t *ToolSleepRandom) Implement() toolCall {
 	}
 }
 
+func (t *ToolSleepRandom) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil {
+		arguments := map[string]any{
+			"params": params,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid sleep random params: %v", action.Params)
+}
+
 // ToolClosePopups implements the close_popups tool call.
 type ToolClosePopups struct{}
 
-func (t *ToolClosePopups) Name() string {
-	return "close_popups"
+func (t *ToolClosePopups) Name() option.ActionMethod {
+	return option.ACTION_ClosePopups
 }
 
 func (t *ToolClosePopups) Description() string {
@@ -1737,7 +2112,7 @@ func (t *ToolClosePopups) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.TargetDeviceRequest{})
 }
 
-func (t *ToolClosePopups) Implement() toolCall {
+func (t *ToolClosePopups) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1755,11 +2130,15 @@ func (t *ToolClosePopups) Implement() toolCall {
 	}
 }
 
+func (t *ToolClosePopups) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
 // ToolCallFunction implements the call_function tool call.
 type ToolCallFunction struct{}
 
-func (t *ToolCallFunction) Name() string {
-	return "call_function"
+func (t *ToolCallFunction) Name() option.ActionMethod {
+	return option.ACTION_CallFunction
 }
 
 func (t *ToolCallFunction) Description() string {
@@ -1770,7 +2149,7 @@ func (t *ToolCallFunction) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.CallFunctionRequest{})
 }
 
-func (t *ToolCallFunction) Implement() toolCall {
+func (t *ToolCallFunction) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1795,11 +2174,21 @@ func (t *ToolCallFunction) Implement() toolCall {
 	}
 }
 
+func (t *ToolCallFunction) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if description, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"description": description,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid call function params: %v", action.Params)
+}
+
 // ToolAIAction implements the ai_action tool call.
 type ToolAIAction struct{}
 
-func (t *ToolAIAction) Name() string {
-	return "ai_action"
+func (t *ToolAIAction) Name() option.ActionMethod {
+	return option.ACTION_AIAction
 }
 
 func (t *ToolAIAction) Description() string {
@@ -1810,7 +2199,7 @@ func (t *ToolAIAction) Options() []mcp.ToolOption {
 	return option.NewMCPOptions(option.AIActionRequest{})
 }
 
-func (t *ToolAIAction) Implement() toolCall {
+func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
 		if err != nil {
@@ -1831,4 +2220,14 @@ func (t *ToolAIAction) Implement() toolCall {
 
 		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed AI action with prompt: %s", aiReq.Prompt)), nil
 	}
+}
+
+func (t *ToolAIAction) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if prompt, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"prompt": prompt,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid AI action params: %v", action.Params)
 }

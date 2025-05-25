@@ -1,20 +1,19 @@
-## hrp startproject
+## hrp mcp-server
 
-Create a scaffold project
+Start MCP server for UI automation
+
+### Synopsis
+
+Start MCP server for UI automation, expose device driver via MCP protocol
 
 ```
-hrp startproject $project_name [flags]
+hrp mcp-server [flags]
 ```
 
 ### Options
 
 ```
-      --empty           generate empty project
-  -f, --force           force to overwrite existing project
-      --go              generate hashicorp go plugin
-  -h, --help            help for startproject
-      --ignore-plugin   ignore function plugin
-      --py              generate hashicorp python plugin (default true)
+  -h, --help   help for mcp-server
 ```
 
 ### Options inherited from parent commands

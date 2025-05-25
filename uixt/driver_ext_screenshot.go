@@ -348,7 +348,7 @@ func MarkUIOperation(driver IDriver, actionType option.ActionMethod, actionCoord
 		x, y := actionCoordinates[0], actionCoordinates[1]
 		point := image.Point{X: int(x), Y: int(y)}
 		err = SaveImageWithCircleMarker(compressedBufSource, point, imagePath)
-	} else if actionType == option.ACTION_Swipe || actionType == option.ACTION_Drag {
+	} else if actionType == option.ACTION_SwipeDirection || actionType == option.ACTION_SwipeCoordinate || actionType == option.ACTION_Drag {
 		if len(actionCoordinates) != 4 {
 			return fmt.Errorf("invalid swipe action coordinates: %v", actionCoordinates)
 		}

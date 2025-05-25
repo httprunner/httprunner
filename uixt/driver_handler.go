@@ -98,7 +98,8 @@ func preHandler_Drag(driver IDriver, options *option.ActionOptions, rawFomX, raw
 	return fromX, fromY, toX, toY, nil
 }
 
-func preHandler_Swipe(driver IDriver, options *option.ActionOptions, rawFomX, rawFromY, rawToX, rawToY float64) (
+func preHandler_Swipe(driver IDriver, actionType option.ActionMethod,
+	options *option.ActionOptions, rawFomX, rawFromY, rawToX, rawToY float64) (
 	fromX, fromY, toX, toY float64, err error) {
 
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(driver, rawFomX, rawFromY, rawToX, rawToY)
@@ -109,7 +110,7 @@ func preHandler_Swipe(driver IDriver, options *option.ActionOptions, rawFomX, ra
 
 	// save screenshot before action and mark UI operation
 	if options.PreMarkOperation {
-		if markErr := MarkUIOperation(driver, option.ACTION_Swipe, []float64{fromX, fromY, toX, toY}); markErr != nil {
+		if markErr := MarkUIOperation(driver, actionType, []float64{fromX, fromY, toX, toY}); markErr != nil {
 			log.Warn().Err(markErr).Msg("Failed to mark swipe operation")
 		}
 	}

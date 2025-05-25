@@ -19,8 +19,8 @@ func TestNewMCPServer(t *testing.T) {
 		"list_available_devices",
 		"select_device",
 		"list_packages",
-		"launch_app",
-		"terminate_app",
+		"app_launch",
+		"app_terminate",
 		"get_screen_size",
 		"press_button",
 		"tap_xy",
@@ -54,7 +54,7 @@ func TestToolInterfaces(t *testing.T) {
 		&ToolGetScreenSize{},
 		&ToolPressButton{},
 		&ToolTapXY{},
-		&ToolSwipe{},
+		&ToolSwipeDirection{},
 		&ToolDrag{},
 		&ToolScreenShot{},
 		&ToolHome{},
@@ -64,7 +64,7 @@ func TestToolInterfaces(t *testing.T) {
 	}
 
 	for _, tool := range tools {
-		assert.NotEmpty(t, tool.Name(), "Tool name should not be empty")
+		assert.NotEmpty(t, string(tool.Name()), "Tool name should not be empty")
 		assert.NotEmpty(t, tool.Description(), "Tool description should not be empty")
 		assert.NotNil(t, tool.Options(), "Tool options should not be nil")
 		assert.NotNil(t, tool.Implement(), "Tool implementation should not be nil")
