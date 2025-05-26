@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/maja42/goval"
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -20,7 +21,6 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/mcphost"
-	mcp2 "github.com/mark3labs/mcp-go/mcp"
 )
 
 func NewParser() *Parser {
@@ -316,13 +316,17 @@ func (p *Parser) CallMCPTool(ctx context.Context, serverName,
 		return nil, errors.Wrapf(err, "invoke tool %s/%s failed", serverName, funcName)
 	}
 	if result.IsError {
-		return nil, fmt.Errorf("invoke tool %s/%s failed: %v", serverName, funcName, result.Content)
+		if len(result.Content) > 0 {
+			return nil, fmt.Errorf("invoke tool %s/%s failed: %v",
+				serverName, funcName, result.Content)
+		}
+		return nil, fmt.Errorf("invoke tool %s/%s failed", serverName, funcName)
 	}
 
 	// extract text content
 	var resultText string
 	for _, item := range result.Content {
-		if contentMap, ok := item.(mcp2.TextContent); ok {
+		if contentMap, ok := item.(mcp.TextContent); ok {
 			resultText += fmt.Sprintf("%v ", contentMap.Text)
 		}
 	}

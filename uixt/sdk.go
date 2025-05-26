@@ -101,9 +101,10 @@ func (dExt *XTDriver) ExecuteAction(action MobileAction) (err error) {
 	// Check if the tool execution had business logic errors
 	if result.IsError {
 		if len(result.Content) > 0 {
-			return fmt.Errorf("tool execution failed: %s", result.Content[0])
+			return fmt.Errorf("invoke tool %s failed: %v",
+				tool.Name(), result.Content)
 		}
-		return fmt.Errorf("tool execution failed")
+		return fmt.Errorf("invoke tool %s failed", tool.Name())
 	}
 
 	log.Debug().Str("method", string(action.Method)).

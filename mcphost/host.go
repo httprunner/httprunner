@@ -218,7 +218,7 @@ func (h *MCPHost) GetTool(ctx context.Context, serverName, toolName string) (*mc
 		}
 	}
 	if !found {
-		return nil, fmt.Errorf("no connection found for server %s", serverName)
+		return nil, fmt.Errorf("no connection found for MCP server %s", serverName)
 	}
 	if serverTools.Err != nil {
 		return nil, serverTools.Err
@@ -231,7 +231,7 @@ func (h *MCPHost) GetTool(ctx context.Context, serverName, toolName string) (*mc
 		}
 	}
 
-	return nil, fmt.Errorf("tool %s not found", toolName)
+	return nil, fmt.Errorf("MCP tool %s/%s not found", serverName, toolName)
 }
 
 // InvokeTool calls a tool with the given arguments
@@ -271,9 +271,12 @@ func (h *MCPHost) InvokeTool(ctx context.Context,
 		return nil, errors.Wrapf(err,
 			"call tool %s/%s failed", serverName, toolName)
 	}
-
-	if err := handleToolError(result); err != nil {
-		return nil, err
+	if result.IsError {
+		if len(result.Content) > 0 {
+			return nil, fmt.Errorf("invoke tool %s/%s failed: %v",
+				serverName, toolName, result.Content)
+		}
+		return nil, fmt.Errorf("invoke tool %s/%s failed", serverName, toolName)
 	}
 
 	return result, nil
@@ -382,15 +385,4 @@ func prepareClientInitRequest() mcp.InitializeRequest {
 			},
 		},
 	}
-}
-
-// handleToolError handles tool execution errors
-func handleToolError(result *mcp.CallToolResult) error {
-	if !result.IsError {
-		return nil
-	}
-	if len(result.Content) > 0 {
-		return fmt.Errorf("tool error: %v", result.Content[0])
-	}
-	return fmt.Errorf("tool error: unknown error")
 }
