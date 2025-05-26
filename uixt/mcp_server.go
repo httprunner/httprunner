@@ -101,6 +101,7 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolDoubleTapXY{}) // double tap xy
 
 	// Swipe Tool
+	s.registerTool(&ToolSwipe{})           // generic swipe, auto-detect direction or coordinate
 	s.registerTool(&ToolSwipeDirection{})  // swipe direction, up/down/left/right
 	s.registerTool(&ToolSwipeCoordinate{}) // swipe coordinate, [fromX, fromY, toX, toY]
 	s.registerTool(&ToolSwipeToTapApp{})
@@ -879,6 +880,175 @@ func (t *ToolPressButton) ConvertActionToCallToolRequest(action MobileAction) (m
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid press button params: %v", action.Params)
+}
+
+// ToolSwipe implements the generic swipe tool call.
+// It automatically determines whether to use direction-based or coordinate-based swipe
+// based on the params type.
+type ToolSwipe struct{}
+
+func (t *ToolSwipe) Name() option.ActionMethod {
+	return option.ACTION_Swipe
+}
+
+func (t *ToolSwipe) Description() string {
+	return "Swipe on the screen by direction (up/down/left/right) or coordinates [fromX, fromY, toX, toY]"
+}
+
+func (t *ToolSwipe) Options() []mcp.ToolOption {
+	// Combine options from both direction and coordinate swipe
+	directionOptions := option.NewMCPOptions(option.SwipeRequest{})
+	coordinateOptions := option.NewMCPOptions(option.SwipeAdvancedRequest{})
+
+	// Merge the options
+	allOptions := make([]mcp.ToolOption, 0, len(directionOptions)+len(coordinateOptions))
+	allOptions = append(allOptions, directionOptions...)
+	allOptions = append(allOptions, coordinateOptions...)
+
+	return allOptions
+}
+
+func (t *ToolSwipe) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		// Check if it's direction-based swipe (has "direction" parameter)
+		if direction, exists := request.Params.Arguments["direction"]; exists {
+			// Direction-based swipe
+			directionStr, ok := direction.(string)
+			if !ok {
+				return nil, fmt.Errorf("direction parameter must be a string")
+			}
+
+			// Validate direction
+			validDirections := []string{"up", "down", "left", "right"}
+			isValid := false
+			for _, validDir := range validDirections {
+				if directionStr == validDir {
+					isValid = true
+					break
+				}
+			}
+			if !isValid {
+				return nil, fmt.Errorf("invalid swipe direction: %s, expected one of: %v", directionStr, validDirections)
+			}
+
+			log.Info().Str("direction", directionStr).Msg("performing direction-based swipe")
+
+			// Extract duration and press duration
+			var duration, pressDuration float64
+			if d, exists := request.Params.Arguments["duration"]; exists {
+				if dFloat, ok := d.(float64); ok {
+					duration = dFloat
+				}
+			}
+			if pd, exists := request.Params.Arguments["pressDuration"]; exists {
+				if pdFloat, ok := pd.(float64); ok {
+					pressDuration = pdFloat
+				}
+			}
+
+			opts := []option.ActionOption{
+				option.WithPreMarkOperation(true),
+			}
+			if duration > 0 {
+				opts = append(opts, option.WithDuration(duration))
+			}
+			if pressDuration > 0 {
+				opts = append(opts, option.WithPressDuration(pressDuration))
+			}
+
+			// Convert direction to coordinates and perform swipe
+			switch directionStr {
+			case "up":
+				err = driverExt.Swipe(0.5, 0.5, 0.5, 0.1, opts...)
+			case "down":
+				err = driverExt.Swipe(0.5, 0.5, 0.5, 0.9, opts...)
+			case "left":
+				err = driverExt.Swipe(0.5, 0.5, 0.1, 0.5, opts...)
+			case "right":
+				err = driverExt.Swipe(0.5, 0.5, 0.9, 0.5, opts...)
+			default:
+				return mcp.NewToolResultError(fmt.Sprintf("Unexpected swipe direction: %s", directionStr)), nil
+			}
+
+			if err != nil {
+				return mcp.NewToolResultError(fmt.Sprintf("Direction swipe failed: %s", err.Error())), nil
+			}
+
+			return mcp.NewToolResultText(fmt.Sprintf("Successfully swiped %s", directionStr)), nil
+
+		} else {
+			// Coordinate-based swipe
+			var swipeAdvReq option.SwipeAdvancedRequest
+			if err := mapToStruct(request.Params.Arguments, &swipeAdvReq); err != nil {
+				return nil, fmt.Errorf("parse parameters error: %w", err)
+			}
+
+			log.Info().
+				Float64("fromX", swipeAdvReq.FromX).Float64("fromY", swipeAdvReq.FromY).
+				Float64("toX", swipeAdvReq.ToX).Float64("toY", swipeAdvReq.ToY).
+				Msg("performing coordinate-based swipe")
+
+			params := []float64{swipeAdvReq.FromX, swipeAdvReq.FromY, swipeAdvReq.ToX, swipeAdvReq.ToY}
+			opts := []option.ActionOption{}
+			if swipeAdvReq.Duration > 0 {
+				opts = append(opts, option.WithDuration(swipeAdvReq.Duration))
+			}
+			if swipeAdvReq.PressDuration > 0 {
+				opts = append(opts, option.WithPressDuration(swipeAdvReq.PressDuration))
+			}
+
+			swipeAction := prepareSwipeAction(driverExt, params, opts...)
+			err = swipeAction(driverExt)
+			if err != nil {
+				return mcp.NewToolResultError(fmt.Sprintf("Coordinate swipe failed: %s", err.Error())), nil
+			}
+
+			return mcp.NewToolResultText(fmt.Sprintf("Successfully performed coordinate swipe from (%.2f, %.2f) to (%.2f, %.2f)",
+				swipeAdvReq.FromX, swipeAdvReq.FromY, swipeAdvReq.ToX, swipeAdvReq.ToY)), nil
+		}
+	}
+}
+
+func (t *ToolSwipe) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	// Check if params is a string (direction-based swipe)
+	if direction, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"direction": direction,
+		}
+		// Add duration and press duration from options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
+			arguments["pressDuration"] = pressDuration
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+
+	// Check if params is a coordinate array (coordinate-based swipe)
+	if paramSlice, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(paramSlice) == 4 {
+		arguments := map[string]any{
+			"fromX": paramSlice[0],
+			"fromY": paramSlice[1],
+			"toX":   paramSlice[2],
+			"toY":   paramSlice[3],
+		}
+		// Add duration and press duration from options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
+			arguments["pressDuration"] = pressDuration
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v, expected string direction or [fromX, fromY, toX, toY] coordinates", action.Params)
 }
 
 // ToolSwipeDirection implements the swipe tool call.

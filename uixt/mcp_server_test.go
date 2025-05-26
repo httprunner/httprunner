@@ -25,6 +25,7 @@ func TestNewMCPServer(t *testing.T) {
 		"tap_ocr",
 		"tap_cv",
 		"double_tap_xy",
+		"swipe",
 		"swipe_direction",
 		"swipe_coordinate",
 		"swipe_to_tap_app",
@@ -79,6 +80,7 @@ func TestToolInterfaces(t *testing.T) {
 		&ToolTapByOCR{},
 		&ToolTapByCV{},
 		&ToolDoubleTapXY{},
+		&ToolSwipe{},
 		&ToolSwipeDirection{},
 		&ToolSwipeCoordinate{},
 		&ToolSwipeToTapApp{},
@@ -420,6 +422,72 @@ func TestToolDoubleTapXY(t *testing.T) {
 		Params: "invalid",
 	}
 	_, err = tool.ConvertActionToCallToolRequest(invalidAction)
+	assert.Error(t, err)
+}
+
+// TestToolSwipe tests the ToolSwipe implementation
+func TestToolSwipe(t *testing.T) {
+	tool := &ToolSwipe{}
+
+	// Test Name
+	assert.Equal(t, option.ACTION_Swipe, tool.Name())
+
+	// Test Description
+	assert.NotEmpty(t, tool.Description())
+
+	// Test Options
+	options := tool.Options()
+	assert.NotNil(t, options)
+
+	// Test ConvertActionToCallToolRequest with direction params (string)
+	directionAction := MobileAction{
+		Method: option.ACTION_Swipe,
+		Params: "up",
+		ActionOptions: option.ActionOptions{
+			Duration:      1.5,
+			PressDuration: 0.5,
+		},
+	}
+	request, err := tool.ConvertActionToCallToolRequest(directionAction)
+	assert.NoError(t, err)
+	assert.Equal(t, string(option.ACTION_Swipe), request.Params.Name)
+	assert.Equal(t, "up", request.Params.Arguments["direction"])
+	assert.Equal(t, 1.5, request.Params.Arguments["duration"])
+	assert.Equal(t, 0.5, request.Params.Arguments["pressDuration"])
+
+	// Test ConvertActionToCallToolRequest with coordinate params ([]float64)
+	coordinateAction := MobileAction{
+		Method: option.ACTION_Swipe,
+		Params: []float64{0.1, 0.2, 0.8, 0.9},
+		ActionOptions: option.ActionOptions{
+			Duration:      2.0,
+			PressDuration: 1.0,
+		},
+	}
+	request, err = tool.ConvertActionToCallToolRequest(coordinateAction)
+	assert.NoError(t, err)
+	assert.Equal(t, string(option.ACTION_Swipe), request.Params.Name)
+	assert.Equal(t, 0.1, request.Params.Arguments["fromX"])
+	assert.Equal(t, 0.2, request.Params.Arguments["fromY"])
+	assert.Equal(t, 0.8, request.Params.Arguments["toX"])
+	assert.Equal(t, 0.9, request.Params.Arguments["toY"])
+	assert.Equal(t, 2.0, request.Params.Arguments["duration"])
+	assert.Equal(t, 1.0, request.Params.Arguments["pressDuration"])
+
+	// Test ConvertActionToCallToolRequest with invalid params
+	invalidAction := MobileAction{
+		Method: option.ACTION_Swipe,
+		Params: 123, // should be string or []float64
+	}
+	_, err = tool.ConvertActionToCallToolRequest(invalidAction)
+	assert.Error(t, err)
+
+	// Test ConvertActionToCallToolRequest with incomplete coordinate params
+	incompleteAction := MobileAction{
+		Method: option.ACTION_Swipe,
+		Params: []float64{0.1, 0.2}, // missing toX and toY
+	}
+	_, err = tool.ConvertActionToCallToolRequest(incompleteAction)
 	assert.Error(t, err)
 }
 
