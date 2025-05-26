@@ -16,11 +16,9 @@ type TargetDeviceRequest struct {
 
 type TapRequest struct {
 	TargetDeviceRequest
-	X                   float64 `json:"x" binding:"required" desc:"X coordinate (0.0~1.0 for percent, or absolute pixel value)"`
-	Y                   float64 `json:"y" binding:"required" desc:"Y coordinate (0.0~1.0 for percent, or absolute pixel value)"`
-	Duration            float64 `json:"duration" desc:"Tap duration in seconds (optional)"`
-	IgnoreNotFoundError bool    `json:"ignore_NotFoundError" desc:"Ignore error if target element not found"`
-	MaxRetryTimes       int     `json:"max_retry_times" desc:"Maximum retry times for the tap action"`
+	X        float64 `json:"x" binding:"required" desc:"X coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	Y        float64 `json:"y" binding:"required" desc:"Y coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	Duration float64 `json:"duration" desc:"Tap duration in seconds (optional)"`
 }
 
 type DragRequest struct {
@@ -157,11 +155,9 @@ type GetSourceRequest struct {
 
 type TapAbsXYRequest struct {
 	TargetDeviceRequest
-	X                   float64 `json:"x" binding:"required" desc:"Absolute X coordinate in pixels"`
-	Y                   float64 `json:"y" binding:"required" desc:"Absolute Y coordinate in pixels"`
-	Duration            float64 `json:"duration" desc:"Tap duration in seconds (optional)"`
-	IgnoreNotFoundError bool    `json:"ignore_NotFoundError" desc:"Ignore error if target element not found"`
-	MaxRetryTimes       int     `json:"max_retry_times" desc:"Maximum retry times for the tap action"`
+	X        float64 `json:"x" binding:"required" desc:"Absolute X coordinate in pixels"`
+	Y        float64 `json:"y" binding:"required" desc:"Absolute Y coordinate in pixels"`
+	Duration float64 `json:"duration" desc:"Tap duration in seconds (optional)"`
 }
 
 type TapByOCRRequest struct {
@@ -185,10 +181,8 @@ type TapByCVRequest struct {
 
 type DoubleTapXYRequest struct {
 	TargetDeviceRequest
-	X                   float64 `json:"x" binding:"required" desc:"X coordinate (0.0~1.0 for percent, or absolute pixel value)"`
-	Y                   float64 `json:"y" binding:"required" desc:"Y coordinate (0.0~1.0 for percent, or absolute pixel value)"`
-	IgnoreNotFoundError bool    `json:"ignore_NotFoundError" desc:"Ignore error if target element not found"`
-	MaxRetryTimes       int     `json:"max_retry_times" desc:"Maximum retry times for the tap action"`
+	X float64 `json:"x" binding:"required" desc:"X coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	Y float64 `json:"y" binding:"required" desc:"Y coordinate (0.0~1.0 for percent, or absolute pixel value)"`
 }
 
 type SwipeAdvancedRequest struct {

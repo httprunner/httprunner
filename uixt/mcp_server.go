@@ -316,17 +316,9 @@ func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 		// Build action options from request structure
 		var opts []option.ActionOption
 
-		// Add boolean options
-		if tapReq.IgnoreNotFoundError {
-			opts = append(opts, option.WithIgnoreNotFoundError(true))
-		}
-
 		// Add numeric options
 		if tapReq.Duration > 0 {
 			opts = append(opts, option.WithDuration(tapReq.Duration))
-		}
-		if tapReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(tapReq.MaxRetryTimes))
 		}
 
 		// Add default options
@@ -394,17 +386,9 @@ func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 		// Build action options from request structure
 		var opts []option.ActionOption
 
-		// Add boolean options
-		if tapAbsReq.IgnoreNotFoundError {
-			opts = append(opts, option.WithIgnoreNotFoundError(true))
-		}
-
 		// Add numeric options
 		if tapAbsReq.Duration > 0 {
 			opts = append(opts, option.WithDuration(tapAbsReq.Duration))
-		}
-		if tapAbsReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(tapAbsReq.MaxRetryTimes))
 		}
 
 		// Tap absolute XY action logic
