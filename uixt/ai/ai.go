@@ -2,7 +2,9 @@ package ai
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
@@ -95,6 +97,11 @@ func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 			"env %s missed", EnvModelName)
 	}
 
+	// Validate model type and model name compatibility
+	if err := validateModelType(modelType, modelName); err != nil {
+		return nil, err
+	}
+
 	// https://www.volcengine.com/docs/82379/1536429
 	temperature := float32(0)
 	topP := float32(0.7)
@@ -118,6 +125,23 @@ func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 		ChatModelConfig: modelConfig,
 		ModelType:       modelType,
 	}, nil
+}
+
+func validateModelType(modelType option.LLMServiceType, modelName string) error {
+	switch modelType {
+	case option.LLMServiceTypeUITARS:
+		if !strings.Contains(modelName, "ui-tars") {
+			return fmt.Errorf("model name %s is not supported for %s", modelName, modelType)
+		}
+		return nil
+	case option.LLMServiceTypeDoubaoVL:
+		if !strings.Contains(modelName, "doubao") || !strings.Contains(modelName, "vision") {
+			return fmt.Errorf("model name %s is not supported", modelName)
+		}
+		return nil
+	}
+
+	return fmt.Errorf("model type %s is not supported", modelType)
 }
 
 // maskAPIKey masks the API key
