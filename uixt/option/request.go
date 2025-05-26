@@ -195,6 +195,10 @@ type AIActionRequest struct {
 	Prompt string `json:"prompt" binding:"required" desc:"AI action prompt"`
 }
 
+type FinishedRequest struct {
+	Content string `json:"content" binding:"required" desc:"Completion message for finished reason"`
+}
+
 // NewMCPOptions generates mcp.NewTool parameters from a struct type.
 // It automatically generates mcp.NewTool parameters based on the struct fields and their desc tags.
 func NewMCPOptions(t interface{}) (options []mcp.ToolOption) {

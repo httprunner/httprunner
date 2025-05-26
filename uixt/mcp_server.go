@@ -142,7 +142,6 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolSetIme{})
 	s.registerTool(&ToolGetSource{})
 	s.registerTool(&ToolClosePopups{})
-	s.registerTool(&ToolAIAction{})
 
 	// PC/Web actions
 	s.registerTool(&ToolWebLoginNoneUI{})
@@ -151,6 +150,10 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolTapBySelector{})
 	s.registerTool(&ToolSecondaryClickBySelector{})
 	s.registerTool(&ToolWebCloseTab{})
+
+	// LLM actions
+	s.registerTool(&ToolAIAction{})
+	s.registerTool(&ToolFinished{})
 }
 
 func (s *MCPServer4XTDriver) registerTool(tool ActionTool) {
@@ -2147,4 +2150,41 @@ func (t *ToolAIAction) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid AI action params: %v", action.Params)
+}
+
+// ToolFinished implements the finished tool call.
+type ToolFinished struct{}
+
+func (t *ToolFinished) Name() option.ActionMethod {
+	return option.ACTION_Finished
+}
+
+func (t *ToolFinished) Description() string {
+	return "Mark task as completed with a result message"
+}
+
+func (t *ToolFinished) Options() []mcp.ToolOption {
+	return option.NewMCPOptions(option.FinishedRequest{})
+}
+
+func (t *ToolFinished) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		var finishedReq option.FinishedRequest
+		if err := mapToStruct(request.Params.Arguments, &finishedReq); err != nil {
+			return nil, fmt.Errorf("parse parameters error: %w", err)
+		}
+		log.Info().Str("reason", finishedReq.Content).Msg("task finished")
+
+		return mcp.NewToolResultText(fmt.Sprintf("Task completed: %s", finishedReq.Content)), nil
+	}
+}
+
+func (t *ToolFinished) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+	if reason, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"content": reason,
+		}
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid finished params: %v", action.Params)
 }

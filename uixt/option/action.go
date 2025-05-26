@@ -65,6 +65,7 @@ const (
 	ACTION_InstallApp      ActionMethod = "install_app"
 	ACTION_UninstallApp    ActionMethod = "uninstall_app"
 	ACTION_DownloadApp     ActionMethod = "download_app"
+	ACTION_Finished        ActionMethod = "finished"
 )
 
 const (
