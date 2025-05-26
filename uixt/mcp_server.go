@@ -80,8 +80,8 @@ func (s *MCPServer4XTDriver) GetTool(name string) *mcp.Tool {
 	return nil
 }
 
-// GetToolByActionMethod returns the tool that handles the given action method
-func (s *MCPServer4XTDriver) GetToolByActionMethod(actionMethod option.ActionMethod) ActionTool {
+// GetToolByAction returns the tool that handles the given action method
+func (s *MCPServer4XTDriver) GetToolByAction(actionMethod option.ActionMethod) ActionTool {
 	if s.actionToolMap == nil {
 		return nil
 	}
