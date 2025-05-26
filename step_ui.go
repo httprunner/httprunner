@@ -692,7 +692,10 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 	})
 
 	// init wda/uia/hdc driver
-	uiDriver, err := s.caseRunner.GetUIXTDriver(mobileStep.Serial)
+	config := uixt.DriverCacheConfig{
+		Serial: mobileStep.Serial,
+	}
+	uiDriver, err := uixt.GetOrCreateXTDriver(config)
 	if err != nil {
 		return
 	}

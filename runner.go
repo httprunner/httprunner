@@ -236,13 +236,6 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			return err
 		}
 
-		// release UI driver session
-		defer func() {
-			for _, client := range caseRunner.uixtDrivers {
-				client.DeleteSession()
-			}
-		}()
-
 		for it := caseRunner.parametersIterator; it.HasNext(); {
 			// case runner can run multiple times with different parameters
 			// each run has its own session runner
@@ -286,10 +279,9 @@ func NewCaseRunner(testcase TestCase, hrpRunner *HRPRunner) (*CaseRunner, error)
 		hrpRunner = NewRunner(nil)
 	}
 	caseRunner := &CaseRunner{
-		TestCase:    testcase,
-		hrpRunner:   hrpRunner,
-		parser:      NewParser(),
-		uixtDrivers: make(map[string]*uixt.XTDriver),
+		TestCase:  testcase,
+		hrpRunner: hrpRunner,
+		parser:    NewParser(),
 	}
 	config := testcase.Config.Get()
 
@@ -353,9 +345,6 @@ type CaseRunner struct {
 	parser    *Parser    // each CaseRunner init its own Parser
 
 	parametersIterator *ParametersIterator
-
-	// UI automation clients for iOS and Android, key is udid/serial
-	uixtDrivers map[string]*uixt.XTDriver
 }
 
 func (r *CaseRunner) GetParametersIterator() *ParametersIterator {
@@ -446,6 +435,7 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 	}
 	aiOpts = append(aiOpts, option.WithCVService(parsedConfig.CVService))
 
+	var driverConfigs []uixt.DriverCacheConfig
 	// parse android devices config
 	for _, androidDeviceOptions := range parsedConfig.Android {
 		err := r.parseDeviceConfig(androidDeviceOptions, parsedConfig.Variables)
@@ -453,21 +443,12 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse android config failed: %v", err))
 		}
-
-		device, err := uixt.NewAndroidDevice(androidDeviceOptions.Options()...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init android device failed")
-		}
-		driver, err := device.NewDriver()
-		if err != nil {
-			return nil, errors.Wrap(err, "init android driver failed")
-		}
-
-		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init android XTDriver failed")
-		}
-		r.RegisterUIXTDriver(androidDeviceOptions.SerialNumber, driverExt)
+		driverConfigs = append(driverConfigs, uixt.DriverCacheConfig{
+			Platform:   "android",
+			Serial:     androidDeviceOptions.SerialNumber,
+			AIOptions:  aiOpts,
+			DeviceOpts: option.FromAndroidOptions(androidDeviceOptions),
+		})
 	}
 	// parse iOS devices config
 	for _, iosDeviceOptions := range parsedConfig.IOS {
@@ -476,21 +457,12 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse ios config failed: %v", err))
 		}
-
-		device, err := uixt.NewIOSDevice(iosDeviceOptions.Options()...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init ios device failed")
-		}
-		driver, err := device.NewDriver()
-		if err != nil {
-			return nil, errors.Wrap(err, "init ios driver failed")
-		}
-
-		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init ios XTDriver failed")
-		}
-		r.RegisterUIXTDriver(iosDeviceOptions.UDID, driverExt)
+		driverConfigs = append(driverConfigs, uixt.DriverCacheConfig{
+			Platform:   "ios",
+			Serial:     iosDeviceOptions.UDID,
+			AIOptions:  aiOpts,
+			DeviceOpts: option.FromIOSOptions(iosDeviceOptions),
+		})
 	}
 	// parse harmony devices config
 	for _, harmonyDeviceOptions := range parsedConfig.Harmony {
@@ -499,21 +471,12 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse harmony config failed: %v", err))
 		}
-
-		device, err := uixt.NewHarmonyDevice(harmonyDeviceOptions.Options()...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init harmony device failed")
-		}
-		driver, err := device.NewDriver()
-		if err != nil {
-			return nil, errors.Wrap(err, "init harmony driver failed")
-		}
-
-		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init harmony XTDriver failed")
-		}
-		r.RegisterUIXTDriver(harmonyDeviceOptions.ConnectKey, driverExt)
+		driverConfigs = append(driverConfigs, uixt.DriverCacheConfig{
+			Platform:   "harmony",
+			Serial:     harmonyDeviceOptions.ConnectKey,
+			AIOptions:  aiOpts,
+			DeviceOpts: option.FromHarmonyOptions(harmonyDeviceOptions),
+		})
 	}
 	// parse browser devices config
 	for _, browserDeviceOptions := range parsedConfig.Browser {
@@ -522,26 +485,35 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse browser config failed: %v", err))
 		}
-		device, err := uixt.NewBrowserDevice(browserDeviceOptions.Options()...)
+		driverConfigs = append(driverConfigs, uixt.DriverCacheConfig{
+			Platform:   "browser",
+			Serial:     browserDeviceOptions.BrowserID,
+			AIOptions:  aiOpts,
+			DeviceOpts: option.FromBrowserOptions(browserDeviceOptions),
+		})
+	}
+
+	// init XTDriver and register to unified cache
+	for _, driverConfig := range driverConfigs {
+		driverExt, err := uixt.GetOrCreateXTDriver(driverConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "init browser device failed")
+			return nil, errors.Wrapf(err, "init %s XTDriver failed", driverConfig.Platform)
 		}
-		driver, err := device.NewDriver()
-		if err != nil {
-			return nil, errors.Wrap(err, "init browser driver failed")
+		if err := r.RegisterUIXTDriver(driverConfig.Serial, driverExt); err != nil {
+			return nil, err
 		}
-		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init browser XTDriver failed")
-		}
-		r.RegisterUIXTDriver(browserDeviceOptions.BrowserID, driverExt)
 	}
 
 	return parsedConfig, nil
 }
 
-func (r *CaseRunner) RegisterUIXTDriver(serial string, driver *uixt.XTDriver) {
-	r.uixtDrivers[serial] = driver
+func (r *CaseRunner) RegisterUIXTDriver(serial string, driver *uixt.XTDriver) error {
+	if err := uixt.RegisterXTDriver(serial, driver); err != nil {
+		log.Error().Err(err).Str("serial", serial).Msg("register XTDriver failed")
+		return err
+	}
+	log.Info().Str("serial", serial).Msg("register XTDriver success")
+	return nil
 }
 
 func (r *CaseRunner) parseDeviceConfig(device interface{}, configVariables map[string]interface{}) error {
@@ -578,21 +550,6 @@ func (r *CaseRunner) parseDeviceConfig(device interface{}, configVariables map[s
 		}
 	}
 	return nil
-}
-
-func (r *CaseRunner) GetUIXTDriver(serial string) (driver *uixt.XTDriver, err error) {
-	for key, driver := range r.uixtDrivers {
-		// return the driver with the same serial
-		if key == serial {
-			return driver, nil
-		}
-		// or return the first driver if serial is empty
-		if serial == "" {
-			r.uixtDrivers[serial] = driver
-			return driver, nil
-		}
-	}
-	return nil, errors.New("no driver found")
 }
 
 // each boomer task initiates a new session
@@ -653,12 +610,14 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 		summary.InOut.ConfigVars = config.Variables
 
 		// TODO: move to mobile ui step
-		for uuid, client := range r.caseRunner.uixtDrivers {
+		// Collect logs from cached drivers
+		for _, cached := range uixt.ListCachedDrivers() {
 			// add WDA/UIA logs to summary
 			logs := map[string]interface{}{
-				"uuid": uuid,
+				"uuid": cached.Serial,
 			}
 
+			client := cached.Driver
 			if client.GetDevice().LogEnabled() {
 				log, err1 := client.StopCaptureLog()
 				if err1 != nil {

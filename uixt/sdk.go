@@ -113,31 +113,6 @@ func (dExt *XTDriver) ExecuteAction(action MobileAction) (err error) {
 	return nil
 }
 
-// NewXTDriverWithDefault is a helper function to create a XTDriver with default options
-func NewXTDriverWithDefault(platform, serial string) (*XTDriver, error) {
-	device, err := NewDeviceWithDefault(platform, serial)
-	if err != nil {
-		return nil, err
-	}
-
-	// init driver
-	driver, err := device.NewDriver()
-	if err != nil {
-		return nil, fmt.Errorf("init driver failed: %w", err)
-	}
-	if err := driver.Setup(); err != nil {
-		return nil, fmt.Errorf("setup driver failed: %w", err)
-	}
-
-	// init XTDriver
-	driverExt, err := NewXTDriver(driver,
-		option.WithCVService(option.CVServiceTypeVEDEM))
-	if err != nil {
-		return nil, fmt.Errorf("init XT driver failed: %w", err)
-	}
-	return driverExt, nil
-}
-
 // NewDeviceWithDefault is a helper function to create a device with default options
 func NewDeviceWithDefault(platform, serial string) (device IDevice, err error) {
 	if serial == "" {
@@ -146,11 +121,7 @@ func NewDeviceWithDefault(platform, serial string) (device IDevice, err error) {
 
 	switch strings.ToLower(platform) {
 	case "android":
-		device, err = NewAndroidDevice(
-			option.WithSerialNumber(serial))
-		if err != nil {
-			return
-		}
+		device, err = NewAndroidDevice(option.WithSerialNumber(serial))
 	case "ios":
 		device, err = NewIOSDevice(
 			option.WithUDID(serial),
@@ -158,17 +129,13 @@ func NewDeviceWithDefault(platform, serial string) (device IDevice, err error) {
 			option.WithWDAMjpegPort(8800),
 			option.WithResetHomeOnStartup(false),
 		)
-		if err != nil {
-			return
-		}
 	case "browser":
 		device, err = NewBrowserDevice(option.WithBrowserID(serial))
-		if err != nil {
-			return
-		}
+	case "harmony":
+		device, err = NewHarmonyDevice(option.WithConnectKey(serial))
 	default:
-		return nil, fmt.Errorf("invalid platform: %s", platform)
+		return nil, fmt.Errorf("unsupported platform: %s", platform)
 	}
 
-	return device, nil
+	return device, err
 }
