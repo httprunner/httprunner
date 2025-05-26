@@ -313,12 +313,27 @@ func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
+		// Build action options from request structure
+		var opts []option.ActionOption
+
+		// Add boolean options
+		if tapReq.IgnoreNotFoundError {
+			opts = append(opts, option.WithIgnoreNotFoundError(true))
+		}
+
+		// Add numeric options
+		if tapReq.Duration > 0 {
+			opts = append(opts, option.WithDuration(tapReq.Duration))
+		}
+		if tapReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(tapReq.MaxRetryTimes))
+		}
+
+		// Add default options
+		opts = append(opts, option.WithPreMarkOperation(true))
+
 		// Tap action logic
 		log.Info().Float64("x", tapReq.X).Float64("y", tapReq.Y).Msg("tapping at coordinates")
-		opts := []option.ActionOption{
-			option.WithDuration(tapReq.Duration),
-			option.WithPreMarkOperation(true),
-		}
 
 		err = driverExt.TapXY(tapReq.X, tapReq.Y, opts...)
 		if err != nil {
@@ -340,6 +355,10 @@ func (t *ToolTapXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.Cal
 		if duration := action.ActionOptions.Duration; duration > 0 {
 			arguments["duration"] = duration
 		}
+
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
+
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap params: %v", action.Params)
@@ -372,12 +391,24 @@ func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		// Tap absolute XY action logic
-		log.Info().Float64("x", tapAbsReq.X).Float64("y", tapAbsReq.Y).Msg("tapping at absolute coordinates")
-		opts := []option.ActionOption{}
+		// Build action options from request structure
+		var opts []option.ActionOption
+
+		// Add boolean options
+		if tapAbsReq.IgnoreNotFoundError {
+			opts = append(opts, option.WithIgnoreNotFoundError(true))
+		}
+
+		// Add numeric options
 		if tapAbsReq.Duration > 0 {
 			opts = append(opts, option.WithDuration(tapAbsReq.Duration))
 		}
+		if tapAbsReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(tapAbsReq.MaxRetryTimes))
+		}
+
+		// Tap absolute XY action logic
+		log.Info().Float64("x", tapAbsReq.X).Float64("y", tapAbsReq.Y).Msg("tapping at absolute coordinates")
 
 		err = driverExt.TapAbsXY(tapAbsReq.X, tapAbsReq.Y, opts...)
 		if err != nil {
@@ -399,12 +430,16 @@ func (t *ToolTapAbsXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 		if duration := action.ActionOptions.Duration; duration > 0 {
 			arguments["duration"] = duration
 		}
+
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
+
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap abs params: %v", action.Params)
 }
 
-// ToolTapByOCR implements the tap_by_ocr tool call.
+// ToolTapByOCR implements the tap_ocr tool call.
 type ToolTapByOCR struct{}
 
 func (t *ToolTapByOCR) Name() option.ActionMethod {
@@ -431,9 +466,31 @@ func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
+		// Build action options from request structure
+		var opts []option.ActionOption
+
+		// Add boolean options
+		if ocrReq.IgnoreNotFoundError {
+			opts = append(opts, option.WithIgnoreNotFoundError(true))
+		}
+		if ocrReq.Regex {
+			opts = append(opts, option.WithRegex(true))
+		}
+		if ocrReq.TapRandomRect {
+			opts = append(opts, option.WithTapRandomRect(true))
+		}
+
+		// Add numeric options
+		if ocrReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(ocrReq.MaxRetryTimes))
+		}
+		if ocrReq.Index > 0 {
+			opts = append(opts, option.WithIndex(ocrReq.Index))
+		}
+
 		// Tap by OCR action logic
 		log.Info().Str("text", ocrReq.Text).Msg("tapping by OCR")
-		err = driverExt.TapByOCR(ocrReq.Text)
+		err = driverExt.TapByOCR(ocrReq.Text, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap by OCR failed: %s", err.Error())), nil
 		}
@@ -447,12 +504,16 @@ func (t *ToolTapByOCR) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 		arguments := map[string]any{
 			"text": text,
 		}
+
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
+
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by OCR params: %v", action.Params)
 }
 
-// ToolTapByCV implements the tap_by_cv tool call.
+// ToolTapByCV implements the tap_cv tool call.
 type ToolTapByCV struct{}
 
 func (t *ToolTapByCV) Name() option.ActionMethod {
@@ -479,13 +540,32 @@ func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
+		// Build action options from request structure
+		var opts []option.ActionOption
+
+		// Add boolean options
+		if cvReq.IgnoreNotFoundError {
+			opts = append(opts, option.WithIgnoreNotFoundError(true))
+		}
+		if cvReq.TapRandomRect {
+			opts = append(opts, option.WithTapRandomRect(true))
+		}
+
+		// Add numeric options
+		if cvReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(cvReq.MaxRetryTimes))
+		}
+		if cvReq.Index > 0 {
+			opts = append(opts, option.WithIndex(cvReq.Index))
+		}
+
 		// Tap by CV action logic
 		log.Info().Str("imagePath", cvReq.ImagePath).Msg("tapping by CV")
 
 		// For TapByCV, we need to check if there are UI types in the options
 		// In the original DoAction, it requires ScreenShotWithUITypes to be set
 		// We'll add a basic implementation that triggers CV recognition
-		err = driverExt.TapByCV()
+		err = driverExt.TapByCV(opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap by CV failed: %s", err.Error())), nil
 		}
@@ -499,6 +579,10 @@ func (t *ToolTapByCV) ConvertActionToCallToolRequest(action MobileAction) (mcp.C
 	arguments := map[string]any{
 		"imagePath": "", // Will be handled by the tool based on UI types
 	}
+
+	// Extract options to arguments
+	extractActionOptionsToArguments(action.GetOptions(), arguments)
+
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
@@ -1002,9 +1086,25 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
+		// Build action options from request structure
+		var opts []option.ActionOption
+
+		// Add boolean options
+		if swipeAppReq.IgnoreNotFoundError {
+			opts = append(opts, option.WithIgnoreNotFoundError(true))
+		}
+
+		// Add numeric options
+		if swipeAppReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(swipeAppReq.MaxRetryTimes))
+		}
+		if swipeAppReq.Index > 0 {
+			opts = append(opts, option.WithIndex(swipeAppReq.Index))
+		}
+
 		// Swipe to tap app action logic
 		log.Info().Str("appName", swipeAppReq.AppName).Msg("swipe to tap app")
-		err = driverExt.SwipeToTapApp(swipeAppReq.AppName)
+		err = driverExt.SwipeToTapApp(swipeAppReq.AppName, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap app failed: %s", err.Error())), nil
 		}
@@ -1018,6 +1118,10 @@ func (t *ToolSwipeToTapApp) ConvertActionToCallToolRequest(action MobileAction) 
 		arguments := map[string]any{
 			"appName": appName,
 		}
+
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
+
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap app params: %v", action.Params)
@@ -1050,9 +1154,28 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
+		// Build action options from request structure
+		var opts []option.ActionOption
+
+		// Add boolean options
+		if swipeTextReq.IgnoreNotFoundError {
+			opts = append(opts, option.WithIgnoreNotFoundError(true))
+		}
+		if swipeTextReq.Regex {
+			opts = append(opts, option.WithRegex(true))
+		}
+
+		// Add numeric options
+		if swipeTextReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(swipeTextReq.MaxRetryTimes))
+		}
+		if swipeTextReq.Index > 0 {
+			opts = append(opts, option.WithIndex(swipeTextReq.Index))
+		}
+
 		// Swipe to tap text action logic
 		log.Info().Str("text", swipeTextReq.Text).Msg("swipe to tap text")
-		err = driverExt.SwipeToTapTexts([]string{swipeTextReq.Text})
+		err = driverExt.SwipeToTapTexts([]string{swipeTextReq.Text}, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap text failed: %s", err.Error())), nil
 		}
@@ -1066,6 +1189,10 @@ func (t *ToolSwipeToTapText) ConvertActionToCallToolRequest(action MobileAction)
 		arguments := map[string]any{
 			"text": text,
 		}
+
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
+
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap text params: %v", action.Params)
@@ -1098,9 +1225,28 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
+		// Build action options from request structure
+		var opts []option.ActionOption
+
+		// Add boolean options
+		if swipeTextsReq.IgnoreNotFoundError {
+			opts = append(opts, option.WithIgnoreNotFoundError(true))
+		}
+		if swipeTextsReq.Regex {
+			opts = append(opts, option.WithRegex(true))
+		}
+
+		// Add numeric options
+		if swipeTextsReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(swipeTextsReq.MaxRetryTimes))
+		}
+		if swipeTextsReq.Index > 0 {
+			opts = append(opts, option.WithIndex(swipeTextsReq.Index))
+		}
+
 		// Swipe to tap texts action logic
 		log.Info().Strs("texts", swipeTextsReq.Texts).Msg("swipe to tap texts")
-		err = driverExt.SwipeToTapTexts(swipeTextsReq.Texts)
+		err = driverExt.SwipeToTapTexts(swipeTextsReq.Texts, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap texts failed: %s", err.Error())), nil
 		}
@@ -1121,6 +1267,10 @@ func (t *ToolSwipeToTapTexts) ConvertActionToCallToolRequest(action MobileAction
 	arguments := map[string]any{
 		"texts": texts,
 	}
+
+	// Extract options to arguments
+	extractActionOptionsToArguments(action.GetOptions(), arguments)
+
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
@@ -1196,6 +1346,48 @@ func mapToStruct(m map[string]any, out interface{}) error {
 		return err
 	}
 	return json.Unmarshal(b, out)
+}
+
+// extractActionOptionsToArguments extracts action options and adds them to arguments map
+// This is a generic helper that can be used by multiple tools
+func extractActionOptionsToArguments(actionOptions []option.ActionOption, arguments map[string]any) {
+	if len(actionOptions) == 0 {
+		return
+	}
+
+	// Apply all options to a temporary ActionOptions to extract values
+	tempOptions := &option.ActionOptions{}
+	for _, opt := range actionOptions {
+		opt(tempOptions)
+	}
+
+	// Define option mappings for common boolean options
+	booleanOptions := map[string]bool{
+		"ignore_NotFoundError": tempOptions.IgnoreNotFoundError,
+		"regex":                tempOptions.Regex,
+		"tap_random_rect":      tempOptions.TapRandomRect,
+	}
+
+	// Add boolean options only if they are true
+	for key, value := range booleanOptions {
+		if value {
+			arguments[key] = true
+		}
+	}
+
+	// Add numeric options only if they have meaningful values
+	if tempOptions.MaxRetryTimes > 0 {
+		arguments["max_retry_times"] = tempOptions.MaxRetryTimes
+	}
+	if tempOptions.Index != 0 {
+		arguments["index"] = tempOptions.Index
+	}
+	if tempOptions.Duration > 0 {
+		arguments["duration"] = tempOptions.Duration
+	}
+	if tempOptions.PressDuration > 0 {
+		arguments["press_duration"] = tempOptions.PressDuration
+	}
 }
 
 // ToolHome implements the home tool call.

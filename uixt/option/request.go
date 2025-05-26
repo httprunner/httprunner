@@ -16,9 +16,11 @@ type TargetDeviceRequest struct {
 
 type TapRequest struct {
 	TargetDeviceRequest
-	X        float64 `json:"x" binding:"required" desc:"X coordinate (0.0~1.0 for percent, or absolute pixel value)"`
-	Y        float64 `json:"y" binding:"required" desc:"Y coordinate (0.0~1.0 for percent, or absolute pixel value)"`
-	Duration float64 `json:"duration" desc:"Tap duration in seconds (optional)"`
+	X                   float64 `json:"x" binding:"required" desc:"X coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	Y                   float64 `json:"y" binding:"required" desc:"Y coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	Duration            float64 `json:"duration" desc:"Tap duration in seconds (optional)"`
+	IgnoreNotFoundError bool    `json:"ignore_NotFoundError" desc:"Ignore error if target element not found"`
+	MaxRetryTimes       int     `json:"max_retry_times" desc:"Maximum retry times for the tap action"`
 }
 
 type DragRequest struct {
@@ -103,17 +105,28 @@ type WebLoginNoneUIRequest struct {
 
 type SwipeToTapAppRequest struct {
 	TargetDeviceRequest
-	AppName string `json:"appName" binding:"required" desc:"App name to find and tap"`
+	AppName             string `json:"appName" binding:"required" desc:"App name to find and tap"`
+	IgnoreNotFoundError bool   `json:"ignore_NotFoundError" desc:"Ignore error if target element not found"`
+	MaxRetryTimes       int    `json:"max_retry_times" desc:"Maximum retry times for finding the app"`
+	Index               int    `json:"index" desc:"Index of the target element when multiple matches found"`
 }
 
 type SwipeToTapTextRequest struct {
 	TargetDeviceRequest
-	Text string `json:"text" binding:"required" desc:"Text to find and tap"`
+	Text                string `json:"text" binding:"required" desc:"Text to find and tap"`
+	IgnoreNotFoundError bool   `json:"ignore_NotFoundError" desc:"Ignore error if target element not found"`
+	MaxRetryTimes       int    `json:"max_retry_times" desc:"Maximum retry times for finding the text"`
+	Index               int    `json:"index" desc:"Index of the target element when multiple matches found"`
+	Regex               bool   `json:"regex" desc:"Use regex to match text"`
 }
 
 type SwipeToTapTextsRequest struct {
 	TargetDeviceRequest
-	Texts []string `json:"texts" binding:"required" desc:"List of texts to find and tap"`
+	Texts               []string `json:"texts" binding:"required" desc:"List of texts to find and tap"`
+	IgnoreNotFoundError bool     `json:"ignore_NotFoundError" desc:"Ignore error if target element not found"`
+	MaxRetryTimes       int      `json:"max_retry_times" desc:"Maximum retry times for finding the texts"`
+	Index               int      `json:"index" desc:"Index of the target element when multiple matches found"`
+	Regex               bool     `json:"regex" desc:"Use regex to match text"`
 }
 
 type SecondaryClickRequest struct {
@@ -144,25 +157,38 @@ type GetSourceRequest struct {
 
 type TapAbsXYRequest struct {
 	TargetDeviceRequest
-	X        float64 `json:"x" binding:"required" desc:"Absolute X coordinate in pixels"`
-	Y        float64 `json:"y" binding:"required" desc:"Absolute Y coordinate in pixels"`
-	Duration float64 `json:"duration" desc:"Tap duration in seconds (optional)"`
+	X                   float64 `json:"x" binding:"required" desc:"Absolute X coordinate in pixels"`
+	Y                   float64 `json:"y" binding:"required" desc:"Absolute Y coordinate in pixels"`
+	Duration            float64 `json:"duration" desc:"Tap duration in seconds (optional)"`
+	IgnoreNotFoundError bool    `json:"ignore_NotFoundError" desc:"Ignore error if target element not found"`
+	MaxRetryTimes       int     `json:"max_retry_times" desc:"Maximum retry times for the tap action"`
 }
 
 type TapByOCRRequest struct {
 	TargetDeviceRequest
-	Text string `json:"text" binding:"required" desc:"OCR text to find and tap"`
+	Text                string `json:"text" binding:"required" desc:"OCR text to find and tap"`
+	IgnoreNotFoundError bool   `json:"ignore_NotFoundError" desc:"Ignore error if target element not found"`
+	MaxRetryTimes       int    `json:"max_retry_times" desc:"Maximum retry times for finding the text"`
+	Index               int    `json:"index" desc:"Index of the target element when multiple matches found"`
+	Regex               bool   `json:"regex" desc:"Use regex to match text"`
+	TapRandomRect       bool   `json:"tap_random_rect" desc:"Tap random point in text rectangle"`
 }
 
 type TapByCVRequest struct {
 	TargetDeviceRequest
-	ImagePath string `json:"imagePath" desc:"Path to reference image for CV recognition"`
+	ImagePath           string `json:"imagePath" desc:"Path to reference image for CV recognition"`
+	IgnoreNotFoundError bool   `json:"ignore_NotFoundError" desc:"Ignore error if target element not found"`
+	MaxRetryTimes       int    `json:"max_retry_times" desc:"Maximum retry times for finding the image"`
+	Index               int    `json:"index" desc:"Index of the target element when multiple matches found"`
+	TapRandomRect       bool   `json:"tap_random_rect" desc:"Tap random point in image rectangle"`
 }
 
 type DoubleTapXYRequest struct {
 	TargetDeviceRequest
-	X float64 `json:"x" binding:"required" desc:"X coordinate (0.0~1.0 for percent, or absolute pixel value)"`
-	Y float64 `json:"y" binding:"required" desc:"Y coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	X                   float64 `json:"x" binding:"required" desc:"X coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	Y                   float64 `json:"y" binding:"required" desc:"Y coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	IgnoreNotFoundError bool    `json:"ignore_NotFoundError" desc:"Ignore error if target element not found"`
+	MaxRetryTimes       int     `json:"max_retry_times" desc:"Maximum retry times for the tap action"`
 }
 
 type SwipeAdvancedRequest struct {
