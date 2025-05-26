@@ -299,7 +299,8 @@ func (t *ToolTapXY) Description() string {
 }
 
 func (t *ToolTapXY) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TapRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_TapXY)
 }
 
 func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
@@ -309,31 +310,32 @@ func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var tapReq option.TapRequest
-		if err := mapToStruct(request.Params.Arguments, &tapReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		// Build action options from request structure
-		var opts []option.ActionOption
-
-		// Add numeric options
-		if tapReq.Duration > 0 {
-			opts = append(opts, option.WithDuration(tapReq.Duration))
-		}
+		// Convert to ActionOptions
+		actionOpts := unifiedReq.ToActionOptions()
+		opts := actionOpts.Options()
 
 		// Add default options
 		opts = append(opts, option.WithPreMarkOperation(true))
 
-		// Tap action logic
-		log.Info().Float64("x", tapReq.X).Float64("y", tapReq.Y).Msg("tapping at coordinates")
+		// Validate required parameters
+		if unifiedReq.X == nil || unifiedReq.Y == nil {
+			return nil, fmt.Errorf("x and y coordinates are required")
+		}
 
-		err = driverExt.TapXY(tapReq.X, tapReq.Y, opts...)
+		// Tap action logic
+		log.Info().Float64("x", *unifiedReq.X).Float64("y", *unifiedReq.Y).Msg("tapping at coordinates")
+
+		err = driverExt.TapXY(*unifiedReq.X, *unifiedReq.Y, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at coordinates (%.2f, %.2f)", tapReq.X, tapReq.Y)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at coordinates (%.2f, %.2f)", *unifiedReq.X, *unifiedReq.Y)), nil
 	}
 }
 
@@ -369,7 +371,8 @@ func (t *ToolTapAbsXY) Description() string {
 }
 
 func (t *ToolTapAbsXY) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TapAbsXYRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_TapAbsXY)
 }
 
 func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
@@ -436,7 +439,8 @@ func (t *ToolTapByOCR) Description() string {
 }
 
 func (t *ToolTapByOCR) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TapByOCRRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_TapByOCR)
 }
 
 func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
@@ -510,7 +514,8 @@ func (t *ToolTapByCV) Description() string {
 }
 
 func (t *ToolTapByCV) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TapByCVRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_TapByCV)
 }
 
 func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
@@ -583,7 +588,8 @@ func (t *ToolDoubleTapXY) Description() string {
 }
 
 func (t *ToolDoubleTapXY) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.DoubleTapXYRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_DoubleTapXY)
 }
 
 func (t *ToolDoubleTapXY) Implement() server.ToolHandlerFunc {
@@ -633,7 +639,8 @@ func (t *ToolListPackages) Description() string {
 }
 
 func (t *ToolListPackages) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TargetDeviceRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_ListPackages)
 }
 
 func (t *ToolListPackages) Implement() server.ToolHandlerFunc {
@@ -667,7 +674,8 @@ func (t *ToolLaunchApp) Description() string {
 }
 
 func (t *ToolLaunchApp) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.AppLaunchRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_AppLaunch)
 }
 
 func (t *ToolLaunchApp) Implement() server.ToolHandlerFunc {
@@ -719,7 +727,8 @@ func (t *ToolTerminateApp) Description() string {
 }
 
 func (t *ToolTerminateApp) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.AppTerminateRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_AppTerminate)
 }
 
 func (t *ToolTerminateApp) Implement() server.ToolHandlerFunc {
@@ -774,7 +783,8 @@ func (t *ToolScreenShot) Description() string {
 }
 
 func (t *ToolScreenShot) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TargetDeviceRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_ScreenShot)
 }
 
 func (t *ToolScreenShot) Implement() server.ToolHandlerFunc {
@@ -810,7 +820,8 @@ func (t *ToolGetScreenSize) Description() string {
 }
 
 func (t *ToolGetScreenSize) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TargetDeviceRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_GetScreenSize)
 }
 
 func (t *ToolGetScreenSize) Implement() server.ToolHandlerFunc {
@@ -846,7 +857,8 @@ func (t *ToolPressButton) Description() string {
 }
 
 func (t *ToolPressButton) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.PressButtonRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_PressButton)
 }
 
 func (t *ToolPressButton) Implement() server.ToolHandlerFunc {
@@ -896,16 +908,8 @@ func (t *ToolSwipe) Description() string {
 }
 
 func (t *ToolSwipe) Options() []mcp.ToolOption {
-	// Combine options from both direction and coordinate swipe
-	directionOptions := option.NewMCPOptions(option.SwipeRequest{})
-	coordinateOptions := option.NewMCPOptions(option.SwipeAdvancedRequest{})
-
-	// Merge the options
-	allOptions := make([]mcp.ToolOption, 0, len(directionOptions)+len(coordinateOptions))
-	allOptions = append(allOptions, directionOptions...)
-	allOptions = append(allOptions, coordinateOptions...)
-
-	return allOptions
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_Swipe)
 }
 
 func (t *ToolSwipe) Implement() server.ToolHandlerFunc {
@@ -965,7 +969,8 @@ func (t *ToolSwipeDirection) Description() string {
 }
 
 func (t *ToolSwipeDirection) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SwipeRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SwipeDirection)
 }
 
 func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
@@ -1054,7 +1059,8 @@ func (t *ToolSwipeCoordinate) Description() string {
 }
 
 func (t *ToolSwipeCoordinate) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SwipeAdvancedRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SwipeCoordinate)
 }
 
 func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
@@ -1127,7 +1133,8 @@ func (t *ToolSwipeToTapApp) Description() string {
 }
 
 func (t *ToolSwipeToTapApp) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SwipeToTapAppRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SwipeToTapApp)
 }
 
 func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
@@ -1195,7 +1202,8 @@ func (t *ToolSwipeToTapText) Description() string {
 }
 
 func (t *ToolSwipeToTapText) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SwipeToTapTextRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SwipeToTapText)
 }
 
 func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
@@ -1266,7 +1274,8 @@ func (t *ToolSwipeToTapTexts) Description() string {
 }
 
 func (t *ToolSwipeToTapTexts) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SwipeToTapTextsRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SwipeToTapTexts)
 }
 
 func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
@@ -1342,7 +1351,8 @@ func (t *ToolDrag) Description() string {
 }
 
 func (t *ToolDrag) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.DragRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_Drag)
 }
 
 func (t *ToolDrag) Implement() server.ToolHandlerFunc {
@@ -1458,7 +1468,8 @@ func (t *ToolHome) Description() string {
 }
 
 func (t *ToolHome) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TargetDeviceRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_Home)
 }
 
 func (t *ToolHome) Implement() server.ToolHandlerFunc {
@@ -1495,7 +1506,8 @@ func (t *ToolBack) Description() string {
 }
 
 func (t *ToolBack) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TargetDeviceRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_Back)
 }
 
 func (t *ToolBack) Implement() server.ToolHandlerFunc {
@@ -1532,7 +1544,8 @@ func (t *ToolInput) Description() string {
 }
 
 func (t *ToolInput) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.InputRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_Input)
 }
 
 func (t *ToolInput) Implement() server.ToolHandlerFunc {
@@ -1582,7 +1595,8 @@ func (t *ToolWebLoginNoneUI) Description() string {
 }
 
 func (t *ToolWebLoginNoneUI) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.WebLoginNoneUIRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_WebLoginNoneUI)
 }
 
 func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
@@ -1629,7 +1643,8 @@ func (t *ToolAppInstall) Description() string {
 }
 
 func (t *ToolAppInstall) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.AppInstallRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_AppInstall)
 }
 
 func (t *ToolAppInstall) Implement() server.ToolHandlerFunc {
@@ -1677,7 +1692,8 @@ func (t *ToolAppUninstall) Description() string {
 }
 
 func (t *ToolAppUninstall) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.AppUninstallRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_AppUninstall)
 }
 
 func (t *ToolAppUninstall) Implement() server.ToolHandlerFunc {
@@ -1725,7 +1741,8 @@ func (t *ToolAppClear) Description() string {
 }
 
 func (t *ToolAppClear) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.AppClearRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_AppClear)
 }
 
 func (t *ToolAppClear) Implement() server.ToolHandlerFunc {
@@ -1773,7 +1790,8 @@ func (t *ToolSecondaryClick) Description() string {
 }
 
 func (t *ToolSecondaryClick) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SecondaryClickRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SecondaryClick)
 }
 
 func (t *ToolSecondaryClick) Implement() server.ToolHandlerFunc {
@@ -1822,7 +1840,8 @@ func (t *ToolHoverBySelector) Description() string {
 }
 
 func (t *ToolHoverBySelector) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SelectorRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_HoverBySelector)
 }
 
 func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
@@ -1870,7 +1889,8 @@ func (t *ToolTapBySelector) Description() string {
 }
 
 func (t *ToolTapBySelector) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SelectorRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_TapBySelector)
 }
 
 func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
@@ -1918,7 +1938,8 @@ func (t *ToolSecondaryClickBySelector) Description() string {
 }
 
 func (t *ToolSecondaryClickBySelector) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SelectorRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SecondaryClickBySelector)
 }
 
 func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
@@ -1966,7 +1987,8 @@ func (t *ToolWebCloseTab) Description() string {
 }
 
 func (t *ToolWebCloseTab) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.WebCloseTabRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_WebCloseTab)
 }
 
 func (t *ToolWebCloseTab) Implement() server.ToolHandlerFunc {
@@ -2027,7 +2049,8 @@ func (t *ToolSetIme) Description() string {
 }
 
 func (t *ToolSetIme) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SetImeRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SetIme)
 }
 
 func (t *ToolSetIme) Implement() server.ToolHandlerFunc {
@@ -2075,7 +2098,8 @@ func (t *ToolGetSource) Description() string {
 }
 
 func (t *ToolGetSource) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.GetSourceRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_GetSource)
 }
 
 func (t *ToolGetSource) Implement() server.ToolHandlerFunc {
@@ -2181,7 +2205,8 @@ func (t *ToolSleepMS) Description() string {
 }
 
 func (t *ToolSleepMS) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SleepMSRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SleepMS)
 }
 
 func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
@@ -2226,7 +2251,8 @@ func (t *ToolSleepRandom) Description() string {
 }
 
 func (t *ToolSleepRandom) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.SleepRandomRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SleepRandom)
 }
 
 func (t *ToolSleepRandom) Implement() server.ToolHandlerFunc {
@@ -2266,7 +2292,8 @@ func (t *ToolClosePopups) Description() string {
 }
 
 func (t *ToolClosePopups) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.TargetDeviceRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_ClosePopups)
 }
 
 func (t *ToolClosePopups) Implement() server.ToolHandlerFunc {
@@ -2303,7 +2330,8 @@ func (t *ToolAIAction) Description() string {
 }
 
 func (t *ToolAIAction) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.AIActionRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_AIAction)
 }
 
 func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
@@ -2351,7 +2379,8 @@ func (t *ToolFinished) Description() string {
 }
 
 func (t *ToolFinished) Options() []mcp.ToolOption {
-	return option.NewMCPOptions(option.FinishedRequest{})
+	unifiedReq := &option.UnifiedActionRequest{}
+	return unifiedReq.GetMCPOptions(option.ACTION_Finished)
 }
 
 func (t *ToolFinished) Implement() server.ToolHandlerFunc {
