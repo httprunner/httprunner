@@ -495,18 +495,16 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 
 	// init XTDriver and register to unified cache
 	for _, driverConfig := range driverConfigs {
-		driverExt, err := uixt.GetOrCreateXTDriver(driverConfig)
+		_, err := uixt.GetOrCreateXTDriver(driverConfig)
 		if err != nil {
 			return nil, errors.Wrapf(err, "init %s XTDriver failed", driverConfig.Platform)
-		}
-		if err := r.RegisterUIXTDriver(driverConfig.Serial, driverExt); err != nil {
-			return nil, err
 		}
 	}
 
 	return parsedConfig, nil
 }
 
+// RegisterUIXTDriver is used to register a external driver to the unified cache
 func (r *CaseRunner) RegisterUIXTDriver(serial string, driver *uixt.XTDriver) error {
 	if err := uixt.RegisterXTDriver(serial, driver); err != nil {
 		log.Error().Err(err).Str("serial", serial).Msg("register XTDriver failed")

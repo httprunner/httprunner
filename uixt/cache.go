@@ -30,40 +30,64 @@ type DriverCacheConfig struct {
 
 // GetOrCreateXTDriver gets an existing driver from cache or creates a new one
 func GetOrCreateXTDriver(config DriverCacheConfig) (*XTDriver, error) {
-	cacheKey := config.Serial
-	if cacheKey == "" {
-		return nil, fmt.Errorf("serial cannot be empty")
-	}
+	// If serial is specified, check cache first
+	if config.Serial != "" {
+		cacheKey := config.Serial
+		if cachedItem, ok := driverCache.Load(cacheKey); ok {
+			if cached, ok := cachedItem.(*CachedXTDriver); ok {
+				log.Info().Str("serial", cached.Serial).Msg("Using cached XTDriver")
 
-	// Check if driver exists in cache
-	if cachedItem, ok := driverCache.Load(cacheKey); ok {
-		if cached, ok := cachedItem.(*CachedXTDriver); ok {
-			log.Info().Str("serial", cached.Serial).Msg("Using cached XTDriver")
-
-			// Increment reference count
-			cached.RefCount++
-			return cached.Driver, nil
+				// Increment reference count
+				cached.RefCount++
+				return cached.Driver, nil
+			}
 		}
 	}
 
-	// Create new driver
+	// If no serial specified, try to find existing driver
+	if config.Serial == "" {
+		if driver := findCachedDriver(config.Platform); driver != nil {
+			return driver, nil
+		}
+	}
+
+	// Create new driver (will auto-detect serial if empty)
 	driverExt, err := createXTDriverWithConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create XTDriver: %w", err)
 	}
 
-	// Cache the driver
+	// Get actual serial from the created driver
+	actualSerial := driverExt.GetDevice().UUID()
+
+	// Check if a driver with this actual serial already exists in cache
+	if cachedItem, ok := driverCache.Load(actualSerial); ok {
+		if cached, ok := cachedItem.(*CachedXTDriver); ok {
+			log.Info().Str("serial", actualSerial).Msg("Found existing cached XTDriver with detected serial")
+
+			// Clean up the newly created driver since we have a cached one
+			if err := driverExt.DeleteSession(); err != nil {
+				log.Warn().Err(err).Str("serial", actualSerial).Msg("Failed to delete newly created driver session")
+			}
+
+			// Increment reference count and return cached driver
+			cached.RefCount++
+			return cached.Driver, nil
+		}
+	}
+
+	// Cache the new driver with actual serial
 	cached := &CachedXTDriver{
 		Platform: config.Platform,
 		Driver:   driverExt,
-		Serial:   config.Serial,
+		Serial:   actualSerial,
 		RefCount: 1,
 	}
-	driverCache.Store(cacheKey, cached)
+	driverCache.Store(actualSerial, cached)
 
 	log.Info().
 		Str("platform", config.Platform).
-		Str("serial", config.Serial).
+		Str("serial", actualSerial).
 		Msg("Created and cached new XTDriver")
 
 	return driverExt, nil
@@ -77,16 +101,13 @@ func createXTDriverWithConfig(config DriverCacheConfig) (*XTDriver, error) {
 		platform = "android"
 	}
 
-	if config.Serial == "" {
-		return nil, fmt.Errorf("serial is empty")
-	}
-
 	// Create device based on platform and configuration
 	var device IDevice
 	var err error
 
-	// Try to create device with specific options first
+	// Create device based on platform and configuration
 	if config.DeviceOpts != nil {
+		// Use specific device options
 		switch strings.ToLower(platform) {
 		case "android":
 			androidOpts := config.DeviceOpts.ToAndroidOptions().Options()
@@ -100,9 +121,39 @@ func createXTDriverWithConfig(config DriverCacheConfig) (*XTDriver, error) {
 		case "browser":
 			browserOpts := config.DeviceOpts.ToBrowserOptions().Options()
 			device, err = NewBrowserDevice(browserOpts...)
+		default:
+			return nil, fmt.Errorf("unsupported platform: %s", platform)
 		}
 	} else {
-		device, err = NewDeviceWithDefault(platform, config.Serial)
+		// Use default options, let NewXXDevice handle serial (empty or specified)
+		switch strings.ToLower(platform) {
+		case "android":
+			if config.Serial != "" {
+				device, err = NewAndroidDevice(option.WithSerialNumber(config.Serial))
+			} else {
+				device, err = NewAndroidDevice()
+			}
+		case "ios":
+			if config.Serial != "" {
+				device, err = NewIOSDevice(option.WithUDID(config.Serial))
+			} else {
+				device, err = NewIOSDevice()
+			}
+		case "harmony":
+			if config.Serial != "" {
+				device, err = NewHarmonyDevice(option.WithConnectKey(config.Serial))
+			} else {
+				device, err = NewHarmonyDevice()
+			}
+		case "browser":
+			if config.Serial != "" {
+				device, err = NewBrowserDevice(option.WithBrowserID(config.Serial))
+			} else {
+				device, err = NewBrowserDevice()
+			}
+		default:
+			return nil, fmt.Errorf("unsupported platform: %s", platform)
+		}
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to create device: %w", err)
@@ -144,9 +195,11 @@ func ReleaseXTDriver(serial string) error {
 			if cached.RefCount <= 0 {
 				driverCache.Delete(serial)
 
-				// Clean up driver resources
-				if err := cached.Driver.DeleteSession(); err != nil {
-					log.Warn().Err(err).Str("serial", serial).Msg("Failed to delete driver session")
+				// Clean up driver resources if driver has underlying IDriver
+				if cached.Driver != nil && cached.Driver.IDriver != nil {
+					if err := cached.Driver.DeleteSession(); err != nil {
+						log.Warn().Err(err).Str("serial", serial).Msg("Failed to delete driver session")
+					}
 				}
 
 				log.Info().Str("serial", serial).Msg("Cleaned up XTDriver from cache")
@@ -161,9 +214,11 @@ func CleanupAllDrivers() {
 	driverCache.Range(func(key, value interface{}) bool {
 		if serial, ok := key.(string); ok {
 			if cached, ok := value.(*CachedXTDriver); ok {
-				// Clean up driver resources
-				if err := cached.Driver.DeleteSession(); err != nil {
-					log.Warn().Err(err).Str("serial", serial).Msg("Failed to delete driver session")
+				// Clean up driver resources if driver has underlying IDriver
+				if cached.Driver != nil && cached.Driver.IDriver != nil {
+					if err := cached.Driver.DeleteSession(); err != nil {
+						log.Warn().Err(err).Str("serial", serial).Msg("Failed to delete driver session")
+					}
 				}
 				log.Info().Str("serial", serial).Msg("Cleaned up XTDriver from cache")
 			}
@@ -185,6 +240,39 @@ func ListCachedDrivers() []CachedXTDriver {
 	return drivers
 }
 
+// findCachedDriver searches for a cached driver by platform
+// If platform is empty, returns any available driver
+func findCachedDriver(platform string) *XTDriver {
+	var foundDriver *XTDriver
+	driverCache.Range(func(key, value interface{}) bool {
+		serial, ok := key.(string)
+		if !ok {
+			return true // continue iteration
+		}
+
+		cached, ok := value.(*CachedXTDriver)
+		if !ok {
+			return true // continue iteration
+		}
+
+		// If platform is specified, match platform; otherwise use any available driver
+		if platform == "" || cached.Platform == platform {
+			foundDriver = cached.Driver
+			cached.RefCount++
+
+			if platform != "" {
+				log.Info().Str("platform", platform).Str("serial", serial).Msg("Using cached XTDriver by platform")
+			} else {
+				log.Info().Str("serial", serial).Msg("Using any available cached XTDriver")
+			}
+			return false // stop iteration
+		}
+
+		return true // continue iteration
+	})
+	return foundDriver
+}
+
 // setupXTDriver initializes an XTDriver based on the platform and serial.
 // This function is kept for backward compatibility with MCP integration
 func setupXTDriver(_ context.Context, args map[string]any) (*XTDriver, error) {
@@ -195,7 +283,6 @@ func setupXTDriver(_ context.Context, args map[string]any) (*XTDriver, error) {
 		Platform: platform,
 		Serial:   serial,
 	}
-
 	return GetOrCreateXTDriver(config)
 }
 

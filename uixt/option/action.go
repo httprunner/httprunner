@@ -34,8 +34,8 @@ const (
 	ACTION_Home                     ActionMethod = "home"
 	ACTION_TapXY                    ActionMethod = "tap_xy"
 	ACTION_TapAbsXY                 ActionMethod = "tap_abs_xy"
-	ACTION_TapByOCR                 ActionMethod = "tap_by_ocr"
-	ACTION_TapByCV                  ActionMethod = "tap_by_cv"
+	ACTION_TapByOCR                 ActionMethod = "tap_ocr"
+	ACTION_TapByCV                  ActionMethod = "tap_cv"
 	ACTION_DoubleTapXY              ActionMethod = "double_tap_xy"
 	ACTION_SwipeDirection           ActionMethod = "swipe_direction"  // swipe by direction (up, down, left, right)
 	ACTION_SwipeCoordinate          ActionMethod = "swipe_coordinate" // swipe by coordinates (fromX, fromY, toX, toY)
