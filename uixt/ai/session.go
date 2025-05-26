@@ -98,7 +98,7 @@ func logRequest(messages ConversationHistory) {
 }
 
 func logResponse(message *schema.Message) {
-	logger := log.Info().Str("role", string(message.Role)).
+	logger := log.Debug().Str("role", string(message.Role)).
 		Str("content", message.Content)
 
 	var toolCalls []string

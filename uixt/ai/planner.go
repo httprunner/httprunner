@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
@@ -113,10 +114,15 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 	// handle tool calls
 	if len(message.ToolCalls) > 0 {
 		// append tool call message
+		toolCallID := ""
+		for _, toolCall := range message.ToolCalls {
+			toolCallID += toolCall.ID
+		}
 		p.history.Append(&schema.Message{
-			Role:      schema.Tool,
-			Content:   message.Content,
-			ToolCalls: message.ToolCalls,
+			Role:       schema.Tool,
+			Content:    message.Content,
+			ToolCalls:  message.ToolCalls,
+			ToolCallID: toolCallID,
 		})
 		// history will be appended with tool calls execution result
 		result := &PlanningResult{
@@ -140,11 +146,12 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 			Content: message.Content,
 		})
 	} else {
-		// append tool call message
+		// append assistant message with tool calls
 		p.history.Append(&schema.Message{
-			Role:      schema.Tool,
-			Content:   result.Content,
-			ToolCalls: result.ToolCalls,
+			Role:       schema.Tool,
+			Content:    result.Content,
+			ToolCalls:  result.ToolCalls,
+			ToolCallID: fmt.Sprintf("%d", time.Now().Unix()),
 		})
 	}
 
