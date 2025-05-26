@@ -27,7 +27,7 @@ func setupXTDriver(_ context.Context, args map[string]any) (*XTDriver, error) {
 		}
 	}
 
-	driverExt, err := NewDriverExt(platform, serial)
+	driverExt, err := NewXTDriverWithDefault(platform, serial)
 	if err != nil {
 		return nil, err
 	}

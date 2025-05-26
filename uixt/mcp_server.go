@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/danielpaulus/go-ios/ios"
@@ -1188,66 +1187,6 @@ func (t *ToolDrag) ConvertActionToCallToolRequest(action MobileAction) (mcp.Call
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid drag params: %v", action.Params)
-}
-
-func NewDriverExt(platform, serial string) (*XTDriver, error) {
-	device, err := NewDevice(platform, serial)
-	if err != nil {
-		return nil, err
-	}
-
-	// init driver
-	driver, err := device.NewDriver()
-	if err != nil {
-		return nil, fmt.Errorf("init driver failed: %w", err)
-	}
-	if err := driver.Setup(); err != nil {
-		return nil, fmt.Errorf("setup driver failed: %w", err)
-	}
-
-	// init XTDriver
-	driverExt, err := NewXTDriver(driver,
-		option.WithCVService(option.CVServiceTypeVEDEM))
-	if err != nil {
-		return nil, fmt.Errorf("init XT driver failed: %w", err)
-	}
-	return driverExt, nil
-}
-
-func NewDevice(platform, serial string) (device IDevice, err error) {
-	if serial == "" {
-		return nil, fmt.Errorf("serial is empty")
-	}
-	switch strings.ToLower(platform) {
-	case "android":
-		device, err = NewAndroidDevice(
-			option.WithSerialNumber(serial))
-		if err != nil {
-			return
-		}
-	case "ios":
-		device, err = NewIOSDevice(
-			option.WithUDID(serial),
-			option.WithWDAPort(8700),
-			option.WithWDAMjpegPort(8800),
-			option.WithResetHomeOnStartup(false),
-		)
-		if err != nil {
-			return
-		}
-	case "browser":
-		device, err = NewBrowserDevice(option.WithBrowserID(serial))
-		if err != nil {
-			return
-		}
-	default:
-		return nil, fmt.Errorf("invalid platform: %s", platform)
-	}
-	err = device.Setup()
-	if err != nil {
-		log.Error().Err(err).Msg("setup device failed")
-	}
-	return device, nil
 }
 
 // mapToStruct convert map[string]any to target struct

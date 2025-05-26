@@ -3,6 +3,7 @@ package uixt
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
@@ -107,8 +108,67 @@ func (dExt *XTDriver) ExecuteAction(action MobileAction) (err error) {
 		return fmt.Errorf("invoke tool %s failed", tool.Name())
 	}
 
-	log.Debug().Str("method", string(action.Method)).
-		Str("tool", string(tool.Name())).
-		Msg("executed action via MCP tool")
+	log.Debug().Str("tool", string(tool.Name())).
+		Msg("execute action via MCP tool")
 	return nil
+}
+
+// NewXTDriverWithDefault is a helper function to create a XTDriver with default options
+func NewXTDriverWithDefault(platform, serial string) (*XTDriver, error) {
+	device, err := NewDeviceWithDefault(platform, serial)
+	if err != nil {
+		return nil, err
+	}
+
+	// init driver
+	driver, err := device.NewDriver()
+	if err != nil {
+		return nil, fmt.Errorf("init driver failed: %w", err)
+	}
+	if err := driver.Setup(); err != nil {
+		return nil, fmt.Errorf("setup driver failed: %w", err)
+	}
+
+	// init XTDriver
+	driverExt, err := NewXTDriver(driver,
+		option.WithCVService(option.CVServiceTypeVEDEM))
+	if err != nil {
+		return nil, fmt.Errorf("init XT driver failed: %w", err)
+	}
+	return driverExt, nil
+}
+
+// NewDeviceWithDefault is a helper function to create a device with default options
+func NewDeviceWithDefault(platform, serial string) (device IDevice, err error) {
+	if serial == "" {
+		return nil, fmt.Errorf("serial is empty")
+	}
+
+	switch strings.ToLower(platform) {
+	case "android":
+		device, err = NewAndroidDevice(
+			option.WithSerialNumber(serial))
+		if err != nil {
+			return
+		}
+	case "ios":
+		device, err = NewIOSDevice(
+			option.WithUDID(serial),
+			option.WithWDAPort(8700),
+			option.WithWDAMjpegPort(8800),
+			option.WithResetHomeOnStartup(false),
+		)
+		if err != nil {
+			return
+		}
+	case "browser":
+		device, err = NewBrowserDevice(option.WithBrowserID(serial))
+		if err != nil {
+			return
+		}
+	default:
+		return nil, fmt.Errorf("invalid platform: %s", platform)
+	}
+
+	return device, nil
 }

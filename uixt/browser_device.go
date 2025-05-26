@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -30,6 +31,9 @@ func NewBrowserDevice(opts ...option.BrowserDeviceOption) (device *BrowserDevice
 	}
 	log.Info().Str("browserID", device.Options.BrowserID).Msg("init browser device")
 
+	if err := device.Setup(); err != nil {
+		return nil, fmt.Errorf("setup browser device failed: %w", err)
+	}
 	return device, nil
 }
 

@@ -44,7 +44,7 @@ func (r *Router) GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error)
 func (r *Router) GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
 	platform := c.Param("platform")
 	serial := c.Param("serial")
-	device, err = uixt.NewDevice(platform, serial)
+	device, err = uixt.NewDeviceWithDefault(platform, serial)
 	if err != nil {
 		RenderErrorInitDriver(c, err)
 		return
