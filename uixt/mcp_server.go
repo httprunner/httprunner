@@ -986,8 +986,8 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 
 		opts := []option.ActionOption{
 			option.WithPreMarkOperation(true),
-			option.WithDuration(getFloat64ValueOrDefault(&unifiedReq.Duration, 0.5)),
-			option.WithPressDuration(getFloat64ValueOrDefault(&unifiedReq.PressDuration, 0.1)),
+			option.WithDuration(getFloat64ValueOrDefault(unifiedReq.Duration, 0.5)),
+			option.WithPressDuration(getFloat64ValueOrDefault(unifiedReq.PressDuration, 0.1)),
 		}
 
 		// Convert direction to coordinates and perform swipe
@@ -2413,31 +2413,9 @@ func (t *ToolFinished) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid finished params: %v", action.Params)
 }
 
-// Helper functions for pointer type handling
-func getFloat64Value(ptr *float64) float64 {
-	if ptr == nil {
-		return 0
-	}
-	return *ptr
-}
-
-func getFloat64ValueOrDefault(ptr *float64, defaultValue float64) float64 {
-	if ptr == nil {
+func getFloat64ValueOrDefault(value float64, defaultValue float64) float64 {
+	if value == 0 {
 		return defaultValue
 	}
-	return *ptr
-}
-
-func getIntValue(ptr *int) int {
-	if ptr == nil {
-		return 0
-	}
-	return *ptr
-}
-
-func getBoolValue(ptr *bool) bool {
-	if ptr == nil {
-		return false
-	}
-	return *ptr
+	return value
 }
