@@ -160,3 +160,61 @@ func (dExt *XTDriver) GetMCPClient(serverName string) (client.MCPClient, bool) {
 	client, exists := dExt.loadedMCPClients[serverName]
 	return client, exists
 }
+
+// CallMCPTool calls the specified MCP tool
+func (dExt *XTDriver) CallMCPTool(ctx context.Context,
+	serverName, toolName string, arguments map[string]any) (result *mcp.CallToolResult, err error) {
+	// Get MCP client
+
+	mcpClient, exists := dExt.GetMCPClient(serverName)
+	if !exists {
+		log.Warn().Str("server", serverName).Msg("MCP server not found")
+		return nil, fmt.Errorf("MCP server %s not found", serverName)
+	}
+
+	// Prepare arguments
+	if arguments == nil {
+		arguments = make(map[string]any)
+	}
+
+	log.Debug().Str("server", serverName).Str("tool", toolName).
+		Interface("arguments", arguments).Msg("call MCP tool")
+
+	// Call MCP tool
+	req := mcp.CallToolRequest{
+		Params: struct {
+			Name      string         `json:"name"`
+			Arguments map[string]any `json:"arguments,omitempty"`
+			Meta      *struct {
+				ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
+			} `json:"_meta,omitempty"`
+		}{
+			Name:      toolName,
+			Arguments: arguments,
+		},
+	}
+
+	result, err = mcpClient.CallTool(ctx, req)
+	if err != nil {
+		log.Debug().Err(err).
+			Str("server", serverName).
+			Str("tool", toolName).
+			Msg("MCP hook call failed")
+		return nil, err
+	}
+
+	if result.IsError {
+		log.Debug().
+			Str("server", serverName).
+			Str("tool", toolName).
+			Interface("content", result.Content).
+			Msg("MCP hook returned error")
+		return nil, fmt.Errorf("MCP hook returned error")
+	}
+
+	log.Debug().
+		Str("server", serverName).
+		Str("tool", toolName).
+		Msg("MCP hook called successfully")
+	return result, nil
+}

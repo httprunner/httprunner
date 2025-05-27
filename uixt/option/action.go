@@ -83,6 +83,11 @@ const (
 	ACTION_UninstallApp    ActionName = "uninstall_app"
 	ACTION_DownloadApp     ActionName = "download_app"
 	ACTION_Finished        ActionName = "finished"
+	ACTION_CallFunction    ActionName = "call_function"
+
+	// anti-risk actions
+	ACTION_SetTouchInfo     ActionName = "set_touch_info"
+	ACTION_SetTouchInfoList ActionName = "set_touch_info_list"
 )
 
 const (

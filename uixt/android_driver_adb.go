@@ -281,7 +281,9 @@ func (ad *ADBDriver) AppLaunch(packageName string) (err error) {
 		return errors.Wrap(code.MobileUILaunchAppError,
 			fmt.Sprintf("monkey aborted: %s", strings.TrimSpace(sOutput)))
 	}
-	return nil
+
+	return postHandler(ad, option.ACTION_SetTouchInfo,
+		option.NewActionOptions(option.WithAntiRisk(true)))
 }
 
 func (ad *ADBDriver) AppTerminate(packageName string) (successful bool, err error) {

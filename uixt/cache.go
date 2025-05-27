@@ -308,3 +308,32 @@ func RegisterXTDriver(serial string, driver *XTDriver) error {
 
 	return nil
 }
+
+// getXTDriverFromCache gets XTDriver from cache using device UUID
+func getXTDriverFromCache(driver IDriver) *XTDriver {
+	// Get device info to find the corresponding XTDriver
+	device := driver.GetDevice()
+	if device == nil {
+		log.Warn().Msg("Cannot get device from driver for MCP hook")
+		return nil
+	}
+
+	// Get device UUID (serial/udid/connectKey/browserID)
+	deviceUUID := device.UUID()
+	if deviceUUID == "" {
+		log.Warn().Msg("Cannot get device UUID for MCP hook")
+		return nil
+	}
+
+	// Get XTDriver from cache using device UUID as serial
+	cachedDrivers := ListCachedDrivers()
+	for _, cached := range cachedDrivers {
+		if cached.Serial == deviceUUID {
+			return cached.Driver
+		}
+	}
+
+	log.Warn().Str("uuid", deviceUUID).
+		Msg("Cannot find cached XTDriver for MCP hook")
+	return nil
+}

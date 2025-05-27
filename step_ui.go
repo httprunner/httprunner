@@ -448,6 +448,16 @@ func (s *StepMobile) ClosePopups(opts ...option.ActionOption) *StepMobile {
 	return s
 }
 
+func (s *StepMobile) Call(name string, fn func(), opts ...option.ActionOption) *StepMobile {
+	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
+		Method:  option.ACTION_CallFunction,
+		Params:  name, // function description
+		Fn:      fn,
+		Options: option.NewActionOptions(opts...),
+	})
+	return s
+}
+
 // Validate switches to step validation.
 func (s *StepMobile) Validate() *StepMobileUIValidation {
 	return &StepMobileUIValidation{
@@ -801,6 +811,17 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				log.Info().Interface("action", action.Params).Msg("stat uixt action")
 				actionMethod := option.ActionName(action.Params.(string))
 				s.summary.Stat.Actions[actionMethod]++
+				continue
+			}
+
+			// call custom function
+			if action.Method == option.ACTION_CallFunction {
+				if funcDesc, ok := action.Params.(string); ok {
+					err := uiDriver.Call(funcDesc, action.Fn, action.GetOptions()...)
+					if err != nil {
+						return stepResult, err
+					}
+				}
 				continue
 			}
 
