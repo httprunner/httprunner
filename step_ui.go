@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -803,7 +804,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				continue
 			}
 
-			err = uiDriver.ExecuteAction(action)
+			err = uiDriver.ExecuteAction(context.Background(), action)
 			actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 			if err != nil {

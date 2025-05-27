@@ -26,7 +26,6 @@ type MCPHost struct {
 	connections map[string]*Connection
 	config      *MCPConfig
 	withUIXT    bool
-	drivers     map[string]*uixt.XTDriver
 }
 
 // Connection represents a connection to an MCP server
@@ -52,7 +51,6 @@ func NewMCPHost(configPath string, withUIXT bool) (*MCPHost, error) {
 	host := &MCPHost{
 		connections: make(map[string]*Connection),
 		config:      config,
-		drivers:     make(map[string]*uixt.XTDriver),
 		withUIXT:    withUIXT,
 	}
 
@@ -175,6 +173,18 @@ func (h *MCPHost) GetClient(serverName string) (client.MCPClient, error) {
 	return conn.Client, nil
 }
 
+// GetAllClients returns all MCP clients
+func (h *MCPHost) GetAllClients() map[string]client.MCPClient {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	clients := make(map[string]client.MCPClient)
+	for name, conn := range h.connections {
+		clients[name] = conn.Client
+	}
+	return clients
+}
+
 // GetTools returns all tools from all MCP servers
 func (h *MCPHost) GetTools(ctx context.Context) []MCPTools {
 	h.mu.RLock()
@@ -204,28 +214,20 @@ func (h *MCPHost) GetTool(ctx context.Context, serverName, toolName string) (*mc
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	// Get all tools
-	results := h.GetTools(ctx)
-
-	// Find the server's tools
-	var serverTools MCPTools
-	found := false
-	for _, tools := range results {
-		if tools.ServerName == serverName {
-			serverTools = tools
-			found = true
-			break
-		}
-	}
-	if !found {
+	// Get connection for the server
+	conn, exists := h.connections[serverName]
+	if !exists {
 		return nil, fmt.Errorf("no connection found for MCP server %s", serverName)
 	}
-	if serverTools.Err != nil {
-		return nil, serverTools.Err
+
+	// Get tools from the specific server
+	listResults, err := conn.Client.ListTools(ctx, mcp.ListToolsRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tools from server %s: %w", serverName, err)
 	}
 
 	// Find the specific tool
-	for _, tool := range serverTools.Tools {
+	for _, tool := range listResults.Tools {
 		if tool.Name == toolName {
 			return &tool, nil
 		}

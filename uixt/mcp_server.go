@@ -1071,10 +1071,10 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 
 		params := []float64{unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY}
 		opts := []option.ActionOption{}
-		if unifiedReq.Duration > 0 && unifiedReq.Duration > 0 {
+		if unifiedReq.Duration > 0 {
 			opts = append(opts, option.WithDuration(unifiedReq.Duration))
 		}
-		if unifiedReq.PressDuration > 0 && unifiedReq.PressDuration > 0 {
+		if unifiedReq.PressDuration > 0 {
 			opts = append(opts, option.WithPressDuration(unifiedReq.PressDuration))
 		}
 
@@ -1146,10 +1146,10 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 		}
 
 		// Add numeric options
-		if unifiedReq.MaxRetryTimes > 0 && unifiedReq.MaxRetryTimes > 0 {
+		if unifiedReq.MaxRetryTimes > 0 {
 			opts = append(opts, option.WithMaxRetryTimes(unifiedReq.MaxRetryTimes))
 		}
-		if unifiedReq.Index > 0 && unifiedReq.Index > 0 {
+		if unifiedReq.Index > 0 {
 			opts = append(opts, option.WithIndex(unifiedReq.Index))
 		}
 
@@ -1218,10 +1218,10 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 		}
 
 		// Add numeric options
-		if unifiedReq.MaxRetryTimes > 0 && unifiedReq.MaxRetryTimes > 0 {
+		if unifiedReq.MaxRetryTimes > 0 {
 			opts = append(opts, option.WithMaxRetryTimes(unifiedReq.MaxRetryTimes))
 		}
-		if unifiedReq.Index > 0 && unifiedReq.Index > 0 {
+		if unifiedReq.Index > 0 {
 			opts = append(opts, option.WithIndex(unifiedReq.Index))
 		}
 
@@ -1290,10 +1290,10 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 		}
 
 		// Add numeric options
-		if unifiedReq.MaxRetryTimes > 0 && unifiedReq.MaxRetryTimes > 0 {
+		if unifiedReq.MaxRetryTimes > 0 {
 			opts = append(opts, option.WithMaxRetryTimes(unifiedReq.MaxRetryTimes))
 		}
-		if unifiedReq.Index > 0 && unifiedReq.Index > 0 {
+		if unifiedReq.Index > 0 {
 			opts = append(opts, option.WithIndex(unifiedReq.Index))
 		}
 

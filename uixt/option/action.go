@@ -175,6 +175,9 @@ type ActionOptions struct {
 
 	ScreenOptions
 
+	// Anti-risk options
+	AntiRisk bool `json:"anti_risk,omitempty" yaml:"anti_risk,omitempty" desc:"Enable anti-risk MCP tool calls"`
+
 	// Custom options
 	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty" desc:"Custom options"`
 }
@@ -284,6 +287,10 @@ func (o *ActionOptions) Options() []ActionOption {
 	}
 	if o.MatchOne {
 		options = append(options, WithMatchOne(true))
+	}
+
+	if o.AntiRisk {
+		options = append(options, WithAntiRisk(true))
 	}
 
 	// custom options
@@ -491,6 +498,12 @@ func WithTimeout(timeout int) ActionOption {
 func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
 	return func(o *ActionOptions) {
 		o.IgnoreNotFoundError = ignoreError
+	}
+}
+
+func WithAntiRisk(antiRisk bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.AntiRisk = antiRisk
 	}
 }
 

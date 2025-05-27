@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/uixt/option"
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/rs/zerolog/log"
 )
 
@@ -46,6 +48,14 @@ func (dExt *XTDriver) Call(desc string, fn func(), opts ...option.ActionOption) 
 
 func preHandler_TapAbsXY(driver IDriver, options *option.ActionOptions, rawX, rawY float64) (
 	x, y float64, err error) {
+
+	// Call MCP action tool if anti-risk is enabled
+	if options.AntiRisk {
+		callMCPActionTool(driver, option.ACTION_TapAbsXY, map[string]any{
+			"x": rawX,
+			"y": rawY,
+		})
+	}
 
 	x, y = options.ApplyTapOffset(rawX, rawY)
 
@@ -142,4 +152,132 @@ func postHandler(driver IDriver, actionType option.ActionName, options *option.A
 		}()
 	}
 	return nil
+}
+
+// callMCPActionTool calls MCP tool for the given action
+func callMCPActionTool(driver IDriver, actionType option.ActionName, arguments map[string]any) {
+	// Get XTDriver from cache
+	dExt := getXTDriverFromCache(driver)
+	if dExt == nil {
+		return
+	}
+
+	// Define action to MCP server mapping for pre-hooks
+	serverMapping := getPreHookServerMapping(actionType)
+	if serverMapping == nil {
+		return // No MCP hook configured for this action
+	}
+
+	callMCPTool(dExt, serverMapping.ServerName, serverMapping.ToolName, arguments, actionType)
+}
+
+// MCPServerMapping defines the mapping between action and MCP server/tool
+type MCPServerMapping struct {
+	ServerName string
+	ToolName   string
+}
+
+// getPreHookServerMapping returns MCP server mapping for pre-hooks
+// TODO: You can customize these mappings according to your needs
+func getPreHookServerMapping(actionType option.ActionName) *MCPServerMapping {
+	mappings := map[option.ActionName]*MCPServerMapping{
+		option.ACTION_TapAbsXY: {
+			ServerName: "evalpkgs",
+			ToolName:   "log_pre_action",
+		},
+		// Add more mappings as needed
+		// option.ACTION_Swipe: {
+		//     ServerName: "monitor",
+		//     ToolName:   "start_timer",
+		// },
+	}
+	return mappings[actionType]
+}
+
+// getXTDriverFromCache gets XTDriver from cache using device UUID
+func getXTDriverFromCache(driver IDriver) *XTDriver {
+	// Get device info to find the corresponding XTDriver
+	device := driver.GetDevice()
+	if device == nil {
+		log.Warn().Msg("Cannot get device from driver for MCP hook")
+		return nil
+	}
+
+	// Get device UUID (serial/udid/connectKey/browserID)
+	deviceUUID := device.UUID()
+	if deviceUUID == "" {
+		log.Warn().Msg("Cannot get device UUID for MCP hook")
+		return nil
+	}
+
+	// Get XTDriver from cache using device UUID as serial
+	cachedDrivers := ListCachedDrivers()
+	for _, cached := range cachedDrivers {
+		if cached.Serial == deviceUUID {
+			return cached.Driver
+		}
+	}
+
+	log.Warn().Str("uuid", deviceUUID).
+		Msg("Cannot find cached XTDriver for MCP hook")
+	return nil
+}
+
+// callMCPTool calls the specified MCP tool
+func callMCPTool(dExt *XTDriver, serverName, toolName string, arguments map[string]any, actionType option.ActionName) {
+	// Get MCP client
+	mcpClient, exists := dExt.GetMCPClient(serverName)
+	if !exists {
+		log.Debug().Str("server", serverName).Msg("MCP server not found for hook")
+		return
+	}
+
+	// Create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Prepare arguments
+	if arguments == nil {
+		arguments = make(map[string]any)
+	}
+	// Add action type and hook type to arguments
+	arguments["action_type"] = string(actionType)
+
+	// Call MCP tool
+	req := mcp.CallToolRequest{
+		Params: struct {
+			Name      string         `json:"name"`
+			Arguments map[string]any `json:"arguments,omitempty"`
+			Meta      *struct {
+				ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
+			} `json:"_meta,omitempty"`
+		}{
+			Name:      toolName,
+			Arguments: arguments,
+		},
+	}
+
+	result, err := mcpClient.CallTool(ctx, req)
+	if err != nil {
+		log.Debug().Err(err).
+			Str("server", serverName).
+			Str("tool", toolName).
+			Msg("MCP hook call failed")
+		return
+	}
+
+	if result.IsError {
+		log.Debug().
+			Str("server", serverName).
+			Str("tool", toolName).
+			Interface("content", result.Content).
+			Msg("MCP hook returned error")
+		return
+	}
+
+	log.Debug().
+		Str("server", serverName).
+		Str("tool", toolName).
+		Str("action", string(actionType)).
+		Msg("MCP hook called successfully")
 }

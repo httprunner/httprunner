@@ -15,9 +15,10 @@ import (
 func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, error) {
 	driverExt := &XTDriver{
 		IDriver: driver,
-		Client: &MCPClient4XTDriver{
+		client: &MCPClient4XTDriver{
 			Server: NewMCPServer(),
 		},
+		loadedMCPClients: make(map[string]client.MCPClient),
 	}
 
 	services := option.NewAIServiceOptions(opts...)
@@ -47,7 +48,8 @@ type XTDriver struct {
 	CVService  ai.ICVService  // OCR/CV
 	LLMService ai.ILLMService // LLM
 
-	Client *MCPClient4XTDriver // MCP Client
+	client           *MCPClient4XTDriver         // MCP Client for built-in uixt server
+	loadedMCPClients map[string]client.MCPClient // External MCP clients
 }
 
 // MCPClient4XTDriver is a mock MCP client that only implements the methods used by the host
@@ -80,9 +82,9 @@ func (c *MCPClient4XTDriver) Close() error {
 	return nil
 }
 
-func (dExt *XTDriver) ExecuteAction(action MobileAction) (err error) {
+func (dExt *XTDriver) ExecuteAction(ctx context.Context, action MobileAction) (err error) {
 	// Find the corresponding tool for this action method
-	tool := dExt.Client.Server.GetToolByAction(action.Method)
+	tool := dExt.client.Server.GetToolByAction(action.Method)
 	if tool == nil {
 		return fmt.Errorf("no tool found for action method: %s", action.Method)
 	}
@@ -94,7 +96,7 @@ func (dExt *XTDriver) ExecuteAction(action MobileAction) (err error) {
 	}
 
 	// Execute via MCP tool
-	result, err := dExt.Client.CallTool(context.Background(), req)
+	result, err := dExt.client.CallTool(ctx, req)
 	if err != nil {
 		return fmt.Errorf("MCP tool call failed: %w", err)
 	}
@@ -138,4 +140,23 @@ func NewDeviceWithDefault(platform, serial string) (device IDevice, err error) {
 	}
 
 	return device, err
+}
+
+// SetMCPClients sets the external MCP clients for the driver
+func (dExt *XTDriver) SetMCPClients(clients map[string]client.MCPClient) {
+	if dExt.loadedMCPClients == nil {
+		dExt.loadedMCPClients = make(map[string]client.MCPClient)
+	}
+	for name, client := range clients {
+		dExt.loadedMCPClients[name] = client
+	}
+}
+
+// GetMCPClient returns the MCP client for the specified server name
+func (dExt *XTDriver) GetMCPClient(serverName string) (client.MCPClient, bool) {
+	if dExt.loadedMCPClients == nil {
+		return nil, false
+	}
+	client, exists := dExt.loadedMCPClients[serverName]
+	return client, exists
 }

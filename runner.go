@@ -495,9 +495,18 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 
 	// init XTDriver and register to unified cache
 	for _, driverConfig := range driverConfigs {
-		_, err := uixt.GetOrCreateXTDriver(driverConfig)
+		driver, err := uixt.GetOrCreateXTDriver(driverConfig)
 		if err != nil {
 			return nil, errors.Wrapf(err, "init %s XTDriver failed", driverConfig.Platform)
+		}
+
+		// Set MCP clients if MCPHost is available
+		if r.parser.MCPHost != nil {
+			mcpClients := r.parser.MCPHost.GetAllClients()
+			driver.SetMCPClients(mcpClients)
+			log.Debug().Str("serial", driverConfig.Serial).
+				Int("mcp_clients", len(mcpClients)).
+				Msg("Set MCP clients for XTDriver")
 		}
 	}
 
