@@ -5,6 +5,7 @@ echo "SCRIPT_DIR:, $SCRIPT_DIR"
 # assume the script is always in <repository>/scripts
 pushd "$SCRIPT_DIR/.." >/dev/null
 
+mkdir -p .git/hooks
 PRE_COMMIT_FILE=.git/hooks/pre-commit
 
 # install pre-commit hook and make it executable

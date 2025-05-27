@@ -86,7 +86,7 @@ func (r *Router) Init() {
 }
 
 func (r *Router) Run(port int) error {
-	err := r.Engine.Run(fmt.Sprintf("127.0.0.1:%d", port))
+	err := r.Engine.Run(fmt.Sprintf("localhost:%d", port))
 	if err != nil {
 		log.Err(err).Msg("failed to start http server")
 		return err
