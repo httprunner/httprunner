@@ -45,7 +45,7 @@ func NewMCPServer() *MCPServer4XTDriver {
 	)
 	s := &MCPServer4XTDriver{
 		mcpServer:     mcpServer,
-		actionToolMap: make(map[option.ActionMethod]ActionTool),
+		actionToolMap: make(map[option.ActionName]ActionTool),
 	}
 	s.registerTools()
 	return s
@@ -54,8 +54,8 @@ func NewMCPServer() *MCPServer4XTDriver {
 // MCPServer4XTDriver wraps a MCPServer to expose XTDriver functionality via MCP protocol.
 type MCPServer4XTDriver struct {
 	mcpServer     *server.MCPServer
-	mcpTools      []mcp.Tool                         // tools list for uixt
-	actionToolMap map[option.ActionMethod]ActionTool // action method to tool mapping
+	mcpTools      []mcp.Tool                       // tools list for uixt
+	actionToolMap map[option.ActionName]ActionTool // action method to tool mapping
 }
 
 // Start runs the MCP server (blocking).
@@ -80,7 +80,7 @@ func (s *MCPServer4XTDriver) GetTool(name string) *mcp.Tool {
 }
 
 // GetToolByAction returns the tool that handles the given action method
-func (s *MCPServer4XTDriver) GetToolByAction(actionMethod option.ActionMethod) ActionTool {
+func (s *MCPServer4XTDriver) GetToolByAction(actionMethod option.ActionName) ActionTool {
 	if s.actionToolMap == nil {
 		return nil
 	}
@@ -174,7 +174,7 @@ func (s *MCPServer4XTDriver) registerTool(tool ActionTool) {
 
 // ActionTool interface defines the contract for MCP tools
 type ActionTool interface {
-	Name() option.ActionMethod
+	Name() option.ActionName
 	Description() string
 	Options() []mcp.ToolOption
 	Implement() server.ToolHandlerFunc
@@ -183,7 +183,7 @@ type ActionTool interface {
 }
 
 // buildMCPCallToolRequest is a helper function to build mcp.CallToolRequest
-func buildMCPCallToolRequest(toolName option.ActionMethod, arguments map[string]any) mcp.CallToolRequest {
+func buildMCPCallToolRequest(toolName option.ActionName, arguments map[string]any) mcp.CallToolRequest {
 	return mcp.CallToolRequest{
 		Params: struct {
 			Name      string         `json:"name"`
@@ -201,7 +201,7 @@ func buildMCPCallToolRequest(toolName option.ActionMethod, arguments map[string]
 // ToolListAvailableDevices implements the list_available_devices tool call.
 type ToolListAvailableDevices struct{}
 
-func (t *ToolListAvailableDevices) Name() option.ActionMethod {
+func (t *ToolListAvailableDevices) Name() option.ActionName {
 	return option.ACTION_ListAvailableDevices
 }
 
@@ -256,7 +256,7 @@ func (t *ToolListAvailableDevices) ConvertActionToCallToolRequest(action MobileA
 // ToolSelectDevice implements the select_device tool call.
 type ToolSelectDevice struct{}
 
-func (t *ToolSelectDevice) Name() option.ActionMethod {
+func (t *ToolSelectDevice) Name() option.ActionName {
 	return option.ACTION_SelectDevice
 }
 
@@ -290,7 +290,7 @@ func (t *ToolSelectDevice) ConvertActionToCallToolRequest(action MobileAction) (
 // ToolTapXY implements the tap_xy tool call.
 type ToolTapXY struct{}
 
-func (t *ToolTapXY) Name() option.ActionMethod {
+func (t *ToolTapXY) Name() option.ActionName {
 	return option.ACTION_TapXY
 }
 
@@ -299,7 +299,7 @@ func (t *ToolTapXY) Description() string {
 }
 
 func (t *ToolTapXY) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_TapXY)
 }
 
@@ -310,32 +310,31 @@ func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		// Convert to ActionOptions
-		actionOpts := unifiedReq.ToActionOptions()
-		opts := actionOpts.Options()
+		// Get options directly since ActionOptions is now ActionOptions
+		opts := unifiedReq.Options()
 
 		// Add default options
 		opts = append(opts, option.WithPreMarkOperation(true))
 
 		// Validate required parameters
-		if unifiedReq.X == nil || unifiedReq.Y == nil {
+		if unifiedReq.X == 0 || unifiedReq.Y == 0 {
 			return nil, fmt.Errorf("x and y coordinates are required")
 		}
 
 		// Tap action logic
-		log.Info().Float64("x", *unifiedReq.X).Float64("y", *unifiedReq.Y).Msg("tapping at coordinates")
+		log.Info().Float64("x", unifiedReq.X).Float64("y", unifiedReq.Y).Msg("tapping at coordinates")
 
-		err = driverExt.TapXY(*unifiedReq.X, *unifiedReq.Y, opts...)
+		err = driverExt.TapXY(unifiedReq.X, unifiedReq.Y, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at coordinates (%.2f, %.2f)", *unifiedReq.X, *unifiedReq.Y)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at coordinates (%.2f, %.2f)", unifiedReq.X, unifiedReq.Y)), nil
 	}
 }
 
@@ -362,7 +361,7 @@ func (t *ToolTapXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.Cal
 // ToolTapAbsXY implements the tap_abs_xy tool call.
 type ToolTapAbsXY struct{}
 
-func (t *ToolTapAbsXY) Name() option.ActionMethod {
+func (t *ToolTapAbsXY) Name() option.ActionName {
 	return option.ACTION_TapAbsXY
 }
 
@@ -371,7 +370,7 @@ func (t *ToolTapAbsXY) Description() string {
 }
 
 func (t *ToolTapAbsXY) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_TapAbsXY)
 }
 
@@ -382,32 +381,31 @@ func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		// Convert to ActionOptions
-		actionOpts := unifiedReq.ToActionOptions()
-		opts := actionOpts.Options()
+		// Get options directly since ActionOptions is now ActionOptions
+		opts := unifiedReq.Options()
 
 		// Add default options
 		opts = append(opts, option.WithPreMarkOperation(true))
 
 		// Validate required parameters
-		if unifiedReq.X == nil || unifiedReq.Y == nil {
+		if unifiedReq.X == 0 || unifiedReq.Y == 0 {
 			return nil, fmt.Errorf("x and y coordinates are required")
 		}
 
 		// Tap absolute XY action logic
-		log.Info().Float64("x", *unifiedReq.X).Float64("y", *unifiedReq.Y).Msg("tapping at absolute coordinates")
+		log.Info().Float64("x", unifiedReq.X).Float64("y", unifiedReq.Y).Msg("tapping at absolute coordinates")
 
-		err = driverExt.TapAbsXY(*unifiedReq.X, *unifiedReq.Y, opts...)
+		err = driverExt.TapAbsXY(unifiedReq.X, unifiedReq.Y, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap absolute XY failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at absolute coordinates (%.0f, %.0f)", *unifiedReq.X, *unifiedReq.Y)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at absolute coordinates (%.0f, %.0f)", unifiedReq.X, unifiedReq.Y)), nil
 	}
 }
 
@@ -434,7 +432,7 @@ func (t *ToolTapAbsXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 // ToolTapByOCR implements the tap_ocr tool call.
 type ToolTapByOCR struct{}
 
-func (t *ToolTapByOCR) Name() option.ActionMethod {
+func (t *ToolTapByOCR) Name() option.ActionName {
 	return option.ACTION_TapByOCR
 }
 
@@ -443,7 +441,7 @@ func (t *ToolTapByOCR) Description() string {
 }
 
 func (t *ToolTapByOCR) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_TapByOCR)
 }
 
@@ -454,14 +452,13 @@ func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		// Convert to ActionOptions
-		actionOpts := unifiedReq.ToActionOptions()
-		opts := actionOpts.Options()
+		// Get options directly since ActionOptions is now ActionOptions
+		opts := unifiedReq.Options()
 
 		// Add default options
 		opts = append(opts, option.WithPreMarkOperation(true))
@@ -499,7 +496,7 @@ func (t *ToolTapByOCR) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 // ToolTapByCV implements the tap_cv tool call.
 type ToolTapByCV struct{}
 
-func (t *ToolTapByCV) Name() option.ActionMethod {
+func (t *ToolTapByCV) Name() option.ActionName {
 	return option.ACTION_TapByCV
 }
 
@@ -508,7 +505,7 @@ func (t *ToolTapByCV) Description() string {
 }
 
 func (t *ToolTapByCV) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_TapByCV)
 }
 
@@ -519,14 +516,13 @@ func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		// Convert to ActionOptions
-		actionOpts := unifiedReq.ToActionOptions()
-		opts := actionOpts.Options()
+		// Get options directly since ActionOptions is now ActionOptions
+		opts := unifiedReq.Options()
 
 		// Add default options
 		opts = append(opts, option.WithPreMarkOperation(true))
@@ -561,7 +557,7 @@ func (t *ToolTapByCV) ConvertActionToCallToolRequest(action MobileAction) (mcp.C
 // ToolDoubleTapXY implements the double_tap_xy tool call.
 type ToolDoubleTapXY struct{}
 
-func (t *ToolDoubleTapXY) Name() option.ActionMethod {
+func (t *ToolDoubleTapXY) Name() option.ActionName {
 	return option.ACTION_DoubleTapXY
 }
 
@@ -570,7 +566,7 @@ func (t *ToolDoubleTapXY) Description() string {
 }
 
 func (t *ToolDoubleTapXY) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_DoubleTapXY)
 }
 
@@ -581,24 +577,24 @@ func (t *ToolDoubleTapXY) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Validate required parameters
-		if unifiedReq.X == nil || unifiedReq.Y == nil {
+		if unifiedReq.X == 0 || unifiedReq.Y == 0 {
 			return nil, fmt.Errorf("x and y coordinates are required")
 		}
 
 		// Double tap XY action logic
-		log.Info().Float64("x", *unifiedReq.X).Float64("y", *unifiedReq.Y).Msg("double tapping at coordinates")
-		err = driverExt.DoubleTap(*unifiedReq.X, *unifiedReq.Y)
+		log.Info().Float64("x", unifiedReq.X).Float64("y", unifiedReq.Y).Msg("double tapping at coordinates")
+		err = driverExt.DoubleTap(unifiedReq.X, unifiedReq.Y)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Double tap failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully double tapped at (%.2f, %.2f)", *unifiedReq.X, *unifiedReq.Y)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully double tapped at (%.2f, %.2f)", unifiedReq.X, unifiedReq.Y)), nil
 	}
 }
 
@@ -617,7 +613,7 @@ func (t *ToolDoubleTapXY) ConvertActionToCallToolRequest(action MobileAction) (m
 // ToolListPackages implements the list_packages tool call.
 type ToolListPackages struct{}
 
-func (t *ToolListPackages) Name() option.ActionMethod {
+func (t *ToolListPackages) Name() option.ActionName {
 	return option.ACTION_ListPackages
 }
 
@@ -626,7 +622,7 @@ func (t *ToolListPackages) Description() string {
 }
 
 func (t *ToolListPackages) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_ListPackages)
 }
 
@@ -652,7 +648,7 @@ func (t *ToolListPackages) ConvertActionToCallToolRequest(action MobileAction) (
 // ToolLaunchApp implements the launch_app tool call.
 type ToolLaunchApp struct{}
 
-func (t *ToolLaunchApp) Name() option.ActionMethod {
+func (t *ToolLaunchApp) Name() option.ActionName {
 	return option.ACTION_AppLaunch
 }
 
@@ -661,7 +657,7 @@ func (t *ToolLaunchApp) Description() string {
 }
 
 func (t *ToolLaunchApp) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_AppLaunch)
 }
 
@@ -672,7 +668,7 @@ func (t *ToolLaunchApp) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -705,7 +701,7 @@ func (t *ToolLaunchApp) ConvertActionToCallToolRequest(action MobileAction) (mcp
 // ToolTerminateApp implements the terminate_app tool call.
 type ToolTerminateApp struct{}
 
-func (t *ToolTerminateApp) Name() option.ActionMethod {
+func (t *ToolTerminateApp) Name() option.ActionName {
 	return option.ACTION_AppTerminate
 }
 
@@ -714,7 +710,7 @@ func (t *ToolTerminateApp) Description() string {
 }
 
 func (t *ToolTerminateApp) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_AppTerminate)
 }
 
@@ -725,7 +721,7 @@ func (t *ToolTerminateApp) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -761,7 +757,7 @@ func (t *ToolTerminateApp) ConvertActionToCallToolRequest(action MobileAction) (
 // ToolScreenShot implements the screenshot tool call.
 type ToolScreenShot struct{}
 
-func (t *ToolScreenShot) Name() option.ActionMethod {
+func (t *ToolScreenShot) Name() option.ActionName {
 	return option.ACTION_ScreenShot
 }
 
@@ -770,7 +766,7 @@ func (t *ToolScreenShot) Description() string {
 }
 
 func (t *ToolScreenShot) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_ScreenShot)
 }
 
@@ -798,7 +794,7 @@ func (t *ToolScreenShot) ConvertActionToCallToolRequest(action MobileAction) (mc
 // ToolGetScreenSize implements the get_screen_size tool call.
 type ToolGetScreenSize struct{}
 
-func (t *ToolGetScreenSize) Name() option.ActionMethod {
+func (t *ToolGetScreenSize) Name() option.ActionName {
 	return option.ACTION_GetScreenSize
 }
 
@@ -807,7 +803,7 @@ func (t *ToolGetScreenSize) Description() string {
 }
 
 func (t *ToolGetScreenSize) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_GetScreenSize)
 }
 
@@ -835,7 +831,7 @@ func (t *ToolGetScreenSize) ConvertActionToCallToolRequest(action MobileAction) 
 // ToolPressButton implements the press_button tool call.
 type ToolPressButton struct{}
 
-func (t *ToolPressButton) Name() option.ActionMethod {
+func (t *ToolPressButton) Name() option.ActionName {
 	return option.ACTION_PressButton
 }
 
@@ -844,7 +840,7 @@ func (t *ToolPressButton) Description() string {
 }
 
 func (t *ToolPressButton) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_PressButton)
 }
 
@@ -855,7 +851,7 @@ func (t *ToolPressButton) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -886,7 +882,7 @@ func (t *ToolPressButton) ConvertActionToCallToolRequest(action MobileAction) (m
 // based on the params type.
 type ToolSwipe struct{}
 
-func (t *ToolSwipe) Name() option.ActionMethod {
+func (t *ToolSwipe) Name() option.ActionName {
 	return option.ACTION_Swipe
 }
 
@@ -895,7 +891,7 @@ func (t *ToolSwipe) Description() string {
 }
 
 func (t *ToolSwipe) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_Swipe)
 }
 
@@ -947,7 +943,7 @@ func (t *ToolSwipe) ConvertActionToCallToolRequest(action MobileAction) (mcp.Cal
 // ToolSwipeDirection implements the swipe tool call.
 type ToolSwipeDirection struct{}
 
-func (t *ToolSwipeDirection) Name() option.ActionMethod {
+func (t *ToolSwipeDirection) Name() option.ActionName {
 	return option.ACTION_SwipeDirection
 }
 
@@ -956,7 +952,7 @@ func (t *ToolSwipeDirection) Description() string {
 }
 
 func (t *ToolSwipeDirection) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_SwipeDirection)
 }
 
@@ -967,13 +963,13 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Swipe action logic
-		log.Info().Str("direction", unifiedReq.Direction).Msg("performing swipe")
+		log.Info().Interface("direction", unifiedReq.Direction).Msg("performing swipe")
 
 		// Validate direction
 		validDirections := []string{"up", "down", "left", "right"}
@@ -990,8 +986,8 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 
 		opts := []option.ActionOption{
 			option.WithPreMarkOperation(true),
-			option.WithDuration(getFloat64ValueOrDefault(unifiedReq.Duration, 0.5)),
-			option.WithPressDuration(getFloat64ValueOrDefault(unifiedReq.PressDuration, 0.1)),
+			option.WithDuration(getFloat64ValueOrDefault(&unifiedReq.Duration, 0.5)),
+			option.WithPressDuration(getFloat64ValueOrDefault(&unifiedReq.PressDuration, 0.1)),
 		}
 
 		// Convert direction to coordinates and perform swipe
@@ -1037,7 +1033,7 @@ func (t *ToolSwipeDirection) ConvertActionToCallToolRequest(action MobileAction)
 // ToolSwipeCoordinate implements the swipe_advanced tool call.
 type ToolSwipeCoordinate struct{}
 
-func (t *ToolSwipeCoordinate) Name() option.ActionMethod {
+func (t *ToolSwipeCoordinate) Name() option.ActionName {
 	return option.ACTION_SwipeCoordinate
 }
 
@@ -1046,7 +1042,7 @@ func (t *ToolSwipeCoordinate) Description() string {
 }
 
 func (t *ToolSwipeCoordinate) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_SwipeCoordinate)
 }
 
@@ -1057,29 +1053,29 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Validate required parameters
-		if unifiedReq.FromX == nil || unifiedReq.FromY == nil || unifiedReq.ToX == nil || unifiedReq.ToY == nil {
+		if unifiedReq.FromX == 0 || unifiedReq.FromY == 0 || unifiedReq.ToX == 0 || unifiedReq.ToY == 0 {
 			return nil, fmt.Errorf("fromX, fromY, toX, and toY coordinates are required")
 		}
 
 		// Advanced swipe action logic using prepareSwipeAction like the original DoAction
 		log.Info().
-			Float64("fromX", *unifiedReq.FromX).Float64("fromY", *unifiedReq.FromY).
-			Float64("toX", *unifiedReq.ToX).Float64("toY", *unifiedReq.ToY).
+			Float64("fromX", unifiedReq.FromX).Float64("fromY", unifiedReq.FromY).
+			Float64("toX", unifiedReq.ToX).Float64("toY", unifiedReq.ToY).
 			Msg("performing advanced swipe")
 
-		params := []float64{*unifiedReq.FromX, *unifiedReq.FromY, *unifiedReq.ToX, *unifiedReq.ToY}
+		params := []float64{unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY}
 		opts := []option.ActionOption{}
-		if unifiedReq.Duration != nil && *unifiedReq.Duration > 0 {
-			opts = append(opts, option.WithDuration(*unifiedReq.Duration))
+		if unifiedReq.Duration > 0 && unifiedReq.Duration > 0 {
+			opts = append(opts, option.WithDuration(unifiedReq.Duration))
 		}
-		if unifiedReq.PressDuration != nil && *unifiedReq.PressDuration > 0 {
-			opts = append(opts, option.WithPressDuration(*unifiedReq.PressDuration))
+		if unifiedReq.PressDuration > 0 && unifiedReq.PressDuration > 0 {
+			opts = append(opts, option.WithPressDuration(unifiedReq.PressDuration))
 		}
 
 		swipeAction := prepareSwipeAction(driverExt, params, opts...)
@@ -1089,7 +1085,7 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 		}
 
 		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed advanced swipe from (%.2f, %.2f) to (%.2f, %.2f)",
-			*unifiedReq.FromX, *unifiedReq.FromY, *unifiedReq.ToX, *unifiedReq.ToY)), nil
+			unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY)), nil
 	}
 }
 
@@ -1116,7 +1112,7 @@ func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action MobileAction
 // ToolSwipeToTapApp implements the swipe_to_tap_app tool call.
 type ToolSwipeToTapApp struct{}
 
-func (t *ToolSwipeToTapApp) Name() option.ActionMethod {
+func (t *ToolSwipeToTapApp) Name() option.ActionName {
 	return option.ACTION_SwipeToTapApp
 }
 
@@ -1125,7 +1121,7 @@ func (t *ToolSwipeToTapApp) Description() string {
 }
 
 func (t *ToolSwipeToTapApp) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_SwipeToTapApp)
 }
 
@@ -1136,7 +1132,7 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -1145,16 +1141,16 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 		var opts []option.ActionOption
 
 		// Add boolean options
-		if getBoolValue(unifiedReq.IgnoreNotFoundError) {
+		if unifiedReq.IgnoreNotFoundError {
 			opts = append(opts, option.WithIgnoreNotFoundError(true))
 		}
 
 		// Add numeric options
-		if unifiedReq.MaxRetryTimes != nil && *unifiedReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(*unifiedReq.MaxRetryTimes))
+		if unifiedReq.MaxRetryTimes > 0 && unifiedReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(unifiedReq.MaxRetryTimes))
 		}
-		if unifiedReq.Index != nil && *unifiedReq.Index > 0 {
-			opts = append(opts, option.WithIndex(*unifiedReq.Index))
+		if unifiedReq.Index > 0 && unifiedReq.Index > 0 {
+			opts = append(opts, option.WithIndex(unifiedReq.Index))
 		}
 
 		// Swipe to tap app action logic
@@ -1185,7 +1181,7 @@ func (t *ToolSwipeToTapApp) ConvertActionToCallToolRequest(action MobileAction) 
 // ToolSwipeToTapText implements the swipe_to_tap_text tool call.
 type ToolSwipeToTapText struct{}
 
-func (t *ToolSwipeToTapText) Name() option.ActionMethod {
+func (t *ToolSwipeToTapText) Name() option.ActionName {
 	return option.ACTION_SwipeToTapText
 }
 
@@ -1194,7 +1190,7 @@ func (t *ToolSwipeToTapText) Description() string {
 }
 
 func (t *ToolSwipeToTapText) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_SwipeToTapText)
 }
 
@@ -1205,7 +1201,7 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -1214,19 +1210,19 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 		var opts []option.ActionOption
 
 		// Add boolean options
-		if getBoolValue(unifiedReq.IgnoreNotFoundError) {
+		if unifiedReq.IgnoreNotFoundError {
 			opts = append(opts, option.WithIgnoreNotFoundError(true))
 		}
-		if getBoolValue(unifiedReq.Regex) {
+		if unifiedReq.Regex {
 			opts = append(opts, option.WithRegex(true))
 		}
 
 		// Add numeric options
-		if unifiedReq.MaxRetryTimes != nil && *unifiedReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(*unifiedReq.MaxRetryTimes))
+		if unifiedReq.MaxRetryTimes > 0 && unifiedReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(unifiedReq.MaxRetryTimes))
 		}
-		if unifiedReq.Index != nil && *unifiedReq.Index > 0 {
-			opts = append(opts, option.WithIndex(*unifiedReq.Index))
+		if unifiedReq.Index > 0 && unifiedReq.Index > 0 {
+			opts = append(opts, option.WithIndex(unifiedReq.Index))
 		}
 
 		// Swipe to tap text action logic
@@ -1257,7 +1253,7 @@ func (t *ToolSwipeToTapText) ConvertActionToCallToolRequest(action MobileAction)
 // ToolSwipeToTapTexts implements the swipe_to_tap_texts tool call.
 type ToolSwipeToTapTexts struct{}
 
-func (t *ToolSwipeToTapTexts) Name() option.ActionMethod {
+func (t *ToolSwipeToTapTexts) Name() option.ActionName {
 	return option.ACTION_SwipeToTapTexts
 }
 
@@ -1266,7 +1262,7 @@ func (t *ToolSwipeToTapTexts) Description() string {
 }
 
 func (t *ToolSwipeToTapTexts) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_SwipeToTapTexts)
 }
 
@@ -1277,7 +1273,7 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -1286,19 +1282,19 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 		var opts []option.ActionOption
 
 		// Add boolean options
-		if getBoolValue(unifiedReq.IgnoreNotFoundError) {
+		if unifiedReq.IgnoreNotFoundError {
 			opts = append(opts, option.WithIgnoreNotFoundError(true))
 		}
-		if getBoolValue(unifiedReq.Regex) {
+		if unifiedReq.Regex {
 			opts = append(opts, option.WithRegex(true))
 		}
 
 		// Add numeric options
-		if unifiedReq.MaxRetryTimes != nil && *unifiedReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(*unifiedReq.MaxRetryTimes))
+		if unifiedReq.MaxRetryTimes > 0 && unifiedReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(unifiedReq.MaxRetryTimes))
 		}
-		if unifiedReq.Index != nil && *unifiedReq.Index > 0 {
-			opts = append(opts, option.WithIndex(*unifiedReq.Index))
+		if unifiedReq.Index > 0 && unifiedReq.Index > 0 {
+			opts = append(opts, option.WithIndex(unifiedReq.Index))
 		}
 
 		// Swipe to tap texts action logic
@@ -1334,7 +1330,7 @@ func (t *ToolSwipeToTapTexts) ConvertActionToCallToolRequest(action MobileAction
 // ToolDrag implements the drag tool call.
 type ToolDrag struct{}
 
-func (t *ToolDrag) Name() option.ActionMethod {
+func (t *ToolDrag) Name() option.ActionName {
 	return option.ACTION_Drag
 }
 
@@ -1343,7 +1339,7 @@ func (t *ToolDrag) Description() string {
 }
 
 func (t *ToolDrag) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_Drag)
 }
 
@@ -1354,34 +1350,34 @@ func (t *ToolDrag) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Validate required parameters
-		if unifiedReq.FromX == nil || unifiedReq.FromY == nil || unifiedReq.ToX == nil || unifiedReq.ToY == nil {
+		if unifiedReq.FromX == 0 || unifiedReq.FromY == 0 || unifiedReq.ToX == 0 || unifiedReq.ToY == 0 {
 			return nil, fmt.Errorf("fromX, fromY, toX, and toY coordinates are required")
 		}
 
 		opts := []option.ActionOption{}
-		if unifiedReq.Duration != nil && *unifiedReq.Duration > 0 {
-			opts = append(opts, option.WithDuration(*unifiedReq.Duration/1000.0))
+		if unifiedReq.Duration > 0 {
+			opts = append(opts, option.WithDuration(unifiedReq.Duration/1000.0))
 		}
 
 		// Drag action logic
 		log.Info().
-			Float64("fromX", *unifiedReq.FromX).Float64("fromY", *unifiedReq.FromY).
-			Float64("toX", *unifiedReq.ToX).Float64("toY", *unifiedReq.ToY).
+			Float64("fromX", unifiedReq.FromX).Float64("fromY", unifiedReq.FromY).
+			Float64("toX", unifiedReq.ToX).Float64("toY", unifiedReq.ToY).
 			Msg("performing drag")
 
-		err = driverExt.Swipe(*unifiedReq.FromX, *unifiedReq.FromY, *unifiedReq.ToX, *unifiedReq.ToY, opts...)
+		err = driverExt.Swipe(unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Drag failed: %s", err.Error())), nil
 		}
 
 		return mcp.NewToolResultText(fmt.Sprintf("Successfully dragged from (%.2f, %.2f) to (%.2f, %.2f)",
-			*unifiedReq.FromX, *unifiedReq.FromY, *unifiedReq.ToX, *unifiedReq.ToY)), nil
+			unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY)), nil
 	}
 }
 
@@ -1456,7 +1452,7 @@ func extractActionOptionsToArguments(actionOptions []option.ActionOption, argume
 // ToolHome implements the home tool call.
 type ToolHome struct{}
 
-func (t *ToolHome) Name() option.ActionMethod {
+func (t *ToolHome) Name() option.ActionName {
 	return option.ACTION_Home
 }
 
@@ -1465,7 +1461,7 @@ func (t *ToolHome) Description() string {
 }
 
 func (t *ToolHome) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_Home)
 }
 
@@ -1494,7 +1490,7 @@ func (t *ToolHome) ConvertActionToCallToolRequest(action MobileAction) (mcp.Call
 // ToolBack implements the back tool call.
 type ToolBack struct{}
 
-func (t *ToolBack) Name() option.ActionMethod {
+func (t *ToolBack) Name() option.ActionName {
 	return option.ACTION_Back
 }
 
@@ -1503,7 +1499,7 @@ func (t *ToolBack) Description() string {
 }
 
 func (t *ToolBack) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_Back)
 }
 
@@ -1532,7 +1528,7 @@ func (t *ToolBack) ConvertActionToCallToolRequest(action MobileAction) (mcp.Call
 // ToolInput implements the input tool call.
 type ToolInput struct{}
 
-func (t *ToolInput) Name() option.ActionMethod {
+func (t *ToolInput) Name() option.ActionName {
 	return option.ACTION_Input
 }
 
@@ -1541,7 +1537,7 @@ func (t *ToolInput) Description() string {
 }
 
 func (t *ToolInput) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_Input)
 }
 
@@ -1552,7 +1548,7 @@ func (t *ToolInput) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -1583,7 +1579,7 @@ func (t *ToolInput) ConvertActionToCallToolRequest(action MobileAction) (mcp.Cal
 // ToolWebLoginNoneUI implements the web_login_none_ui tool call.
 type ToolWebLoginNoneUI struct{}
 
-func (t *ToolWebLoginNoneUI) Name() option.ActionMethod {
+func (t *ToolWebLoginNoneUI) Name() option.ActionName {
 	return option.ACTION_WebLoginNoneUI
 }
 
@@ -1592,7 +1588,7 @@ func (t *ToolWebLoginNoneUI) Description() string {
 }
 
 func (t *ToolWebLoginNoneUI) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_WebLoginNoneUI)
 }
 
@@ -1603,7 +1599,7 @@ func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -1631,7 +1627,7 @@ func (t *ToolWebLoginNoneUI) ConvertActionToCallToolRequest(action MobileAction)
 // ToolAppInstall implements the app_install tool call.
 type ToolAppInstall struct{}
 
-func (t *ToolAppInstall) Name() option.ActionMethod {
+func (t *ToolAppInstall) Name() option.ActionName {
 	return option.ACTION_AppInstall
 }
 
@@ -1640,7 +1636,7 @@ func (t *ToolAppInstall) Description() string {
 }
 
 func (t *ToolAppInstall) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_AppInstall)
 }
 
@@ -1651,7 +1647,7 @@ func (t *ToolAppInstall) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -1680,7 +1676,7 @@ func (t *ToolAppInstall) ConvertActionToCallToolRequest(action MobileAction) (mc
 // ToolAppUninstall implements the app_uninstall tool call.
 type ToolAppUninstall struct{}
 
-func (t *ToolAppUninstall) Name() option.ActionMethod {
+func (t *ToolAppUninstall) Name() option.ActionName {
 	return option.ACTION_AppUninstall
 }
 
@@ -1689,7 +1685,7 @@ func (t *ToolAppUninstall) Description() string {
 }
 
 func (t *ToolAppUninstall) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_AppUninstall)
 }
 
@@ -1700,7 +1696,7 @@ func (t *ToolAppUninstall) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -1729,7 +1725,7 @@ func (t *ToolAppUninstall) ConvertActionToCallToolRequest(action MobileAction) (
 // ToolAppClear implements the app_clear tool call.
 type ToolAppClear struct{}
 
-func (t *ToolAppClear) Name() option.ActionMethod {
+func (t *ToolAppClear) Name() option.ActionName {
 	return option.ACTION_AppClear
 }
 
@@ -1738,7 +1734,7 @@ func (t *ToolAppClear) Description() string {
 }
 
 func (t *ToolAppClear) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_AppClear)
 }
 
@@ -1749,7 +1745,7 @@ func (t *ToolAppClear) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -1778,7 +1774,7 @@ func (t *ToolAppClear) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 // ToolSecondaryClick implements the secondary_click tool call.
 type ToolSecondaryClick struct{}
 
-func (t *ToolSecondaryClick) Name() option.ActionMethod {
+func (t *ToolSecondaryClick) Name() option.ActionName {
 	return option.ACTION_SecondaryClick
 }
 
@@ -1787,7 +1783,7 @@ func (t *ToolSecondaryClick) Description() string {
 }
 
 func (t *ToolSecondaryClick) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_SecondaryClick)
 }
 
@@ -1798,24 +1794,24 @@ func (t *ToolSecondaryClick) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Validate required parameters
-		if unifiedReq.X == nil || unifiedReq.Y == nil {
+		if unifiedReq.X == 0 || unifiedReq.Y == 0 {
 			return nil, fmt.Errorf("x and y coordinates are required")
 		}
 
 		// Secondary click action logic
-		log.Info().Float64("x", *unifiedReq.X).Float64("y", *unifiedReq.Y).Msg("performing secondary click")
-		err = driverExt.SecondaryClick(*unifiedReq.X, *unifiedReq.Y)
+		log.Info().Float64("x", unifiedReq.X).Float64("y", unifiedReq.Y).Msg("performing secondary click")
+		err = driverExt.SecondaryClick(unifiedReq.X, unifiedReq.Y)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Secondary click failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed secondary click at (%.2f, %.2f)", *unifiedReq.X, *unifiedReq.Y)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed secondary click at (%.2f, %.2f)", unifiedReq.X, unifiedReq.Y)), nil
 	}
 }
 
@@ -1833,7 +1829,7 @@ func (t *ToolSecondaryClick) ConvertActionToCallToolRequest(action MobileAction)
 // ToolHoverBySelector implements the hover_by_selector tool call.
 type ToolHoverBySelector struct{}
 
-func (t *ToolHoverBySelector) Name() option.ActionMethod {
+func (t *ToolHoverBySelector) Name() option.ActionName {
 	return option.ACTION_HoverBySelector
 }
 
@@ -1842,7 +1838,7 @@ func (t *ToolHoverBySelector) Description() string {
 }
 
 func (t *ToolHoverBySelector) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_HoverBySelector)
 }
 
@@ -1853,7 +1849,7 @@ func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -1882,7 +1878,7 @@ func (t *ToolHoverBySelector) ConvertActionToCallToolRequest(action MobileAction
 // ToolTapBySelector implements the tap_by_selector tool call.
 type ToolTapBySelector struct{}
 
-func (t *ToolTapBySelector) Name() option.ActionMethod {
+func (t *ToolTapBySelector) Name() option.ActionName {
 	return option.ACTION_TapBySelector
 }
 
@@ -1891,7 +1887,7 @@ func (t *ToolTapBySelector) Description() string {
 }
 
 func (t *ToolTapBySelector) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_TapBySelector)
 }
 
@@ -1902,7 +1898,7 @@ func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -1931,7 +1927,7 @@ func (t *ToolTapBySelector) ConvertActionToCallToolRequest(action MobileAction) 
 // ToolSecondaryClickBySelector implements the secondary_click_by_selector tool call.
 type ToolSecondaryClickBySelector struct{}
 
-func (t *ToolSecondaryClickBySelector) Name() option.ActionMethod {
+func (t *ToolSecondaryClickBySelector) Name() option.ActionName {
 	return option.ACTION_SecondaryClickBySelector
 }
 
@@ -1940,7 +1936,7 @@ func (t *ToolSecondaryClickBySelector) Description() string {
 }
 
 func (t *ToolSecondaryClickBySelector) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_SecondaryClickBySelector)
 }
 
@@ -1951,7 +1947,7 @@ func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -1980,7 +1976,7 @@ func (t *ToolSecondaryClickBySelector) ConvertActionToCallToolRequest(action Mob
 // ToolWebCloseTab implements the web_close_tab tool call.
 type ToolWebCloseTab struct{}
 
-func (t *ToolWebCloseTab) Name() option.ActionMethod {
+func (t *ToolWebCloseTab) Name() option.ActionName {
 	return option.ACTION_WebCloseTab
 }
 
@@ -1989,7 +1985,7 @@ func (t *ToolWebCloseTab) Description() string {
 }
 
 func (t *ToolWebCloseTab) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_WebCloseTab)
 }
 
@@ -2000,24 +1996,24 @@ func (t *ToolWebCloseTab) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Validate required parameters
-		if unifiedReq.TabIndex == nil {
+		if unifiedReq.TabIndex == 0 {
 			return nil, fmt.Errorf("tabIndex is required")
 		}
 
 		// Web close tab action logic
-		log.Info().Int("tabIndex", *unifiedReq.TabIndex).Msg("closing web tab")
+		log.Info().Int("tabIndex", unifiedReq.TabIndex).Msg("closing web tab")
 		browserDriver, ok := driverExt.IDriver.(*BrowserDriver)
 		if !ok {
 			return nil, fmt.Errorf("web close tab is only supported for browser drivers")
 		}
 
-		err = browserDriver.CloseTab(*unifiedReq.TabIndex)
+		err = browserDriver.CloseTab(unifiedReq.TabIndex)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Close tab failed: %s", err.Error())), nil
 		}
@@ -2047,7 +2043,7 @@ func (t *ToolWebCloseTab) ConvertActionToCallToolRequest(action MobileAction) (m
 // ToolSetIme implements the set_ime tool call.
 type ToolSetIme struct{}
 
-func (t *ToolSetIme) Name() option.ActionMethod {
+func (t *ToolSetIme) Name() option.ActionName {
 	return option.ACTION_SetIme
 }
 
@@ -2056,7 +2052,7 @@ func (t *ToolSetIme) Description() string {
 }
 
 func (t *ToolSetIme) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_SetIme)
 }
 
@@ -2067,7 +2063,7 @@ func (t *ToolSetIme) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -2096,7 +2092,7 @@ func (t *ToolSetIme) ConvertActionToCallToolRequest(action MobileAction) (mcp.Ca
 // ToolGetSource implements the get_source tool call.
 type ToolGetSource struct{}
 
-func (t *ToolGetSource) Name() option.ActionMethod {
+func (t *ToolGetSource) Name() option.ActionName {
 	return option.ACTION_GetSource
 }
 
@@ -2105,7 +2101,7 @@ func (t *ToolGetSource) Description() string {
 }
 
 func (t *ToolGetSource) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_GetSource)
 }
 
@@ -2116,7 +2112,7 @@ func (t *ToolGetSource) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -2145,7 +2141,7 @@ func (t *ToolGetSource) ConvertActionToCallToolRequest(action MobileAction) (mcp
 // ToolSleep implements the sleep tool call.
 type ToolSleep struct{}
 
-func (t *ToolSleep) Name() option.ActionMethod {
+func (t *ToolSleep) Name() option.ActionName {
 	return option.ACTION_Sleep
 }
 
@@ -2203,7 +2199,7 @@ func (t *ToolSleep) ConvertActionToCallToolRequest(action MobileAction) (mcp.Cal
 // ToolSleepMS implements the sleep_ms tool call.
 type ToolSleepMS struct{}
 
-func (t *ToolSleepMS) Name() option.ActionMethod {
+func (t *ToolSleepMS) Name() option.ActionName {
 	return option.ACTION_SleepMS
 }
 
@@ -2212,27 +2208,27 @@ func (t *ToolSleepMS) Description() string {
 }
 
 func (t *ToolSleepMS) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_SleepMS)
 }
 
 func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Validate required parameters
-		if unifiedReq.Milliseconds == nil {
+		if unifiedReq.Milliseconds == 0 {
 			return nil, fmt.Errorf("milliseconds is required")
 		}
 
 		// Sleep MS action logic
-		log.Info().Int64("milliseconds", *unifiedReq.Milliseconds).Msg("sleeping in milliseconds")
-		time.Sleep(time.Duration(*unifiedReq.Milliseconds) * time.Millisecond)
+		log.Info().Int64("milliseconds", unifiedReq.Milliseconds).Msg("sleeping in milliseconds")
+		time.Sleep(time.Duration(unifiedReq.Milliseconds) * time.Millisecond)
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully slept for %d milliseconds", *unifiedReq.Milliseconds)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully slept for %d milliseconds", unifiedReq.Milliseconds)), nil
 	}
 }
 
@@ -2254,7 +2250,7 @@ func (t *ToolSleepMS) ConvertActionToCallToolRequest(action MobileAction) (mcp.C
 // ToolSleepRandom implements the sleep_random tool call.
 type ToolSleepRandom struct{}
 
-func (t *ToolSleepRandom) Name() option.ActionMethod {
+func (t *ToolSleepRandom) Name() option.ActionName {
 	return option.ACTION_SleepRandom
 }
 
@@ -2263,13 +2259,13 @@ func (t *ToolSleepRandom) Description() string {
 }
 
 func (t *ToolSleepRandom) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_SleepRandom)
 }
 
 func (t *ToolSleepRandom) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -2295,7 +2291,7 @@ func (t *ToolSleepRandom) ConvertActionToCallToolRequest(action MobileAction) (m
 // ToolClosePopups implements the close_popups tool call.
 type ToolClosePopups struct{}
 
-func (t *ToolClosePopups) Name() option.ActionMethod {
+func (t *ToolClosePopups) Name() option.ActionName {
 	return option.ACTION_ClosePopups
 }
 
@@ -2304,7 +2300,7 @@ func (t *ToolClosePopups) Description() string {
 }
 
 func (t *ToolClosePopups) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_ClosePopups)
 }
 
@@ -2333,7 +2329,7 @@ func (t *ToolClosePopups) ConvertActionToCallToolRequest(action MobileAction) (m
 // ToolAIAction implements the ai_action tool call.
 type ToolAIAction struct{}
 
-func (t *ToolAIAction) Name() option.ActionMethod {
+func (t *ToolAIAction) Name() option.ActionName {
 	return option.ACTION_AIAction
 }
 
@@ -2342,7 +2338,7 @@ func (t *ToolAIAction) Description() string {
 }
 
 func (t *ToolAIAction) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_AIAction)
 }
 
@@ -2353,7 +2349,7 @@ func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
@@ -2382,7 +2378,7 @@ func (t *ToolAIAction) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 // ToolFinished implements the finished tool call.
 type ToolFinished struct{}
 
-func (t *ToolFinished) Name() option.ActionMethod {
+func (t *ToolFinished) Name() option.ActionName {
 	return option.ACTION_Finished
 }
 
@@ -2391,13 +2387,13 @@ func (t *ToolFinished) Description() string {
 }
 
 func (t *ToolFinished) Options() []mcp.ToolOption {
-	unifiedReq := &option.UnifiedActionRequest{}
+	unifiedReq := &option.ActionOptions{}
 	return unifiedReq.GetMCPOptions(option.ACTION_Finished)
 }
 
 func (t *ToolFinished) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		var unifiedReq option.UnifiedActionRequest
+		var unifiedReq option.ActionOptions
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}

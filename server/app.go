@@ -22,7 +22,7 @@ func (r *Router) foregroundAppHandler(c *gin.Context) {
 }
 
 func (r *Router) appInfoHandler(c *gin.Context) {
-	var req option.UnifiedActionRequest
+	var req option.ActionOptions
 	if err := c.ShouldBindQuery(&req); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return

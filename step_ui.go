@@ -67,7 +67,7 @@ func (s *StepMobile) Serial(serial string) *StepMobile {
 	return s
 }
 
-func (s *StepMobile) Log(actionName option.ActionMethod) *StepMobile {
+func (s *StepMobile) Log(actionName option.ActionName) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
 		Method: option.ACTION_LOG,
 		Params: actionName,
@@ -798,7 +798,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			// stat uixt action
 			if action.Method == option.ACTION_LOG {
 				log.Info().Interface("action", action.Params).Msg("stat uixt action")
-				actionMethod := option.ActionMethod(action.Params.(string))
+				actionMethod := option.ActionName(action.Params.(string))
 				s.summary.Stat.Actions[actionMethod]++
 				continue
 			}

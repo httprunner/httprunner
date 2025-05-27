@@ -98,7 +98,7 @@ func preHandler_Drag(driver IDriver, options *option.ActionOptions, rawFomX, raw
 	return fromX, fromY, toX, toY, nil
 }
 
-func preHandler_Swipe(driver IDriver, actionType option.ActionMethod,
+func preHandler_Swipe(driver IDriver, actionType option.ActionName,
 	options *option.ActionOptions, rawFomX, rawFromY, rawToX, rawToY float64) (
 	fromX, fromY, toX, toY float64, err error) {
 
@@ -118,7 +118,7 @@ func preHandler_Swipe(driver IDriver, actionType option.ActionMethod,
 	return fromX, fromY, toX, toY, nil
 }
 
-func postHandler(driver IDriver, actionType option.ActionMethod, options *option.ActionOptions) error {
+func postHandler(driver IDriver, actionType option.ActionName, options *option.ActionOptions) error {
 	// save screenshot after action
 	if options.PostMarkOperation {
 		// get compressed screenshot buffer

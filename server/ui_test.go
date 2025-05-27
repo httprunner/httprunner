@@ -18,17 +18,17 @@ func TestTapHandler(t *testing.T) {
 	tests := []struct {
 		name       string
 		path       string
-		req        option.UnifiedActionRequest
+		req        option.ActionOptions
 		wantStatus int
 		wantResp   HttpResponse
 	}{
 		{
 			name: "tap abs xy",
 			path: fmt.Sprintf("/api/v1/android/%s/ui/tap", "4622ca24"),
-			req: option.UnifiedActionRequest{
-				X:        &[]float64{500}[0],
-				Y:        &[]float64{800}[0],
-				Duration: &[]float64{0}[0],
+			req: option.ActionOptions{
+				X:        500.0,
+				Y:        800.0,
+				Duration: 0,
 			},
 			wantStatus: http.StatusOK,
 			wantResp: HttpResponse{
@@ -40,10 +40,10 @@ func TestTapHandler(t *testing.T) {
 		{
 			name: "tap relative xy",
 			path: fmt.Sprintf("/api/v1/android/%s/ui/tap", "4622ca24"),
-			req: option.UnifiedActionRequest{
-				X:        &[]float64{0.5}[0],
-				Y:        &[]float64{0.6}[0],
-				Duration: &[]float64{0}[0],
+			req: option.ActionOptions{
+				X:        0.5,
+				Y:        0.6,
+				Duration: 0,
 			},
 			wantStatus: http.StatusOK,
 			wantResp: HttpResponse{

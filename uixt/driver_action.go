@@ -5,7 +5,7 @@ import (
 )
 
 type MobileAction struct {
-	Method  option.ActionMethod   `json:"method,omitempty" yaml:"method,omitempty"`
+	Method  option.ActionName     `json:"method,omitempty" yaml:"method,omitempty"`
 	Params  interface{}           `json:"params,omitempty" yaml:"params,omitempty"`
 	Options *option.ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
 	option.ActionOptions

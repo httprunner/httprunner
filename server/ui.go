@@ -7,8 +7,8 @@ import (
 )
 
 // processUnifiedRequest is a helper function to handle common request processing
-func (r *Router) processUnifiedRequest(c *gin.Context, actionType option.ActionMethod) (*option.UnifiedActionRequest, error) {
-	var req option.UnifiedActionRequest
+func (r *Router) processUnifiedRequest(c *gin.Context, actionType option.ActionName) (*option.ActionOptions, error) {
+	var req option.ActionOptions
 
 	// Bind JSON request
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -29,7 +29,7 @@ func (r *Router) processUnifiedRequest(c *gin.Context, actionType option.ActionM
 }
 
 // setRequestContextFromURL sets platform and serial from URL parameters
-func setRequestContextFromURL(c *gin.Context, req *option.UnifiedActionRequest) {
+func setRequestContextFromURL(c *gin.Context, req *option.ActionOptions) {
 	if req.Platform == "" {
 		req.Platform = c.Param("platform")
 	}
@@ -49,12 +49,11 @@ func (r *Router) tapHandler(c *gin.Context) {
 		return
 	}
 
-	// Use UnifiedActionRequest directly
-	if req.GetDuration() > 0 {
-		err = driver.Drag(req.GetX(), req.GetY(), req.GetX(), req.GetY(),
-			option.WithDuration(req.GetDuration()))
+	if req.Duration > 0 {
+		err = driver.Drag(req.X, req.Y, req.X, req.Y,
+			option.WithDuration(req.Duration))
 	} else {
-		err = driver.TapXY(req.GetX(), req.GetY())
+		err = driver.TapXY(req.X, req.Y)
 	}
 	if err != nil {
 		RenderError(c, err)
@@ -74,7 +73,7 @@ func (r *Router) rightClickHandler(c *gin.Context) {
 		return
 	}
 	err = driver.IDriver.(*uixt.BrowserDriver).
-		SecondaryClick(req.GetX(), req.GetY())
+		SecondaryClick(req.X, req.Y)
 	if err != nil {
 		RenderError(c, err)
 		return
@@ -117,7 +116,7 @@ func (r *Router) hoverHandler(c *gin.Context) {
 	}
 
 	err = driver.IDriver.(*uixt.BrowserDriver).
-		Hover(req.GetX(), req.GetY())
+		Hover(req.X, req.Y)
 
 	if err != nil {
 		RenderError(c, err)
@@ -139,7 +138,7 @@ func (r *Router) scrollHandler(c *gin.Context) {
 	}
 
 	err = driver.IDriver.(*uixt.BrowserDriver).
-		Scroll(req.GetDelta())
+		Scroll(req.Delta)
 
 	if err != nil {
 		RenderError(c, err)
@@ -159,7 +158,7 @@ func (r *Router) doubleTapHandler(c *gin.Context) {
 		return
 	}
 
-	err = driver.DoubleTap(req.GetX(), req.GetY())
+	err = driver.DoubleTap(req.X, req.Y)
 	if err != nil {
 		RenderError(c, err)
 		return
@@ -173,7 +172,7 @@ func (r *Router) dragHandler(c *gin.Context) {
 		return
 	}
 
-	duration := req.GetDuration()
+	duration := req.Duration
 	if duration == 0 {
 		duration = 1
 	}
@@ -182,9 +181,9 @@ func (r *Router) dragHandler(c *gin.Context) {
 		return
 	}
 
-	err = driver.Drag(req.GetFromX(), req.GetFromY(), req.GetToX(), req.GetToY(),
+	err = driver.Drag(req.FromX, req.FromY, req.ToX, req.ToY,
 		option.WithDuration(duration),
-		option.WithPressDuration(req.GetPressDuration()))
+		option.WithPressDuration(req.PressDuration))
 	if err != nil {
 		RenderError(c, err)
 		return
@@ -202,7 +201,7 @@ func (r *Router) inputHandler(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	err = driver.Input(req.Text, option.WithFrequency(req.GetFrequency()))
+	err = driver.Input(req.Text, option.WithFrequency(req.Frequency))
 	if err != nil {
 		RenderError(c, err)
 		return

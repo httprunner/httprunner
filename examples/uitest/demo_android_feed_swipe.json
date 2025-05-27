@@ -7,7 +7,7 @@
         "android": [
             {
                 "serial": "$device",
-                "log_on": true,
+                "log_on": false,
                 "adb_server_host": "localhost",
                 "adb_server_port": 5037,
                 "uia2_ip": "localhost",

@@ -62,7 +62,7 @@ func (c *MCPClient4XTDriver) ListTools(ctx context.Context, req mcp.ListToolsReq
 }
 
 func (c *MCPClient4XTDriver) CallTool(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	actionTool := c.Server.GetToolByAction(option.ActionMethod(req.Params.Name))
+	actionTool := c.Server.GetToolByAction(option.ActionName(req.Params.Name))
 	if actionTool == nil {
 		return mcp.NewToolResultError(fmt.Sprintf("action %s for tool not found", req.Params.Name)), nil
 	}

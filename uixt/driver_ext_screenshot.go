@@ -322,7 +322,7 @@ func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error
 }
 
 // MarkUIOperation add operation mark for UI operation
-func MarkUIOperation(driver IDriver, actionType option.ActionMethod, actionCoordinates []float64) error {
+func MarkUIOperation(driver IDriver, actionType option.ActionName, actionCoordinates []float64) error {
 	if actionType == "" || len(actionCoordinates) == 0 {
 		return nil
 	}

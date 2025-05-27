@@ -39,7 +39,7 @@ func (r *Router) backspaceHandler(c *gin.Context) {
 		return
 	}
 
-	count := req.GetCount()
+	count := req.Count
 	if count == 0 {
 		count = 20
 	}
@@ -67,7 +67,7 @@ func (r *Router) keycodeHandler(c *gin.Context) {
 	}
 	// TODO FIXME
 	err = driver.IDriver.(*uixt.ADBDriver).
-		PressKeyCode(uixt.KeyCode(req.GetKeycode()), uixt.KMEmpty)
+		PressKeyCode(uixt.KeyCode(req.Keycode), uixt.KMEmpty)
 	if err != nil {
 		RenderError(c, err)
 		return
