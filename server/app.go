@@ -22,17 +22,27 @@ func (r *Router) foregroundAppHandler(c *gin.Context) {
 }
 
 func (r *Router) appInfoHandler(c *gin.Context) {
-	var appInfoReq option.AppInfoRequest
-	if err := c.ShouldBindQuery(&appInfoReq); err != nil {
+	var req option.UnifiedActionRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
+
+	// Set platform and serial from URL parameters
+	setRequestContextFromURL(c, &req)
+
+	// Validate for HTTP API usage
+	if err := req.ValidateForHTTPAPI(option.ACTION_AppInfo); err != nil {
+		RenderErrorValidateRequest(c, err)
+		return
+	}
+
 	device, err := r.GetDevice(c)
 	if err != nil {
 		return
 	}
 	if androidDevice, ok := device.(*uixt.AndroidDevice); ok {
-		appInfo, err := androidDevice.GetAppInfo(appInfoReq.PackageName)
+		appInfo, err := androidDevice.GetAppInfo(req.PackageName)
 		if err != nil {
 			RenderError(c, err)
 			return
@@ -40,7 +50,7 @@ func (r *Router) appInfoHandler(c *gin.Context) {
 		RenderSuccess(c, appInfo)
 		return
 	} else if iOSDevice, ok := device.(*uixt.IOSDevice); ok {
-		appInfo, err := iOSDevice.GetAppInfo(appInfoReq.PackageName)
+		appInfo, err := iOSDevice.GetAppInfo(req.PackageName)
 		if err != nil {
 			RenderError(c, err)
 			return
@@ -51,9 +61,8 @@ func (r *Router) appInfoHandler(c *gin.Context) {
 }
 
 func (r *Router) clearAppHandler(c *gin.Context) {
-	var appClearReq option.AppClearRequest
-	if err := c.ShouldBindJSON(&appClearReq); err != nil {
-		RenderErrorValidateRequest(c, err)
+	req, err := r.processUnifiedRequest(c, option.ACTION_AppClear)
+	if err != nil {
 		return
 	}
 
@@ -61,7 +70,7 @@ func (r *Router) clearAppHandler(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	err = driver.AppClear(appClearReq.PackageName)
+	err = driver.AppClear(req.PackageName)
 	if err != nil {
 		RenderError(c, err)
 		return
@@ -70,16 +79,16 @@ func (r *Router) clearAppHandler(c *gin.Context) {
 }
 
 func (r *Router) launchAppHandler(c *gin.Context) {
-	var appLaunchReq option.AppLaunchRequest
-	if err := c.ShouldBindJSON(&appLaunchReq); err != nil {
-		RenderErrorValidateRequest(c, err)
+	req, err := r.processUnifiedRequest(c, option.ACTION_AppLaunch)
+	if err != nil {
 		return
 	}
+
 	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
-	err = driver.AppLaunch(appLaunchReq.PackageName)
+	err = driver.AppLaunch(req.PackageName)
 	if err != nil {
 		RenderError(c, err)
 		return
@@ -88,16 +97,16 @@ func (r *Router) launchAppHandler(c *gin.Context) {
 }
 
 func (r *Router) terminalAppHandler(c *gin.Context) {
-	var appTerminateReq option.AppTerminateRequest
-	if err := c.ShouldBindJSON(&appTerminateReq); err != nil {
-		RenderErrorValidateRequest(c, err)
+	req, err := r.processUnifiedRequest(c, option.ACTION_AppTerminate)
+	if err != nil {
 		return
 	}
+
 	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
-	_, err = driver.AppTerminate(appTerminateReq.PackageName)
+	_, err = driver.AppTerminate(req.PackageName)
 	if err != nil {
 		RenderError(c, err)
 		return
@@ -106,16 +115,16 @@ func (r *Router) terminalAppHandler(c *gin.Context) {
 }
 
 func (r *Router) uninstallAppHandler(c *gin.Context) {
-	var appUninstallReq option.AppUninstallRequest
-	if err := c.ShouldBindJSON(&appUninstallReq); err != nil {
-		RenderErrorValidateRequest(c, err)
+	req, err := r.processUnifiedRequest(c, option.ACTION_AppUninstall)
+	if err != nil {
 		return
 	}
+
 	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
-	err = driver.GetDevice().Uninstall(appUninstallReq.PackageName)
+	err = driver.GetDevice().Uninstall(req.PackageName)
 	if err != nil {
 		log.Err(err).Msg("failed to uninstall app")
 	}

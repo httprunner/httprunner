@@ -33,15 +33,6 @@ type UploadRequest struct {
 	FileFormat string  `json:"file_format"`
 }
 
-type HoverRequest struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-}
-
-type ScrollRequest struct {
-	Delta int `json:"delta"`
-}
-
 type CreateBrowserRequest struct {
 	Timeout int `json:"timeout"`
 	Width   int `json:"width"`

@@ -382,28 +382,32 @@ func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var tapAbsReq option.TapAbsXYRequest
-		if err := mapToStruct(request.Params.Arguments, &tapAbsReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		// Build action options from request structure
-		var opts []option.ActionOption
+		// Convert to ActionOptions
+		actionOpts := unifiedReq.ToActionOptions()
+		opts := actionOpts.Options()
 
-		// Add numeric options
-		if tapAbsReq.Duration > 0 {
-			opts = append(opts, option.WithDuration(tapAbsReq.Duration))
+		// Add default options
+		opts = append(opts, option.WithPreMarkOperation(true))
+
+		// Validate required parameters
+		if unifiedReq.X == nil || unifiedReq.Y == nil {
+			return nil, fmt.Errorf("x and y coordinates are required")
 		}
 
 		// Tap absolute XY action logic
-		log.Info().Float64("x", tapAbsReq.X).Float64("y", tapAbsReq.Y).Msg("tapping at absolute coordinates")
+		log.Info().Float64("x", *unifiedReq.X).Float64("y", *unifiedReq.Y).Msg("tapping at absolute coordinates")
 
-		err = driverExt.TapAbsXY(tapAbsReq.X, tapAbsReq.Y, opts...)
+		err = driverExt.TapAbsXY(*unifiedReq.X, *unifiedReq.Y, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap absolute XY failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at absolute coordinates (%.0f, %.0f)", tapAbsReq.X, tapAbsReq.Y)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped at absolute coordinates (%.0f, %.0f)", *unifiedReq.X, *unifiedReq.Y)), nil
 	}
 }
 
@@ -450,41 +454,31 @@ func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var ocrReq option.TapByOCRRequest
-		if err := mapToStruct(request.Params.Arguments, &ocrReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		// Build action options from request structure
-		var opts []option.ActionOption
+		// Convert to ActionOptions
+		actionOpts := unifiedReq.ToActionOptions()
+		opts := actionOpts.Options()
 
-		// Add boolean options
-		if ocrReq.IgnoreNotFoundError {
-			opts = append(opts, option.WithIgnoreNotFoundError(true))
-		}
-		if ocrReq.Regex {
-			opts = append(opts, option.WithRegex(true))
-		}
-		if ocrReq.TapRandomRect {
-			opts = append(opts, option.WithTapRandomRect(true))
-		}
+		// Add default options
+		opts = append(opts, option.WithPreMarkOperation(true))
 
-		// Add numeric options
-		if ocrReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(ocrReq.MaxRetryTimes))
-		}
-		if ocrReq.Index > 0 {
-			opts = append(opts, option.WithIndex(ocrReq.Index))
+		// Validate required parameters
+		if unifiedReq.Text == "" {
+			return nil, fmt.Errorf("text parameter is required")
 		}
 
 		// Tap by OCR action logic
-		log.Info().Str("text", ocrReq.Text).Msg("tapping by OCR")
-		err = driverExt.TapByOCR(ocrReq.Text, opts...)
+		log.Info().Str("text", unifiedReq.Text).Msg("tapping by OCR")
+		err = driverExt.TapByOCR(unifiedReq.Text, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap by OCR failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped on OCR text: %s", ocrReq.Text)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped on OCR text: %s", unifiedReq.Text)), nil
 	}
 }
 
@@ -525,32 +519,20 @@ func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var cvReq option.TapByCVRequest
-		if err := mapToStruct(request.Params.Arguments, &cvReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		// Build action options from request structure
-		var opts []option.ActionOption
+		// Convert to ActionOptions
+		actionOpts := unifiedReq.ToActionOptions()
+		opts := actionOpts.Options()
 
-		// Add boolean options
-		if cvReq.IgnoreNotFoundError {
-			opts = append(opts, option.WithIgnoreNotFoundError(true))
-		}
-		if cvReq.TapRandomRect {
-			opts = append(opts, option.WithTapRandomRect(true))
-		}
-
-		// Add numeric options
-		if cvReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(cvReq.MaxRetryTimes))
-		}
-		if cvReq.Index > 0 {
-			opts = append(opts, option.WithIndex(cvReq.Index))
-		}
+		// Add default options
+		opts = append(opts, option.WithPreMarkOperation(true))
 
 		// Tap by CV action logic
-		log.Info().Str("imagePath", cvReq.ImagePath).Msg("tapping by CV")
+		log.Info().Msg("tapping by CV")
 
 		// For TapByCV, we need to check if there are UI types in the options
 		// In the original DoAction, it requires ScreenShotWithUITypes to be set
@@ -599,19 +581,24 @@ func (t *ToolDoubleTapXY) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var doubleTapReq option.DoubleTapXYRequest
-		if err := mapToStruct(request.Params.Arguments, &doubleTapReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
+		// Validate required parameters
+		if unifiedReq.X == nil || unifiedReq.Y == nil {
+			return nil, fmt.Errorf("x and y coordinates are required")
+		}
+
 		// Double tap XY action logic
-		log.Info().Float64("x", doubleTapReq.X).Float64("y", doubleTapReq.Y).Msg("double tapping at coordinates")
-		err = driverExt.DoubleTap(doubleTapReq.X, doubleTapReq.Y)
+		log.Info().Float64("x", *unifiedReq.X).Float64("y", *unifiedReq.Y).Msg("double tapping at coordinates")
+		err = driverExt.DoubleTap(*unifiedReq.X, *unifiedReq.Y)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Double tap failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully double tapped at (%.2f, %.2f)", doubleTapReq.X, doubleTapReq.Y)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully double tapped at (%.2f, %.2f)", *unifiedReq.X, *unifiedReq.Y)), nil
 	}
 }
 
@@ -685,23 +672,23 @@ func (t *ToolLaunchApp) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var appLaunchReq option.AppLaunchRequest
-		if err := mapToStruct(request.Params.Arguments, &appLaunchReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		if appLaunchReq.PackageName == "" {
+		if unifiedReq.PackageName == "" {
 			return nil, fmt.Errorf("package_name is required")
 		}
 
 		// Launch app action logic
-		log.Info().Str("packageName", appLaunchReq.PackageName).Msg("launching app")
-		err = driverExt.AppLaunch(appLaunchReq.PackageName)
+		log.Info().Str("packageName", unifiedReq.PackageName).Msg("launching app")
+		err = driverExt.AppLaunch(unifiedReq.PackageName)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Launch app failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully launched app: %s", appLaunchReq.PackageName)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully launched app: %s", unifiedReq.PackageName)), nil
 	}
 }
 
@@ -738,26 +725,26 @@ func (t *ToolTerminateApp) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var appTerminateReq option.AppTerminateRequest
-		if err := mapToStruct(request.Params.Arguments, &appTerminateReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		if appTerminateReq.PackageName == "" {
+		if unifiedReq.PackageName == "" {
 			return nil, fmt.Errorf("package_name is required")
 		}
 
 		// Terminate app action logic
-		log.Info().Str("packageName", appTerminateReq.PackageName).Msg("terminating app")
-		success, err := driverExt.AppTerminate(appTerminateReq.PackageName)
+		log.Info().Str("packageName", unifiedReq.PackageName).Msg("terminating app")
+		success, err := driverExt.AppTerminate(unifiedReq.PackageName)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Terminate app failed: %s", err.Error())), nil
 		}
 		if !success {
-			log.Warn().Str("packageName", appTerminateReq.PackageName).Msg("app was not running")
+			log.Warn().Str("packageName", unifiedReq.PackageName).Msg("app was not running")
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully terminated app: %s", appTerminateReq.PackageName)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully terminated app: %s", unifiedReq.PackageName)), nil
 	}
 }
 
@@ -868,19 +855,19 @@ func (t *ToolPressButton) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var pressButtonReq option.PressButtonRequest
-		if err := mapToStruct(request.Params.Arguments, &pressButtonReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Press button action logic
-		log.Info().Str("button", string(pressButtonReq.Button)).Msg("pressing button")
-		err = driverExt.PressButton(types.DeviceButton(pressButtonReq.Button))
+		log.Info().Str("button", string(unifiedReq.Button)).Msg("pressing button")
+		err = driverExt.PressButton(types.DeviceButton(unifiedReq.Button))
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Press button failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully pressed button: %s", pressButtonReq.Button)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully pressed button: %s", unifiedReq.Button)), nil
 	}
 }
 
@@ -980,35 +967,35 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var swipeReq option.SwipeRequest
-		if err := mapToStruct(request.Params.Arguments, &swipeReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Swipe action logic
-		log.Info().Str("direction", swipeReq.Direction).Msg("performing swipe")
+		log.Info().Str("direction", unifiedReq.Direction).Msg("performing swipe")
 
 		// Validate direction
 		validDirections := []string{"up", "down", "left", "right"}
 		isValid := false
 		for _, validDir := range validDirections {
-			if swipeReq.Direction == validDir {
+			if unifiedReq.Direction == validDir {
 				isValid = true
 				break
 			}
 		}
 		if !isValid {
-			return nil, fmt.Errorf("invalid swipe direction: %s, expected one of: %v", swipeReq.Direction, validDirections)
+			return nil, fmt.Errorf("invalid swipe direction: %s, expected one of: %v", unifiedReq.Direction, validDirections)
 		}
 
 		opts := []option.ActionOption{
 			option.WithPreMarkOperation(true),
-			option.WithDuration(swipeReq.Duration),
-			option.WithPressDuration(swipeReq.PressDuration),
+			option.WithDuration(getFloat64ValueOrDefault(unifiedReq.Duration, 0.5)),
+			option.WithPressDuration(getFloat64ValueOrDefault(unifiedReq.PressDuration, 0.1)),
 		}
 
 		// Convert direction to coordinates and perform swipe
-		switch swipeReq.Direction {
+		switch unifiedReq.Direction {
 		case "up":
 			err = driverExt.Swipe(0.5, 0.5, 0.5, 0.1, opts...)
 		case "down":
@@ -1018,14 +1005,14 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 		case "right":
 			err = driverExt.Swipe(0.5, 0.5, 0.9, 0.5, opts...)
 		default:
-			return mcp.NewToolResultError(fmt.Sprintf("Unexpected swipe direction: %s", swipeReq.Direction)), nil
+			return mcp.NewToolResultError(fmt.Sprintf("Unexpected swipe direction: %s", unifiedReq.Direction)), nil
 		}
 
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Swipe failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully swiped %s", swipeReq.Direction)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully swiped %s", unifiedReq.Direction)), nil
 	}
 }
 
@@ -1070,24 +1057,29 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var swipeAdvReq option.SwipeAdvancedRequest
-		if err := mapToStruct(request.Params.Arguments, &swipeAdvReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
+		}
+
+		// Validate required parameters
+		if unifiedReq.FromX == nil || unifiedReq.FromY == nil || unifiedReq.ToX == nil || unifiedReq.ToY == nil {
+			return nil, fmt.Errorf("fromX, fromY, toX, and toY coordinates are required")
 		}
 
 		// Advanced swipe action logic using prepareSwipeAction like the original DoAction
 		log.Info().
-			Float64("fromX", swipeAdvReq.FromX).Float64("fromY", swipeAdvReq.FromY).
-			Float64("toX", swipeAdvReq.ToX).Float64("toY", swipeAdvReq.ToY).
+			Float64("fromX", *unifiedReq.FromX).Float64("fromY", *unifiedReq.FromY).
+			Float64("toX", *unifiedReq.ToX).Float64("toY", *unifiedReq.ToY).
 			Msg("performing advanced swipe")
 
-		params := []float64{swipeAdvReq.FromX, swipeAdvReq.FromY, swipeAdvReq.ToX, swipeAdvReq.ToY}
+		params := []float64{*unifiedReq.FromX, *unifiedReq.FromY, *unifiedReq.ToX, *unifiedReq.ToY}
 		opts := []option.ActionOption{}
-		if swipeAdvReq.Duration > 0 {
-			opts = append(opts, option.WithDuration(swipeAdvReq.Duration))
+		if unifiedReq.Duration != nil && *unifiedReq.Duration > 0 {
+			opts = append(opts, option.WithDuration(*unifiedReq.Duration))
 		}
-		if swipeAdvReq.PressDuration > 0 {
-			opts = append(opts, option.WithPressDuration(swipeAdvReq.PressDuration))
+		if unifiedReq.PressDuration != nil && *unifiedReq.PressDuration > 0 {
+			opts = append(opts, option.WithPressDuration(*unifiedReq.PressDuration))
 		}
 
 		swipeAction := prepareSwipeAction(driverExt, params, opts...)
@@ -1097,7 +1089,7 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 		}
 
 		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed advanced swipe from (%.2f, %.2f) to (%.2f, %.2f)",
-			swipeAdvReq.FromX, swipeAdvReq.FromY, swipeAdvReq.ToX, swipeAdvReq.ToY)), nil
+			*unifiedReq.FromX, *unifiedReq.FromY, *unifiedReq.ToX, *unifiedReq.ToY)), nil
 	}
 }
 
@@ -1144,8 +1136,8 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var swipeAppReq option.SwipeToTapAppRequest
-		if err := mapToStruct(request.Params.Arguments, &swipeAppReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
@@ -1153,26 +1145,26 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 		var opts []option.ActionOption
 
 		// Add boolean options
-		if swipeAppReq.IgnoreNotFoundError {
+		if getBoolValue(unifiedReq.IgnoreNotFoundError) {
 			opts = append(opts, option.WithIgnoreNotFoundError(true))
 		}
 
 		// Add numeric options
-		if swipeAppReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(swipeAppReq.MaxRetryTimes))
+		if unifiedReq.MaxRetryTimes != nil && *unifiedReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(*unifiedReq.MaxRetryTimes))
 		}
-		if swipeAppReq.Index > 0 {
-			opts = append(opts, option.WithIndex(swipeAppReq.Index))
+		if unifiedReq.Index != nil && *unifiedReq.Index > 0 {
+			opts = append(opts, option.WithIndex(*unifiedReq.Index))
 		}
 
 		// Swipe to tap app action logic
-		log.Info().Str("appName", swipeAppReq.AppName).Msg("swipe to tap app")
-		err = driverExt.SwipeToTapApp(swipeAppReq.AppName, opts...)
+		log.Info().Str("appName", unifiedReq.AppName).Msg("swipe to tap app")
+		err = driverExt.SwipeToTapApp(unifiedReq.AppName, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap app failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped app: %s", swipeAppReq.AppName)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped app: %s", unifiedReq.AppName)), nil
 	}
 }
 
@@ -1213,8 +1205,8 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var swipeTextReq option.SwipeToTapTextRequest
-		if err := mapToStruct(request.Params.Arguments, &swipeTextReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
@@ -1222,29 +1214,29 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 		var opts []option.ActionOption
 
 		// Add boolean options
-		if swipeTextReq.IgnoreNotFoundError {
+		if getBoolValue(unifiedReq.IgnoreNotFoundError) {
 			opts = append(opts, option.WithIgnoreNotFoundError(true))
 		}
-		if swipeTextReq.Regex {
+		if getBoolValue(unifiedReq.Regex) {
 			opts = append(opts, option.WithRegex(true))
 		}
 
 		// Add numeric options
-		if swipeTextReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(swipeTextReq.MaxRetryTimes))
+		if unifiedReq.MaxRetryTimes != nil && *unifiedReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(*unifiedReq.MaxRetryTimes))
 		}
-		if swipeTextReq.Index > 0 {
-			opts = append(opts, option.WithIndex(swipeTextReq.Index))
+		if unifiedReq.Index != nil && *unifiedReq.Index > 0 {
+			opts = append(opts, option.WithIndex(*unifiedReq.Index))
 		}
 
 		// Swipe to tap text action logic
-		log.Info().Str("text", swipeTextReq.Text).Msg("swipe to tap text")
-		err = driverExt.SwipeToTapTexts([]string{swipeTextReq.Text}, opts...)
+		log.Info().Str("text", unifiedReq.Text).Msg("swipe to tap text")
+		err = driverExt.SwipeToTapTexts([]string{unifiedReq.Text}, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap text failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped text: %s", swipeTextReq.Text)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped text: %s", unifiedReq.Text)), nil
 	}
 }
 
@@ -1285,8 +1277,8 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var swipeTextsReq option.SwipeToTapTextsRequest
-		if err := mapToStruct(request.Params.Arguments, &swipeTextsReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
@@ -1294,29 +1286,29 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 		var opts []option.ActionOption
 
 		// Add boolean options
-		if swipeTextsReq.IgnoreNotFoundError {
+		if getBoolValue(unifiedReq.IgnoreNotFoundError) {
 			opts = append(opts, option.WithIgnoreNotFoundError(true))
 		}
-		if swipeTextsReq.Regex {
+		if getBoolValue(unifiedReq.Regex) {
 			opts = append(opts, option.WithRegex(true))
 		}
 
 		// Add numeric options
-		if swipeTextsReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(swipeTextsReq.MaxRetryTimes))
+		if unifiedReq.MaxRetryTimes != nil && *unifiedReq.MaxRetryTimes > 0 {
+			opts = append(opts, option.WithMaxRetryTimes(*unifiedReq.MaxRetryTimes))
 		}
-		if swipeTextsReq.Index > 0 {
-			opts = append(opts, option.WithIndex(swipeTextsReq.Index))
+		if unifiedReq.Index != nil && *unifiedReq.Index > 0 {
+			opts = append(opts, option.WithIndex(*unifiedReq.Index))
 		}
 
 		// Swipe to tap texts action logic
-		log.Info().Strs("texts", swipeTextsReq.Texts).Msg("swipe to tap texts")
-		err = driverExt.SwipeToTapTexts(swipeTextsReq.Texts, opts...)
+		log.Info().Strs("texts", unifiedReq.Texts).Msg("swipe to tap texts")
+		err = driverExt.SwipeToTapTexts(unifiedReq.Texts, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap texts failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped one of texts: %v", swipeTextsReq.Texts)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped one of texts: %v", unifiedReq.Texts)), nil
 	}
 }
 
@@ -1362,29 +1354,34 @@ func (t *ToolDrag) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var dragReq option.DragRequest
-		if err := mapToStruct(request.Params.Arguments, &dragReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
+		// Validate required parameters
+		if unifiedReq.FromX == nil || unifiedReq.FromY == nil || unifiedReq.ToX == nil || unifiedReq.ToY == nil {
+			return nil, fmt.Errorf("fromX, fromY, toX, and toY coordinates are required")
+		}
+
 		opts := []option.ActionOption{}
-		if dragReq.Duration > 0 {
-			opts = append(opts, option.WithDuration(dragReq.Duration/1000.0))
+		if unifiedReq.Duration != nil && *unifiedReq.Duration > 0 {
+			opts = append(opts, option.WithDuration(*unifiedReq.Duration/1000.0))
 		}
 
 		// Drag action logic
 		log.Info().
-			Float64("fromX", dragReq.FromX).Float64("fromY", dragReq.FromY).
-			Float64("toX", dragReq.ToX).Float64("toY", dragReq.ToY).
+			Float64("fromX", *unifiedReq.FromX).Float64("fromY", *unifiedReq.FromY).
+			Float64("toX", *unifiedReq.ToX).Float64("toY", *unifiedReq.ToY).
 			Msg("performing drag")
 
-		err = driverExt.Swipe(dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY, opts...)
+		err = driverExt.Swipe(*unifiedReq.FromX, *unifiedReq.FromY, *unifiedReq.ToX, *unifiedReq.ToY, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Drag failed: %s", err.Error())), nil
 		}
 
 		return mcp.NewToolResultText(fmt.Sprintf("Successfully dragged from (%.2f, %.2f) to (%.2f, %.2f)",
-			dragReq.FromX, dragReq.FromY, dragReq.ToX, dragReq.ToY)), nil
+			*unifiedReq.FromX, *unifiedReq.FromY, *unifiedReq.ToX, *unifiedReq.ToY)), nil
 	}
 }
 
@@ -1555,23 +1552,23 @@ func (t *ToolInput) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var inputReq option.InputRequest
-		if err := mapToStruct(request.Params.Arguments, &inputReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		if inputReq.Text == "" {
+		if unifiedReq.Text == "" {
 			return nil, fmt.Errorf("text is required")
 		}
 
 		// Input action logic
-		log.Info().Str("text", inputReq.Text).Msg("inputting text")
-		err = driverExt.Input(inputReq.Text)
+		log.Info().Str("text", unifiedReq.Text).Msg("inputting text")
+		err = driverExt.Input(unifiedReq.Text)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Input failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully input text: %s", inputReq.Text)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully input text: %s", unifiedReq.Text)), nil
 	}
 }
 
@@ -1606,19 +1603,19 @@ func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var loginReq option.WebLoginNoneUIRequest
-		if err := mapToStruct(request.Params.Arguments, &loginReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Web login none UI action logic
-		log.Info().Str("packageName", loginReq.PackageName).Msg("performing web login without UI")
+		log.Info().Str("packageName", unifiedReq.PackageName).Msg("performing web login without UI")
 		driver, ok := driverExt.IDriver.(*BrowserDriver)
 		if !ok {
 			return nil, fmt.Errorf("invalid browser driver for web login")
 		}
 
-		_, err = driver.LoginNoneUI(loginReq.PackageName, loginReq.PhoneNumber, loginReq.Captcha, loginReq.Password)
+		_, err = driver.LoginNoneUI(unifiedReq.PackageName, unifiedReq.PhoneNumber, unifiedReq.Captcha, unifiedReq.Password)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Web login failed: %s", err.Error())), nil
 		}
@@ -1654,19 +1651,19 @@ func (t *ToolAppInstall) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var installReq option.AppInstallRequest
-		if err := mapToStruct(request.Params.Arguments, &installReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// App install action logic
-		log.Info().Str("appUrl", installReq.AppUrl).Msg("installing app")
-		err = driverExt.GetDevice().Install(installReq.AppUrl)
+		log.Info().Str("appUrl", unifiedReq.AppUrl).Msg("installing app")
+		err = driverExt.GetDevice().Install(unifiedReq.AppUrl)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("App install failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully installed app from: %s", installReq.AppUrl)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully installed app from: %s", unifiedReq.AppUrl)), nil
 	}
 }
 
@@ -1703,19 +1700,19 @@ func (t *ToolAppUninstall) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var uninstallReq option.AppUninstallRequest
-		if err := mapToStruct(request.Params.Arguments, &uninstallReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// App uninstall action logic
-		log.Info().Str("packageName", uninstallReq.PackageName).Msg("uninstalling app")
-		err = driverExt.GetDevice().Uninstall(uninstallReq.PackageName)
+		log.Info().Str("packageName", unifiedReq.PackageName).Msg("uninstalling app")
+		err = driverExt.GetDevice().Uninstall(unifiedReq.PackageName)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("App uninstall failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully uninstalled app: %s", uninstallReq.PackageName)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully uninstalled app: %s", unifiedReq.PackageName)), nil
 	}
 }
 
@@ -1752,19 +1749,19 @@ func (t *ToolAppClear) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var clearReq option.AppClearRequest
-		if err := mapToStruct(request.Params.Arguments, &clearReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// App clear action logic
-		log.Info().Str("packageName", clearReq.PackageName).Msg("clearing app")
-		err = driverExt.AppClear(clearReq.PackageName)
+		log.Info().Str("packageName", unifiedReq.PackageName).Msg("clearing app")
+		err = driverExt.AppClear(unifiedReq.PackageName)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("App clear failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully cleared app: %s", clearReq.PackageName)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully cleared app: %s", unifiedReq.PackageName)), nil
 	}
 }
 
@@ -1801,19 +1798,24 @@ func (t *ToolSecondaryClick) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var clickReq option.SecondaryClickRequest
-		if err := mapToStruct(request.Params.Arguments, &clickReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
+		// Validate required parameters
+		if unifiedReq.X == nil || unifiedReq.Y == nil {
+			return nil, fmt.Errorf("x and y coordinates are required")
+		}
+
 		// Secondary click action logic
-		log.Info().Float64("x", clickReq.X).Float64("y", clickReq.Y).Msg("performing secondary click")
-		err = driverExt.SecondaryClick(clickReq.X, clickReq.Y)
+		log.Info().Float64("x", *unifiedReq.X).Float64("y", *unifiedReq.Y).Msg("performing secondary click")
+		err = driverExt.SecondaryClick(*unifiedReq.X, *unifiedReq.Y)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Secondary click failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed secondary click at (%.2f, %.2f)", clickReq.X, clickReq.Y)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed secondary click at (%.2f, %.2f)", *unifiedReq.X, *unifiedReq.Y)), nil
 	}
 }
 
@@ -1851,19 +1853,19 @@ func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var selectorReq option.SelectorRequest
-		if err := mapToStruct(request.Params.Arguments, &selectorReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Hover by selector action logic
-		log.Info().Str("selector", selectorReq.Selector).Msg("hovering by selector")
-		err = driverExt.HoverBySelector(selectorReq.Selector)
+		log.Info().Str("selector", unifiedReq.Selector).Msg("hovering by selector")
+		err = driverExt.HoverBySelector(unifiedReq.Selector)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Hover by selector failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully hovered over element with selector: %s", selectorReq.Selector)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully hovered over element with selector: %s", unifiedReq.Selector)), nil
 	}
 }
 
@@ -1900,19 +1902,19 @@ func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var selectorReq option.SelectorRequest
-		if err := mapToStruct(request.Params.Arguments, &selectorReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Tap by selector action logic
-		log.Info().Str("selector", selectorReq.Selector).Msg("tapping by selector")
-		err = driverExt.TapBySelector(selectorReq.Selector)
+		log.Info().Str("selector", unifiedReq.Selector).Msg("tapping by selector")
+		err = driverExt.TapBySelector(unifiedReq.Selector)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap by selector failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped element with selector: %s", selectorReq.Selector)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped element with selector: %s", unifiedReq.Selector)), nil
 	}
 }
 
@@ -1949,19 +1951,19 @@ func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var selectorReq option.SelectorRequest
-		if err := mapToStruct(request.Params.Arguments, &selectorReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Secondary click by selector action logic
-		log.Info().Str("selector", selectorReq.Selector).Msg("performing secondary click by selector")
-		err = driverExt.SecondaryClickBySelector(selectorReq.Selector)
+		log.Info().Str("selector", unifiedReq.Selector).Msg("performing secondary click by selector")
+		err = driverExt.SecondaryClickBySelector(unifiedReq.Selector)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Secondary click by selector failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed secondary click on element with selector: %s", selectorReq.Selector)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed secondary click on element with selector: %s", unifiedReq.Selector)), nil
 	}
 }
 
@@ -1998,24 +2000,29 @@ func (t *ToolWebCloseTab) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var closeTabReq option.WebCloseTabRequest
-		if err := mapToStruct(request.Params.Arguments, &closeTabReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
+		// Validate required parameters
+		if unifiedReq.TabIndex == nil {
+			return nil, fmt.Errorf("tabIndex is required")
+		}
+
 		// Web close tab action logic
-		log.Info().Int("tabIndex", closeTabReq.TabIndex).Msg("closing web tab")
+		log.Info().Int("tabIndex", *unifiedReq.TabIndex).Msg("closing web tab")
 		browserDriver, ok := driverExt.IDriver.(*BrowserDriver)
 		if !ok {
 			return nil, fmt.Errorf("web close tab is only supported for browser drivers")
 		}
 
-		err = browserDriver.CloseTab(closeTabReq.TabIndex)
+		err = browserDriver.CloseTab(*unifiedReq.TabIndex)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Close tab failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully closed tab at index: %d", closeTabReq.TabIndex)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully closed tab at index: %d", unifiedReq.TabIndex)), nil
 	}
 }
 
@@ -2060,19 +2067,19 @@ func (t *ToolSetIme) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var imeReq option.SetImeRequest
-		if err := mapToStruct(request.Params.Arguments, &imeReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Set IME action logic
-		log.Info().Str("ime", imeReq.Ime).Msg("setting IME")
-		err = driverExt.SetIme(imeReq.Ime)
+		log.Info().Str("ime", unifiedReq.Ime).Msg("setting IME")
+		err = driverExt.SetIme(unifiedReq.Ime)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Set IME failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully set IME to: %s", imeReq.Ime)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully set IME to: %s", unifiedReq.Ime)), nil
 	}
 }
 
@@ -2109,19 +2116,19 @@ func (t *ToolGetSource) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var sourceReq option.GetSourceRequest
-		if err := mapToStruct(request.Params.Arguments, &sourceReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Get source action logic
-		log.Info().Str("packageName", sourceReq.PackageName).Msg("getting source")
-		_, err = driverExt.Source(option.WithProcessName(sourceReq.PackageName))
+		log.Info().Str("packageName", unifiedReq.PackageName).Msg("getting source")
+		_, err = driverExt.Source(option.WithProcessName(unifiedReq.PackageName))
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Get source failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully retrieved source for package: %s", sourceReq.PackageName)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully retrieved source for package: %s", unifiedReq.PackageName)), nil
 	}
 }
 
@@ -2211,16 +2218,21 @@ func (t *ToolSleepMS) Options() []mcp.ToolOption {
 
 func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		var sleepReq option.SleepMSRequest
-		if err := mapToStruct(request.Params.Arguments, &sleepReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
-		// Sleep MS action logic
-		log.Info().Int64("milliseconds", sleepReq.Milliseconds).Msg("sleeping in milliseconds")
-		time.Sleep(time.Duration(sleepReq.Milliseconds) * time.Millisecond)
+		// Validate required parameters
+		if unifiedReq.Milliseconds == nil {
+			return nil, fmt.Errorf("milliseconds is required")
+		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully slept for %d milliseconds", sleepReq.Milliseconds)), nil
+		// Sleep MS action logic
+		log.Info().Int64("milliseconds", *unifiedReq.Milliseconds).Msg("sleeping in milliseconds")
+		time.Sleep(time.Duration(*unifiedReq.Milliseconds) * time.Millisecond)
+
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully slept for %d milliseconds", *unifiedReq.Milliseconds)), nil
 	}
 }
 
@@ -2257,16 +2269,16 @@ func (t *ToolSleepRandom) Options() []mcp.ToolOption {
 
 func (t *ToolSleepRandom) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		var sleepRandomReq option.SleepRandomRequest
-		if err := mapToStruct(request.Params.Arguments, &sleepRandomReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// Sleep random action logic
-		log.Info().Floats64("params", sleepRandomReq.Params).Msg("sleeping for random duration")
-		sleepStrict(time.Now(), getSimulationDuration(sleepRandomReq.Params))
+		log.Info().Floats64("params", unifiedReq.Params).Msg("sleeping for random duration")
+		sleepStrict(time.Now(), getSimulationDuration(unifiedReq.Params))
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully slept for random duration with params: %v", sleepRandomReq.Params)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully slept for random duration with params: %v", unifiedReq.Params)), nil
 	}
 }
 
@@ -2341,19 +2353,19 @@ func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var aiReq option.AIActionRequest
-		if err := mapToStruct(request.Params.Arguments, &aiReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
 
 		// AI action logic
-		log.Info().Str("prompt", aiReq.Prompt).Msg("performing AI action")
-		err = driverExt.AIAction(aiReq.Prompt)
+		log.Info().Str("prompt", unifiedReq.Prompt).Msg("performing AI action")
+		err = driverExt.AIAction(unifiedReq.Prompt)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("AI action failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed AI action with prompt: %s", aiReq.Prompt)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed AI action with prompt: %s", unifiedReq.Prompt)), nil
 	}
 }
 
@@ -2385,13 +2397,13 @@ func (t *ToolFinished) Options() []mcp.ToolOption {
 
 func (t *ToolFinished) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		var finishedReq option.FinishedRequest
-		if err := mapToStruct(request.Params.Arguments, &finishedReq); err != nil {
+		var unifiedReq option.UnifiedActionRequest
+		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
-		log.Info().Str("reason", finishedReq.Content).Msg("task finished")
+		log.Info().Str("reason", unifiedReq.Content).Msg("task finished")
 
-		return mcp.NewToolResultText(fmt.Sprintf("Task completed: %s", finishedReq.Content)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Task completed: %s", unifiedReq.Content)), nil
 	}
 }
 
@@ -2403,4 +2415,33 @@ func (t *ToolFinished) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid finished params: %v", action.Params)
+}
+
+// Helper functions for pointer type handling
+func getFloat64Value(ptr *float64) float64 {
+	if ptr == nil {
+		return 0
+	}
+	return *ptr
+}
+
+func getFloat64ValueOrDefault(ptr *float64, defaultValue float64) float64 {
+	if ptr == nil {
+		return defaultValue
+	}
+	return *ptr
+}
+
+func getIntValue(ptr *int) int {
+	if ptr == nil {
+		return 0
+	}
+	return *ptr
+}
+
+func getBoolValue(ptr *bool) bool {
+	if ptr == nil {
+		return false
+	}
+	return *ptr
 }

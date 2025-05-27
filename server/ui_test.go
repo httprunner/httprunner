@@ -18,17 +18,17 @@ func TestTapHandler(t *testing.T) {
 	tests := []struct {
 		name       string
 		path       string
-		tapReq     option.TapRequest
+		req        option.UnifiedActionRequest
 		wantStatus int
 		wantResp   HttpResponse
 	}{
 		{
 			name: "tap abs xy",
 			path: fmt.Sprintf("/api/v1/android/%s/ui/tap", "4622ca24"),
-			tapReq: option.TapRequest{
-				X:        500,
-				Y:        800,
-				Duration: 0,
+			req: option.UnifiedActionRequest{
+				X:        &[]float64{500}[0],
+				Y:        &[]float64{800}[0],
+				Duration: &[]float64{0}[0],
 			},
 			wantStatus: http.StatusOK,
 			wantResp: HttpResponse{
@@ -40,10 +40,10 @@ func TestTapHandler(t *testing.T) {
 		{
 			name: "tap relative xy",
 			path: fmt.Sprintf("/api/v1/android/%s/ui/tap", "4622ca24"),
-			tapReq: option.TapRequest{
-				X:        0.5,
-				Y:        0.6,
-				Duration: 0,
+			req: option.UnifiedActionRequest{
+				X:        &[]float64{0.5}[0],
+				Y:        &[]float64{0.6}[0],
+				Duration: &[]float64{0}[0],
 			},
 			wantStatus: http.StatusOK,
 			wantResp: HttpResponse{
@@ -56,7 +56,7 @@ func TestTapHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reqBody, _ := json.Marshal(tt.tapReq)
+			reqBody, _ := json.Marshal(tt.req)
 			req := httptest.NewRequest(http.MethodPost, tt.path, bytes.NewBuffer(reqBody))
 			req.Header.Set("Content-Type", "application/json")
 

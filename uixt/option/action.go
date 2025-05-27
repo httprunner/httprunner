@@ -32,10 +32,12 @@ const (
 
 	// UI handling
 	ACTION_Home                     ActionMethod = "home"
+	ACTION_Tap                      ActionMethod = "tap" // generic tap action
 	ACTION_TapXY                    ActionMethod = "tap_xy"
 	ACTION_TapAbsXY                 ActionMethod = "tap_abs_xy"
 	ACTION_TapByOCR                 ActionMethod = "tap_ocr"
 	ACTION_TapByCV                  ActionMethod = "tap_cv"
+	ACTION_DoubleTap                ActionMethod = "double_tap" // generic double tap action
 	ACTION_DoubleTapXY              ActionMethod = "double_tap_xy"
 	ACTION_Swipe                    ActionMethod = "swipe"            // swipe by direction or coordinates
 	ACTION_SwipeDirection           ActionMethod = "swipe_direction"  // swipe by direction (up, down, left, right)
@@ -45,13 +47,22 @@ const (
 	ACTION_PressButton              ActionMethod = "press_button"
 	ACTION_Back                     ActionMethod = "back"
 	ACTION_KeyCode                  ActionMethod = "keycode"
+	ACTION_Delete                   ActionMethod = "delete"    // delete action
+	ACTION_Backspace                ActionMethod = "backspace" // backspace action
 	ACTION_AIAction                 ActionMethod = "ai_action" // action with ai
 	ACTION_TapBySelector            ActionMethod = "tap_by_selector"
 	ACTION_HoverBySelector          ActionMethod = "hover_by_selector"
+	ACTION_Hover                    ActionMethod = "hover"       // generic hover action
+	ACTION_RightClick               ActionMethod = "right_click" // right click action
 	ACTION_WebCloseTab              ActionMethod = "web_close_tab"
 	ACTION_SecondaryClick           ActionMethod = "secondary_click"
 	ACTION_SecondaryClickBySelector ActionMethod = "secondary_click_by_selector"
 	ACTION_GetElementTextBySelector ActionMethod = "get_element_text_by_selector"
+	ACTION_Scroll                   ActionMethod = "scroll"         // scroll action
+	ACTION_Upload                   ActionMethod = "upload"         // upload action
+	ACTION_PushMedia                ActionMethod = "push_media"     // push media action
+	ACTION_CreateBrowser            ActionMethod = "create_browser" // create browser action
+	ACTION_AppInfo                  ActionMethod = "app_info"       // get app info action
 
 	// device actions
 	ACTION_ListAvailableDevices ActionMethod = "list_available_devices"
