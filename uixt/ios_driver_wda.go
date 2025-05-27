@@ -138,7 +138,7 @@ func (wd *WDADriver) Setup() error {
 	if err != nil {
 		return err
 	}
-	wd.Session.SetBaseURL(fmt.Sprintf("http://127.0.0.1:%d", localPort))
+	wd.Session.SetBaseURL(fmt.Sprintf("http://localhost:%d", localPort))
 
 	if err = wd.initMjpegClient(); err != nil {
 		return err
