@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -225,19 +226,54 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 		return err
 	}
 
-	// quit all plugins
+	// collect all MCP hosts for cleanup
+	var mcpHosts []*mcphost.MCPHost
+	var cleanupOnce sync.Once
+
+	// quit all plugins and close MCP hosts
 	defer func() {
-		pluginMap.Range(func(key, value interface{}) bool {
-			if plugin, ok := value.(funplugin.IPlugin); ok {
-				plugin.Quit()
+		cleanupOnce.Do(func() {
+			pluginMap.Range(func(key, value interface{}) bool {
+				if plugin, ok := value.(funplugin.IPlugin); ok {
+					plugin.Quit()
+				}
+				return true
+			})
+
+			// Close all MCP hosts with timeout
+			if len(mcpHosts) > 0 {
+				done := make(chan struct{})
+				go func() {
+					defer close(done)
+					for _, host := range mcpHosts {
+						if host != nil {
+							host.Shutdown()
+						}
+					}
+				}()
+
+				// Wait for cleanup with timeout
+				select {
+				case <-done:
+					log.Debug().Msg("All MCP hosts cleaned up successfully")
+				case <-time.After(10 * time.Second):
+					log.Warn().Msg("MCP hosts cleanup timeout")
+				}
 			}
-			return true
 		})
 	}()
 
 	var runErr error
 	// run testcase one by one
 	for _, testcase := range testCases {
+		// check for interrupt signal before processing each testcase
+		select {
+		case <-r.interruptSignal:
+			log.Warn().Msg("interrupted in main runner")
+			return errors.Wrap(code.InterruptError, "main runner interrupted")
+		default:
+		}
+
 		// each testcase has its own case runner
 		caseRunner, err := NewCaseRunner(*testcase, r)
 		if err != nil {
@@ -245,7 +281,20 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			return err
 		}
 
+		// collect MCP host for cleanup
+		if caseRunner.parser.MCPHost != nil {
+			mcpHosts = append(mcpHosts, caseRunner.parser.MCPHost)
+		}
+
 		for it := caseRunner.parametersIterator; it.HasNext(); {
+			// check for interrupt signal before each iteration
+			select {
+			case <-r.interruptSignal:
+				log.Warn().Msg("interrupted in main runner")
+				return errors.Wrap(code.InterruptError, "main runner interrupted")
+			default:
+			}
+
 			// case runner can run multiple times with different parameters
 			// each run has its own session runner
 			sessionRunner := caseRunner.NewSession()

@@ -194,11 +194,33 @@ func callMCPActionTool(driver IDriver,
 	// Get XTDriver from cache
 	dExt := getXTDriverFromCache(driver)
 	if dExt == nil {
+		log.Warn().Msg("XTDriver not found in cache, skipping MCP tool call")
 		return
 	}
 
-	dExt.CallMCPTool(context.Background(),
-		serverName, actionType, arguments)
+	// Create a context with timeout that can be cancelled
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	log.Debug().Str("server", serverName).Str("action", actionType).
+		Interface("arguments", arguments).Msg("calling MCP action tool")
+
+	// Call MCP tool with timeout context
+	result, err := dExt.CallMCPTool(ctx, serverName, actionType, arguments)
+	if err != nil {
+		// Classify error types for better debugging
+		if ctx.Err() == context.DeadlineExceeded {
+			log.Warn().Str("server", serverName).Str("action", actionType).
+				Msg("MCP action tool call timeout")
+		} else {
+			log.Warn().Err(err).Str("server", serverName).Str("action", actionType).
+				Msg("MCP action tool call failed")
+		}
+		return
+	}
+
+	log.Debug().Str("server", serverName).Str("action", actionType).
+		Interface("result", result).Msg("MCP action tool call succeeded")
 }
 
 // getAntiRisk_SetTouchInfo_Arguments gets arguments for SetTouchInfo MCP tool

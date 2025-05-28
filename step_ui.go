@@ -741,23 +741,21 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			attachments["error"] = err.Error()
 
 			// save foreground app
-			if uiDriver != nil {
-				startTime := time.Now()
-				actionResult := &ActionResult{
-					MobileAction: uixt.MobileAction{
-						Method: option.ACTION_GetForegroundApp,
-						Params: "[ForDebug] check foreground app",
-					},
-					StartTime: startTime.Unix(),
-				}
-				if app, err1 := uiDriver.ForegroundInfo(); err1 == nil {
-					attachments["foreground_app"] = app.AppBaseInfo
-				} else {
-					log.Warn().Err(err1).Msg("save foreground app failed, ignore")
-				}
-				actionResult.Elapsed = time.Since(startTime).Milliseconds()
-				stepResult.Actions = append(stepResult.Actions, actionResult)
+			startTime := time.Now()
+			actionResult := &ActionResult{
+				MobileAction: uixt.MobileAction{
+					Method: option.ACTION_GetForegroundApp,
+					Params: "[ForDebug] check foreground app",
+				},
+				StartTime: startTime.Unix(),
 			}
+			if app, err1 := uiDriver.ForegroundInfo(); err1 == nil {
+				attachments["foreground_app"] = app.AppBaseInfo
+			} else {
+				log.Warn().Err(err1).Msg("save foreground app failed, ignore")
+			}
+			actionResult.Elapsed = time.Since(startTime).Milliseconds()
+			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
 		// automatic handling of pop-up windows on each step finished
@@ -782,10 +780,8 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		}
 
 		// save attachments
-		if uiDriver != nil {
-			for key, value := range uiDriver.GetData(true) {
-				attachments[key] = value
-			}
+		for key, value := range uiDriver.GetData(true) {
+			attachments[key] = value
 		}
 		stepResult.Attachments = attachments
 		stepResult.Elapsed = time.Since(start).Milliseconds()

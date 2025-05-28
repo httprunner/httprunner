@@ -23,6 +23,12 @@
 				"ABC": "123"
 			}
 		},
+		"evalpkgs": {
+			"command": "/Users/debugtalk/MyProjects/ByteDance/evalpkgs/dist/mcpserver",
+			"args": [],
+			"env": {
+			}
+		},
 		"disabled_server": {
 			"command": "echo",
 			"args": ["disabled"],
