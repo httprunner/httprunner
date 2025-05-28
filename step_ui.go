@@ -825,6 +825,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				continue
 			}
 
+			// call MCP tool to execute action
 			err = uiDriver.ExecuteAction(context.Background(), action)
 			actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
 			stepResult.Actions = append(stepResult.Actions, actionResult)

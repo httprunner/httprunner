@@ -110,10 +110,14 @@ func (h *MCPHost) connectToServer(ctx context.Context, serverName string, config
 		mcpClient, err = client.NewSSEMCPClient(cfg.Url,
 			client.WithHeaders(parseHeaders(cfg.Headers)))
 	case STDIOServerConfig:
-		env := make([]string, 0, len(cfg.Env))
+		// Start with current process environment variables
+		env := os.Environ()
+
+		// Add or override with config-specific environment variables
 		for k, v := range cfg.Env {
 			env = append(env, fmt.Sprintf("%s=%s", k, v))
 		}
+
 		mcpClient, err = client.NewStdioMCPClient(cfg.Command, env, cfg.Args...)
 		if stdioClient, ok := mcpClient.(*client.Client); ok {
 			stderr, _ := client.GetStderr(stdioClient)

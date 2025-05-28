@@ -8,6 +8,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
+	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/rs/zerolog/log"
 )
@@ -50,7 +51,13 @@ func preHandler_TapAbsXY(driver IDriver, options *option.ActionOptions, rawX, ra
 
 	// Call MCP action tool if anti-risk is enabled
 	if options.AntiRisk {
-		// TODO
+		arguments := getAntiRisk_SetTouchInfoList_Arguments(driver, []ai.PointF{
+			{X: rawX, Y: rawY},
+		})
+		if arguments != nil {
+			callMCPActionTool(driver, "evalpkgs",
+				string(option.ACTION_SetTouchInfoList), arguments)
+		}
 	}
 
 	x, y = options.ApplyTapOffset(rawX, rawY)
@@ -94,6 +101,18 @@ func preHandler_Drag(driver IDriver, options *option.ActionOptions, rawFomX, raw
 	}
 	fromX, fromY, toX, toY = options.ApplySwipeOffset(fromX, fromY, toX, toY)
 
+	// Call MCP action tool if anti-risk is enabled
+	if options.AntiRisk {
+		arguments := getAntiRisk_SetTouchInfoList_Arguments(driver, []ai.PointF{
+			{X: fromX, Y: fromY},
+			{X: toX, Y: toY},
+		})
+		if arguments != nil {
+			callMCPActionTool(driver, "evalpkgs",
+				string(option.ACTION_SetTouchInfoList), arguments)
+		}
+	}
+
 	// mark UI operation
 	if options.PreMarkOperation {
 		if markErr := MarkUIOperation(driver, option.ACTION_Drag, []float64{fromX, fromY, toX, toY}); markErr != nil {
@@ -113,6 +132,18 @@ func preHandler_Swipe(driver IDriver, actionType option.ActionName,
 		return 0, 0, 0, 0, err
 	}
 	fromX, fromY, toX, toY = options.ApplySwipeOffset(fromX, fromY, toX, toY)
+
+	// Call MCP action tool if anti-risk is enabled
+	if options.AntiRisk {
+		arguments := getAntiRisk_SetTouchInfoList_Arguments(driver, []ai.PointF{
+			{X: fromX, Y: fromY},
+			{X: toX, Y: toY},
+		})
+		if arguments != nil {
+			callMCPActionTool(driver, "evalpkgs",
+				string(option.ACTION_SetTouchInfoList), arguments)
+		}
+	}
 
 	// save screenshot before action and mark UI operation
 	if options.PreMarkOperation {
@@ -170,18 +201,51 @@ func callMCPActionTool(driver IDriver,
 		serverName, actionType, arguments)
 }
 
+// getAntiRisk_SetTouchInfo_Arguments gets arguments for SetTouchInfo MCP tool
 func getAntiRisk_SetTouchInfo_Arguments(driver IDriver) map[string]interface{} {
-	var deviceModel string
-	device := driver.GetDevice()
-	if adbDevice, ok := device.(*AndroidDevice); ok {
-		var err error
-		deviceModel, err = adbDevice.Model()
-		if err != nil {
-			return nil
+	arguments := getCommonMCPArguments(driver)
+	return arguments
+}
+
+// getAntiRisk_SetTouchInfoList_Arguments gets arguments for SetTouchInfoList MCP tool
+func getAntiRisk_SetTouchInfoList_Arguments(driver IDriver, points []ai.PointF) map[string]interface{} {
+	arguments := getCommonMCPArguments(driver)
+
+	pointsList := make([]map[string]float64, len(points))
+	for i, point := range points {
+		pointsList[i] = map[string]float64{
+			"x": point.X,
+			"y": point.Y,
 		}
 	}
 
-	return map[string]interface{}{
-		"deviceModel": deviceModel,
+	arguments["points"] = pointsList
+	arguments["clean"] = true
+
+	return arguments
+}
+
+// getCommonMCPArguments gets common arguments for MCP tools
+func getCommonMCPArguments(driver IDriver) map[string]interface{} {
+	arguments := make(map[string]interface{})
+
+	device := driver.GetDevice()
+
+	// Get device model for Android devices
+	if adbDevice, ok := device.(*AndroidDevice); ok {
+		// Get device model
+		if deviceModel, err := adbDevice.Device.Model(); err == nil {
+			arguments["deviceModel"] = deviceModel
+		}
+
+		// Get device serial number
+		arguments["deviceSerial"] = adbDevice.Device.Serial()
 	}
+
+	// Get current foreground app info
+	if appInfo, err := driver.ForegroundInfo(); err == nil {
+		arguments["packageName"] = appInfo.PackageName
+	}
+
+	return arguments
 }
