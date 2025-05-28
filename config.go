@@ -43,6 +43,7 @@ type TConfig struct {
 	Path              string                         `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
 	PluginSetting     *PluginConfig                  `json:"plugin,omitempty" yaml:"plugin,omitempty"` // plugin config
 	MCPConfigPath     string                         `json:"mcp_config_path,omitempty" yaml:"mcp_config_path,omitempty"`
+	AntiRisk          bool                           `json:"anti_risk,omitempty" yaml:"anti_risk,omitempty"` // global anti-risk switch
 	IgnorePopup       bool                           `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
 	LLMService        option.LLMServiceType          `json:"llm_service,omitempty" yaml:"llm_service,omitempty"`
 	CVService         option.CVServiceType           `json:"cv_service,omitempty" yaml:"cv_service,omitempty"`
@@ -73,6 +74,12 @@ func (c *TConfig) SetHeaders(headers map[string]string) *TConfig {
 // SetVerifySSL sets whether to verify SSL for current testcase.
 func (c *TConfig) SetVerifySSL(verify bool) *TConfig {
 	c.Verify = verify
+	return c
+}
+
+// SetAntiRisk sets global anti-risk switch for current testcase.
+func (c *TConfig) SetAntiRisk(antiRisk bool) *TConfig {
+	c.AntiRisk = antiRisk
 	return c
 }
 

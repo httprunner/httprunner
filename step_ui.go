@@ -709,7 +709,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 	}
 	uiDriver, err := uixt.GetOrCreateXTDriver(config)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	identifier := mobileStep.Identifier
@@ -741,25 +741,31 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			attachments["error"] = err.Error()
 
 			// save foreground app
-			startTime := time.Now()
-			actionResult := &ActionResult{
-				MobileAction: uixt.MobileAction{
-					Method: option.ACTION_GetForegroundApp,
-					Params: "[ForDebug] check foreground app",
-				},
-				StartTime: startTime.Unix(),
+			if uiDriver != nil {
+				startTime := time.Now()
+				actionResult := &ActionResult{
+					MobileAction: uixt.MobileAction{
+						Method: option.ACTION_GetForegroundApp,
+						Params: "[ForDebug] check foreground app",
+					},
+					StartTime: startTime.Unix(),
+				}
+				if app, err1 := uiDriver.ForegroundInfo(); err1 == nil {
+					attachments["foreground_app"] = app.AppBaseInfo
+				} else {
+					log.Warn().Err(err1).Msg("save foreground app failed, ignore")
+				}
+				actionResult.Elapsed = time.Since(startTime).Milliseconds()
+				stepResult.Actions = append(stepResult.Actions, actionResult)
 			}
-			if app, err1 := uiDriver.ForegroundInfo(); err1 == nil {
-				attachments["foreground_app"] = app.AppBaseInfo
-			} else {
-				log.Warn().Err(err1).Msg("save foreground app failed, ignore")
-			}
-			actionResult.Elapsed = time.Since(startTime).Milliseconds()
-			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
 		// automatic handling of pop-up windows on each step finished
-		if !ignorePopup && !s.caseRunner.Config.Get().IgnorePopup {
+		var config *TConfig
+		if s.caseRunner != nil && s.caseRunner.Config != nil {
+			config = s.caseRunner.Config.Get()
+		}
+		if !ignorePopup && (config == nil || !config.IgnorePopup) && uiDriver != nil {
 			startTime := time.Now()
 			actionResult := &ActionResult{
 				MobileAction: uixt.MobileAction{
@@ -776,8 +782,10 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		}
 
 		// save attachments
-		for key, value := range uiDriver.GetData(true) {
-			attachments[key] = value
+		if uiDriver != nil {
+			for key, value := range uiDriver.GetData(true) {
+				attachments[key] = value
+			}
 		}
 		stepResult.Attachments = attachments
 		stepResult.Elapsed = time.Since(start).Milliseconds()
@@ -804,6 +812,20 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 						fmt.Sprintf("parse action params failed: %v", err))
 				}
 				return stepResult, err
+			}
+
+			// Apply global AntiRisk configuration if enabled in testcase config
+			if s.caseRunner != nil && s.caseRunner.Config != nil {
+				config := s.caseRunner.Config.Get()
+				if config != nil && config.AntiRisk {
+					if action.Options == nil {
+						action.Options = &option.ActionOptions{}
+					}
+					// Only set AntiRisk to true if it's not already explicitly set to false
+					if !action.Options.AntiRisk {
+						action.Options.AntiRisk = true
+					}
+				}
 			}
 
 			// stat uixt action
