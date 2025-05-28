@@ -35,6 +35,7 @@ var (
 	saveTests         bool
 	genHTMLReport     bool
 	caseTimeout       float32
+	runMCPConfigPath  string // MCP config path for run command
 )
 
 func init() {
@@ -46,6 +47,7 @@ func init() {
 	CmdRun.Flags().BoolVarP(&saveTests, "save-tests", "s", false, "save tests summary")
 	CmdRun.Flags().BoolVarP(&genHTMLReport, "gen-html-report", "g", false, "generate html report")
 	CmdRun.Flags().Float32Var(&caseTimeout, "case-timeout", 3600, "set testcase timeout (seconds)")
+	CmdRun.Flags().StringVar(&runMCPConfigPath, "mcp-config", "", "path to the MCP config file")
 }
 
 func makeHRPRunner() *hrp.HRPRunner {
@@ -70,6 +72,9 @@ func makeHRPRunner() *hrp.HRPRunner {
 	}
 	if proxyUrl != "" {
 		runner.SetProxyUrl(proxyUrl)
+	}
+	if runMCPConfigPath != "" {
+		runner.SetMCPConfigPath(runMCPConfigPath)
 	}
 	return runner
 }

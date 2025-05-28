@@ -52,6 +52,7 @@ func NewRunner(t *testing.T) *HRPRunner {
 		t:             t,
 		failfast:      true, // default to failfast
 		genHTMLReport: false,
+		mcpConfigPath: "",
 		httpClient: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -84,6 +85,7 @@ type HRPRunner struct {
 	venv             string
 	saveTests        bool
 	genHTMLReport    bool
+	mcpConfigPath    string // MCP config file path
 	httpClient       *http.Client
 	http2Client      *http.Client
 	wsDialer         *websocket.Dialer
@@ -190,6 +192,13 @@ func (r *HRPRunner) SetSaveTests(saveTests bool) *HRPRunner {
 func (r *HRPRunner) GenHTMLReport() *HRPRunner {
 	log.Info().Bool("genHTMLReport", true).Msg("[init] SetgenHTMLReport")
 	r.genHTMLReport = true
+	return r
+}
+
+// SetMCPConfigPath configures the MCP config path.
+func (r *HRPRunner) SetMCPConfigPath(mcpConfigPath string) *HRPRunner {
+	log.Info().Str("mcpConfigPath", mcpConfigPath).Msg("[init] SetMCPConfigPath")
+	r.mcpConfigPath = mcpConfigPath
 	return r
 }
 
@@ -309,14 +318,19 @@ func NewCaseRunner(testcase TestCase, hrpRunner *HRPRunner) (*CaseRunner, error)
 	}
 
 	// init MCP servers
-	if config.MCPConfigPath != "" {
-		mcpHost, err := mcphost.NewMCPHost(config.MCPConfigPath, false)
+	mcpConfigPath := hrpRunner.mcpConfigPath
+	if mcpConfigPath == "" {
+		mcpConfigPath = config.MCPConfigPath
+	}
+	if mcpConfigPath != "" {
+		mcpHost, err := mcphost.NewMCPHost(mcpConfigPath, false)
 		if err != nil {
-			log.Error().Err(err).Msg("init MCP hub failed")
+			log.Error().Err(err).
+				Str("mcpConfigPath", mcpConfigPath).Msg("init MCP hub failed")
 			return nil, err
 		}
 		caseRunner.parser.MCPHost = mcpHost
-		log.Info().Str("mcpConfigPath", config.MCPConfigPath).Msg("mcp server loaded")
+		log.Info().Str("mcpConfigPath", mcpConfigPath).Msg("mcp server loaded")
 	}
 
 	// parse testcase config
