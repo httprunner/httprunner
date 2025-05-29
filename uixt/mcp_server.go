@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/danielpaulus/go-ios/ios"
@@ -967,21 +968,16 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
 			return nil, fmt.Errorf("parse parameters error: %w", err)
 		}
+		swipeDirection := unifiedReq.Direction.(string)
 
 		// Swipe action logic
-		log.Info().Interface("direction", unifiedReq.Direction).Msg("performing swipe")
+		log.Info().Str("direction", swipeDirection).Msg("performing swipe")
 
 		// Validate direction
 		validDirections := []string{"up", "down", "left", "right"}
-		isValid := false
-		for _, validDir := range validDirections {
-			if unifiedReq.Direction == validDir {
-				isValid = true
-				break
-			}
-		}
-		if !isValid {
-			return nil, fmt.Errorf("invalid swipe direction: %s, expected one of: %v", unifiedReq.Direction, validDirections)
+		if !slices.Contains(validDirections, swipeDirection) {
+			return nil, fmt.Errorf("invalid swipe direction: %s, expected one of: %v",
+				swipeDirection, validDirections)
 		}
 
 		opts := []option.ActionOption{
@@ -989,9 +985,12 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 			option.WithDuration(getFloat64ValueOrDefault(unifiedReq.Duration, 0.5)),
 			option.WithPressDuration(getFloat64ValueOrDefault(unifiedReq.PressDuration, 0.1)),
 		}
+		if unifiedReq.AntiRisk {
+			opts = append(opts, option.WithAntiRisk(true))
+		}
 
 		// Convert direction to coordinates and perform swipe
-		switch unifiedReq.Direction {
+		switch swipeDirection {
 		case "up":
 			err = driverExt.Swipe(0.5, 0.5, 0.5, 0.1, opts...)
 		case "down":
@@ -1001,14 +1000,15 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 		case "right":
 			err = driverExt.Swipe(0.5, 0.5, 0.9, 0.5, opts...)
 		default:
-			return mcp.NewToolResultError(fmt.Sprintf("Unexpected swipe direction: %s", unifiedReq.Direction)), nil
+			return mcp.NewToolResultError(
+				fmt.Sprintf("Unexpected swipe direction: %s", swipeDirection)), nil
 		}
 
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Swipe failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully swiped %s", unifiedReq.Direction)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Successfully swiped %s", swipeDirection)), nil
 	}
 }
 
@@ -1025,6 +1025,10 @@ func (t *ToolSwipeDirection) ConvertActionToCallToolRequest(action MobileAction)
 		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
 			arguments["pressDuration"] = pressDuration
 		}
+
+		// Extract all action options
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
+
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v", action.Params)
@@ -1070,12 +1074,17 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 			Msg("performing advanced swipe")
 
 		params := []float64{unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY}
+
+		// Build action options from the unified request
 		opts := []option.ActionOption{}
 		if unifiedReq.Duration > 0 {
 			opts = append(opts, option.WithDuration(unifiedReq.Duration))
 		}
 		if unifiedReq.PressDuration > 0 {
 			opts = append(opts, option.WithPressDuration(unifiedReq.PressDuration))
+		}
+		if unifiedReq.AntiRisk {
+			opts = append(opts, option.WithAntiRisk(true))
 		}
 
 		swipeAction := prepareSwipeAction(driverExt, params, opts...)
@@ -1104,6 +1113,10 @@ func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action MobileAction
 		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
 			arguments["pressDuration"] = pressDuration
 		}
+
+		// Extract all action options
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
+
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe advanced params: %v", action.Params)
@@ -1425,6 +1438,7 @@ func extractActionOptionsToArguments(actionOptions []option.ActionOption, argume
 		"ignore_NotFoundError": tempOptions.IgnoreNotFoundError,
 		"regex":                tempOptions.Regex,
 		"tap_random_rect":      tempOptions.TapRandomRect,
+		"anti_risk":            tempOptions.AntiRisk,
 	}
 
 	// Add boolean options only if they are true

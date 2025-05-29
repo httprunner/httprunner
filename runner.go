@@ -374,9 +374,7 @@ func NewCaseRunner(testcase TestCase, hrpRunner *HRPRunner) (*CaseRunner, error)
 	if mcpConfigPath != "" {
 		mcpHost, err := mcphost.NewMCPHost(mcpConfigPath, false)
 		if err != nil {
-			log.Error().Err(err).
-				Str("mcpConfigPath", mcpConfigPath).Msg("init MCP hub failed")
-			return nil, err
+			return nil, errors.Wrapf(err, "init mcp config %s failed", mcpConfigPath)
 		}
 		caseRunner.parser.MCPHost = mcpHost
 		log.Info().Str("mcpConfigPath", mcpConfigPath).Msg("mcp server loaded")
