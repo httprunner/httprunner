@@ -311,9 +311,9 @@ func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Get options directly since ActionOptions is now ActionOptions
@@ -382,9 +382,9 @@ func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Get options directly since ActionOptions is now ActionOptions
@@ -392,6 +392,11 @@ func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 
 		// Add default options
 		opts = append(opts, option.WithPreMarkOperation(true))
+
+		// Add AntiRisk support
+		if unifiedReq.AntiRisk {
+			opts = append(opts, option.WithAntiRisk(true))
+		}
 
 		// Validate required parameters
 		if unifiedReq.X == 0 || unifiedReq.Y == 0 {
@@ -453,9 +458,9 @@ func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Get options directly since ActionOptions is now ActionOptions
@@ -517,9 +522,9 @@ func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Get options directly since ActionOptions is now ActionOptions
@@ -578,9 +583,9 @@ func (t *ToolDoubleTapXY) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Validate required parameters
@@ -669,9 +674,9 @@ func (t *ToolLaunchApp) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		if unifiedReq.PackageName == "" {
@@ -722,9 +727,9 @@ func (t *ToolTerminateApp) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		if unifiedReq.PackageName == "" {
@@ -852,9 +857,9 @@ func (t *ToolPressButton) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Press button action logic
@@ -964,9 +969,9 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 		swipeDirection := unifiedReq.Direction.(string)
 
@@ -1057,9 +1062,9 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Validate required parameters
@@ -1101,10 +1106,10 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
 	if paramSlice, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(paramSlice) == 4 {
 		arguments := map[string]any{
-			"fromX": paramSlice[0],
-			"fromY": paramSlice[1],
-			"toX":   paramSlice[2],
-			"toY":   paramSlice[3],
+			"from_x": paramSlice[0],
+			"from_y": paramSlice[1],
+			"to_x":   paramSlice[2],
+			"to_y":   paramSlice[3],
 		}
 		// Add duration and press duration from options
 		if duration := action.ActionOptions.Duration; duration > 0 {
@@ -1145,9 +1150,9 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Build action options from request structure
@@ -1214,9 +1219,9 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Build action options from request structure
@@ -1286,9 +1291,9 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Build action options from request structure
@@ -1363,19 +1368,26 @@ func (t *ToolDrag) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
-		// Validate required parameters
-		if unifiedReq.FromX == 0 || unifiedReq.FromY == 0 || unifiedReq.ToX == 0 || unifiedReq.ToY == 0 {
-			return nil, fmt.Errorf("fromX, fromY, toX, and toY coordinates are required")
+		// Validate required parameters - check if coordinates are provided (not just non-zero)
+		_, hasFromX := request.Params.Arguments["from_x"]
+		_, hasFromY := request.Params.Arguments["from_y"]
+		_, hasToX := request.Params.Arguments["to_x"]
+		_, hasToY := request.Params.Arguments["to_y"]
+		if !hasFromX || !hasFromY || !hasToX || !hasToY {
+			return nil, fmt.Errorf("from_x, from_y, to_x, and to_y coordinates are required")
 		}
 
 		opts := []option.ActionOption{}
 		if unifiedReq.Duration > 0 {
 			opts = append(opts, option.WithDuration(unifiedReq.Duration/1000.0))
+		}
+		if unifiedReq.AntiRisk {
+			opts = append(opts, option.WithAntiRisk(true))
 		}
 
 		// Drag action logic
@@ -1397,27 +1409,22 @@ func (t *ToolDrag) Implement() server.ToolHandlerFunc {
 func (t *ToolDrag) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
 	if paramSlice, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(paramSlice) == 4 {
 		arguments := map[string]any{
-			"fromX": paramSlice[0],
-			"fromY": paramSlice[1],
-			"toX":   paramSlice[2],
-			"toY":   paramSlice[3],
+			"from_x": paramSlice[0],
+			"from_y": paramSlice[1],
+			"to_x":   paramSlice[2],
+			"to_y":   paramSlice[3],
 		}
 		// Add duration from options
 		if duration := action.ActionOptions.Duration; duration > 0 {
 			arguments["duration"] = duration * 1000 // convert to milliseconds
 		}
+
+		// Extract all action options
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
+
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
-	return mcp.CallToolRequest{}, fmt.Errorf("invalid drag params: %v", action.Params)
-}
-
-// mapToStruct convert map[string]any to target struct
-func mapToStruct(m map[string]any, out interface{}) error {
-	b, err := json.Marshal(m)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(b, out)
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid drag parameters: %v", action.Params)
 }
 
 // extractActionOptionsToArguments extracts action options and adds them to arguments map
@@ -1448,15 +1455,18 @@ func extractActionOptionsToArguments(actionOptions []option.ActionOption, argume
 		}
 	}
 
-	// Add numeric options only if they have meaningful values
+	// Add numeric options only if they have meaningful values and don't already exist
 	if tempOptions.MaxRetryTimes > 0 {
 		arguments["max_retry_times"] = tempOptions.MaxRetryTimes
 	}
 	if tempOptions.Index != 0 {
 		arguments["index"] = tempOptions.Index
 	}
+	// Only set duration if it's not already set (to avoid overriding tool-specific conversions)
 	if tempOptions.Duration > 0 {
-		arguments["duration"] = tempOptions.Duration
+		if _, exists := arguments["duration"]; !exists {
+			arguments["duration"] = tempOptions.Duration
+		}
 	}
 	if tempOptions.PressDuration > 0 {
 		arguments["press_duration"] = tempOptions.PressDuration
@@ -1562,9 +1572,9 @@ func (t *ToolInput) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		if unifiedReq.Text == "" {
@@ -1613,9 +1623,9 @@ func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Web login none UI action logic
@@ -1661,9 +1671,9 @@ func (t *ToolAppInstall) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// App install action logic
@@ -1710,9 +1720,9 @@ func (t *ToolAppUninstall) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// App uninstall action logic
@@ -1759,9 +1769,9 @@ func (t *ToolAppClear) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// App clear action logic
@@ -1808,9 +1818,9 @@ func (t *ToolSecondaryClick) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Validate required parameters
@@ -1863,9 +1873,9 @@ func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Hover by selector action logic
@@ -1912,9 +1922,9 @@ func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Tap by selector action logic
@@ -1961,9 +1971,9 @@ func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Secondary click by selector action logic
@@ -2010,9 +2020,9 @@ func (t *ToolWebCloseTab) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Validate required parameters
@@ -2077,9 +2087,9 @@ func (t *ToolSetIme) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Set IME action logic
@@ -2126,9 +2136,9 @@ func (t *ToolGetSource) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Get source action logic
@@ -2228,9 +2238,9 @@ func (t *ToolSleepMS) Options() []mcp.ToolOption {
 
 func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Validate required parameters
@@ -2279,9 +2289,9 @@ func (t *ToolSleepRandom) Options() []mcp.ToolOption {
 
 func (t *ToolSleepRandom) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// Sleep random action logic
@@ -2363,9 +2373,9 @@ func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 
 		// AI action logic
@@ -2407,9 +2417,9 @@ func (t *ToolFinished) Options() []mcp.ToolOption {
 
 func (t *ToolFinished) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		var unifiedReq option.ActionOptions
-		if err := mapToStruct(request.Params.Arguments, &unifiedReq); err != nil {
-			return nil, fmt.Errorf("parse parameters error: %w", err)
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
 		}
 		log.Info().Str("reason", unifiedReq.Content).Msg("task finished")
 
@@ -2432,4 +2442,19 @@ func getFloat64ValueOrDefault(value float64, defaultValue float64) float64 {
 		return defaultValue
 	}
 	return value
+}
+
+// parseActionOptions converts MCP request arguments to ActionOptions struct
+func parseActionOptions(arguments map[string]any) (*option.ActionOptions, error) {
+	b, err := json.Marshal(arguments)
+	if err != nil {
+		return nil, fmt.Errorf("marshal arguments failed: %w", err)
+	}
+
+	var actionOptions option.ActionOptions
+	if err := json.Unmarshal(b, &actionOptions); err != nil {
+		return nil, fmt.Errorf("unmarshal to ActionOptions failed: %w", err)
+	}
+
+	return &actionOptions, nil
 }

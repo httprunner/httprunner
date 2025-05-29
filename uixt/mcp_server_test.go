@@ -455,7 +455,7 @@ func TestToolSwipe(t *testing.T) {
 	assert.Equal(t, 1.5, request.Params.Arguments["duration"])
 	assert.Equal(t, 0.5, request.Params.Arguments["pressDuration"])
 
-	// Test ConvertActionToCallToolRequest with coordinate params ([]float64)
+	// Test ConvertActionToCallToolRequest with coordinate params
 	coordinateAction := MobileAction{
 		Method: option.ACTION_Swipe,
 		Params: []float64{0.1, 0.2, 0.8, 0.9},
@@ -467,10 +467,10 @@ func TestToolSwipe(t *testing.T) {
 	request, err = tool.ConvertActionToCallToolRequest(coordinateAction)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_Swipe), request.Params.Name)
-	assert.Equal(t, 0.1, request.Params.Arguments["fromX"])
-	assert.Equal(t, 0.2, request.Params.Arguments["fromY"])
-	assert.Equal(t, 0.8, request.Params.Arguments["toX"])
-	assert.Equal(t, 0.9, request.Params.Arguments["toY"])
+	assert.Equal(t, 0.1, request.Params.Arguments["from_x"])
+	assert.Equal(t, 0.2, request.Params.Arguments["from_y"])
+	assert.Equal(t, 0.8, request.Params.Arguments["to_x"])
+	assert.Equal(t, 0.9, request.Params.Arguments["to_y"])
 	assert.Equal(t, 2.0, request.Params.Arguments["duration"])
 	assert.Equal(t, 1.0, request.Params.Arguments["pressDuration"])
 
@@ -556,10 +556,10 @@ func TestToolSwipeCoordinate(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SwipeCoordinate), request.Params.Name)
-	assert.Equal(t, 0.1, request.Params.Arguments["fromX"])
-	assert.Equal(t, 0.2, request.Params.Arguments["fromY"])
-	assert.Equal(t, 0.8, request.Params.Arguments["toX"])
-	assert.Equal(t, 0.9, request.Params.Arguments["toY"])
+	assert.Equal(t, 0.1, request.Params.Arguments["from_x"])
+	assert.Equal(t, 0.2, request.Params.Arguments["from_y"])
+	assert.Equal(t, 0.8, request.Params.Arguments["to_x"])
+	assert.Equal(t, 0.9, request.Params.Arguments["to_y"])
 	assert.Equal(t, 2.0, request.Params.Arguments["duration"])
 	assert.Equal(t, 1.0, request.Params.Arguments["pressDuration"])
 
@@ -724,10 +724,10 @@ func TestToolDrag(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_Drag), request.Params.Name)
-	assert.Equal(t, 0.1, request.Params.Arguments["fromX"])
-	assert.Equal(t, 0.2, request.Params.Arguments["fromY"])
-	assert.Equal(t, 0.8, request.Params.Arguments["toX"])
-	assert.Equal(t, 0.9, request.Params.Arguments["toY"])
+	assert.Equal(t, 0.1, request.Params.Arguments["from_x"])
+	assert.Equal(t, 0.2, request.Params.Arguments["from_y"])
+	assert.Equal(t, 0.8, request.Params.Arguments["to_x"])
+	assert.Equal(t, 0.9, request.Params.Arguments["to_y"])
 	assert.Equal(t, 2500.0, request.Params.Arguments["duration"]) // converted to milliseconds
 
 	// Test ConvertActionToCallToolRequest with invalid params
