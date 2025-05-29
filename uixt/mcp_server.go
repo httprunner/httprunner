@@ -19,6 +19,184 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
+/*
+Package uixt provides MCP (Model Context Protocol) server implementation for HttpRunner UI automation.
+
+# HttpRunner MCP Server
+
+This package implements a comprehensive MCP server that exposes HttpRunner's UI automation
+capabilities through standardized MCP protocol interfaces. It enables AI models and other
+clients to perform mobile and web UI automation tasks.
+
+## Architecture Overview
+
+The MCP server follows a pure ActionTool architecture where each UI operation is implemented
+as an independent tool that conforms to the ActionTool interface:
+
+	┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+	│   MCP Client    │    │   MCP Server    │    │  XTDriver Core  │
+	│   (AI Model)    │◄──►│  (mcp_server)   │◄──►│   (UI Engine)   │
+	└─────────────────┘    └─────────────────┘    └─────────────────┘
+	                              │
+	                              ▼
+	                       ┌─────────────────┐
+	                       │  Device Layer   │
+	                       │ Android/iOS/Web │
+	                       └─────────────────┘
+
+## Core Components
+
+### MCPServer4XTDriver
+The main server struct that manages MCP protocol communication and tool registration.
+
+### ActionTool Interface
+Defines the contract for all MCP tools:
+  - Name(): Returns the action name identifier
+  - Description(): Provides human-readable tool description
+  - Options(): Defines MCP tool parameters and validation
+  - Implement(): Contains the actual tool execution logic
+  - ConvertActionToCallToolRequest(): Converts legacy actions to MCP format
+
+## Supported Operations
+
+### Device Management
+- list_available_devices: Discover Android/iOS devices and simulators
+- select_device: Choose specific device by platform and serial
+
+### Touch Operations
+- tap_xy: Tap at relative coordinates (0-1 range)
+- tap_abs_xy: Tap at absolute pixel coordinates
+- tap_ocr: Tap on text found by OCR recognition
+- tap_cv: Tap on element found by computer vision
+- double_tap_xy: Double tap at coordinates
+
+### Gesture Operations
+- swipe: Generic swipe with auto-detection (direction or coordinates)
+- swipe_direction: Directional swipe (up/down/left/right)
+- swipe_coordinate: Coordinate-based swipe with precise control
+- drag: Drag operation between two points
+
+### Advanced Swipe Operations
+- swipe_to_tap_app: Swipe to find and tap app by name
+- swipe_to_tap_text: Swipe to find and tap text
+- swipe_to_tap_texts: Swipe to find and tap one of multiple texts
+
+### Input Operations
+- input: Text input on focused element
+- press_button: Press device buttons (home, back, volume, etc.)
+
+### App Management
+- list_packages: List all installed apps
+- app_launch: Launch app by package name
+- app_terminate: Terminate running app
+- app_install: Install app from URL/path
+- app_uninstall: Uninstall app by package name
+- app_clear: Clear app data and cache
+
+### Screen Operations
+- screenshot: Capture screen as Base64 encoded image
+- get_screen_size: Get device screen dimensions
+- get_source: Get UI hierarchy/source
+
+### Utility Operations
+- sleep: Sleep for specified seconds
+- sleep_ms: Sleep for specified milliseconds
+- sleep_random: Sleep for random duration based on parameters
+- set_ime: Set input method editor
+- close_popups: Close popup windows/dialogs
+
+### Web Operations
+- web_login_none_ui: Perform login without UI interaction
+- secondary_click: Right-click at specified coordinates
+- hover_by_selector: Hover over element by CSS selector/XPath
+- tap_by_selector: Click element by CSS selector/XPath
+- secondary_click_by_selector: Right-click element by selector
+- web_close_tab: Close browser tab by index
+
+### AI Operations
+- ai_action: Perform AI-driven actions with natural language prompts
+- finished: Mark task completion with result message
+
+## Key Features
+
+### Anti-Risk Support
+Built-in anti-detection mechanisms for sensitive operations:
+  - Touch simulation with realistic timing
+  - Device fingerprint masking
+  - Behavioral pattern randomization
+
+### Unified Parameter Handling
+All tools use consistent parameter parsing through parseActionOptions():
+  - JSON marshaling/unmarshaling for type safety
+  - Automatic validation and error handling
+  - Support for complex nested parameters
+
+### Device Abstraction
+Seamless multi-platform support:
+  - Android devices via ADB
+  - iOS devices via go-ios
+  - Web browsers via WebDriver
+  - Harmony OS devices
+
+### Error Handling
+Comprehensive error management:
+  - Structured error responses
+  - Detailed logging with context
+  - Graceful failure recovery
+
+## Usage Example
+
+	// Create and start MCP server
+	server := NewMCPServer()
+	err := server.Start() // Blocks and serves MCP protocol over stdio
+
+	// Client interaction (via MCP protocol):
+	// 1. Initialize connection
+	// 2. List available tools
+	// 3. Call tools with parameters
+	// 4. Receive structured results
+
+## Extension Guide
+
+To add a new tool:
+
+1. Define tool struct implementing ActionTool interface
+2. Implement all required methods (Name, Description, Options, Implement, ConvertActionToCallToolRequest)
+3. Register tool in registerTools() method
+4. Add comprehensive unit tests
+5. Update documentation
+
+Example:
+	type ToolCustomAction struct{}
+
+	func (t *ToolCustomAction) Name() option.ActionName {
+		return option.ACTION_CustomAction
+	}
+
+	func (t *ToolCustomAction) Implement() server.ToolHandlerFunc {
+		return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			// Implementation logic
+		}
+	}
+
+## Performance Considerations
+
+- Driver instances are cached and reused for efficiency
+- Parameter parsing is optimized to minimize JSON overhead
+- Timeout controls prevent hanging operations
+- Resource cleanup ensures memory efficiency
+
+## Security Notes
+
+- All device operations require explicit permission
+- Input validation prevents injection attacks
+- Sensitive operations support anti-detection measures
+- Audit logging tracks all tool executions
+
+For detailed implementation examples and best practices, see the accompanying
+documentation.
+*/
+
 // MCPServer4XTDriver provides MCP (Model Context Protocol) interface for XTDriver.
 //
 // This implementation adopts a pure ActionTool-style architecture where:
@@ -38,6 +216,31 @@ import (
 //   - Easy extensibility for new features
 
 // NewMCPServer creates a new MCP server for XTDriver and registers all tools.
+//
+// This function initializes a complete MCP server instance with:
+//   - MCP protocol server with uixt capabilities
+//   - Version information from HttpRunner
+//   - Tool capabilities disabled (set to false for performance)
+//   - All available UI automation tools pre-registered
+//
+// The server supports the following tool categories:
+//   - Device management (discovery, selection)
+//   - Touch operations (tap, double-tap, long-press)
+//   - Gesture operations (swipe, drag)
+//   - Input operations (text input, button press)
+//   - App management (launch, terminate, install)
+//   - Screen operations (screenshot, size, source)
+//   - Utility operations (sleep, IME, popups)
+//   - Web operations (browser automation)
+//   - AI operations (intelligent actions)
+//
+// Returns:
+//   - *MCPServer4XTDriver: Configured server ready to start
+//
+// Usage:
+//
+//	server := NewMCPServer()
+//	err := server.Start() // Blocks and serves over stdio
 func NewMCPServer() *MCPServer4XTDriver {
 	mcpServer := server.NewMCPServer(
 		"uixt",
@@ -174,6 +377,54 @@ func (s *MCPServer4XTDriver) registerTool(tool ActionTool) {
 }
 
 // ActionTool interface defines the contract for MCP tools
+//
+// This interface standardizes how UI automation actions are exposed through MCP protocol.
+// Each tool implementation must provide:
+//
+// 1. Identity and Documentation:
+//   - Name(): Unique identifier for the action (e.g., ACTION_TapXY)
+//   - Description(): Human-readable description for AI models
+//
+// 2. MCP Integration:
+//   - Options(): Parameter definitions with validation rules
+//   - Implement(): Actual execution logic as MCP handler
+//
+// 3. Legacy Compatibility:
+//   - ConvertActionToCallToolRequest(): Converts old MobileAction format
+//
+// Implementation Pattern:
+//
+//	type ToolExample struct{}
+//
+//	func (t *ToolExample) Name() option.ActionName {
+//	    return option.ACTION_Example
+//	}
+//
+//	func (t *ToolExample) Description() string {
+//	    return "Performs example operation"
+//	}
+//
+//	func (t *ToolExample) Options() []mcp.ToolOption {
+//	    return []mcp.ToolOption{
+//	        mcp.WithString("param", mcp.Description("Parameter description")),
+//	    }
+//	}
+//
+//	func (t *ToolExample) Implement() server.ToolHandlerFunc {
+//	    return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+//	        // 1. Setup driver
+//	        // 2. Parse parameters
+//	        // 3. Execute operation
+//	        // 4. Return result
+//	    }
+//	}
+//
+// Benefits of this architecture:
+//   - Complete decoupling between tools
+//   - Consistent parameter handling
+//   - Standardized error reporting
+//   - Easy testing and maintenance
+//   - Seamless MCP protocol integration
 type ActionTool interface {
 	Name() option.ActionName
 	Description() string
@@ -207,7 +458,7 @@ func (t *ToolListAvailableDevices) Name() option.ActionName {
 }
 
 func (t *ToolListAvailableDevices) Description() string {
-	return "List all available devices. If there are more than one device returned, you need to let the user select one of them."
+	return "List all available devices including Android devices and iOS devices. If there are multiple devices returned, you need to let the user select one of them."
 }
 
 func (t *ToolListAvailableDevices) Options() []mcp.ToolOption {
@@ -262,13 +513,13 @@ func (t *ToolSelectDevice) Name() option.ActionName {
 }
 
 func (t *ToolSelectDevice) Description() string {
-	return "Select a device to use from the list of available devices. Use the list_available_devices tool to get a list of available devices."
+	return "Select a device to use from the list of available devices. Use the list_available_devices tool first to get a list of available devices."
 }
 
 func (t *ToolSelectDevice) Options() []mcp.ToolOption {
 	return []mcp.ToolOption{
-		mcp.WithString("platform", mcp.Enum("android", "ios"), mcp.Description("The type of device to select")),
-		mcp.WithString("serial", mcp.Description("The device serial/udid to select")),
+		mcp.WithString("platform", mcp.Enum("android", "ios"), mcp.Description("The platform type of device to select")),
+		mcp.WithString("serial", mcp.Description("The device serial number or UDID to select")),
 	}
 }
 
@@ -289,6 +540,50 @@ func (t *ToolSelectDevice) ConvertActionToCallToolRequest(action MobileAction) (
 }
 
 // ToolTapXY implements the tap_xy tool call.
+//
+// This tool performs touch/click operations at specified relative coordinates on the device screen.
+// Coordinates are normalized to 0-1 range where (0,0) is top-left and (1,1) is bottom-right.
+//
+// Supported platforms:
+//   - Android: Touch events via ADB
+//   - iOS: Touch events via go-ios
+//   - Web: Click events via WebDriver
+//   - Harmony: Touch events via native interface
+//
+// Features:
+//   - Relative coordinate system (0-1 range)
+//   - Anti-risk detection support
+//   - Configurable touch duration
+//   - Pre-operation marking for debugging
+//   - Comprehensive error handling
+//
+// MCP Parameters:
+//   - platform (string): Device platform ("android", "ios", "web", "harmony")
+//   - serial (string): Device serial number or identifier
+//   - x (number): X coordinate (0.0 to 1.0, relative to screen width)
+//   - y (number): Y coordinate (0.0 to 1.0, relative to screen height)
+//   - duration (number, optional): Touch duration in seconds (default: 0.1)
+//   - anti_risk (boolean, optional): Enable anti-detection measures
+//
+// Example Usage:
+//
+//	{
+//	  "name": "tap_xy",
+//	  "arguments": {
+//	    "platform": "android",
+//	    "serial": "emulator-5554",
+//	    "x": 0.5,
+//	    "y": 0.3,
+//	    "duration": 0.2,
+//	    "anti_risk": true
+//	  }
+//	}
+//
+// Error Conditions:
+//   - Missing or invalid coordinates
+//   - Device connection failure
+//   - Touch operation timeout
+//   - Platform not supported
 type ToolTapXY struct{}
 
 func (t *ToolTapXY) Name() option.ActionName {
@@ -296,7 +591,7 @@ func (t *ToolTapXY) Name() option.ActionName {
 }
 
 func (t *ToolTapXY) Description() string {
-	return "Click on the screen at given x,y coordinates"
+	return "Tap on the screen at given relative coordinates (0.0-1.0 range)"
 }
 
 func (t *ToolTapXY) Options() []mcp.ToolOption {
@@ -319,8 +614,10 @@ func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 		// Get options directly since ActionOptions is now ActionOptions
 		opts := unifiedReq.Options()
 
-		// Add default options
-		opts = append(opts, option.WithPreMarkOperation(true))
+		// Add configurable options based on request
+		if unifiedReq.PreMarkOperation {
+			opts = append(opts, option.WithPreMarkOperation(true))
+		}
 
 		// Validate required parameters
 		if unifiedReq.X == 0 || unifiedReq.Y == 0 {
@@ -367,7 +664,7 @@ func (t *ToolTapAbsXY) Name() option.ActionName {
 }
 
 func (t *ToolTapAbsXY) Description() string {
-	return "Tap at absolute pixel coordinates"
+	return "Tap at absolute pixel coordinates on the screen"
 }
 
 func (t *ToolTapAbsXY) Options() []mcp.ToolOption {
@@ -390,8 +687,10 @@ func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 		// Get options directly since ActionOptions is now ActionOptions
 		opts := unifiedReq.Options()
 
-		// Add default options
-		opts = append(opts, option.WithPreMarkOperation(true))
+		// Add configurable options based on request
+		if unifiedReq.PreMarkOperation {
+			opts = append(opts, option.WithPreMarkOperation(true))
+		}
 
 		// Add AntiRisk support
 		if unifiedReq.AntiRisk {
@@ -466,8 +765,10 @@ func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
 		// Get options directly since ActionOptions is now ActionOptions
 		opts := unifiedReq.Options()
 
-		// Add default options
-		opts = append(opts, option.WithPreMarkOperation(true))
+		// Add configurable options based on request
+		if unifiedReq.PreMarkOperation {
+			opts = append(opts, option.WithPreMarkOperation(true))
+		}
 
 		// Validate required parameters
 		if unifiedReq.Text == "" {
@@ -530,8 +831,10 @@ func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
 		// Get options directly since ActionOptions is now ActionOptions
 		opts := unifiedReq.Options()
 
-		// Add default options
-		opts = append(opts, option.WithPreMarkOperation(true))
+		// Add configurable options based on request
+		if unifiedReq.PreMarkOperation {
+			opts = append(opts, option.WithPreMarkOperation(true))
+		}
 
 		// Tap by CV action logic
 		log.Info().Msg("tapping by CV")
@@ -568,7 +871,7 @@ func (t *ToolDoubleTapXY) Name() option.ActionName {
 }
 
 func (t *ToolDoubleTapXY) Description() string {
-	return "Double tap at given coordinates"
+	return "Double tap at given relative coordinates (0.0-1.0 range)"
 }
 
 func (t *ToolDoubleTapXY) Options() []mcp.ToolOption {
@@ -624,7 +927,7 @@ func (t *ToolListPackages) Name() option.ActionName {
 }
 
 func (t *ToolListPackages) Description() string {
-	return "List all the apps/packages on the device."
+	return "List all installed apps/packages on the device with their package names."
 }
 
 func (t *ToolListPackages) Options() []mcp.ToolOption {
@@ -659,7 +962,7 @@ func (t *ToolLaunchApp) Name() option.ActionName {
 }
 
 func (t *ToolLaunchApp) Description() string {
-	return "Launch an app on mobile device. Use this to open a specific app. You can find the package name of the app by calling list_packages."
+	return "Launch an app on mobile device using its package name. Use list_packages tool first to find the correct package name."
 }
 
 func (t *ToolLaunchApp) Options() []mcp.ToolOption {
@@ -712,7 +1015,7 @@ func (t *ToolTerminateApp) Name() option.ActionName {
 }
 
 func (t *ToolTerminateApp) Description() string {
-	return "Stop and terminate an app on mobile device"
+	return "Stop and terminate a running app on mobile device using its package name"
 }
 
 func (t *ToolTerminateApp) Options() []mcp.ToolOption {
@@ -768,7 +1071,7 @@ func (t *ToolScreenShot) Name() option.ActionName {
 }
 
 func (t *ToolScreenShot) Description() string {
-	return "Take a screenshot of the mobile device. Use this to understand what's on screen. Do not cache this result."
+	return "Take a screenshot of the mobile device screen. Use this to understand what's currently displayed on screen."
 }
 
 func (t *ToolScreenShot) Options() []mcp.ToolOption {
@@ -946,7 +1249,7 @@ func (t *ToolSwipe) ConvertActionToCallToolRequest(action MobileAction) (mcp.Cal
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v, expected string direction or [fromX, fromY, toX, toY] coordinates", action.Params)
 }
 
-// ToolSwipeDirection implements the swipe tool call.
+// ToolSwipeDirection implements the swipe_direction tool call.
 type ToolSwipeDirection struct{}
 
 func (t *ToolSwipeDirection) Name() option.ActionName {
@@ -954,7 +1257,7 @@ func (t *ToolSwipeDirection) Name() option.ActionName {
 }
 
 func (t *ToolSwipeDirection) Description() string {
-	return "Swipe on the screen"
+	return "Swipe on the screen in a specific direction (up, down, left, right)"
 }
 
 func (t *ToolSwipeDirection) Options() []mcp.ToolOption {
@@ -986,12 +1289,14 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 		}
 
 		opts := []option.ActionOption{
-			option.WithPreMarkOperation(true),
 			option.WithDuration(getFloat64ValueOrDefault(unifiedReq.Duration, 0.5)),
 			option.WithPressDuration(getFloat64ValueOrDefault(unifiedReq.PressDuration, 0.1)),
 		}
 		if unifiedReq.AntiRisk {
 			opts = append(opts, option.WithAntiRisk(true))
+		}
+		if unifiedReq.PreMarkOperation {
+			opts = append(opts, option.WithPreMarkOperation(true))
 		}
 
 		// Convert direction to coordinates and perform swipe
@@ -1039,7 +1344,7 @@ func (t *ToolSwipeDirection) ConvertActionToCallToolRequest(action MobileAction)
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v", action.Params)
 }
 
-// ToolSwipeCoordinate implements the swipe_advanced tool call.
+// ToolSwipeCoordinate implements the swipe_coordinate tool call.
 type ToolSwipeCoordinate struct{}
 
 func (t *ToolSwipeCoordinate) Name() option.ActionName {
@@ -1047,7 +1352,7 @@ func (t *ToolSwipeCoordinate) Name() option.ActionName {
 }
 
 func (t *ToolSwipeCoordinate) Description() string {
-	return "Perform advanced swipe with custom coordinates and timing"
+	return "Perform swipe with specific start and end coordinates and custom timing"
 }
 
 func (t *ToolSwipeCoordinate) Options() []mcp.ToolOption {
@@ -1353,7 +1658,7 @@ func (t *ToolDrag) Name() option.ActionName {
 }
 
 func (t *ToolDrag) Description() string {
-	return "Drag on the mobile device"
+	return "Drag from one point to another on the mobile device screen"
 }
 
 func (t *ToolDrag) Options() []mcp.ToolOption {
@@ -1446,6 +1751,7 @@ func extractActionOptionsToArguments(actionOptions []option.ActionOption, argume
 		"regex":                tempOptions.Regex,
 		"tap_random_rect":      tempOptions.TapRandomRect,
 		"anti_risk":            tempOptions.AntiRisk,
+		"pre_mark_operation":   tempOptions.PreMarkOperation,
 	}
 
 	// Add boolean options only if they are true
@@ -1557,7 +1863,7 @@ func (t *ToolInput) Name() option.ActionName {
 }
 
 func (t *ToolInput) Description() string {
-	return "Input text on the current active element"
+	return "Input text into the currently focused element or input field"
 }
 
 func (t *ToolInput) Options() []mcp.ToolOption {
@@ -1656,7 +1962,7 @@ func (t *ToolAppInstall) Name() option.ActionName {
 }
 
 func (t *ToolAppInstall) Description() string {
-	return "Install an app on the device"
+	return "Install an app on the device from a URL or local file path"
 }
 
 func (t *ToolAppInstall) Options() []mcp.ToolOption {
@@ -1754,7 +2060,7 @@ func (t *ToolAppClear) Name() option.ActionName {
 }
 
 func (t *ToolAppClear) Description() string {
-	return "Clear app data and cache"
+	return "Clear app data and cache for a specific app using its package name"
 }
 
 func (t *ToolAppClear) Options() []mcp.ToolOption {
@@ -1803,7 +2109,7 @@ func (t *ToolSecondaryClick) Name() option.ActionName {
 }
 
 func (t *ToolSecondaryClick) Description() string {
-	return "Perform secondary click (right click) at coordinates"
+	return "Perform secondary click (right click) at specified coordinates"
 }
 
 func (t *ToolSecondaryClick) Options() []mcp.ToolOption {
@@ -2121,7 +2427,7 @@ func (t *ToolGetSource) Name() option.ActionName {
 }
 
 func (t *ToolGetSource) Description() string {
-	return "Get the source/hierarchy of the current screen"
+	return "Get the UI hierarchy/source tree of the current screen for a specific app"
 }
 
 func (t *ToolGetSource) Options() []mcp.ToolOption {
@@ -2358,7 +2664,7 @@ func (t *ToolAIAction) Name() option.ActionName {
 }
 
 func (t *ToolAIAction) Description() string {
-	return "Perform actions using AI with a given prompt"
+	return "Perform AI-driven automation actions using natural language prompts to describe the desired operation"
 }
 
 func (t *ToolAIAction) Options() []mcp.ToolOption {
@@ -2407,7 +2713,7 @@ func (t *ToolFinished) Name() option.ActionName {
 }
 
 func (t *ToolFinished) Description() string {
-	return "Mark task as completed with a result message"
+	return "Mark the current automation task as completed with a result message"
 }
 
 func (t *ToolFinished) Options() []mcp.ToolOption {
@@ -2445,6 +2751,43 @@ func getFloat64ValueOrDefault(value float64, defaultValue float64) float64 {
 }
 
 // parseActionOptions converts MCP request arguments to ActionOptions struct
+//
+// This function provides unified parameter parsing for all MCP tools by:
+//
+// 1. Converting map[string]any arguments to JSON bytes
+// 2. Unmarshaling JSON into strongly-typed ActionOptions struct
+// 3. Providing automatic validation and type conversion
+//
+// The ActionOptions struct contains all possible parameters for UI operations:
+//   - Coordinates: X, Y, FromX, FromY, ToX, ToY
+//   - Text/Content: Text, Content, AppName, PackageName
+//   - Timing: Duration, PressDuration, Milliseconds
+//   - Behavior: AntiRisk, IgnoreNotFoundError, Regex
+//   - Indices: Index, MaxRetryTimes, TabIndex
+//   - Device: Platform, Serial, Button, Direction
+//   - Web: Selector, PhoneNumber, Captcha, Password
+//   - AI: Prompt
+//   - Collections: Texts, Params, Points
+//
+// Parameters:
+//   - arguments: Raw MCP request arguments as map[string]any
+//
+// Returns:
+//   - *option.ActionOptions: Parsed and validated options struct
+//   - error: Parsing or validation error
+//
+// Usage:
+//
+//	unifiedReq, err := parseActionOptions(request.Params.Arguments)
+//	if err != nil {
+//	    return nil, err
+//	}
+//	// Use unifiedReq.X, unifiedReq.Y, etc.
+//
+// Error Handling:
+//   - JSON marshal errors (invalid argument types)
+//   - JSON unmarshal errors (type conversion failures)
+//   - Missing required fields (handled by individual tools)
 func parseActionOptions(arguments map[string]any) (*option.ActionOptions, error) {
 	b, err := json.Marshal(arguments)
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 func TestNewMCPServer(t *testing.T) {
 	server := NewMCPServer()
 	assert.NotNil(t, server)
+	assert.NotEmpty(t, server.ListTools())
 
 	// Check that tools are registered
 	tools := server.ListTools()
@@ -1527,4 +1528,37 @@ func TestToolWebCloseTab(t *testing.T) {
 	}
 	_, err = tool.ConvertActionToCallToolRequest(invalidAction)
 	assert.Error(t, err)
+}
+
+func TestPreMarkOperationConfiguration(t *testing.T) {
+	// Test that pre_mark_operation is configurable and not hardcoded
+	server := NewMCPServer()
+
+	// Get the tap_xy tool
+	tapTool := server.GetToolByAction(option.ACTION_TapXY)
+	assert.NotNil(t, tapTool)
+
+	// Test conversion with pre_mark_operation enabled
+	actionWithPreMark := MobileAction{
+		Method:        option.ACTION_TapXY,
+		Params:        []float64{0.5, 0.5},
+		ActionOptions: *option.NewActionOptions(option.WithPreMarkOperation(true)),
+	}
+
+	request, err := tapTool.ConvertActionToCallToolRequest(actionWithPreMark)
+	assert.NoError(t, err)
+	assert.Equal(t, true, request.Params.Arguments["pre_mark_operation"])
+
+	// Test conversion without pre_mark_operation
+	actionWithoutPreMark := MobileAction{
+		Method:        option.ACTION_TapXY,
+		Params:        []float64{0.5, 0.5},
+		ActionOptions: *option.NewActionOptions(option.WithPreMarkOperation(false)),
+	}
+
+	request2, err := tapTool.ConvertActionToCallToolRequest(actionWithoutPreMark)
+	assert.NoError(t, err)
+	// Should not have pre_mark_operation in arguments when false
+	_, exists := request2.Params.Arguments["pre_mark_operation"]
+	assert.False(t, exists)
 }
