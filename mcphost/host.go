@@ -558,3 +558,18 @@ func (h *MCPHost) forceCloseAll() {
 		delete(h.connections, name)
 	}
 }
+
+// getActionToolProvider returns an ActionToolProvider for the given server name if available
+// This method checks if the MCP server implements the ActionToolProvider interface
+func (h *MCPHost) getActionToolProvider(serverName string) ActionToolProvider {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	if conn, exists := h.connections[serverName]; exists {
+		// Check if the client directly implements ActionToolProvider interface
+		if actionToolProvider, ok := conn.Client.(ActionToolProvider); ok {
+			return actionToolProvider
+		}
+	}
+	return nil
+}

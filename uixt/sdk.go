@@ -82,6 +82,11 @@ func (c *MCPClient4XTDriver) Close() error {
 	return nil
 }
 
+// GetToolByAction implements ActionToolProvider interface
+func (c *MCPClient4XTDriver) GetToolByAction(actionName option.ActionName) ActionTool {
+	return c.Server.GetToolByAction(actionName)
+}
+
 func (dExt *XTDriver) ExecuteAction(ctx context.Context, action MobileAction) (err error) {
 	// Find the corresponding tool for this action method
 	tool := dExt.client.Server.GetToolByAction(action.Method)

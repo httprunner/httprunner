@@ -124,6 +124,11 @@ func TestExtractDocStringInfo(t *testing.T) {
 }
 
 func TestConvertToolsToRecords(t *testing.T) {
+	// Create a mock MCPHost for testing
+	host := &MCPHost{
+		connections: make(map[string]*Connection),
+	}
+
 	tests := []struct {
 		name  string
 		tools []MCPTools
@@ -152,7 +157,7 @@ func TestConvertToolsToRecords(t *testing.T) {
 			},
 			want: []MCPToolRecord{
 				{
-					ToolID:      "weather_get_alerts",
+					ToolID:      "weather__get_alerts",
 					ServerName:  "weather",
 					ToolName:    "get_alerts",
 					Description: "Get weather alerts for a US state.",
@@ -184,7 +189,7 @@ func TestConvertToolsToRecords(t *testing.T) {
 			},
 			want: []MCPToolRecord{
 				{
-					ToolID:      "ui_swipe",
+					ToolID:      "ui__swipe",
 					ServerName:  "ui",
 					ToolName:    "swipe",
 					Description: "Do screen swipe action.",
@@ -192,7 +197,7 @@ func TestConvertToolsToRecords(t *testing.T) {
 					Returns:     "{}",
 				},
 				{
-					ToolID:      "ui_tap",
+					ToolID:      "ui__tap",
 					ServerName:  "ui",
 					ToolName:    "tap",
 					Description: "Tap on screen at specified position.",
@@ -201,11 +206,47 @@ func TestConvertToolsToRecords(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "convert tool with InputSchema",
+			tools: []MCPTools{
+				{
+					ServerName: "test",
+					Tools: []mcp.Tool{
+						{
+							Name:        "test_tool",
+							Description: "Test tool with input schema",
+							InputSchema: mcp.ToolInputSchema{
+								Type: "object",
+								Properties: map[string]interface{}{
+									"param1": map[string]interface{}{
+										"type":        "string",
+										"description": "First parameter",
+									},
+									"param2": map[string]interface{}{
+										"type": "number",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: []MCPToolRecord{
+				{
+					ToolID:      "test__test_tool",
+					ServerName:  "test",
+					ToolName:    "test_tool",
+					Description: "Test tool with input schema",
+					Parameters:  `{"param1":"First parameter","param2":"Parameter of type number"}`,
+					Returns:     "{}",
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ConvertToolsToRecords(tt.tools)
+			got := host.ConvertToolsToRecords(tt.tools)
 
 			// Compare each record
 			require.Equal(t, len(tt.want), len(got))
@@ -232,6 +273,182 @@ func TestConvertToolsToRecords(t *testing.T) {
 				// CreatedAt and LastUpdatedAt should be the same
 				assert.Equal(t, got[i].CreatedAt, got[i].LastUpdatedAt)
 			}
+		})
+	}
+}
+
+// TestExtractParameters tests the extractParameters method
+func TestExtractParameters(t *testing.T) {
+	host := &MCPHost{}
+
+	tests := []struct {
+		name     string
+		tool     mcp.Tool
+		info     DocStringInfo
+		expected string
+	}{
+		{
+			name: "extract from InputSchema",
+			tool: mcp.Tool{
+				InputSchema: mcp.ToolInputSchema{
+					Properties: map[string]interface{}{
+						"param1": map[string]interface{}{
+							"type":        "string",
+							"description": "First parameter",
+						},
+						"param2": map[string]interface{}{
+							"type": "number",
+						},
+					},
+				},
+			},
+			info:     DocStringInfo{Parameters: map[string]string{"old": "old param"}},
+			expected: `{"param1":"First parameter","param2":"Parameter of type number"}`,
+		},
+		{
+			name: "fallback to docstring",
+			tool: mcp.Tool{},
+			info: DocStringInfo{
+				Parameters: map[string]string{
+					"param": "parameter description",
+				},
+			},
+			expected: `{"param":"parameter description"}`,
+		},
+		{
+			name:     "empty parameters",
+			tool:     mcp.Tool{},
+			info:     DocStringInfo{},
+			expected: "{}",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := host.extractParameters(tt.tool, tt.info)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+// TestExtractReturns tests the extractReturns method
+func TestExtractReturns(t *testing.T) {
+	host := &MCPHost{
+		connections: make(map[string]*Connection),
+	}
+
+	tests := []struct {
+		name       string
+		serverName string
+		toolName   string
+		info       DocStringInfo
+		expected   string
+	}{
+		{
+			name:       "fallback to docstring returns",
+			serverName: "unknown_server",
+			toolName:   "unknown_tool",
+			info: DocStringInfo{
+				Returns: map[string]string{
+					"result": "operation result",
+					"error":  "error message",
+				},
+			},
+			expected: `{"error":"error message","result":"operation result"}`,
+		},
+		{
+			name:       "empty returns",
+			serverName: "unknown_server",
+			toolName:   "unknown_tool",
+			info:       DocStringInfo{},
+			expected:   "{}",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := host.extractReturns(tt.serverName, tt.toolName, tt.info)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+// TestGetPropertyDescription tests the getPropertyDescription method
+func TestGetPropertyDescription(t *testing.T) {
+	host := &MCPHost{}
+
+	tests := []struct {
+		name     string
+		propMap  map[string]interface{}
+		expected string
+	}{
+		{
+			name: "with description",
+			propMap: map[string]interface{}{
+				"type":        "string",
+				"description": "Parameter description",
+			},
+			expected: "Parameter description",
+		},
+		{
+			name: "without description, with type",
+			propMap: map[string]interface{}{
+				"type": "number",
+			},
+			expected: "Parameter of type number",
+		},
+		{
+			name:     "without description and type",
+			propMap:  map[string]interface{}{},
+			expected: "Parameter",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := host.getPropertyDescription(tt.propMap)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
+// TestMarshalToJSON tests the marshalToJSON method
+func TestMarshalToJSON(t *testing.T) {
+	host := &MCPHost{}
+
+	tests := []struct {
+		name     string
+		data     interface{}
+		dataType string
+		expected string
+	}{
+		{
+			name: "valid map",
+			data: map[string]string{
+				"key1": "value1",
+				"key2": "value2",
+			},
+			dataType: "test data",
+			expected: `{"key1":"value1","key2":"value2"}`,
+		},
+		{
+			name:     "empty map",
+			data:     map[string]string{},
+			dataType: "test data",
+			expected: "{}",
+		},
+		{
+			name:     "invalid data (channel)",
+			data:     make(chan int),
+			dataType: "test data",
+			expected: "{}",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := host.marshalToJSON(tt.data, tt.dataType)
+			assert.Equal(t, tt.expected, got)
 		})
 	}
 }

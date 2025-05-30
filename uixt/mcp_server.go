@@ -304,7 +304,7 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolTapByCV{})     // tap by CV
 	s.registerTool(&ToolDoubleTapXY{}) // double tap xy
 
-	// Swipe Tool
+	// Swipe Tools
 	s.registerTool(&ToolSwipe{})           // generic swipe, auto-detect direction or coordinate
 	s.registerTool(&ToolSwipeDirection{})  // swipe direction, up/down/left/right
 	s.registerTool(&ToolSwipeCoordinate{}) // swipe coordinate, [fromX, fromY, toX, toY]
@@ -337,7 +337,7 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolAppUninstall{}) // AppUninstall
 	s.registerTool(&ToolAppClear{})     // AppClear
 
-	// Sleep Tool
+	// Sleep Tools
 	s.registerTool(&ToolSleep{})
 	s.registerTool(&ToolSleepMS{})
 	s.registerTool(&ToolSleepRandom{})
@@ -432,6 +432,8 @@ type ActionTool interface {
 	Implement() server.ToolHandlerFunc
 	// ConvertActionToCallToolRequest converts MobileAction to mcp.CallToolRequest
 	ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error)
+	// ReturnSchema returns the expected return value schema based on mcp.CallToolResult conventions
+	ReturnSchema() map[string]string
 }
 
 // buildMCPCallToolRequest is a helper function to build mcp.CallToolRequest
@@ -505,6 +507,13 @@ func (t *ToolListAvailableDevices) ConvertActionToCallToolRequest(action MobileA
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
+func (t *ToolListAvailableDevices) ReturnSchema() map[string]string {
+	return map[string]string{
+		"androidDevices": "[]string: List of Android device serial numbers",
+		"iosDevices":     "[]string: List of iOS device UDIDs",
+	}
+}
+
 // ToolSelectDevice implements the select_device tool call.
 type ToolSelectDevice struct{}
 
@@ -537,6 +546,12 @@ func (t *ToolSelectDevice) Implement() server.ToolHandlerFunc {
 
 func (t *ToolSelectDevice) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
+func (t *ToolSelectDevice) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message with selected device UUID",
+	}
 }
 
 // ToolTapXY implements the tap_xy tool call.
@@ -656,6 +671,12 @@ func (t *ToolTapXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.Cal
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap params: %v", action.Params)
 }
 
+func (t *ToolTapXY) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming tap operation at specified coordinates",
+	}
+}
+
 // ToolTapAbsXY implements the tap_abs_xy tool call.
 type ToolTapAbsXY struct{}
 
@@ -734,6 +755,19 @@ func (t *ToolTapAbsXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap abs params: %v", action.Params)
 }
 
+func (t *ToolTapAbsXY) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming tap operation at absolute coordinates",
+	}
+}
+
+// defaultReturnSchema provides a standard return schema for most tools
+func defaultReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming the operation was completed",
+	}
+}
+
 // ToolTapByOCR implements the tap_ocr tool call.
 type ToolTapByOCR struct{}
 
@@ -800,6 +834,12 @@ func (t *ToolTapByOCR) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by OCR params: %v", action.Params)
 }
 
+func (t *ToolTapByOCR) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming the operation was completed",
+	}
+}
+
 // ToolTapByCV implements the tap_cv tool call.
 type ToolTapByCV struct{}
 
@@ -863,6 +903,10 @@ func (t *ToolTapByCV) ConvertActionToCallToolRequest(action MobileAction) (mcp.C
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
+func (t *ToolTapByCV) ReturnSchema() map[string]string {
+	return defaultReturnSchema()
+}
+
 // ToolDoubleTapXY implements the double_tap_xy tool call.
 type ToolDoubleTapXY struct{}
 
@@ -919,6 +963,10 @@ func (t *ToolDoubleTapXY) ConvertActionToCallToolRequest(action MobileAction) (m
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid double tap params: %v", action.Params)
 }
 
+func (t *ToolDoubleTapXY) ReturnSchema() map[string]string {
+	return defaultReturnSchema()
+}
+
 // ToolListPackages implements the list_packages tool call.
 type ToolListPackages struct{}
 
@@ -952,6 +1000,12 @@ func (t *ToolListPackages) Implement() server.ToolHandlerFunc {
 
 func (t *ToolListPackages) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
+func (t *ToolListPackages) ReturnSchema() map[string]string {
+	return map[string]string{
+		"packages": "[]string: List of installed app package names on the device",
+	}
 }
 
 // ToolLaunchApp implements the launch_app tool call.
@@ -1005,6 +1059,10 @@ func (t *ToolLaunchApp) ConvertActionToCallToolRequest(action MobileAction) (mcp
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app launch params: %v", action.Params)
+}
+
+func (t *ToolLaunchApp) ReturnSchema() map[string]string {
+	return defaultReturnSchema()
 }
 
 // ToolTerminateApp implements the terminate_app tool call.
@@ -1063,6 +1121,10 @@ func (t *ToolTerminateApp) ConvertActionToCallToolRequest(action MobileAction) (
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app terminate params: %v", action.Params)
 }
 
+func (t *ToolTerminateApp) ReturnSchema() map[string]string {
+	return defaultReturnSchema()
+}
+
 // ToolScreenShot implements the screenshot tool call.
 type ToolScreenShot struct{}
 
@@ -1100,6 +1162,14 @@ func (t *ToolScreenShot) ConvertActionToCallToolRequest(action MobileAction) (mc
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
+func (t *ToolScreenShot) ReturnSchema() map[string]string {
+	return map[string]string{
+		"image": "string: Base64 encoded screenshot image in JPEG format",
+		"name":  "string: Image name identifier (typically 'screenshot')",
+		"type":  "string: MIME type of the image (image/jpeg)",
+	}
+}
+
 // ToolGetScreenSize implements the get_screen_size tool call.
 type ToolGetScreenSize struct{}
 
@@ -1135,6 +1205,14 @@ func (t *ToolGetScreenSize) Implement() server.ToolHandlerFunc {
 
 func (t *ToolGetScreenSize) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
+func (t *ToolGetScreenSize) ReturnSchema() map[string]string {
+	return map[string]string{
+		"width":   "int: Screen width in pixels",
+		"height":  "int: Screen height in pixels",
+		"message": "string: Formatted message with screen dimensions",
+	}
 }
 
 // ToolPressButton implements the press_button tool call.
@@ -1184,6 +1262,13 @@ func (t *ToolPressButton) ConvertActionToCallToolRequest(action MobileAction) (m
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid press button params: %v", action.Params)
+}
+
+func (t *ToolPressButton) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming the button press operation",
+		"button":  "string: Name of the button that was pressed",
+	}
 }
 
 // ToolSwipe implements the generic swipe tool call.
@@ -1247,6 +1332,17 @@ func (t *ToolSwipe) ConvertActionToCallToolRequest(action MobileAction) (mcp.Cal
 	}
 
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v, expected string direction or [fromX, fromY, toX, toY] coordinates", action.Params)
+}
+
+func (t *ToolSwipe) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":   "string: Success message confirming the swipe operation",
+		"direction": "string: Direction of swipe (for directional swipes)",
+		"fromX":     "float64: Starting X coordinate (for coordinate-based swipes)",
+		"fromY":     "float64: Starting Y coordinate (for coordinate-based swipes)",
+		"toX":       "float64: Ending X coordinate (for coordinate-based swipes)",
+		"toY":       "float64: Ending Y coordinate (for coordinate-based swipes)",
+	}
 }
 
 // ToolSwipeDirection implements the swipe_direction tool call.
@@ -1344,6 +1440,13 @@ func (t *ToolSwipeDirection) ConvertActionToCallToolRequest(action MobileAction)
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v", action.Params)
 }
 
+func (t *ToolSwipeDirection) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":   "string: Success message confirming the directional swipe",
+		"direction": "string: Direction that was swiped (up/down/left/right)",
+	}
+}
+
 // ToolSwipeCoordinate implements the swipe_coordinate tool call.
 type ToolSwipeCoordinate struct{}
 
@@ -1432,6 +1535,16 @@ func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action MobileAction
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe advanced params: %v", action.Params)
 }
 
+func (t *ToolSwipeCoordinate) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming the coordinate-based swipe",
+		"fromX":   "float64: Starting X coordinate of the swipe",
+		"fromY":   "float64: Starting Y coordinate of the swipe",
+		"toX":     "float64: Ending X coordinate of the swipe",
+		"toY":     "float64: Ending Y coordinate of the swipe",
+	}
+}
+
 // ToolSwipeToTapApp implements the swipe_to_tap_app tool call.
 type ToolSwipeToTapApp struct{}
 
@@ -1499,6 +1612,13 @@ func (t *ToolSwipeToTapApp) ConvertActionToCallToolRequest(action MobileAction) 
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap app params: %v", action.Params)
+}
+
+func (t *ToolSwipeToTapApp) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming the app was found and tapped",
+		"appName": "string: Name of the app that was found and tapped",
+	}
 }
 
 // ToolSwipeToTapText implements the swipe_to_tap_text tool call.
@@ -1571,6 +1691,13 @@ func (t *ToolSwipeToTapText) ConvertActionToCallToolRequest(action MobileAction)
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap text params: %v", action.Params)
+}
+
+func (t *ToolSwipeToTapText) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming the text was found and tapped",
+		"text":    "string: Text content that was found and tapped",
+	}
 }
 
 // ToolSwipeToTapTexts implements the swipe_to_tap_texts tool call.
@@ -1648,6 +1775,14 @@ func (t *ToolSwipeToTapTexts) ConvertActionToCallToolRequest(action MobileAction
 	extractActionOptionsToArguments(action.GetOptions(), arguments)
 
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
+}
+
+func (t *ToolSwipeToTapTexts) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":   "string: Success message confirming one of the texts was found and tapped",
+		"texts":     "[]string: List of text options that were searched for",
+		"foundText": "string: The specific text that was actually found and tapped",
+	}
 }
 
 // ToolDrag implements the drag tool call.
@@ -1730,6 +1865,16 @@ func (t *ToolDrag) ConvertActionToCallToolRequest(action MobileAction) (mcp.Call
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid drag parameters: %v", action.Params)
+}
+
+func (t *ToolDrag) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming the drag operation",
+		"fromX":   "float64: Starting X coordinate of the drag",
+		"fromY":   "float64: Starting Y coordinate of the drag",
+		"toX":     "float64: Ending X coordinate of the drag",
+		"toY":     "float64: Ending Y coordinate of the drag",
+	}
 }
 
 // extractActionOptionsToArguments extracts action options and adds them to arguments map
@@ -1817,6 +1962,12 @@ func (t *ToolHome) ConvertActionToCallToolRequest(action MobileAction) (mcp.Call
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
+func (t *ToolHome) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming home button was pressed",
+	}
+}
+
 // ToolBack implements the back tool call.
 type ToolBack struct{}
 
@@ -1853,6 +2004,12 @@ func (t *ToolBack) Implement() server.ToolHandlerFunc {
 
 func (t *ToolBack) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
+func (t *ToolBack) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming back button was pressed",
+	}
 }
 
 // ToolInput implements the input tool call.
@@ -1906,6 +2063,13 @@ func (t *ToolInput) ConvertActionToCallToolRequest(action MobileAction) (mcp.Cal
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
+func (t *ToolInput) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming text was input",
+		"text":    "string: Text content that was input into the field",
+	}
+}
+
 // ToolWebLoginNoneUI implements the web_login_none_ui tool call.
 type ToolWebLoginNoneUI struct{}
 
@@ -1952,6 +2116,13 @@ func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 
 func (t *ToolWebLoginNoneUI) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
+func (t *ToolWebLoginNoneUI) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":     "string: Success message confirming web login was completed",
+		"loginResult": "object: Result of the login operation (success/failure details)",
+	}
 }
 
 // ToolAppInstall implements the app_install tool call.
@@ -2003,6 +2174,13 @@ func (t *ToolAppInstall) ConvertActionToCallToolRequest(action MobileAction) (mc
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app install params: %v", action.Params)
 }
 
+func (t *ToolAppInstall) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming app installation",
+		"appUrl":  "string: URL or path of the app that was installed",
+	}
+}
+
 // ToolAppUninstall implements the app_uninstall tool call.
 type ToolAppUninstall struct{}
 
@@ -2052,6 +2230,13 @@ func (t *ToolAppUninstall) ConvertActionToCallToolRequest(action MobileAction) (
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app uninstall params: %v", action.Params)
 }
 
+func (t *ToolAppUninstall) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":     "string: Success message confirming app uninstallation",
+		"packageName": "string: Package name of the app that was uninstalled",
+	}
+}
+
 // ToolAppClear implements the app_clear tool call.
 type ToolAppClear struct{}
 
@@ -2099,6 +2284,13 @@ func (t *ToolAppClear) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app clear params: %v", action.Params)
+}
+
+func (t *ToolAppClear) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":     "string: Success message confirming app data and cache were cleared",
+		"packageName": "string: Package name of the app that was cleared",
+	}
 }
 
 // ToolSecondaryClick implements the secondary_click tool call.
@@ -2156,6 +2348,14 @@ func (t *ToolSecondaryClick) ConvertActionToCallToolRequest(action MobileAction)
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click params: %v", action.Params)
 }
 
+func (t *ToolSecondaryClick) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming secondary click (right-click) operation",
+		"x":       "float64: X coordinate where secondary click was performed",
+		"y":       "float64: Y coordinate where secondary click was performed",
+	}
+}
+
 // ToolHoverBySelector implements the hover_by_selector tool call.
 type ToolHoverBySelector struct{}
 
@@ -2203,6 +2403,13 @@ func (t *ToolHoverBySelector) ConvertActionToCallToolRequest(action MobileAction
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid hover by selector params: %v", action.Params)
+}
+
+func (t *ToolHoverBySelector) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":  "string: Success message confirming hover operation",
+		"selector": "string: CSS selector or XPath of the element that was hovered over",
+	}
 }
 
 // ToolTapBySelector implements the tap_by_selector tool call.
@@ -2254,6 +2461,13 @@ func (t *ToolTapBySelector) ConvertActionToCallToolRequest(action MobileAction) 
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by selector params: %v", action.Params)
 }
 
+func (t *ToolTapBySelector) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":  "string: Success message confirming tap operation",
+		"selector": "string: CSS selector or XPath of the element that was tapped",
+	}
+}
+
 // ToolSecondaryClickBySelector implements the secondary_click_by_selector tool call.
 type ToolSecondaryClickBySelector struct{}
 
@@ -2301,6 +2515,13 @@ func (t *ToolSecondaryClickBySelector) ConvertActionToCallToolRequest(action Mob
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click by selector params: %v", action.Params)
+}
+
+func (t *ToolSecondaryClickBySelector) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":  "string: Success message confirming secondary click operation",
+		"selector": "string: CSS selector or XPath of the element that was right-clicked",
+	}
 }
 
 // ToolWebCloseTab implements the web_close_tab tool call.
@@ -2370,6 +2591,13 @@ func (t *ToolWebCloseTab) ConvertActionToCallToolRequest(action MobileAction) (m
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
+func (t *ToolWebCloseTab) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":  "string: Success message confirming browser tab was closed",
+		"tabIndex": "int: Index of the tab that was closed",
+	}
+}
+
 // ToolSetIme implements the set_ime tool call.
 type ToolSetIme struct{}
 
@@ -2419,6 +2647,13 @@ func (t *ToolSetIme) ConvertActionToCallToolRequest(action MobileAction) (mcp.Ca
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid set ime params: %v", action.Params)
 }
 
+func (t *ToolSetIme) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming IME was set",
+		"ime":     "string: Input method editor that was set",
+	}
+}
+
 // ToolGetSource implements the get_source tool call.
 type ToolGetSource struct{}
 
@@ -2466,6 +2701,14 @@ func (t *ToolGetSource) ConvertActionToCallToolRequest(action MobileAction) (mcp
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid get source params: %v", action.Params)
+}
+
+func (t *ToolGetSource) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":     "string: Success message confirming UI source was retrieved",
+		"packageName": "string: Package name of the app whose source was retrieved",
+		"source":      "string: UI hierarchy/source tree data in XML or JSON format",
+	}
 }
 
 // ToolSleep implements the sleep tool call.
@@ -2526,6 +2769,13 @@ func (t *ToolSleep) ConvertActionToCallToolRequest(action MobileAction) (mcp.Cal
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
+func (t *ToolSleep) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message": "string: Success message confirming sleep operation completed",
+		"seconds": "float64: Duration in seconds that was slept",
+	}
+}
+
 // ToolSleepMS implements the sleep_ms tool call.
 type ToolSleepMS struct{}
 
@@ -2577,6 +2827,13 @@ func (t *ToolSleepMS) ConvertActionToCallToolRequest(action MobileAction) (mcp.C
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
+func (t *ToolSleepMS) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":      "string: Success message confirming sleep operation completed",
+		"milliseconds": "int64: Duration in milliseconds that was slept",
+	}
+}
+
 // ToolSleepRandom implements the sleep_random tool call.
 type ToolSleepRandom struct{}
 
@@ -2618,6 +2875,14 @@ func (t *ToolSleepRandom) ConvertActionToCallToolRequest(action MobileAction) (m
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid sleep random params: %v", action.Params)
 }
 
+func (t *ToolSleepRandom) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":        "string: Success message confirming random sleep operation completed",
+		"params":         "[]float64: Parameters used for random duration calculation",
+		"actualDuration": "float64: Actual duration that was slept (in seconds)",
+	}
+}
+
 // ToolClosePopups implements the close_popups tool call.
 type ToolClosePopups struct{}
 
@@ -2654,6 +2919,13 @@ func (t *ToolClosePopups) Implement() server.ToolHandlerFunc {
 
 func (t *ToolClosePopups) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}
+
+func (t *ToolClosePopups) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":      "string: Success message confirming popups were closed",
+		"popupsClosed": "int: Number of popup windows or dialogs that were closed",
+	}
 }
 
 // ToolAIAction implements the ai_action tool call.
@@ -2705,6 +2977,14 @@ func (t *ToolAIAction) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid AI action params: %v", action.Params)
 }
 
+func (t *ToolAIAction) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":     "string: Success message confirming AI action was performed",
+		"prompt":      "string: Natural language prompt that was processed",
+		"actionTaken": "string: Description of the specific action that was taken by AI",
+	}
+}
+
 // ToolFinished implements the finished tool call.
 type ToolFinished struct{}
 
@@ -2741,6 +3021,14 @@ func (t *ToolFinished) ConvertActionToCallToolRequest(action MobileAction) (mcp.
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid finished params: %v", action.Params)
+}
+
+func (t *ToolFinished) ReturnSchema() map[string]string {
+	return map[string]string{
+		"message":       "string: Success message confirming task completion",
+		"content":       "string: Completion reason or result description",
+		"taskCompleted": "bool: Boolean indicating task was successfully finished",
+	}
 }
 
 func getFloat64ValueOrDefault(value float64, defaultValue float64) float64 {

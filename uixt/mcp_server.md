@@ -69,6 +69,7 @@ type ActionTool interface {
     Options() []mcp.ToolOption                                           // MCP 选项定义
     Implement() server.ToolHandlerFunc                                   // 工具实现逻辑
     ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) // 动作转换
+    ReturnSchema() map[string]string                                     // 返回值结构描述
 }
 ```
 
@@ -98,6 +99,12 @@ func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 
         // 4. 返回结果
         return mcp.NewToolResultText("操作成功"), nil
+    }
+}
+
+func (t *ToolTapXY) ReturnSchema() map[string]string {
+    return map[string]string{
+        "message": "string: Success message confirming tap operation at specified coordinates",
     }
 }
 ```
@@ -150,6 +157,20 @@ func setupXTDriver(ctx context.Context, arguments map[string]any) (*XTDriver, er
 if err != nil {
     log.Error().Err(err).Str("tool", toolName).Msg("tool execution failed")
     return mcp.NewToolResultError(fmt.Sprintf("操作失败: %s", err.Error())), nil
+}
+```
+
+### 5. 返回值结构化描述
+
+每个工具都提供详细的返回值类型信息：
+
+```go
+func (t *ToolScreenShot) ReturnSchema() map[string]string {
+    return map[string]string{
+        "image": "string: Base64 encoded screenshot image in JPEG format",
+        "name":  "string: Image name identifier (typically 'screenshot')",
+        "type":  "string: MIME type of the image (image/jpeg)",
+    }
 }
 ```
 
@@ -256,7 +277,20 @@ func (t *ToolLongPress) ConvertActionToCallToolRequest(action MobileAction) (mcp
 }
 ```
 
-### 步骤 5: 注册工具
+### 步骤 5: 定义返回值结构
+
+```go
+func (t *ToolLongPress) ReturnSchema() map[string]string {
+    return map[string]string{
+        "message":  "string: Success message confirming long press operation",
+        "x":        "float64: X coordinate where long press was performed",
+        "y":        "float64: Y coordinate where long press was performed",
+        "duration": "float64: Duration of the long press in seconds",
+    }
+}
+```
+
+### 步骤 6: 注册工具
 
 在 `registerTools()` 方法中添加新工具：
 
@@ -271,7 +305,7 @@ func (s *MCPServer4XTDriver) registerTools() {
 }
 ```
 
-### 步骤 6: 添加单元测试
+### 步骤 7: 添加单元测试
 
 ```go
 func TestToolLongPress(t *testing.T) {
@@ -284,6 +318,11 @@ func TestToolLongPress(t *testing.T) {
     // 测试选项定义
     options := tool.Options()
     assert.NotEmpty(t, options)
+
+    // 测试返回值结构
+    returnSchema := tool.ReturnSchema()
+    assert.Contains(t, returnSchema["message"], "string:")
+    assert.Contains(t, returnSchema["x"], "float64:")
 
     // 测试动作转换
     action := MobileAction{
@@ -360,6 +399,17 @@ if unifiedReq.AntiRisk {
 }
 ```
 
+### 6. 返回值类型规范
+```go
+// 标准返回值类型前缀
+"message": "string: 描述信息"
+"x": "float64: X坐标值"
+"count": "int: 数量"
+"success": "bool: 成功状态"
+"items": "[]string: 字符串数组"
+"data": "object: 复杂对象"
+```
+
 ## 🚀 高级特性
 
 ### 1. 反作弊支持
@@ -396,7 +446,11 @@ for _, point := range unifiedReq.Points {
 #### list_available_devices
 **功能**: 发现所有可用的设备和模拟器
 **参数**: 无
-**返回**: JSON 格式的设备列表
+**返回值类型**:
+- `androidDevices` ([]string): Android 设备序列号列表
+- `iosDevices` ([]string): iOS 设备 UDID 列表
+
+**返回示例**:
 ```json
 {
   "androidDevices": ["emulator-5554", "device-serial"],
@@ -410,6 +464,9 @@ for _, point := range unifiedReq.Points {
 - `platform` (string): "android" | "ios" | "web" | "harmony"
 - `serial` (string): 设备序列号或 UDID
 
+**返回值类型**:
+- `message` (string): 包含选中设备 UUID 的成功消息
+
 ---
 
 ### 👆 触摸操作工具
@@ -422,6 +479,9 @@ for _, point := range unifiedReq.Points {
 - `duration` (number, 可选): 点击持续时间(秒)
 - `anti_risk` (boolean, 可选): 启用反作弊
 
+**返回值类型**:
+- `message` (string): 确认在指定坐标点击操作的成功消息
+
 #### tap_abs_xy
 **功能**: 在绝对像素坐标点击
 **参数**:
@@ -430,6 +490,9 @@ for _, point := range unifiedReq.Points {
 - `duration` (number, 可选): 点击持续时间(秒)
 - `anti_risk` (boolean, 可选): 启用反作弊
 
+**返回值类型**:
+- `message` (string): 确认在绝对坐标点击操作的成功消息
+
 #### tap_ocr
 **功能**: 通过 OCR 识别文本并点击
 **参数**:
@@ -437,17 +500,26 @@ for _, point := range unifiedReq.Points {
 - `ignore_NotFoundError` (boolean, 可选): 忽略未找到错误
 - `regex` (boolean, 可选): 使用正则表达式匹配
 
+**返回值类型**:
+- `message` (string): 确认操作完成的成功消息
+
 #### tap_cv
 **功能**: 通过计算机视觉识别图像并点击
 **参数**:
 - `imagePath` (string): 模板图像路径
 - `threshold` (number, 可选): 匹配阈值
 
+**返回值类型**:
+- `message` (string): 确认操作完成的成功消息
+
 #### double_tap_xy
 **功能**: 在指定坐标双击
 **参数**:
 - `x` (number): X 坐标
 - `y` (number): Y 坐标
+
+**返回值类型**:
+- `message` (string): 确认操作完成的成功消息
 
 ---
 
@@ -456,6 +528,14 @@ for _, point := range unifiedReq.Points {
 #### swipe
 **功能**: 通用滑动 (自动检测方向或坐标)
 **参数**: 支持方向滑动或坐标滑动两种模式
+
+**返回值类型**:
+- `message` (string): 确认滑动操作的成功消息
+- `direction` (string): 滑动方向 (方向滑动模式)
+- `fromX` (float64): 起始 X 坐标 (坐标滑动模式)
+- `fromY` (float64): 起始 Y 坐标 (坐标滑动模式)
+- `toX` (float64): 结束 X 坐标 (坐标滑动模式)
+- `toY` (float64): 结束 Y 坐标 (坐标滑动模式)
 
 ##### 方向滑动模式:
 - `direction` (string): "up" | "down" | "left" | "right"
@@ -468,6 +548,34 @@ for _, point := range unifiedReq.Points {
 - `to_x` (number): 结束 X 坐标
 - `to_y` (number): 结束 Y 坐标
 
+#### swipe_direction
+**功能**: 方向滑动
+**参数**:
+- `direction` (string): "up" | "down" | "left" | "right"
+- `duration` (number, 可选): 滑动持续时间
+- `press_duration` (number, 可选): 按压持续时间
+
+**返回值类型**:
+- `message` (string): 确认方向滑动的成功消息
+- `direction` (string): 滑动的方向 (up/down/left/right)
+
+#### swipe_coordinate
+**功能**: 坐标滑动
+**参数**:
+- `from_x` (number): 起始 X 坐标
+- `from_y` (number): 起始 Y 坐标
+- `to_x` (number): 结束 X 坐标
+- `to_y` (number): 结束 Y 坐标
+- `duration` (number, 可选): 滑动持续时间
+- `press_duration` (number, 可选): 按压持续时间
+
+**返回值类型**:
+- `message` (string): 确认坐标滑动的成功消息
+- `fromX` (float64): 滑动起始 X 坐标
+- `fromY` (float64): 滑动起始 Y 坐标
+- `toX` (float64): 滑动结束 X 坐标
+- `toY` (float64): 滑动结束 Y 坐标
+
 #### drag
 **功能**: 拖拽操作
 **参数**:
@@ -477,12 +585,23 @@ for _, point := range unifiedReq.Points {
 - `to_y` (number): 结束 Y 坐标
 - `duration` (number, 可选): 拖拽持续时间(毫秒)
 
+**返回值类型**:
+- `message` (string): 确认拖拽操作的成功消息
+- `fromX` (float64): 拖拽起始 X 坐标
+- `fromY` (float64): 拖拽起始 Y 坐标
+- `toX` (float64): 拖拽结束 X 坐标
+- `toY` (float64): 拖拽结束 Y 坐标
+
 #### swipe_to_tap_app
 **功能**: 滑动查找并点击应用
 **参数**:
 - `appName` (string): 应用名称
 - `max_retry_times` (number, 可选): 最大重试次数
 - `ignore_NotFoundError` (boolean, 可选): 忽略未找到错误
+
+**返回值类型**:
+- `message` (string): 确认找到并点击应用的成功消息
+- `appName` (string): 找到并点击的应用名称
 
 #### swipe_to_tap_text
 **功能**: 滑动查找并点击文本
@@ -491,11 +610,20 @@ for _, point := range unifiedReq.Points {
 - `max_retry_times` (number, 可选): 最大重试次数
 - `regex` (boolean, 可选): 使用正则表达式
 
+**返回值类型**:
+- `message` (string): 确认找到并点击文本的成功消息
+- `text` (string): 找到并点击的文本内容
+
 #### swipe_to_tap_texts
 **功能**: 滑动查找并点击多个文本中的一个
 **参数**:
 - `texts` (array): 文本数组
 - `max_retry_times` (number, 可选): 最大重试次数
+
+**返回值类型**:
+- `message` (string): 确认找到并点击其中一个文本的成功消息
+- `texts` ([]string): 搜索的文本选项列表
+- `foundText` (string): 实际找到并点击的特定文本
 
 ---
 
@@ -506,6 +634,10 @@ for _, point := range unifiedReq.Points {
 **参数**:
 - `text` (string): 要输入的文本
 
+**返回值类型**:
+- `message` (string): 确认文本输入的成功消息
+- `text` (string): 输入到字段中的文本内容
+
 #### press_button
 **功能**: 按设备按键
 **参数**:
@@ -513,13 +645,23 @@ for _, point := range unifiedReq.Points {
   - Android: "BACK", "HOME", "VOLUME_UP", "VOLUME_DOWN", "ENTER"
   - iOS: "HOME", "VOLUME_UP", "VOLUME_DOWN"
 
+**返回值类型**:
+- `message` (string): 确认按键操作的成功消息
+- `button` (string): 被按下的按键名称
+
 #### home
 **功能**: 按 Home 键
 **参数**: 无
 
+**返回值类型**:
+- `message` (string): 确认 Home 键被按下的成功消息
+
 #### back
 **功能**: 按返回键 (仅 Android)
 **参数**: 无
+
+**返回值类型**:
+- `message` (string): 确认返回键被按下的成功消息
 
 ---
 
@@ -529,30 +671,51 @@ for _, point := range unifiedReq.Points {
 **功能**: 列出设备上所有应用包名
 **参数**: 无
 
+**返回值类型**:
+- `packages` ([]string): 设备上已安装应用包名列表
+
 #### app_launch
 **功能**: 启动应用
 **参数**:
 - `packageName` (string): 应用包名
+
+**返回值类型**:
+- `message` (string): 确认操作完成的成功消息
 
 #### app_terminate
 **功能**: 终止应用
 **参数**:
 - `packageName` (string): 应用包名
 
+**返回值类型**:
+- `message` (string): 确认操作完成的成功消息
+
 #### app_install
 **功能**: 安装应用
 **参数**:
 - `appUrl` (string): APK/IPA 文件路径或 URL
+
+**返回值类型**:
+- `message` (string): 确认应用安装的成功消息
+- `appUrl` (string): 安装的应用 URL 或路径
 
 #### app_uninstall
 **功能**: 卸载应用
 **参数**:
 - `packageName` (string): 应用包名
 
+**返回值类型**:
+- `message` (string): 确认应用卸载的成功消息
+- `packageName` (string): 被卸载的应用包名
+
 #### app_clear
 **功能**: 清除应用数据
 **参数**:
 - `packageName` (string): 应用包名
+
+**返回值类型**:
+- `message` (string): 确认应用数据和缓存被清除的成功消息
+- `packageName` (string): 被清除的应用包名
 
 ---
 
@@ -561,17 +724,30 @@ for _, point := range unifiedReq.Points {
 #### screenshot
 **功能**: 截取屏幕截图
 **参数**: 无
-**返回**: Base64 编码的图像数据
+
+**返回值类型**:
+- `image` (string): JPEG 格式的 Base64 编码截图图像
+- `name` (string): 图像名称标识符 (通常为 'screenshot')
+- `type` (string): 图像的 MIME 类型 (image/jpeg)
 
 #### get_screen_size
 **功能**: 获取屏幕尺寸
 **参数**: 无
-**返回**: 屏幕宽度和高度 (像素)
+
+**返回值类型**:
+- `width` (int): 屏幕宽度 (像素)
+- `height` (int): 屏幕高度 (像素)
+- `message` (string): 包含屏幕尺寸的格式化消息
 
 #### get_source
 **功能**: 获取 UI 层次结构
 **参数**:
 - `packageName` (string, 可选): 指定应用包名
+
+**返回值类型**:
+- `message` (string): 确认 UI 源码获取的成功消息
+- `packageName` (string): 获取源码的应用包名
+- `source` (string): XML 或 JSON 格式的 UI 层次/源码树数据
 
 ---
 
@@ -582,15 +758,28 @@ for _, point := range unifiedReq.Points {
 **参数**:
 - `seconds` (number): 等待秒数
 
+**返回值类型**:
+- `message` (string): 确认睡眠操作完成的成功消息
+- `seconds` (float64): 睡眠的持续时间 (秒)
+
 #### sleep_ms
 **功能**: 等待指定毫秒数
 **参数**:
 - `milliseconds` (number): 等待毫秒数
 
+**返回值类型**:
+- `message` (string): 确认睡眠操作完成的成功消息
+- `milliseconds` (int64): 睡眠的持续时间 (毫秒)
+
 #### sleep_random
 **功能**: 随机等待
 **参数**:
 - `params` (array): 随机参数数组
+
+**返回值类型**:
+- `message` (string): 确认随机睡眠操作完成的成功消息
+- `params` ([]float64): 用于随机持续时间计算的参数
+- `actualDuration` (float64): 实际睡眠的持续时间 (秒)
 
 ---
 
@@ -601,9 +790,17 @@ for _, point := range unifiedReq.Points {
 **参数**:
 - `ime` (string): 输入法包名
 
+**返回值类型**:
+- `message` (string): 确认 IME 设置的成功消息
+- `ime` (string): 设置的输入法编辑器
+
 #### close_popups
 **功能**: 关闭弹窗
 **参数**: 无
+
+**返回值类型**:
+- `message` (string): 确认弹窗关闭的成功消息
+- `popupsClosed` (int): 关闭的弹窗或对话框数量
 
 ---
 
@@ -617,31 +814,56 @@ for _, point := range unifiedReq.Points {
 - `captcha` (string, 可选): 验证码
 - `password` (string, 可选): 密码
 
+**返回值类型**:
+- `message` (string): 确认 Web 登录完成的成功消息
+- `loginResult` (object): 登录操作的结果 (成功/失败详情)
+
 #### secondary_click
 **功能**: 右键点击
 **参数**:
 - `x` (number): X 坐标
 - `y` (number): Y 坐标
 
+**返回值类型**:
+- `message` (string): 确认辅助点击 (右键) 操作的成功消息
+- `x` (float64): 执行辅助点击的 X 坐标
+- `y` (float64): 执行辅助点击的 Y 坐标
+
 #### hover_by_selector
 **功能**: 悬停在选择器元素上
 **参数**:
 - `selector` (string): CSS 选择器或 XPath
+
+**返回值类型**:
+- `message` (string): 确认悬停操作的成功消息
+- `selector` (string): 悬停元素的 CSS 选择器或 XPath
 
 #### tap_by_selector
 **功能**: 点击选择器元素
 **参数**:
 - `selector` (string): CSS 选择器或 XPath
 
+**返回值类型**:
+- `message` (string): 确认点击操作的成功消息
+- `selector` (string): 被点击元素的 CSS 选择器或 XPath
+
 #### secondary_click_by_selector
 **功能**: 右键点击选择器元素
 **参数**:
 - `selector` (string): CSS 选择器或 XPath
 
+**返回值类型**:
+- `message` (string): 确认辅助点击操作的成功消息
+- `selector` (string): 被右键点击元素的 CSS 选择器或 XPath
+
 #### web_close_tab
 **功能**: 关闭浏览器标签页
 **参数**:
 - `tabIndex` (number): 标签页索引
+
+**返回值类型**:
+- `message` (string): 确认浏览器标签页关闭的成功消息
+- `tabIndex` (int): 被关闭的标签页索引
 
 ---
 
@@ -652,10 +874,20 @@ for _, point := range unifiedReq.Points {
 **参数**:
 - `prompt` (string): 自然语言指令
 
+**返回值类型**:
+- `message` (string): 确认 AI 操作执行的成功消息
+- `prompt` (string): 处理的自然语言提示
+- `actionTaken` (string): AI 执行的具体操作描述
+
 #### finished
 **功能**: 标记任务完成
 **参数**:
 - `content` (string): 完成信息
+
+**返回值类型**:
+- `message` (string): 确认任务完成的成功消息
+- `content` (string): 完成原因或结果描述
+- `taskCompleted` (bool): 指示任务成功完成的布尔值
 
 ---
 
@@ -754,3 +986,23 @@ for _, point := range unifiedReq.Points {
 4. **平台差异**: 不同平台支持的功能可能有差异
 5. **错误处理**: 建议启用适当的错误忽略选项
 6. **性能考虑**: 避免过于频繁的操作，适当添加等待时间
+7. **返回值类型**: 所有返回值都包含明确的类型信息，便于 AI 模型理解和处理
+
+### 📊 返回值类型系统
+
+HttpRunner MCP Server 为所有工具提供了完整的返回值类型描述，采用 `类型: 描述` 的格式：
+
+#### 支持的数据类型
+- **string**: 文本消息、名称、描述等
+- **int**: 整数值如屏幕宽度、高度、标签索引等
+- **int64**: 长整型如毫秒数
+- **float64**: 浮点数如坐标值、时间等
+- **bool**: 布尔值如任务完成状态
+- **[]string**: 字符串数组如设备列表、文本选项等
+- **object**: 复杂对象如登录结果
+
+#### 类型信息的作用
+1. **AI 模型理解**: 帮助 AI 模型正确解析和使用返回值
+2. **开发调试**: 为开发者提供清晰的接口文档
+3. **类型安全**: 确保数据类型的一致性和可预测性
+4. **自动化测试**: 支持基于类型的自动化验证
