@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -93,6 +95,7 @@ func (w ServerConfigWrapper) MarshalJSON() ([]byte, error) {
 
 // LoadMCPConfig loads the MCP configuration from the specified path or default location
 func LoadMCPConfig(configPath string) (*MCPConfig, error) {
+	log.Debug().Str("configPath", configPath).Msg("Loading MCP config")
 	if configPath == "" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
@@ -122,6 +125,7 @@ func LoadMCPConfig(configPath string) (*MCPConfig, error) {
 		return nil, fmt.Errorf("error parsing config file: %w", err)
 	}
 	config.ConfigPath = configPath
-
+	log.Debug().Str("configPath", configPath).
+		Interface("config", config).Msg("Loaded MCP config")
 	return &config, nil
 }

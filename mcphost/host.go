@@ -228,6 +228,7 @@ func isSignalError(err error) bool {
 		strings.Contains(errStr, "signal: terminated") ||
 		strings.Contains(errStr, "exit status 120") ||
 		strings.Contains(errStr, "exit status 130") ||
+		strings.Contains(errStr, "exit status 143") || // SIGTERM (15)
 		strings.Contains(errStr, "broken pipe") ||
 		strings.Contains(errStr, "connection reset")
 }
@@ -472,13 +473,28 @@ func startStdioLog(stderr io.Reader, serverName string, ctx context.Context) {
 				} else {
 					// Scanner finished or encountered error
 					if err := scanner.Err(); err != nil {
-						log.Debug().Str("server", serverName).Err(err).Msg("stdio log scanner error")
+						// Check if it's a normal shutdown error (pipe closed)
+						if isNormalShutdownError(err) {
+							log.Debug().Str("server", serverName).Msg("stdio log stopped due to normal shutdown")
+						} else {
+							log.Debug().Str("server", serverName).Err(err).Msg("stdio log scanner error")
+						}
 					}
 					return
 				}
 			}
 		}
 	}()
+}
+
+// isNormalShutdownError checks if the error is caused by normal shutdown (pipe closed)
+func isNormalShutdownError(err error) bool {
+	errStr := err.Error()
+	// Common pipe closed error patterns during normal shutdown
+	return strings.Contains(errStr, "file already closed") ||
+		strings.Contains(errStr, "broken pipe") ||
+		strings.Contains(errStr, "use of closed file") ||
+		strings.Contains(errStr, "read/write on closed pipe")
 }
 
 // prepareClientInitRequest creates a standard initialization request
