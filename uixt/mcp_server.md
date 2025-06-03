@@ -2,40 +2,13 @@
 
 ## 📖 概述
 
-HttpRunner MCP Server 是基于 Model Context Protocol (MCP) 协议实现的 UI 自动化测试服务器，它将 HttpRunner 的强大 UI 自动化能力通过标准化的 MCP 接口暴露给 AI 模型和其他客户端。
-
-## 🎯 核心功能特性
-
-### 1. 设备管理
-- **设备发现**: 自动发现 Android/iOS 设备和模拟器
-- **设备选择**: 支持通过序列号/UDID 选择特定设备
-- **多平台支持**: Android、iOS、Harmony、Browser 全平台覆盖
-
-### 2. 交互操作
-- **点击操作**: 支持坐标点击、OCR 文本点击、CV 图像识别点击
-- **滑动操作**: 方向滑动、坐标滑动、智能滑动查找
-- **拖拽操作**: 精确的拖拽控制，支持反作弊
-- **输入操作**: 文本输入、按键操作
-
-### 3. 应用管理
-- **应用控制**: 启动、终止、安装、卸载、清除数据
-- **包名查询**: 获取设备上所有应用包名
-- **前台应用**: 获取当前前台应用信息
-
-### 4. 屏幕操作
-- **截图功能**: 高质量屏幕截图，支持 Base64 编码
-- **屏幕信息**: 获取屏幕尺寸、方向等信息
-- **UI 层次**: 获取界面元素层次结构
-
-### 5. 高级功能
-- **AI 驱动**: 支持 AI 模型驱动的智能操作
-- **反作弊机制**: 内置反作弊检测和规避
-- **Web 自动化**: 支持浏览器自动化操作
-- **时间控制**: 精确的等待和延时控制
+HttpRunner MCP Server 是基于 Model Context Protocol (MCP) 协议实现的 UI 自动化测试服务器，它将 HttpRunner 的强大 UI 自动化能力通过标准化的 MCP 接口暴露给 AI 模型和其他客户端，使其能够执行移动端和 Web 端的 UI 自动化任务。
 
 ## 🏗️ 架构设计
 
 ### 整体架构
+
+MCP 服务器采用纯 ActionTool 架构，其中每个 UI 操作都作为独立的工具实现，符合 ActionTool 接口规范：
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -52,7 +25,9 @@ HttpRunner MCP Server 是基于 Model Context Protocol (MCP) 协议实现的 UI 
 
 ### 核心组件
 
-#### 1. MCPServer4XTDriver
+#### MCPServer4XTDriver
+管理 MCP 协议通信和工具注册的主要服务器结构体：
+
 ```go
 type MCPServer4XTDriver struct {
     mcpServer     *server.MCPServer                // MCP 协议服务器
@@ -61,7 +36,9 @@ type MCPServer4XTDriver struct {
 }
 ```
 
-#### 2. ActionTool 接口
+#### ActionTool 接口
+定义所有 MCP 工具的契约：
+
 ```go
 type ActionTool interface {
     Name() option.ActionName                                              // 工具名称
@@ -73,11 +50,203 @@ type ActionTool interface {
 }
 ```
 
-## 🛠️ 实现思路
+### 模块化架构
 
-### 1. 纯 ActionTool 架构
+为了更好的代码组织和维护，MCP 工具按功能类别拆分为多个文件：
 
-采用纯 ActionTool 风格架构，每个 MCP 工具都是独立的结构体：
+- **mcp_server.go**: 核心服务器实现和工具注册
+- **mcp_tools_device.go**: 设备管理工具
+- **mcp_tools_touch.go**: 触摸操作工具
+- **mcp_tools_swipe.go**: 滑动和拖拽操作工具
+- **mcp_tools_input.go**: 输入和 IME 工具
+- **mcp_tools_button.go**: 按键操作工具
+- **mcp_tools_app.go**: 应用管理工具
+- **mcp_tools_screen.go**: 屏幕操作工具
+- **mcp_tools_utility.go**: 实用工具（睡眠、弹窗等）
+- **mcp_tools_web.go**: Web 操作工具
+- **mcp_tools_ai.go**: AI 驱动操作工具
+
+### 架构特点
+
+#### 纯 ActionTool 架构实现
+- **每个 MCP 工具都是实现 ActionTool 接口的独立结构体**
+- **操作逻辑直接嵌入在每个工具的 Implement() 方法中**
+- **工具间无中间动作方法或耦合关系**
+- **完全解耦，摆脱了原有大型 switch-case DoAction 方法**
+
+#### 架构流程
+```
+MCP Request -> ActionTool.Implement() -> Direct Driver Method Call
+```
+
+#### 架构优势
+- **真正的 ActionTool 接口一致性**: 所有工具保持一致
+- **完全解耦**: 无方法间依赖关系
+- **模块化组织**: 按功能分类的文件结构
+- **简化错误处理**: 每个工具独立的错误处理和日志记录
+- **易于扩展**: 新功能易于扩展
+
+## 🎯 功能特性
+
+### 支持的操作类别
+
+#### 设备管理（mcp_tools_device.go）
+- **list_available_devices**: 发现 Android/iOS 设备和模拟器
+- **select_device**: 通过平台和序列号选择特定设备
+
+#### 触摸操作（mcp_tools_touch.go）
+- **tap_xy**: 在相对坐标点击 (0-1 范围)
+- **tap_abs_xy**: 在绝对像素坐标点击
+- **tap_ocr**: 通过 OCR 识别文本并点击
+- **tap_cv**: 通过计算机视觉识别元素并点击
+- **double_tap_xy**: 在坐标处双击
+
+#### 手势操作（mcp_tools_swipe.go）
+- **swipe**: 通用滑动，自动检测方向或坐标
+- **swipe_direction**: 方向滑动 (上/下/左/右)
+- **swipe_coordinate**: 基于坐标的精确滑动控制
+- **drag**: 两点间的拖拽操作
+- **swipe_to_tap_app**: 滑动查找并点击应用
+- **swipe_to_tap_text**: 滑动查找并点击文本
+- **swipe_to_tap_texts**: 滑动查找并点击多个文本中的一个
+
+#### 输入操作（mcp_tools_input.go）
+- **input**: 在焦点元素上输入文本
+- **set_ime**: 设置输入法编辑器
+
+#### 按键操作（mcp_tools_button.go）
+- **press_button**: 按设备按键 (home、back、音量等)
+- **home**: 按 home 键
+- **back**: 按 back 键
+
+#### 应用管理（mcp_tools_app.go）
+- **list_packages**: 列出所有已安装应用
+- **app_launch**: 通过包名启动应用
+- **app_terminate**: 终止运行中的应用
+- **app_install**: 从 URL/路径安装应用
+- **app_uninstall**: 通过包名卸载应用
+- **app_clear**: 清除应用数据和缓存
+
+#### 屏幕操作（mcp_tools_screen.go）
+- **screenshot**: 捕获屏幕为 Base64 编码图像
+- **get_screen_size**: 获取设备屏幕尺寸
+- **get_source**: 获取 UI 层次结构/源码
+
+#### 实用工具操作（mcp_tools_utility.go）
+- **sleep**: 等待指定秒数
+- **sleep_ms**: 等待指定毫秒数
+- **sleep_random**: 基于参数的随机等待
+- **close_popups**: 关闭弹窗/对话框
+
+#### Web 操作（mcp_tools_web.go）
+- **web_login_none_ui**: 执行无 UI 交互的登录
+- **secondary_click**: 在指定坐标右键点击
+- **hover_by_selector**: 通过 CSS 选择器/XPath 悬停元素
+- **tap_by_selector**: 通过 CSS 选择器/XPath 点击元素
+- **secondary_click_by_selector**: 通过选择器右键点击元素
+- **web_close_tab**: 通过索引关闭浏览器标签页
+
+#### AI 操作（mcp_tools_ai.go）
+- **ai_action**: 使用自然语言提示执行 AI 驱动的动作
+- **finished**: 标记任务完成并返回结果消息
+
+### 关键特性
+
+#### 反作弊支持
+为敏感操作内置反检测机制：
+- 真实时间的触摸模拟
+- 设备指纹掩码
+- 行为模式随机化
+
+#### 统一参数处理
+所有工具通过 parseActionOptions() 使用一致的参数解析：
+- 类型安全的 JSON 编组/解组
+- 自动验证和错误处理
+- 支持复杂嵌套参数
+
+#### 设备抽象
+无缝的多平台支持：
+- 通过 ADB 支持 Android 设备
+- 通过 go-ios 支持 iOS 设备
+- 通过 WebDriver 支持 Web 浏览器
+- 支持 Harmony OS 设备
+
+#### 错误处理
+全面的错误管理：
+- 结构化错误响应
+- 带上下文的详细日志记录
+- 优雅的故障恢复
+
+## 📖 使用指南
+
+### 创建和启动服务器
+
+#### NewMCPServer 函数
+该函数创建一个新的 XTDriver MCP 服务器并注册所有工具：
+
+- **MCP 协议服务器**: 具有 uixt 功能
+- **版本信息**: 来自 HttpRunner
+- **工具功能**: 为性能考虑禁用 (设置为 false)
+- **预注册工具**: 所有可用的 UI 自动化工具
+
+#### 使用示例
+```go
+// 创建和启动 MCP 服务器
+server := NewMCPServer()
+err := server.Start() // 阻塞并通过 stdio 提供 MCP 协议服务
+```
+
+#### 客户端交互流程
+1. **初始化连接**: 建立 MCP 协议连接
+2. **列出可用工具**: 获取所有注册的工具列表
+3. **调用工具**: 使用参数调用特定工具
+4. **接收结果**: 获取结构化的操作结果
+
+## 🛠️ 实现原理
+
+### 统一参数处理
+
+使用 `parseActionOptions` 函数统一处理 MCP 请求参数：
+
+```go
+func parseActionOptions(arguments map[string]any) (*option.ActionOptions, error) {
+    b, err := json.Marshal(arguments)
+    if err != nil {
+        return nil, fmt.Errorf("marshal arguments failed: %w", err)
+    }
+
+    var actionOptions option.ActionOptions
+    if err := json.Unmarshal(b, &actionOptions); err != nil {
+        return nil, fmt.Errorf("unmarshal to ActionOptions failed: %w", err)
+    }
+
+    return &actionOptions, nil
+}
+```
+
+### 设备管理策略
+
+通过 `setupXTDriver` 函数实现设备的统一管理：
+
+```go
+func setupXTDriver(ctx context.Context, arguments map[string]any) (*XTDriver, error) {
+    // 1. 解析设备参数
+    platform := arguments["platform"].(string)
+    serial := arguments["serial"].(string)
+
+    // 2. 获取或创建驱动器
+    driverExt, err := GetOrCreateXTDriver(
+        option.WithPlatform(platform),
+        option.WithSerial(serial),
+    )
+
+    return driverExt, err
+}
+```
+
+### 工具实现模式
+
+每个 MCP 工具都遵循统一的实现模式：
 
 ```go
 type ToolTapXY struct{}
@@ -109,47 +278,7 @@ func (t *ToolTapXY) ReturnSchema() map[string]string {
 }
 ```
 
-### 2. 统一参数处理
-
-使用 `parseActionOptions` 函数统一处理 MCP 请求参数：
-
-```go
-func parseActionOptions(arguments map[string]any) (*option.ActionOptions, error) {
-    b, err := json.Marshal(arguments)
-    if err != nil {
-        return nil, fmt.Errorf("marshal arguments failed: %w", err)
-    }
-
-    var actionOptions option.ActionOptions
-    if err := json.Unmarshal(b, &actionOptions); err != nil {
-        return nil, fmt.Errorf("unmarshal to ActionOptions failed: %w", err)
-    }
-
-    return &actionOptions, nil
-}
-```
-
-### 3. 设备管理策略
-
-通过 `setupXTDriver` 函数实现设备的统一管理：
-
-```go
-func setupXTDriver(ctx context.Context, arguments map[string]any) (*XTDriver, error) {
-    // 1. 解析设备参数
-    platform := arguments["platform"].(string)
-    serial := arguments["serial"].(string)
-
-    // 2. 获取或创建驱动器
-    driverExt, err := GetOrCreateXTDriver(
-        option.WithPlatform(platform),
-        option.WithSerial(serial),
-    )
-
-    return driverExt, err
-}
-```
-
-### 4. 错误处理机制
+### 错误处理机制
 
 统一的错误处理和日志记录：
 
@@ -160,23 +289,90 @@ if err != nil {
 }
 ```
 
-### 5. 返回值结构化描述
+### 工具注册机制
 
-每个工具都提供详细的返回值类型信息：
+在 `mcp_server.go` 的 `registerTools()` 方法中统一注册所有工具：
 
 ```go
-func (t *ToolScreenShot) ReturnSchema() map[string]string {
-    return map[string]string{
-        "image": "string: Base64 encoded screenshot image in JPEG format",
-        "name":  "string: Image name identifier (typically 'screenshot')",
-        "type":  "string: MIME type of the image (image/jpeg)",
-    }
+func (s *MCPServer4XTDriver) registerTools() {
+    // Device Tools
+    s.registerTool(&ToolListAvailableDevices{})
+    s.registerTool(&ToolSelectDevice{})
+
+    // Touch Tools
+    s.registerTool(&ToolTapXY{})
+    s.registerTool(&ToolTapAbsXY{})
+    s.registerTool(&ToolTapByOCR{})
+    s.registerTool(&ToolTapByCV{})
+    s.registerTool(&ToolDoubleTapXY{})
+
+    // Swipe Tools
+    s.registerTool(&ToolSwipe{})
+    s.registerTool(&ToolSwipeDirection{})
+    s.registerTool(&ToolSwipeCoordinate{})
+    s.registerTool(&ToolSwipeToTapApp{})
+    s.registerTool(&ToolSwipeToTapText{})
+    s.registerTool(&ToolSwipeToTapTexts{})
+    s.registerTool(&ToolDrag{})
+
+    // Input Tools
+    s.registerTool(&ToolInput{})
+    s.registerTool(&ToolSetIme{})
+
+    // Button Tools
+    s.registerTool(&ToolPressButton{})
+    s.registerTool(&ToolHome{})
+    s.registerTool(&ToolBack{})
+
+    // App Tools
+    s.registerTool(&ToolListPackages{})
+    s.registerTool(&ToolLaunchApp{})
+    s.registerTool(&ToolTerminateApp{})
+    s.registerTool(&ToolAppInstall{})
+    s.registerTool(&ToolAppUninstall{})
+    s.registerTool(&ToolAppClear{})
+
+    // Screen Tools
+    s.registerTool(&ToolScreenShot{})
+    s.registerTool(&ToolGetScreenSize{})
+    s.registerTool(&ToolGetSource{})
+
+    // Utility Tools
+    s.registerTool(&ToolSleep{})
+    s.registerTool(&ToolSleepMS{})
+    s.registerTool(&ToolSleepRandom{})
+    s.registerTool(&ToolClosePopups{})
+
+    // Web Tools
+    s.registerTool(&ToolWebLoginNoneUI{})
+    s.registerTool(&ToolSecondaryClick{})
+    s.registerTool(&ToolHoverBySelector{})
+    s.registerTool(&ToolTapBySelector{})
+    s.registerTool(&ToolSecondaryClickBySelector{})
+    s.registerTool(&ToolWebCloseTab{})
+
+    // AI Tools
+    s.registerTool(&ToolAIAction{})
+    s.registerTool(&ToolFinished{})
 }
 ```
 
-## 🔧 如何扩展接入新工具
+## 🔧 扩展开发
 
-### 步骤 1: 定义工具结构体
+### 添加新工具的步骤
+
+1. **选择合适的文件**: 根据功能类别选择对应的 `mcp_tools_*.go` 文件
+2. **定义工具结构体**: 实现 ActionTool 接口
+3. **实现所有必需方法**: Name、Description、Options、Implement、ConvertActionToCallToolRequest、ReturnSchema
+4. **在 registerTools() 方法中注册工具**
+5. **添加全面的单元测试**
+6. **更新文档**
+
+### 开发示例：长按操作工具
+
+假设要在 `mcp_tools_touch.go` 中添加长按操作：
+
+#### 步骤 1: 定义工具结构体
 
 ```go
 // 新工具：长按操作
@@ -191,22 +387,16 @@ func (t *ToolLongPress) Description() string {
 }
 ```
 
-### 步骤 2: 定义 MCP 选项
+#### 步骤 2: 定义 MCP 选项
 
 ```go
 func (t *ToolLongPress) Options() []mcp.ToolOption {
-    return []mcp.ToolOption{
-        mcp.WithString("platform", mcp.Enum("android", "ios"), mcp.Description("设备平台")),
-        mcp.WithString("serial", mcp.Description("设备序列号")),
-        mcp.WithNumber("x", mcp.Description("X 坐标")),
-        mcp.WithNumber("y", mcp.Description("Y 坐标")),
-        mcp.WithNumber("duration", mcp.Description("长按持续时间(秒)")),
-        mcp.WithBoolean("anti_risk", mcp.Description("是否启用反作弊")),
-    }
+    unifiedReq := &option.ActionOptions{}
+    return unifiedReq.GetMCPOptions(option.ACTION_LongPress)
 }
 ```
 
-### 步骤 3: 实现工具逻辑
+#### 步骤 3: 实现工具逻辑
 
 ```go
 func (t *ToolLongPress) Implement() server.ToolHandlerFunc {
@@ -253,7 +443,7 @@ func (t *ToolLongPress) Implement() server.ToolHandlerFunc {
 }
 ```
 
-### 步骤 4: 实现动作转换
+#### 步骤 4: 实现动作转换和返回值结构
 
 ```go
 func (t *ToolLongPress) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
@@ -262,24 +452,15 @@ func (t *ToolLongPress) ConvertActionToCallToolRequest(action MobileAction) (mcp
             "x": params[0],
             "y": params[1],
         }
-
-        // 添加持续时间
         if len(params) > 2 {
             arguments["duration"] = params[2]
         }
-
-        // 提取动作选项
         extractActionOptionsToArguments(action.GetOptions(), arguments)
-
         return buildMCPCallToolRequest(t.Name(), arguments), nil
     }
     return mcp.CallToolRequest{}, fmt.Errorf("invalid long press params: %v", action.Params)
 }
-```
 
-### 步骤 5: 定义返回值结构
-
-```go
 func (t *ToolLongPress) ReturnSchema() map[string]string {
     return map[string]string{
         "message":  "string: Success message confirming long press operation",
@@ -290,67 +471,28 @@ func (t *ToolLongPress) ReturnSchema() map[string]string {
 }
 ```
 
-### 步骤 6: 注册工具
+#### 步骤 5: 注册工具
 
-在 `registerTools()` 方法中添加新工具：
-
-```go
-func (s *MCPServer4XTDriver) registerTools() {
-    // ... 现有工具注册 ...
-
-    // 注册新工具
-    s.registerTool(&ToolLongPress{})
-
-    // ... 其他工具 ...
-}
-```
-
-### 步骤 7: 添加单元测试
+在 `mcp_server.go` 的 `registerTools()` 方法中添加：
 
 ```go
-func TestToolLongPress(t *testing.T) {
-    tool := &ToolLongPress{}
-
-    // 测试工具基本信息
-    assert.Equal(t, option.ACTION_LongPress, tool.Name())
-    assert.Contains(t, tool.Description(), "长按")
-
-    // 测试选项定义
-    options := tool.Options()
-    assert.NotEmpty(t, options)
-
-    // 测试返回值结构
-    returnSchema := tool.ReturnSchema()
-    assert.Contains(t, returnSchema["message"], "string:")
-    assert.Contains(t, returnSchema["x"], "float64:")
-
-    // 测试动作转换
-    action := MobileAction{
-        Method: option.ACTION_LongPress,
-        Params: []float64{100, 200, 2.0}, // x, y, duration
-        ActionOptions: option.ActionOptions{
-            AntiRisk: true,
-        },
-    }
-
-    request, err := tool.ConvertActionToCallToolRequest(action)
-    assert.NoError(t, err)
-    assert.Equal(t, string(option.ACTION_LongPress), request.Params.Name)
-    assert.Equal(t, 100.0, request.Params.Arguments["x"])
-    assert.Equal(t, 200.0, request.Params.Arguments["y"])
-    assert.Equal(t, 2.0, request.Params.Arguments["duration"])
-    assert.Equal(t, true, request.Params.Arguments["anti_risk"])
-}
+// Touch Tools
+s.registerTool(&ToolTapXY{})
+s.registerTool(&ToolTapAbsXY{})
+s.registerTool(&ToolTapByOCR{})
+s.registerTool(&ToolTapByCV{})
+s.registerTool(&ToolDoubleTapXY{})
+s.registerTool(&ToolLongPress{}) // 新增长按工具
 ```
 
-## 📋 工具开发最佳实践
+### 开发最佳实践
 
-### 1. 命名规范
-- 工具结构体: `Tool{ActionName}`
-- 常量定义: `ACTION_{ActionName}`
-- 参数名称: 使用下划线分隔 (`from_x`, `to_y`)
+#### 文件组织规范
+- **按功能分类**: 将相关工具放在同一个文件中
+- **命名一致性**: 文件名使用 `mcp_tools_{category}.go` 格式
+- **工具命名**: 结构体使用 `Tool{ActionName}` 格式
 
-### 2. 参数验证
+#### 参数验证
 ```go
 // 必需参数验证
 if unifiedReq.Text == "" {
@@ -358,14 +500,12 @@ if unifiedReq.Text == "" {
 }
 
 // 坐标参数验证
-_, hasX := request.Params.Arguments["x"]
-_, hasY := request.Params.Arguments["y"]
-if !hasX || !hasY {
+if unifiedReq.X == 0 || unifiedReq.Y == 0 {
     return nil, fmt.Errorf("x and y coordinates are required")
 }
 ```
 
-### 3. 错误处理
+#### 错误处理
 ```go
 // 统一错误格式
 if err != nil {
@@ -376,7 +516,7 @@ if err != nil {
 return mcp.NewToolResultText(fmt.Sprintf("操作成功: %s", details)), nil
 ```
 
-### 4. 日志记录
+#### 日志记录
 ```go
 // 操作开始日志
 log.Info().Str("action", "long_press").
@@ -388,18 +528,7 @@ log.Debug().Interface("arguments", arguments).
     Msg("parsed tool arguments")
 ```
 
-### 5. 选项处理
-```go
-// 使用 extractActionOptionsToArguments 统一处理
-extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-// 或手动添加特定选项
-if unifiedReq.AntiRisk {
-    opts = append(opts, option.WithAntiRisk(true))
-}
-```
-
-### 6. 返回值类型规范
+#### 返回值类型规范
 ```go
 // 标准返回值类型前缀
 "message": "string: 描述信息"
@@ -410,9 +539,26 @@ if unifiedReq.AntiRisk {
 "data": "object: 复杂对象"
 ```
 
-## 🚀 高级特性
+## 🚀 性能与安全
 
-### 1. 反作弊支持
+### 性能考虑
+
+- **驱动器实例缓存**: 为提高效率，驱动器实例被缓存和重用
+- **参数解析优化**: 参数解析经过优化以最小化 JSON 开销
+- **超时控制**: 超时控制防止操作挂起
+- **资源清理**: 资源清理确保内存效率
+- **模块化加载**: 按需加载工具模块，减少内存占用
+
+### 安全注意事项
+
+- **设备操作权限**: 所有设备操作都需要明确权限
+- **输入验证**: 输入验证防止注入攻击
+- **敏感操作保护**: 敏感操作支持反检测措施
+- **审计日志**: 审计日志跟踪所有工具执行
+
+### 高级特性
+
+#### 反作弊支持
 ```go
 // 在需要反作弊的操作中添加
 if unifiedReq.AntiRisk {
@@ -421,14 +567,14 @@ if unifiedReq.AntiRisk {
 }
 ```
 
-### 2. 异步操作
+#### 异步操作
 ```go
 // 对于长时间运行的操作，使用 context 控制超时
 ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 defer cancel()
 ```
 
-### 3. 批量操作
+#### 批量操作
 ```go
 // 支持批量参数处理
 for _, point := range unifiedReq.Points {
@@ -439,570 +585,18 @@ for _, point := range unifiedReq.Points {
 }
 ```
 
-## 📚 MCP Tools 快速参考
-
-### 📱 设备管理工具
-
-#### list_available_devices
-**功能**: 发现所有可用的设备和模拟器
-**参数**: 无
-**返回值类型**:
-- `androidDevices` ([]string): Android 设备序列号列表
-- `iosDevices` ([]string): iOS 设备 UDID 列表
-
-**返回示例**:
-```json
-{
-  "androidDevices": ["emulator-5554", "device-serial"],
-  "iosDevices": ["iPhone-UDID", "simulator-UDID"]
-}
-```
-
-#### select_device
-**功能**: 选择要使用的设备
-**参数**:
-- `platform` (string): "android" | "ios" | "web" | "harmony"
-- `serial` (string): 设备序列号或 UDID
-
-**返回值类型**:
-- `message` (string): 包含选中设备 UUID 的成功消息
-
 ---
 
-### 👆 触摸操作工具
+## 📚 总结
 
-#### tap_xy
-**功能**: 在相对坐标点击 (0-1 范围)
-**参数**:
-- `x` (number): X 坐标 (0.0-1.0)
-- `y` (number): Y 坐标 (0.0-1.0)
-- `duration` (number, 可选): 点击持续时间(秒)
-- `anti_risk` (boolean, 可选): 启用反作弊
+HttpRunner MCP Server 通过模块化的架构设计，将 UI 自动化功能按类别拆分为多个文件，每个文件专注于特定的功能领域。这种设计不仅提高了代码的可维护性和可扩展性，还使得开发者能够更容易地理解和贡献代码。
 
-**返回值类型**:
-- `message` (string): 确认在指定坐标点击操作的成功消息
+### 核心优势
 
-#### tap_abs_xy
-**功能**: 在绝对像素坐标点击
-**参数**:
-- `x` (number): X 像素坐标
-- `y` (number): Y 像素坐标
-- `duration` (number, 可选): 点击持续时间(秒)
-- `anti_risk` (boolean, 可选): 启用反作弊
+1. **模块化架构**: 按功能分类的文件组织，便于维护和扩展
+2. **统一接口**: 所有工具都实现相同的 ActionTool 接口
+3. **类型安全**: 强类型的参数处理和返回值定义
+4. **完整文档**: 每个工具都有详细的参数和返回值说明
+5. **易于测试**: 独立的工具实现便于单元测试
 
-**返回值类型**:
-- `message` (string): 确认在绝对坐标点击操作的成功消息
-
-#### tap_ocr
-**功能**: 通过 OCR 识别文本并点击
-**参数**:
-- `text` (string): 要查找的文本
-- `ignore_NotFoundError` (boolean, 可选): 忽略未找到错误
-- `regex` (boolean, 可选): 使用正则表达式匹配
-
-**返回值类型**:
-- `message` (string): 确认操作完成的成功消息
-
-#### tap_cv
-**功能**: 通过计算机视觉识别图像并点击
-**参数**:
-- `imagePath` (string): 模板图像路径
-- `threshold` (number, 可选): 匹配阈值
-
-**返回值类型**:
-- `message` (string): 确认操作完成的成功消息
-
-#### double_tap_xy
-**功能**: 在指定坐标双击
-**参数**:
-- `x` (number): X 坐标
-- `y` (number): Y 坐标
-
-**返回值类型**:
-- `message` (string): 确认操作完成的成功消息
-
----
-
-### 🔄 手势操作工具
-
-#### swipe
-**功能**: 通用滑动 (自动检测方向或坐标)
-**参数**: 支持方向滑动或坐标滑动两种模式
-
-**返回值类型**:
-- `message` (string): 确认滑动操作的成功消息
-- `direction` (string): 滑动方向 (方向滑动模式)
-- `fromX` (float64): 起始 X 坐标 (坐标滑动模式)
-- `fromY` (float64): 起始 Y 坐标 (坐标滑动模式)
-- `toX` (float64): 结束 X 坐标 (坐标滑动模式)
-- `toY` (float64): 结束 Y 坐标 (坐标滑动模式)
-
-##### 方向滑动模式:
-- `direction` (string): "up" | "down" | "left" | "right"
-- `duration` (number, 可选): 滑动持续时间
-- `press_duration` (number, 可选): 按压持续时间
-
-##### 坐标滑动模式:
-- `from_x` (number): 起始 X 坐标
-- `from_y` (number): 起始 Y 坐标
-- `to_x` (number): 结束 X 坐标
-- `to_y` (number): 结束 Y 坐标
-
-#### swipe_direction
-**功能**: 方向滑动
-**参数**:
-- `direction` (string): "up" | "down" | "left" | "right"
-- `duration` (number, 可选): 滑动持续时间
-- `press_duration` (number, 可选): 按压持续时间
-
-**返回值类型**:
-- `message` (string): 确认方向滑动的成功消息
-- `direction` (string): 滑动的方向 (up/down/left/right)
-
-#### swipe_coordinate
-**功能**: 坐标滑动
-**参数**:
-- `from_x` (number): 起始 X 坐标
-- `from_y` (number): 起始 Y 坐标
-- `to_x` (number): 结束 X 坐标
-- `to_y` (number): 结束 Y 坐标
-- `duration` (number, 可选): 滑动持续时间
-- `press_duration` (number, 可选): 按压持续时间
-
-**返回值类型**:
-- `message` (string): 确认坐标滑动的成功消息
-- `fromX` (float64): 滑动起始 X 坐标
-- `fromY` (float64): 滑动起始 Y 坐标
-- `toX` (float64): 滑动结束 X 坐标
-- `toY` (float64): 滑动结束 Y 坐标
-
-#### drag
-**功能**: 拖拽操作
-**参数**:
-- `from_x` (number): 起始 X 坐标
-- `from_y` (number): 起始 Y 坐标
-- `to_x` (number): 结束 X 坐标
-- `to_y` (number): 结束 Y 坐标
-- `duration` (number, 可选): 拖拽持续时间(毫秒)
-
-**返回值类型**:
-- `message` (string): 确认拖拽操作的成功消息
-- `fromX` (float64): 拖拽起始 X 坐标
-- `fromY` (float64): 拖拽起始 Y 坐标
-- `toX` (float64): 拖拽结束 X 坐标
-- `toY` (float64): 拖拽结束 Y 坐标
-
-#### swipe_to_tap_app
-**功能**: 滑动查找并点击应用
-**参数**:
-- `appName` (string): 应用名称
-- `max_retry_times` (number, 可选): 最大重试次数
-- `ignore_NotFoundError` (boolean, 可选): 忽略未找到错误
-
-**返回值类型**:
-- `message` (string): 确认找到并点击应用的成功消息
-- `appName` (string): 找到并点击的应用名称
-
-#### swipe_to_tap_text
-**功能**: 滑动查找并点击文本
-**参数**:
-- `text` (string): 要查找的文本
-- `max_retry_times` (number, 可选): 最大重试次数
-- `regex` (boolean, 可选): 使用正则表达式
-
-**返回值类型**:
-- `message` (string): 确认找到并点击文本的成功消息
-- `text` (string): 找到并点击的文本内容
-
-#### swipe_to_tap_texts
-**功能**: 滑动查找并点击多个文本中的一个
-**参数**:
-- `texts` (array): 文本数组
-- `max_retry_times` (number, 可选): 最大重试次数
-
-**返回值类型**:
-- `message` (string): 确认找到并点击其中一个文本的成功消息
-- `texts` ([]string): 搜索的文本选项列表
-- `foundText` (string): 实际找到并点击的特定文本
-
----
-
-### ⌨️ 输入操作工具
-
-#### input
-**功能**: 在当前焦点元素输入文本
-**参数**:
-- `text` (string): 要输入的文本
-
-**返回值类型**:
-- `message` (string): 确认文本输入的成功消息
-- `text` (string): 输入到字段中的文本内容
-
-#### press_button
-**功能**: 按设备按键
-**参数**:
-- `button` (string): 按键名称
-  - Android: "BACK", "HOME", "VOLUME_UP", "VOLUME_DOWN", "ENTER"
-  - iOS: "HOME", "VOLUME_UP", "VOLUME_DOWN"
-
-**返回值类型**:
-- `message` (string): 确认按键操作的成功消息
-- `button` (string): 被按下的按键名称
-
-#### home
-**功能**: 按 Home 键
-**参数**: 无
-
-**返回值类型**:
-- `message` (string): 确认 Home 键被按下的成功消息
-
-#### back
-**功能**: 按返回键 (仅 Android)
-**参数**: 无
-
-**返回值类型**:
-- `message` (string): 确认返回键被按下的成功消息
-
----
-
-### 📱 应用管理工具
-
-#### list_packages
-**功能**: 列出设备上所有应用包名
-**参数**: 无
-
-**返回值类型**:
-- `packages` ([]string): 设备上已安装应用包名列表
-
-#### app_launch
-**功能**: 启动应用
-**参数**:
-- `packageName` (string): 应用包名
-
-**返回值类型**:
-- `message` (string): 确认操作完成的成功消息
-
-#### app_terminate
-**功能**: 终止应用
-**参数**:
-- `packageName` (string): 应用包名
-
-**返回值类型**:
-- `message` (string): 确认操作完成的成功消息
-
-#### app_install
-**功能**: 安装应用
-**参数**:
-- `appUrl` (string): APK/IPA 文件路径或 URL
-
-**返回值类型**:
-- `message` (string): 确认应用安装的成功消息
-- `appUrl` (string): 安装的应用 URL 或路径
-
-#### app_uninstall
-**功能**: 卸载应用
-**参数**:
-- `packageName` (string): 应用包名
-
-**返回值类型**:
-- `message` (string): 确认应用卸载的成功消息
-- `packageName` (string): 被卸载的应用包名
-
-#### app_clear
-**功能**: 清除应用数据
-**参数**:
-- `packageName` (string): 应用包名
-
-**返回值类型**:
-- `message` (string): 确认应用数据和缓存被清除的成功消息
-- `packageName` (string): 被清除的应用包名
-
----
-
-### 📸 屏幕操作工具
-
-#### screenshot
-**功能**: 截取屏幕截图
-**参数**: 无
-
-**返回值类型**:
-- `image` (string): JPEG 格式的 Base64 编码截图图像
-- `name` (string): 图像名称标识符 (通常为 'screenshot')
-- `type` (string): 图像的 MIME 类型 (image/jpeg)
-
-#### get_screen_size
-**功能**: 获取屏幕尺寸
-**参数**: 无
-
-**返回值类型**:
-- `width` (int): 屏幕宽度 (像素)
-- `height` (int): 屏幕高度 (像素)
-- `message` (string): 包含屏幕尺寸的格式化消息
-
-#### get_source
-**功能**: 获取 UI 层次结构
-**参数**:
-- `packageName` (string, 可选): 指定应用包名
-
-**返回值类型**:
-- `message` (string): 确认 UI 源码获取的成功消息
-- `packageName` (string): 获取源码的应用包名
-- `source` (string): XML 或 JSON 格式的 UI 层次/源码树数据
-
----
-
-### ⏱️ 时间控制工具
-
-#### sleep
-**功能**: 等待指定秒数
-**参数**:
-- `seconds` (number): 等待秒数
-
-**返回值类型**:
-- `message` (string): 确认睡眠操作完成的成功消息
-- `seconds` (float64): 睡眠的持续时间 (秒)
-
-#### sleep_ms
-**功能**: 等待指定毫秒数
-**参数**:
-- `milliseconds` (number): 等待毫秒数
-
-**返回值类型**:
-- `message` (string): 确认睡眠操作完成的成功消息
-- `milliseconds` (int64): 睡眠的持续时间 (毫秒)
-
-#### sleep_random
-**功能**: 随机等待
-**参数**:
-- `params` (array): 随机参数数组
-
-**返回值类型**:
-- `message` (string): 确认随机睡眠操作完成的成功消息
-- `params` ([]float64): 用于随机持续时间计算的参数
-- `actualDuration` (float64): 实际睡眠的持续时间 (秒)
-
----
-
-### 🛠️ 实用工具
-
-#### set_ime
-**功能**: 设置输入法
-**参数**:
-- `ime` (string): 输入法包名
-
-**返回值类型**:
-- `message` (string): 确认 IME 设置的成功消息
-- `ime` (string): 设置的输入法编辑器
-
-#### close_popups
-**功能**: 关闭弹窗
-**参数**: 无
-
-**返回值类型**:
-- `message` (string): 确认弹窗关闭的成功消息
-- `popupsClosed` (int): 关闭的弹窗或对话框数量
-
----
-
-### 🌐 Web 操作工具
-
-#### web_login_none_ui
-**功能**: 无 UI 登录
-**参数**:
-- `packageName` (string): 应用包名
-- `phoneNumber` (string, 可选): 手机号
-- `captcha` (string, 可选): 验证码
-- `password` (string, 可选): 密码
-
-**返回值类型**:
-- `message` (string): 确认 Web 登录完成的成功消息
-- `loginResult` (object): 登录操作的结果 (成功/失败详情)
-
-#### secondary_click
-**功能**: 右键点击
-**参数**:
-- `x` (number): X 坐标
-- `y` (number): Y 坐标
-
-**返回值类型**:
-- `message` (string): 确认辅助点击 (右键) 操作的成功消息
-- `x` (float64): 执行辅助点击的 X 坐标
-- `y` (float64): 执行辅助点击的 Y 坐标
-
-#### hover_by_selector
-**功能**: 悬停在选择器元素上
-**参数**:
-- `selector` (string): CSS 选择器或 XPath
-
-**返回值类型**:
-- `message` (string): 确认悬停操作的成功消息
-- `selector` (string): 悬停元素的 CSS 选择器或 XPath
-
-#### tap_by_selector
-**功能**: 点击选择器元素
-**参数**:
-- `selector` (string): CSS 选择器或 XPath
-
-**返回值类型**:
-- `message` (string): 确认点击操作的成功消息
-- `selector` (string): 被点击元素的 CSS 选择器或 XPath
-
-#### secondary_click_by_selector
-**功能**: 右键点击选择器元素
-**参数**:
-- `selector` (string): CSS 选择器或 XPath
-
-**返回值类型**:
-- `message` (string): 确认辅助点击操作的成功消息
-- `selector` (string): 被右键点击元素的 CSS 选择器或 XPath
-
-#### web_close_tab
-**功能**: 关闭浏览器标签页
-**参数**:
-- `tabIndex` (number): 标签页索引
-
-**返回值类型**:
-- `message` (string): 确认浏览器标签页关闭的成功消息
-- `tabIndex` (int): 被关闭的标签页索引
-
----
-
-### 🤖 AI 操作工具
-
-#### ai_action
-**功能**: AI 驱动的智能操作
-**参数**:
-- `prompt` (string): 自然语言指令
-
-**返回值类型**:
-- `message` (string): 确认 AI 操作执行的成功消息
-- `prompt` (string): 处理的自然语言提示
-- `actionTaken` (string): AI 执行的具体操作描述
-
-#### finished
-**功能**: 标记任务完成
-**参数**:
-- `content` (string): 完成信息
-
-**返回值类型**:
-- `message` (string): 确认任务完成的成功消息
-- `content` (string): 完成原因或结果描述
-- `taskCompleted` (bool): 指示任务成功完成的布尔值
-
----
-
-### 📋 通用参数说明
-
-#### 设备参数 (所有工具通用)
-- `platform` (string): 设备平台
-  - "android": Android 设备
-  - "ios": iOS 设备
-  - "web": Web 浏览器
-  - "harmony": 鸿蒙设备
-- `serial` (string): 设备标识符
-  - Android: 设备序列号 (如 "emulator-5554")
-  - iOS: 设备 UDID
-  - Web: 浏览器会话 ID
-
-#### 坐标参数
-- **相对坐标**: 0.0-1.0 范围，相对于屏幕尺寸
-- **绝对坐标**: 像素值，基于实际屏幕分辨率
-
-#### 时间参数
-- `duration`: 操作持续时间 (秒)
-- `press_duration`: 按压持续时间 (秒)
-- `milliseconds`: 毫秒数
-
-#### 行为参数
-- `anti_risk`: 启用反作弊检测
-- `ignore_NotFoundError`: 忽略元素未找到错误
-- `regex`: 使用正则表达式匹配
-- `pre_mark_operation`: 启用操作前标记 (用于调试和可视化)
-- `max_retry_times`: 最大重试次数
-- `index`: 元素索引 (多个匹配时)
-
----
-
-### 🔧 使用示例
-
-#### 基本点击操作
-```json
-{
-  "name": "tap_xy",
-  "arguments": {
-    "platform": "android",
-    "serial": "emulator-5554",
-    "x": 0.5,
-    "y": 0.3
-  }
-}
-```
-
-#### 滑动操作
-```json
-{
-  "name": "swipe",
-  "arguments": {
-    "platform": "android",
-    "serial": "emulator-5554",
-    "direction": "up",
-    "duration": 0.5
-  }
-}
-```
-
-#### 应用启动
-```json
-{
-  "name": "app_launch",
-  "arguments": {
-    "platform": "android",
-    "serial": "emulator-5554",
-    "packageName": "com.example.app"
-  }
-}
-```
-
-#### OCR 文本点击
-```json
-{
-  "name": "tap_ocr",
-  "arguments": {
-    "platform": "android",
-    "serial": "emulator-5554",
-    "text": "登录",
-    "ignore_NotFoundError": false
-  }
-}
-```
-
----
-
-### ⚠️ 注意事项
-
-1. **设备连接**: 确保设备已连接并可访问
-2. **权限要求**: 某些操作需要设备 root 或开发者权限
-3. **坐标系统**: 注意相对坐标 (0-1) 和绝对坐标 (像素) 的区别
-4. **平台差异**: 不同平台支持的功能可能有差异
-5. **错误处理**: 建议启用适当的错误忽略选项
-6. **性能考虑**: 避免过于频繁的操作，适当添加等待时间
-7. **返回值类型**: 所有返回值都包含明确的类型信息，便于 AI 模型理解和处理
-
-### 📊 返回值类型系统
-
-HttpRunner MCP Server 为所有工具提供了完整的返回值类型描述，采用 `类型: 描述` 的格式：
-
-#### 支持的数据类型
-- **string**: 文本消息、名称、描述等
-- **int**: 整数值如屏幕宽度、高度、标签索引等
-- **int64**: 长整型如毫秒数
-- **float64**: 浮点数如坐标值、时间等
-- **bool**: 布尔值如任务完成状态
-- **[]string**: 字符串数组如设备列表、文本选项等
-- **object**: 复杂对象如登录结果
-
-#### 类型信息的作用
-1. **AI 模型理解**: 帮助 AI 模型正确解析和使用返回值
-2. **开发调试**: 为开发者提供清晰的接口文档
-3. **类型安全**: 确保数据类型的一致性和可预测性
-4. **自动化测试**: 支持基于类型的自动化验证
+该实现为 UI 自动化测试提供了一个完整、可扩展且高性能的 MCP 服务器解决方案。
