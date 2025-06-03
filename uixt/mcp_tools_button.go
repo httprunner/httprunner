@@ -50,7 +50,7 @@ func (t *ToolPressButton) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolPressButton) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolPressButton) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if button, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"button": button,
@@ -101,7 +101,7 @@ func (t *ToolHome) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolHome) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolHome) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
@@ -145,7 +145,7 @@ func (t *ToolBack) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolBack) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolBack) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 

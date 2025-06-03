@@ -13,6 +13,24 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type MobileAction struct {
+	Method  ActionName     `json:"method,omitempty" yaml:"method,omitempty"`
+	Params  interface{}    `json:"params,omitempty" yaml:"params,omitempty"`
+	Fn      func()         `json:"-" yaml:"-"` // used for function action, not serialized
+	Options *ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
+	ActionOptions
+}
+
+func (ma MobileAction) GetOptions() []ActionOption {
+	var actionOptionList []ActionOption
+	// Notice: merge options from ma.Options and ma.ActionOptions
+	if ma.Options != nil {
+		actionOptionList = append(actionOptionList, ma.Options.Options()...)
+	}
+	actionOptionList = append(actionOptionList, ma.ActionOptions.Options()...)
+	return actionOptionList
+}
+
 type ActionName string
 
 const (

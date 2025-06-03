@@ -56,7 +56,7 @@ func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolWebLoginNoneUI) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolWebLoginNoneUI) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
@@ -111,7 +111,7 @@ func (t *ToolSecondaryClick) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSecondaryClick) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSecondaryClick) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
 		arguments := map[string]any{
 			"x": params[0],
@@ -169,7 +169,7 @@ func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolHoverBySelector) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolHoverBySelector) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if selector, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"selector": selector,
@@ -225,7 +225,7 @@ func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolTapBySelector) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolTapBySelector) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if selector, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"selector": selector,
@@ -281,7 +281,7 @@ func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSecondaryClickBySelector) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSecondaryClickBySelector) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if selector, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"selector": selector,
@@ -347,7 +347,7 @@ func (t *ToolWebCloseTab) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolWebCloseTab) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolWebCloseTab) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	var tabIndex int
 	if param, ok := action.Params.(json.Number); ok {
 		paramInt64, _ := param.Int64()

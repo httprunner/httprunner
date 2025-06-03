@@ -49,7 +49,7 @@ func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolAIAction) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolAIAction) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if prompt, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"prompt": prompt,
@@ -95,7 +95,7 @@ func (t *ToolFinished) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolFinished) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolFinished) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if reason, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"content": reason,

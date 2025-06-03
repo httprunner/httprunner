@@ -140,7 +140,7 @@ func TestIgnoreNotFoundErrorOption(t *testing.T) {
 		option.WithRegex(true),
 		option.WithTapRandomRect(true),
 	)
-	action := MobileAction{
+	action := option.MobileAction{
 		Method:        option.ACTION_TapByOCR,
 		Params:        "test_text",
 		ActionOptions: *actionOptions,
@@ -201,7 +201,7 @@ func TestToolListAvailableDevices(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_ListAvailableDevices,
 		Params: nil,
 	}
@@ -227,7 +227,7 @@ func TestToolSelectDevice(t *testing.T) {
 	assert.Len(t, options, 2) // platform and serial
 
 	// Test ConvertActionToCallToolRequest
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_SelectDevice,
 		Params: nil,
 	}
@@ -251,7 +251,7 @@ func TestToolTapXY(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_TapXY,
 		Params: []float64{0.5, 0.6},
 		ActionOptions: option.ActionOptions{
@@ -266,7 +266,7 @@ func TestToolTapXY(t *testing.T) {
 	assert.Equal(t, 1.5, request.Params.Arguments["duration"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_TapXY,
 		Params: "invalid",
 	}
@@ -289,7 +289,7 @@ func TestToolTapAbsXY(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_TapAbsXY,
 		Params: []float64{100.0, 200.0},
 		ActionOptions: option.ActionOptions{
@@ -304,7 +304,7 @@ func TestToolTapAbsXY(t *testing.T) {
 	assert.Equal(t, 2.0, request.Params.Arguments["duration"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_TapAbsXY,
 		Params: []float64{100.0}, // missing y coordinate
 	}
@@ -334,7 +334,7 @@ func TestToolTapByOCR(t *testing.T) {
 		option.WithRegex(true),
 		option.WithTapRandomRect(true),
 	)
-	action := MobileAction{
+	action := option.MobileAction{
 		Method:        option.ACTION_TapByOCR,
 		Params:        "test_text",
 		ActionOptions: *actionOptions,
@@ -350,7 +350,7 @@ func TestToolTapByOCR(t *testing.T) {
 	assert.Equal(t, true, request.Params.Arguments["tap_random_rect"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_TapByOCR,
 		Params: 123, // should be string
 	}
@@ -378,7 +378,7 @@ func TestToolTapByCV(t *testing.T) {
 		option.WithMaxRetryTimes(2),
 		option.WithTapRandomRect(true),
 	)
-	action := MobileAction{
+	action := option.MobileAction{
 		Method:        option.ACTION_TapByCV,
 		Params:        nil,
 		ActionOptions: *actionOptions,
@@ -407,7 +407,7 @@ func TestToolDoubleTapXY(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_DoubleTapXY,
 		Params: []float64{0.3, 0.7},
 	}
@@ -418,7 +418,7 @@ func TestToolDoubleTapXY(t *testing.T) {
 	assert.Equal(t, 0.7, request.Params.Arguments["y"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_DoubleTapXY,
 		Params: "invalid",
 	}
@@ -441,7 +441,7 @@ func TestToolSwipe(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with direction params (string)
-	directionAction := MobileAction{
+	directionAction := option.MobileAction{
 		Method: option.ACTION_Swipe,
 		Params: "up",
 		ActionOptions: option.ActionOptions{
@@ -457,7 +457,7 @@ func TestToolSwipe(t *testing.T) {
 	assert.Equal(t, 0.5, request.Params.Arguments["pressDuration"])
 
 	// Test ConvertActionToCallToolRequest with coordinate params
-	coordinateAction := MobileAction{
+	coordinateAction := option.MobileAction{
 		Method: option.ACTION_Swipe,
 		Params: []float64{0.1, 0.2, 0.8, 0.9},
 		ActionOptions: option.ActionOptions{
@@ -476,7 +476,7 @@ func TestToolSwipe(t *testing.T) {
 	assert.Equal(t, 1.0, request.Params.Arguments["pressDuration"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_Swipe,
 		Params: 123, // should be string or []float64
 	}
@@ -484,7 +484,7 @@ func TestToolSwipe(t *testing.T) {
 	assert.Error(t, err)
 
 	// Test ConvertActionToCallToolRequest with incomplete coordinate params
-	incompleteAction := MobileAction{
+	incompleteAction := option.MobileAction{
 		Method: option.ACTION_Swipe,
 		Params: []float64{0.1, 0.2}, // missing toX and toY
 	}
@@ -507,7 +507,7 @@ func TestToolSwipeDirection(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_SwipeDirection,
 		Params: "up",
 		ActionOptions: option.ActionOptions{
@@ -523,7 +523,7 @@ func TestToolSwipeDirection(t *testing.T) {
 	assert.Equal(t, 0.5, request.Params.Arguments["pressDuration"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_SwipeDirection,
 		Params: 123, // should be string
 	}
@@ -546,7 +546,7 @@ func TestToolSwipeCoordinate(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_SwipeCoordinate,
 		Params: []float64{0.1, 0.2, 0.8, 0.9},
 		ActionOptions: option.ActionOptions{
@@ -565,7 +565,7 @@ func TestToolSwipeCoordinate(t *testing.T) {
 	assert.Equal(t, 1.0, request.Params.Arguments["pressDuration"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_SwipeCoordinate,
 		Params: []float64{0.1, 0.2}, // missing toX and toY
 	}
@@ -593,7 +593,7 @@ func TestToolSwipeToTapApp(t *testing.T) {
 		option.WithMaxRetryTimes(3),
 		option.WithIndex(1),
 	)
-	action := MobileAction{
+	action := option.MobileAction{
 		Method:        option.ACTION_SwipeToTapApp,
 		Params:        "WeChat",
 		ActionOptions: *actionOptions,
@@ -607,7 +607,7 @@ func TestToolSwipeToTapApp(t *testing.T) {
 	assert.Equal(t, 1, request.Params.Arguments["index"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_SwipeToTapApp,
 		Params: 123, // should be string
 	}
@@ -635,7 +635,7 @@ func TestToolSwipeToTapText(t *testing.T) {
 		option.WithMaxRetryTimes(2),
 		option.WithRegex(true),
 	)
-	action := MobileAction{
+	action := option.MobileAction{
 		Method:        option.ACTION_SwipeToTapText,
 		Params:        "Submit",
 		ActionOptions: *actionOptions,
@@ -649,7 +649,7 @@ func TestToolSwipeToTapText(t *testing.T) {
 	assert.Equal(t, true, request.Params.Arguments["regex"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_SwipeToTapText,
 		Params: []int{1, 2, 3}, // should be string
 	}
@@ -676,7 +676,7 @@ func TestToolSwipeToTapTexts(t *testing.T) {
 		option.WithIgnoreNotFoundError(true),
 		option.WithRegex(true),
 	)
-	action := MobileAction{
+	action := option.MobileAction{
 		Method:        option.ACTION_SwipeToTapTexts,
 		Params:        []string{"OK", "确定", "Submit"},
 		ActionOptions: *actionOptions,
@@ -692,7 +692,7 @@ func TestToolSwipeToTapTexts(t *testing.T) {
 	assert.Equal(t, true, request.Params.Arguments["regex"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_SwipeToTapTexts,
 		Params: "single_string", // should be []string
 	}
@@ -715,7 +715,7 @@ func TestToolDrag(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_Drag,
 		Params: []float64{0.1, 0.2, 0.8, 0.9},
 		ActionOptions: option.ActionOptions{
@@ -732,7 +732,7 @@ func TestToolDrag(t *testing.T) {
 	assert.Equal(t, 2500.0, request.Params.Arguments["duration"]) // converted to milliseconds
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_Drag,
 		Params: []float64{0.1, 0.2}, // missing toX and toY
 	}
@@ -755,7 +755,7 @@ func TestToolInput(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_Input,
 		Params: "Hello World",
 	}
@@ -780,7 +780,7 @@ func TestToolScreenShot(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_ScreenShot,
 		Params: nil,
 	}
@@ -805,7 +805,7 @@ func TestToolGetScreenSize(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_GetScreenSize,
 		Params: nil,
 	}
@@ -830,7 +830,7 @@ func TestToolPressButton(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_PressButton,
 		Params: "HOME",
 	}
@@ -840,7 +840,7 @@ func TestToolPressButton(t *testing.T) {
 	assert.Equal(t, "HOME", request.Params.Arguments["button"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_PressButton,
 		Params: 123, // should be string
 	}
@@ -863,7 +863,7 @@ func TestToolHome(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_Home,
 		Params: nil,
 	}
@@ -888,7 +888,7 @@ func TestToolBack(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_Back,
 		Params: nil,
 	}
@@ -913,7 +913,7 @@ func TestToolListPackages(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_ListPackages,
 		Params: nil,
 	}
@@ -938,7 +938,7 @@ func TestToolLaunchApp(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_AppLaunch,
 		Params: "com.example.app",
 	}
@@ -948,7 +948,7 @@ func TestToolLaunchApp(t *testing.T) {
 	assert.Equal(t, "com.example.app", request.Params.Arguments["packageName"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_AppLaunch,
 		Params: 123, // should be string
 	}
@@ -971,7 +971,7 @@ func TestToolTerminateApp(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_AppTerminate,
 		Params: "com.example.app",
 	}
@@ -981,7 +981,7 @@ func TestToolTerminateApp(t *testing.T) {
 	assert.Equal(t, "com.example.app", request.Params.Arguments["packageName"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_AppTerminate,
 		Params: []int{1, 2, 3}, // should be string
 	}
@@ -1004,7 +1004,7 @@ func TestToolAppInstall(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_AppInstall,
 		Params: "https://example.com/app.apk",
 	}
@@ -1014,7 +1014,7 @@ func TestToolAppInstall(t *testing.T) {
 	assert.Equal(t, "https://example.com/app.apk", request.Params.Arguments["appUrl"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_AppInstall,
 		Params: 123, // should be string
 	}
@@ -1037,7 +1037,7 @@ func TestToolAppUninstall(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_AppUninstall,
 		Params: "com.example.app",
 	}
@@ -1047,7 +1047,7 @@ func TestToolAppUninstall(t *testing.T) {
 	assert.Equal(t, "com.example.app", request.Params.Arguments["packageName"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_AppUninstall,
 		Params: 123, // should be string
 	}
@@ -1070,7 +1070,7 @@ func TestToolAppClear(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_AppClear,
 		Params: "com.example.app",
 	}
@@ -1080,7 +1080,7 @@ func TestToolAppClear(t *testing.T) {
 	assert.Equal(t, "com.example.app", request.Params.Arguments["packageName"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_AppClear,
 		Params: 123, // should be string
 	}
@@ -1103,7 +1103,7 @@ func TestToolSleep(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_Sleep,
 		Params: 2.5,
 	}
@@ -1128,7 +1128,7 @@ func TestToolSleepMS(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_SleepMS,
 		Params: int64(1500),
 	}
@@ -1138,7 +1138,7 @@ func TestToolSleepMS(t *testing.T) {
 	assert.Equal(t, int64(1500), request.Params.Arguments["milliseconds"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_SleepMS,
 		Params: "invalid", // should be int64
 	}
@@ -1161,7 +1161,7 @@ func TestToolSleepRandom(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_SleepRandom,
 		Params: []float64{1.0, 3.0},
 	}
@@ -1174,7 +1174,7 @@ func TestToolSleepRandom(t *testing.T) {
 	assert.Equal(t, []float64{1.0, 3.0}, params)
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_SleepRandom,
 		Params: "invalid", // should be []float64
 	}
@@ -1197,7 +1197,7 @@ func TestToolSetIme(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_SetIme,
 		Params: "com.google.android.inputmethod.latin",
 	}
@@ -1207,7 +1207,7 @@ func TestToolSetIme(t *testing.T) {
 	assert.Equal(t, "com.google.android.inputmethod.latin", request.Params.Arguments["ime"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_SetIme,
 		Params: 123, // should be string
 	}
@@ -1230,7 +1230,7 @@ func TestToolGetSource(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_GetSource,
 		Params: "com.example.app",
 	}
@@ -1240,7 +1240,7 @@ func TestToolGetSource(t *testing.T) {
 	assert.Equal(t, "com.example.app", request.Params.Arguments["packageName"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_GetSource,
 		Params: 123, // should be string
 	}
@@ -1263,7 +1263,7 @@ func TestToolClosePopups(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_ClosePopups,
 		Params: nil,
 	}
@@ -1288,7 +1288,7 @@ func TestToolAIAction(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_AIAction,
 		Params: "Click on the login button",
 	}
@@ -1298,7 +1298,7 @@ func TestToolAIAction(t *testing.T) {
 	assert.Equal(t, "Click on the login button", request.Params.Arguments["prompt"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_AIAction,
 		Params: 123, // should be string
 	}
@@ -1321,7 +1321,7 @@ func TestToolFinished(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_Finished,
 		Params: "Task completed successfully",
 	}
@@ -1331,7 +1331,7 @@ func TestToolFinished(t *testing.T) {
 	assert.Equal(t, "Task completed successfully", request.Params.Arguments["content"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_Finished,
 		Params: 123, // should be string
 	}
@@ -1354,7 +1354,7 @@ func TestToolWebLoginNoneUI(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_WebLoginNoneUI,
 		Params: nil,
 	}
@@ -1379,7 +1379,7 @@ func TestToolSecondaryClick(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_SecondaryClick,
 		Params: []float64{0.5, 0.6},
 	}
@@ -1390,7 +1390,7 @@ func TestToolSecondaryClick(t *testing.T) {
 	assert.Equal(t, 0.6, request.Params.Arguments["y"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_SecondaryClick,
 		Params: "invalid", // should be []float64
 	}
@@ -1413,7 +1413,7 @@ func TestToolHoverBySelector(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_HoverBySelector,
 		Params: "#login-button",
 	}
@@ -1423,7 +1423,7 @@ func TestToolHoverBySelector(t *testing.T) {
 	assert.Equal(t, "#login-button", request.Params.Arguments["selector"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_HoverBySelector,
 		Params: 123, // should be string
 	}
@@ -1446,7 +1446,7 @@ func TestToolTapBySelector(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_TapBySelector,
 		Params: "//button[@id='submit']",
 	}
@@ -1456,7 +1456,7 @@ func TestToolTapBySelector(t *testing.T) {
 	assert.Equal(t, "//button[@id='submit']", request.Params.Arguments["selector"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_TapBySelector,
 		Params: 123, // should be string
 	}
@@ -1479,7 +1479,7 @@ func TestToolSecondaryClickBySelector(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_SecondaryClickBySelector,
 		Params: ".context-menu-trigger",
 	}
@@ -1489,7 +1489,7 @@ func TestToolSecondaryClickBySelector(t *testing.T) {
 	assert.Equal(t, ".context-menu-trigger", request.Params.Arguments["selector"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_SecondaryClickBySelector,
 		Params: 123, // should be string
 	}
@@ -1512,7 +1512,7 @@ func TestToolWebCloseTab(t *testing.T) {
 	assert.NotNil(t, options)
 
 	// Test ConvertActionToCallToolRequest with valid params
-	action := MobileAction{
+	action := option.MobileAction{
 		Method: option.ACTION_WebCloseTab,
 		Params: 1,
 	}
@@ -1522,7 +1522,7 @@ func TestToolWebCloseTab(t *testing.T) {
 	assert.Equal(t, 1, request.Params.Arguments["tabIndex"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
-	invalidAction := MobileAction{
+	invalidAction := option.MobileAction{
 		Method: option.ACTION_WebCloseTab,
 		Params: "invalid", // should be int
 	}
@@ -1539,7 +1539,7 @@ func TestPreMarkOperationConfiguration(t *testing.T) {
 	assert.NotNil(t, tapTool)
 
 	// Test conversion with pre_mark_operation enabled
-	actionWithPreMark := MobileAction{
+	actionWithPreMark := option.MobileAction{
 		Method:        option.ACTION_TapXY,
 		Params:        []float64{0.5, 0.5},
 		ActionOptions: *option.NewActionOptions(option.WithPreMarkOperation(true)),
@@ -1550,7 +1550,7 @@ func TestPreMarkOperationConfiguration(t *testing.T) {
 	assert.Equal(t, true, request.Params.Arguments["pre_mark_operation"])
 
 	// Test conversion without pre_mark_operation
-	actionWithoutPreMark := MobileAction{
+	actionWithoutPreMark := option.MobileAction{
 		Method:        option.ACTION_TapXY,
 		Params:        []float64{0.5, 0.5},
 		ActionOptions: *option.NewActionOptions(option.WithPreMarkOperation(false)),

@@ -53,7 +53,7 @@ func (t *ToolInput) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolInput) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolInput) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	text := fmt.Sprintf("%v", action.Params)
 	arguments := map[string]any{
 		"text": text,
@@ -107,7 +107,7 @@ func (t *ToolSetIme) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSetIme) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSetIme) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if ime, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"ime": ime,

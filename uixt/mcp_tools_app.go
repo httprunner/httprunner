@@ -41,7 +41,7 @@ func (t *ToolListPackages) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolListPackages) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolListPackages) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
@@ -94,7 +94,7 @@ func (t *ToolLaunchApp) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolLaunchApp) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolLaunchApp) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if packageName, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"packageName": packageName,
@@ -154,7 +154,7 @@ func (t *ToolTerminateApp) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolTerminateApp) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolTerminateApp) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if packageName, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"packageName": packageName,
@@ -207,7 +207,7 @@ func (t *ToolAppInstall) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolAppInstall) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolAppInstall) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if appUrl, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"appUrl": appUrl,
@@ -263,7 +263,7 @@ func (t *ToolAppUninstall) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolAppUninstall) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolAppUninstall) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if packageName, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"packageName": packageName,
@@ -319,7 +319,7 @@ func (t *ToolAppClear) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolAppClear) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolAppClear) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if packageName, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"packageName": packageName,

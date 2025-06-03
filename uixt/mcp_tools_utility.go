@@ -64,7 +64,7 @@ func (t *ToolSleep) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSleep) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSleep) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	arguments := map[string]any{
 		"seconds": action.Params,
 	}
@@ -114,7 +114,7 @@ func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSleepMS) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSleepMS) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	var milliseconds int64
 	if param, ok := action.Params.(json.Number); ok {
 		milliseconds, _ = param.Int64()
@@ -167,7 +167,7 @@ func (t *ToolSleepRandom) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSleepRandom) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSleepRandom) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil {
 		arguments := map[string]any{
 			"params": params,
@@ -219,7 +219,7 @@ func (t *ToolClosePopups) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolClosePopups) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolClosePopups) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 

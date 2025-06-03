@@ -45,7 +45,7 @@ func (t *ToolSwipe) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSwipe) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSwipe) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	// Check if params is a string (direction-based swipe)
 	if _, ok := action.Params.(string); ok {
 		// Delegate to ToolSwipeDirection but use our tool name
@@ -159,7 +159,7 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSwipeDirection) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSwipeDirection) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	// Handle direction swipe like "up", "down", "left", "right"
 	if direction, ok := action.Params.(string); ok {
 		arguments := map[string]any{
@@ -252,7 +252,7 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if paramSlice, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(paramSlice) == 4 {
 		arguments := map[string]any{
 			"from_x": paramSlice[0],
@@ -341,7 +341,7 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSwipeToTapApp) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSwipeToTapApp) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if appName, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"appName": appName,
@@ -420,7 +420,7 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSwipeToTapText) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSwipeToTapText) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if text, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"text": text,
@@ -499,7 +499,7 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSwipeToTapTexts) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSwipeToTapTexts) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	var texts []string
 	if textsSlice, ok := action.Params.([]string); ok {
 		texts = textsSlice
@@ -587,7 +587,7 @@ func (t *ToolDrag) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolDrag) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolDrag) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if paramSlice, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(paramSlice) == 4 {
 		arguments := map[string]any{
 			"from_x": paramSlice[0],

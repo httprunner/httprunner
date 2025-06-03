@@ -43,7 +43,7 @@ func (t *ToolScreenShot) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolScreenShot) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolScreenShot) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
@@ -88,7 +88,7 @@ func (t *ToolGetScreenSize) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolGetScreenSize) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolGetScreenSize) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
@@ -139,7 +139,7 @@ func (t *ToolGetSource) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolGetSource) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolGetSource) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if packageName, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"packageName": packageName,

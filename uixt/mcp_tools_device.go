@@ -64,7 +64,7 @@ func (t *ToolListAvailableDevices) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolListAvailableDevices) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolListAvailableDevices) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
@@ -105,7 +105,7 @@ func (t *ToolSelectDevice) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolSelectDevice) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolSelectDevice) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 

@@ -64,7 +64,7 @@ func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolTapXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolTapXY) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
 		x, y := params[0], params[1]
 		arguments := map[string]any{
@@ -148,7 +148,7 @@ func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolTapAbsXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolTapAbsXY) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
 		x, y := params[0], params[1]
 		arguments := map[string]any{
@@ -233,7 +233,7 @@ func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolTapByOCR) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolTapByOCR) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if text, ok := action.Params.(string); ok {
 		arguments := map[string]any{
 			"text": text,
@@ -304,7 +304,7 @@ func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolTapByCV) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolTapByCV) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	// For TapByCV, the original action might not have params but relies on options
 	arguments := map[string]any{
 		"imagePath": "", // Will be handled by the tool based on UI types
@@ -364,7 +364,7 @@ func (t *ToolDoubleTapXY) Implement() server.ToolHandlerFunc {
 	}
 }
 
-func (t *ToolDoubleTapXY) ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error) {
+func (t *ToolDoubleTapXY) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	if params, err := builtin.ConvertToFloat64Slice(action.Params); err == nil && len(params) == 2 {
 		x, y := params[0], params[1]
 		arguments := map[string]any{

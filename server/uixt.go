@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/rs/zerolog/log"
 )
 
@@ -13,7 +13,7 @@ func (r *Router) uixtActionHandler(c *gin.Context) {
 		return
 	}
 
-	var req uixt.MobileAction
+	var req option.MobileAction
 	if err := c.ShouldBindJSON(&req); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
@@ -35,7 +35,7 @@ func (r *Router) uixtActionsHandler(c *gin.Context) {
 		return
 	}
 
-	var actions []uixt.MobileAction
+	var actions []option.MobileAction
 	if err := c.ShouldBindJSON(&actions); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return

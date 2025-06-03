@@ -142,61 +142,13 @@ func (s *MCPServer4XTDriver) registerTool(tool ActionTool) {
 }
 
 // ActionTool interface defines the contract for MCP tools
-//
-// This interface standardizes how UI automation actions are exposed through MCP protocol.
-// Each tool implementation must provide:
-//
-// 1. Identity and Documentation:
-//   - Name(): Unique identifier for the action (e.g., ACTION_TapXY)
-//   - Description(): Human-readable description for AI models
-//
-// 2. MCP Integration:
-//   - Options(): Parameter definitions with validation rules
-//   - Implement(): Actual execution logic as MCP handler
-//
-// 3. Legacy Compatibility:
-//   - ConvertActionToCallToolRequest(): Converts old MobileAction format
-//
-// Implementation Pattern:
-//
-//	type ToolExample struct{}
-//
-//	func (t *ToolExample) Name() option.ActionName {
-//	    return option.ACTION_Example
-//	}
-//
-//	func (t *ToolExample) Description() string {
-//	    return "Performs example operation"
-//	}
-//
-//	func (t *ToolExample) Options() []mcp.ToolOption {
-//	    return []mcp.ToolOption{
-//	        mcp.WithString("param", mcp.Description("Parameter description")),
-//	    }
-//	}
-//
-//	func (t *ToolExample) Implement() server.ToolHandlerFunc {
-//	    return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-//	        // 1. Setup driver
-//	        // 2. Parse parameters
-//	        // 3. Execute operation
-//	        // 4. Return result
-//	    }
-//	}
-//
-// Benefits of this architecture:
-//   - Complete decoupling between tools
-//   - Consistent parameter handling
-//   - Standardized error reporting
-//   - Easy testing and maintenance
-//   - Seamless MCP protocol integration
 type ActionTool interface {
 	Name() option.ActionName
 	Description() string
 	Options() []mcp.ToolOption
 	Implement() server.ToolHandlerFunc
 	// ConvertActionToCallToolRequest converts MobileAction to mcp.CallToolRequest
-	ConvertActionToCallToolRequest(action MobileAction) (mcp.CallToolRequest, error)
+	ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error)
 	// ReturnSchema returns the expected return value schema based on mcp.CallToolResult conventions
 	ReturnSchema() map[string]string
 }
@@ -272,43 +224,6 @@ func getFloat64ValueOrDefault(value float64, defaultValue float64) float64 {
 }
 
 // parseActionOptions converts MCP request arguments to ActionOptions struct
-//
-// This function provides unified parameter parsing for all MCP tools by:
-//
-// 1. Converting map[string]any arguments to JSON bytes
-// 2. Unmarshaling JSON into strongly-typed ActionOptions struct
-// 3. Providing automatic validation and type conversion
-//
-// The ActionOptions struct contains all possible parameters for UI operations:
-//   - Coordinates: X, Y, FromX, FromY, ToX, ToY
-//   - Text/Content: Text, Content, AppName, PackageName
-//   - Timing: Duration, PressDuration, Milliseconds
-//   - Behavior: AntiRisk, IgnoreNotFoundError, Regex
-//   - Indices: Index, MaxRetryTimes, TabIndex
-//   - Device: Platform, Serial, Button, Direction
-//   - Web: Selector, PhoneNumber, Captcha, Password
-//   - AI: Prompt
-//   - Collections: Texts, Params, Points
-//
-// Parameters:
-//   - arguments: Raw MCP request arguments as map[string]any
-//
-// Returns:
-//   - *option.ActionOptions: Parsed and validated options struct
-//   - error: Parsing or validation error
-//
-// Usage:
-//
-//	unifiedReq, err := parseActionOptions(request.Params.Arguments)
-//	if err != nil {
-//	    return nil, err
-//	}
-//	// Use unifiedReq.X, unifiedReq.Y, etc.
-//
-// Error Handling:
-//   - JSON marshal errors (invalid argument types)
-//   - JSON unmarshal errors (type conversion failures)
-//   - Missing required fields (handled by individual tools)
 func parseActionOptions(arguments map[string]any) (*option.ActionOptions, error) {
 	b, err := json.Marshal(arguments)
 	if err != nil {
