@@ -1,5 +1,7 @@
 package ai
 
+import "github.com/httprunner/httprunner/v5/uixt/option"
+
 // system prompt for UITARSContentParser
 // doubao-1.5-ui-tars on volcengine.com
 // https://www.volcengine.com/docs/82379/1536429
@@ -14,13 +16,12 @@ Action: ...
 
 ## Action Space
 click(start_box='[x1, y1, x2, y2]')
-long_press(start_box='[x1, y1, x2, y2]')
+left_double(start_box='[x1, y1, x2, y2]')
+right_single(start_box='[x1, y1, x2, y2]')
+drag(start_box='[x1, y1, x2, y2]', end_box='[x3, y3, x4, y4]')
+hotkey(key='')
 type(content='') #If you want to submit your input, use "\n" at the end of ` + "`content`" + `.
 scroll(start_box='[x1, y1, x2, y2]', direction='down or up or right or left')
-open_app(app_name=\'\')
-drag(start_box='[x1, y1, x2, y2]', end_box='[x3, y3, x4, y4]')
-press_home()
-press_back()
 wait() #Sleep for 5s and take a screenshot to check for any changes.
 finished(content='xxx') # Use escape characters \\', \\", and \\n in content part to ensure we can parse the content in normal python string format.
 
@@ -30,6 +31,18 @@ finished(content='xxx') # Use escape characters \\', \\", and \\n in content par
 
 ## User Instruction
 `
+
+var doubao_1_5_ui_tars_action_mapping = map[string]option.ActionName{
+	"click":        option.ACTION_TapXY,
+	"left_double":  option.ACTION_DoubleTapXY,
+	"right_single": option.ACTION_SecondaryClick,
+	"drag":         option.ACTION_Drag,
+	"hotkey":       option.ACTION_KeyCode,
+	"type":         option.ACTION_Input,
+	"scroll":       option.ACTION_Scroll,
+	"wait":         option.ACTION_Sleep,
+	"finished":     option.ACTION_Finished,
+}
 
 // system prompt for UITARSContentParser
 // https://github.com/bytedance/UI-TARS/blob/main/codes/ui_tars/prompt.py

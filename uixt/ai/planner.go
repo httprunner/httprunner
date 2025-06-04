@@ -2,7 +2,6 @@ package ai
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
@@ -140,20 +139,12 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 			Error:         err.Error(),
 		}
 		log.Debug().Str("reason", err.Error()).Msg("parse content to actions failed")
-		// append assistant message
-		p.history.Append(&schema.Message{
-			Role:    schema.Assistant,
-			Content: message.Content,
-		})
-	} else {
-		// append assistant message with tool calls
-		p.history.Append(&schema.Message{
-			Role:       schema.Tool,
-			Content:    result.Content,
-			ToolCalls:  result.ToolCalls,
-			ToolCallID: fmt.Sprintf("%d", time.Now().Unix()),
-		})
 	}
+	// append assistant message (since we're parsing content, not using native function calling)
+	p.history.Append(&schema.Message{
+		Role:    schema.Assistant,
+		Content: message.Content,
+	})
 
 	log.Info().
 		Interface("summary", result.ActionSummary).

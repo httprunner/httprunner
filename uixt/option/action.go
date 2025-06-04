@@ -2,6 +2,7 @@ package option
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand/v2"
 	"reflect"
@@ -328,6 +329,18 @@ func (o *ActionOptions) Options() []ActionOption {
 	options = append(options, o.GetMarkOperationOptions()...)
 
 	return options
+}
+
+func (o *ActionOptions) ToMap() map[string]interface{} {
+	result := make(map[string]interface{})
+	b, err := json.Marshal(o)
+	if err != nil {
+		return nil
+	}
+	if err := json.Unmarshal(b, &result); err != nil {
+		return nil
+	}
+	return result
 }
 
 func (o *ActionOptions) ApplyTapOffset(absX, absY float64) (float64, float64) {

@@ -25,7 +25,7 @@ type Router struct {
 }
 
 func (r *Router) InitMCPHost(configPath string) error {
-	mcpHost, err := mcphost.NewMCPHost(configPath, false)
+	mcpHost, err := mcphost.NewMCPHost(configPath, true)
 	if err != nil {
 		log.Error().Err(err).Msg("init MCP host failed")
 		return err

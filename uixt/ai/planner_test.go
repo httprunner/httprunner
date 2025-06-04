@@ -29,7 +29,7 @@ func TestVLMPlanning(t *testing.T) {
 
 	userInstruction += "\n\n请基于以上游戏规则，给出下一步可点击的两个图标坐标"
 
-	modelConfig, err := GetModelConfig(option.LLMServiceTypeDoubaoVL)
+	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
 	require.NoError(t, err)
 
 	planner, err := NewPlanner(context.Background(), modelConfig)
@@ -157,9 +157,9 @@ func TestHandleSwitch(t *testing.T) {
 		imageFile  string
 		actionType string
 	}{
-		{"testdata/deepseek_think_off.png", "click"},     // 关闭状态，需要点击开启
-		{"testdata/deepseek_think_on.png", "click"},      // 关闭状态，需要点击开启
-		{"testdata/deepseek_network_on.png", "finished"}, // 开启状态，无需操作
+		{"testdata/deepseek_think_off.png", "uixt__tap_xy"},    // 关闭状态，需要点击开启
+		{"testdata/deepseek_think_on.png", "uixt__tap_xy"},     // 关闭状态，需要点击开启
+		{"testdata/deepseek_network_on.png", "uixt__finished"}, // 开启状态，无需操作
 	}
 
 	for _, tc := range testCases {

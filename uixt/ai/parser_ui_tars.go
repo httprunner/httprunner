@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino/schema"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/rs/zerolog/log"
 )
@@ -20,7 +21,8 @@ const (
 
 // UITARSContentParser parses the Thought/Action format response
 type UITARSContentParser struct {
-	systemPrompt string
+	systemPrompt  string
+	actionMapping map[string]option.ActionName
 }
 
 func (p *UITARSContentParser) SystemPrompt() string {
@@ -47,7 +49,7 @@ func (p *UITARSContentParser) Parse(content string, size types.Size) (*PlanningR
 	}
 
 	// Convert actions to tool calls
-	toolCalls := convertActionsToToolCalls(actions)
+	toolCalls := convertActionsToToolCalls(actions, p.actionMapping)
 
 	return &PlanningResult{
 		ToolCalls:     toolCalls,
@@ -92,10 +94,15 @@ func (p *UITARSContentParser) parseActionString(actionStr string, size types.Siz
 		return nil, err
 	}
 
-	// Create final action
+	// Convert processedArgs based on action type and coordinate parameters
+	finalArgs, err := convertProcessedArgs(processedArgs, actionType)
+	if err != nil {
+		return nil, err
+	}
+
 	action := Action{
 		ActionType:   actionType,
-		ActionInputs: processedArgs,
+		ActionInputs: finalArgs,
 	}
 
 	return []Action{action}, nil
@@ -147,6 +154,18 @@ func normalizeCoordinatesFormat(text string) string {
 }
 
 // convertRelativeToAbsolute converts relative coordinates to absolute pixel coordinates
+// The coordinate system uses a 1000x1000 relative coordinate system as the base.
+// This function maps relative coordinates to actual screen resolution coordinates.
+//
+// Conversion formula:
+//   - For X coordinates: absolute_x = (relative_x / 1000) * screen_width
+//   - For Y coordinates: absolute_y = (relative_y / 1000) * screen_height
+//
+// Example:
+//   - Screen size: 1920x1080
+//   - Relative coordinate: 500 (in 1000x1000 system)
+//   - X conversion: 500/1000 * 1920 = 960 pixels
+//   - Y conversion: 500/1000 * 1080 = 540 pixels
 func convertRelativeToAbsolute(relativeCoord float64, isXCoord bool, size types.Size) float64 {
 	if isXCoord {
 		return math.Round((relativeCoord/DefaultFactor*float64(size.Width))*10) / 10
@@ -204,7 +223,9 @@ func normalizeParameterName(paramName string) string {
 
 // processActionArguments processes raw arguments based on action type and parameter types
 // Input: rawArgs={"start_box": "100,200,150,250"}
-// Output: processedArgs={"start_box": [120.5, 240.1, 180.7, 300.2]} (converted to pixels)
+// Output: processedArgs={"start_box": [125.0, 225.0]} (converted to center point coordinates)
+// For drag: rawArgs={"start_box": "100,200,150,250", "end_box": "300,400,350,450"}
+// Output: processedArgs={"start_box": [125.0, 225.0], "end_box": [325.0, 425.0]} (both converted to center points)
 func processActionArguments(rawArgs map[string]interface{}, size types.Size) (map[string]interface{}, error) {
 	processedArgs := make(map[string]interface{})
 
@@ -222,9 +243,9 @@ func processActionArguments(rawArgs map[string]interface{}, size types.Size) (ma
 
 // Process a single argument based on its name and value
 func processArgument(paramName string, paramValue interface{}, size types.Size) (interface{}, error) {
-	// Handle coordinate parameters
+	// Handle coordinate parameters - convert bounding box to center point
 	if isCoordinateParameter(paramName) {
-		return normalizeActionCoordinates(paramValue, size)
+		return normalizeActionCoordinatesToCenterPoint(paramValue, size)
 	}
 
 	// Handle other parameter types (content, key, direction, etc.)
@@ -234,6 +255,59 @@ func processArgument(paramName string, paramValue interface{}, size types.Size) 
 // Check if a parameter is a coordinate parameter
 func isCoordinateParameter(paramName string) bool {
 	return strings.Contains(paramName, "box") || strings.Contains(paramName, "point")
+}
+
+// convertProcessedArgs converts processed arguments based on action type and coordinate parameters
+// For single start_box: {"start_box": [125.0, 225.0]} -> {"start_box": [125.0, 225.0]}
+// For drag with start_box and end_box: {"start_box": [125.0, 225.0], "end_box": [325.0, 425.0]} -> {"start_box": [125.0, 225.0, 325.0, 425.0]}
+func convertProcessedArgs(processedArgs map[string]interface{}, actionType string) (map[string]interface{}, error) {
+	// Handle coordinate parameters based on action type
+	startBox, hasStartBox := processedArgs["start_box"]
+	endBox, hasEndBox := processedArgs["end_box"]
+
+	// Check if this is a drag operation that should merge coordinates
+	if hasStartBox && hasEndBox {
+		// Drag operation: merge start_box and end_box into a single coordinate array
+		startCoords, ok1 := startBox.([]float64)
+		endCoords, ok2 := endBox.([]float64)
+
+		if !ok1 || !ok2 {
+			return nil, fmt.Errorf("invalid coordinate format for drag operation")
+		}
+
+		if len(startCoords) != 2 || len(endCoords) != 2 {
+			return nil, fmt.Errorf("drag operation requires 2-element coordinate arrays, got start: %d, end: %d", len(startCoords), len(endCoords))
+		}
+
+		options := option.ActionOptions{
+			FromX: startCoords[0],
+			FromY: startCoords[1],
+			ToX:   endCoords[0],
+			ToY:   endCoords[1],
+		}
+		return options.ToMap(), nil
+	}
+
+	// For single coordinate operations, return the coordinate array directly
+	if hasStartBox {
+		startCoords, ok := startBox.([]float64)
+		if !ok {
+			return nil, fmt.Errorf("invalid coordinate format for single operation")
+		}
+		options := option.ActionOptions{
+			X: startCoords[0],
+			Y: startCoords[1],
+		}
+		return options.ToMap(), nil
+	}
+
+	// For non-coordinate operations, return the original arguments map
+	// TODO
+	finalArgs := make(map[string]interface{})
+	for key, value := range processedArgs {
+		finalArgs[key] = value
+	}
+	return finalArgs, nil
 }
 
 // normalizeActionCoordinates normalizes coordinates from various formats to actual pixel coordinates
@@ -350,15 +424,39 @@ func normalizeStringCoordinates(coordStr string, size types.Size) ([]float64, er
 	return nil, fmt.Errorf("invalid coordinate string format: %s", coordStr)
 }
 
+// normalizeActionCoordinatesToCenterPoint converts bounding box coordinates to center point coordinates
+// Input: "100,200,150,250" (x1,y1,x2,y2) -> Output: [125.0, 225.0] (center point in absolute pixels)
+// Input: "100,200" (x,y) -> Output: [100.0, 200.0] (point in absolute pixels)
+func normalizeActionCoordinatesToCenterPoint(coordData interface{}, size types.Size) ([]float64, error) {
+	// First normalize coordinates to get absolute pixel coordinates
+	coords, err := normalizeActionCoordinates(coordData, size)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert bounding box to center point
+	if len(coords) == 4 {
+		// [x1, y1, x2, y2] -> [center_x, center_y]
+		centerX := (coords[0] + coords[2]) / 2
+		centerY := (coords[1] + coords[3]) / 2
+		return []float64{centerX, centerY}, nil
+	} else if len(coords) == 2 {
+		// Already a point [x, y], return as-is
+		return coords, nil
+	} else {
+		return nil, fmt.Errorf("invalid coordinate format: expected 2 or 4 coordinates, got %d", len(coords))
+	}
+}
+
 // Action represents a parsed action with its context.
 type Action struct {
-	ActionType   string         `json:"action_type"`
+	ActionType   string         `json:"action_type"` // map to option.ActionName
 	ActionInputs map[string]any `json:"action_inputs"`
 }
 
 // convertActionsToToolCalls converts actions to tool calls
 // This is a shared function used by both JSONContentParser and UITARSContentParser
-func convertActionsToToolCalls(actions []Action) []schema.ToolCall {
+func convertActionsToToolCalls(actions []Action, actionMapping map[string]option.ActionName) []schema.ToolCall {
 	toolCalls := make([]schema.ToolCall, 0, len(actions))
 	for _, action := range actions {
 		jsonArgs, err := json.Marshal(action.ActionInputs)
@@ -366,11 +464,15 @@ func convertActionsToToolCalls(actions []Action) []schema.ToolCall {
 			log.Error().Interface("action", action).Msg("failed to marshal action inputs")
 			continue
 		}
+		actionName := string(actionMapping[action.ActionType])
+		if actionName == "" {
+			actionName = action.ActionType
+		}
 		toolCalls = append(toolCalls, schema.ToolCall{
-			ID:   action.ActionType + "_" + strconv.FormatInt(time.Now().Unix(), 10),
+			ID:   actionName + "_" + strconv.FormatInt(time.Now().Unix(), 10),
 			Type: "function",
 			Function: schema.FunctionCall{
-				Name:      "uixt__" + action.ActionType,
+				Name:      "uixt__" + actionName,
 				Arguments: string(jsonArgs),
 			},
 		})
