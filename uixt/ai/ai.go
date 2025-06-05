@@ -129,12 +129,12 @@ func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 
 func validateModelType(modelType option.LLMServiceType, modelName string) error {
 	switch modelType {
-	case option.LLMServiceTypeUITARS:
+	case option.DOUBAO_1_5_UI_TARS_250428:
 		if !strings.Contains(modelName, "ui-tars") {
 			return fmt.Errorf("model name %s is not supported for %s", modelName, modelType)
 		}
 		return nil
-	case option.LLMServiceTypeDoubaoVL:
+	case option.DOUBAO_1_5_THINKING_VISION_PRO_250428:
 		if !strings.Contains(modelName, "doubao") || !strings.Contains(modelName, "vision") {
 			return fmt.Errorf("model name %s is not supported", modelName)
 		}

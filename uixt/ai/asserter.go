@@ -53,7 +53,7 @@ func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, erro
 		systemPrompt: defaultAssertionPrompt,
 	}
 
-	if modelConfig.ModelType == option.LLMServiceTypeUITARS {
+	if modelConfig.ModelType == option.DOUBAO_1_5_UI_TARS_250428 {
 		asserter.systemPrompt += "\n" + uiTarsAssertionResponseFormat
 	} else {
 		// define output format

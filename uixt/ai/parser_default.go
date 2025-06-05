@@ -19,7 +19,7 @@ type LLMContentParser interface {
 
 func NewLLMContentParser(modelType option.LLMServiceType) LLMContentParser {
 	switch modelType {
-	case option.LLMServiceTypeUITARS:
+	case option.DOUBAO_1_5_UI_TARS_250428:
 		return &UITARSContentParser{
 			systemPrompt:  doubao_1_5_ui_tars_planning_prompt,
 			actionMapping: doubao_1_5_ui_tars_action_mapping,

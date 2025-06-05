@@ -64,7 +64,7 @@ func (p *Planner) History() *ConversationHistory {
 }
 
 func (p *Planner) RegisterTools(tools []*schema.ToolInfo) error {
-	if p.modelConfig.ModelType == option.LLMServiceTypeUITARS {
+	if p.modelConfig.ModelType == option.DOUBAO_1_5_UI_TARS_250428 {
 		// tools have been registered in ui-tars system prompt
 		return nil
 	}

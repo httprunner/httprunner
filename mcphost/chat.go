@@ -25,7 +25,7 @@ import (
 // NewChat creates a new chat session
 func (h *MCPHost) NewChat(ctx context.Context) (*Chat, error) {
 	// Get model config from environment variables
-	modelConfig, err := ai.GetModelConfig(option.LLMServiceTypeDoubaoVL)
+	modelConfig, err := ai.GetModelConfig(option.DOUBAO_1_5_THINKING_VISION_PRO_250428)
 	if err != nil {
 		return nil, err
 	}
