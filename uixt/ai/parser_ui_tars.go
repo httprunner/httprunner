@@ -254,7 +254,8 @@ func processArgument(paramName string, paramValue interface{}, size types.Size) 
 
 // Check if a parameter is a coordinate parameter
 func isCoordinateParameter(paramName string) bool {
-	return strings.Contains(paramName, "box") || strings.Contains(paramName, "point")
+	return strings.Contains(strings.ToLower(paramName), "box") ||
+		strings.Contains(strings.ToLower(paramName), "point")
 }
 
 // convertProcessedArgs converts processed arguments based on action type and coordinate parameters

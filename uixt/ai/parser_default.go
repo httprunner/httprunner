@@ -26,8 +26,8 @@ func NewLLMContentParser(modelType option.LLMServiceType) LLMContentParser {
 		}
 	default:
 		return &JSONContentParser{
-			systemPrompt:  defaultPlanningResponseJsonFormat,
-			actionMapping: map[string]option.ActionName{},
+			systemPrompt:  doubao_1_5_thinking_vision_pro_planning_prompt,
+			actionMapping: doubao_1_5_thinking_vision_pro_action_mapping,
 		}
 	}
 }
@@ -80,8 +80,14 @@ func (p *JSONContentParser) Parse(content string, size types.Size) (*PlanningRes
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to process action arguments")
 		}
-		action.ActionInputs = processedArgs
 
+		// Convert processedArgs based on action type and coordinate parameters
+		finalArgs, err := convertProcessedArgs(processedArgs, action.ActionType)
+		if err != nil {
+			return nil, err
+		}
+
+		action.ActionInputs = finalArgs
 		normalizedActions = append(normalizedActions, action)
 	}
 
