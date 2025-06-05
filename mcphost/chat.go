@@ -136,7 +136,7 @@ func (c *Chat) runPrompt(ctx context.Context, prompt string) error {
 		return c.handleToolCalls(ctx, toolCalls)
 	}
 
-	c.renderContent("Assistant", result.ActionSummary)
+	c.renderContent("Assistant", result.Thought)
 
 	return nil
 }

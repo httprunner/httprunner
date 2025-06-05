@@ -27,11 +27,10 @@ type PlanningOptions struct {
 
 // PlanningResult represents the result of planning
 type PlanningResult struct {
-	ToolCalls     []schema.ToolCall `json:"tool_calls"`
-	ActionSummary string            `json:"summary"`
-	Thought       string            `json:"thought"`
-	Content       string            `json:"content"` // original content from model
-	Error         string            `json:"error,omitempty"`
+	ToolCalls []schema.ToolCall `json:"tool_calls"`
+	Thought   string            `json:"thought"`
+	Content   string            `json:"content"` // original content from model
+	Error     string            `json:"error,omitempty"`
 }
 
 func NewPlanner(ctx context.Context, modelConfig *ModelConfig) (*Planner, error) {
@@ -125,8 +124,8 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 		})
 		// history will be appended with tool calls execution result
 		result := &PlanningResult{
-			ToolCalls:     message.ToolCalls,
-			ActionSummary: message.Content,
+			ToolCalls: message.ToolCalls,
+			Thought:   message.Content,
 		}
 		return result, nil
 	}
@@ -135,8 +134,8 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 	result, err := p.parser.Parse(message.Content, opts.Size)
 	if err != nil {
 		result = &PlanningResult{
-			ActionSummary: message.Content,
-			Error:         err.Error(),
+			Thought: message.Content,
+			Error:   err.Error(),
 		}
 		log.Debug().Str("reason", err.Error()).Msg("parse content to actions failed")
 	}
@@ -147,7 +146,7 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 	})
 
 	log.Info().
-		Interface("summary", result.ActionSummary).
+		Interface("thought", result.Thought).
 		Interface("tool_calls", result.ToolCalls).
 		Msg("get VLM planning result")
 	return result, nil

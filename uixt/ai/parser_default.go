@@ -53,7 +53,7 @@ func (p *JSONContentParser) Parse(content string, size types.Size) (*PlanningRes
 	// Define a temporary struct to parse the expected JSON format
 	var jsonResponse struct {
 		Actions []Action `json:"actions"`
-		Summary string   `json:"summary"`
+		Thought string   `json:"thought"`
 		Error   string   `json:"error"`
 	}
 
@@ -95,9 +95,8 @@ func (p *JSONContentParser) Parse(content string, size types.Size) (*PlanningRes
 	toolCalls := convertActionsToToolCalls(normalizedActions, p.actionMapping)
 
 	return &PlanningResult{
-		ToolCalls:     toolCalls,
-		ActionSummary: jsonResponse.Summary,
-		Thought:       jsonResponse.Summary,
-		Content:       content,
+		ToolCalls: toolCalls,
+		Thought:   jsonResponse.Thought,
+		Content:   content,
 	}, nil
 }

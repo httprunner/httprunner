@@ -34,7 +34,8 @@ func (t *ToolSleep) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		seconds, ok := request.Params.Arguments["seconds"]
 		if !ok {
-			return nil, fmt.Errorf("seconds parameter is required")
+			log.Warn().Msg("seconds parameter is required, using default value 5.0 seconds")
+			seconds = 5.0
 		}
 
 		// Sleep action logic

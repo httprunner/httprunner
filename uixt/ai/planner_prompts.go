@@ -98,7 +98,7 @@ Supporting actions:
 
 Field description:
 * The ` + "`start_box`" + ` and ` + "`end_box`" + ` fields represent the bounding box coordinates of the target element in 1000x1000 relative coordinate system.
-* Use Chinese in log and summary fields.
+* Use Chinese in log and thought fields.
 
 Return in JSON format:
 {
@@ -108,7 +108,7 @@ Return in JSON format:
       "action_inputs": { ... }
     }
   ],
-  "summary": "string", // Log what the next action you can do according to the screenshot and the instruction. Use Chinese.
+  "thought": "string", // Log what the next action you can do according to the screenshot and the instruction. Use Chinese.
   "error": "string" | null, // Error messages about unexpected situations, if any. Use Chinese.
 }
 
@@ -123,7 +123,7 @@ For example, when the instruction is "点击第二个帖子的作者头像", by 
       }
     }
   ],
-  "summary": "点击第二个帖子的作者头像",
+  "thought": "点击第二个帖子的作者头像",
   "error": null
 }
 

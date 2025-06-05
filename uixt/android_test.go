@@ -25,7 +25,7 @@ func setupADBDriverExt(t *testing.T) *XTDriver {
 	require.Nil(t, err)
 	driverExt, err := NewXTDriver(driver,
 		option.WithCVService(option.CVServiceTypeVEDEM),
-		option.WithLLMService(option.LLMServiceTypeUITARS),
+		option.WithLLMService(option.LLMServiceTypeDoubaoVL),
 	)
 	require.Nil(t, err)
 	return driverExt

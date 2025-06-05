@@ -52,10 +52,9 @@ func (p *UITARSContentParser) Parse(content string, size types.Size) (*PlanningR
 	toolCalls := convertActionsToToolCalls(actions, p.actionMapping)
 
 	return &PlanningResult{
-		ToolCalls:     toolCalls,
-		ActionSummary: thought,
-		Thought:       thought,
-		Content:       content,
+		ToolCalls: toolCalls,
+		Thought:   thought,
+		Content:   content,
 	}, nil
 }
 
