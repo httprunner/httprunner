@@ -161,7 +161,7 @@ func (host *MCPHost) convertSingleToolToRecord(serverName string, tool mcp.Tool,
 	return MCPToolRecord{
 		ToolID:        id,
 		VisibleRange:  1,
-		ToolType:      "edge",
+		ToolType:      "Hrp",
 		ServerName:    serverName,
 		ToolName:      tool.Name,
 		Description:   info.Description,
@@ -227,7 +227,7 @@ func (host *MCPHost) extractReturns(serverName, toolName string, info DocStringI
 	// Priority 1: Get from ActionTool interface if available
 	if actionToolProvider := host.getActionToolProvider(serverName); actionToolProvider != nil {
 		if actionTool := actionToolProvider.GetToolByAction(option.ActionName(toolName)); actionTool != nil {
-			returnSchema := actionTool.ReturnSchema()
+			returnSchema := uixt.GenerateReturnSchema(actionTool)
 			if len(returnSchema) > 0 {
 				return host.marshalToJSON(returnSchema, "return schema")
 			}

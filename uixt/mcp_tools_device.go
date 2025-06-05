@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/danielpaulus/go-ios/ios"
-	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/pkg/gadb"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -14,7 +13,14 @@ import (
 )
 
 // ToolListAvailableDevices implements the list_available_devices tool call.
-type ToolListAvailableDevices struct{}
+type ToolListAvailableDevices struct {
+	// Return data fields - these define the structure of data returned by this tool
+	AndroidDevices []string `json:"androidDevices" desc:"List of Android device serial numbers"`
+	IosDevices     []string `json:"iosDevices" desc:"List of iOS device UDIDs"`
+	TotalCount     int      `json:"totalCount" desc:"Total number of available devices"`
+	AndroidCount   int      `json:"androidCount" desc:"Number of Android devices"`
+	IosCount       int      `json:"iosCount" desc:"Number of iOS devices"`
+}
 
 func (t *ToolListAvailableDevices) Name() option.ActionName {
 	return option.ACTION_ListAvailableDevices
@@ -59,8 +65,19 @@ func (t *ToolListAvailableDevices) Implement() server.ToolHandlerFunc {
 			deviceList["iosDevices"] = serialList
 		}
 
-		jsonResult, _ := json.Marshal(deviceList)
-		return mcp.NewToolResultText(string(jsonResult)), nil
+		// Create structured response
+		totalDevices := len(deviceList["androidDevices"]) + len(deviceList["iosDevices"])
+		message := fmt.Sprintf("Found %d available devices (%d Android, %d iOS)",
+			totalDevices, len(deviceList["androidDevices"]), len(deviceList["iosDevices"]))
+		returnData := ToolListAvailableDevices{
+			AndroidDevices: deviceList["androidDevices"],
+			IosDevices:     deviceList["iosDevices"],
+			TotalCount:     totalDevices,
+			AndroidCount:   len(deviceList["androidDevices"]),
+			IosCount:       len(deviceList["iosDevices"]),
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -68,15 +85,11 @@ func (t *ToolListAvailableDevices) ConvertActionToCallToolRequest(action option.
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
-func (t *ToolListAvailableDevices) ReturnSchema() map[string]string {
-	return map[string]string{
-		"androidDevices": "[]string: List of Android device serial numbers",
-		"iosDevices":     "[]string: List of iOS device UDIDs",
-	}
-}
-
 // ToolSelectDevice implements the select_device tool call.
-type ToolSelectDevice struct{}
+type ToolSelectDevice struct {
+	// Return data fields - these define the structure of data returned by this tool
+	DeviceUUID string `json:"deviceUUID" desc:"UUID of the selected device"`
+}
 
 func (t *ToolSelectDevice) Name() option.ActionName {
 	return option.ACTION_SelectDevice
@@ -101,16 +114,13 @@ func (t *ToolSelectDevice) Implement() server.ToolHandlerFunc {
 		}
 
 		uuid := driverExt.IDriver.GetDevice().UUID()
-		return mcp.NewToolResultText(fmt.Sprintf("Selected device: %s", uuid)), nil
+		message := fmt.Sprintf("Selected device: %s", uuid)
+		returnData := ToolSelectDevice{DeviceUUID: uuid}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
 func (t *ToolSelectDevice) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
-}
-
-func (t *ToolSelectDevice) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message with selected device UUID",
-	}
 }

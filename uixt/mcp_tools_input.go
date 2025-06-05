@@ -10,7 +10,10 @@ import (
 )
 
 // ToolInput implements the input tool call.
-type ToolInput struct{}
+type ToolInput struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Text string `json:"text" desc:"Text that was input"`
+}
 
 func (t *ToolInput) Name() option.ActionName {
 	return option.ACTION_Input
@@ -44,10 +47,13 @@ func (t *ToolInput) Implement() server.ToolHandlerFunc {
 		// Input action logic
 		err = driverExt.Input(unifiedReq.Text)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Input failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Input failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully input text: %s", unifiedReq.Text)), nil
+		message := fmt.Sprintf("Successfully input text: %s", unifiedReq.Text)
+		returnData := ToolInput{Text: unifiedReq.Text}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -59,15 +65,11 @@ func (t *ToolInput) ConvertActionToCallToolRequest(action option.MobileAction) (
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
-func (t *ToolInput) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming text was input",
-		"text":    "string: Text content that was input into the field",
-	}
-}
-
 // ToolSetIme implements the set_ime tool call.
-type ToolSetIme struct{}
+type ToolSetIme struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Ime string `json:"ime" desc:"IME that was set"`
+}
 
 func (t *ToolSetIme) Name() option.ActionName {
 	return option.ACTION_SetIme
@@ -97,10 +99,13 @@ func (t *ToolSetIme) Implement() server.ToolHandlerFunc {
 		// Set IME action logic
 		err = driverExt.SetIme(unifiedReq.Ime)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Set IME failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Set IME failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully set IME to: %s", unifiedReq.Ime)), nil
+		message := fmt.Sprintf("Successfully set IME to: %s", unifiedReq.Ime)
+		returnData := ToolSetIme{Ime: unifiedReq.Ime}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -112,11 +117,4 @@ func (t *ToolSetIme) ConvertActionToCallToolRequest(action option.MobileAction) 
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid set ime params: %v", action.Params)
-}
-
-func (t *ToolSetIme) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming IME was set",
-		"ime":     "string: Input method editor that was set",
-	}
 }

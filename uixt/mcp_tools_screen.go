@@ -11,7 +11,9 @@ import (
 )
 
 // ToolScreenShot implements the screenshot tool call.
-type ToolScreenShot struct{}
+type ToolScreenShot struct { // Return data fields - these define the structure of data returned by this tool
+	// Note: This tool returns image data, not JSON, so no additional fields needed
+}
 
 func (t *ToolScreenShot) Name() option.ActionName {
 	return option.ACTION_ScreenShot
@@ -47,16 +49,12 @@ func (t *ToolScreenShot) ConvertActionToCallToolRequest(action option.MobileActi
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
-func (t *ToolScreenShot) ReturnSchema() map[string]string {
-	return map[string]string{
-		"image": "string: Base64 encoded screenshot image in JPEG format",
-		"name":  "string: Image name identifier (typically 'screenshot')",
-		"type":  "string: MIME type of the image (image/jpeg)",
-	}
-}
-
 // ToolGetScreenSize implements the get_screen_size tool call.
-type ToolGetScreenSize struct{}
+type ToolGetScreenSize struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Width  int `json:"width" desc:"Screen width in pixels"`
+	Height int `json:"height" desc:"Screen height in pixels"`
+}
 
 func (t *ToolGetScreenSize) Name() option.ActionName {
 	return option.ACTION_GetScreenSize
@@ -80,11 +78,16 @@ func (t *ToolGetScreenSize) Implement() server.ToolHandlerFunc {
 
 		screenSize, err := driverExt.IDriver.WindowSize()
 		if err != nil {
-			return mcp.NewToolResultError("Get screen size failed: " + err.Error()), nil
+			return NewMCPErrorResponse("Get screen size failed: " + err.Error()), nil
 		}
-		return mcp.NewToolResultText(
-			fmt.Sprintf("Screen size: %d x %d pixels", screenSize.Width, screenSize.Height),
-		), nil
+
+		message := fmt.Sprintf("Screen size: %d x %d pixels", screenSize.Width, screenSize.Height)
+		returnData := ToolGetScreenSize{
+			Width:  screenSize.Width,
+			Height: screenSize.Height,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -92,16 +95,12 @@ func (t *ToolGetScreenSize) ConvertActionToCallToolRequest(action option.MobileA
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
-func (t *ToolGetScreenSize) ReturnSchema() map[string]string {
-	return map[string]string{
-		"width":   "int: Screen width in pixels",
-		"height":  "int: Screen height in pixels",
-		"message": "string: Formatted message with screen dimensions",
-	}
-}
-
 // ToolGetSource implements the get_source tool call.
-type ToolGetSource struct{}
+type ToolGetSource struct {
+	// Return data fields - these define the structure of data returned by this tool
+	PackageName string `json:"packageName" desc:"Package name of the app whose source was retrieved"`
+	Source      string `json:"source" desc:"UI hierarchy/source tree data in XML or JSON format"`
+}
 
 func (t *ToolGetSource) Name() option.ActionName {
 	return option.ACTION_GetSource
@@ -129,12 +128,18 @@ func (t *ToolGetSource) Implement() server.ToolHandlerFunc {
 		}
 
 		// Get source action logic
-		_, err = driverExt.Source(option.WithProcessName(unifiedReq.PackageName))
+		sourceData, err := driverExt.Source(option.WithProcessName(unifiedReq.PackageName))
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Get source failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Get source failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully retrieved source for package: %s", unifiedReq.PackageName)), nil
+		message := fmt.Sprintf("Successfully retrieved source for package: %s", unifiedReq.PackageName)
+		returnData := ToolGetSource{
+			PackageName: unifiedReq.PackageName,
+			Source:      sourceData,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -146,12 +151,4 @@ func (t *ToolGetSource) ConvertActionToCallToolRequest(action option.MobileActio
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid get source params: %v", action.Params)
-}
-
-func (t *ToolGetSource) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message":     "string: Success message confirming UI source was retrieved",
-		"packageName": "string: Package name of the app whose source was retrieved",
-		"source":      "string: UI hierarchy/source tree data in XML or JSON format",
-	}
 }

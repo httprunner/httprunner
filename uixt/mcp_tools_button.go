@@ -11,7 +11,10 @@ import (
 )
 
 // ToolPressButton implements the press_button tool call.
-type ToolPressButton struct{}
+type ToolPressButton struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Button string `json:"button" desc:"Name of the button that was pressed"`
+}
 
 func (t *ToolPressButton) Name() option.ActionName {
 	return option.ACTION_PressButton
@@ -41,10 +44,13 @@ func (t *ToolPressButton) Implement() server.ToolHandlerFunc {
 		// Press button action logic
 		err = driverExt.PressButton(types.DeviceButton(unifiedReq.Button))
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Press button failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Press button failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully pressed button: %s", unifiedReq.Button)), nil
+		message := fmt.Sprintf("Successfully pressed button: %s", unifiedReq.Button)
+		returnData := ToolPressButton{Button: string(unifiedReq.Button)}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -58,15 +64,9 @@ func (t *ToolPressButton) ConvertActionToCallToolRequest(action option.MobileAct
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid press button params: %v", action.Params)
 }
 
-func (t *ToolPressButton) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming the button press operation",
-		"button":  "string: Name of the button that was pressed",
-	}
-}
-
 // ToolHome implements the home tool call.
-type ToolHome struct{}
+type ToolHome struct { // Return data fields - these define the structure of data returned by this tool
+}
 
 func (t *ToolHome) Name() option.ActionName {
 	return option.ACTION_Home
@@ -91,10 +91,13 @@ func (t *ToolHome) Implement() server.ToolHandlerFunc {
 		// Home action logic
 		err = driverExt.Home()
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Home button press failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Home button press failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText("Successfully pressed home button"), nil
+		message := "Successfully pressed home button"
+		returnData := ToolHome{}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -102,14 +105,9 @@ func (t *ToolHome) ConvertActionToCallToolRequest(action option.MobileAction) (m
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
-func (t *ToolHome) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming home button was pressed",
-	}
-}
-
 // ToolBack implements the back tool call.
-type ToolBack struct{}
+type ToolBack struct { // Return data fields - these define the structure of data returned by this tool
+}
 
 func (t *ToolBack) Name() option.ActionName {
 	return option.ACTION_Back
@@ -134,19 +132,16 @@ func (t *ToolBack) Implement() server.ToolHandlerFunc {
 		// Back action logic
 		err = driverExt.Back()
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Back button press failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Back button press failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText("Successfully pressed back button"), nil
+		message := "Successfully pressed back button"
+		returnData := ToolBack{}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
 func (t *ToolBack) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
-}
-
-func (t *ToolBack) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming back button was pressed",
-	}
 }

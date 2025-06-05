@@ -15,7 +15,10 @@ import (
 // ToolSwipe implements the generic swipe tool call.
 // It automatically determines whether to use direction-based or coordinate-based swipe
 // based on the params type.
-type ToolSwipe struct{}
+type ToolSwipe struct {
+	// Return data fields - these define the structure of data returned by this tool
+	SwipeType string `json:"swipeType" desc:"Type of swipe performed (direction or coordinate)"`
+}
 
 func (t *ToolSwipe) Name() option.ActionName {
 	return option.ACTION_Swipe
@@ -75,19 +78,15 @@ func (t *ToolSwipe) ConvertActionToCallToolRequest(action option.MobileAction) (
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v, expected string direction or [fromX, fromY, toX, toY] coordinates", action.Params)
 }
 
-func (t *ToolSwipe) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message":   "string: Success message confirming the swipe operation",
-		"direction": "string: Direction of swipe (for directional swipes)",
-		"fromX":     "float64: Starting X coordinate (for coordinate-based swipes)",
-		"fromY":     "float64: Starting Y coordinate (for coordinate-based swipes)",
-		"toX":       "float64: Ending X coordinate (for coordinate-based swipes)",
-		"toY":       "float64: Ending Y coordinate (for coordinate-based swipes)",
-	}
-}
-
 // ToolSwipeDirection implements the swipe_direction tool call.
-type ToolSwipeDirection struct{}
+type ToolSwipeDirection struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Direction string  `json:"direction" desc:"Direction that was swiped (up/down/left/right)"`
+	FromX     float64 `json:"fromX" desc:"Starting X coordinate of the swipe"`
+	FromY     float64 `json:"fromY" desc:"Starting Y coordinate of the swipe"`
+	ToX       float64 `json:"toX" desc:"Ending X coordinate of the swipe"`
+	ToY       float64 `json:"toY" desc:"Ending Y coordinate of the swipe"`
+}
 
 func (t *ToolSwipeDirection) Name() option.ActionName {
 	return option.ACTION_SwipeDirection
@@ -137,25 +136,38 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 		}
 
 		// Convert direction to coordinates and perform swipe
+		var fromX, fromY, toX, toY float64
 		switch swipeDirection {
 		case "up":
-			err = driverExt.Swipe(0.5, 0.5, 0.5, 0.1, opts...)
+			fromX, fromY, toX, toY = 0.5, 0.5, 0.5, 0.1
+			err = driverExt.Swipe(fromX, fromY, toX, toY, opts...)
 		case "down":
-			err = driverExt.Swipe(0.5, 0.5, 0.5, 0.9, opts...)
+			fromX, fromY, toX, toY = 0.5, 0.5, 0.5, 0.9
+			err = driverExt.Swipe(fromX, fromY, toX, toY, opts...)
 		case "left":
-			err = driverExt.Swipe(0.5, 0.5, 0.1, 0.5, opts...)
+			fromX, fromY, toX, toY = 0.5, 0.5, 0.1, 0.5
+			err = driverExt.Swipe(fromX, fromY, toX, toY, opts...)
 		case "right":
-			err = driverExt.Swipe(0.5, 0.5, 0.9, 0.5, opts...)
+			fromX, fromY, toX, toY = 0.5, 0.5, 0.9, 0.5
+			err = driverExt.Swipe(fromX, fromY, toX, toY, opts...)
 		default:
-			return mcp.NewToolResultError(
-				fmt.Sprintf("Unexpected swipe direction: %s", swipeDirection)), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Unexpected swipe direction: %s", swipeDirection)), nil
 		}
 
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Swipe failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Swipe failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully swiped %s", swipeDirection)), nil
+		message := fmt.Sprintf("Successfully swiped %s", swipeDirection)
+		returnData := ToolSwipeDirection{
+			Direction: swipeDirection,
+			FromX:     fromX,
+			FromY:     fromY,
+			ToX:       toX,
+			ToY:       toY,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -181,15 +193,14 @@ func (t *ToolSwipeDirection) ConvertActionToCallToolRequest(action option.Mobile
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v", action.Params)
 }
 
-func (t *ToolSwipeDirection) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message":   "string: Success message confirming the directional swipe",
-		"direction": "string: Direction that was swiped (up/down/left/right)",
-	}
-}
-
 // ToolSwipeCoordinate implements the swipe_coordinate tool call.
-type ToolSwipeCoordinate struct{}
+type ToolSwipeCoordinate struct {
+	// Return data fields - these define the structure of data returned by this tool
+	FromX float64 `json:"fromX" desc:"Starting X coordinate of the swipe"`
+	FromY float64 `json:"fromY" desc:"Starting Y coordinate of the swipe"`
+	ToX   float64 `json:"toX" desc:"Ending X coordinate of the swipe"`
+	ToY   float64 `json:"toY" desc:"Ending Y coordinate of the swipe"`
+}
 
 func (t *ToolSwipeCoordinate) Name() option.ActionName {
 	return option.ACTION_SwipeCoordinate
@@ -244,11 +255,19 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 		swipeAction := prepareSwipeAction(driverExt, params, opts...)
 		err = swipeAction(driverExt)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Advanced swipe failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Advanced swipe failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed advanced swipe from (%.2f, %.2f) to (%.2f, %.2f)",
-			unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY)), nil
+		message := fmt.Sprintf("Successfully performed advanced swipe from (%.2f, %.2f) to (%.2f, %.2f)",
+			unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY)
+		returnData := ToolSwipeCoordinate{
+			FromX: unifiedReq.FromX,
+			FromY: unifiedReq.FromY,
+			ToX:   unifiedReq.ToX,
+			ToY:   unifiedReq.ToY,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -276,18 +295,11 @@ func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action option.Mobil
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe advanced params: %v", action.Params)
 }
 
-func (t *ToolSwipeCoordinate) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming the coordinate-based swipe",
-		"fromX":   "float64: Starting X coordinate of the swipe",
-		"fromY":   "float64: Starting Y coordinate of the swipe",
-		"toX":     "float64: Ending X coordinate of the swipe",
-		"toY":     "float64: Ending Y coordinate of the swipe",
-	}
-}
-
 // ToolSwipeToTapApp implements the swipe_to_tap_app tool call.
-type ToolSwipeToTapApp struct{}
+type ToolSwipeToTapApp struct {
+	// Return data fields - these define the structure of data returned by this tool
+	AppName string `json:"appName" desc:"Name of the app that was found and tapped"`
+}
 
 func (t *ToolSwipeToTapApp) Name() option.ActionName {
 	return option.ACTION_SwipeToTapApp
@@ -333,10 +345,13 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 		// Swipe to tap app action logic
 		err = driverExt.SwipeToTapApp(unifiedReq.AppName, opts...)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap app failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Swipe to tap app failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped app: %s", unifiedReq.AppName)), nil
+		message := fmt.Sprintf("Successfully found and tapped app: %s", unifiedReq.AppName)
+		returnData := ToolSwipeToTapApp{AppName: unifiedReq.AppName}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -354,15 +369,11 @@ func (t *ToolSwipeToTapApp) ConvertActionToCallToolRequest(action option.MobileA
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap app params: %v", action.Params)
 }
 
-func (t *ToolSwipeToTapApp) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming the app was found and tapped",
-		"appName": "string: Name of the app that was found and tapped",
-	}
-}
-
 // ToolSwipeToTapText implements the swipe_to_tap_text tool call.
-type ToolSwipeToTapText struct{}
+type ToolSwipeToTapText struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Text string `json:"text" desc:"Text that was found and tapped"`
+}
 
 func (t *ToolSwipeToTapText) Name() option.ActionName {
 	return option.ACTION_SwipeToTapText
@@ -411,10 +422,13 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 		// Swipe to tap text action logic
 		err = driverExt.SwipeToTapTexts([]string{unifiedReq.Text}, opts...)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap text failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Swipe to tap text failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped text: %s", unifiedReq.Text)), nil
+		message := fmt.Sprintf("Successfully found and tapped text: %s", unifiedReq.Text)
+		returnData := ToolSwipeToTapText{Text: unifiedReq.Text}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -432,15 +446,12 @@ func (t *ToolSwipeToTapText) ConvertActionToCallToolRequest(action option.Mobile
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap text params: %v", action.Params)
 }
 
-func (t *ToolSwipeToTapText) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming the text was found and tapped",
-		"text":    "string: Text content that was found and tapped",
-	}
-}
-
 // ToolSwipeToTapTexts implements the swipe_to_tap_texts tool call.
-type ToolSwipeToTapTexts struct{}
+type ToolSwipeToTapTexts struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Texts      []string `json:"texts" desc:"List of texts that were searched for"`
+	TappedText string   `json:"tappedText" desc:"The specific text that was found and tapped"`
+}
 
 func (t *ToolSwipeToTapTexts) Name() option.ActionName {
 	return option.ACTION_SwipeToTapTexts
@@ -490,10 +501,16 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 		log.Info().Strs("texts", unifiedReq.Texts).Msg("swipe to tap texts")
 		err = driverExt.SwipeToTapTexts(unifiedReq.Texts, opts...)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap texts failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Swipe to tap texts failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully found and tapped one of texts: %v", unifiedReq.Texts)), nil
+		message := fmt.Sprintf("Successfully found and tapped one of texts: %v", unifiedReq.Texts)
+		returnData := ToolSwipeToTapTexts{
+			Texts:      unifiedReq.Texts,
+			TappedText: "unknown", // We don't know which specific text was tapped
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -516,16 +533,14 @@ func (t *ToolSwipeToTapTexts) ConvertActionToCallToolRequest(action option.Mobil
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
-func (t *ToolSwipeToTapTexts) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message":   "string: Success message confirming one of the texts was found and tapped",
-		"texts":     "[]string: List of text options that were searched for",
-		"foundText": "string: The specific text that was actually found and tapped",
-	}
-}
-
 // ToolDrag implements the drag tool call.
-type ToolDrag struct{}
+type ToolDrag struct {
+	// Return data fields - these define the structure of data returned by this tool
+	FromX float64 `json:"fromX" desc:"Starting X coordinate of the drag"`
+	FromY float64 `json:"fromY" desc:"Starting Y coordinate of the drag"`
+	ToX   float64 `json:"toX" desc:"Ending X coordinate of the drag"`
+	ToY   float64 `json:"toY" desc:"Ending Y coordinate of the drag"`
+}
 
 func (t *ToolDrag) Name() option.ActionName {
 	return option.ACTION_Drag
@@ -577,11 +592,19 @@ func (t *ToolDrag) Implement() server.ToolHandlerFunc {
 
 		err = driverExt.Swipe(unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY, opts...)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Drag failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Drag failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully dragged from (%.2f, %.2f) to (%.2f, %.2f)",
-			unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY)), nil
+		message := fmt.Sprintf("Successfully dragged from (%.2f, %.2f) to (%.2f, %.2f)",
+			unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY)
+		returnData := ToolDrag{
+			FromX: unifiedReq.FromX,
+			FromY: unifiedReq.FromY,
+			ToX:   unifiedReq.ToX,
+			ToY:   unifiedReq.ToY,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -604,14 +627,4 @@ func (t *ToolDrag) ConvertActionToCallToolRequest(action option.MobileAction) (m
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid drag parameters: %v", action.Params)
-}
-
-func (t *ToolDrag) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming the drag operation",
-		"fromX":   "float64: Starting X coordinate of the drag",
-		"fromY":   "float64: Starting Y coordinate of the drag",
-		"toX":     "float64: Ending X coordinate of the drag",
-		"toY":     "float64: Ending Y coordinate of the drag",
-	}
 }

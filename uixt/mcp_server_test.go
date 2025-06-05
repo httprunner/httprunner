@@ -3,6 +3,7 @@ package uixt
 import (
 	"testing"
 
+	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1561,4 +1562,85 @@ func TestPreMarkOperationConfiguration(t *testing.T) {
 	// Should not have pre_mark_operation in arguments when false
 	_, exists := request2.Params.Arguments["pre_mark_operation"]
 	assert.False(t, exists)
+}
+
+func TestGenerateReturnSchema(t *testing.T) {
+	// Test with ToolListPackages
+	tool := ToolListPackages{}
+	schema := GenerateReturnSchema(tool)
+
+	// Check that standard MCPResponse fields are included
+	assert.Contains(t, schema, "action")
+	assert.Contains(t, schema, "success")
+	assert.Contains(t, schema, "message")
+	assert.Equal(t, "string: Action performed", schema["action"])
+	assert.Equal(t, "boolean: Whether the operation was successful", schema["success"])
+	assert.Equal(t, "string: Human-readable message describing the result", schema["message"])
+
+	// Check that tool-specific fields are included at the same level
+	assert.Contains(t, schema, "packages")
+	assert.Contains(t, schema, "count")
+	assert.Equal(t, "[]string: List of installed app package names on the device", schema["packages"])
+	assert.Equal(t, "int: Number of installed packages", schema["count"])
+
+	// Ensure "data" field is not present in the new flat structure
+	assert.NotContains(t, schema, "data")
+}
+
+func TestMCPResponseInheritance(t *testing.T) {
+	// Test creating a response with tool data
+	returnData := ToolListPackages{
+		Packages: []string{"com.example.app1", "com.example.app2"},
+		Count:    2,
+	}
+
+	// Test JSON marshaling
+	jsonData, err := json.Marshal(returnData)
+	assert.NoError(t, err)
+
+	// Parse back to verify structure
+	var parsed map[string]interface{}
+	err = json.Unmarshal(jsonData, &parsed)
+	assert.NoError(t, err)
+
+	// Check that tool-specific fields are present
+	assert.Equal(t, float64(2), parsed["count"]) // JSON numbers are float64
+
+	packages, ok := parsed["packages"].([]interface{})
+	assert.True(t, ok)
+	assert.Len(t, packages, 2)
+	assert.Equal(t, "com.example.app1", packages[0])
+	assert.Equal(t, "com.example.app2", packages[1])
+}
+
+func TestNewMCPSuccessResponse(t *testing.T) {
+	// Test the simplified NewMCPSuccessResponse function
+	message := "Successfully slept for 5 seconds"
+	returnData := ToolSleep{
+		Seconds:  5.0,
+		Duration: "5s",
+	}
+
+	// Test JSON marshaling directly first
+	jsonData, err := json.Marshal(returnData)
+	assert.NoError(t, err)
+
+	// Parse the JSON to verify structure
+	var parsed map[string]interface{}
+	err = json.Unmarshal(jsonData, &parsed)
+	assert.NoError(t, err)
+
+	assert.Equal(t, float64(5.0), parsed["seconds"])
+	assert.Equal(t, "5s", parsed["duration"])
+
+	// Test the MCP response function with actual tool instance
+	tool := &ToolSleep{}
+	result := NewMCPSuccessResponse(message, tool)
+	assert.NotNil(t, result)
+}
+
+func TestNewMCPErrorResponse(t *testing.T) {
+	// Test error response creation
+	result := NewMCPErrorResponse("Test error message")
+	assert.NotNil(t, result)
 }

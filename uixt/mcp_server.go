@@ -3,6 +3,8 @@ package uixt
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -150,8 +152,6 @@ type ActionTool interface {
 	Implement() server.ToolHandlerFunc
 	// ConvertActionToCallToolRequest converts MobileAction to mcp.CallToolRequest
 	ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error)
-	// ReturnSchema returns the expected return value schema based on mcp.CallToolResult conventions
-	ReturnSchema() map[string]string
 }
 
 // buildMCPCallToolRequest is a helper function to build mcp.CallToolRequest
@@ -245,4 +245,176 @@ func parseActionOptions(arguments map[string]any) (*option.ActionOptions, error)
 	}
 
 	return &actionOptions, nil
+}
+
+// MCPResponse represents the standard response structure for all MCP tools
+type MCPResponse struct {
+	Action  string `json:"action" desc:"Action performed"`
+	Success bool   `json:"success" desc:"Whether the operation was successful"`
+	Message string `json:"message" desc:"Human-readable message describing the result"`
+}
+
+// NewMCPSuccessResponse creates a successful response with structured data
+func NewMCPSuccessResponse(message string, actionTool ActionTool) *mcp.CallToolResult {
+	// Create base response with standard fields
+	response := map[string]any{
+		"action":  string(actionTool.Name()),
+		"success": true,
+		"message": message,
+	}
+
+	// Add all tool-specific fields at the same level
+	toolData := convertToolToData(actionTool)
+	for key, value := range toolData {
+		response[key] = value
+	}
+
+	return marshalToMCPResult(response)
+}
+
+// convertToolToData converts tool struct to map[string]any for Data field
+func convertToolToData(tool interface{}) map[string]any {
+	data := make(map[string]any)
+
+	// Use reflection to extract fields from the tool struct
+	structValue := reflect.ValueOf(tool)
+	structType := reflect.TypeOf(tool)
+
+	// Handle pointer types
+	if structType.Kind() == reflect.Ptr {
+		structValue = structValue.Elem()
+		structType = structType.Elem()
+	}
+
+	// Extract all fields except MCPResponse
+	for i := 0; i < structType.NumField(); i++ {
+		field := structType.Field(i)
+		fieldValue := structValue.Field(i)
+
+		// Skip MCPResponse embedded fields
+		if field.Type.Name() == "MCPResponse" {
+			continue
+		}
+
+		// Get JSON tag name
+		jsonTag := field.Tag.Get("json")
+		if jsonTag == "" || jsonTag == "-" {
+			continue
+		}
+
+		// Parse JSON tag (remove omitempty, etc.)
+		jsonName := strings.Split(jsonTag, ",")[0]
+		if jsonName == "" {
+			jsonName = strings.ToLower(field.Name)
+		}
+
+		// Add field value to data
+		if fieldValue.IsValid() && fieldValue.CanInterface() {
+			data[jsonName] = fieldValue.Interface()
+		}
+	}
+
+	return data
+}
+
+// NewMCPErrorResponse creates an error response
+func NewMCPErrorResponse(message string) *mcp.CallToolResult {
+	response := map[string]any{
+		"success": false,
+		"message": message,
+	}
+	return marshalToMCPResult(response)
+}
+
+// marshalToMCPResult converts any data to mcp.CallToolResult
+func marshalToMCPResult(data interface{}) *mcp.CallToolResult {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		// Fallback to error response if marshaling fails
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to marshal response: %s", err.Error()))
+	}
+	return mcp.NewToolResultText(string(jsonData))
+}
+
+// GenerateReturnSchema generates return schema from a struct using reflection
+func GenerateReturnSchema(toolStruct interface{}) map[string]string {
+	schema := make(map[string]string)
+
+	// Add standard MCPResponse fields
+	schema["action"] = "string: Action performed"
+	schema["success"] = "boolean: Whether the operation was successful"
+	schema["message"] = "string: Human-readable message describing the result"
+
+	// Get the type of the struct
+	structType := reflect.TypeOf(toolStruct)
+	if structType.Kind() == reflect.Ptr {
+		structType = structType.Elem()
+	}
+
+	// Iterate through all fields and add them at the same level
+	for i := 0; i < structType.NumField(); i++ {
+		field := structType.Field(i)
+
+		// Skip embedded MCPResponse fields (though they shouldn't exist now)
+		if field.Type.Name() == "MCPResponse" {
+			continue
+		}
+
+		// Get JSON tag
+		jsonTag := field.Tag.Get("json")
+		if jsonTag == "" || jsonTag == "-" {
+			continue
+		}
+
+		// Parse JSON tag (remove omitempty, etc.)
+		jsonName := strings.Split(jsonTag, ",")[0]
+		if jsonName == "" {
+			jsonName = strings.ToLower(field.Name)
+		}
+
+		// Get description from tag
+		description := field.Tag.Get("desc")
+		if description == "" {
+			description = fmt.Sprintf("%s field", field.Name)
+		}
+
+		// Get field type
+		fieldType := getFieldTypeString(field.Type)
+
+		// Add to schema at the same level as standard fields
+		schema[jsonName] = fmt.Sprintf("%s: %s", fieldType, description)
+	}
+
+	return schema
+}
+
+// getFieldTypeString converts Go type to string representation
+func getFieldTypeString(t reflect.Type) string {
+	switch t.Kind() {
+	case reflect.String:
+		return "string"
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return "int"
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return "uint"
+	case reflect.Float32, reflect.Float64:
+		return "float64"
+	case reflect.Bool:
+		return "boolean"
+	case reflect.Slice:
+		elemType := getFieldTypeString(t.Elem())
+		return fmt.Sprintf("[]%s", elemType)
+	case reflect.Map:
+		keyType := getFieldTypeString(t.Key())
+		valueType := getFieldTypeString(t.Elem())
+		return fmt.Sprintf("map[%s]%s", keyType, valueType)
+	case reflect.Struct:
+		return "object"
+	case reflect.Ptr:
+		return getFieldTypeString(t.Elem())
+	case reflect.Interface:
+		return "interface{}"
+	default:
+		return t.String()
+	}
 }

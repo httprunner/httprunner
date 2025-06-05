@@ -11,7 +11,10 @@ import (
 )
 
 // ToolStartToGoal implements the start_to_goal tool call.
-type ToolStartToGoal struct{}
+type ToolStartToGoal struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Prompt string `json:"prompt" desc:"Goal prompt that was executed"`
+}
 
 func (t *ToolStartToGoal) Name() option.ActionName {
 	return option.ACTION_StartToGoal
@@ -41,10 +44,15 @@ func (t *ToolStartToGoal) Implement() server.ToolHandlerFunc {
 		// Start to goal logic
 		err = driverExt.StartToGoal(ctx, unifiedReq.Prompt)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to achieve goal: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Failed to achieve goal: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully achieved goal: %s", unifiedReq.Prompt)), nil
+		message := fmt.Sprintf("Successfully achieved goal: %s", unifiedReq.Prompt)
+		returnData := ToolStartToGoal{
+			Prompt: unifiedReq.Prompt,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -62,14 +70,11 @@ func (t *ToolStartToGoal) ConvertActionToCallToolRequest(action option.MobileAct
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid start to goal params: %v", action.Params)
 }
 
-func (t *ToolStartToGoal) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming goal was achieved, or error message if failed",
-	}
-}
-
 // ToolAIAction implements the ai_action tool call.
-type ToolAIAction struct{}
+type ToolAIAction struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Prompt string `json:"prompt" desc:"AI action prompt that was executed"`
+}
 
 func (t *ToolAIAction) Name() option.ActionName {
 	return option.ACTION_AIAction
@@ -99,10 +104,15 @@ func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
 		// AI action logic
 		err = driverExt.AIAction(ctx, unifiedReq.Prompt)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("AI action failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("AI action failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed AI action with prompt: %s", unifiedReq.Prompt)), nil
+		message := fmt.Sprintf("Successfully performed AI action with prompt: %s", unifiedReq.Prompt)
+		returnData := ToolAIAction{
+			Prompt: unifiedReq.Prompt,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -120,14 +130,11 @@ func (t *ToolAIAction) ConvertActionToCallToolRequest(action option.MobileAction
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid AI action params: %v", action.Params)
 }
 
-func (t *ToolAIAction) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming AI action was performed, or error message if failed",
-	}
-}
-
 // ToolFinished implements the finished tool call.
-type ToolFinished struct{}
+type ToolFinished struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Content string `json:"content" desc:"Task completion reason or result message"`
+}
 
 func (t *ToolFinished) Name() option.ActionName {
 	return option.ACTION_Finished
@@ -150,7 +157,12 @@ func (t *ToolFinished) Implement() server.ToolHandlerFunc {
 		}
 		log.Info().Str("reason", unifiedReq.Content).Msg("task finished")
 
-		return mcp.NewToolResultText(fmt.Sprintf("Task completed: %s", unifiedReq.Content)), nil
+		message := fmt.Sprintf("Task completed: %s", unifiedReq.Content)
+		returnData := ToolFinished{
+			Content: unifiedReq.Content,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -162,10 +174,4 @@ func (t *ToolFinished) ConvertActionToCallToolRequest(action option.MobileAction
 		return buildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid finished params: %v", action.Params)
-}
-
-func (t *ToolFinished) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming task completion, or error message if failed",
-	}
 }

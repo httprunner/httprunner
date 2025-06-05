@@ -13,7 +13,10 @@ import (
 )
 
 // ToolWebLoginNoneUI implements the web_login_none_ui tool call.
-type ToolWebLoginNoneUI struct{}
+type ToolWebLoginNoneUI struct {
+	// Return data fields - these define the structure of data returned by this tool
+	PackageName string `json:"packageName" desc:"Package name used for web login"`
+}
 
 func (t *ToolWebLoginNoneUI) Name() option.ActionName {
 	return option.ACTION_WebLoginNoneUI
@@ -49,10 +52,13 @@ func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 
 		_, err = driver.LoginNoneUI(unifiedReq.PackageName, unifiedReq.PhoneNumber, unifiedReq.Captcha, unifiedReq.Password)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Web login failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Web login failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText("Successfully performed web login without UI"), nil
+		message := "Successfully performed web login without UI"
+		returnData := ToolWebLoginNoneUI{PackageName: unifiedReq.PackageName}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -60,15 +66,12 @@ func (t *ToolWebLoginNoneUI) ConvertActionToCallToolRequest(action option.Mobile
 	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
-func (t *ToolWebLoginNoneUI) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message":     "string: Success message confirming web login was completed",
-		"loginResult": "object: Result of the login operation (success/failure details)",
-	}
-}
-
 // ToolSecondaryClick implements the secondary_click tool call.
-type ToolSecondaryClick struct{}
+type ToolSecondaryClick struct {
+	// Return data fields - these define the structure of data returned by this tool
+	X float64 `json:"x" desc:"X coordinate of the secondary click"`
+	Y float64 `json:"y" desc:"Y coordinate of the secondary click"`
+}
 
 func (t *ToolSecondaryClick) Name() option.ActionName {
 	return option.ACTION_SecondaryClick
@@ -103,10 +106,16 @@ func (t *ToolSecondaryClick) Implement() server.ToolHandlerFunc {
 		// Secondary click action logic
 		err = driverExt.SecondaryClick(unifiedReq.X, unifiedReq.Y)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Secondary click failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Secondary click failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed secondary click at (%.2f, %.2f)", unifiedReq.X, unifiedReq.Y)), nil
+		message := fmt.Sprintf("Successfully performed secondary click at (%.2f, %.2f)", unifiedReq.X, unifiedReq.Y)
+		returnData := ToolSecondaryClick{
+			X: unifiedReq.X,
+			Y: unifiedReq.Y,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -121,16 +130,11 @@ func (t *ToolSecondaryClick) ConvertActionToCallToolRequest(action option.Mobile
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click params: %v", action.Params)
 }
 
-func (t *ToolSecondaryClick) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message": "string: Success message confirming secondary click (right-click) operation",
-		"x":       "float64: X coordinate where secondary click was performed",
-		"y":       "float64: Y coordinate where secondary click was performed",
-	}
-}
-
 // ToolHoverBySelector implements the hover_by_selector tool call.
-type ToolHoverBySelector struct{}
+type ToolHoverBySelector struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Selector string `json:"selector" desc:"CSS selector or XPath used for hover"`
+}
 
 func (t *ToolHoverBySelector) Name() option.ActionName {
 	return option.ACTION_HoverBySelector
@@ -160,10 +164,13 @@ func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
 		// Hover by selector action logic
 		err = driverExt.HoverBySelector(unifiedReq.Selector)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Hover by selector failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Hover by selector failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully hovered over element with selector: %s", unifiedReq.Selector)), nil
+		message := fmt.Sprintf("Successfully hovered over element with selector: %s", unifiedReq.Selector)
+		returnData := ToolHoverBySelector{Selector: unifiedReq.Selector}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -177,15 +184,11 @@ func (t *ToolHoverBySelector) ConvertActionToCallToolRequest(action option.Mobil
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid hover by selector params: %v", action.Params)
 }
 
-func (t *ToolHoverBySelector) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message":  "string: Success message confirming hover operation",
-		"selector": "string: CSS selector or XPath of the element that was hovered over",
-	}
-}
-
 // ToolTapBySelector implements the tap_by_selector tool call.
-type ToolTapBySelector struct{}
+type ToolTapBySelector struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Selector string `json:"selector" desc:"CSS selector or XPath used for tap"`
+}
 
 func (t *ToolTapBySelector) Name() option.ActionName {
 	return option.ACTION_TapBySelector
@@ -215,10 +218,13 @@ func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 		// Tap by selector action logic
 		err = driverExt.TapBySelector(unifiedReq.Selector)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Tap by selector failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Tap by selector failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully tapped element with selector: %s", unifiedReq.Selector)), nil
+		message := fmt.Sprintf("Successfully tapped element with selector: %s", unifiedReq.Selector)
+		returnData := ToolTapBySelector{Selector: unifiedReq.Selector}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -232,15 +238,11 @@ func (t *ToolTapBySelector) ConvertActionToCallToolRequest(action option.MobileA
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by selector params: %v", action.Params)
 }
 
-func (t *ToolTapBySelector) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message":  "string: Success message confirming tap operation",
-		"selector": "string: CSS selector or XPath of the element that was tapped",
-	}
-}
-
 // ToolSecondaryClickBySelector implements the secondary_click_by_selector tool call.
-type ToolSecondaryClickBySelector struct{}
+type ToolSecondaryClickBySelector struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Selector string `json:"selector" desc:"CSS selector or XPath used for secondary click"`
+}
 
 func (t *ToolSecondaryClickBySelector) Name() option.ActionName {
 	return option.ACTION_SecondaryClickBySelector
@@ -270,10 +272,13 @@ func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
 		// Secondary click by selector action logic
 		err = driverExt.SecondaryClickBySelector(unifiedReq.Selector)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Secondary click by selector failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Secondary click by selector failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully performed secondary click on element with selector: %s", unifiedReq.Selector)), nil
+		message := fmt.Sprintf("Successfully performed secondary click on element with selector: %s", unifiedReq.Selector)
+		returnData := ToolSecondaryClickBySelector{Selector: unifiedReq.Selector}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -287,15 +292,11 @@ func (t *ToolSecondaryClickBySelector) ConvertActionToCallToolRequest(action opt
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click by selector params: %v", action.Params)
 }
 
-func (t *ToolSecondaryClickBySelector) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message":  "string: Success message confirming secondary click operation",
-		"selector": "string: CSS selector or XPath of the element that was right-clicked",
-	}
-}
-
 // ToolWebCloseTab implements the web_close_tab tool call.
-type ToolWebCloseTab struct{}
+type ToolWebCloseTab struct {
+	// Return data fields - these define the structure of data returned by this tool
+	TabIndex int `json:"tabIndex" desc:"Index of the closed tab"`
+}
 
 func (t *ToolWebCloseTab) Name() option.ActionName {
 	return option.ACTION_WebCloseTab
@@ -335,10 +336,13 @@ func (t *ToolWebCloseTab) Implement() server.ToolHandlerFunc {
 
 		err = browserDriver.CloseTab(unifiedReq.TabIndex)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Close tab failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Close tab failed: %s", err.Error())), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Successfully closed tab at index: %d", unifiedReq.TabIndex)), nil
+		message := fmt.Sprintf("Successfully closed tab at index: %d", unifiedReq.TabIndex)
+		returnData := ToolWebCloseTab{TabIndex: unifiedReq.TabIndex}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
 	}
 }
 
@@ -358,11 +362,4 @@ func (t *ToolWebCloseTab) ConvertActionToCallToolRequest(action option.MobileAct
 		"tabIndex": tabIndex,
 	}
 	return buildMCPCallToolRequest(t.Name(), arguments), nil
-}
-
-func (t *ToolWebCloseTab) ReturnSchema() map[string]string {
-	return map[string]string{
-		"message":  "string: Success message confirming browser tab was closed",
-		"tabIndex": "int: Index of the tab that was closed",
-	}
 }
