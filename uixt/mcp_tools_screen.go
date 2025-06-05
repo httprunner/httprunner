@@ -129,7 +129,6 @@ func (t *ToolGetSource) Implement() server.ToolHandlerFunc {
 		}
 
 		// Get source action logic
-		log.Info().Str("packageName", unifiedReq.PackageName).Msg("getting source")
 		_, err = driverExt.Source(option.WithProcessName(unifiedReq.PackageName))
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Get source failed: %s", err.Error())), nil

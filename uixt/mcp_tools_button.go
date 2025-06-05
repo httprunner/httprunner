@@ -8,7 +8,6 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"github.com/rs/zerolog/log"
 )
 
 // ToolPressButton implements the press_button tool call.
@@ -40,7 +39,6 @@ func (t *ToolPressButton) Implement() server.ToolHandlerFunc {
 		}
 
 		// Press button action logic
-		log.Info().Str("button", string(unifiedReq.Button)).Msg("pressing button")
 		err = driverExt.PressButton(types.DeviceButton(unifiedReq.Button))
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Press button failed: %s", err.Error())), nil
@@ -91,7 +89,6 @@ func (t *ToolHome) Implement() server.ToolHandlerFunc {
 		}
 
 		// Home action logic
-		log.Info().Msg("pressing home button")
 		err = driverExt.Home()
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Home button press failed: %s", err.Error())), nil
@@ -135,7 +132,6 @@ func (t *ToolBack) Implement() server.ToolHandlerFunc {
 		}
 
 		// Back action logic
-		log.Info().Msg("pressing back button")
 		err = driverExt.Back()
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Back button press failed: %s", err.Error())), nil

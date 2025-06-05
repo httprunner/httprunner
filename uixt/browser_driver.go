@@ -201,6 +201,7 @@ func (wd *BrowserDriver) CreateNetListener() (*websocket.Conn, error) {
 }
 
 func (wd *BrowserDriver) CloseTab(pageIndex int) (err error) {
+	log.Info().Int("pageIndex", pageIndex).Msg("BrowserDriver.CloseTab")
 	data := map[string]interface{}{
 		"page_index": pageIndex,
 	}
@@ -210,6 +211,7 @@ func (wd *BrowserDriver) CloseTab(pageIndex int) (err error) {
 }
 
 func (wd *BrowserDriver) HoverBySelector(selector string, options ...option.ActionOption) (err error) {
+	log.Info().Str("selector", selector).Msg("BrowserDriver.HoverBySelector")
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -222,6 +224,7 @@ func (wd *BrowserDriver) HoverBySelector(selector string, options ...option.Acti
 }
 
 func (wd *BrowserDriver) TapBySelector(selector string, options ...option.ActionOption) (err error) {
+	log.Info().Str("selector", selector).Msg("BrowserDriver.TapBySelector")
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -234,6 +237,7 @@ func (wd *BrowserDriver) TapBySelector(selector string, options ...option.Action
 }
 
 func (wd *BrowserDriver) SecondaryClick(x, y float64) (err error) {
+	log.Info().Float64("x", x).Float64("y", y).Msg("BrowserDriver.SecondaryClick")
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
@@ -243,6 +247,7 @@ func (wd *BrowserDriver) SecondaryClick(x, y float64) (err error) {
 }
 
 func (wd *BrowserDriver) SecondaryClickBySelector(selector string, options ...option.ActionOption) (err error) {
+	log.Info().Str("selector", selector).Msg("BrowserDriver.SecondaryClickBySelector")
 	data := map[string]interface{}{
 		"selector": selector,
 	}

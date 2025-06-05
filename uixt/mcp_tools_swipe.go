@@ -331,7 +331,6 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 		}
 
 		// Swipe to tap app action logic
-		log.Info().Str("appName", unifiedReq.AppName).Msg("swipe to tap app")
 		err = driverExt.SwipeToTapApp(unifiedReq.AppName, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap app failed: %s", err.Error())), nil
@@ -410,7 +409,6 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 		}
 
 		// Swipe to tap text action logic
-		log.Info().Str("text", unifiedReq.Text).Msg("swipe to tap text")
 		err = driverExt.SwipeToTapTexts([]string{unifiedReq.Text}, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Swipe to tap text failed: %s", err.Error())), nil

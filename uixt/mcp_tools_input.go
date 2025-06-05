@@ -7,7 +7,6 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"github.com/rs/zerolog/log"
 )
 
 // ToolInput implements the input tool call.
@@ -43,7 +42,6 @@ func (t *ToolInput) Implement() server.ToolHandlerFunc {
 		}
 
 		// Input action logic
-		log.Info().Str("text", unifiedReq.Text).Msg("inputting text")
 		err = driverExt.Input(unifiedReq.Text)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Input failed: %s", err.Error())), nil
@@ -97,7 +95,6 @@ func (t *ToolSetIme) Implement() server.ToolHandlerFunc {
 		}
 
 		// Set IME action logic
-		log.Info().Str("ime", unifiedReq.Ime).Msg("setting IME")
 		err = driverExt.SetIme(unifiedReq.Ime)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Set IME failed: %s", err.Error())), nil

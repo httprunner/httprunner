@@ -8,7 +8,6 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"github.com/rs/zerolog/log"
 )
 
 // ToolTapXY implements the tap_xy tool call.
@@ -135,8 +134,6 @@ func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 		}
 
 		// Tap absolute XY action logic
-		log.Info().Float64("x", unifiedReq.X).Float64("y", unifiedReq.Y).Msg("tapping at absolute coordinates")
-
 		err = driverExt.TapAbsXY(unifiedReq.X, unifiedReq.Y, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap absolute XY failed: %s", err.Error())), nil
@@ -221,7 +218,6 @@ func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
 		}
 
 		// Tap by OCR action logic
-		log.Info().Str("text", unifiedReq.Text).Msg("tapping by OCR")
 		err = driverExt.TapByOCR(unifiedReq.Text, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap by OCR failed: %s", err.Error())), nil
@@ -286,9 +282,6 @@ func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
 		if unifiedReq.PreMarkOperation {
 			opts = append(opts, option.WithPreMarkOperation(true))
 		}
-
-		// Tap by CV action logic
-		log.Info().Msg("tapping by CV")
 
 		// For TapByCV, we need to check if there are UI types in the options
 		// In the original DoAction, it requires ScreenShotWithUITypes to be set

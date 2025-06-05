@@ -161,7 +161,6 @@ func (t *ToolSleepRandom) Implement() server.ToolHandlerFunc {
 		}
 
 		// Sleep random action logic
-		log.Info().Floats64("params", unifiedReq.Params).Msg("sleeping for random duration")
 		sleepStrict(time.Now(), getSimulationDuration(unifiedReq.Params))
 
 		return mcp.NewToolResultText(fmt.Sprintf("Successfully slept for random duration with params: %v", unifiedReq.Params)), nil
@@ -210,7 +209,6 @@ func (t *ToolClosePopups) Implement() server.ToolHandlerFunc {
 		}
 
 		// Close popups action logic
-		log.Info().Msg("closing popups")
 		err = driverExt.ClosePopupsHandler()
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Close popups failed: %s", err.Error())), nil

@@ -742,6 +742,7 @@ func (ad *ADBDriver) ForegroundInfo() (app types.AppInfo, err error) {
 }
 
 func (ad *ADBDriver) SetIme(imeRegx string) error {
+	log.Info().Str("imeRegx", imeRegx).Msg("ADBDriver.SetIme")
 	imeList := ad.ListIme()
 	ime := ""
 	for _, imeName := range imeList {

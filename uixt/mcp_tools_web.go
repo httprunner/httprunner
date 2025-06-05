@@ -101,7 +101,6 @@ func (t *ToolSecondaryClick) Implement() server.ToolHandlerFunc {
 		}
 
 		// Secondary click action logic
-		log.Info().Float64("x", unifiedReq.X).Float64("y", unifiedReq.Y).Msg("performing secondary click")
 		err = driverExt.SecondaryClick(unifiedReq.X, unifiedReq.Y)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Secondary click failed: %s", err.Error())), nil
@@ -159,7 +158,6 @@ func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
 		}
 
 		// Hover by selector action logic
-		log.Info().Str("selector", unifiedReq.Selector).Msg("hovering by selector")
 		err = driverExt.HoverBySelector(unifiedReq.Selector)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Hover by selector failed: %s", err.Error())), nil
@@ -215,7 +213,6 @@ func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 		}
 
 		// Tap by selector action logic
-		log.Info().Str("selector", unifiedReq.Selector).Msg("tapping by selector")
 		err = driverExt.TapBySelector(unifiedReq.Selector)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap by selector failed: %s", err.Error())), nil
@@ -271,7 +268,6 @@ func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
 		}
 
 		// Secondary click by selector action logic
-		log.Info().Str("selector", unifiedReq.Selector).Msg("performing secondary click by selector")
 		err = driverExt.SecondaryClickBySelector(unifiedReq.Selector)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Secondary click by selector failed: %s", err.Error())), nil
@@ -332,7 +328,6 @@ func (t *ToolWebCloseTab) Implement() server.ToolHandlerFunc {
 		}
 
 		// Web close tab action logic
-		log.Info().Int("tabIndex", unifiedReq.TabIndex).Msg("closing web tab")
 		browserDriver, ok := driverExt.IDriver.(*BrowserDriver)
 		if !ok {
 			return nil, fmt.Errorf("web close tab is only supported for browser drivers")

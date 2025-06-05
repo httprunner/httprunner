@@ -84,7 +84,6 @@ func (t *ToolLaunchApp) Implement() server.ToolHandlerFunc {
 		}
 
 		// Launch app action logic
-		log.Info().Str("packageName", unifiedReq.PackageName).Msg("launching app")
 		err = driverExt.AppLaunch(unifiedReq.PackageName)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Launch app failed: %s", err.Error())), nil
@@ -141,7 +140,6 @@ func (t *ToolTerminateApp) Implement() server.ToolHandlerFunc {
 		}
 
 		// Terminate app action logic
-		log.Info().Str("packageName", unifiedReq.PackageName).Msg("terminating app")
 		success, err := driverExt.AppTerminate(unifiedReq.PackageName)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Terminate app failed: %s", err.Error())), nil
@@ -197,7 +195,6 @@ func (t *ToolAppInstall) Implement() server.ToolHandlerFunc {
 		}
 
 		// App install action logic
-		log.Info().Str("appUrl", unifiedReq.AppUrl).Msg("installing app")
 		err = driverExt.GetDevice().Install(unifiedReq.AppUrl)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("App install failed: %s", err.Error())), nil
@@ -253,7 +250,6 @@ func (t *ToolAppUninstall) Implement() server.ToolHandlerFunc {
 		}
 
 		// App uninstall action logic
-		log.Info().Str("packageName", unifiedReq.PackageName).Msg("uninstalling app")
 		err = driverExt.GetDevice().Uninstall(unifiedReq.PackageName)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("App uninstall failed: %s", err.Error())), nil
@@ -309,7 +305,6 @@ func (t *ToolAppClear) Implement() server.ToolHandlerFunc {
 		}
 
 		// App clear action logic
-		log.Info().Str("packageName", unifiedReq.PackageName).Msg("clearing app")
 		err = driverExt.AppClear(unifiedReq.PackageName)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("App clear failed: %s", err.Error())), nil

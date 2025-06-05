@@ -39,7 +39,6 @@ func (t *ToolStartToGoal) Implement() server.ToolHandlerFunc {
 		}
 
 		// Start to goal logic
-		log.Info().Str("prompt", unifiedReq.Prompt).Msg("starting to goal")
 		err = driverExt.StartToGoal(ctx, unifiedReq.Prompt)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to achieve goal: %s", err.Error())), nil
@@ -98,7 +97,6 @@ func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
 		}
 
 		// AI action logic
-		log.Info().Str("prompt", unifiedReq.Prompt).Msg("performing AI action")
 		err = driverExt.AIAction(ctx, unifiedReq.Prompt)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("AI action failed: %s", err.Error())), nil

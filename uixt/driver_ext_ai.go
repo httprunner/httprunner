@@ -18,7 +18,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (dExt *XTDriver) StartToGoal(ctx context.Context, text string, opts ...option.ActionOption) error {
+func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...option.ActionOption) error {
 	options := option.NewActionOptions(opts...)
 	log.Info().Int("max_retry_times", options.MaxRetryTimes).Msg("StartToGoal")
 	var attempt int
@@ -34,7 +34,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, text string, opts ...opti
 		default:
 		}
 
-		if err := dExt.AIAction(ctx, text, opts...); err != nil {
+		if err := dExt.AIAction(ctx, prompt, opts...); err != nil {
 			// Check if this is a LLM service request error that should be retried
 			if errors.Is(err, code.LLMRequestServiceError) {
 				log.Warn().Err(err).Int("attempt", attempt).
@@ -50,9 +50,11 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, text string, opts ...opti
 	}
 }
 
-func (dExt *XTDriver) AIAction(ctx context.Context, text string, opts ...option.ActionOption) error {
+func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...option.ActionOption) error {
+	log.Info().Str("prompt", prompt).Msg("performing AI action")
+
 	// plan next action
-	result, err := dExt.PlanNextAction(ctx, text, opts...)
+	result, err := dExt.PlanNextAction(ctx, prompt, opts...)
 	if err != nil {
 		return err
 	}
@@ -95,7 +97,7 @@ func (dExt *XTDriver) AIAction(ctx context.Context, text string, opts ...option.
 	return nil
 }
 
-func (dExt *XTDriver) PlanNextAction(ctx context.Context, text string, opts ...option.ActionOption) (*ai.PlanningResult, error) {
+func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ...option.ActionOption) (*ai.PlanningResult, error) {
 	if dExt.LLMService == nil {
 		return nil, errors.New("LLM service is not initialized")
 	}
@@ -127,7 +129,7 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, text string, opts ...o
 	}
 
 	planningOpts := &ai.PlanningOptions{
-		UserInstruction: text,
+		UserInstruction: prompt,
 		Message: &schema.Message{
 			Role: schema.User,
 			MultiContent: []schema.ChatMessagePart{
