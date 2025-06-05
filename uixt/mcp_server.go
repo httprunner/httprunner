@@ -121,6 +121,7 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolWebCloseTab{})
 
 	// AI Tools
+	s.registerTool(&ToolStartToGoal{})
 	s.registerTool(&ToolAIAction{})
 	s.registerTool(&ToolFinished{})
 }
@@ -213,6 +214,14 @@ func extractActionOptionsToArguments(actionOptions []option.ActionOption, argume
 	}
 	if tempOptions.PressDuration > 0 {
 		arguments["press_duration"] = tempOptions.PressDuration
+	}
+
+	// Add AI service options
+	if tempOptions.LLMService != "" {
+		arguments["llm_service"] = tempOptions.LLMService
+	}
+	if tempOptions.CVService != "" {
+		arguments["cv_service"] = tempOptions.CVService
 	}
 }
 

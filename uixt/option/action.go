@@ -73,7 +73,6 @@ const (
 	ACTION_KeyCode                  ActionName = "keycode"
 	ACTION_Delete                   ActionName = "delete"    // delete action
 	ACTION_Backspace                ActionName = "backspace" // backspace action
-	ACTION_AIAction                 ActionName = "ai_action" // action with ai
 	ACTION_TapBySelector            ActionName = "tap_by_selector"
 	ACTION_HoverBySelector          ActionName = "hover_by_selector"
 	ACTION_Hover                    ActionName = "hover"       // generic hover action
@@ -101,8 +100,12 @@ const (
 	ACTION_InstallApp      ActionName = "install_app"
 	ACTION_UninstallApp    ActionName = "uninstall_app"
 	ACTION_DownloadApp     ActionName = "download_app"
-	ACTION_Finished        ActionName = "finished"
 	ACTION_CallFunction    ActionName = "call_function"
+
+	// AI actions
+	ACTION_StartToGoal ActionName = "start_to_goal" // start to goal action
+	ACTION_AIAction    ActionName = "ai_action"     // action with ai
+	ACTION_Finished    ActionName = "finished"      // finished action
 
 	// anti-risk actions
 	ACTION_SetTouchInfo     ActionName = "set_touch_info"
@@ -178,8 +181,10 @@ type ActionOptions struct {
 	Params []float64 `json:"params,omitempty" yaml:"params,omitempty" desc:"Generic parameter array"`
 
 	// AI related
-	Prompt  string `json:"prompt,omitempty" yaml:"prompt,omitempty" desc:"AI action prompt"`
-	Content string `json:"content,omitempty" yaml:"content,omitempty" desc:"Content for finished action"`
+	Prompt     string `json:"prompt,omitempty" yaml:"prompt,omitempty" desc:"AI action prompt"`
+	Content    string `json:"content,omitempty" yaml:"content,omitempty" desc:"Content for finished action"`
+	LLMService string `json:"llm_service,omitempty" yaml:"llm_service,omitempty" desc:"LLM service type for AI actions"`
+	CVService  string `json:"cv_service,omitempty" yaml:"cv_service,omitempty" desc:"Computer vision service type for AI actions"`
 
 	// Time related
 	Seconds      float64 `json:"seconds,omitempty" yaml:"seconds,omitempty" desc:"Sleep duration in seconds"`
@@ -679,6 +684,9 @@ func (o *ActionOptions) validateActionSpecificFields(actionType ActionName) erro
 		ACTION_AIAction: func() error {
 			return o.requireFields("prompt", o.Prompt != "")
 		},
+		ACTION_StartToGoal: func() error {
+			return o.requireFields("prompt", o.Prompt != "")
+		},
 		ACTION_Finished: func() error {
 			return o.requireFields("content", o.Content != "")
 		},
@@ -750,7 +758,8 @@ func (o *ActionOptions) GetMCPOptions(actionType ActionName) []mcp.ToolOption {
 		ACTION_Sleep:                    {"seconds"},
 		ACTION_SleepMS:                  {"platform", "serial", "milliseconds"},
 		ACTION_SleepRandom:              {"platform", "serial", "params"},
-		ACTION_AIAction:                 {"platform", "serial", "prompt"},
+		ACTION_AIAction:                 {"platform", "serial", "prompt", "llm_service", "cv_service"},
+		ACTION_StartToGoal:              {"platform", "serial", "prompt", "llm_service", "cv_service"},
 		ACTION_Finished:                 {"content"},
 		ACTION_ListAvailableDevices:     {},
 		ACTION_SelectDevice:             {"platform", "serial"},

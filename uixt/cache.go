@@ -279,9 +279,23 @@ func setupXTDriver(_ context.Context, args map[string]any) (*XTDriver, error) {
 	platform, _ := args["platform"].(string)
 	serial, _ := args["serial"].(string)
 
+	// Extract AI service options from arguments if provided
+	var aiOpts []option.AIServiceOption
+
+	// Check for LLM service type
+	if llmService, ok := args["llm_service"].(string); ok && llmService != "" {
+		aiOpts = append(aiOpts, option.WithLLMService(option.LLMServiceType(llmService)))
+	}
+
+	// Check for CV service type
+	if cvService, ok := args["cv_service"].(string); ok && cvService != "" {
+		aiOpts = append(aiOpts, option.WithCVService(option.CVServiceType(cvService)))
+	}
+
 	config := DriverCacheConfig{
-		Platform: platform,
-		Serial:   serial,
+		Platform:  platform,
+		Serial:    serial,
+		AIOptions: aiOpts,
 	}
 	return GetOrCreateXTDriver(config)
 }

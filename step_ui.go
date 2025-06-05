@@ -177,6 +177,18 @@ func (s *StepMobile) TapByUITypes(opts ...option.ActionOption) *StepMobile {
 	return s
 }
 
+// StartToGoal do goal-oriented actions with VLM
+func (s *StepMobile) StartToGoal(prompt string, opts ...option.ActionOption) *StepMobile {
+	action := option.MobileAction{
+		Method:  option.ACTION_StartToGoal,
+		Params:  prompt,
+		Options: option.NewActionOptions(opts...),
+	}
+
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
 // AIAction do actions with VLM
 func (s *StepMobile) AIAction(prompt string, opts ...option.ActionOption) *StepMobile {
 	action := option.MobileAction{
@@ -707,6 +719,29 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		Platform: mobileStep.OSType,
 		Serial:   mobileStep.Serial,
 	}
+
+	// Extract AI service options from global configuration
+	if s.caseRunner != nil && s.caseRunner.Config != nil {
+		globalConfig := s.caseRunner.Config.Get()
+		if globalConfig != nil {
+			var aiOpts []option.AIServiceOption
+
+			// Add LLM service if configured
+			if globalConfig.LLMService != "" {
+				aiOpts = append(aiOpts, option.WithLLMService(globalConfig.LLMService))
+				log.Debug().Str("llmService", string(globalConfig.LLMService)).Msg("Applied global LLM service to XTDriver config")
+			}
+
+			// Add CV service if configured
+			if globalConfig.CVService != "" {
+				aiOpts = append(aiOpts, option.WithCVService(globalConfig.CVService))
+				log.Debug().Str("cvService", string(globalConfig.CVService)).Msg("Applied global CV service to XTDriver config")
+			}
+
+			config.AIOptions = aiOpts
+		}
+	}
+
 	uiDriver, err := uixt.GetOrCreateXTDriver(config)
 	if err != nil {
 		return nil, err
@@ -810,16 +845,29 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				return stepResult, err
 			}
 
-			// Apply global AntiRisk configuration if enabled in testcase config
+			// Apply global configuration from testcase config
 			if s.caseRunner != nil && s.caseRunner.Config != nil {
 				config := s.caseRunner.Config.Get()
-				if config != nil && config.AntiRisk {
+				if config != nil {
 					if action.Options == nil {
 						action.Options = &option.ActionOptions{}
 					}
-					// Only set AntiRisk to true if it's not already explicitly set to false
-					if !action.Options.AntiRisk {
+
+					// Apply global AntiRisk configuration
+					if config.AntiRisk && !action.Options.AntiRisk {
 						action.Options.AntiRisk = true
+					}
+
+					// Apply global LLM service configuration for AI actions
+					if action.Method == option.ACTION_AIAction || action.Method == option.ACTION_StartToGoal {
+						if config.LLMService != "" && action.Options.LLMService == "" {
+							action.Options.LLMService = string(config.LLMService)
+							log.Debug().Str("action", string(action.Method)).Str("llmService", action.Options.LLMService).Msg("Applied global LLM service config to action")
+						}
+						if config.CVService != "" && action.Options.CVService == "" {
+							action.Options.CVService = string(config.CVService)
+							log.Debug().Str("action", string(action.Method)).Str("cvService", action.Options.CVService).Msg("Applied global CV service config to action")
+						}
 					}
 				}
 			}
