@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
-	"math"
 	"math/rand/v2"
 	"net/http"
 	"os"
@@ -53,8 +52,8 @@ func convertToAbsolutePoint(driver IDriver, x, y float64) (absX, absY float64, e
 			return 0, 0, err
 		}
 
-		absX = math.Round(float64(windowSize.Width)*x*10) / 10
-		absY = math.Round(float64(windowSize.Height)*y*10) / 10
+		absX = builtin.RoundToOneDecimal(float64(windowSize.Width) * x)
+		absY = builtin.RoundToOneDecimal(float64(windowSize.Height) * y)
 		return absX, absY, nil
 	}
 

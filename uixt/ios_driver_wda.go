@@ -7,7 +7,6 @@ import (
 	builtinJSON "encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"net"
 	"net/http"
 	"os"
@@ -667,10 +666,10 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	defer postHandler(wd, option.ACTION_Drag, actionOptions)
 
 	data := map[string]interface{}{
-		"fromX": math.Round(fromX*10) / 10,
-		"fromY": math.Round(fromY*10) / 10,
-		"toX":   math.Round(toX*10) / 10,
-		"toY":   math.Round(toY*10) / 10,
+		"fromX": builtin.RoundToOneDecimal(fromX),
+		"fromY": builtin.RoundToOneDecimal(fromY),
+		"toX":   builtin.RoundToOneDecimal(toX),
+		"toY":   builtin.RoundToOneDecimal(toY),
 	}
 	option.MergeOptions(data, opts...)
 	// wda 43 version

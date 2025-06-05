@@ -25,6 +25,12 @@ func (dExt *XTDriver) StartToGoal(text string, opts ...option.ActionOption) erro
 		attempt++
 		log.Info().Int("attempt", attempt).Msg("planning attempt")
 		if err := dExt.AIAction(text, opts...); err != nil {
+			// Check if this is a LLM service request error that should be retried
+			if errors.Is(err, code.LLMRequestServiceError) {
+				log.Warn().Err(err).Int("attempt", attempt).
+					Msg("LLM service request failed, retrying...")
+				continue
+			}
 			return err
 		}
 

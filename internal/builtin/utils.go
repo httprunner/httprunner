@@ -374,6 +374,11 @@ func ConvertToStringSlice(val interface{}) ([]string, error) {
 	return stringSlice, nil
 }
 
+// RoundToOneDecimal rounds a float64 value to 1 decimal place
+func RoundToOneDecimal(val float64) float64 {
+	return math.Round(val*10) / 10.0
+}
+
 func GetFreePort() (int, error) {
 	minPort := 20000
 	maxPort := 50000

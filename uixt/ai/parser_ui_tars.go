@@ -3,13 +3,13 @@ package ai
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/cloudwego/eino/schema"
+	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/rs/zerolog/log"
@@ -167,9 +167,9 @@ func normalizeCoordinatesFormat(text string) string {
 //   - Y conversion: 500/1000 * 1080 = 540 pixels
 func convertRelativeToAbsolute(relativeCoord float64, isXCoord bool, size types.Size) float64 {
 	if isXCoord {
-		return math.Round((relativeCoord/DefaultFactor*float64(size.Width))*10) / 10
+		return builtin.RoundToOneDecimal(relativeCoord / DefaultFactor * float64(size.Width))
 	}
-	return math.Round((relativeCoord/DefaultFactor*float64(size.Height))*10) / 10
+	return builtin.RoundToOneDecimal(relativeCoord / DefaultFactor * float64(size.Height))
 }
 
 // parseActionTypeAndArguments extracts function name and raw parameter map from action string
@@ -280,10 +280,10 @@ func convertProcessedArgs(processedArgs map[string]interface{}, actionType strin
 		}
 
 		options := option.ActionOptions{
-			FromX: startCoords[0],
-			FromY: startCoords[1],
-			ToX:   endCoords[0],
-			ToY:   endCoords[1],
+			FromX: builtin.RoundToOneDecimal(startCoords[0]),
+			FromY: builtin.RoundToOneDecimal(startCoords[1]),
+			ToX:   builtin.RoundToOneDecimal(endCoords[0]),
+			ToY:   builtin.RoundToOneDecimal(endCoords[1]),
 		}
 		return options.ToMap(), nil
 	}
@@ -295,8 +295,8 @@ func convertProcessedArgs(processedArgs map[string]interface{}, actionType strin
 			return nil, fmt.Errorf("invalid coordinate format for single operation")
 		}
 		options := option.ActionOptions{
-			X: startCoords[0],
-			Y: startCoords[1],
+			X: builtin.RoundToOneDecimal(startCoords[0]),
+			Y: builtin.RoundToOneDecimal(startCoords[1]),
 		}
 		return options.ToMap(), nil
 	}
