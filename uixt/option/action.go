@@ -105,6 +105,8 @@ const (
 	// AI actions
 	ACTION_StartToGoal ActionName = "start_to_goal" // start to goal action
 	ACTION_AIAction    ActionName = "ai_action"     // action with ai
+	ACTION_AIAssert    ActionName = "ai_assert"     // assert with ai
+	ACTION_Query       ActionName = "ai_query"      // query with ai
 	ACTION_Finished    ActionName = "finished"      // finished action
 
 	// anti-risk actions

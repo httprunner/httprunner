@@ -91,14 +91,14 @@ func runStepShell(r *SessionRunner, step IStep) (stepResult *StepResult, err err
 
 	log.Info().
 		Str("name", step.Name()).
-		Str("type", string(StepTypeShell)).
+		Str("type", string(step.Type())).
 		Str("content", shell.String).
 		Msg("run shell string")
 
 	start := time.Now()
 	stepResult = &StepResult{
 		Name:        step.Name(),
-		StepType:    StepTypeShell,
+		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
 		StartTime:   start.Unix(),

@@ -18,13 +18,23 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (dExt *XTDriver) StartToGoal(text string, opts ...option.ActionOption) error {
+func (dExt *XTDriver) StartToGoal(ctx context.Context, text string, opts ...option.ActionOption) error {
 	options := option.NewActionOptions(opts...)
+	log.Info().Int("max_retry_times", options.MaxRetryTimes).Msg("StartToGoal")
 	var attempt int
 	for {
 		attempt++
 		log.Info().Int("attempt", attempt).Msg("planning attempt")
-		if err := dExt.AIAction(text, opts...); err != nil {
+
+		// Check for context cancellation (interrupt signal)
+		select {
+		case <-ctx.Done():
+			log.Warn().Msg("interrupted in StartToGoal")
+			return errors.Wrap(code.InterruptError, "StartToGoal interrupted")
+		default:
+		}
+
+		if err := dExt.AIAction(ctx, text, opts...); err != nil {
 			// Check if this is a LLM service request error that should be retried
 			if errors.Is(err, code.LLMRequestServiceError) {
 				log.Warn().Err(err).Int("attempt", attempt).
@@ -40,15 +50,23 @@ func (dExt *XTDriver) StartToGoal(text string, opts ...option.ActionOption) erro
 	}
 }
 
-func (dExt *XTDriver) AIAction(text string, opts ...option.ActionOption) error {
+func (dExt *XTDriver) AIAction(ctx context.Context, text string, opts ...option.ActionOption) error {
 	// plan next action
-	result, err := dExt.PlanNextAction(text, opts...)
+	result, err := dExt.PlanNextAction(ctx, text, opts...)
 	if err != nil {
 		return err
 	}
 
 	// do actions
 	for _, action := range result.ToolCalls {
+		// Check for context cancellation before each action
+		select {
+		case <-ctx.Done():
+			log.Warn().Msg("interrupted in AIAction")
+			return errors.Wrap(code.InterruptError, "AIAction interrupted")
+		default:
+		}
+
 		// call eino tool
 		arguments := make(map[string]interface{})
 		err := json.Unmarshal([]byte(action.Function.Arguments), &arguments)
@@ -68,7 +86,7 @@ func (dExt *XTDriver) AIAction(text string, opts ...option.ActionOption) error {
 			},
 		}
 
-		_, err = dExt.client.CallTool(context.Background(), req)
+		_, err = dExt.client.CallTool(ctx, req)
 		if err != nil {
 			return err
 		}
@@ -77,7 +95,7 @@ func (dExt *XTDriver) AIAction(text string, opts ...option.ActionOption) error {
 	return nil
 }
 
-func (dExt *XTDriver) PlanNextAction(text string, opts ...option.ActionOption) (*ai.PlanningResult, error) {
+func (dExt *XTDriver) PlanNextAction(ctx context.Context, text string, opts ...option.ActionOption) (*ai.PlanningResult, error) {
 	if dExt.LLMService == nil {
 		return nil, errors.New("LLM service is not initialized")
 	}
@@ -124,7 +142,7 @@ func (dExt *XTDriver) PlanNextAction(text string, opts ...option.ActionOption) (
 		Size: size,
 	}
 
-	result, err := dExt.LLMService.Call(context.Background(), planningOpts)
+	result, err := dExt.LLMService.Call(ctx, planningOpts)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get next action from planner")
 	}

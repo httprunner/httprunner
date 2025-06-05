@@ -690,6 +690,15 @@ func (s *StepMobileUIValidation) Run(r *SessionRunner) (*StepResult, error) {
 }
 
 func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err error) {
+	start := time.Now()
+	stepResult = &StepResult{
+		Name:        step.Name(),
+		StepType:    step.Type(),
+		Success:     false,
+		ContentSize: 0,
+		StartTime:   start.Unix(),
+	}
+
 	var stepVariables map[string]interface{}
 	var stepValidators []interface{}
 	var ignorePopup bool
@@ -706,7 +715,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		stepValidators = stepMobile.Validators
 		ignorePopup = stepMobile.StepMobile.IgnorePopup
 	default:
-		return nil, errors.New("invalid mobile UI step type")
+		return stepResult, errors.New("invalid mobile UI step type")
 	}
 
 	// report GA event
@@ -744,7 +753,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 
 	uiDriver, err := uixt.GetOrCreateXTDriver(config)
 	if err != nil {
-		return nil, err
+		return stepResult, err
 	}
 
 	identifier := mobileStep.Identifier
@@ -759,16 +768,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			}
 		}
 	}
-
-	start := time.Now()
-	stepResult = &StepResult{
-		Name:        step.Name(),
-		Identifier:  identifier,
-		StepType:    step.Type(),
-		Success:     false,
-		ContentSize: 0,
-		StartTime:   start.Unix(),
-	}
+	stepResult.Identifier = identifier
 
 	defer func() {
 		attachments := uixt.Attachments{}
@@ -859,7 +859,8 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 					}
 
 					// Apply global LLM service configuration for AI actions
-					if action.Method == option.ACTION_AIAction || action.Method == option.ACTION_StartToGoal {
+					if action.Method == option.ACTION_AIAction || action.Method == option.ACTION_StartToGoal ||
+						action.Method == option.ACTION_AIAssert || action.Method == option.ACTION_Query {
 						if config.LLMService != "" && action.Options.LLMService == "" {
 							action.Options.LLMService = string(config.LLMService)
 							log.Debug().Str("action", string(action.Method)).Str("llmService", action.Options.LLMService).Msg("Applied global LLM service config to action")
@@ -891,8 +892,22 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				continue
 			}
 
-			// call MCP tool to execute action
-			err = uiDriver.ExecuteAction(context.Background(), action)
+			// call MCP tool to execute action with cancellable context
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			// Create a goroutine to monitor for interrupt signals
+			go func() {
+				select {
+				case <-s.caseRunner.hrpRunner.interruptSignal:
+					log.Warn().Msg("cancelling action due to interrupt signal")
+					cancel()
+				case <-ctx.Done():
+					// Context already cancelled
+				}
+			}()
+
+			err = uiDriver.ExecuteAction(ctx, action)
 			actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 			if err != nil {

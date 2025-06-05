@@ -9,6 +9,7 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -34,8 +35,7 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 	if services.LLMService != "" {
 		driverExt.LLMService, err = ai.NewLLMService(services.LLMService)
 		if err != nil {
-			log.Error().Err(err).Msg("init llm service failed")
-			return nil, err
+			return nil, errors.Wrap(err, "init llm service failed")
 		}
 	}
 

@@ -130,18 +130,21 @@ func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 func validateModelType(modelType option.LLMServiceType, modelName string) error {
 	switch modelType {
 	case option.DOUBAO_1_5_UI_TARS_250428:
-		if !strings.Contains(modelName, "ui-tars") {
+		if !strings.Contains(modelName, string(modelType)) {
 			return fmt.Errorf("model name %s is not supported for %s", modelName, modelType)
 		}
 		return nil
 	case option.DOUBAO_1_5_THINKING_VISION_PRO_250428:
-		if !strings.Contains(modelName, "doubao") || !strings.Contains(modelName, "vision") {
+		if !strings.Contains(modelName, string(modelType)) {
 			return fmt.Errorf("model name %s is not supported", modelName)
 		}
 		return nil
 	}
 
-	return fmt.Errorf("model type %s is not supported", modelType)
+	return fmt.Errorf("model type %s is not supported, supported types: %s, %s",
+		modelType,
+		option.DOUBAO_1_5_UI_TARS_250428,
+		option.DOUBAO_1_5_THINKING_VISION_PRO_250428)
 }
 
 // maskAPIKey masks the API key

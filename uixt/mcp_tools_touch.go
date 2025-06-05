@@ -53,8 +53,6 @@ func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 		}
 
 		// Tap action logic
-		log.Info().Float64("x", unifiedReq.X).Float64("y", unifiedReq.Y).Msg("tapping at coordinates")
-
 		err = driverExt.TapXY(unifiedReq.X, unifiedReq.Y, opts...)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Tap failed: %s", err.Error())), nil
@@ -354,7 +352,6 @@ func (t *ToolDoubleTapXY) Implement() server.ToolHandlerFunc {
 		}
 
 		// Double tap XY action logic
-		log.Info().Float64("x", unifiedReq.X).Float64("y", unifiedReq.Y).Msg("double tapping at coordinates")
 		err = driverExt.DoubleTap(unifiedReq.X, unifiedReq.Y)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Double tap failed: %s", err.Error())), nil

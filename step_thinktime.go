@@ -36,8 +36,8 @@ func (s *StepThinkTime) Run(r *SessionRunner) (*StepResult, error) {
 	log.Info().Float64("time", thinkTime.Time).Msg("think time")
 
 	stepResult := &StepResult{
-		Name:     s.StepName,
-		StepType: StepTypeThinkTime,
+		Name:     s.Name(),
+		StepType: s.Type(),
 		Success:  true,
 	}
 

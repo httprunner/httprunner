@@ -4,6 +4,7 @@ package uixt
 
 import (
 	"bytes"
+	"context"
 	"image"
 	"os"
 	"testing"
@@ -130,7 +131,7 @@ func TestDriverExt_TapByOCR(t *testing.T) {
 
 func TestDriverExt_TapByLLM(t *testing.T) {
 	driver := setupDriverExt(t)
-	err := driver.AIAction("点击第一个帖子的作者头像")
+	err := driver.AIAction(context.Background(), "点击第一个帖子的作者头像")
 	assert.Nil(t, err)
 
 	err = driver.AIAssert("当前在个人介绍页")
@@ -161,13 +162,13 @@ func TestDriverExt_StartToGoal(t *testing.T) {
 
 	userInstruction += "\n\n请严格按照以上游戏规则，开始游戏；注意，请只做点击操作"
 
-	err := driver.StartToGoal(userInstruction)
+	err := driver.StartToGoal(context.Background(), userInstruction)
 	assert.Nil(t, err)
 }
 
 func TestDriverExt_PlanNextAction(t *testing.T) {
 	driver := setupDriverExt(t)
-	result, err := driver.PlanNextAction("启动抖音")
+	result, err := driver.PlanNextAction(context.Background(), "启动抖音")
 	assert.Nil(t, err)
 	t.Log(result)
 }

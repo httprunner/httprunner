@@ -282,8 +282,8 @@ func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err e
 	stepRequest := step.(*StepRequestWithOptionalArgs)
 	start := time.Now()
 	stepResult = &StepResult{
-		Name:        stepRequest.StepName,
-		StepType:    StepTypeRequest,
+		Name:        step.Name(),
+		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
 		StartTime:   start.Unix(),
@@ -925,7 +925,7 @@ func (s *StepRequestWithOptionalArgs) Name() string {
 }
 
 func (s *StepRequestWithOptionalArgs) Type() StepType {
-	return StepType(fmt.Sprintf("request-%v", s.Request.Method))
+	return StepType(fmt.Sprintf("%s-%v", StepTypeRequest, s.Request.Method))
 }
 
 func (s *StepRequestWithOptionalArgs) Config() *StepConfig {
@@ -959,7 +959,7 @@ func (s *StepRequestExtraction) Name() string {
 }
 
 func (s *StepRequestExtraction) Type() StepType {
-	stepType := StepType(fmt.Sprintf("request-%v", s.Request.Method))
+	stepType := StepType(fmt.Sprintf("%s-%v", StepTypeRequest, s.Request.Method))
 	return stepType + stepTypeSuffixExtraction
 }
 
@@ -987,7 +987,7 @@ func (s *StepRequestValidation) Name() string {
 }
 
 func (s *StepRequestValidation) Type() StepType {
-	stepType := StepType(fmt.Sprintf("request-%v", s.Request.Method))
+	stepType := StepType(fmt.Sprintf("%s-%v", StepTypeRequest, s.Request.Method))
 	return stepType + stepTypeSuffixValidation
 }
 

@@ -48,8 +48,8 @@ func (s *StepTransaction) Run(r *SessionRunner) (*StepResult, error) {
 		Msg("transaction")
 
 	stepResult := &StepResult{
-		Name:        transaction.Name,
-		StepType:    StepTypeTransaction,
+		Name:        s.Name(),
+		StepType:    s.Type(),
 		Success:     true,
 		Elapsed:     0,
 		ContentSize: 0, // TODO: record transaction total response length

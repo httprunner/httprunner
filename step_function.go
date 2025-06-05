@@ -53,7 +53,7 @@ func runStepFunction(r *SessionRunner, step IStep) (stepResult *StepResult, err 
 	start := time.Now()
 	stepResult = &StepResult{
 		Name:        step.Name(),
-		StepType:    StepTypeFunction,
+		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
 		StartTime:   start.Unix(),
