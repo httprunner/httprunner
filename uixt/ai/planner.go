@@ -89,7 +89,6 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 	// reset conversation history if requested
 	if opts.ResetHistory {
 		p.history.Clear() // Clear everything including system message for complete isolation
-		log.Info().Msg("conversation history reset for planner")
 	}
 
 	// prepare prompt
@@ -109,8 +108,8 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 	logRequest(p.history)
 	startTime := time.Now()
 	message, err := p.model.Generate(ctx, p.history)
-	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
-		Str("model", string(p.modelConfig.ModelType)).Msg("call model service")
+	log.Debug().Float64("elapsed(s)", time.Since(startTime).Seconds()).
+		Str("model", string(p.modelConfig.ModelType)).Msg("call model service for planning")
 	if err != nil {
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}

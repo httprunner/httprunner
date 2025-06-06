@@ -70,7 +70,7 @@ func (h *ConversationHistory) Clear() {
 
 	// Clear everything including system message
 	*h = ConversationHistory{}
-	log.Info().Msg("conversation history cleared completely")
+	log.Warn().Msg("conversation history cleared completely")
 }
 
 func logRequest(messages ConversationHistory) {

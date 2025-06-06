@@ -261,9 +261,9 @@ func findCachedDriver(platform string) *XTDriver {
 			cached.RefCount++
 
 			if platform != "" {
-				log.Info().Str("platform", platform).Str("serial", serial).Msg("Using cached XTDriver by platform")
+				log.Debug().Str("platform", platform).Str("serial", serial).Msg("Using cached XTDriver by platform")
 			} else {
-				log.Info().Str("serial", serial).Msg("Using any available cached XTDriver")
+				log.Debug().Str("serial", serial).Msg("Using any available cached XTDriver")
 			}
 			return false // stop iteration
 		}

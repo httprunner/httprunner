@@ -133,7 +133,7 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	logRequest(a.history)
 	startTime := time.Now()
 	message, err := a.model.Generate(ctx, a.history)
-	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
+	log.Debug().Float64("elapsed(s)", time.Since(startTime).Seconds()).
 		Str("model", string(a.modelConfig.ModelType)).Msg("call model service for assertion")
 	if err != nil {
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())

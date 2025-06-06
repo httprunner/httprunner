@@ -103,8 +103,8 @@ type ModelConfig struct {
 - 多模型类型支持
 
 **支持的模型类型**:
-- `LLMServiceTypeUITARS`: UI-TARS 专业 UI 自动化模型
-- `LLMServiceTypeDoubaoVL`: 豆包视觉语言模型
+- `DOUBAO_1_5_THINKING_VISION_PRO_250428`: 豆包思维视觉专业版
+- `DOUBAO_1_5_UI_TARS_250428`: 豆包UI-TARS专业UI自动化模型
 
 ### 2. 智能规划器 (planner.go)
 
@@ -290,29 +290,119 @@ type ConversationHistory []*schema.Message
 
 ### 1. 环境配置
 
-设置必要的环境变量：
+HttpRunner AI 模块支持多模型服务配置，您可以同时配置多个大模型服务，然后在测试用例中灵活切换。
+
+#### 多模型配置方式
+
+**服务特定配置**：
+```bash
+# 豆包思维视觉专业版配置
+DOUBAO_1_5_THINKING_VISION_PRO_250428_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+DOUBAO_1_5_THINKING_VISION_PRO_250428_API_KEY=your_doubao_api_key
+
+# 豆包UI-TARS配置
+DOUBAO_1_5_UI_TARS_250428_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+DOUBAO_1_5_UI_TARS_250428_API_KEY=your_doubao_ui_tars_api_key
+
+**默认配置（向后兼容）**：
+```bash
+# 默认配置，当没有找到服务特定配置时使用
+LLM_MODEL_NAME=doubao-1.5-thinking-vision-pro-250428
+OPENAI_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+OPENAI_API_KEY=your_default_api_key
+```
+
+#### 环境变量命名规则
+
+- 将服务名称转换为大写
+- 将连字符 `-` 和点号 `.` 替换为下划线 `_`
+- 添加对应的后缀：`_BASE_URL`、`_API_KEY`
+- 模型名称直接从服务类型推导，无需单独配置
+
+例如：
+- `doubao-1.5-thinking-vision-pro-250428` → `DOUBAO_1_5_THINKING_VISION_PRO_250428_*`
+- `gpt-4` → `GPT_4_*`
+- `claude-3.5-sonnet` → `CLAUDE_3_5_SONNET_*`
+
+#### 配置优先级
+
+1. **服务特定配置**（最高优先级）：`{SERVICE_NAME}_BASE_URL`、`{SERVICE_NAME}_API_KEY`
+2. **默认配置**（向后兼容）：`OPENAI_BASE_URL`、`OPENAI_API_KEY`、`LLM_MODEL_NAME`
+3. **模型名称**：优先使用服务类型名称，仅在完全使用默认配置时才使用 `LLM_MODEL_NAME`
+
+#### 示例 .env 文件
 
 ```bash
-export OPENAI_BASE_URL="https://your-api-endpoint"
-export OPENAI_API_KEY="your-api-key"
-export LLM_MODEL_NAME="your-model-name"
+# 默认配置
+LLM_MODEL_NAME=doubao-1.5-thinking-vision-pro-250428
+OPENAI_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+OPENAI_API_KEY=your_default_api_key
+
+# doubao-1.5-thinking-vision-pro-250428
+DOUBAO_1_5_THINKING_VISION_PRO_250428_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+DOUBAO_1_5_THINKING_VISION_PRO_250428_API_KEY=your_doubao_thinking_api_key
+
+# doubao-1.5-ui-tars-250428
+DOUBAO_1_5_UI_TARS_250428_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+DOUBAO_1_5_UI_TARS_250428_API_KEY=your_doubao_ui_tars_api_key
 ```
 
 ### 2. 创建 LLM 服务
 
+#### 在测试用例中指定服务
+
+```json
+{
+    "config": {
+        "name": "AI测试用例",
+        "llm_service": "doubao-1.5-thinking-vision-pro-250428"
+    },
+    "teststeps": [
+        {
+            "name": "AI操作步骤",
+            "android": {
+                "actions": [
+                    {
+                        "method": "start_to_goal",
+                        "params": "启动应用并完成某个任务"
+                    }
+                ]
+            }
+        }
+    ]
+}
+```
+
+#### 在Go代码中使用
+
 ```go
-// 创建 UI-TARS 服务
-llmService, err := ai.NewLLMService(option.LLMServiceTypeUITARS)
+// 创建豆包思维视觉专业版服务
+llmService, err := ai.NewLLMService(option.DOUBAO_1_5_THINKING_VISION_PRO_250428)
 if err != nil {
     log.Fatal().Err(err).Msg("failed to create LLM service")
 }
 
-// 创建豆包视觉服务
-llmService, err := ai.NewLLMService(option.LLMServiceTypeDoubaoVL)
+// 创建豆包UI-TARS服务
+llmService, err := ai.NewLLMService(option.DOUBAO_1_5_UI_TARS_250428)
 if err != nil {
     log.Fatal().Err(err).Msg("failed to create LLM service")
 }
 ```
+
+#### 模型切换
+
+要切换到不同的模型服务，只需要修改测试用例中的 `llm_service` 字段：
+
+```json
+{
+    "config": {
+        "name": "连连看游戏测试",
+        "llm_service": "doubao-1.5-ui-tars-250428"
+    }
+}
+```
+
+系统会自动根据服务名称获取对应的配置，无需修改环境变量。
 
 ### 3. 智能规划使用
 
@@ -446,8 +536,8 @@ log.Info().Float64("x", center.X).Float64("y", center.Y).
 
 AI 模块支持多种不同的语言模型，每种模型都有其特定的优势：
 
-- **UI-TARS**: 专门针对 UI 自动化优化的模型，支持 Thought/Action 格式
-- **豆包视觉**: 通用视觉语言模型，支持结构化 JSON 输出
+- **豆包思维视觉专业版**: 支持深度思考的视觉语言模型，适合复杂场景分析
+- **豆包UI-TARS**: 专门针对 UI 自动化优化的模型，支持 Thought/Action 格式
 
 ### 2. 坐标系统转换
 
@@ -495,7 +585,8 @@ func normalizeParameterName(paramName string) string {
 ### 1. 环境变量配置
 - 确保所有必需的环境变量都已正确设置
 - API 密钥需要有足够的权限和配额
-- 模型名称必须与服务类型匹配
+- 支持多模型配置，可以同时配置多个服务
+- 模型名称自动从服务类型推导，无需手动配置
 
 ### 2. 图像格式要求
 - 支持 Base64 编码的图像数据
@@ -503,7 +594,7 @@ func normalizeParameterName(paramName string) string {
 - 图像尺寸信息必须准确提供
 
 ### 3. 坐标系统
-- UI-TARS 使用 1000x1000 相对坐标系统
+- 豆包UI-TARS 使用 1000x1000 相对坐标系统
 - 需要正确的屏幕尺寸信息进行坐标转换
 - 注意不同模型的坐标格式差异
 
