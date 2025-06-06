@@ -23,6 +23,7 @@ type PlanningOptions struct {
 	UserInstruction string          `json:"user_instruction"` // append to system prompt
 	Message         *schema.Message `json:"message"`
 	Size            types.Size      `json:"size"`
+	ResetHistory    bool            `json:"reset_history"` // whether to reset conversation history before planning
 }
 
 // PlanningResult represents the result of planning
@@ -83,6 +84,12 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 	// validate input parameters
 	if err := validatePlanningInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate planning parameters failed")
+	}
+
+	// reset conversation history if requested
+	if opts.ResetHistory {
+		p.history.Clear() // Clear everything including system message for complete isolation
+		log.Info().Msg("conversation history reset for planner")
 	}
 
 	// prepare prompt

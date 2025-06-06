@@ -21,6 +21,7 @@ import (
 func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...option.ActionOption) error {
 	options := option.NewActionOptions(opts...)
 	log.Info().Int("max_retry_times", options.MaxRetryTimes).Msg("StartToGoal")
+
 	var attempt int
 	for {
 		attempt++
@@ -34,13 +35,31 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		default:
 		}
 
-		if err := dExt.AIAction(ctx, prompt, opts...); err != nil {
+		// Plan next action with history reset on first attempt
+		planningOpts := opts
+		if attempt == 1 {
+			// Add ResetHistory option for the first attempt
+			planningOpts = append(planningOpts, option.WithResetHistory(true))
+		}
+		result, err := dExt.PlanNextAction(ctx, prompt, planningOpts...)
+		if err != nil {
 			// Check if this is a LLM service request error that should be retried
 			if errors.Is(err, code.LLMRequestServiceError) {
 				log.Warn().Err(err).Int("attempt", attempt).
 					Msg("LLM service request failed, retrying...")
 				continue
 			}
+			return err
+		}
+
+		// Check if task is finished BEFORE executing actions
+		if dExt.isTaskFinished(result) {
+			log.Info().Msg("task finished, stopping StartToGoal")
+			return nil
+		}
+
+		// Execute actions only if task is not finished
+		if err := dExt.executeActions(ctx, result.ToolCalls); err != nil {
 			return err
 		}
 
@@ -59,42 +78,8 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 		return err
 	}
 
-	// do actions
-	for _, action := range result.ToolCalls {
-		// Check for context cancellation before each action
-		select {
-		case <-ctx.Done():
-			log.Warn().Msg("interrupted in AIAction")
-			return errors.Wrap(code.InterruptError, "AIAction interrupted")
-		default:
-		}
-
-		// call eino tool
-		arguments := make(map[string]interface{})
-		err := json.Unmarshal([]byte(action.Function.Arguments), &arguments)
-		if err != nil {
-			return err
-		}
-		req := mcp.CallToolRequest{
-			Params: struct {
-				Name      string         `json:"name"`
-				Arguments map[string]any `json:"arguments,omitempty"`
-				Meta      *struct {
-					ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
-				} `json:"_meta,omitempty"`
-			}{
-				Name:      action.Function.Name,
-				Arguments: arguments,
-			},
-		}
-
-		_, err = dExt.client.CallTool(ctx, req)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	// execute actions
+	return dExt.executeActions(ctx, result.ToolCalls)
 }
 
 func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ...option.ActionOption) (*ai.PlanningResult, error) {
@@ -128,6 +113,10 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 		return nil, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 
+	// Parse action options to get ResetHistory setting
+	options := option.NewActionOptions(opts...)
+	resetHistory := options.ResetHistory
+
 	planningOpts := &ai.PlanningOptions{
 		UserInstruction: prompt,
 		Message: &schema.Message{
@@ -141,7 +130,8 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 				},
 			},
 		},
-		Size: size,
+		Size:         size,
+		ResetHistory: resetHistory,
 	}
 
 	result, err := dExt.LLMService.Call(ctx, planningOpts)
@@ -149,6 +139,64 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 		return nil, errors.Wrap(err, "failed to get next action from planner")
 	}
 	return result, nil
+}
+
+// isTaskFinished checks if the task is completed based on the planning result
+func (dExt *XTDriver) isTaskFinished(result *ai.PlanningResult) bool {
+	// Check if there are no tool calls (no actions to execute)
+	if len(result.ToolCalls) == 0 {
+		log.Info().Msg("no tool calls returned, task may be finished")
+		return true
+	}
+
+	// Check if any tool call is a "finished" action
+	for _, toolCall := range result.ToolCalls {
+		if toolCall.Function.Name == "uixt__finished" {
+			log.Info().Str("reason", toolCall.Function.Arguments).Msg("finished action detected")
+			return true
+		}
+	}
+
+	return false
+}
+
+// executeActions executes the planned actions
+func (dExt *XTDriver) executeActions(ctx context.Context, toolCalls []schema.ToolCall) error {
+	for _, action := range toolCalls {
+		// Check for context cancellation before each action
+		select {
+		case <-ctx.Done():
+			log.Warn().Msg("interrupted in executeActions")
+			return errors.Wrap(code.InterruptError, "executeActions interrupted")
+		default:
+		}
+
+		// call eino tool
+		arguments := make(map[string]interface{})
+		err := json.Unmarshal([]byte(action.Function.Arguments), &arguments)
+		if err != nil {
+			return err
+		}
+		req := mcp.CallToolRequest{
+			Params: struct {
+				Name      string         `json:"name"`
+				Arguments map[string]any `json:"arguments,omitempty"`
+				Meta      *struct {
+					ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
+				} `json:"_meta,omitempty"`
+			}{
+				Name:      action.Function.Name,
+				Arguments: arguments,
+			},
+		}
+
+		_, err = dExt.client.CallTool(ctx, req)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (string, error) {

@@ -62,10 +62,15 @@ func (h *ConversationHistory) Append(msg *schema.Message) {
 }
 
 func (h *ConversationHistory) Clear() {
-	// Keep only the system message
-	systemMsg := (*h)[0]
-	*h = ConversationHistory{systemMsg}
-	log.Info().Msg("conversation history cleared")
+	// Check if history is empty
+	if len(*h) == 0 {
+		log.Info().Msg("conversation history is already empty")
+		return
+	}
+
+	// Clear everything including system message
+	*h = ConversationHistory{}
+	log.Info().Msg("conversation history cleared completely")
 }
 
 func logRequest(messages ConversationHistory) {

@@ -53,6 +53,7 @@ const (
 	ACTION_SetIme           ActionName = "set_ime"
 	ACTION_GetSource        ActionName = "get_source"
 	ACTION_GetForegroundApp ActionName = "get_foreground_app"
+	ACTION_AppInfo          ActionName = "app_info" // get app info action
 
 	// UI handling
 	ACTION_Home                     ActionName = "home"
@@ -85,7 +86,6 @@ const (
 	ACTION_Upload                   ActionName = "upload"         // upload action
 	ACTION_PushMedia                ActionName = "push_media"     // push media action
 	ACTION_CreateBrowser            ActionName = "create_browser" // create browser action
-	ACTION_AppInfo                  ActionName = "app_info"       // get app info action
 
 	// device actions
 	ACTION_ListAvailableDevices ActionName = "list_available_devices"
@@ -183,10 +183,11 @@ type ActionOptions struct {
 	Params []float64 `json:"params,omitempty" yaml:"params,omitempty" desc:"Generic parameter array"`
 
 	// AI related
-	Prompt     string `json:"prompt,omitempty" yaml:"prompt,omitempty" desc:"AI action prompt"`
-	Content    string `json:"content,omitempty" yaml:"content,omitempty" desc:"Content for finished action"`
-	LLMService string `json:"llm_service,omitempty" yaml:"llm_service,omitempty" desc:"LLM service type for AI actions"`
-	CVService  string `json:"cv_service,omitempty" yaml:"cv_service,omitempty" desc:"Computer vision service type for AI actions"`
+	Prompt       string `json:"prompt,omitempty" yaml:"prompt,omitempty" desc:"AI action prompt"`
+	Content      string `json:"content,omitempty" yaml:"content,omitempty" desc:"Content for finished action"`
+	LLMService   string `json:"llm_service,omitempty" yaml:"llm_service,omitempty" desc:"LLM service type for AI actions"`
+	CVService    string `json:"cv_service,omitempty" yaml:"cv_service,omitempty" desc:"Computer vision service type for AI actions"`
+	ResetHistory bool   `json:"reset_history,omitempty" yaml:"reset_history,omitempty" desc:"Whether to reset conversation history before AI planning"`
 
 	// Time related
 	Seconds      float64 `json:"seconds,omitempty" yaml:"seconds,omitempty" desc:"Sleep duration in seconds"`
@@ -547,6 +548,12 @@ func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
 func WithAntiRisk(antiRisk bool) ActionOption {
 	return func(o *ActionOptions) {
 		o.AntiRisk = antiRisk
+	}
+}
+
+func WithResetHistory(resetHistory bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ResetHistory = resetHistory
 	}
 }
 
