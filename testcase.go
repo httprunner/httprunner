@@ -237,26 +237,65 @@ func (tc *TestCaseDef) loadISteps() (*TestCase, error) {
 				WebSocket:  step.WebSocket,
 			})
 		} else if step.IOS != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
-				StepConfig: step.StepConfig,
-				IOS:        step.IOS,
-			})
+			if len(step.Validators) > 0 {
+				testCase.TestSteps = append(testCase.TestSteps, &StepMobileUIValidation{
+					StepMobile: &StepMobile{
+						StepConfig: step.StepConfig,
+						IOS:        step.IOS,
+					},
+					Validators: step.Validators,
+				})
+			} else {
+				testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
+					StepConfig: step.StepConfig,
+					IOS:        step.IOS,
+				})
+			}
 		} else if step.Harmony != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
-				StepConfig: step.StepConfig,
-				Harmony:    step.Harmony,
-			})
+			if len(step.Validators) > 0 {
+				testCase.TestSteps = append(testCase.TestSteps, &StepMobileUIValidation{
+					StepMobile: &StepMobile{
+						StepConfig: step.StepConfig,
+						Harmony:    step.Harmony,
+					},
+					Validators: step.Validators,
+				})
+			} else {
+				testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
+					StepConfig: step.StepConfig,
+					Harmony:    step.Harmony,
+				})
+			}
 		} else if step.Android != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
-				StepConfig: step.StepConfig,
-				Android:    step.Android,
-			})
+			if len(step.Validators) > 0 {
+				testCase.TestSteps = append(testCase.TestSteps, &StepMobileUIValidation{
+					StepMobile: &StepMobile{
+						StepConfig: step.StepConfig,
+						Android:    step.Android,
+					},
+					Validators: step.Validators,
+				})
+			} else {
+				testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
+					StepConfig: step.StepConfig,
+					Android:    step.Android,
+				})
+			}
 		} else if step.Browser != nil {
-			testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
-				StepConfig: step.StepConfig,
-				Browser:    step.Browser,
-			})
-
+			if len(step.Validators) > 0 {
+				testCase.TestSteps = append(testCase.TestSteps, &StepMobileUIValidation{
+					StepMobile: &StepMobile{
+						StepConfig: step.StepConfig,
+						Browser:    step.Browser,
+					},
+					Validators: step.Validators,
+				})
+			} else {
+				testCase.TestSteps = append(testCase.TestSteps, &StepMobile{
+					StepConfig: step.StepConfig,
+					Browser:    step.Browser,
+				})
+			}
 		} else if step.Shell != nil {
 			testCase.TestSteps = append(testCase.TestSteps, &StepShell{
 				StepConfig: step.StepConfig,
