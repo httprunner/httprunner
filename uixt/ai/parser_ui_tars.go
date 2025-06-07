@@ -301,13 +301,26 @@ func convertProcessedArgs(processedArgs map[string]interface{}, actionType strin
 		return options.ToMap(), nil
 	}
 
-	// For non-coordinate operations, return the original arguments map
-	// TODO
+	// For non-coordinate operations, apply parameter name mapping and return the arguments map
 	finalArgs := make(map[string]interface{})
 	for key, value := range processedArgs {
-		finalArgs[key] = value
+		// Map parameter names to match ActionOptions field names
+		mappedKey := mapParameterName(key)
+		finalArgs[mappedKey] = value
 	}
 	return finalArgs, nil
+}
+
+// mapParameterName maps UI-TARS parameter names to ActionOptions field names
+func mapParameterName(paramName string) string {
+	switch paramName {
+	case "content":
+		return "text" // Map content to text for input operations
+	case "key":
+		return "keycode" // Map key to keycode for hotkey operations
+	default:
+		return paramName
+	}
 }
 
 // normalizeActionCoordinates normalizes coordinates from various formats to actual pixel coordinates

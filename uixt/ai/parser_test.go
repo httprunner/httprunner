@@ -15,21 +15,23 @@ func TestParseActionToStructureOutput(t *testing.T) {
 	assert.Nil(t, err)
 	function := result.ToolCalls[0].Function
 	assert.Equal(t, function.Name, "uixt__click")
-	// ActionInputs is now directly a coordinate array
-	var coords []float64
-	err = json.Unmarshal([]byte(function.Arguments), &coords)
+
+	var arguments map[string]interface{}
+	err = json.Unmarshal([]byte(function.Arguments), &arguments)
 	assert.Nil(t, err)
-	assert.Equal(t, 2, len(coords))
+	assert.Contains(t, arguments, "x")
+	assert.Contains(t, arguments, "y")
 
 	text = "Thought: 我看到页面上有几个帖子，第二个帖子的标题是\"字节四年，头发白了\"。要完成任务，我需要点击这个帖子下方的作者头像，这样就能进入作者的个人主页了。\nAction: click(start_point='<point>550 450 550 450</point>')"
 	result, err = parser.Parse(text, types.Size{Height: 2341, Width: 1024})
 	assert.Nil(t, err)
 	function = result.ToolCalls[0].Function
 	assert.Equal(t, function.Name, "uixt__click")
-	// ActionInputs is now directly a coordinate array
-	err = json.Unmarshal([]byte(function.Arguments), &coords)
+
+	err = json.Unmarshal([]byte(function.Arguments), &arguments)
 	assert.Nil(t, err)
-	assert.Equal(t, 2, len(coords))
+	assert.Contains(t, arguments, "x")
+	assert.Contains(t, arguments, "y")
 
 	// Test new bracket format - should convert bounding box to center point
 	text = "Thought: 我需要点击这个按钮\nAction: click(start_box='[100, 200, 150, 250]')"
@@ -37,29 +39,27 @@ func TestParseActionToStructureOutput(t *testing.T) {
 	assert.Nil(t, err)
 	function = result.ToolCalls[0].Function
 	assert.Equal(t, function.Name, "uixt__click")
-	// ActionInputs is now directly a coordinate array
-	err = json.Unmarshal([]byte(function.Arguments), &coords)
-	assert.Nil(t, err)
-	// Should be converted to center point [125, 225] from bounding box [100, 200, 150, 250]
-	assert.Equal(t, 2, len(coords))
-	assert.Equal(t, 125.0, coords[0]) // (100 + 150) / 2 = 125
-	assert.Equal(t, 225.0, coords[1]) // (200 + 250) / 2 = 225
 
-	// Test drag operation with both start_box and end_box - should merge center points into single array
+	err = json.Unmarshal([]byte(function.Arguments), &arguments)
+	assert.Nil(t, err)
+	// Should be converted to center point x=125, y=225 from bounding box [100, 200, 150, 250]
+	assert.Equal(t, 125.0, arguments["x"]) // (100 + 150) / 2 = 125
+	assert.Equal(t, 225.0, arguments["y"]) // (200 + 250) / 2 = 225
+
+	// Test drag operation with both start_box and end_box - should use from_x,from_y,to_x,to_y format
 	text = "Thought: 我需要拖拽元素\nAction: drag(start_box='[100, 200, 150, 250]', end_box='[300, 400, 350, 450]')"
 	result, err = parser.Parse(text, types.Size{Height: 1000, Width: 1000})
 	assert.Nil(t, err)
 	function = result.ToolCalls[0].Function
 	assert.Equal(t, function.Name, "uixt__drag")
-	// ActionInputs is now directly a coordinate array
-	err = json.Unmarshal([]byte(function.Arguments), &coords)
+	// ActionInputs is now in from_x,from_y,to_x,to_y format for drag operations
+	err = json.Unmarshal([]byte(function.Arguments), &arguments)
 	assert.Nil(t, err)
-	// Should be merged into single array [start_center_x, start_center_y, end_center_x, end_center_y]
-	assert.Equal(t, 4, len(coords))
-	assert.Equal(t, 125.0, coords[0]) // start center x: (100 + 150) / 2 = 125
-	assert.Equal(t, 225.0, coords[1]) // start center y: (200 + 250) / 2 = 225
-	assert.Equal(t, 325.0, coords[2]) // end center x: (300 + 350) / 2 = 325
-	assert.Equal(t, 425.0, coords[3]) // end center y: (400 + 450) / 2 = 425
+	// Should be converted to from_x,from_y,to_x,to_y format
+	assert.Equal(t, 125.0, arguments["from_x"]) // start center x: (100 + 150) / 2 = 125
+	assert.Equal(t, 225.0, arguments["from_y"]) // start center y: (200 + 250) / 2 = 225
+	assert.Equal(t, 325.0, arguments["to_x"])   // end center x: (300 + 350) / 2 = 325
+	assert.Equal(t, 425.0, arguments["to_y"])   // end center y: (400 + 450) / 2 = 425
 }
 
 // Test normalizeCoordinatesFormat function
@@ -799,33 +799,30 @@ func TestNewCoordinateConversion(t *testing.T) {
 	function := result.ToolCalls[0].Function
 	assert.Equal(t, function.Name, "uixt__click")
 
-	// ActionInputs is now directly a coordinate array
-	var coords []float64
-	err = json.Unmarshal([]byte(function.Arguments), &coords)
+	var arguments map[string]interface{}
+	err = json.Unmarshal([]byte(function.Arguments), &arguments)
 	assert.Nil(t, err)
 
-	// Should convert bounding box [100,200,150,250] to center point [125.0, 225.0]
-	assert.Equal(t, 2, len(coords))
-	assert.Equal(t, 125.0, coords[0]) // (100 + 150) / 2 = 125
-	assert.Equal(t, 225.0, coords[1]) // (200 + 250) / 2 = 225
+	// Should convert bounding box [100,200,150,250] to center point x=125.0, y=225.0
+	assert.Equal(t, 125.0, arguments["x"]) // (100 + 150) / 2 = 125
+	assert.Equal(t, 225.0, arguments["y"]) // (200 + 250) / 2 = 225
 
-	// Test drag operation conversion to merged array
+	// Test drag operation conversion to from_x,from_y,to_x,to_y format
 	text = "Thought: 我需要拖拽元素\nAction: drag(start_box='100,200,150,250', end_box='300,400,350,450')"
 	result, err = parser.Parse(text, types.Size{Height: 1000, Width: 1000})
 	assert.Nil(t, err)
 	function = result.ToolCalls[0].Function
 	assert.Equal(t, function.Name, "uixt__drag")
 
-	// ActionInputs is now directly a coordinate array
-	err = json.Unmarshal([]byte(function.Arguments), &coords)
+	// ActionInputs is now in from_x,from_y,to_x,to_y format for drag operations
+	err = json.Unmarshal([]byte(function.Arguments), &arguments)
 	assert.Nil(t, err)
 
-	// Should merge start_box and end_box center points into single array [125.0, 225.0, 325.0, 425.0]
-	assert.Equal(t, 4, len(coords))
-	assert.Equal(t, 125.0, coords[0]) // start center x: (100 + 150) / 2 = 125
-	assert.Equal(t, 225.0, coords[1]) // start center y: (200 + 250) / 2 = 225
-	assert.Equal(t, 325.0, coords[2]) // end center x: (300 + 350) / 2 = 325
-	assert.Equal(t, 425.0, coords[3]) // end center y: (400 + 450) / 2 = 425
+	// Should convert to from_x,from_y,to_x,to_y format
+	assert.Equal(t, 125.0, arguments["from_x"]) // start center x: (100 + 150) / 2 = 125
+	assert.Equal(t, 225.0, arguments["from_y"]) // start center y: (200 + 250) / 2 = 225
+	assert.Equal(t, 325.0, arguments["to_x"])   // end center x: (300 + 350) / 2 = 325
+	assert.Equal(t, 425.0, arguments["to_y"])   // end center y: (400 + 450) / 2 = 425
 
 	// Test non-coordinate operation (type action)
 	text = "Thought: 我需要输入文本\nAction: type(content='Hello World')"
@@ -834,9 +831,262 @@ func TestNewCoordinateConversion(t *testing.T) {
 	function = result.ToolCalls[0].Function
 	assert.Equal(t, function.Name, "uixt__type")
 
-	// ActionInputs should be a map for non-coordinate operations
-	var arguments map[string]interface{}
+	// ActionInputs should be a map for non-coordinate operations with parameter mapping
 	err = json.Unmarshal([]byte(function.Arguments), &arguments)
 	assert.Nil(t, err)
-	assert.Equal(t, "Hello World", arguments["content"])
+	assert.Equal(t, "Hello World", arguments["text"]) // content should be mapped to text
+}
+
+// Test convertProcessedArgs function
+func TestConvertProcessedArgs(t *testing.T) {
+	tests := []struct {
+		name          string
+		processedArgs map[string]interface{}
+		actionType    string
+		expected      map[string]interface{}
+		expectError   bool
+		description   string
+	}{
+		// Single coordinate operation tests
+		{
+			name: "single_coordinate_operation",
+			processedArgs: map[string]interface{}{
+				"start_box": []float64{125.0, 225.0},
+			},
+			actionType: "click",
+			expected: map[string]interface{}{
+				"x": 125.0,
+				"y": 225.0,
+			},
+			description: "Single coordinate operation should convert to x,y format",
+		},
+		{
+			name: "single_coordinate_with_rounding",
+			processedArgs: map[string]interface{}{
+				"start_box": []float64{125.123456, 225.987654},
+			},
+			actionType: "click",
+			expected: map[string]interface{}{
+				"x": 125.1,
+				"y": 226.0,
+			},
+			description: "Coordinates should be rounded to one decimal place",
+		},
+		// Drag operation tests
+		{
+			name: "drag_operation_dual_coordinates",
+			processedArgs: map[string]interface{}{
+				"start_box": []float64{125.0, 225.0},
+				"end_box":   []float64{325.0, 425.0},
+			},
+			actionType: "drag",
+			expected: map[string]interface{}{
+				"from_x": 125.0,
+				"from_y": 225.0,
+				"to_x":   325.0,
+				"to_y":   425.0,
+			},
+			description: "Drag operation should convert to from_x,from_y,to_x,to_y format",
+		},
+		{
+			name: "drag_operation_with_rounding",
+			processedArgs: map[string]interface{}{
+				"start_box": []float64{125.123456, 225.987654},
+				"end_box":   []float64{325.555555, 425.444444},
+			},
+			actionType: "drag",
+			expected: map[string]interface{}{
+				"from_x": 125.1,
+				"from_y": 226.0,
+				"to_x":   325.6,
+				"to_y":   425.4,
+			},
+			description: "Drag coordinates should be rounded to one decimal place",
+		},
+		// Non-coordinate operation tests
+		{
+			name: "non_coordinate_operation_with_parameter_mapping",
+			processedArgs: map[string]interface{}{
+				"content":   "Hello World",
+				"direction": "down",
+			},
+			actionType: "type",
+			expected: map[string]interface{}{
+				"text":      "Hello World", // content should be mapped to text
+				"direction": "down",
+			},
+			description: "Non-coordinate operation should apply parameter name mapping",
+		},
+		{
+			name: "non_coordinate_operation_key_mapping",
+			processedArgs: map[string]interface{}{
+				"key": "enter",
+			},
+			actionType: "hotkey",
+			expected: map[string]interface{}{
+				"keycode": "enter", // key should be mapped to keycode
+			},
+			description: "Key parameter should be mapped to keycode",
+		},
+		{
+			name: "non_coordinate_operation_mixed_parameters",
+			processedArgs: map[string]interface{}{
+				"content":   "Test input",
+				"key":       "ctrl+c",
+				"direction": "up",
+				"timeout":   5,
+			},
+			actionType: "mixed",
+			expected: map[string]interface{}{
+				"text":      "Test input", // content -> text
+				"keycode":   "ctrl+c",     // key -> keycode
+				"direction": "up",         // unchanged
+				"timeout":   5,            // unchanged
+			},
+			description: "Mixed parameters should apply correct mappings",
+		},
+		{
+			name:          "empty_arguments",
+			processedArgs: map[string]interface{}{},
+			actionType:    "empty",
+			expected:      map[string]interface{}{},
+			description:   "Empty arguments should return empty map",
+		},
+		// Error cases
+		{
+			name: "invalid_single_coordinate_format",
+			processedArgs: map[string]interface{}{
+				"start_box": "invalid",
+			},
+			actionType:  "click",
+			expectError: true,
+			description: "Invalid coordinate format should cause error",
+		},
+		{
+			name: "invalid_drag_start_coordinate",
+			processedArgs: map[string]interface{}{
+				"start_box": "invalid",
+				"end_box":   []float64{325.0, 425.0},
+			},
+			actionType:  "drag",
+			expectError: true,
+			description: "Invalid start coordinate in drag should cause error",
+		},
+		{
+			name: "invalid_drag_end_coordinate",
+			processedArgs: map[string]interface{}{
+				"start_box": []float64{125.0, 225.0},
+				"end_box":   "invalid",
+			},
+			actionType:  "drag",
+			expectError: true,
+			description: "Invalid end coordinate in drag should cause error",
+		},
+		{
+			name: "drag_insufficient_start_coordinates",
+			processedArgs: map[string]interface{}{
+				"start_box": []float64{125.0}, // Only one coordinate
+				"end_box":   []float64{325.0, 425.0},
+			},
+			actionType:  "drag",
+			expectError: true,
+			description: "Insufficient start coordinates in drag should cause error",
+		},
+		{
+			name: "drag_insufficient_end_coordinates",
+			processedArgs: map[string]interface{}{
+				"start_box": []float64{125.0, 225.0},
+				"end_box":   []float64{325.0}, // Only one coordinate
+			},
+			actionType:  "drag",
+			expectError: true,
+			description: "Insufficient end coordinates in drag should cause error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := convertProcessedArgs(tt.processedArgs, tt.actionType)
+
+			if tt.expectError {
+				assert.Error(t, err, "Test case: %s", tt.description)
+				return
+			}
+
+			assert.NoError(t, err, "Test case: %s", tt.description)
+			assert.Equal(t, len(tt.expected), len(result), "Test case: %s", tt.description)
+
+			for key, expectedValue := range tt.expected {
+				actualValue, exists := result[key]
+				assert.True(t, exists, "Key %s should exist in result for test: %s", key, tt.description)
+				assert.Equal(t, expectedValue, actualValue, "Value for key %s should match for test: %s", key, tt.description)
+			}
+		})
+	}
+}
+
+// Test mapParameterName function
+func TestMapParameterName(t *testing.T) {
+	tests := []struct {
+		name        string
+		paramName   string
+		expected    string
+		description string
+	}{
+		{
+			name:        "content_to_text",
+			paramName:   "content",
+			expected:    "text",
+			description: "content parameter should be mapped to text",
+		},
+		{
+			name:        "key_to_keycode",
+			paramName:   "key",
+			expected:    "keycode",
+			description: "key parameter should be mapped to keycode",
+		},
+		{
+			name:        "unchanged_parameter_direction",
+			paramName:   "direction",
+			expected:    "direction",
+			description: "direction parameter should remain unchanged",
+		},
+		{
+			name:        "unchanged_parameter_start_box",
+			paramName:   "start_box",
+			expected:    "start_box",
+			description: "start_box parameter should remain unchanged",
+		},
+		{
+			name:        "unchanged_parameter_end_box",
+			paramName:   "end_box",
+			expected:    "end_box",
+			description: "end_box parameter should remain unchanged",
+		},
+		{
+			name:        "unchanged_parameter_timeout",
+			paramName:   "timeout",
+			expected:    "timeout",
+			description: "timeout parameter should remain unchanged",
+		},
+		{
+			name:        "unchanged_parameter_custom",
+			paramName:   "custom_param",
+			expected:    "custom_param",
+			description: "custom parameter should remain unchanged",
+		},
+		{
+			name:        "empty_parameter_name",
+			paramName:   "",
+			expected:    "",
+			description: "empty parameter name should remain empty",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := mapParameterName(tt.paramName)
+			assert.Equal(t, tt.expected, result, "Test case: %s", tt.description)
+		})
+	}
 }
