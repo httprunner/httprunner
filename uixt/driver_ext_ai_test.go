@@ -15,8 +15,9 @@ import (
 
 func TestDriverExt_TapByLLM(t *testing.T) {
 	driver := setupDriverExt(t)
-	err := driver.AIAction(context.Background(), "点击第一个帖子的作者头像")
+	subActionResults, err := driver.AIAction(context.Background(), "点击第一个帖子的作者头像")
 	assert.Nil(t, err)
+	t.Log(subActionResults)
 
 	err = driver.AIAssert("当前在个人介绍页")
 	assert.Nil(t, err)
@@ -46,7 +47,7 @@ func TestDriverExt_StartToGoal(t *testing.T) {
 
 	userInstruction += "\n\n请严格按照以上游戏规则，开始游戏；注意，请只做点击操作"
 
-	err := driver.StartToGoal(context.Background(), userInstruction)
+	_, err := driver.StartToGoal(context.Background(), userInstruction)
 	assert.Nil(t, err)
 }
 

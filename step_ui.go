@@ -907,8 +907,10 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				}
 			}()
 
-			err = uiDriver.ExecuteAction(ctx, action)
+			// action execution
+			subActionResults, err := uiDriver.ExecuteAction(ctx, action)
 			actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
+			actionResult.SubActions = subActionResults
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 			if err != nil {
 				if !code.IsErrorPredefined(err) {
