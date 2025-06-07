@@ -13,7 +13,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -219,6 +218,31 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	// record execution data to summary
 	s := NewSummary()
 
+	// defer summary saving and HTML report generation
+	// this ensures they run regardless of how the function exits
+	defer func() {
+		s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
+		log.Info().Int("duration(s)", int(s.Time.Duration)).Msg("run testcase finished")
+
+		// save summary
+		if r.saveTests {
+			if summaryPath, saveErr := s.GenSummary(); saveErr != nil {
+				log.Error().Err(saveErr).Msg("failed to save summary")
+			} else {
+				log.Info().Str("path", summaryPath).Msg("summary saved successfully")
+			}
+		}
+
+		// generate HTML report
+		if r.genHTMLReport {
+			if reportErr := s.GenHTMLReport(); reportErr != nil {
+				log.Error().Err(reportErr).Msg("failed to generate HTML report")
+			} else {
+				log.Info().Msg("HTML report generated successfully")
+			}
+		}
+	}()
+
 	// load all testcases
 	testCases, err := LoadTestCases(testcases...)
 	if err != nil {
@@ -228,39 +252,36 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 
 	// collect all MCP hosts for cleanup
 	var mcpHosts []*mcphost.MCPHost
-	var cleanupOnce sync.Once
 
 	// quit all plugins and close MCP hosts
 	defer func() {
-		cleanupOnce.Do(func() {
-			pluginMap.Range(func(key, value interface{}) bool {
-				if plugin, ok := value.(funplugin.IPlugin); ok {
-					plugin.Quit()
-				}
-				return true
-			})
-
-			// Close all MCP hosts with timeout
-			if len(mcpHosts) > 0 {
-				done := make(chan struct{})
-				go func() {
-					defer close(done)
-					for _, host := range mcpHosts {
-						if host != nil {
-							host.Shutdown()
-						}
-					}
-				}()
-
-				// Wait for cleanup with timeout
-				select {
-				case <-done:
-					log.Debug().Msg("All MCP hosts cleaned up successfully")
-				case <-time.After(10 * time.Second):
-					log.Warn().Msg("MCP hosts cleanup timeout")
-				}
+		pluginMap.Range(func(key, value interface{}) bool {
+			if plugin, ok := value.(funplugin.IPlugin); ok {
+				plugin.Quit()
 			}
+			return true
 		})
+
+		// Close all MCP hosts with timeout
+		if len(mcpHosts) > 0 {
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				for _, host := range mcpHosts {
+					if host != nil {
+						host.Shutdown()
+					}
+				}
+			}()
+
+			// Wait for cleanup with timeout
+			select {
+			case <-done:
+				log.Debug().Msg("All MCP hosts cleaned up successfully")
+			case <-time.After(10 * time.Second):
+				log.Warn().Msg("MCP hosts cleanup timeout")
+			}
+		}
 	}()
 
 	var runErr error
@@ -290,8 +311,8 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			// check for interrupt signal before each iteration
 			select {
 			case <-r.interruptSignal:
-				log.Warn().Msg("interrupted in main runner")
-				return errors.Wrap(code.InterruptError, "main runner interrupted")
+				log.Warn().Msg("interrupted in parameter iteration")
+				return errors.Wrap(code.InterruptError, "parameter iteration interrupted")
 			default:
 			}
 
@@ -302,27 +323,11 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			s.AddCaseSummary(caseSummary)
 			if err != nil {
 				log.Error().Err(err).Msg("[Run] run testcase failed")
+				if r.failfast {
+					return err
+				}
 				runErr = err
 			}
-
-			if runErr != nil && r.failfast {
-				break
-			}
-		}
-	}
-	s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
-
-	// save summary
-	if r.saveTests {
-		if _, err := s.GenSummary(); err != nil {
-			return err
-		}
-	}
-
-	// generate HTML report
-	if r.genHTMLReport {
-		if err := s.GenHTMLReport(); err != nil {
-			return err
 		}
 	}
 
