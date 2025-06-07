@@ -41,9 +41,9 @@ func Dump2JSON(data interface{}, path string) error {
 	}
 	log.Info().Str("path", path).Msg("dump data to json")
 
-	// init json encoder
+	// Use standard library json encoder with consistent indentation and no HTML escaping
 	buffer := new(bytes.Buffer)
-	encoder := json.NewEncoder(buffer)
+	encoder := builtinJSON.NewEncoder(buffer)
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "    ")
 
