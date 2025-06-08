@@ -746,9 +746,10 @@ const htmlTemplate = `<!DOCTYPE html>
 
         .log-entry {
             border-bottom: 1px solid #e9ecef;
-            padding: 8px 12px;
+            padding: 4px 8px;
             font-family: monospace;
-            font-size: 0.85em;
+            font-size: 0.8em;
+            line-height: 1.2;
         }
 
         .log-entry:last-child {
@@ -775,20 +776,25 @@ const htmlTemplate = `<!DOCTYPE html>
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+            flex-wrap: nowrap;
         }
 
         .log-time {
             color: #6c757d;
-            font-size: 0.8em;
+            font-size: 0.75em;
+            white-space: nowrap;
+            min-width: 180px;
         }
 
         .log-level {
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.7em;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 0.65em;
             font-weight: bold;
             text-transform: uppercase;
+            min-width: 45px;
+            text-align: center;
         }
 
         .log-level.debug {
@@ -813,19 +819,21 @@ const htmlTemplate = `<!DOCTYPE html>
 
         .log-message {
             color: #495057;
-            margin-bottom: 4px;
             word-wrap: break-word;
+            flex: 1;
+            margin-left: 10px;
         }
 
         .log-data {
-            background: #e9ecef;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 4px 6px;
-            font-size: 0.8em;
+            background: #f8f9fa;
+            border-left: 3px solid #dee2e6;
+            padding: 2px 6px;
+            margin: 2px 0 2px 195px;
+            font-size: 0.75em;
             color: #6c757d;
-            max-height: 100px;
+            max-height: 80px;
             overflow-y: auto;
+            word-break: break-all;
         }
 
         .controls {
@@ -930,6 +938,32 @@ const htmlTemplate = `<!DOCTYPE html>
 
             .screenshot-item.small .screenshot-image img {
                 max-height: 150px;
+            }
+
+            .log-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+
+            .log-time {
+                min-width: auto;
+                font-size: 0.7em;
+            }
+
+            .log-level {
+                min-width: 35px;
+                font-size: 0.6em;
+            }
+
+            .log-message {
+                margin-left: 0;
+                font-size: 0.75em;
+            }
+
+            .log-data {
+                margin-left: 10px;
+                font-size: 0.7em;
             }
         }
     </style>
@@ -1143,16 +1177,16 @@ const htmlTemplate = `<!DOCTYPE html>
                             <h4>📋 Step Logs</h4>
                             <div class="logs-container">
                                 {{range $logEntry := $stepLogs}}
-                                <div class="log-entry {{$logEntry.Level}}">
-                                    <div class="log-header">
-                                        <span class="log-time">{{$logEntry.Time}}</span>
-                                        <span class="log-level {{$logEntry.Level}}">{{$logEntry.Level}}</span>
-                                    </div>
-                                    <div class="log-message">{{$logEntry.Message}}</div>
-                                    {{if $logEntry.Data}}
-                                    <div class="log-data">{{safeHTML (toJSON $logEntry.Data)}}</div>
-                                    {{end}}
-                                </div>
+                                                                 <div class="log-entry {{$logEntry.Level}}">
+                                     <div class="log-header">
+                                         <span class="log-time">{{$logEntry.Time}}</span>
+                                         <span class="log-level {{$logEntry.Level}}">{{$logEntry.Level}}</span>
+                                         <span class="log-message">{{$logEntry.Message}}</span>
+                                     </div>
+                                     {{if $logEntry.Data}}
+                                     <div class="log-data">{{safeHTML (toJSON $logEntry.Data)}}</div>
+                                     {{end}}
+                                 </div>
                                 {{end}}
                             </div>
                         </div>
