@@ -1,11 +1,8 @@
 package hrp
 
 import (
-	"bufio"
 	_ "embed"
 	"fmt"
-	"html/template"
-	"os"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -94,27 +91,19 @@ func (s *Summary) GenHTMLReport() error {
 		return err
 	}
 
+	// Find summary.json and hrp.log files
+	summaryPath := filepath.Join(reportsDir, "summary.json")
+	logPath := filepath.Join(reportsDir, "hrp.log")
 	reportPath := filepath.Join(reportsDir, "report.html")
-	file, err := os.Open(reportPath)
-	if err != nil {
-		log.Error().Err(err).Msg("open file failed")
-		return err
+
+	// Check if summary.json exists, if not create it first
+	if !builtin.FileExists(summaryPath) {
+		if _, err := s.GenSummary(); err != nil {
+			return fmt.Errorf("failed to generate summary.json: %w", err)
+		}
 	}
-	defer file.Close()
-	writer := bufio.NewWriter(file)
-	tmpl := template.Must(template.New("report").Parse(reportTemplate))
-	err = tmpl.Execute(writer, s)
-	if err != nil {
-		log.Error().Err(err).Msg("execute applies a parsed template to the specified data object failed")
-		return err
-	}
-	err = writer.Flush()
-	if err == nil {
-		log.Info().Str("path", reportPath).Msg("generate HTML report")
-	} else {
-		log.Error().Str("path", reportPath).Msg("generate HTML report failed")
-	}
-	return err
+
+	return GenerateHTMLReportFromFiles(summaryPath, logPath, reportPath)
 }
 
 func (s *Summary) GenSummary() (path string, err error) {
@@ -130,9 +119,6 @@ func (s *Summary) GenSummary() (path string, err error) {
 	}
 	return path, nil
 }
-
-//go:embed internal/scaffold/templates/report/template.html
-var reportTemplate string
 
 type Stat struct {
 	TestCases TestCaseStat `json:"testcases" yaml:"testcases"`

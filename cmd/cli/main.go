@@ -17,6 +17,7 @@ func addAllCommands() {
 	cmd.RootCmd.AddCommand(cmd.CmdBuild)
 	cmd.RootCmd.AddCommand(cmd.CmdConvert)
 	cmd.RootCmd.AddCommand(cmd.CmdPytest)
+	cmd.RootCmd.AddCommand(cmd.CmdReport)
 	cmd.RootCmd.AddCommand(cmd.CmdRun)
 	cmd.RootCmd.AddCommand(cmd.CmdScaffold)
 	cmd.RootCmd.AddCommand(cmd.CmdServer)
