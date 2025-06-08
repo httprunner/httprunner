@@ -141,7 +141,7 @@ func (s *MCPServer4XTDriver) registerTool(tool ActionTool) {
 	s.mcpTools = append(s.mcpTools, mcpTool)
 	s.actionToolMap[tool.Name()] = tool
 
-	log.Debug().Str("name", toolName).Str("type", toolName).Msg("register tool")
+	log.Debug().Str("name", toolName).Msg("register tool")
 }
 
 // ActionTool interface defines the contract for MCP tools

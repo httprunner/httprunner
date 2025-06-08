@@ -43,7 +43,7 @@ type LogEntry struct {
 	Time    string         `json:"time"`
 	Level   string         `json:"level"`
 	Message string         `json:"message"`
-	Data    map[string]any `json:"data,omitempty"`
+	Fields  map[string]any `json:"-"` // Store all other fields
 }
 
 // NewHTMLReportGenerator creates a new HTML report generator
@@ -99,11 +99,36 @@ func (g *HTMLReportGenerator) loadLogData() error {
 			continue
 		}
 
-		var logEntry LogEntry
-		if err := json.Unmarshal([]byte(line), &logEntry); err != nil {
+		// First parse into a generic map to get all fields
+		var rawEntry map[string]any
+		if err := json.Unmarshal([]byte(line), &rawEntry); err != nil {
 			// Skip invalid JSON lines
 			continue
 		}
+
+		// Create LogEntry with basic fields
+		logEntry := LogEntry{
+			Fields: make(map[string]any),
+		}
+
+		// Extract standard fields
+		if time, ok := rawEntry["time"].(string); ok {
+			logEntry.Time = time
+		}
+		if level, ok := rawEntry["level"].(string); ok {
+			logEntry.Level = level
+		}
+		if message, ok := rawEntry["message"].(string); ok {
+			logEntry.Message = message
+		}
+
+		// Store all other fields in Fields map
+		for key, value := range rawEntry {
+			if key != "time" && key != "level" && key != "message" {
+				logEntry.Fields[key] = value
+			}
+		}
+
 		g.LogData = append(g.LogData, logEntry)
 	}
 
@@ -192,7 +217,7 @@ func (g *HTMLReportGenerator) encodeImageToBase64(imagePath string) string {
 }
 
 // formatDuration formats duration from milliseconds to human readable format
-func (g *HTMLReportGenerator) formatDuration(duration interface{}) string {
+func (g *HTMLReportGenerator) formatDuration(duration any) string {
 	var durationMs float64
 
 	switch v := duration.(type) {
@@ -225,6 +250,117 @@ func (g *HTMLReportGenerator) getStepLogsForTemplate(step *StepResult) []LogEntr
 	return g.getStepLogs(step.Name, step.StartTime, step.Elapsed)
 }
 
+// calculateTotalActions calculates the total number of actions across all test cases
+func (g *HTMLReportGenerator) calculateTotalActions() int {
+	total := 0
+	if g.SummaryData == nil || g.SummaryData.Details == nil {
+		return total
+	}
+
+	for _, testCase := range g.SummaryData.Details {
+		if testCase.Records == nil {
+			continue
+		}
+		for _, step := range testCase.Records {
+			if step.Actions != nil {
+				total += len(step.Actions)
+			}
+		}
+	}
+	return total
+}
+
+// calculateTotalSubActions calculates the total number of sub-actions across all test cases
+func (g *HTMLReportGenerator) calculateTotalSubActions() int {
+	total := 0
+	if g.SummaryData == nil || g.SummaryData.Details == nil {
+		return total
+	}
+
+	for _, testCase := range g.SummaryData.Details {
+		if testCase.Records == nil {
+			continue
+		}
+		for _, step := range testCase.Records {
+			if step.Actions != nil {
+				for _, action := range step.Actions {
+					if action.SubActions != nil {
+						total += len(action.SubActions)
+					}
+				}
+			}
+		}
+	}
+	return total
+}
+
+// calculateTotalRequests calculates the total number of requests across all test cases
+func (g *HTMLReportGenerator) calculateTotalRequests() int {
+	total := 0
+	if g.SummaryData == nil || g.SummaryData.Details == nil {
+		return total
+	}
+
+	for _, testCase := range g.SummaryData.Details {
+		if testCase.Records == nil {
+			continue
+		}
+		for _, step := range testCase.Records {
+			if step.Actions != nil {
+				for _, action := range step.Actions {
+					if action.SubActions != nil {
+						for _, subAction := range action.SubActions {
+							if subAction.Requests != nil {
+								total += len(subAction.Requests)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return total
+}
+
+// calculateTotalScreenshots calculates the total number of screenshots across all test cases
+func (g *HTMLReportGenerator) calculateTotalScreenshots() int {
+	total := 0
+	if g.SummaryData == nil || g.SummaryData.Details == nil {
+		return total
+	}
+
+	for _, testCase := range g.SummaryData.Details {
+		if testCase.Records == nil {
+			continue
+		}
+		for _, step := range testCase.Records {
+			// Count screenshots in actions
+			if step.Actions != nil {
+				for _, action := range step.Actions {
+					if action.SubActions != nil {
+						for _, subAction := range action.SubActions {
+							if subAction.ScreenResults != nil {
+								total += len(subAction.ScreenResults)
+							}
+						}
+					}
+				}
+			}
+			// Count screenshots in attachments
+			if step.Attachments != nil {
+				if attachments, ok := step.Attachments.(map[string]any); ok {
+					if screenResults, exists := attachments["screen_results"]; exists {
+						if screenResultsSlice, ok := screenResults.([]any); ok {
+							total += len(screenResultsSlice)
+						}
+					}
+				}
+			}
+		}
+	}
+	return total
+}
+
 // GenerateReport generates the complete HTML test report
 func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 	if outputFile == "" {
@@ -233,11 +369,15 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 
 	// Create template functions
 	funcMap := template.FuncMap{
-		"formatDuration":    g.formatDuration,
-		"encodeImageBase64": g.encodeImageToBase64,
-		"getStepLogs":       g.getStepLogsForTemplate,
-		"safeHTML":          func(s string) template.HTML { return template.HTML(s) },
-		"toJSON": func(v interface{}) string {
+		"formatDuration":            g.formatDuration,
+		"encodeImageBase64":         g.encodeImageToBase64,
+		"getStepLogs":               g.getStepLogsForTemplate,
+		"calculateTotalActions":     g.calculateTotalActions,
+		"calculateTotalSubActions":  g.calculateTotalSubActions,
+		"calculateTotalRequests":    g.calculateTotalRequests,
+		"calculateTotalScreenshots": g.calculateTotalScreenshots,
+		"safeHTML":                  func(s string) template.HTML { return template.HTML(s) },
+		"toJSON": func(v any) string {
 			var buf strings.Builder
 			encoder := json.NewEncoder(&buf)
 			encoder.SetEscapeHTML(false)
@@ -248,7 +388,7 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 		"mul":   func(a, b float64) float64 { return a * b },
 		"add":   func(a, b int) int { return a + b },
 		"base":  filepath.Base,
-		"index": func(m map[string]any, key string) interface{} { return m[key] },
+		"index": func(m map[string]any, key string) any { return m[key] },
 	}
 
 	// Parse template
@@ -778,6 +918,12 @@ const htmlTemplate = `<!DOCTYPE html>
             gap: 10px;
             margin-bottom: 2px;
             flex-wrap: nowrap;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .log-header:hover {
+            background-color: rgba(0,0,0,0.05);
         }
 
         .log-time {
@@ -824,16 +970,35 @@ const htmlTemplate = `<!DOCTYPE html>
             margin-left: 10px;
         }
 
-        .log-data {
+        .log-toggle {
+            color: #6c757d;
+            font-size: 0.8em;
+            margin-left: auto;
+            transition: transform 0.3s;
+        }
+
+        .log-toggle.rotated {
+            transform: rotate(-90deg);
+        }
+
+        .log-fields {
             background: #f8f9fa;
             border-left: 3px solid #dee2e6;
             padding: 2px 6px;
-            margin: 2px 0 2px 195px;
+            margin: 2px 0;
             font-size: 0.75em;
             color: #6c757d;
             max-height: 80px;
             overflow-y: auto;
             word-break: break-all;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .log-fields.collapsed {
+            max-height: 0;
+            padding: 0 6px;
+            margin: 0;
+            overflow: hidden;
         }
 
         .controls {
@@ -961,9 +1126,13 @@ const htmlTemplate = `<!DOCTYPE html>
                 font-size: 0.75em;
             }
 
-            .log-data {
-                margin-left: 10px;
+            .log-fields {
+                margin: 2px 0;
                 font-size: 0.7em;
+            }
+
+            .log-fields.collapsed {
+                margin: 0;
             }
         }
     </style>
@@ -978,10 +1147,6 @@ const htmlTemplate = `<!DOCTYPE html>
         <div class="summary">
             <h2>📊 Test Summary</h2>
             <div class="summary-grid">
-                <div class="summary-item {{if .Success}}success{{else}}failure{{end}}">
-                    <div class="value">{{if .Success}}✓{{else}}✗{{end}}</div>
-                    <div class="label">Overall Status</div>
-                </div>
                 <div class="summary-item">
                     <div class="value">{{.Stat.TestCases.Total}}</div>
                     <div class="label">Total Test Cases</div>
@@ -997,6 +1162,22 @@ const htmlTemplate = `<!DOCTYPE html>
                 <div class="summary-item">
                     <div class="value">{{.Stat.TestSteps.Total}}</div>
                     <div class="label">Total Steps</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">{{calculateTotalActions}}</div>
+                    <div class="label">Total Actions</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">{{calculateTotalSubActions}}</div>
+                    <div class="label">Total Sub-Actions</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">{{calculateTotalRequests}}</div>
+                    <div class="label">Total Requests</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">{{calculateTotalScreenshots}}</div>
+                    <div class="label">Total Screenshots</div>
                 </div>
                 <div class="summary-item">
                     <div class="value">{{printf "%.1f" .Time.Duration}}s</div>
@@ -1177,14 +1358,17 @@ const htmlTemplate = `<!DOCTYPE html>
                             <h4>📋 Step Logs</h4>
                             <div class="logs-container">
                                 {{range $logEntry := $stepLogs}}
-                                                                 <div class="log-entry {{$logEntry.Level}}">
-                                     <div class="log-header">
+                                 <div class="log-entry {{$logEntry.Level}}">
+                                     <div class="log-header" {{if $logEntry.Fields}}onclick="toggleLogFields(this)"{{end}}>
                                          <span class="log-time">{{$logEntry.Time}}</span>
                                          <span class="log-level {{$logEntry.Level}}">{{$logEntry.Level}}</span>
                                          <span class="log-message">{{$logEntry.Message}}</span>
+                                         {{if $logEntry.Fields}}
+                                         <span class="log-toggle">▼</span>
+                                         {{end}}
                                      </div>
-                                     {{if $logEntry.Data}}
-                                     <div class="log-data">{{safeHTML (toJSON $logEntry.Data)}}</div>
+                                     {{if $logEntry.Fields}}
+                                     <div class="log-fields collapsed">{{safeHTML (toJSON $logEntry.Fields)}}</div>
                                      {{end}}
                                  </div>
                                 {{end}}
@@ -1216,6 +1400,22 @@ const htmlTemplate = `<!DOCTYPE html>
             } else {
                 content.classList.add('show');
                 icon.classList.add('rotated');
+            }
+        }
+
+        function toggleLogFields(headerElement) {
+            const logEntry = headerElement.parentElement;
+            const fieldsElement = logEntry.querySelector('.log-fields');
+            const toggleIcon = headerElement.querySelector('.log-toggle');
+
+            if (fieldsElement && toggleIcon) {
+                if (fieldsElement.classList.contains('collapsed')) {
+                    fieldsElement.classList.remove('collapsed');
+                    toggleIcon.classList.add('rotated');
+                } else {
+                    fieldsElement.classList.add('collapsed');
+                    toggleIcon.classList.remove('rotated');
+                }
             }
         }
 
