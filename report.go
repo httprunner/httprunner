@@ -237,11 +237,18 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 		"encodeImageBase64": g.encodeImageToBase64,
 		"getStepLogs":       g.getStepLogsForTemplate,
 		"safeHTML":          func(s string) template.HTML { return template.HTML(s) },
-		"toJSON":            func(v interface{}) string { b, _ := json.Marshal(v); return string(b) },
-		"mul":               func(a, b float64) float64 { return a * b },
-		"add":               func(a, b int) int { return a + b },
-		"base":              filepath.Base,
-		"index":             func(m map[string]any, key string) interface{} { return m[key] },
+		"toJSON": func(v interface{}) string {
+			var buf strings.Builder
+			encoder := json.NewEncoder(&buf)
+			encoder.SetEscapeHTML(false)
+			_ = encoder.Encode(v)
+			result := buf.String()
+			return strings.TrimSpace(result)
+		},
+		"mul":   func(a, b float64) float64 { return a * b },
+		"add":   func(a, b int) int { return a + b },
+		"base":  filepath.Base,
+		"index": func(m map[string]any, key string) interface{} { return m[key] },
 	}
 
 	// Parse template
@@ -1033,7 +1040,7 @@ const htmlTemplate = `<!DOCTYPE html>
                                         {{end}}
 
                                         {{if $subAction.Arguments}}
-                                        <div class="arguments">Arguments: {{toJSON $subAction.Arguments}}</div>
+                                        <div class="arguments">Arguments: {{safeHTML (toJSON $subAction.Arguments)}}</div>
                                         {{end}}
 
                                         {{if $subAction.Requests}}
@@ -1143,7 +1150,7 @@ const htmlTemplate = `<!DOCTYPE html>
                                     </div>
                                     <div class="log-message">{{$logEntry.Message}}</div>
                                     {{if $logEntry.Data}}
-                                    <div class="log-data">{{toJSON $logEntry.Data}}</div>
+                                    <div class="log-data">{{safeHTML (toJSON $logEntry.Data)}}</div>
                                     {{end}}
                                 </div>
                                 {{end}}
