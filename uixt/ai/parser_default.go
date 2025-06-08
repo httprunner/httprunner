@@ -21,11 +21,13 @@ func NewLLMContentParser(modelType option.LLMServiceType) LLMContentParser {
 	switch modelType {
 	case option.DOUBAO_1_5_UI_TARS_250428:
 		return &UITARSContentParser{
+			modelType:     modelType,
 			systemPrompt:  doubao_1_5_ui_tars_planning_prompt,
 			actionMapping: doubao_1_5_ui_tars_action_mapping,
 		}
 	default:
 		return &JSONContentParser{
+			modelType:     modelType,
 			systemPrompt:  doubao_1_5_thinking_vision_pro_planning_prompt,
 			actionMapping: doubao_1_5_thinking_vision_pro_action_mapping,
 		}
@@ -34,6 +36,7 @@ func NewLLMContentParser(modelType option.LLMServiceType) LLMContentParser {
 
 // JSONContentParser parses the response as JSON string format
 type JSONContentParser struct {
+	modelType     option.LLMServiceType
 	systemPrompt  string
 	actionMapping map[string]option.ActionName
 }
@@ -98,5 +101,6 @@ func (p *JSONContentParser) Parse(content string, size types.Size) (*PlanningRes
 		ToolCalls: toolCalls,
 		Thought:   jsonResponse.Thought,
 		Content:   content,
+		ModelName: string(p.modelType),
 	}, nil
 }

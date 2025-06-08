@@ -21,6 +21,7 @@ const (
 
 // UITARSContentParser parses the Thought/Action format response
 type UITARSContentParser struct {
+	modelType     option.LLMServiceType
 	systemPrompt  string
 	actionMapping map[string]option.ActionName
 }
@@ -55,6 +56,7 @@ func (p *UITARSContentParser) Parse(content string, size types.Size) (*PlanningR
 		ToolCalls: toolCalls,
 		Thought:   thought,
 		Content:   content,
+		ModelName: string(p.modelType),
 	}, nil
 }
 

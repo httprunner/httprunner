@@ -449,14 +449,44 @@ const htmlTemplate = `<!DOCTYPE html>
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .header h1 {
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
         }
 
-        .header .subtitle {
+        .header-left .subtitle {
             font-size: 1.2em;
             opacity: 0.9;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .start-time {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .time-label {
+            display: block;
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+
+        .time-value {
+            display: block;
+            font-size: 1.1em;
+            font-weight: bold;
         }
 
         .summary {
@@ -511,14 +541,81 @@ const htmlTemplate = `<!DOCTYPE html>
 
         .platform-info {
             background: #e9ecef;
-            padding: 15px;
+            padding: 20px;
             border-radius: 8px;
             margin-top: 20px;
         }
 
         .platform-info h3 {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             color: #495057;
+        }
+
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .platform-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .platform-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .platform-label {
+            font-size: 1.0em;
+            color: #6c757d;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .platform-value {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #2c3e50;
+            word-break: break-all;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .controls button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .controls button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .step-container {
@@ -643,16 +740,56 @@ const htmlTemplate = `<!DOCTYPE html>
             align-items: center;
             gap: 15px;
             margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .action-header:hover {
+            background-color: rgba(0, 123, 255, 0.1);
         }
 
         .action-header strong {
             color: #007bff;
         }
 
+        .action-toggle {
+            margin-left: auto;
+            font-size: 0.8em;
+            color: #6c757d;
+            transition: transform 0.3s;
+        }
+
+        .action-toggle.rotated {
+            transform: rotate(-90deg);
+        }
+
+        .action-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .action-content {
+            display: none;
+        }
+
+        .action-content.expanded {
+            display: block;
+        }
+
         .action-params {
             color: #6c757d;
             font-style: italic;
             margin-bottom: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 0.9em;
+            line-height: 1.4;
         }
 
         .error {
@@ -674,6 +811,22 @@ const htmlTemplate = `<!DOCTYPE html>
             margin-bottom: 10px;
         }
 
+        .sub-action-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .sub-action-left {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .sub-action-right {
+            flex: 1;
+            min-width: 0;
+        }
+
         .sub-action-header {
             display: flex;
             align-items: center;
@@ -691,13 +844,53 @@ const htmlTemplate = `<!DOCTYPE html>
         }
 
         .thought {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 6px;
-            padding: 8px;
-            margin: 8px 0;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border: 2px solid #2196f3;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
             font-style: italic;
-            color: #856404;
+            color: #1565c0;
+            font-size: 1.0em;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .thought::before {
+            content: "💭";
+            font-size: 1.2em;
+            flex-shrink: 0;
+            margin-top: 0px;
+            line-height: 1;
+        }
+
+        .model-name-container {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .model-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .model-value {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #495057;
+            font-size: 0.85em;
         }
 
         .arguments {
@@ -711,7 +904,31 @@ const htmlTemplate = `<!DOCTYPE html>
         }
 
         .requests {
-            margin-top: 10px;
+            margin-top: 15px;
+        }
+
+        .requests-toggle {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .requests-toggle:hover {
+            background: #5a6268;
+        }
+
+        .requests-content {
+            display: none;
+        }
+
+        .requests-content.show {
+            display: block;
         }
 
         .request-item {
@@ -774,7 +991,24 @@ const htmlTemplate = `<!DOCTYPE html>
         }
 
         .sub-action-screenshots, .screenshots-section {
-            margin-top: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #28a745;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
+        }
+
+        .sub-action-screenshots h5, .screenshots-section h4 {
+            color: #155724;
+            margin-bottom: 10px;
+            font-size: 1.0em;
+            font-weight: 600;
+        }
+
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
         }
 
         .screenshot-item {
@@ -783,6 +1017,13 @@ const htmlTemplate = `<!DOCTYPE html>
             border-radius: 8px;
             padding: 10px;
             margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .screenshot-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
 
         .screenshot-item.small {
@@ -876,12 +1117,50 @@ const htmlTemplate = `<!DOCTYPE html>
             margin-top: 20px;
         }
 
+        .logs-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .logs-header:hover {
+            background: #e9ecef;
+        }
+
+        .logs-header h4 {
+            margin: 0;
+            color: #495057;
+        }
+
+        .logs-toggle {
+            margin-left: auto;
+            font-size: 0.8em;
+            color: #6c757d;
+            transition: transform 0.3s;
+        }
+
+        .logs-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
         .logs-container {
             max-height: 400px;
             overflow-y: auto;
             border: 1px solid #dee2e6;
             border-radius: 6px;
             background: #f8f9fa;
+            display: none;
+        }
+
+        .logs-container.show {
+            display: block;
         }
 
         .log-entry {
@@ -1065,8 +1344,41 @@ const htmlTemplate = `<!DOCTYPE html>
                 padding: 10px;
             }
 
-            .header h1 {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .header-left h1 {
                 font-size: 2em;
+            }
+
+            .header-right {
+                text-align: left;
+                width: 100%;
+            }
+
+            .start-time {
+                width: 100%;
+                text-align: center;
+            }
+
+            .platform-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 10px;
+            }
+
+            .platform-item {
+                padding: 12px;
+            }
+
+            .platform-label {
+                font-size: 0.8em;
+            }
+
+            .platform-value {
+                font-size: 1em;
             }
 
             .summary-grid {
@@ -1091,10 +1403,36 @@ const htmlTemplate = `<!DOCTYPE html>
                 gap: 8px;
             }
 
+            .controls button {
+                padding: 6px 10px;
+                font-size: 0.8em;
+                margin: 2px;
+            }
+
+            .logs-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .logs-header h4 {
+                font-size: 0.9em;
+            }
+
             .request-header {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 6px;
+            }
+
+            .sub-action-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .screenshots-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
             }
 
             .screenshot-image img {
@@ -1140,8 +1478,18 @@ const htmlTemplate = `<!DOCTYPE html>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 HttpRunner Test Report</h1>
-            <div class="subtitle">Automated Testing Results</div>
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>🚀 HttpRunner Test Report</h1>
+                    <div class="subtitle">Automated Testing Results</div>
+                </div>
+                <div class="header-right">
+                    <div class="start-time">
+                        <span class="time-label">Start Time:</span>
+                        <span class="time-value">{{.Time.StartAt.Format "2006-01-02 15:04:05"}}</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="summary">
@@ -1187,16 +1535,26 @@ const htmlTemplate = `<!DOCTYPE html>
 
             <div class="platform-info">
                 <h3>🔧 Platform Information</h3>
-                <p><strong>HttpRunner Version:</strong> {{.Platform.HttprunnerVersion}}</p>
-                <p><strong>Go Version:</strong> {{.Platform.GoVersion}}</p>
-                <p><strong>Platform:</strong> {{.Platform.Platform}}</p>
-                <p><strong>Start Time:</strong> {{.Time.StartAt.Format "2006-01-02 15:04:05"}}</p>
+                <div class="platform-grid">
+                    <div class="platform-item">
+                        <div class="platform-label">HttpRunner Version</div>
+                        <div class="platform-value">{{.Platform.HttprunnerVersion}}</div>
+                    </div>
+                    <div class="platform-item">
+                        <div class="platform-label">Go Version</div>
+                        <div class="platform-value">{{.Platform.GoVersion}}</div>
+                    </div>
+                    <div class="platform-item">
+                        <div class="platform-label">Platform</div>
+                        <div class="platform-value">{{.Platform.Platform}}</div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="controls">
-            <button onclick="expandAll()">Expand All</button>
-            <button onclick="collapseAll()">Collapse All</button>
+            <button id="toggleStepsBtn" onclick="toggleAllSteps()">Collapse All Steps</button>
+            <button id="toggleActionsBtn" onclick="toggleAllActions()">Expand All Actions</button>
         </div>
 
         <div class="test-cases">
@@ -1234,12 +1592,14 @@ const htmlTemplate = `<!DOCTYPE html>
                             <h4>Actions</h4>
                             {{range $actionIndex, $action := $step.Actions}}
                             <div class="action-item">
-                                <div class="action-header">
+                                <div class="action-header" onclick="toggleAction({{$stepIndex}}, {{$actionIndex}})">
                                     <strong>{{$action.Method}}</strong>
                                     <span class="duration">{{formatDuration $action.Elapsed}}</span>
                                     {{if $action.Error}}<span class="error">Error: {{$action.Error}}</span>{{end}}
+                                    <span class="action-toggle collapsed" id="action-toggle-{{$stepIndex}}-{{$actionIndex}}">▶</span>
                                 </div>
-                                <div class="action-params">{{$action.Params}}</div>
+                                <div class="action-content" id="action-content-{{$stepIndex}}-{{$actionIndex}}">
+                                    <div class="action-params">{{$action.Params}}</div>
 
                                 {{if $action.SubActions}}
                                 <div class="sub-actions">
@@ -1250,59 +1610,81 @@ const htmlTemplate = `<!DOCTYPE html>
                                             <span class="duration">{{formatDuration $subAction.Elapsed}}</span>
                                         </div>
 
-                                        {{if $subAction.Thought}}
-                                        <div class="thought">💭 {{$subAction.Thought}}</div>
-                                        {{end}}
+                                        <div class="sub-action-content">
+                                            <div class="sub-action-left">
+                                                {{if $subAction.Arguments}}
+                                                <div class="arguments">Arguments: {{safeHTML (toJSON $subAction.Arguments)}}</div>
+                                                {{end}}
 
-                                        {{if $subAction.Arguments}}
-                                        <div class="arguments">Arguments: {{safeHTML (toJSON $subAction.Arguments)}}</div>
-                                        {{end}}
+                                                {{if $subAction.Thought}}
+                                                <div class="thought">{{$subAction.Thought}}</div>
+                                                {{end}}
 
-                                        {{if $subAction.Requests}}
-                                        <div class="requests">
-                                            {{range $request := $subAction.Requests}}
-                                            <div class="request-item">
-                                                <div class="request-header">
-                                                    <span class="method">{{$request.RequestMethod}}</span>
-                                                    <span class="url">{{$request.RequestUrl}}</span>
-                                                    <span class="status {{if $request.Success}}success{{else}}failure{{end}}">Status: {{$request.ResponseStatus}}</span>
-                                                    <span class="duration">{{formatDuration $request.ResponseDuration}}</span>
+                                                {{if $subAction.ModelName}}
+                                                <div class="model-name-container">
+                                                    <span class="model-label">🤖 Model:</span>
+                                                    <span class="model-value">{{$subAction.ModelName}}</span>
                                                 </div>
-                                                {{if $request.RequestBody}}
-                                                <div class="request-body">Request: {{$request.RequestBody}}</div>
                                                 {{end}}
-                                                {{if $request.ResponseBody}}
-                                                <div class="response-body">Response: {{$request.ResponseBody}}</div>
+
+                                                {{if $subAction.Requests}}
+                                                <div class="requests">
+                                                    <button class="requests-toggle" onclick="toggleRequests(this)">
+                                                        📡 Show Requests ({{len $subAction.Requests}})
+                                                    </button>
+                                                    <div class="requests-content">
+                                                        {{range $request := $subAction.Requests}}
+                                                        <div class="request-item">
+                                                            <div class="request-header">
+                                                                <span class="method">{{$request.RequestMethod}}</span>
+                                                                <span class="url">{{$request.RequestUrl}}</span>
+                                                                <span class="status {{if $request.Success}}success{{else}}failure{{end}}">Status: {{$request.ResponseStatus}}</span>
+                                                                <span class="duration">{{formatDuration $request.ResponseDuration}}</span>
+                                                            </div>
+                                                            {{if $request.RequestBody}}
+                                                            <div class="request-body">Request: {{$request.RequestBody}}</div>
+                                                            {{end}}
+                                                            {{if $request.ResponseBody}}
+                                                            <div class="response-body">Response: {{$request.ResponseBody}}</div>
+                                                            {{end}}
+                                                        </div>
+                                                        {{end}}
+                                                    </div>
+                                                </div>
                                                 {{end}}
+                                            </div>
+
+                                            {{if $subAction.ScreenResults}}
+                                            <div class="sub-action-right">
+                                                <div class="sub-action-screenshots">
+                                                    <h5>📸 Screenshots</h5>
+                                                    <div class="screenshots-grid">
+                                                        {{range $screenshot := $subAction.ScreenResults}}
+                                                        {{$base64Image := encodeImageBase64 $screenshot.ImagePath}}
+                                                        {{if $base64Image}}
+                                                        <div class="screenshot-item small">
+                                                            <div class="screenshot-info">
+                                                                <span class="filename">{{base $screenshot.ImagePath}}</span>
+                                                                {{if $screenshot.Resolution}}
+                                                                <span class="resolution">{{$screenshot.Resolution.Width}}x{{$screenshot.Resolution.Height}}</span>
+                                                                {{end}}
+                                                            </div>
+                                                            <div class="screenshot-image">
+                                                                <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Screenshot" onclick="openImageModal(this.src)" />
+                                                            </div>
+                                                        </div>
+                                                        {{end}}
+                                                        {{end}}
+                                                    </div>
+                                                </div>
                                             </div>
                                             {{end}}
                                         </div>
-                                        {{end}}
-
-                                        {{if $subAction.ScreenResults}}
-                                        <div class="sub-action-screenshots">
-                                            {{range $screenshot := $subAction.ScreenResults}}
-                                            {{$base64Image := encodeImageBase64 $screenshot.ImagePath}}
-                                            {{if $base64Image}}
-                                            <div class="screenshot-item small">
-                                                <div class="screenshot-info">
-                                                    <span class="filename">{{base $screenshot.ImagePath}}</span>
-                                                    {{if $screenshot.Resolution}}
-                                                    <span class="resolution">{{$screenshot.Resolution.Width}}x{{$screenshot.Resolution.Height}}</span>
-                                                    {{end}}
-                                                </div>
-                                                <div class="screenshot-image">
-                                                    <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Screenshot" onclick="openImageModal(this.src)" />
-                                                </div>
-                                            </div>
-                                            {{end}}
-                                            {{end}}
-                                        </div>
-                                        {{end}}
+                                    </div>
+                                    {{end}}
                                     </div>
                                     {{end}}
                                 </div>
-                                {{end}}
                             </div>
                             {{end}}
                         </div>
@@ -1355,8 +1737,11 @@ const htmlTemplate = `<!DOCTYPE html>
                         {{$stepLogs := getStepLogs $step}}
                         {{if $stepLogs}}
                         <div class="logs-section">
-                            <h4>📋 Step Logs</h4>
-                            <div class="logs-container">
+                            <div class="logs-header" onclick="toggleStepLogs({{$stepIndex}})">
+                                <h4>📋 Step Logs ({{len $stepLogs}})</h4>
+                                <span class="logs-toggle collapsed" id="logs-toggle-{{$stepIndex}}">▶</span>
+                            </div>
+                            <div class="logs-container" id="logs-container-{{$stepIndex}}">
                                 {{range $logEntry := $stepLogs}}
                                  <div class="log-entry {{$logEntry.Level}}">
                                      <div class="log-header" {{if $logEntry.Fields}}onclick="toggleLogFields(this)"{{end}}>
@@ -1419,6 +1804,49 @@ const htmlTemplate = `<!DOCTYPE html>
             }
         }
 
+        function toggleStepLogs(stepIndex) {
+            const container = document.getElementById('logs-container-' + stepIndex);
+            const toggle = document.getElementById('logs-toggle-' + stepIndex);
+
+            if (container.classList.contains('show')) {
+                container.classList.remove('show');
+                toggle.classList.add('collapsed');
+                toggle.textContent = '▶';
+            } else {
+                container.classList.add('show');
+                toggle.classList.remove('collapsed');
+                toggle.textContent = '▼';
+            }
+        }
+
+                function toggleRequests(buttonElement) {
+            const requestsDiv = buttonElement.parentElement;
+            const requestsContent = requestsDiv.querySelector('.requests-content');
+
+            if (requestsContent.classList.contains('show')) {
+                requestsContent.classList.remove('show');
+                buttonElement.textContent = buttonElement.textContent.replace('Hide', 'Show');
+            } else {
+                requestsContent.classList.add('show');
+                buttonElement.textContent = buttonElement.textContent.replace('Show', 'Hide');
+            }
+        }
+
+        function toggleAction(stepIndex, actionIndex) {
+            const content = document.getElementById('action-content-' + stepIndex + '-' + actionIndex);
+            const toggle = document.getElementById('action-toggle-' + stepIndex + '-' + actionIndex);
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                toggle.classList.add('collapsed');
+                toggle.textContent = '▶';
+            } else {
+                content.classList.add('expanded');
+                toggle.classList.remove('collapsed');
+                toggle.textContent = '▼';
+            }
+        }
+
         function openImageModal(src) {
             const modal = document.getElementById('imageModal');
             const modalImg = document.getElementById('modalImage');
@@ -1438,34 +1866,70 @@ const htmlTemplate = `<!DOCTYPE html>
             }
         }
 
-        // Expand all steps
-        function expandAll() {
+        // Toggle all steps
+        function toggleAllSteps() {
             const contents = document.querySelectorAll('.step-content');
             const icons = document.querySelectorAll('.toggle-icon');
+            const button = document.getElementById('toggleStepsBtn');
+
+            // Check if any step is currently expanded
+            const anyExpanded = Array.from(contents).some(content => content.classList.contains('show'));
+
+            if (anyExpanded) {
+                // Collapse all
+                contents.forEach(content => content.classList.remove('show'));
+                icons.forEach(icon => icon.classList.remove('rotated'));
+                button.textContent = 'Expand All Steps';
+            } else {
+                // Expand all
+                contents.forEach(content => content.classList.add('show'));
+                icons.forEach(icon => icon.classList.add('rotated'));
+                button.textContent = 'Collapse All Steps';
+            }
+        }
+
+        // Toggle all actions
+        function toggleAllActions() {
+            const contents = document.querySelectorAll('.action-content');
+            const toggles = document.querySelectorAll('.action-toggle');
+            const button = document.getElementById('toggleActionsBtn');
+
+            // Check if any action is currently expanded
+            const anyExpanded = Array.from(contents).some(content => content.classList.contains('expanded'));
+
+            if (anyExpanded) {
+                // Collapse all
+                contents.forEach(content => content.classList.remove('expanded'));
+                toggles.forEach(toggle => {
+                    toggle.classList.add('collapsed');
+                    toggle.textContent = '▶';
+                });
+                button.textContent = 'Expand All Actions';
+            } else {
+                // Expand all
+                contents.forEach(content => content.classList.add('expanded'));
+                toggles.forEach(toggle => {
+                    toggle.classList.remove('collapsed');
+                    toggle.textContent = '▼';
+                });
+                button.textContent = 'Collapse All Actions';
+            }
+        }
+
+        // Auto-expand all steps on load to show actions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Expand all steps to show the actions list
+            const contents = document.querySelectorAll('.step-content');
+            const icons = document.querySelectorAll('.toggle-icon');
+            const stepsButton = document.getElementById('toggleStepsBtn');
 
             contents.forEach(content => content.classList.add('show'));
             icons.forEach(icon => icon.classList.add('rotated'));
-        }
 
-        // Collapse all steps
-        function collapseAll() {
-            const contents = document.querySelectorAll('.step-content');
-            const icons = document.querySelectorAll('.toggle-icon');
-
-            contents.forEach(content => content.classList.remove('show'));
-            icons.forEach(icon => icon.classList.remove('rotated'));
-        }
-
-        // Auto-expand failed steps on load
-        document.addEventListener('DOMContentLoaded', function() {
-            const failedSteps = document.querySelectorAll('.step-container .status-badge.failure');
-            failedSteps.forEach(badge => {
-                const stepContainer = badge.closest('.step-container');
-                const stepHeader = stepContainer.querySelector('.step-header');
-                if (stepHeader) {
-                    stepHeader.click();
-                }
-            });
+            // Update button text to reflect current state (steps are expanded)
+            if (stepsButton) {
+                stepsButton.textContent = 'Collapse All Steps';
+            }
         });
     </script>
 </body>

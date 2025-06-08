@@ -35,6 +35,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		}
 
 		// Plan next action with history reset on first attempt
+		planningStartTime := time.Now()
 		planningOpts := opts
 		if attempt == 1 {
 			// Add ResetHistory option for the first attempt
@@ -49,9 +50,12 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 				continue
 			}
 			allSubActions = append(allSubActions, &SubActionResult{
-				ActionName: "plan_next_action",
-				Arguments:  prompt,
-				Error:      err,
+				ActionName:  "plan_next_action",
+				Arguments:   prompt,
+				Error:       err,
+				StartTime:   planningStartTime.Unix(),
+				Elapsed:     time.Since(planningStartTime).Milliseconds(),
+				SessionData: dExt.GetSession().GetData(true),
 			})
 			return allSubActions, err
 		}
@@ -59,6 +63,17 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		// Check if task is finished BEFORE executing actions
 		if dExt.isTaskFinished(result) {
 			log.Info().Msg("task finished, stopping StartToGoal")
+			// Create a sub-action result to record the planning result even when task is finished
+			subActionResult := &SubActionResult{
+				ActionName:  "plan_next_action",
+				Arguments:   prompt,
+				StartTime:   planningStartTime.Unix(),
+				Elapsed:     time.Since(planningStartTime).Milliseconds(),
+				Thought:     result.Thought,
+				ModelName:   result.ModelName,
+				SessionData: dExt.GetSession().GetData(true),
+			}
+			allSubActions = append(allSubActions, subActionResult)
 			return allSubActions, nil
 		}
 
@@ -79,6 +94,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 				Arguments:  toolCall.Function.Arguments,
 				StartTime:  subActionStartTime.Unix(),
 				Thought:    result.Thought,
+				ModelName:  result.ModelName,
 			}
 
 			if err := dExt.invokeToolCall(ctx, toolCall); err != nil {
@@ -86,6 +102,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 				allSubActions = append(allSubActions, subActionResult)
 				return allSubActions, err
 			}
+			subActionResult.Elapsed = time.Since(subActionStartTime).Milliseconds()
 
 			// Collect sub-action specific attachments and reset session data
 			subActionResult.SessionData = dExt.GetSession().GetData(true) // reset after getting data
@@ -221,12 +238,13 @@ func (dExt *XTDriver) invokeToolCall(ctx context.Context, toolCall schema.ToolCa
 
 // SubActionResult represents a sub-action within a start_to_goal action
 type SubActionResult struct {
-	ActionName string      `json:"action_name"`         // name of the sub-action (e.g., "tap", "input")
-	Arguments  interface{} `json:"arguments,omitempty"` // arguments passed to the sub-action
-	StartTime  int64       `json:"start_time"`          // sub-action start time
-	Elapsed    int64       `json:"elapsed_ms"`          // sub-action elapsed time(ms)
-	Error      error       `json:"error,omitempty"`     // sub-action execution result
-	Thought    string      `json:"thought,omitempty"`   // sub-action thought
+	ActionName string      `json:"action_name"`          // name of the sub-action (e.g., "tap", "input")
+	Arguments  interface{} `json:"arguments,omitempty"`  // arguments passed to the sub-action
+	StartTime  int64       `json:"start_time"`           // sub-action start time
+	Elapsed    int64       `json:"elapsed_ms"`           // sub-action elapsed time(ms)
+	Error      error       `json:"error,omitempty"`      // sub-action execution result
+	Thought    string      `json:"thought,omitempty"`    // sub-action thought
+	ModelName  string      `json:"model_name,omitempty"` // model name used for AI actions
 	SessionData
 }
 

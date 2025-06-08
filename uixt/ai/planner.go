@@ -32,6 +32,7 @@ type PlanningResult struct {
 	Thought   string            `json:"thought"`
 	Content   string            `json:"content"` // original content from model
 	Error     string            `json:"error,omitempty"`
+	ModelName string            `json:"model_name"` // model name used for planning
 }
 
 func NewPlanner(ctx context.Context, modelConfig *ModelConfig) (*Planner, error) {
@@ -132,6 +133,7 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 		result := &PlanningResult{
 			ToolCalls: message.ToolCalls,
 			Thought:   message.Content,
+			ModelName: string(p.modelConfig.ModelType),
 		}
 		return result, nil
 	}
@@ -140,8 +142,9 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 	result, err := p.parser.Parse(message.Content, opts.Size)
 	if err != nil {
 		result = &PlanningResult{
-			Thought: message.Content,
-			Error:   err.Error(),
+			Thought:   message.Content,
+			Error:     err.Error(),
+			ModelName: string(p.modelConfig.ModelType),
 		}
 		log.Debug().Str("reason", err.Error()).Msg("parse content to actions failed")
 	}
