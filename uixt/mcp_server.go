@@ -96,12 +96,13 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolBack{}) // Back
 
 	// App Tools
-	s.registerTool(&ToolListPackages{}) // ListPackages
-	s.registerTool(&ToolLaunchApp{})    // LaunchApp
-	s.registerTool(&ToolTerminateApp{}) // TerminateApp
-	s.registerTool(&ToolAppInstall{})   // AppInstall
-	s.registerTool(&ToolAppUninstall{}) // AppUninstall
-	s.registerTool(&ToolAppClear{})     // AppClear
+	s.registerTool(&ToolListPackages{})     // ListPackages
+	s.registerTool(&ToolLaunchApp{})        // LaunchApp
+	s.registerTool(&ToolTerminateApp{})     // TerminateApp
+	s.registerTool(&ToolAppInstall{})       // AppInstall
+	s.registerTool(&ToolAppUninstall{})     // AppUninstall
+	s.registerTool(&ToolAppClear{})         // AppClear
+	s.registerTool(&ToolGetForegroundApp{}) // GetForegroundApp
 
 	// Screen Tools
 	s.registerTool(&ToolScreenShot{})

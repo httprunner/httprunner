@@ -340,3 +340,50 @@ func (t *ToolAppClear) ConvertActionToCallToolRequest(action option.MobileAction
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app clear params: %v", action.Params)
 }
+
+// ToolGetForegroundApp implements the get_foreground_app tool call.
+type ToolGetForegroundApp struct {
+	// Return data fields - these define the structure of data returned by this tool
+	PackageName string `json:"packageName" desc:"Package name of the foreground app"`
+	AppName     string `json:"appName" desc:"Name of the foreground app"`
+}
+
+func (t *ToolGetForegroundApp) Name() option.ActionName {
+	return option.ACTION_GetForegroundApp
+}
+
+func (t *ToolGetForegroundApp) Description() string {
+	return "Get information about the currently running foreground app"
+}
+
+func (t *ToolGetForegroundApp) Options() []mcp.ToolOption {
+	unifiedReq := &option.ActionOptions{}
+	return unifiedReq.GetMCPOptions(option.ACTION_GetForegroundApp)
+}
+
+func (t *ToolGetForegroundApp) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		// Get foreground app info
+		appInfo, err := driverExt.ForegroundInfo()
+		if err != nil {
+			return NewMCPErrorResponse(fmt.Sprintf("Get foreground app failed: %s", err.Error())), nil
+		}
+
+		message := fmt.Sprintf("Current foreground app: %s (%s)", appInfo.AppName, appInfo.PackageName)
+		returnData := ToolGetForegroundApp{
+			PackageName: appInfo.PackageName,
+			AppName:     appInfo.AppName,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
+	}
+}
+
+func (t *ToolGetForegroundApp) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
+	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+}

@@ -645,6 +645,9 @@ func (o *ActionOptions) validateActionSpecificFields(actionType ActionName) erro
 		ACTION_AppInstall: func() error {
 			return o.requireFields("appUrl", o.AppUrl != "")
 		},
+		ACTION_GetForegroundApp: func() error {
+			return nil
+		},
 		ACTION_TapByOCR: func() error {
 			return o.requireFields("text", o.Text != "")
 		},
@@ -752,6 +755,7 @@ func (o *ActionOptions) GetMCPOptions(actionType ActionName) []mcp.ToolOption {
 		ACTION_AppInstall:               {"platform", "serial", "appUrl", "packageName"},
 		ACTION_AppUninstall:             {"platform", "serial", "packageName"},
 		ACTION_AppClear:                 {"platform", "serial", "packageName"},
+		ACTION_GetForegroundApp:         {"platform", "serial"},
 		ACTION_PressButton:              {"platform", "serial", "button"},
 		ACTION_SwipeToTapApp:            {"platform", "serial", "appName", "ignoreNotFoundError", "maxRetryTimes", "index"},
 		ACTION_SwipeToTapText:           {"platform", "serial", "text", "ignoreNotFoundError", "maxRetryTimes", "index", "regex"},
