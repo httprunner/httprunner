@@ -1,15 +1,24 @@
-## hrp wiki
+## hrp report
 
-visit https://httprunner.com
+Generate HTML report from test results
+
+### Synopsis
+
+Generate report.html from test results in the specified folder.
+The folder should contain summary.json and optionally hrp.log files.
+
+Examples:
+  $ hrp report results/20250607234602/
+  $ hrp report /path/to/test/results/
 
 ```
-hrp wiki [flags]
+hrp report [result_folder] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for wiki
+  -h, --help   help for report
 ```
 
 ### Options inherited from parent commands

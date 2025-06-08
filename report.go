@@ -1062,6 +1062,14 @@ const htmlTemplate = `<!DOCTYPE html>
 
         .screenshot-image {
             text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            margin: 10px 0;
         }
 
         .screenshot-image img {
@@ -1070,10 +1078,17 @@ const htmlTemplate = `<!DOCTYPE html>
             border-radius: 6px;
             cursor: pointer;
             transition: transform 0.2s;
+            object-fit: contain;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .screenshot-image img:hover {
             transform: scale(1.02);
+        }
+
+        .screenshot-item.small .screenshot-image {
+            min-height: 250px;
+            padding: 15px 0;
         }
 
         .screenshot-item.small .screenshot-image img {
@@ -1444,8 +1459,18 @@ const htmlTemplate = `<!DOCTYPE html>
                 gap: 10px;
             }
 
+            .screenshot-image {
+                min-height: 250px;
+                padding: 15px 0;
+            }
+
             .screenshot-image img {
                 max-height: 250px;
+            }
+
+            .screenshot-item.small .screenshot-image {
+                min-height: 200px;
+                padding: 10px 0;
             }
 
             .screenshot-item.small .screenshot-image img {
