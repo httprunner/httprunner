@@ -96,8 +96,6 @@ func TestStartToGoal(t *testing.T) {
 - 优先使用「减少种类」道具，可以将图案种类随机减少一种
 - 遇到困难时，推荐使用「随机打乱」道具，可以获得很多新的消除机会
 - 观看广告视频，待屏幕右上角出现「领取成功」后，点击其右侧的 X 即可关闭广告，继续游戏
-5、结束游戏
-- 游戏失败，且无法再「立即复活」后，游戏结束，停止游戏
 
 请严格按照以上游戏规则，开始游戏
 `
@@ -119,8 +117,8 @@ func TestStartToGoal(t *testing.T) {
 	err := testCase.Dump2JSON("start_llk_game.json")
 	require.Nil(t, err)
 
-	// err = hrp.NewRunner(t).Run(testCase)
-	// assert.Nil(t, err)
+	err = hrp.NewRunner(t).Run(testCase)
+	assert.Nil(t, err)
 }
 
 func TestAIAction(t *testing.T) {

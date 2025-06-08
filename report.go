@@ -32,11 +32,13 @@ func GenerateHTMLReportFromFiles(summaryFile, logFile, outputFile string) error 
 
 // HTMLReportGenerator generates comprehensive HTML test reports
 type HTMLReportGenerator struct {
-	SummaryFile string
-	LogFile     string
-	SummaryData *Summary
-	LogData     []LogEntry
-	ReportDir   string
+	SummaryFile    string
+	LogFile        string
+	SummaryData    *Summary
+	LogData        []LogEntry
+	ReportDir      string
+	SummaryContent string // Raw summary.json content for download
+	LogContent     string // Raw hrp.log content for download
 }
 
 // LogEntry represents a single log entry
@@ -77,6 +79,9 @@ func (g *HTMLReportGenerator) loadSummaryData() error {
 		return err
 	}
 
+	// Store raw content for download
+	g.SummaryContent = string(data)
+
 	g.SummaryData = &Summary{}
 	return json.Unmarshal(data, g.SummaryData)
 }
@@ -86,6 +91,13 @@ func (g *HTMLReportGenerator) loadLogData() error {
 	if g.LogFile == "" || !builtin.FileExists(g.LogFile) {
 		return nil
 	}
+
+	// Read raw log content for download
+	logData, err := os.ReadFile(g.LogFile)
+	if err != nil {
+		return err
+	}
+	g.LogContent = string(logData)
 
 	file, err := os.Open(g.LogFile)
 	if err != nil {
@@ -385,7 +397,15 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 		"calculateTotalSubActions":  g.calculateTotalSubActions,
 		"calculateTotalRequests":    g.calculateTotalRequests,
 		"calculateTotalScreenshots": g.calculateTotalScreenshots,
-		"safeHTML":                  func(s string) template.HTML { return template.HTML(s) },
+		"getSummaryContentBase64": func() string {
+			return base64.StdEncoding.EncodeToString([]byte(g.SummaryContent))
+		},
+		"getLogContentBase64": func() string {
+			return base64.StdEncoding.EncodeToString([]byte(g.LogContent))
+		},
+		"safeHTML": func(s string) template.HTML {
+			return template.HTML(s)
+		},
 		"toJSON": func(v any) string {
 			var buf strings.Builder
 			encoder := json.NewEncoder(&buf)
@@ -476,6 +496,10 @@ const htmlTemplate = `<!DOCTYPE html>
 
         .header-right {
             text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 15px;
         }
 
         .start-time {
@@ -483,6 +507,45 @@ const htmlTemplate = `<!DOCTYPE html>
             padding: 12px 20px;
             border-radius: 8px;
             backdrop-filter: blur(10px);
+            min-width: 200px;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            max-width: 240px;
+        }
+
+        .download-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .download-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
         }
 
         .time-label {
@@ -1379,13 +1442,28 @@ const htmlTemplate = `<!DOCTYPE html>
             }
 
             .header-right {
-                text-align: left;
+                text-align: center;
                 width: 100%;
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
             }
 
             .start-time {
                 width: 100%;
                 text-align: center;
+                min-width: auto;
+            }
+
+            .download-buttons {
+                justify-content: center;
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .download-btn {
+                padding: 6px 10px;
+                font-size: 0.75em;
             }
 
             .platform-grid {
@@ -1521,6 +1599,16 @@ const htmlTemplate = `<!DOCTYPE html>
                     <div class="start-time">
                         <span class="time-label">Start Time:</span>
                         <span class="time-value">{{.Time.StartAt.Format "2006-01-02 15:04:05"}}</span>
+                    </div>
+                    <div class="download-buttons">
+                        <button class="download-btn" onclick="downloadSummary()">
+                            <span>📄</span>
+                            <span>summary.json</span>
+                        </button>
+                        <button class="download-btn" onclick="downloadLog()">
+                            <span>📋</span>
+                            <span>hrp.log</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1814,6 +1902,43 @@ const htmlTemplate = `<!DOCTYPE html>
     </div>
 
     <script>
+        // Embedded file contents for download (Base64 encoded)
+        const summaryContentBase64 = "{{getSummaryContentBase64}}";
+        const logContentBase64 = "{{getLogContentBase64}}";
+
+        // Decode Base64 content
+        const summaryContent = summaryContentBase64 ? atob(summaryContentBase64) : "";
+        const logContent = logContentBase64 ? atob(logContentBase64) : "";
+
+        // Download functions
+        function downloadSummary() {
+            if (!summaryContent) {
+                alert('Summary content not available');
+                return;
+            }
+            downloadFile(summaryContent, 'summary.json', 'application/json');
+        }
+
+        function downloadLog() {
+            if (!logContent) {
+                alert('Log content not available');
+                return;
+            }
+            downloadFile(logContent, 'hrp.log', 'text/plain');
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
         function toggleStep(stepIndex) {
             const content = document.getElementById('step-' + stepIndex);
             const icon = document.getElementById('toggle-' + stepIndex);
