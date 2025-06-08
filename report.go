@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -195,7 +196,7 @@ func (g *HTMLReportGenerator) parseLogTime(timeStr string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("unable to parse time: %s", timeStr)
 }
 
-// encodeImageToBase64 encodes an image file to base64 string
+// encodeImageToBase64 encodes an image file to base64 string with compression
 func (g *HTMLReportGenerator) encodeImageToBase64(imagePath string) string {
 	// Convert relative path to absolute path
 	if !filepath.IsAbs(imagePath) {
@@ -207,13 +208,21 @@ func (g *HTMLReportGenerator) encodeImageToBase64(imagePath string) string {
 		return ""
 	}
 
-	data, err := os.ReadFile(imagePath)
+	// Read and compress the image using the unified compression function
+	// Enable resize with max width 800px for HTML reports
+	compressedData, err := uixt.CompressImageFile(imagePath, true, 800)
 	if err != nil {
-		log.Warn().Err(err).Str("path", imagePath).Msg("failed to read image file")
-		return ""
+		log.Warn().Err(err).Str("path", imagePath).Msg("failed to compress image, using original")
+		// Fallback to original image if compression fails
+		data, readErr := os.ReadFile(imagePath)
+		if readErr != nil {
+			log.Warn().Err(readErr).Str("path", imagePath).Msg("failed to read image file")
+			return ""
+		}
+		return base64.StdEncoding.EncodeToString(data)
 	}
 
-	return base64.StdEncoding.EncodeToString(data)
+	return base64.StdEncoding.EncodeToString(compressedData)
 }
 
 // formatDuration formats duration from milliseconds to human readable format
@@ -1612,12 +1621,12 @@ const htmlTemplate = `<!DOCTYPE html>
 
                                         <div class="sub-action-content">
                                             <div class="sub-action-left">
-                                                {{if $subAction.Arguments}}
-                                                <div class="arguments">Arguments: {{safeHTML (toJSON $subAction.Arguments)}}</div>
-                                                {{end}}
-
                                                 {{if $subAction.Thought}}
                                                 <div class="thought">{{$subAction.Thought}}</div>
+                                                {{end}}
+
+                                                {{if $subAction.Arguments}}
+                                                <div class="arguments">Arguments: {{safeHTML (toJSON $subAction.Arguments)}}</div>
                                                 {{end}}
 
                                                 {{if $subAction.ModelName}}
@@ -1711,10 +1720,13 @@ const htmlTemplate = `<!DOCTYPE html>
                         {{end}}
 
                         <!-- Screenshots -->
-                        {{if $step.Attachments}}{{if $step.Attachments.ScreenResults}}
+                        {{if $step.Attachments}}
+                        {{$attachments := $step.Attachments}}
+                        {{if eq (printf "%T" $attachments) "map[string]interface {}"}}
+                        {{if index $attachments "screen_results"}}
                         <div class="screenshots-section">
                             <h4>Screenshots</h4>
-                            {{range $screenshot := $step.Attachments.ScreenResults}}
+                            {{range $screenshot := index $attachments "screen_results"}}
                             {{$base64Image := encodeImageBase64 $screenshot.ImagePath}}
                             {{if $base64Image}}
                             <div class="screenshot-item">
@@ -1731,7 +1743,9 @@ const htmlTemplate = `<!DOCTYPE html>
                             {{end}}
                             {{end}}
                         </div>
-                        {{end}}{{end}}
+                        {{end}}
+                        {{end}}
+                        {{end}}
 
                         <!-- Step Logs -->
                         {{$stepLogs := getStepLogs $step}}

@@ -81,7 +81,6 @@ Target: User will give you a screenshot, an instruction and some previous logs i
 
 Restriction:
 - Don't give extra actions or plans beyond the instruction. ONLY plan for what the instruction requires. For example, don't try to submit the form if the instruction is only to fill something.
-- Always give ONLY ONE action in ` + "`log`" + ` field (or null if no action should be done), instead of multiple actions. Supported actions are click, long_press, type, scroll, drag, press_home, press_back, wait, finished.
 - Don't repeat actions in the previous logs.
 - Bbox is the bounding box of the element to be located. It's an array of 4 numbers, representing [x1, y1, x2, y2] coordinates in 1000x1000 relative coordinates system.
 

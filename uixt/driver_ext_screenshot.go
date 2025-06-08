@@ -213,7 +213,7 @@ func getScreenShotBuffer(driver IDriver) (compressedBufSource *bytes.Buffer, err
 	}
 
 	// compress screenshot
-	compressBufSource, err := compressImageBuffer(bufSource)
+	compressBufSource, err := compressImageBufferWithOptions(bufSource, false, 800)
 	if err != nil {
 		return nil, errors.Wrapf(code.DeviceScreenShotError,
 			"compress screenshot failed %v", err)
@@ -291,7 +291,8 @@ func saveScreenShot(raw *bytes.Buffer, screenshotPath string) error {
 	return nil
 }
 
-func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error) {
+// compressImageBufferWithOptions compresses image buffer with advanced options
+func compressImageBufferWithOptions(raw *bytes.Buffer, enableResize bool, maxWidth int) (compressed *bytes.Buffer, err error) {
 	rawSize := raw.Len()
 	// decode image from buffer
 	img, format, err := image.Decode(raw)
@@ -299,26 +300,124 @@ func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error
 		return nil, err
 	}
 
-	var buf bytes.Buffer
+	// Get original image dimensions
+	bounds := img.Bounds()
+	originalWidth := bounds.Dx()
+	originalHeight := bounds.Dy()
 
-	switch format {
-	// compress image
-	case "jpeg", "png":
-		jpegOptions := &jpeg.Options{Quality: 60}
-		err = jpeg.Encode(&buf, img, jpegOptions)
-		if err != nil {
-			return nil, err
-		}
+	// Calculate new dimensions for compression if resize is enabled
+	var newWidth, newHeight int
+	var resizedImg image.Image = img
+
+	if enableResize && originalWidth > maxWidth {
+		ratio := float64(maxWidth) / float64(originalWidth)
+		newWidth = maxWidth
+		newHeight = int(float64(originalHeight) * ratio)
+		resizedImg = resizeImage(img, newWidth, newHeight)
+	} else {
+		newWidth = originalWidth
+		newHeight = originalHeight
+	}
+
+	// Determine JPEG quality based on image size for optimal compression
+	jpegQuality := 60                // Default quality for better compression
+	if newWidth*newHeight > 500000 { // For very large images, use lower quality
+		jpegQuality = 50
+	} else if newWidth*newHeight < 100000 { // For small images, use higher quality
+		jpegQuality = 70
+	}
+
+	var buf bytes.Buffer
+	switch strings.ToLower(format) {
+	case "jpeg", "jpg":
+		// Use adaptive JPEG compression quality
+		err = jpeg.Encode(&buf, resizedImg, &jpeg.Options{Quality: jpegQuality})
+	case "png":
+		// Convert PNG to JPEG for better compression
+		err = jpeg.Encode(&buf, resizedImg, &jpeg.Options{Quality: jpegQuality})
+	case "gif":
+		// Keep GIF format but with reduced colors for better compression
+		err = gif.Encode(&buf, resizedImg, &gif.Options{NumColors: 64})
 	default:
-		return nil, fmt.Errorf("unsupported image format: %s", format)
+		// Default to JPEG for unknown formats
+		err = jpeg.Encode(&buf, resizedImg, &jpeg.Options{Quality: jpegQuality})
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	compressedSize := buf.Len()
-	log.Debug().Int("rawSize", rawSize).Int("compressedSize", compressedSize).
+	log.Debug().
+		Int("rawSize", rawSize).
+		Int("originalWidth", originalWidth).
+		Int("originalHeight", originalHeight).
+		Int("newWidth", newWidth).
+		Int("newHeight", newHeight).
+		Int("jpegQuality", jpegQuality).
+		Int("compressedSize", compressedSize).
+		Bool("resized", enableResize && originalWidth > maxWidth).
 		Msg("compress image buffer")
 
 	// return compressed image buffer
 	return &buf, nil
+}
+
+// resizeImage resizes an image using simple nearest neighbor algorithm
+func resizeImage(src image.Image, width, height int) image.Image {
+	srcBounds := src.Bounds()
+	srcWidth := srcBounds.Dx()
+	srcHeight := srcBounds.Dy()
+
+	// Create a new image with the target dimensions
+	dst := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	// Simple nearest neighbor resizing
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			// Map destination coordinates to source coordinates
+			srcX := x * srcWidth / width
+			srcY := y * srcHeight / height
+
+			// Ensure we don't go out of bounds
+			if srcX >= srcWidth {
+				srcX = srcWidth - 1
+			}
+			if srcY >= srcHeight {
+				srcY = srcHeight - 1
+			}
+
+			// Copy pixel from source to destination
+			dst.Set(x, y, src.At(srcBounds.Min.X+srcX, srcBounds.Min.Y+srcY))
+		}
+	}
+
+	return dst
+}
+
+// CompressImageFile compresses an image file and returns the compressed data
+func CompressImageFile(imagePath string, enableResize bool, maxWidth int) ([]byte, error) {
+	// Read the original image file
+	file, err := os.Open(imagePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open image file: %w", err)
+	}
+	defer file.Close()
+
+	// Read file content into buffer
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read image file: %w", err)
+	}
+
+	// Compress using the buffer compression function
+	compressedBuf, err := compressImageBufferWithOptions(&buf, enableResize, maxWidth)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compress image: %w", err)
+	}
+
+	return compressedBuf.Bytes(), nil
 }
 
 // MarkUIOperation add operation mark for UI operation
