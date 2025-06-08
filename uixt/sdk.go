@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/client"
@@ -133,71 +132,12 @@ func (dExt *XTDriver) ExecuteAction(ctx context.Context, action option.MobileAct
 		return []*SubActionResult{subActionResult}, err
 	}
 
-	// Handle special AI actions (start_to_goal, ai_action) that return sub-actions
-	if action.Method == option.ACTION_StartToGoal || action.Method == option.ACTION_AIAction {
-		return dExt.parseAIActionResult(result, subActionResult)
-	}
-
 	// For regular actions, collect session data and return single sub-action result
-	subActionData := dExt.GetData(true) // reset after getting data
-
-	// Add requests if any
-	if requests, ok := subActionData["requests"].([]*DriverRequests); ok && len(requests) > 0 {
-		subActionResult.Requests = requests
-	}
-
-	// Add screen_results if any
-	if screenResults, ok := subActionData["screen_results"].([]*ScreenResult); ok && len(screenResults) > 0 {
-		subActionResult.ScreenResults = screenResults
-	}
+	subActionResult.SessionData = dExt.GetSession().GetData(true) // reset after getting data
 
 	log.Debug().Str("tool", string(tool.Name())).
 		Msg("execute action via MCP tool")
 	return []*SubActionResult{subActionResult}, nil
-}
-
-// parseAIActionResult parses the result from AI actions (start_to_goal, ai_action) and extracts sub-actions
-func (dExt *XTDriver) parseAIActionResult(result *mcp.CallToolResult, originalSubAction *SubActionResult) ([]*SubActionResult, error) {
-	// Parse the JSON response to extract sub_actions
-	var responseData map[string]interface{}
-	if len(result.Content) > 0 {
-		// Get the first text content
-		if textContent, ok := result.Content[0].(mcp.TextContent); ok {
-			if err := json.Unmarshal([]byte(textContent.Text), &responseData); err != nil {
-				log.Warn().Err(err).Msg("failed to parse AI action result, falling back to single action")
-				return []*SubActionResult{originalSubAction}, nil
-			}
-		} else {
-			log.Warn().Msg("AI action result is not text content, falling back to single action")
-			return []*SubActionResult{originalSubAction}, nil
-		}
-	}
-
-	// Extract sub_actions from the response
-	if subActionsData, ok := responseData["sub_actions"]; ok {
-		// Convert to JSON and back to properly deserialize SubActionResult structs
-		subActionsJSON, err := json.Marshal(subActionsData)
-		if err != nil {
-			log.Warn().Err(err).Msg("failed to marshal sub_actions, falling back to single action")
-			return []*SubActionResult{originalSubAction}, nil
-		}
-
-		var subActionResults []*SubActionResult
-		if err := json.Unmarshal(subActionsJSON, &subActionResults); err != nil {
-			log.Warn().Err(err).Msg("failed to unmarshal sub_actions, falling back to single action")
-			return []*SubActionResult{originalSubAction}, nil
-		}
-
-		log.Debug().Int("sub_actions_count", len(subActionResults)).
-			Str("action", string(originalSubAction.ActionName)).
-			Msg("parsed AI action sub-actions")
-		return subActionResults, nil
-	}
-
-	// If no sub_actions found, return the original action as a single result
-	log.Debug().Str("action", string(originalSubAction.ActionName)).
-		Msg("no sub_actions found in AI action result, using single action")
-	return []*SubActionResult{originalSubAction}, nil
 }
 
 // NewDeviceWithDefault is a helper function to create a device with default options

@@ -784,12 +784,13 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				},
 				StartTime: startTime.Unix(),
 			}
-			if app, err1 := uiDriver.ForegroundInfo(); err1 == nil {
-				attachments["foreground_app"] = app.AppBaseInfo
-			} else {
-				log.Warn().Err(err1).Msg("save foreground app failed, ignore")
+			subActionResults, err1 := uiDriver.ExecuteAction(
+				context.Background(), actionResult.MobileAction)
+			if err1 != nil {
+				log.Warn().Err(err1).Msg("get foreground app failed, ignore")
 			}
 			actionResult.Elapsed = time.Since(startTime).Milliseconds()
+			actionResult.SubActions = subActionResults
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
@@ -807,17 +808,16 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				},
 				StartTime: startTime.Unix(),
 			}
-			if err2 := uiDriver.ClosePopupsHandler(); err2 != nil {
-				log.Error().Err(err2).Str("step", step.Name()).Msg("auto handle popup failed")
+			subActionResults, err2 := uiDriver.ExecuteAction(
+				context.Background(), actionResult.MobileAction)
+			if err2 != nil {
+				log.Warn().Err(err2).Str("step", step.Name()).Msg("auto handle popup failed")
 			}
 			actionResult.Elapsed = time.Since(startTime).Milliseconds()
+			actionResult.SubActions = subActionResults
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
-		// save attachments
-		for key, value := range uiDriver.GetData(true) {
-			attachments[key] = value
-		}
 		stepResult.Attachments = attachments
 		stepResult.Elapsed = time.Since(start).Milliseconds()
 	}()
@@ -907,7 +907,23 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				}
 			}()
 
-			// action execution
+			// handle start_to_goal action
+			if action.Method == option.ACTION_StartToGoal {
+				subActionResults, err := uiDriver.StartToGoal(ctx,
+					action.Params.(string), action.GetOptions()...)
+				actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
+				actionResult.SubActions = subActionResults
+				stepResult.Actions = append(stepResult.Actions, actionResult)
+				if err != nil {
+					if !code.IsErrorPredefined(err) {
+						err = errors.Wrap(code.MobileUIDriverError, err.Error())
+					}
+					return stepResult, err
+				}
+				continue
+			}
+
+			// handle other actions
 			subActionResults, err := uiDriver.ExecuteAction(ctx, action)
 			actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
 			actionResult.SubActions = subActionResults

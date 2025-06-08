@@ -3,7 +3,6 @@ package uixt
 import (
 	"context"
 	"encoding/base64"
-	"strings"
 	"time"
 
 	"github.com/cloudwego/eino/schema"
@@ -49,6 +48,11 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 					Msg("LLM service request failed, retrying...")
 				continue
 			}
+			allSubActions = append(allSubActions, &SubActionResult{
+				ActionName: "plan_next_action",
+				Arguments:  prompt,
+				Error:      err,
+			})
 			return allSubActions, err
 		}
 
@@ -59,10 +63,33 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		}
 
 		// Invoke tool calls
-		subActions, err := dExt.invokeToolCalls(ctx, result.Thought, result.ToolCalls)
-		allSubActions = append(allSubActions, subActions...)
-		if err != nil {
-			return allSubActions, err
+		for _, toolCall := range result.ToolCalls {
+			// Check for context cancellation before each action
+			select {
+			case <-ctx.Done():
+				log.Warn().Msg("interrupted in invokeToolCalls")
+				return allSubActions, errors.Wrap(code.InterruptError, "invokeToolCalls interrupted")
+			default:
+			}
+
+			subActionStartTime := time.Now()
+			// Create sub-action result
+			subActionResult := &SubActionResult{
+				ActionName: toolCall.Function.Name,
+				Arguments:  toolCall.Function.Arguments,
+				StartTime:  subActionStartTime.Unix(),
+				Thought:    result.Thought,
+			}
+
+			if err := dExt.invokeToolCall(ctx, toolCall); err != nil {
+				subActionResult.Error = err
+				allSubActions = append(allSubActions, subActionResult)
+				return allSubActions, err
+			}
+
+			// Collect sub-action specific attachments and reset session data
+			subActionResult.SessionData = dExt.GetSession().GetData(true) // reset after getting data
+			allSubActions = append(allSubActions, subActionResult)
 		}
 
 		if options.MaxRetryTimes > 1 && attempt >= options.MaxRetryTimes {
@@ -71,22 +98,24 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 	}
 }
 
-func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...option.ActionOption) ([]*SubActionResult, error) {
+func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...option.ActionOption) error {
 	log.Info().Str("prompt", prompt).Msg("performing AI action")
 
 	// plan next action
 	result, err := dExt.PlanNextAction(ctx, prompt, opts...)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Invoke tool calls
-	subActionResults, err := dExt.invokeToolCalls(ctx, result.Thought, result.ToolCalls)
-	if err != nil {
-		return subActionResults, err
+	for _, toolCall := range result.ToolCalls {
+		err = dExt.invokeToolCall(ctx, toolCall)
+		if err != nil {
+			return err
+		}
 	}
 
-	return subActionResults, nil
+	return nil
 }
 
 func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ...option.ActionOption) (*ai.PlanningResult, error) {
@@ -159,88 +188,49 @@ func (dExt *XTDriver) isTaskFinished(result *ai.PlanningResult) bool {
 	return false
 }
 
-// invokeToolCalls invokes the tool calls and returns sub-action results
-func (dExt *XTDriver) invokeToolCalls(ctx context.Context, thought string, toolCalls []schema.ToolCall) ([]*SubActionResult, error) {
-	var subActionResults []*SubActionResult
-
-	for _, action := range toolCalls {
-		// Check for context cancellation before each action
-		select {
-		case <-ctx.Done():
-			log.Warn().Msg("interrupted in invokeToolCalls")
-			return subActionResults, errors.Wrap(code.InterruptError, "invokeToolCalls interrupted")
-		default:
-		}
-
-		subActionStartTime := time.Now()
-
-		// Extract action name (remove "uixt__" prefix)
-		actionName := strings.TrimPrefix(action.Function.Name, "uixt__")
-
-		// Parse arguments
-		arguments := make(map[string]interface{})
-		err := json.Unmarshal([]byte(action.Function.Arguments), &arguments)
-		if err != nil {
-			return subActionResults, err
-		}
-
-		// Create sub-action result
-		subActionResult := &SubActionResult{
-			ActionName: actionName,
-			Arguments:  arguments,
-			StartTime:  subActionStartTime.Unix(),
-			Thought:    thought,
-		}
-
-		// Execute the action
-		req := mcp.CallToolRequest{
-			Params: struct {
-				Name      string         `json:"name"`
-				Arguments map[string]any `json:"arguments,omitempty"`
-				Meta      *struct {
-					ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
-				} `json:"_meta,omitempty"`
-			}{
-				Name:      action.Function.Name,
-				Arguments: arguments,
-			},
-		}
-
-		_, err = dExt.client.CallTool(ctx, req)
-		subActionResult.Elapsed = time.Since(subActionStartTime).Milliseconds()
-		if err != nil {
-			subActionResult.Error = err
-			subActionResults = append(subActionResults, subActionResult)
-			return subActionResults, err
-		}
-
-		// Collect sub-action specific attachments and reset session data
-		subActionData := dExt.GetData(true) // reset after getting data
-
-		// Add requests if any
-		if requests, ok := subActionData["requests"].([]*DriverRequests); ok && len(requests) > 0 {
-			subActionResult.Requests = requests
-		}
-
-		// Add screen_results if any
-		if screenResults, ok := subActionData["screen_results"].([]*ScreenResult); ok && len(screenResults) > 0 {
-			subActionResult.ScreenResults = screenResults
-		}
-
-		subActionResults = append(subActionResults, subActionResult)
+// invokeToolCall invokes the tool call
+func (dExt *XTDriver) invokeToolCall(ctx context.Context, toolCall schema.ToolCall) error {
+	// Parse arguments
+	arguments := make(map[string]interface{})
+	err := json.Unmarshal([]byte(toolCall.Function.Arguments), &arguments)
+	if err != nil {
+		return err
 	}
 
-	return subActionResults, nil
+	// Execute the action
+	req := mcp.CallToolRequest{
+		Params: struct {
+			Name      string         `json:"name"`
+			Arguments map[string]any `json:"arguments,omitempty"`
+			Meta      *struct {
+				ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
+			} `json:"_meta,omitempty"`
+		}{
+			Name:      toolCall.Function.Name,
+			Arguments: arguments,
+		},
+	}
+
+	_, err = dExt.client.CallTool(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SubActionResult represents a sub-action within a start_to_goal action
 type SubActionResult struct {
-	ActionName    string            `json:"action_name"`              // name of the sub-action (e.g., "tap", "input")
-	Arguments     interface{}       `json:"arguments,omitempty"`      // arguments passed to the sub-action
-	StartTime     int64             `json:"start_time"`               // sub-action start time
-	Elapsed       int64             `json:"elapsed_ms"`               // sub-action elapsed time(ms)
-	Error         error             `json:"error,omitempty"`          // sub-action execution result
-	Thought       string            `json:"thought,omitempty"`        // sub-action thought
+	ActionName string      `json:"action_name"`         // name of the sub-action (e.g., "tap", "input")
+	Arguments  interface{} `json:"arguments,omitempty"` // arguments passed to the sub-action
+	StartTime  int64       `json:"start_time"`          // sub-action start time
+	Elapsed    int64       `json:"elapsed_ms"`          // sub-action elapsed time(ms)
+	Error      error       `json:"error,omitempty"`     // sub-action execution result
+	Thought    string      `json:"thought,omitempty"`   // sub-action thought
+	SessionData
+}
+
+type SessionData struct {
 	Requests      []*DriverRequests `json:"requests,omitempty"`       // store sub-action specific requests
 	ScreenResults []*ScreenResult   `json:"screen_results,omitempty"` // store sub-action specific screen_results
 }

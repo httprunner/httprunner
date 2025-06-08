@@ -13,8 +13,7 @@ import (
 // ToolStartToGoal implements the start_to_goal tool call.
 type ToolStartToGoal struct {
 	// Return data fields - these define the structure of data returned by this tool
-	Prompt     string             `json:"prompt" desc:"Goal prompt that was executed"`
-	SubActions []*SubActionResult `json:"sub_actions" desc:"Sub-actions that were executed"`
+	Prompt string `json:"prompt" desc:"Goal prompt that was executed"`
 }
 
 func (t *ToolStartToGoal) Name() option.ActionName {
@@ -43,15 +42,14 @@ func (t *ToolStartToGoal) Implement() server.ToolHandlerFunc {
 		}
 
 		// Start to goal logic
-		subActionResults, err := driverExt.StartToGoal(ctx, unifiedReq.Prompt)
+		_, err = driverExt.StartToGoal(ctx, unifiedReq.Prompt)
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("Failed to achieve goal: %s", err.Error())), nil
 		}
 
 		message := fmt.Sprintf("Successfully achieved goal: %s", unifiedReq.Prompt)
 		returnData := ToolStartToGoal{
-			Prompt:     unifiedReq.Prompt,
-			SubActions: subActionResults,
+			Prompt: unifiedReq.Prompt,
 		}
 
 		return NewMCPSuccessResponse(message, &returnData), nil
@@ -75,8 +73,7 @@ func (t *ToolStartToGoal) ConvertActionToCallToolRequest(action option.MobileAct
 // ToolAIAction implements the ai_action tool call.
 type ToolAIAction struct {
 	// Return data fields - these define the structure of data returned by this tool
-	Prompt     string             `json:"prompt" desc:"AI action prompt that was executed"`
-	SubActions []*SubActionResult `json:"sub_actions" desc:"Sub-actions that were executed"`
+	Prompt string `json:"prompt" desc:"AI action prompt that was executed"`
 }
 
 func (t *ToolAIAction) Name() option.ActionName {
@@ -105,15 +102,14 @@ func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
 		}
 
 		// AI action logic
-		subActionResults, err := driverExt.AIAction(ctx, unifiedReq.Prompt)
+		err = driverExt.AIAction(ctx, unifiedReq.Prompt)
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("AI action failed: %s", err.Error())), nil
 		}
 
 		message := fmt.Sprintf("Successfully performed AI action with prompt: %s", unifiedReq.Prompt)
 		returnData := ToolAIAction{
-			Prompt:     unifiedReq.Prompt,
-			SubActions: subActionResults,
+			Prompt: unifiedReq.Prompt,
 		}
 
 		return NewMCPSuccessResponse(message, &returnData), nil

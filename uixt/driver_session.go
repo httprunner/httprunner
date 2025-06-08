@@ -76,6 +76,17 @@ func (s *DriverSession) Reset() {
 	s.screenResults = make([]*ScreenResult, 0)
 }
 
+func (s *DriverSession) GetData(withReset bool) SessionData {
+	sessionData := SessionData{
+		Requests:      s.History(),
+		ScreenResults: s.screenResults,
+	}
+	if withReset {
+		s.Reset()
+	}
+	return sessionData
+}
+
 func (s *DriverSession) SetBaseURL(baseUrl string) {
 	s.baseUrl = baseUrl
 }
