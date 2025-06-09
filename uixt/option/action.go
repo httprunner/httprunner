@@ -46,6 +46,7 @@ const (
 	ACTION_AppTerminate     ActionName = "app_terminate"
 	ACTION_AppStop          ActionName = "app_stop"
 	ACTION_ScreenShot       ActionName = "screenshot"
+	ACTION_ScreenRecord     ActionName = "screenrecord"
 	ACTION_GetScreenSize    ActionName = "get_screen_size"
 	ACTION_Sleep            ActionName = "sleep"
 	ACTION_SleepMS          ActionName = "sleep_ms"
@@ -777,6 +778,7 @@ func (o *ActionOptions) GetMCPOptions(actionType ActionName) []mcp.ToolOption {
 		ACTION_ListAvailableDevices:     {},
 		ACTION_SelectDevice:             {"platform", "serial"},
 		ACTION_ScreenShot:               {"platform", "serial"},
+		ACTION_ScreenRecord:             {"platform", "serial", "duration", "screenRecordPath", "screenRecordWithAudio", "screenRecordWithScrcpy"},
 		ACTION_GetScreenSize:            {"platform", "serial"},
 		ACTION_Home:                     {"platform", "serial"},
 		ACTION_Back:                     {"platform", "serial"},

@@ -36,6 +36,7 @@ func TestNewMCPServer(t *testing.T) {
 		"drag",
 		"input",
 		"screenshot",
+		"screenrecord",
 		"get_screen_size",
 		"press_button",
 		"home",

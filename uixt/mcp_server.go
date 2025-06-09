@@ -106,6 +106,7 @@ func (s *MCPServer4XTDriver) registerTools() {
 
 	// Screen Tools
 	s.registerTool(&ToolScreenShot{})
+	s.registerTool(&ToolScreenRecord{})
 	s.registerTool(&ToolGetScreenSize{})
 	s.registerTool(&ToolGetSource{})
 
