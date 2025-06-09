@@ -77,6 +77,15 @@ func (p *Planner) RegisterTools(tools []*schema.ToolInfo) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to register tools")
 	}
+
+	var toolNames []string
+	for _, tool := range tools {
+		toolNames = append(toolNames, tool.Name)
+	}
+	log.Debug().Strs("tools", toolNames).
+		Str("model", string(p.modelConfig.ModelType)).
+		Msg("registered tools to model")
+
 	p.model = toolCallingModel
 	return nil
 }

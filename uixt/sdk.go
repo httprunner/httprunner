@@ -38,6 +38,13 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 		if err != nil {
 			return nil, errors.Wrap(err, "init llm service failed")
 		}
+
+		// Register uixt MCP tools to LLM service
+		mcpTools := driverExt.client.Server.ListTools()
+		einoTools := ai.ConvertMCPToolsToEinoToolInfos(mcpTools, "uixt")
+		if err := driverExt.LLMService.RegisterTools(einoTools); err != nil {
+			log.Warn().Err(err).Msg("failed to register uixt tools")
+		}
 	}
 
 	return driverExt, nil

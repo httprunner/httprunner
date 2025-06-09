@@ -101,7 +101,7 @@ func TestStartToGoal(t *testing.T) {
 `
 
 	testCase := &hrp.TestCase{
-		Config: hrp.NewConfig("run ui action with start to goal").
+		Config: hrp.NewConfig("连连看小游戏自动化测试").
 			SetLLMService(option.DOUBAO_1_5_THINKING_VISION_PRO_250428),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音「连了又连」小游戏").

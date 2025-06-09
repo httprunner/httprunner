@@ -17,6 +17,7 @@ import (
 	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/internal/version"
 	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/pkg/errors"
@@ -413,7 +414,7 @@ func (h *MCPHost) GetEinoToolInfos(ctx context.Context) ([]*schema.ToolInfo, err
 		return nil, fmt.Errorf("no MCP servers loaded")
 	}
 
-	var tools []*schema.ToolInfo
+	var allTools []*schema.ToolInfo
 	for _, serverTools := range results {
 		if serverTools.Err != nil {
 			log.Error().Err(serverTools.Err).
@@ -421,29 +422,13 @@ func (h *MCPHost) GetEinoToolInfos(ctx context.Context) ([]*schema.ToolInfo, err
 			continue
 		}
 
-		var toolNames []string
-		for _, tool := range serverTools.Tools {
-			einoTool, err := h.GetEinoTool(ctx, serverTools.ServerName, tool.Name)
-			if err != nil {
-				log.Error().Err(err).Str("server", serverTools.ServerName).
-					Str("tool", tool.Name).Msg("failed to get eino tool")
-				continue
-			}
-			einoToolInfo, err := einoTool.Info(ctx)
-			if err != nil {
-				log.Error().Err(err).Str("server", serverTools.ServerName).
-					Str("tool", tool.Name).Msg("failed to get eino tool info")
-				continue
-			}
-			einoToolInfo.Name = fmt.Sprintf("%s__%s", serverTools.ServerName, tool.Name)
-			tools = append(tools, einoToolInfo)
-			toolNames = append(toolNames, tool.Name)
-		}
-		log.Debug().Str("server", serverTools.ServerName).
-			Strs("tools", toolNames).Msg("loaded MCP tools")
+		// convert MCP tools to eino tools
+		einoTools := ai.ConvertMCPToolsToEinoToolInfos(
+			serverTools.Tools, serverTools.ServerName)
+		allTools = append(allTools, einoTools...)
 	}
 
-	return tools, nil
+	return allTools, nil
 }
 
 // parseHeaders parses header strings into a map

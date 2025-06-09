@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 
+	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
@@ -10,6 +11,8 @@ import (
 type ILLMService interface {
 	Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
 	Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error)
+	// RegisterTools registers tools for function calling
+	RegisterTools(tools []*schema.ToolInfo) error
 }
 
 func NewLLMService(modelType option.LLMServiceType) (ILLMService, error) {
@@ -48,4 +51,13 @@ func (c *combinedLLMService) Call(ctx context.Context, opts *PlanningOptions) (*
 // Assert 执行断言功能
 func (c *combinedLLMService) Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error) {
 	return c.asserter.Assert(ctx, opts)
+}
+
+// RegisterTools registers tools for function calling
+func (c *combinedLLMService) RegisterTools(tools []*schema.ToolInfo) error {
+	// Only register tools to planner since asserter doesn't need tools
+	if planner, ok := c.planner.(*Planner); ok {
+		return planner.RegisterTools(tools)
+	}
+	return nil
 }
