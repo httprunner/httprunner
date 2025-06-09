@@ -13,39 +13,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Call custom function, used for pre/post action hook
-func (dExt *XTDriver) Call(desc string, fn func(), opts ...option.ActionOption) error {
-	actionOptions := option.NewActionOptions(opts...)
-
-	startTime := time.Now()
-	defer func() {
-		log.Info().Str("desc", desc).
-			Int64("duration(ms)", time.Since(startTime).Milliseconds()).
-			Msg("function called")
-	}()
-
-	if actionOptions.Timeout == 0 {
-		// wait for function to finish
-		fn()
-		return nil
-	}
-
-	// set timeout for function execution
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		fn()
-	}()
-
-	select {
-	case <-done:
-		// function completed within timeout
-		return nil
-	case <-time.After(time.Duration(actionOptions.Timeout) * time.Second):
-		return fmt.Errorf("function execution exceeded timeout of %d seconds", actionOptions.Timeout)
-	}
-}
-
 func preHandler_TapAbsXY(driver IDriver, options *option.ActionOptions, rawX, rawY float64) (
 	x, y float64, err error) {
 

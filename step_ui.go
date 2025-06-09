@@ -884,7 +884,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			// call custom function
 			if action.Method == option.ACTION_CallFunction {
 				if funcDesc, ok := action.Params.(string); ok {
-					err := uiDriver.Call(funcDesc, action.Fn, action.GetOptions()...)
+					err := Call(funcDesc, action.Fn, action.GetOptions()...)
 					if err != nil {
 						return stepResult, err
 					}
