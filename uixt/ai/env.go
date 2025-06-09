@@ -21,7 +21,7 @@ const (
 )
 
 const (
-	defaultTimeout = 30 * time.Second
+	defaultTimeout = 120 * time.Second
 )
 
 // GetModelConfig get OpenAI config
