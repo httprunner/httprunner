@@ -52,9 +52,10 @@ func TestDriverExt_StartToGoal(t *testing.T) {
 
 func TestDriverExt_PlanNextAction(t *testing.T) {
 	driver := setupDriverExt(t)
-	result, err := driver.PlanNextAction(context.Background(), "启动抖音")
+	planningResult, err := driver.PlanNextAction(context.Background(), "启动抖音")
 	assert.Nil(t, err)
-	t.Log(result)
+	assert.NotNil(t, planningResult) // Should always return planningResult
+	t.Log(planningResult)
 }
 
 func TestXTDriver_isTaskFinished(t *testing.T) {
@@ -62,65 +63,73 @@ func TestXTDriver_isTaskFinished(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		result   *ai.PlanningResult
+		result   *PlanningExecutionResult
 		expected bool
 	}{
 		{
 			name: "no tool calls - task finished",
-			result: &ai.PlanningResult{
-				ToolCalls: []schema.ToolCall{},
-				Thought:   "No actions needed",
+			result: &PlanningExecutionResult{
+				PlanningResult: ai.PlanningResult{
+					ToolCalls: []schema.ToolCall{},
+					Thought:   "No actions needed",
+				},
 			},
 			expected: true,
 		},
 		{
 			name: "finished action - task finished",
-			result: &ai.PlanningResult{
-				ToolCalls: []schema.ToolCall{
-					{
-						Function: schema.FunctionCall{
-							Name:      "uixt__finished",
-							Arguments: `{"content": "Task completed successfully"}`,
+			result: &PlanningExecutionResult{
+				PlanningResult: ai.PlanningResult{
+					ToolCalls: []schema.ToolCall{
+						{
+							Function: schema.FunctionCall{
+								Name:      "uixt__finished",
+								Arguments: `{"content": "Task completed successfully"}`,
+							},
 						},
 					},
+					Thought: "Task completed",
 				},
-				Thought: "Task completed",
 			},
 			expected: true,
 		},
 		{
 			name: "regular action - task not finished",
-			result: &ai.PlanningResult{
-				ToolCalls: []schema.ToolCall{
-					{
-						Function: schema.FunctionCall{
-							Name:      string(option.ACTION_TapXY),
-							Arguments: `{"x": 100, "y": 200}`,
+			result: &PlanningExecutionResult{
+				PlanningResult: ai.PlanningResult{
+					ToolCalls: []schema.ToolCall{
+						{
+							Function: schema.FunctionCall{
+								Name:      string(option.ACTION_TapXY),
+								Arguments: `{"x": 100, "y": 200}`,
+							},
 						},
 					},
+					Thought: "Click on button",
 				},
-				Thought: "Click on button",
 			},
 			expected: false,
 		},
 		{
 			name: "multiple actions with finished - task finished",
-			result: &ai.PlanningResult{
-				ToolCalls: []schema.ToolCall{
-					{
-						Function: schema.FunctionCall{
-							Name:      string(option.ACTION_TapXY),
-							Arguments: `{"x": 100, "y": 200}`,
+			result: &PlanningExecutionResult{
+				PlanningResult: ai.PlanningResult{
+					ToolCalls: []schema.ToolCall{
+						{
+							Function: schema.FunctionCall{
+								Name:      string(option.ACTION_TapXY),
+								Arguments: `{"x": 100, "y": 200}`,
+							},
+						},
+						{
+							Function: schema.FunctionCall{
+								Name:      "uixt__finished",
+								Arguments: `{"content": "All tasks completed"}`,
+							},
 						},
 					},
-					{
-						Function: schema.FunctionCall{
-							Name:      "uixt__finished",
-							Arguments: `{"content": "All tasks completed"}`,
-						},
-					},
+					Thought: "Complete all actions",
 				},
-				Thought: "Complete all actions",
 			},
 			expected: true,
 		},

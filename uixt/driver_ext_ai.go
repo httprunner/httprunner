@@ -6,21 +6,23 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino/schema"
+	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
+	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
-func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...option.ActionOption) ([]*SubActionResult, error) {
+func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...option.ActionOption) ([]*PlanningExecutionResult, error) {
 	options := option.NewActionOptions(opts...)
 	log.Info().Int("max_retry_times", options.MaxRetryTimes).Msg("StartToGoal")
 
-	var allSubActions []*SubActionResult
+	var allPlannings []*PlanningExecutionResult
 	var attempt int
 	for {
 		attempt++
@@ -30,7 +32,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		select {
 		case <-ctx.Done():
 			log.Warn().Msg("interrupted in StartToGoal")
-			return allSubActions, errors.Wrap(code.InterruptError, "StartToGoal interrupted")
+			return allPlannings, errors.Wrap(code.InterruptError, "StartToGoal interrupted")
 		default:
 		}
 
@@ -41,7 +43,8 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 			// Add ResetHistory option for the first attempt
 			planningOpts = append(planningOpts, option.WithResetHistory(true))
 		}
-		result, err := dExt.PlanNextAction(ctx, prompt, planningOpts...)
+
+		planningResult, err := dExt.PlanNextAction(ctx, prompt, planningOpts...)
 		if err != nil {
 			// Check if this is a LLM service request error that should be retried
 			if errors.Is(err, code.LLMRequestServiceError) {
@@ -49,68 +52,81 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 					Msg("LLM service request failed, retrying...")
 				continue
 			}
-			allSubActions = append(allSubActions, &SubActionResult{
-				ActionName:  "plan_next_action",
-				Arguments:   prompt,
-				Error:       err,
-				StartTime:   planningStartTime.Unix(),
-				Elapsed:     time.Since(planningStartTime).Milliseconds(),
-				SessionData: dExt.GetSession().GetData(true),
-			})
-			return allSubActions, err
+			// Create planning result with error
+			errorResult := &PlanningExecutionResult{
+				PlanningResult: ai.PlanningResult{
+					Thought:   "Planning failed",
+					ModelName: "",
+					Error:     err.Error(),
+				},
+				StartTime: planningStartTime.Unix(),
+				Elapsed:   time.Since(planningStartTime).Milliseconds(),
+			}
+			allPlannings = append(allPlannings, errorResult)
+			return allPlannings, err
 		}
 
+		// Set planning execution timing
+		planningResult.StartTime = planningStartTime.Unix()
+		planningResult.SubActions = []*SubActionResult{}
+
 		// Check if task is finished BEFORE executing actions
-		if dExt.isTaskFinished(result) {
+		if dExt.isTaskFinished(planningResult) {
 			log.Info().Msg("task finished, stopping StartToGoal")
-			// Create a sub-action result to record the planning result even when task is finished
-			subActionResult := &SubActionResult{
-				ActionName:  "plan_next_action",
-				Arguments:   prompt,
-				StartTime:   planningStartTime.Unix(),
-				Elapsed:     time.Since(planningStartTime).Milliseconds(),
-				Thought:     result.Thought,
-				ModelName:   result.ModelName,
-				SessionData: dExt.GetSession().GetData(true),
-			}
-			allSubActions = append(allSubActions, subActionResult)
-			return allSubActions, nil
+			planningResult.Elapsed = time.Since(planningStartTime).Milliseconds()
+			allPlannings = append(allPlannings, planningResult)
+			return allPlannings, nil
 		}
 
 		// Invoke tool calls
-		for _, toolCall := range result.ToolCalls {
+		for _, toolCall := range planningResult.ToolCalls {
 			// Check for context cancellation before each action
 			select {
 			case <-ctx.Done():
 				log.Warn().Msg("interrupted in invokeToolCalls")
-				return allSubActions, errors.Wrap(code.InterruptError, "invokeToolCalls interrupted")
+				planningResult.Elapsed = time.Since(planningStartTime).Milliseconds()
+				allPlannings = append(allPlannings, planningResult)
+				return allPlannings, errors.Wrap(code.InterruptError, "invokeToolCalls interrupted")
 			default:
 			}
 
-			subActionStartTime := time.Now()
-			// Create sub-action result
-			subActionResult := &SubActionResult{
-				ActionName: toolCall.Function.Name,
-				Arguments:  toolCall.Function.Arguments,
-				StartTime:  subActionStartTime.Unix(),
-				Thought:    result.Thought,
-				ModelName:  result.ModelName,
-			}
+			// Execute each tool call in a separate function to ensure proper defer execution
+			err := func() error {
+				subActionStartTime := time.Now()
+				subActionResult := &SubActionResult{
+					ActionName: toolCall.Function.Name,
+					Arguments:  toolCall.Function.Arguments,
+					StartTime:  subActionStartTime.Unix(),
+				}
 
-			if err := dExt.invokeToolCall(ctx, toolCall); err != nil {
-				subActionResult.Error = err
-				allSubActions = append(allSubActions, subActionResult)
-				return allSubActions, err
-			}
-			subActionResult.Elapsed = time.Since(subActionStartTime).Milliseconds()
+				// Use defer to ensure sub-action is always processed and added to results
+				defer func() {
+					subActionResult.Elapsed = time.Since(subActionStartTime).Milliseconds()
+					subActionResult.SessionData = dExt.GetSession().GetData(true) // reset after getting data
+					planningResult.SubActions = append(planningResult.SubActions, subActionResult)
+				}()
 
-			// Collect sub-action specific attachments and reset session data
-			subActionResult.SessionData = dExt.GetSession().GetData(true) // reset after getting data
-			allSubActions = append(allSubActions, subActionResult)
+				// Execute the tool call
+				if err := dExt.invokeToolCall(ctx, toolCall); err != nil {
+					subActionResult.Error = err
+					return err
+				}
+				return nil
+			}()
+			if err != nil {
+				planningResult.Elapsed = time.Since(planningStartTime).Milliseconds()
+				planningResult.Error = err.Error()
+				allPlannings = append(allPlannings, planningResult)
+				return allPlannings, err
+			}
 		}
 
+		// Complete this planning cycle
+		planningResult.Elapsed = time.Since(planningStartTime).Milliseconds()
+		allPlannings = append(allPlannings, planningResult)
+
 		if options.MaxRetryTimes > 1 && attempt >= options.MaxRetryTimes {
-			return allSubActions, errors.New("reached max retry times")
+			return allPlannings, errors.New("reached max retry times")
 		}
 	}
 }
@@ -119,13 +135,13 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 	log.Info().Str("prompt", prompt).Msg("performing AI action")
 
 	// plan next action
-	result, err := dExt.PlanNextAction(ctx, prompt, opts...)
+	planningResult, err := dExt.PlanNextAction(ctx, prompt, opts...)
 	if err != nil {
 		return err
 	}
 
 	// Invoke tool calls
-	for _, toolCall := range result.ToolCalls {
+	for _, toolCall := range planningResult.ToolCalls {
 		err = dExt.invokeToolCall(ctx, toolCall)
 		if err != nil {
 			return err
@@ -135,7 +151,8 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 	return nil
 }
 
-func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ...option.ActionOption) (*ai.PlanningResult, error) {
+// PlanNextAction performs planning and returns unified planning information
+func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ...option.ActionOption) (*PlanningExecutionResult, error) {
 	if dExt.LLMService == nil {
 		return nil, errors.New("LLM service is not initialized")
 	}
@@ -144,13 +161,20 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 	options := option.NewActionOptions(opts...)
 	resetHistory := options.ResetHistory
 
+	// Step 1: Take screenshot
+	screenshotStartTime := time.Now()
 	// Use GetScreenResult to handle screenshot capture, save, and session tracking
 	screenResult, err := dExt.GetScreenResult(
 		option.WithScreenShotFileName(builtin.GenNameWithTimestamp("%d_screenshot")),
 	)
+	screenshotElapsed := time.Since(screenshotStartTime).Milliseconds()
 	if err != nil {
 		return nil, err
 	}
+
+	// Clear session data after planning screenshot to avoid including it in sub-actions
+	// The planning screenshot is already stored in planningResult.ScreenResult
+	dExt.GetSession().GetData(true) // reset session data to exclude planning screenshot from sub-actions
 
 	// convert buffer to base64 string for LLM
 	screenShotBase64 := "data:image/jpeg;base64," +
@@ -162,6 +186,8 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 		return nil, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 
+	// Step 2: Call model
+	modelCallStartTime := time.Now()
 	planningOpts := &ai.PlanningOptions{
 		UserInstruction: prompt,
 		Message: &schema.Message{
@@ -180,22 +206,48 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 	}
 
 	result, err := dExt.LLMService.Call(ctx, planningOpts)
+	modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
+
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get next action from planner")
 	}
-	return result, nil
+
+	// Step 3: Parse result (this is already done in LLMService.Call, but we record it separately)
+	actionNames := make([]string, len(result.ToolCalls))
+	for i, toolCall := range result.ToolCalls {
+		actionNames[i] = toolCall.Function.Name
+	}
+
+	// Create unified planning result that inherits from ai.PlanningResult
+	planningResult := &PlanningExecutionResult{
+		PlanningResult: *result, // Inherit all fields from ai.PlanningResult
+		// Planning process timing and metadata
+		ScreenshotElapsed: screenshotElapsed,
+		ImagePath:         screenResult.ImagePath,
+		Resolution:        &screenResult.Resolution,
+		ScreenResult:      screenResult,
+		ModelCallElapsed:  modelCallElapsed,
+		ToolCallsCount:    len(result.ToolCalls),
+		ActionNames:       actionNames,
+		// Execution timing (will be set by StartToGoal)
+		StartTime:  0,   // Will be set by caller
+		Elapsed:    0,   // Will be set by caller
+		SubActions: nil, // Will be populated during execution
+	}
+
+	return planningResult, nil
 }
 
 // isTaskFinished checks if the task is completed based on the planning result
-func (dExt *XTDriver) isTaskFinished(result *ai.PlanningResult) bool {
+func (dExt *XTDriver) isTaskFinished(planningResult *PlanningExecutionResult) bool {
 	// Check if there are no tool calls (no actions to execute)
-	if len(result.ToolCalls) == 0 {
+	if len(planningResult.ToolCalls) == 0 {
 		log.Info().Msg("no tool calls returned, task may be finished")
 		return true
 	}
 
 	// Check if any tool call is a "finished" action
-	for _, toolCall := range result.ToolCalls {
+	for _, toolCall := range planningResult.ToolCalls {
 		if toolCall.Function.Name == "uixt__finished" {
 			log.Info().Str("reason", toolCall.Function.Arguments).Msg("finished action detected")
 			return true
@@ -236,15 +288,30 @@ func (dExt *XTDriver) invokeToolCall(ctx context.Context, toolCall schema.ToolCa
 	return nil
 }
 
+// PlanningExecutionResult represents a unified planning result that contains both planning information and execution results
+type PlanningExecutionResult struct {
+	ai.PlanningResult // Inherit all fields from ai.PlanningResult (ToolCalls, Thought, Content, Error, ModelName)
+	// Planning process information
+	ScreenshotElapsed int64         `json:"screenshot_elapsed_ms"` // screenshot elapsed time(ms)
+	ImagePath         string        `json:"image_path"`            // screenshot image path
+	Resolution        *types.Size   `json:"resolution"`            // image resolution
+	ScreenResult      *ScreenResult `json:"screen_result"`         // complete screen result data
+	ModelCallElapsed  int64         `json:"model_call_elapsed_ms"` // model call elapsed time(ms)
+	ToolCallsCount    int           `json:"tool_calls_count"`      // number of tool calls generated
+	ActionNames       []string      `json:"action_names"`          // names of parsed actions
+	// Execution information
+	StartTime  int64              `json:"start_time"`            // planning start time
+	Elapsed    int64              `json:"elapsed_ms"`            // planning elapsed time(ms)
+	SubActions []*SubActionResult `json:"sub_actions,omitempty"` // sub-actions generated from this planning
+}
+
 // SubActionResult represents a sub-action within a start_to_goal action
 type SubActionResult struct {
-	ActionName string      `json:"action_name"`          // name of the sub-action (e.g., "tap", "input")
-	Arguments  interface{} `json:"arguments,omitempty"`  // arguments passed to the sub-action
-	StartTime  int64       `json:"start_time"`           // sub-action start time
-	Elapsed    int64       `json:"elapsed_ms"`           // sub-action elapsed time(ms)
-	Error      error       `json:"error,omitempty"`      // sub-action execution result
-	Thought    string      `json:"thought,omitempty"`    // sub-action thought
-	ModelName  string      `json:"model_name,omitempty"` // model name used for AI actions
+	ActionName string      `json:"action_name"`         // name of the sub-action (e.g., "tap", "input")
+	Arguments  interface{} `json:"arguments,omitempty"` // arguments passed to the sub-action
+	StartTime  int64       `json:"start_time"`          // sub-action start time
+	Elapsed    int64       `json:"elapsed_ms"`          // sub-action elapsed time(ms)
+	Error      error       `json:"error,omitempty"`     // sub-action execution result
 	SessionData
 }
 

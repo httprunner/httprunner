@@ -305,9 +305,18 @@ func (g *HTMLReportGenerator) calculateTotalSubActions() int {
 		for _, step := range testCase.Records {
 			if step.Actions != nil {
 				for _, action := range step.Actions {
+					// Count sub-actions from regular actions
 					if action.SubActions != nil {
 						total += len(action.SubActions)
 					}
+					// Count sub-actions from planning results
+					if action.Plannings != nil {
+						for _, planning := range action.Plannings {
+							if planning.SubActions != nil {
+								total += len(planning.SubActions)
+							}
+						}
+					}
 				}
 			}
 		}
@@ -315,8 +324,8 @@ func (g *HTMLReportGenerator) calculateTotalSubActions() int {
 	return total
 }
 
-// calculateTotalRequests calculates the total number of requests across all test cases
-func (g *HTMLReportGenerator) calculateTotalRequests() int {
+// calculateTotalPlannings calculates the total number of planning results across all test cases
+func (g *HTMLReportGenerator) calculateTotalPlannings() int {
 	total := 0
 	if g.SummaryData == nil || g.SummaryData.Details == nil {
 		return total
@@ -329,12 +338,8 @@ func (g *HTMLReportGenerator) calculateTotalRequests() int {
 		for _, step := range testCase.Records {
 			if step.Actions != nil {
 				for _, action := range step.Actions {
-					if action.SubActions != nil {
-						for _, subAction := range action.SubActions {
-							if subAction.Requests != nil {
-								total += len(subAction.Requests)
-							}
-						}
+					if action.Plannings != nil {
+						total += len(action.Plannings)
 					}
 				}
 			}
@@ -343,11 +348,16 @@ func (g *HTMLReportGenerator) calculateTotalRequests() int {
 	return total
 }
 
-// calculateTotalScreenshots calculates the total number of screenshots across all test cases
-func (g *HTMLReportGenerator) calculateTotalScreenshots() int {
-	total := 0
+// calculateTotalUsage calculates the total token usage across all test cases
+func (g *HTMLReportGenerator) calculateTotalUsage() map[string]interface{} {
+	totalUsage := map[string]interface{}{
+		"prompt_tokens":     0,
+		"completion_tokens": 0,
+		"total_tokens":      0,
+	}
+
 	if g.SummaryData == nil || g.SummaryData.Details == nil {
-		return total
+		return totalUsage
 	}
 
 	for _, testCase := range g.SummaryData.Details {
@@ -355,31 +365,25 @@ func (g *HTMLReportGenerator) calculateTotalScreenshots() int {
 			continue
 		}
 		for _, step := range testCase.Records {
-			// Count screenshots in actions
-			if step.Actions != nil {
-				for _, action := range step.Actions {
-					if action.SubActions != nil {
-						for _, subAction := range action.SubActions {
-							if subAction.ScreenResults != nil {
-								total += len(subAction.ScreenResults)
-							}
-						}
-					}
-				}
+			if step.Actions == nil {
+				continue
 			}
-			// Count screenshots in attachments
-			if step.Attachments != nil {
-				if attachments, ok := step.Attachments.(map[string]any); ok {
-					if screenResults, exists := attachments["screen_results"]; exists {
-						if screenResultsSlice, ok := screenResults.([]any); ok {
-							total += len(screenResultsSlice)
-						}
+			for _, action := range step.Actions {
+				if action.Plannings == nil {
+					continue
+				}
+				for _, planning := range action.Plannings {
+					if planning.Usage == nil {
+						continue
 					}
+					totalUsage["prompt_tokens"] = totalUsage["prompt_tokens"].(int) + planning.Usage.PromptTokens
+					totalUsage["completion_tokens"] = totalUsage["completion_tokens"].(int) + planning.Usage.CompletionTokens
+					totalUsage["total_tokens"] = totalUsage["total_tokens"].(int) + planning.Usage.TotalTokens
 				}
 			}
 		}
 	}
-	return total
+	return totalUsage
 }
 
 // GenerateReport generates the complete HTML test report
@@ -390,13 +394,13 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 
 	// Create template functions
 	funcMap := template.FuncMap{
-		"formatDuration":            g.formatDuration,
-		"encodeImageBase64":         g.encodeImageToBase64,
-		"getStepLogs":               g.getStepLogsForTemplate,
-		"calculateTotalActions":     g.calculateTotalActions,
-		"calculateTotalSubActions":  g.calculateTotalSubActions,
-		"calculateTotalRequests":    g.calculateTotalRequests,
-		"calculateTotalScreenshots": g.calculateTotalScreenshots,
+		"formatDuration":           g.formatDuration,
+		"encodeImageBase64":        g.encodeImageToBase64,
+		"getStepLogs":              g.getStepLogsForTemplate,
+		"calculateTotalActions":    g.calculateTotalActions,
+		"calculateTotalSubActions": g.calculateTotalSubActions,
+		"calculateTotalPlannings":  g.calculateTotalPlannings,
+		"calculateTotalUsage":      g.calculateTotalUsage,
 		"getSummaryContentBase64": func() string {
 			return base64.StdEncoding.EncodeToString([]byte(g.SummaryContent))
 		},
@@ -502,19 +506,26 @@ const htmlTemplate = `<!DOCTYPE html>
             gap: 15px;
         }
 
-        .start-time {
+        .download-section {
             background: rgba(255, 255, 255, 0.2);
-            padding: 12px 20px;
+            padding: 15px 20px;
             border-radius: 8px;
             backdrop-filter: blur(10px);
-            min-width: 200px;
+            min-width: 240px;
+            text-align: center;
+        }
+
+        .download-title {
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            opacity: 0.9;
         }
 
         .download-buttons {
             display: flex;
             gap: 10px;
             width: 100%;
-            max-width: 240px;
         }
 
         .download-btn {
@@ -546,19 +557,6 @@ const htmlTemplate = `<!DOCTYPE html>
 
         .download-btn:active {
             transform: translateY(0);
-        }
-
-        .time-label {
-            display: block;
-            font-size: 0.9em;
-            opacity: 0.8;
-            margin-bottom: 4px;
-        }
-
-        .time-value {
-            display: block;
-            font-size: 1.1em;
-            font-weight: bold;
         }
 
         .summary {
@@ -690,70 +688,138 @@ const htmlTemplate = `<!DOCTYPE html>
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
+        .test-cases {
+            margin-top: 20px;
+        }
+
+        .test-case {
+            background: white;
+            margin-bottom: 40px;
+            border-radius: 15px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 2px solid #e9ecef;
+            padding-bottom: 8px;
+        }
+
+        .test-case h2 {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #495057;
+            margin: 0;
+            padding: 20px 30px;
+            font-size: 1.5em;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .case-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         .step-container {
             background: white;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 8px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             overflow: hidden;
+            border: 1px solid #e9ecef;
+        }
+
+        .step-container:first-of-type {
+            margin-top: 8px;
         }
 
         .step-header {
-            background: #f8f9fa;
-            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px 30px;
             cursor: pointer;
-            border-bottom: 1px solid #dee2e6;
-            transition: background-color 0.3s;
+            border-bottom: 2px solid #dee2e6;
+            transition: all 0.3s ease;
         }
 
         .step-header:hover {
-            background: #e9ecef;
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .step-header h3 {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
             margin: 0;
             font-size: 1.3em;
+            font-weight: 500;
+        }
+
+        .step-info-group {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            justify-content: flex-end;
+        }
+
+        .step-status {
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .step-duration {
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .step-type-fixed {
+            min-width: 120px;
+            text-align: center;
         }
 
         .step-number {
-            background: #007bff;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
             color: white;
-            width: 30px;
-            height: 30px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9em;
+            font-size: 1.0em;
             font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
         }
 
         .status-badge {
-            padding: 5px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
-            font-size: 0.8em;
+            font-size: 0.85em;
             font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .status-badge.success {
-            background: #28a745;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             color: white;
         }
 
         .status-badge.failure {
-            background: #dc3545;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
             color: white;
         }
 
         .duration {
-            background: #6c757d;
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
             color: white;
-            padding: 3px 8px;
+            padding: 4px 10px;
             border-radius: 12px;
             font-size: 0.8em;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
         .toggle-icon {
@@ -766,22 +832,20 @@ const htmlTemplate = `<!DOCTYPE html>
             transform: rotate(-90deg);
         }
 
-        .step-meta {
-            margin-top: 10px;
-            color: #6c757d;
-        }
-
         .step-type {
-            background: #17a2b8;
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
             color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
+            padding: 3px 10px;
+            border-radius: 12px;
             font-size: 0.8em;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
         .step-content {
-            padding: 25px;
+            padding: 30px;
             display: none;
+            background: #fafbfc;
+            border-top: 1px solid #e9ecef;
         }
 
         .step-content.show {
@@ -789,41 +853,73 @@ const htmlTemplate = `<!DOCTYPE html>
         }
 
         .actions-section, .validators-section, .screenshots-section, .logs-section {
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
 
         .actions-section h4, .validators-section h4, .screenshots-section h4, .logs-section h4 {
             color: #495057;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #dee2e6;
+            font-size: 1.2em;
+            font-weight: 600;
         }
 
         .action-item {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .action-item:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+            transform: translateY(-1px);
         }
 
         .action-header {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 10px;
+            gap: 18px;
+            margin-bottom: 15px;
             cursor: pointer;
-            transition: background-color 0.3s;
-            padding: 8px;
-            border-radius: 6px;
+            transition: all 0.3s ease;
+            padding: 12px 15px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
         }
 
         .action-header:hover {
-            background-color: rgba(0, 123, 255, 0.1);
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(0, 123, 255, 0.05) 100%);
+            border-color: #007bff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
         }
 
         .action-header strong {
             color: #007bff;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .action-description {
+            color: #6c757d;
+            font-style: italic;
+            margin: 10px 0;
+            padding: 10px 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 0.9em;
+            line-height: 1.4;
         }
 
         .action-toggle {
@@ -849,25 +945,195 @@ const htmlTemplate = `<!DOCTYPE html>
             display: block;
         }
 
-        .action-params {
-            color: #6c757d;
-            font-style: italic;
-            margin-bottom: 10px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 10px;
-            font-size: 0.9em;
-            line-height: 1.4;
-        }
-
         .error {
             color: #dc3545;
             font-weight: bold;
         }
+
+        .planning-results {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .planning-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .planning-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .planning-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .planning-label {
+            background: #007bff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .plan-next-action {
+            margin: 15px 0;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .plan-next-action h5 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 1.0em;
+            font-weight: 600;
+        }
+
+        .planning-two-columns {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+        }
+
+        .planning-column-left, .planning-column-right {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .planning-step-compact {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .step-header-compact {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 10px 12px;
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .step-name {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+        }
+
+        .screenshot-display {
+            padding: 12px;
+        }
+
+        .screenshot-item-compact {
+            text-align: center;
+        }
+
+        .screenshot-item-compact .screenshot-image {
+            min-height: 200px;
+            padding: 10px 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .screenshot-item-compact .screenshot-image img {
+            max-width: 100%;
+            max-height: 180px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            object-fit: contain;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .screenshot-item-compact .screenshot-image img:hover {
+            transform: scale(1.02);
+        }
+
+        .model-output-compact {
+            padding: 12px;
+        }
+
+        .model-info, .tool-calls-info, .actions-info, .usage-info {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 8px 10px;
+            margin: 6px 0;
+            font-size: 0.85em;
+            color: #495057;
+        }
+
+        @media screen and (max-width: 768px) {
+            .planning-two-columns {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        .raw-content {
+            margin-top: 10px;
+        }
+
+        .raw-content pre {
+            background: #f1f3f4;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 0.8em;
+            max-height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .step-screenshots {
+            margin-top: 10px;
+        }
+
+        .action-details {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .action-details .action-name {
+            background: #6f42c1;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .action-details .action-desc {
+            color: #6c757d;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+
+
 
         .sub-actions {
             margin-top: 15px;
@@ -1449,7 +1715,7 @@ const htmlTemplate = `<!DOCTYPE html>
                 gap: 15px;
             }
 
-            .start-time {
+            .download-section {
                 width: 100%;
                 text-align: center;
                 min-width: auto;
@@ -1458,7 +1724,6 @@ const htmlTemplate = `<!DOCTYPE html>
             .download-buttons {
                 justify-content: center;
                 width: 100%;
-                max-width: 300px;
             }
 
             .download-btn {
@@ -1489,14 +1754,56 @@ const htmlTemplate = `<!DOCTYPE html>
             }
 
             .step-header h3 {
-                font-size: 1.1em;
-                gap: 10px;
+                font-size: 1.2em;
+                gap: 15px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .step-info-group {
+                min-width: auto;
+                width: 100%;
+                justify-content: space-between;
+                margin-left: 0;
+                margin-top: 8px;
+            }
+
+            .step-status {
+                min-width: 60px;
+            }
+
+            .step-duration {
+                min-width: 70px;
+            }
+
+            .step-type-fixed {
+                min-width: 100px;
             }
 
             .step-number {
-                width: 25px;
-                height: 25px;
-                font-size: 0.8em;
+                width: 32px;
+                height: 32px;
+                font-size: 0.9em;
+            }
+
+            .test-case h2 {
+                font-size: 1.3em;
+                padding: 15px 20px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .case-info {
+                align-self: flex-end;
+            }
+
+            .step-header {
+                padding: 20px 25px;
+            }
+
+            .step-content {
+                padding: 25px 20px;
             }
 
             .action-header {
@@ -1585,6 +1892,34 @@ const htmlTemplate = `<!DOCTYPE html>
                 margin: 0;
             }
         }
+
+        .action-content {
+            margin-top: 10px;
+        }
+
+        .action-content strong {
+            color: #6f42c1;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .action-output {
+            background: #f8f9fa;
+            border: 2px solid #6f42c1;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 0.85em;
+            max-height: 120px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #495057;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            line-height: 1.4;
+        }
+
+
     </style>
 </head>
 <body>
@@ -1593,22 +1928,21 @@ const htmlTemplate = `<!DOCTYPE html>
             <div class="header-content">
                 <div class="header-left">
                     <h1>🚀 HttpRunner Test Report</h1>
-                    <div class="subtitle">Automated Testing Results</div>
+                    <div class="subtitle">Start Time: {{.Time.StartAt.Format "2006-01-02 15:04:05"}}</div>
                 </div>
                 <div class="header-right">
-                    <div class="start-time">
-                        <span class="time-label">Start Time:</span>
-                        <span class="time-value">{{.Time.StartAt.Format "2006-01-02 15:04:05"}}</span>
-                    </div>
-                    <div class="download-buttons">
-                        <button class="download-btn" onclick="downloadSummary()">
-                            <span>📄</span>
-                            <span>summary.json</span>
-                        </button>
-                        <button class="download-btn" onclick="downloadLog()">
-                            <span>📋</span>
-                            <span>hrp.log</span>
-                        </button>
+                    <div class="download-section">
+                        <div class="download-title">📥 Download</div>
+                        <div class="download-buttons">
+                            <button class="download-btn" onclick="downloadSummary()">
+                                <span>📄</span>
+                                <span>summary.json</span>
+                            </button>
+                            <button class="download-btn" onclick="downloadLog()">
+                                <span>📋</span>
+                                <span>hrp.log</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1617,17 +1951,13 @@ const htmlTemplate = `<!DOCTYPE html>
         <div class="summary">
             <h2>📊 Test Summary</h2>
             <div class="summary-grid">
-                <div class="summary-item">
-                    <div class="value">{{.Stat.TestCases.Total}}</div>
-                    <div class="label">Total Test Cases</div>
-                </div>
                 <div class="summary-item success">
                     <div class="value">{{.Stat.TestCases.Success}}</div>
-                    <div class="label">Passed</div>
+                    <div class="label">Passed TestCases</div>
                 </div>
                 <div class="summary-item failure">
                     <div class="value">{{.Stat.TestCases.Fail}}</div>
-                    <div class="label">Failed</div>
+                    <div class="label">Failed TestCases</div>
                 </div>
                 <div class="summary-item">
                     <div class="value">{{.Stat.TestSteps.Total}}</div>
@@ -1642,16 +1972,25 @@ const htmlTemplate = `<!DOCTYPE html>
                     <div class="label">Total Sub-Actions</div>
                 </div>
                 <div class="summary-item">
-                    <div class="value">{{calculateTotalRequests}}</div>
-                    <div class="label">Total Requests</div>
-                </div>
-                <div class="summary-item">
-                    <div class="value">{{calculateTotalScreenshots}}</div>
-                    <div class="label">Total Screenshots</div>
+                    <div class="value">{{calculateTotalPlannings}}</div>
+                    <div class="label">Total Plannings</div>
                 </div>
                 <div class="summary-item">
                     <div class="value">{{printf "%.1f" .Time.Duration}}s</div>
                     <div class="label">Duration</div>
+                </div>
+                {{$usage := calculateTotalUsage}}
+                <div class="summary-item">
+                    <div class="value">{{index $usage "prompt_tokens"}}</div>
+                    <div class="label">Input Tokens</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">{{index $usage "completion_tokens"}}</div>
+                    <div class="label">Output Tokens</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">{{index $usage "total_tokens"}}</div>
+                    <div class="label">Total Tokens</div>
                 </div>
             </div>
 
@@ -1682,13 +2021,15 @@ const htmlTemplate = `<!DOCTYPE html>
         <div class="test-cases">
             {{range $caseIndex, $testCase := .Details}}
             <div class="test-case">
-                <h2>📋 {{$testCase.Name}}</h2>
-                <div class="case-info">
-                    <span class="status-badge {{if $testCase.Success}}success{{else}}failure{{end}}">
-                        {{if $testCase.Success}}✓ PASS{{else}}✗ FAIL{{end}}
-                    </span>
-                    <span class="duration">{{printf "%.1f" $testCase.Time.Duration}}s</span>
-                </div>
+                <h2>
+                    <span>📋 {{$testCase.Name}}</span>
+                    <div class="case-info">
+                        <span class="status-badge {{if $testCase.Success}}success{{else}}failure{{end}}">
+                            {{if $testCase.Success}}✓ PASS{{else}}✗ FAIL{{end}}
+                        </span>
+                        <span class="duration">{{printf "%.1f" $testCase.Time.Duration}}s</span>
+                    </div>
+                </h2>
 
                 {{range $stepIndex, $step := $testCase.Records}}
                 <div class="step-container">
@@ -1696,15 +2037,15 @@ const htmlTemplate = `<!DOCTYPE html>
                         <h3>
                             <span class="step-number">{{add $stepIndex 1}}</span>
                             {{$step.Name}}
-                            <span class="status-badge {{if $step.Success}}success{{else}}failure{{end}}">
-                                {{if $step.Success}}✓ PASS{{else}}✗ FAIL{{end}}
-                            </span>
-                            <span class="duration">{{formatDuration $step.Elapsed}}</span>
-                            <span class="toggle-icon" id="toggle-{{$stepIndex}}">▼</span>
+                            <div class="step-info-group">
+                                <span class="status-badge step-status {{if $step.Success}}success{{else}}failure{{end}}">
+                                    {{if $step.Success}}✓ PASS{{else}}✗ FAIL{{end}}
+                                </span>
+                                <span class="duration step-duration">{{formatDuration $step.Elapsed}}</span>
+                                <span class="step-type step-type-fixed">{{$step.StepType}}</span>
+                                <span class="toggle-icon" id="toggle-{{$stepIndex}}">▼</span>
+                            </div>
                         </h3>
-                        <div class="step-meta">
-                            <span class="step-type">{{$step.StepType}}</span>
-                        </div>
                     </div>
 
                     <div class="step-content" id="step-{{$stepIndex}}">
@@ -1720,8 +2061,156 @@ const htmlTemplate = `<!DOCTYPE html>
                                     {{if $action.Error}}<span class="error">Error: {{$action.Error}}</span>{{end}}
                                     <span class="action-toggle collapsed" id="action-toggle-{{$stepIndex}}-{{$actionIndex}}">▶</span>
                                 </div>
+                                <div class="action-description">{{$action.Params}}</div>
                                 <div class="action-content" id="action-content-{{$stepIndex}}-{{$actionIndex}}">
-                                    <div class="action-params">{{$action.Params}}</div>
+
+                                {{if $action.Plannings}}
+                                <div class="planning-results">
+                                    {{range $planningIndex, $planning := $action.Plannings}}
+                                    <div class="planning-item">
+                                        <div class="planning-header">
+                                            <span class="planning-label">🧠 Planning & Execution {{add $planningIndex 1}}</span>
+                                            <span class="duration">{{formatDuration $planning.Elapsed}}</span>
+                                            {{if $planning.Error}}<span class="error">Error: {{$planning.Error}}</span>{{end}}
+                                        </div>
+
+                                        {{if $planning.Thought}}
+                                        <div class="thought">{{$planning.Thought}}</div>
+                                        {{end}}
+
+                                        <!-- Planning Section -->
+                                        <div class="plan-next-action">
+                                            <h5>📋 Planning</h5>
+
+                                            <!-- Two-column layout for screenshot and model output -->
+                                            <div class="planning-two-columns">
+                                                <!-- Left column: Screenshot -->
+                                                <div class="planning-column-left">
+                                                    <div class="planning-step-compact">
+                                                        <div class="step-header-compact">
+                                                            <span class="step-name">📸 Take Screenshot</span>
+                                                            <span class="duration">{{formatDuration $planning.ScreenshotElapsed}}</span>
+                                                        </div>
+                                                        {{if $planning.ScreenResult}}
+                                                        <div class="screenshot-display">
+                                                            {{$screenshot := $planning.ScreenResult}}
+                                                            {{$base64Image := encodeImageBase64 $screenshot.ImagePath}}
+                                                            {{if $base64Image}}
+                                                            <div class="screenshot-item-compact">
+                                                                <div class="screenshot-image">
+                                                                    <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Planning Screenshot" onclick="openImageModal(this.src)" />
+                                                                </div>
+                                                            </div>
+                                                            {{end}}
+                                                        </div>
+                                                        {{end}}
+                                                    </div>
+                                                </div>
+
+                                                <!-- Right column: Model Output -->
+                                                <div class="planning-column-right">
+                                                    <div class="planning-step-compact">
+                                                        <div class="step-header-compact">
+                                                            <span class="step-name">🤖 Call Model & Parse Result</span>
+                                                            <span class="duration">{{formatDuration $planning.ModelCallElapsed}}</span>
+                                                        </div>
+                                                        <div class="model-output-compact">
+                                                            {{if $planning.ModelName}}
+                                                            <div class="model-info">🤖 Model: {{$planning.ModelName}}</div>
+                                                            {{end}}
+                                                            {{if $planning.Usage}}
+                                                            <div class="usage-info">📊 Tokens: {{$planning.Usage.PromptTokens}} in / {{$planning.Usage.CompletionTokens}} out / {{$planning.Usage.TotalTokens}} total</div>
+                                                            {{end}}
+                                                            {{if $planning.ToolCallsCount}}
+                                                            <div class="tool-calls-info">🔧 Tool Calls: {{$planning.ToolCallsCount}}</div>
+                                                            {{end}}
+                                                            {{if $planning.ActionNames}}
+                                                            <div class="actions-info">🎯 Actions: {{safeHTML (toJSON $planning.ActionNames)}}</div>
+                                                            {{end}}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{if $planning.SubActions}}
+                                        <div class="sub-actions">
+                                            <h5>🎯 Actions</h5>
+                                            {{range $subAction := $planning.SubActions}}
+                                            <div class="sub-action-item">
+                                                <div class="sub-action-header">
+                                                    <span class="action-name">{{$subAction.ActionName}}</span>
+                                                    <span class="duration">{{formatDuration $subAction.Elapsed}}</span>
+                                                    {{if $subAction.Error}}<span class="error">Error: {{$subAction.Error}}</span>{{end}}
+                                                </div>
+
+                                                <div class="sub-action-content">
+                                                    <div class="sub-action-left">
+                                                        {{if $subAction.Arguments}}
+                                                        <div class="arguments">Arguments: {{safeHTML (toJSON $subAction.Arguments)}}</div>
+                                                        {{end}}
+
+                                                        {{if $subAction.Requests}}
+                                                        <div class="requests">
+                                                            <button class="requests-toggle" onclick="toggleRequests(this)">
+                                                                📡 Show Requests ({{len $subAction.Requests}})
+                                                            </button>
+                                                            <div class="requests-content">
+                                                                {{range $request := $subAction.Requests}}
+                                                                <div class="request-item">
+                                                                    <div class="request-header">
+                                                                        <span class="method">{{$request.RequestMethod}}</span>
+                                                                        <span class="url">{{$request.RequestUrl}}</span>
+                                                                        <span class="status {{if $request.Success}}success{{else}}failure{{end}}">Status: {{$request.ResponseStatus}}</span>
+                                                                        <span class="duration">{{formatDuration $request.ResponseDuration}}</span>
+                                                                    </div>
+                                                                    {{if $request.RequestBody}}
+                                                                    <div class="request-body">Request: {{$request.RequestBody}}</div>
+                                                                    {{end}}
+                                                                    {{if $request.ResponseBody}}
+                                                                    <div class="response-body">Response: {{$request.ResponseBody}}</div>
+                                                                    {{end}}
+                                                                </div>
+                                                                {{end}}
+                                                            </div>
+                                                        </div>
+                                                        {{end}}
+                                                    </div>
+
+                                                    {{if $subAction.ScreenResults}}
+                                                    <div class="sub-action-right">
+                                                        <div class="sub-action-screenshots">
+                                                            <h5>📸 Screenshots</h5>
+                                                            <div class="screenshots-grid">
+                                                                {{range $screenshot := $subAction.ScreenResults}}
+                                                                {{$base64Image := encodeImageBase64 $screenshot.ImagePath}}
+                                                                {{if $base64Image}}
+                                                                <div class="screenshot-item small">
+                                                                    <div class="screenshot-info">
+                                                                        <span class="filename">{{base $screenshot.ImagePath}}</span>
+                                                                        {{if $screenshot.Resolution}}
+                                                                        <span class="resolution">{{$screenshot.Resolution.Width}}x{{$screenshot.Resolution.Height}}</span>
+                                                                        {{end}}
+                                                                    </div>
+                                                                    <div class="screenshot-image">
+                                                                        <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Screenshot" onclick="openImageModal(this.src)" />
+                                                                    </div>
+                                                                </div>
+                                                                {{end}}
+                                                                {{end}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {{end}}
+                                                </div>
+                                            </div>
+                                            {{end}}
+                                        </div>
+                                        {{end}}
+                                    </div>
+                                    {{end}}
+                                </div>
+                                {{end}}
 
                                 {{if $action.SubActions}}
                                 <div class="sub-actions">
@@ -1734,19 +2223,8 @@ const htmlTemplate = `<!DOCTYPE html>
 
                                         <div class="sub-action-content">
                                             <div class="sub-action-left">
-                                                {{if $subAction.Thought}}
-                                                <div class="thought">{{$subAction.Thought}}</div>
-                                                {{end}}
-
                                                 {{if $subAction.Arguments}}
                                                 <div class="arguments">Arguments: {{safeHTML (toJSON $subAction.Arguments)}}</div>
-                                                {{end}}
-
-                                                {{if $subAction.ModelName}}
-                                                <div class="model-name-container">
-                                                    <span class="model-label">🤖 Model:</span>
-                                                    <span class="model-value">{{$subAction.ModelName}}</span>
-                                                </div>
                                                 {{end}}
 
                                                 {{if $subAction.Requests}}
@@ -1824,8 +2302,8 @@ const htmlTemplate = `<!DOCTYPE html>
                                     <span class="result">{{$validator.check_result}}</span>
                                 </div>
                                 <div class="validator-expect">Expected: {{$validator.expect}}</div>
-                                {{if $validator.msg}}
-                                <div class="validator-message">{{$validator.msg}}</div>
+                                {{if and $validator.msg (ne $validator.check_result "pass")}}
+                                    <div class="validator-message">{{$validator.msg}}</div>
                                 {{end}}
                             </div>
                             {{end}}

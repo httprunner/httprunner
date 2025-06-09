@@ -909,10 +909,10 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 
 			// handle start_to_goal action
 			if action.Method == option.ACTION_StartToGoal {
-				subActionResults, err := uiDriver.StartToGoal(ctx,
+				planningResults, err := uiDriver.StartToGoal(ctx,
 					action.Params.(string), action.GetOptions()...)
 				actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
-				actionResult.SubActions = subActionResults
+				actionResult.Plannings = planningResults
 				stepResult.Actions = append(stepResult.Actions, actionResult)
 				if err != nil {
 					if !code.IsErrorPredefined(err) {

@@ -28,11 +28,12 @@ type PlanningOptions struct {
 
 // PlanningResult represents the result of planning
 type PlanningResult struct {
-	ToolCalls []schema.ToolCall `json:"tool_calls"`
-	Thought   string            `json:"thought"`
-	Content   string            `json:"content"` // original content from model
-	Error     string            `json:"error,omitempty"`
-	ModelName string            `json:"model_name"` // model name used for planning
+	ToolCalls []schema.ToolCall  `json:"tool_calls"`
+	Thought   string             `json:"thought"`
+	Content   string             `json:"content"` // original content from model
+	Error     string             `json:"error,omitempty"`
+	ModelName string             `json:"model_name"`      // model name used for planning
+	Usage     *schema.TokenUsage `json:"usage,omitempty"` // token usage statistics
 }
 
 func NewPlanner(ctx context.Context, modelConfig *ModelConfig) (*Planner, error) {
@@ -81,7 +82,7 @@ func (p *Planner) RegisterTools(tools []*schema.ToolInfo) error {
 }
 
 // Call performs UI planning using Vision Language Model
-func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error) {
+func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (result *PlanningResult, err error) {
 	// validate input parameters
 	if err := validatePlanningInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate planning parameters failed")
@@ -116,6 +117,13 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 	}
 	logResponse(message)
 
+	defer func() {
+		// Extract usage information if available
+		if message.ResponseMeta != nil && message.ResponseMeta.Usage != nil {
+			result.Usage = message.ResponseMeta.Usage
+		}
+	}()
+
 	// handle tool calls
 	if len(message.ToolCalls) > 0 {
 		// append tool call message
@@ -130,7 +138,7 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 			ToolCallID: toolCallID,
 		})
 		// history will be appended with tool calls execution result
-		result := &PlanningResult{
+		result = &PlanningResult{
 			ToolCalls: message.ToolCalls,
 			Thought:   message.Content,
 			ModelName: string(p.modelConfig.ModelType),
@@ -139,7 +147,7 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (*PlanningRes
 	}
 
 	// parse message content to actions (tool calls)
-	result, err := p.parser.Parse(message.Content, opts.Size)
+	result, err = p.parser.Parse(message.Content, opts.Size)
 	if err != nil {
 		result = &PlanningResult{
 			Thought:   message.Content,
