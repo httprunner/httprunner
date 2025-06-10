@@ -14,7 +14,7 @@ import (
 )
 
 type IPlanner interface {
-	Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
+	Plan(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
 }
 
 // PlanningOptions represents the input options for planning
@@ -89,8 +89,8 @@ func (p *Planner) RegisterTools(tools []*schema.ToolInfo) error {
 	return nil
 }
 
-// Call performs UI planning using Vision Language Model
-func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (result *PlanningResult, err error) {
+// Plan performs UI planning using Vision Language Model
+func (p *Planner) Plan(ctx context.Context, opts *PlanningOptions) (result *PlanningResult, err error) {
 	// validate input parameters
 	if err := validatePlanningInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate planning parameters failed")

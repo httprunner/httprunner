@@ -2,7 +2,7 @@
 
 ## 📖 概述
 
-HttpRunner AI 模块是一个集成了多种人工智能服务的 UI 自动化智能引擎，提供基于大语言模型（LLM）的智能规划、断言验证、计算机视觉识别等功能，实现真正的智能化 UI 自动化测试。
+HttpRunner AI 模块是一个集成了多种人工智能服务的 UI 自动化智能引擎，提供基于大语言模型（LLM）的智能规划、断言验证、信息查询、计算机视觉识别等功能，实现真正的智能化 UI 自动化测试。
 
 ## 🎯 核心功能
 
@@ -17,13 +17,19 @@ HttpRunner AI 模块是一个集成了多种人工智能服务的 UI 自动化�
 - **自然语言断言**: 支持自然语言描述的断言条件
 - **结构化输出**: 返回标准化的断言结果和推理过程
 
-### 3. 计算机视觉 (Computer Vision)
+### 3. 智能查询 (Query)
+- **信息提取**: 从屏幕截图中提取指定信息
+- **自定义输出格式**: 支持用户定义的结构化数据格式
+- **自动类型转换**: 智能转换为用户指定的数据类型
+- **多场景适用**: 适用于游戏分析、UI元素提取、表单数据提取等
+
+### 4. 计算机视觉 (Computer Vision)
 - **OCR 文本识别**: 提取屏幕中的文本内容和位置信息
 - **UI 元素检测**: 识别界面中的图标、按钮等 UI 元素
 - **弹窗检测**: 自动识别和定位弹窗及关闭按钮
 - **坐标转换**: 支持相对坐标和绝对坐标的转换
 
-### 4. 会话管理 (Session Management)
+### 5. 会话管理 (Session Management)
 - **对话历史**: 维护完整的对话上下文
 - **消息管理**: 智能管理用户图像消息和助手回复
 - **历史清理**: 自动清理过期的对话记录
@@ -50,15 +56,17 @@ HttpRunner AI 模块是一个集成了多种人工智能服务的 UI 自动化�
 #### ILLMService - LLM 服务接口
 ```go
 type ILLMService interface {
-    Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
+    Plan(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
     Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error)
+    Query(ctx context.Context, opts *QueryOptions) (*QueryResult, error)
+    RegisterTools(tools []*schema.ToolInfo) error
 }
 ```
 
 #### IPlanner - 规划器接口
 ```go
 type IPlanner interface {
-    Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
+    Plan(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
 }
 ```
 
@@ -66,6 +74,13 @@ type IPlanner interface {
 ```go
 type IAsserter interface {
     Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error)
+}
+```
+
+#### IQuerier - 查询器接口
+```go
+type IQuerier interface {
+    Query(ctx context.Context, opts *QueryOptions) (*QueryResult, error)
 }
 ```
 
@@ -81,13 +96,14 @@ type ICVService interface {
 
 ### 1. AI 服务管理器 (ai.go)
 
-**功能**: 统一管理 LLM 服务，提供规划和断言功能的统一入口
+**功能**: 统一管理 LLM 服务，提供规划、断言和查询功能的统一入口
 
 **核心类型**:
 ```go
 type combinedLLMService struct {
     planner  IPlanner  // 提供规划功能
     asserter IAsserter // 提供断言功能
+    querier  IQuerier  // 提供查询功能
 }
 
 type ModelConfig struct {
@@ -105,6 +121,7 @@ type ModelConfig struct {
 **支持的模型类型**:
 - `DOUBAO_1_5_THINKING_VISION_PRO_250428`: 豆包思维视觉专业版
 - `DOUBAO_1_5_UI_TARS_250428`: 豆包UI-TARS专业UI自动化模型
+- `OPENAI_GPT_4O`: OpenAI GPT-4O 视觉模型
 
 ### 2. 智能规划器 (planner.go)
 
@@ -123,14 +140,16 @@ type PlanningOptions struct {
     UserInstruction string          `json:"user_instruction"`
     Message         *schema.Message `json:"message"`
     Size            types.Size      `json:"size"`
+    ResetHistory    bool            `json:"reset_history"`
 }
 
 type PlanningResult struct {
-    ToolCalls     []schema.ToolCall `json:"tool_calls"`
-    ActionSummary string            `json:"summary"`
-    Thought       string            `json:"thought"`
-    Content       string            `json:"content"`
-    Error         string            `json:"error,omitempty"`
+    ToolCalls []schema.ToolCall  `json:"tool_calls"`
+    Thought   string             `json:"thought"`
+    Content   string             `json:"content"`
+    Error     string             `json:"error,omitempty"`
+    ModelName string             `json:"model_name"`
+    Usage     *schema.TokenUsage `json:"usage,omitempty"`
 }
 ```
 
@@ -145,7 +164,7 @@ type PlanningResult struct {
 - 支持工具注册和函数调用
 - 智能对话历史管理
 - 多种输出格式解析
-- 详细的日志记录
+- 详细的日志记录和使用统计
 
 ### 3. 智能断言器 (asserter.go)
 
@@ -185,7 +204,53 @@ type AssertionResult struct {
 - 详细的推理过程记录
 - 多模型适配
 
-### 4. 内容解析器 (parser_*.go)
+### 4. 智能查询器 (querier.go)
+
+**功能**: 基于视觉语言模型从屏幕截图中提取结构化信息
+
+**核心类型**:
+```go
+type Querier struct {
+    modelConfig  *ModelConfig
+    model        model.ToolCallingChatModel
+    systemPrompt string
+    history      ConversationHistory
+}
+
+type QueryOptions struct {
+    Query        string      `json:"query"`
+    Screenshot   string      `json:"screenshot"`
+    Size         types.Size  `json:"size"`
+    OutputSchema interface{} `json:"outputSchema,omitempty"`
+}
+
+type QueryResult struct {
+    Content string      `json:"content"`
+    Thought string      `json:"thought"`
+    Data    interface{} `json:"data,omitempty"`
+}
+```
+
+**工作流程**:
+1. 接收查询指令和屏幕截图
+2. 根据是否提供 OutputSchema 选择处理方式
+3. 调用视觉语言模型进行分析
+4. 解析模型输出为结构化数据
+5. 自动进行类型转换和验证
+
+**特性**:
+- 支持自定义输出格式（OutputSchema）
+- 自动类型转换和数据验证
+- 多级回退机制确保稳定性
+- 向后兼容的API设计
+
+**应用场景**:
+- **UI元素分析**: 提取界面中的按钮、文本、图标等元素信息
+- **游戏界面分析**: 分析游戏网格、角色状态、道具信息等
+- **表单数据提取**: 从表单界面提取字段值和结构
+- **状态信息获取**: 获取应用状态、进度、设置等信息
+
+### 5. 内容解析器 (parser_*.go)
 
 **功能**: 将不同模型的输出解析为标准化的工具调用格式
 
@@ -219,7 +284,7 @@ type Action struct {
 - 坐标系统转换
 - 错误处理和验证
 
-### 5. 计算机视觉服务 (cv.go)
+### 6. 计算机视觉服务 (cv.go)
 
 **功能**: 提供图像识别和分析能力
 
@@ -265,7 +330,7 @@ type ClosePopupsResult struct {
 - 索引选择支持
 - 区域范围过滤
 
-### 6. 会话管理器 (session.go)
+### 7. 会话管理器 (session.go)
 
 **功能**: 管理 AI 对话的历史记录和上下文
 
@@ -304,6 +369,11 @@ DOUBAO_1_5_THINKING_VISION_PRO_250428_API_KEY=your_doubao_api_key
 DOUBAO_1_5_UI_TARS_250428_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
 DOUBAO_1_5_UI_TARS_250428_API_KEY=your_doubao_ui_tars_api_key
 
+# OpenAI GPT-4O配置
+OPENAI_GPT_4O_BASE_URL=https://api.openai.com/v1
+OPENAI_GPT_4O_API_KEY=your_openai_api_key
+```
+
 **默认配置（向后兼容）**：
 ```bash
 # 默认配置，当没有找到服务特定配置时使用
@@ -321,7 +391,7 @@ OPENAI_API_KEY=your_default_api_key
 
 例如：
 - `doubao-1.5-thinking-vision-pro-250428` → `DOUBAO_1_5_THINKING_VISION_PRO_250428_*`
-- `gpt-4` → `GPT_4_*`
+- `openai/gpt-4o` → `OPENAI_GPT_4O_*`
 - `claude-3.5-sonnet` → `CLAUDE_3_5_SONNET_*`
 
 #### 配置优先级
@@ -345,6 +415,10 @@ DOUBAO_1_5_THINKING_VISION_PRO_250428_API_KEY=your_doubao_thinking_api_key
 # doubao-1.5-ui-tars-250428
 DOUBAO_1_5_UI_TARS_250428_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
 DOUBAO_1_5_UI_TARS_250428_API_KEY=your_doubao_ui_tars_api_key
+
+# openai/gpt-4o
+OPENAI_GPT_4O_BASE_URL=https://api.openai.com/v1
+OPENAI_GPT_4O_API_KEY=your_openai_api_key
 ```
 
 ### 2. 创建 LLM 服务
@@ -387,6 +461,12 @@ llmService, err := ai.NewLLMService(option.DOUBAO_1_5_UI_TARS_250428)
 if err != nil {
     log.Fatal().Err(err).Msg("failed to create LLM service")
 }
+
+// 创建OpenAI GPT-4O服务
+llmService, err := ai.NewLLMService(option.OPENAI_GPT_4O)
+if err != nil {
+    log.Fatal().Err(err).Msg("failed to create LLM service")
+}
 ```
 
 #### 模型切换
@@ -425,7 +505,7 @@ planningOpts := &ai.PlanningOptions{
 }
 
 // 执行规划
-result, err := llmService.Call(ctx, planningOpts)
+result, err := llmService.Plan(ctx, planningOpts)
 if err != nil {
     log.Error().Err(err).Msg("planning failed")
     return
@@ -464,7 +544,80 @@ if result.Pass {
 }
 ```
 
-### 5. 计算机视觉使用
+### 5. 智能查询使用
+
+#### 基础查询
+
+```go
+// 基础查询，返回文本描述
+queryOpts := &ai.QueryOptions{
+    Query:      "请描述这张图片中的内容",
+    Screenshot: "data:image/jpeg;base64," + base64Screenshot,
+    Size:       types.Size{Width: 1080, Height: 1920},
+}
+
+result, err := llmService.Query(ctx, queryOpts)
+if err != nil {
+    log.Error().Err(err).Msg("query failed")
+    return
+}
+
+log.Info().Str("content", result.Content).
+    Str("thought", result.Thought).
+    Msg("query result")
+```
+
+#### 自定义格式查询
+
+```go
+// 定义输出数据结构
+type GameInfo struct {
+    Content string   `json:"content"`
+    Thought string   `json:"thought"`
+    Rows    int      `json:"rows"`
+    Cols    int      `json:"cols"`
+    Icons   []string `json:"icons"`
+}
+
+// 自定义格式查询
+queryOpts := &ai.QueryOptions{
+    Query:        "请分析这个连连看游戏界面，告诉我有多少行多少列，有哪些不同类型的图案",
+    Screenshot:   "data:image/jpeg;base64," + base64Screenshot,
+    Size:         types.Size{Width: 1080, Height: 1920},
+    OutputSchema: GameInfo{},
+}
+
+result, err := llmService.Query(ctx, queryOpts)
+if err != nil {
+    log.Error().Err(err).Msg("query failed")
+    return
+}
+
+// 直接类型断言获取结构化数据
+if gameInfo, ok := result.Data.(*GameInfo); ok {
+    log.Info().Int("rows", gameInfo.Rows).
+        Int("cols", gameInfo.Cols).
+        Strs("icons", gameInfo.Icons).
+        Msg("game analysis result")
+} else {
+    log.Error().Msg("failed to convert to GameInfo")
+}
+```
+
+#### 泛型类型转换（可选）
+
+```go
+// 使用泛型函数进行类型转换（当需要转换为不同类型时）
+gameInfo, err := ai.ConvertQueryResultData[GameInfo](result)
+if err != nil {
+    log.Error().Err(err).Msg("failed to convert data")
+    return
+}
+
+log.Info().Interface("gameInfo", gameInfo).Msg("converted game info")
+```
+
+### 6. 计算机视觉使用
 
 ```go
 // 创建 CV 服务
@@ -521,6 +674,7 @@ log.Info().Float64("x", center.X).Float64("y", center.Y).
 | `UserInstruction` | string | 用户指令 | ✓ |
 | `Message` | *schema.Message | 消息内容 | ✓ |
 | `Size` | types.Size | 屏幕尺寸 | ✓ |
+| `ResetHistory` | bool | 是否重置历史 | ✗ |
 
 ### 断言选项
 
@@ -530,6 +684,15 @@ log.Info().Float64("x", center.X).Float64("y", center.Y).
 | `Screenshot` | string | Base64 截图 | ✓ |
 | `Size` | types.Size | 屏幕尺寸 | ✓ |
 
+### 查询选项
+
+| 参数 | 类型 | 说明 | 必需 |
+|------|------|------|------|
+| `Query` | string | 查询指令 | ✓ |
+| `Screenshot` | string | Base64 截图 | ✓ |
+| `Size` | types.Size | 屏幕尺寸 | ✓ |
+| `OutputSchema` | interface{} | 自定义输出格式 | ✗ |
+
 ## 🔍 高级特性
 
 ### 1. 多模型适配
@@ -538,6 +701,7 @@ AI 模块支持多种不同的语言模型，每种模型都有其特定的优�
 
 - **豆包思维视觉专业版**: 支持深度思考的视觉语言模型，适合复杂场景分析
 - **豆包UI-TARS**: 专门针对 UI 自动化优化的模型，支持 Thought/Action 格式
+- **OpenAI GPT-4O**: 强大的多模态模型，支持视觉理解和推理
 
 ### 2. 坐标系统转换
 
@@ -580,6 +744,38 @@ func normalizeParameterName(paramName string) string {
 - 助手回复消息限制：10 条
 - 自动清理策略：FIFO (先进先出)
 
+### 5. 自定义输出格式
+
+查询功能支持用户定义的结构化输出格式：
+
+```go
+// 定义复杂的嵌套数据结构
+type UIAnalysisResult struct {
+    Content    string      `json:"content"`
+    Thought    string      `json:"thought"`
+    Elements   []UIElement `json:"elements"`
+    Statistics Statistics  `json:"statistics"`
+}
+
+type UIElement struct {
+    Type        string      `json:"type"`
+    Text        string      `json:"text"`
+    BoundingBox BoundingBox `json:"boundingBox"`
+    Clickable   bool        `json:"clickable"`
+}
+
+// 使用自定义格式进行查询
+result, err := llmService.Query(ctx, &ai.QueryOptions{
+    Query:        "分析界面中的所有UI元素",
+    Screenshot:   screenshot,
+    Size:         size,
+    OutputSchema: UIAnalysisResult{},
+})
+
+// 自动类型转换
+uiAnalysis := result.Data.(*UIAnalysisResult)
+```
+
 ## ⚠️ 注意事项
 
 ### 1. 环境变量配置
@@ -608,6 +804,12 @@ func normalizeParameterName(paramName string) string {
 - 图像数据较大，注意网络传输优化
 - 对话历史会占用内存，需要定期清理
 
+### 6. 查询功能使用
+- 指定 OutputSchema 时，Data 字段会自动转换为对应类型
+- 支持复杂的嵌套数据结构定义
+- 建议使用类型断言直接获取结构化数据
+- ConvertQueryResultData 函数主要用于类型转换的特殊场景
+
 ## 🧪 测试数据
 
 模块包含丰富的测试数据，位于 `testdata/` 目录：
@@ -635,6 +837,13 @@ func normalizeParameterName(paramName string) string {
 2. 在 `NewCVService` 中添加服务创建逻辑
 3. 定义服务特定的配置和选项
 4. 添加相应的测试用例
+
+### 扩展查询功能
+
+1. 定义新的数据结构模板
+2. 优化 JSON Schema 生成逻辑
+3. 增强类型转换和验证机制
+4. 添加更多应用场景的示例
 
 ### 优化解析逻辑
 

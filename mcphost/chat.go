@@ -124,7 +124,7 @@ func (c *Chat) runPrompt(ctx context.Context, prompt string) error {
 	var result *ai.PlanningResult
 	var err error
 	_ = spinner.New().Title("Thinking...").Action(func() {
-		result, err = c.planner.Call(ctx, planningOpts)
+		result, err = c.planner.Plan(ctx, planningOpts)
 	}).Run()
 	if err != nil {
 		return err

@@ -9,7 +9,7 @@ import (
 
 // ILLMService 定义了 LLM 服务接口，包括规划、断言和查询功能
 type ILLMService interface {
-	Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
+	Plan(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
 	Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error)
 	Query(ctx context.Context, opts *QueryOptions) (*QueryResult, error)
 	// RegisterTools registers tools for function calling
@@ -50,9 +50,9 @@ type combinedLLMService struct {
 	querier  IQuerier  // 提供查询功能
 }
 
-// Call 执行规划功能
-func (c *combinedLLMService) Call(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error) {
-	return c.planner.Call(ctx, opts)
+// Plan 执行规划功能
+func (c *combinedLLMService) Plan(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error) {
+	return c.planner.Plan(ctx, opts)
 }
 
 // Assert 执行断言功能

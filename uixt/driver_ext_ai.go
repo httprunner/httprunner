@@ -206,7 +206,7 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 		ResetHistory: resetHistory,
 	}
 
-	result, err := dExt.LLMService.Call(ctx, planningOpts)
+	result, err := dExt.LLMService.Plan(ctx, planningOpts)
 	modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
 
 	if err != nil {
