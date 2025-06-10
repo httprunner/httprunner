@@ -498,7 +498,6 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 		}
 
 		// Swipe to tap texts action logic
-		log.Info().Strs("texts", unifiedReq.Texts).Msg("swipe to tap texts")
 		err = driverExt.SwipeToTapTexts(unifiedReq.Texts, opts...)
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("Swipe to tap texts failed: %s", err.Error())), nil
@@ -585,11 +584,6 @@ func (t *ToolDrag) Implement() server.ToolHandlerFunc {
 		}
 
 		// Drag action logic
-		log.Info().
-			Float64("fromX", unifiedReq.FromX).Float64("fromY", unifiedReq.FromY).
-			Float64("toX", unifiedReq.ToX).Float64("toY", unifiedReq.ToY).
-			Msg("performing drag")
-
 		err = driverExt.Swipe(unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY, opts...)
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("Drag failed: %s", err.Error())), nil

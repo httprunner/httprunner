@@ -174,6 +174,7 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (result *Plan
 	log.Info().
 		Interface("thought", result.Thought).
 		Interface("tool_calls", result.ToolCalls).
+		Float64("elapsed(s)", time.Since(startTime).Seconds()).
 		Msg("get VLM planning result")
 	return result, nil
 }
