@@ -141,7 +141,7 @@ func postHandler(driver IDriver, actionType option.ActionName, options *option.A
 		// save compressed screenshot to file
 		timestamp := builtin.GenNameWithTimestamp("%d")
 		imagePath := filepath.Join(
-			config.GetConfig().ScreenShotsPath,
+			config.GetConfig().ScreenShotsPath(),
 			fmt.Sprintf("action_%s_post_%s.png", timestamp, actionType),
 		)
 

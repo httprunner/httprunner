@@ -70,7 +70,7 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 		fileName = builtin.GenNameWithTimestamp("%d_screenshot")
 	}
 	imagePath := filepath.Join(
-		config.GetConfig().ScreenShotsPath,
+		config.GetConfig().ScreenShotsPath(),
 		fmt.Sprintf("%s.%s", fileName, "jpeg"),
 	)
 	go func() {
@@ -436,7 +436,7 @@ func MarkUIOperation(driver IDriver, actionType option.ActionName, actionCoordin
 	// create screenshot save path
 	timestamp := builtin.GenNameWithTimestamp("%d")
 	imagePath := filepath.Join(
-		config.GetConfig().ScreenShotsPath,
+		config.GetConfig().ScreenShotsPath(),
 		fmt.Sprintf("action_%s_pre_%s.png", timestamp, actionType),
 	)
 

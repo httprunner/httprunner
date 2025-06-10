@@ -46,7 +46,9 @@ GitHub: https://github.com/httprunner/httprunner
 
 Copyright © 2017-present debugtalk. Apache-2.0 License.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		hrp.InitLogger(logLevel, logJSON)
+		// For report command, don't create log files to avoid creating directories
+		enableLogFile := cmd.Name() != "report"
+		hrp.InitLogger(logLevel, logJSON, enableLogFile)
 	},
 	Version:          version.GetVersionInfo(),
 	TraverseChildren: true, // parses flags on all parents before executing child command

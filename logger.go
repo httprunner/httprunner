@@ -15,7 +15,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/config"
 )
 
-func InitLogger(logLevel string, logJSON bool) {
+func InitLogger(logLevel string, logJSON bool, logFile bool) {
 	// Error Logging with Stacktrace
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 
@@ -39,40 +39,52 @@ func InitLogger(logLevel string, logJSON bool) {
 			TimeFormat: time.RFC3339Nano,
 			NoColor:    noColor,
 		}
-		msg = "log with colorized console and file output"
+		if logFile {
+			msg = "log with colorized console and file output"
+		} else {
+			msg = "log with colorized console output only"
+		}
 	} else {
 		// default logger
 		consoleWriter = os.Stderr
-		msg = "log with json console and file output"
+		if logFile {
+			msg = "log with json console and file output"
+		} else {
+			msg = "log with json console output only"
+		}
 	}
 
 	// parse console log level
 	consoleLevel := parseLogLevel(logLevel)
 
+	// If logFile is false, use console-only logger
+	if !logFile {
+		log.Logger = zerolog.New(consoleWriter).With().Timestamp().Logger().Level(consoleLevel)
+		log.Info().Msg(msg)
+		return
+	}
+
 	// file writer - write to results/taskID/hrp.log
 	cfg := config.GetConfig()
-	logFilePath := filepath.Join(cfg.ResultsPath, "hrp.log")
+	logFilePath := filepath.Join(cfg.ResultsPath(), "hrp.log")
 
 	// create or open log file
-	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
+	logFileWriter, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
 	if err != nil {
 		// if file creation failed, use console logger only
 		log.Logger = zerolog.New(consoleWriter).With().Timestamp().Logger().Level(consoleLevel)
-		log.Error().Err(err).Str("logFilePath", logFilePath).Msg("create log file failed")
+		log.Error().Err(err).Str("logFilePath", logFilePath).Msg(msg)
 	} else {
 		// create a custom writer that applies different log levels
 		multiWriter := &leveledMultiWriter{
 			consoleWriter: consoleWriter,
 			consoleLevel:  consoleLevel,
-			fileWriter:    logFile,
+			fileWriter:    logFileWriter,
 			fileLevel:     zerolog.DebugLevel,
 		}
 		log.Logger = zerolog.New(multiWriter).With().Timestamp().Logger()
-		log.Info().Str("logFilePath", logFilePath).Msg("log file created successfully")
+		log.Info().Str("logFilePath", logFilePath).Msg(msg)
 	}
-
-	log.Info().Msg(msg)
-	log.Info().Str("console_log_level", strings.ToUpper(logLevel)).Str("file_log_level", "DEBUG").Msg("logger initialized with different levels")
 }
 
 // parseLogLevel converts string log level to zerolog.Level

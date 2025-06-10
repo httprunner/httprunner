@@ -807,7 +807,7 @@ func (ad *ADBDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string
 		filePath = options.ScreenRecordPath
 	} else {
 		timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
-		filePath = filepath.Join(config.GetConfig().ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
+		filePath = filepath.Join(config.GetConfig().ScreenShotsPath(), fmt.Sprintf("%s.mp4", timestamp))
 	}
 
 	var ctx context.Context
