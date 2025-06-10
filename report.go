@@ -683,38 +683,7 @@ const htmlTemplate = `<!DOCTYPE html>
             word-break: break-all;
         }
 
-        .controls {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            text-align: center;
-        }
 
-        .controls button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            margin: 0 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .controls button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .controls button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
 
         .test-cases {
             margin-top: 20px;
@@ -914,19 +883,10 @@ const htmlTemplate = `<!DOCTYPE html>
             align-items: center;
             gap: 18px;
             margin-bottom: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
             padding: 12px 15px;
             border-radius: 8px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border: 1px solid #dee2e6;
-        }
-
-        .action-header:hover {
-            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(0, 123, 255, 0.05) 100%);
-            border-color: #007bff;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
         }
 
         .action-header strong {
@@ -950,26 +910,11 @@ const htmlTemplate = `<!DOCTYPE html>
             line-height: 1.4;
         }
 
-        .action-toggle {
-            margin-left: auto;
-            font-size: 0.8em;
-            color: #6c757d;
-            transition: transform 0.3s;
-        }
 
-        .action-toggle.rotated {
-            transform: rotate(-90deg);
-        }
 
-        .action-toggle.collapsed {
-            transform: rotate(-90deg);
-        }
+
 
         .action-content {
-            display: none;
-        }
-
-        .action-content.expanded {
             display: block;
         }
 
@@ -1995,11 +1940,7 @@ const htmlTemplate = `<!DOCTYPE html>
                 gap: 8px;
             }
 
-            .controls button {
-                padding: 6px 10px;
-                font-size: 0.8em;
-                margin: 2px;
-            }
+
 
             .logs-header {
                 flex-direction: column;
@@ -2193,10 +2134,7 @@ const htmlTemplate = `<!DOCTYPE html>
             </div>
         </div>
 
-        <div class="controls">
-            <button id="toggleStepsBtn" onclick="toggleAllSteps()">Collapse All Steps</button>
-            <button id="toggleActionsBtn" onclick="toggleAllActions()">Expand All Actions</button>
-        </div>
+
 
         <div class="test-cases">
             {{range $caseIndex, $testCase := .Details}}
@@ -2235,14 +2173,13 @@ const htmlTemplate = `<!DOCTYPE html>
                             <h4>Actions</h4>
                             {{range $actionIndex, $action := $step.Actions}}
                             <div class="action-item">
-                                <div class="action-header" onclick="toggleAction({{$stepIndex}}, {{$actionIndex}})">
+                                <div class="action-header">
                                     <strong>{{$action.Method}}</strong>
                                     <span class="duration">{{formatDuration $action.Elapsed}}</span>
                                     {{if $action.Error}}<span class="error">Error: {{$action.Error}}</span>{{end}}
-                                    <span class="action-toggle collapsed" id="action-toggle-{{$stepIndex}}-{{$actionIndex}}">▶</span>
                                 </div>
                                 <div class="action-description">{{$action.Params}}</div>
-                                <div class="action-content" id="action-content-{{$stepIndex}}-{{$actionIndex}}">
+                                <div class="action-content">
 
                                 {{if $action.Plannings}}
                                 <div class="planning-results">
@@ -2658,20 +2595,7 @@ const htmlTemplate = `<!DOCTYPE html>
             }
         }
 
-        function toggleAction(stepIndex, actionIndex) {
-            const content = document.getElementById('action-content-' + stepIndex + '-' + actionIndex);
-            const toggle = document.getElementById('action-toggle-' + stepIndex + '-' + actionIndex);
 
-            if (content.classList.contains('expanded')) {
-                content.classList.remove('expanded');
-                toggle.classList.add('collapsed');
-                toggle.textContent = '▶';
-            } else {
-                content.classList.add('expanded');
-                toggle.classList.remove('collapsed');
-                toggle.textContent = '▼';
-            }
-        }
 
         function openImageModal(src) {
             const modal = document.getElementById('imageModal');
@@ -2692,70 +2616,16 @@ const htmlTemplate = `<!DOCTYPE html>
             }
         }
 
-        // Toggle all steps
-        function toggleAllSteps() {
-            const contents = document.querySelectorAll('.step-content');
-            const icons = document.querySelectorAll('.toggle-icon');
-            const button = document.getElementById('toggleStepsBtn');
 
-            // Check if any step is currently expanded
-            const anyExpanded = Array.from(contents).some(content => content.classList.contains('show'));
-
-            if (anyExpanded) {
-                // Collapse all
-                contents.forEach(content => content.classList.remove('show'));
-                icons.forEach(icon => icon.classList.remove('rotated'));
-                button.textContent = 'Expand All Steps';
-            } else {
-                // Expand all
-                contents.forEach(content => content.classList.add('show'));
-                icons.forEach(icon => icon.classList.add('rotated'));
-                button.textContent = 'Collapse All Steps';
-            }
-        }
-
-        // Toggle all actions
-        function toggleAllActions() {
-            const contents = document.querySelectorAll('.action-content');
-            const toggles = document.querySelectorAll('.action-toggle');
-            const button = document.getElementById('toggleActionsBtn');
-
-            // Check if any action is currently expanded
-            const anyExpanded = Array.from(contents).some(content => content.classList.contains('expanded'));
-
-            if (anyExpanded) {
-                // Collapse all
-                contents.forEach(content => content.classList.remove('expanded'));
-                toggles.forEach(toggle => {
-                    toggle.classList.add('collapsed');
-                    toggle.textContent = '▶';
-                });
-                button.textContent = 'Expand All Actions';
-            } else {
-                // Expand all
-                contents.forEach(content => content.classList.add('expanded'));
-                toggles.forEach(toggle => {
-                    toggle.classList.remove('collapsed');
-                    toggle.textContent = '▼';
-                });
-                button.textContent = 'Collapse All Actions';
-            }
-        }
 
         // Auto-expand all steps on load to show actions
         document.addEventListener('DOMContentLoaded', function() {
             // Expand all steps to show the actions list
             const contents = document.querySelectorAll('.step-content');
             const icons = document.querySelectorAll('.toggle-icon');
-            const stepsButton = document.getElementById('toggleStepsBtn');
 
             contents.forEach(content => content.classList.add('show'));
             icons.forEach(icon => icon.classList.add('rotated'));
-
-            // Update button text to reflect current state (steps are expanded)
-            if (stepsButton) {
-                stepsButton.textContent = 'Collapse All Steps';
-            }
         });
     </script>
 </body>
