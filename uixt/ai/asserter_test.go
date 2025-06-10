@@ -12,7 +12,7 @@ import (
 )
 
 func createAsserter(t *testing.T) *Asserter {
-	modelConfig, err := GetModelConfig(option.DOUBAO_1_5_UI_TARS_250428)
+	modelConfig, err := GetModelConfig(option.DOUBAO_1_5_UI_TARS_250328)
 	require.NoError(t, err)
 	asserter, err := NewAsserter(context.Background(), modelConfig)
 	require.NoError(t, err)

@@ -1,9 +1,17 @@
 package ai
 
 import (
+	"context"
 	"regexp"
 	"strings"
+	"time"
 	"unicode/utf8"
+
+	"github.com/cloudwego/eino/components/model"
+	"github.com/cloudwego/eino/schema"
+	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // extractJSONFromContent extracts JSON content from various formats in the response
@@ -101,4 +109,30 @@ func extractJSONFromContent(content string) string {
 	}
 
 	return ""
+}
+
+// callModelWithLogging is a common function to call model with logging and timing
+// It handles the common pattern of:
+// 1. Log request
+// 2. Start timing
+// 3. Call model.Generate
+// 4. Log timing and model info
+// 5. Log response
+func callModelWithLogging(ctx context.Context, model model.ToolCallingChatModel, history ConversationHistory, modelType option.LLMServiceType, operation string) (*schema.Message, error) {
+	logRequest(history)
+
+	startTime := time.Now()
+	defer func() {
+		log.Debug().Float64("elapsed(s)", time.Since(startTime).Seconds()).
+			Str("model", string(modelType)).
+			Msgf("call model service for %s", operation)
+	}()
+
+	message, err := model.Generate(ctx, history)
+	if err != nil {
+		return nil, err
+	}
+
+	logResponse(message)
+	return message, nil
 }

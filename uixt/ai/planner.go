@@ -2,7 +2,6 @@ package ai
 
 import (
 	"context"
-	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/cloudwego/eino/components/model"
@@ -116,15 +115,11 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (result *Plan
 	p.history.Append(opts.Message)
 
 	// call model service, generate response
-	logRequest(p.history)
-	startTime := time.Now()
-	message, err := p.model.Generate(ctx, p.history)
-	log.Debug().Float64("elapsed(s)", time.Since(startTime).Seconds()).
-		Str("model", string(p.modelConfig.ModelType)).Msg("call model service for planning")
+	message, err := callModelWithLogging(ctx, p.model, p.history,
+		p.modelConfig.ModelType, "planning")
 	if err != nil {
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
-	logResponse(message)
 
 	defer func() {
 		// Extract usage information if available
@@ -174,7 +169,6 @@ func (p *Planner) Call(ctx context.Context, opts *PlanningOptions) (result *Plan
 	log.Info().
 		Interface("thought", result.Thought).
 		Interface("tool_calls", result.ToolCalls).
-		Float64("elapsed(s)", time.Since(startTime).Seconds()).
 		Msg("get VLM planning result")
 	return result, nil
 }

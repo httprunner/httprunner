@@ -3,7 +3,6 @@ package ai
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	openai2 "github.com/cloudwego/eino-ext/libs/acl/openai"
@@ -15,7 +14,6 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 // IAsserter interface defines the contract for assertion operations
@@ -128,15 +126,11 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	a.history.Append(userMsg)
 
 	// Call model service, generate response
-	logRequest(a.history)
-	startTime := time.Now()
-	message, err := a.model.Generate(ctx, a.history)
-	log.Debug().Float64("elapsed(s)", time.Since(startTime).Seconds()).
-		Str("model", string(a.modelConfig.ModelType)).Msg("call model service for assertion")
+	message, err := callModelWithLogging(ctx, a.model, a.history,
+		a.modelConfig.ModelType, "assertion")
 	if err != nil {
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
-	logResponse(message)
 
 	// Parse result
 	result, err := parseAssertionResult(message.Content)
