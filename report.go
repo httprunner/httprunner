@@ -2409,9 +2409,25 @@ const htmlTemplate = `<!DOCTYPE html>
         const summaryContentBase64 = "{{getSummaryContentBase64}}";
         const logContentBase64 = "{{getLogContentBase64}}";
 
-        // Decode Base64 content
-        const summaryContent = summaryContentBase64 ? atob(summaryContentBase64) : "";
-        const logContent = logContentBase64 ? atob(logContentBase64) : "";
+        // Decode Base64 content with proper UTF-8 handling
+        function decodeBase64UTF8(base64) {
+            if (!base64) return "";
+            try {
+                // Use TextDecoder for proper UTF-8 decoding
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return new TextDecoder('utf-8').decode(bytes);
+            } catch (e) {
+                console.error('Failed to decode Base64 content:', e);
+                return "";
+            }
+        }
+
+        const summaryContent = decodeBase64UTF8(summaryContentBase64);
+        const logContent = decodeBase64UTF8(logContentBase64);
 
         // Download functions
         function downloadSummary() {
@@ -2431,7 +2447,7 @@ const htmlTemplate = `<!DOCTYPE html>
         }
 
         function downloadFile(content, filename, mimeType) {
-            const blob = new Blob([content], { type: mimeType });
+            const blob = new Blob([content], { type: mimeType + ';charset=utf-8' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
