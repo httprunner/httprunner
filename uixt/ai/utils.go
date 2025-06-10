@@ -3,6 +3,7 @@ package ai
 import (
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 // extractJSONFromContent extracts JSON content from various formats in the response
@@ -42,21 +43,48 @@ func extractJSONFromContent(content string) string {
 		}
 	}
 
-	// Case 3: Look for JSON object in the content using brace counting (most reliable method)
+	// Case 3: Look for JSON object in the content using rune-based brace counting (most reliable method)
 	start := strings.Index(content, "{")
 	if start != -1 {
-		// Find the matching closing brace
+		// Find the matching closing brace using rune-based iteration to handle UTF-8 properly
 		braceCount := 0
-		for i := start; i < len(content); i++ {
-			if content[i] == '{' {
-				braceCount++
-			} else if content[i] == '}' {
-				braceCount--
-				if braceCount == 0 {
-					jsonContent := strings.TrimSpace(content[start : i+1])
-					return jsonContent
+		inString := false
+		escaped := false
+
+		// Use byte-based iteration but track string state properly
+		for i := start; i < len(content); {
+			r, size := utf8.DecodeRuneInString(content[i:])
+
+			if escaped {
+				escaped = false
+				i += size
+				continue
+			}
+
+			if r == '\\' && inString {
+				escaped = true
+				i += size
+				continue
+			}
+
+			if r == '"' {
+				inString = !inString
+				i += size
+				continue
+			}
+
+			if !inString {
+				if r == '{' {
+					braceCount++
+				} else if r == '}' {
+					braceCount--
+					if braceCount == 0 {
+						jsonContent := strings.TrimSpace(content[start : i+size])
+						return jsonContent
+					}
 				}
 			}
+			i += size
 		}
 	}
 

@@ -19,14 +19,13 @@ type LLMContentParser interface {
 }
 
 func NewLLMContentParser(modelType option.LLMServiceType) LLMContentParser {
-	switch modelType {
-	case option.DOUBAO_1_5_UI_TARS_250428:
+	if option.IS_UI_TARS(modelType) {
 		return &UITARSContentParser{
 			modelType:     modelType,
 			systemPrompt:  doubao_1_5_ui_tars_planning_prompt,
 			actionMapping: doubao_1_5_ui_tars_action_mapping,
 		}
-	default:
+	} else {
 		return &JSONContentParser{
 			modelType:     modelType,
 			systemPrompt:  doubao_1_5_thinking_vision_pro_planning_prompt,
