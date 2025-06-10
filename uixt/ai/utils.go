@@ -42,14 +42,7 @@ func extractJSONFromContent(content string) string {
 		}
 	}
 
-	// Case 3: Try regex approach for markdown-like formats
-	jsonRegex := regexp.MustCompile(`(?:json)?\s*({[\s\S]*?})\s*`)
-	matches := jsonRegex.FindStringSubmatch(content)
-	if len(matches) > 1 {
-		return strings.TrimSpace(matches[1])
-	}
-
-	// Case 4: Look for JSON object in the content using brace counting
+	// Case 3: Look for JSON object in the content using brace counting (most reliable method)
 	start := strings.Index(content, "{")
 	if start != -1 {
 		// Find the matching closing brace
@@ -65,6 +58,13 @@ func extractJSONFromContent(content string) string {
 				}
 			}
 		}
+	}
+
+	// Case 4: Try regex approach for markdown-like formats (fallback)
+	jsonRegex := regexp.MustCompile(`(?:json)?\s*({[\s\S]*?})\s*`)
+	matches := jsonRegex.FindStringSubmatch(content)
+	if len(matches) > 1 {
+		return strings.TrimSpace(matches[1])
 	}
 
 	// Case 5: If content itself looks like JSON

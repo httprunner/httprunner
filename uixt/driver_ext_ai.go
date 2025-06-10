@@ -50,6 +50,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 			if errors.Is(err, code.LLMRequestServiceError) {
 				log.Warn().Err(err).Int("attempt", attempt).
 					Msg("LLM service request failed, retrying...")
+				time.Sleep(5 * time.Second)
 				continue
 			}
 			// Create planning result with error

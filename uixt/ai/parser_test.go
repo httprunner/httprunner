@@ -4,8 +4,10 @@ import (
 	"testing"
 
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseActionToStructureOutput(t *testing.T) {
@@ -1087,6 +1089,190 @@ func TestMapParameterName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := mapParameterName(tt.paramName)
 			assert.Equal(t, tt.expected, result, "Test case: %s", tt.description)
+		})
+	}
+}
+
+func TestJSONContentParser_Parse(t *testing.T) {
+	parser := &JSONContentParser{
+		modelType:     option.OPENAI_GPT_4O,
+		systemPrompt:  "test prompt",
+		actionMapping: map[string]option.ActionName{"click": "tap_xy"},
+	}
+
+	size := types.Size{Width: 1200, Height: 2640}
+
+	tests := []struct {
+		name        string
+		content     string
+		expectError bool
+		expectTools int
+	}{
+		{
+			name: "valid click action",
+			content: `{
+  "actions": [
+    {
+      "action_type": "click",
+      "action_inputs": {
+        "start_box": [371, 235, 425, 270]
+      }
+    }
+  ],
+  "thought": "点击桌面上的抖音应用图标以启动抖音",
+  "error": null
+}`,
+			expectError: false,
+			expectTools: 1,
+		},
+		{
+			name: "multiple actions",
+			content: `{
+  "actions": [
+    {
+      "action_type": "click",
+      "action_inputs": {
+        "start_box": [100, 100, 200, 200]
+      }
+    },
+    {
+      "action_type": "type",
+      "action_inputs": {
+        "content": "hello world"
+      }
+    }
+  ],
+  "thought": "执行多个操作",
+  "error": null
+}`,
+			expectError: false,
+			expectTools: 2,
+		},
+		{
+			name: "no actions but valid thought",
+			content: `{
+  "actions": [],
+  "thought": "这是一个分析任务，不需要执行操作",
+  "error": null
+}`,
+			expectError: false,
+			expectTools: 0,
+		},
+		{
+			name: "error response",
+			content: `{
+  "actions": [],
+  "thought": "发生了错误",
+  "error": "无法找到目标元素"
+}`,
+			expectError: true,
+			expectTools: 0,
+		},
+		{
+			name:        "invalid JSON",
+			content:     `{"actions": [{"action_type": "click"`,
+			expectError: true,
+			expectTools: 0,
+		},
+		{
+			name: "string array coordinates (DOUBAO format)",
+			content: `{
+  "actions": [
+    {
+      "action_type": "click",
+      "action_inputs": {
+        "start_box": [
+          "229 389",
+          "229 439"
+        ]
+      }
+    }
+  ],
+  "thought": "点击苹果图案",
+  "error": null
+}`,
+			expectError: false,
+			expectTools: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := parser.Parse(tt.content, size)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.NotNil(t, result)
+			assert.Equal(t, tt.expectTools, len(result.ToolCalls))
+			assert.NotEmpty(t, result.Thought)
+			assert.Equal(t, string(parser.modelType), result.ModelName)
+
+			// Verify tool calls structure if any
+			for _, toolCall := range result.ToolCalls {
+				assert.NotEmpty(t, toolCall.ID)
+				assert.Equal(t, "function", toolCall.Type)
+				assert.NotEmpty(t, toolCall.Function.Name)
+				assert.NotEmpty(t, toolCall.Function.Arguments)
+			}
+		})
+	}
+}
+
+func TestNormalizeActionCoordinates_StringArray(t *testing.T) {
+	size := types.Size{Width: 1200, Height: 2640}
+
+	tests := []struct {
+		name        string
+		coordData   interface{}
+		expectError bool
+		expectLen   int
+	}{
+		{
+			name:        "string array coordinates",
+			coordData:   []interface{}{"229 389", "229 439"},
+			expectError: false,
+			expectLen:   4, // Each string contains 2 coordinates, so total 4
+		},
+		{
+			name:        "mixed number and string coordinates",
+			coordData:   []interface{}{100, 200, "300 400"},
+			expectError: false,
+			expectLen:   4, // 2 numbers + 2 from string = 4
+		},
+		{
+			name:        "single string coordinate",
+			coordData:   []interface{}{"100 200"},
+			expectError: false,
+			expectLen:   2,
+		},
+		{
+			name:        "invalid string format",
+			coordData:   []interface{}{"invalid"},
+			expectError: true,
+			expectLen:   0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := normalizeActionCoordinates(tt.coordData, size)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectLen, len(result))
+
+			// All coordinates should be positive numbers
+			for _, coord := range result {
+				assert.True(t, coord >= 0, "coordinate should be non-negative: %f", coord)
+			}
 		})
 	}
 }

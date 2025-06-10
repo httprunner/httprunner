@@ -329,33 +329,46 @@ func mapParameterName(paramName string) string {
 func normalizeActionCoordinates(coordData interface{}, size types.Size) ([]float64, error) {
 	switch v := coordData.(type) {
 	case []interface{}:
-		// Handle JSON array format: [x1, y1, x2, y2] or [x1, y1]
-		if len(v) < 2 {
-			return nil, fmt.Errorf("coordinate array must have at least 2 elements, got %d", len(v))
+		// Handle JSON array format: [x1, y1, x2, y2] or [x1, y1] or ["229 389", "229 439"]
+		if len(v) == 0 {
+			return nil, fmt.Errorf("coordinate array cannot be empty")
 		}
 
-		coords := make([]float64, len(v))
+		coords := make([]float64, 0)
 		for i, val := range v {
 			switch num := val.(type) {
 			case float64:
 				// Convert relative coordinates to absolute coordinates using DefaultFactor
 				if i%2 == 0 { // x coordinates
-					coords[i] = convertRelativeToAbsolute(num, true, size)
+					coords = append(coords, convertRelativeToAbsolute(num, true, size))
 				} else { // y coordinates
-					coords[i] = convertRelativeToAbsolute(num, false, size)
+					coords = append(coords, convertRelativeToAbsolute(num, false, size))
 				}
 			case int:
 				numFloat := float64(num)
 				// Convert relative coordinates to absolute coordinates using DefaultFactor
 				if i%2 == 0 { // x coordinates
-					coords[i] = convertRelativeToAbsolute(numFloat, true, size)
+					coords = append(coords, convertRelativeToAbsolute(numFloat, true, size))
 				} else { // y coordinates
-					coords[i] = convertRelativeToAbsolute(numFloat, false, size)
+					coords = append(coords, convertRelativeToAbsolute(numFloat, false, size))
 				}
+			case string:
+				// Handle string coordinates like "229 389"
+				stringCoords, err := normalizeStringCoordinates(num, size)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse string coordinate '%s': %v", num, err)
+				}
+				coords = append(coords, stringCoords...)
 			default:
-				return nil, fmt.Errorf("coordinate value must be a number, got %T", val)
+				return nil, fmt.Errorf("coordinate value must be a number or string, got %T", val)
 			}
 		}
+
+		// Check if we have at least 2 coordinates after processing
+		if len(coords) < 2 {
+			return nil, fmt.Errorf("coordinate array must result in at least 2 coordinates, got %d", len(coords))
+		}
+
 		return coords, nil
 
 	case []float64:
