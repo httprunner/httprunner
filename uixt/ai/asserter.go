@@ -3,8 +3,6 @@ package ai
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
@@ -169,7 +167,7 @@ func validateAssertionInput(opts *AssertOptions) error {
 // parseAssertionResult parses the model response into AssertionResponse
 func parseAssertionResult(content string) (*AssertionResult, error) {
 	// Extract JSON content from response
-	jsonContent := extractJSON(content)
+	jsonContent := extractJSONFromContent(content)
 	if jsonContent == "" {
 		return nil, errors.New("could not extract JSON from response")
 	}
@@ -181,39 +179,4 @@ func parseAssertionResult(content string) (*AssertionResult, error) {
 	}
 
 	return &result, nil
-}
-
-// extractJSON extracts JSON content from a string that might contain markdown or other formatting
-func extractJSON(content string) string {
-	content = strings.TrimSpace(content)
-
-	// If the content is already a valid JSON, return it
-	if strings.HasPrefix(content, "{") && strings.HasSuffix(content, "}") {
-		return content
-	}
-
-	// Try to extract JSON from markdown code blocks
-	jsonRegex := regexp.MustCompile(`(?:json)?\s*({[\s\S]*?})\s*`)
-	matches := jsonRegex.FindStringSubmatch(content)
-	if len(matches) > 1 {
-		return strings.TrimSpace(matches[1])
-	}
-
-	// Try a more robust approach for JSON with Chinese characters
-	startIdx := strings.Index(content, "{")
-	if startIdx >= 0 {
-		depth := 1
-		for i := startIdx + 1; i < len(content); i++ {
-			if content[i] == '{' {
-				depth++
-			} else if content[i] == '}' {
-				depth--
-				if depth == 0 {
-					return content[startIdx : i+1]
-				}
-			}
-		}
-	}
-
-	return content
 }

@@ -46,69 +46,11 @@ func (p *JSONContentParser) SystemPrompt() string {
 	return p.systemPrompt
 }
 
-// extractJSONContent extracts JSON content from various formats in the response
-func (p *JSONContentParser) extractJSONContent(content string) string {
-	content = strings.TrimSpace(content)
-
-	// Case 1: Content wrapped in ```json ... ```
-	if strings.Contains(content, "```json") {
-		start := strings.Index(content, "```json")
-		if start != -1 {
-			start += 7 // length of "```json"
-			end := strings.Index(content[start:], "```")
-			if end != -1 {
-				jsonContent := strings.TrimSpace(content[start : start+end])
-				return jsonContent
-			}
-		}
-	}
-
-	// Case 2: Content wrapped in ``` ... ``` (without json specifier)
-	if strings.HasPrefix(content, "```") && strings.HasSuffix(content, "```") {
-		lines := strings.Split(content, "\n")
-		if len(lines) >= 3 {
-			// Remove first and last lines (the ``` markers)
-			jsonLines := lines[1 : len(lines)-1]
-			jsonContent := strings.Join(jsonLines, "\n")
-			jsonContent = strings.TrimSpace(jsonContent)
-			// Check if it looks like JSON
-			if strings.HasPrefix(jsonContent, "{") && strings.HasSuffix(jsonContent, "}") {
-				return jsonContent
-			}
-		}
-	}
-
-	// Case 3: Look for JSON object in the content
-	start := strings.Index(content, "{")
-	if start != -1 {
-		// Find the matching closing brace
-		braceCount := 0
-		for i := start; i < len(content); i++ {
-			if content[i] == '{' {
-				braceCount++
-			} else if content[i] == '}' {
-				braceCount--
-				if braceCount == 0 {
-					jsonContent := strings.TrimSpace(content[start : i+1])
-					return jsonContent
-				}
-			}
-		}
-	}
-
-	// Case 4: If content itself looks like JSON
-	if strings.HasPrefix(content, "{") && strings.HasSuffix(content, "}") {
-		return content
-	}
-
-	return ""
-}
-
 func (p *JSONContentParser) Parse(content string, size types.Size) (*PlanningResult, error) {
 	content = strings.TrimSpace(content)
 
 	// Extract JSON content from markdown code blocks
-	jsonContent := p.extractJSONContent(content)
+	jsonContent := extractJSONFromContent(content)
 	if jsonContent == "" {
 		return nil, fmt.Errorf("no valid JSON content found in response")
 	}
