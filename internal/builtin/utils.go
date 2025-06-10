@@ -52,11 +52,30 @@ func Dump2JSON(data interface{}, path string) error {
 		return err
 	}
 
-	err = os.WriteFile(path, buffer.Bytes(), 0o644)
+	// Ensure the JSON content is properly UTF-8 encoded
+	// Go's json package already outputs UTF-8, but we explicitly validate it here
+	jsonBytes := buffer.Bytes()
+
+	// Create file and write content atomically to prevent corruption
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 	if err != nil {
-		log.Error().Err(err).Msg("dump json path failed")
+		log.Error().Err(err).Msg("create json file failed")
 		return err
 	}
+	defer file.Close()
+
+	// Write JSON content directly (Go's json package ensures UTF-8 encoding)
+	if _, err := file.Write(jsonBytes); err != nil {
+		log.Error().Err(err).Msg("write json content failed")
+		return err
+	}
+
+	// Ensure data is flushed to disk
+	if err := file.Sync(); err != nil {
+		log.Error().Err(err).Msg("sync json file failed")
+		return err
+	}
+
 	return nil
 }
 

@@ -2,6 +2,8 @@ package builtin
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -93,4 +95,79 @@ func TestInterface2Float64(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestUTF8Encoding tests that Chinese characters are properly encoded in JSON files
+func TestUTF8Encoding(t *testing.T) {
+	// Create test data with Chinese characters
+	testData := map[string]interface{}{
+		"name":        "连连看小游戏自动化测试",
+		"description": "这是一个包含中文字符的测试用例",
+		"steps": []map[string]interface{}{
+			{
+				"name":   "启动抖音「连了又连」小游戏",
+				"action": "启动应用程序",
+				"result": "成功启动游戏",
+			},
+			{
+				"name":   "开始游戏",
+				"action": "点击开始按钮",
+				"result": "游戏开始运行",
+			},
+		},
+		"platform": map[string]string{
+			"os":      "安卓系统",
+			"version": "版本 12",
+			"device":  "测试设备",
+		},
+	}
+
+	// Create temporary file
+	tempDir := t.TempDir()
+	testFile := filepath.Join(tempDir, "test_utf8.json")
+
+	// Test the fixed Dump2JSON function
+	err := Dump2JSON(testData, testFile)
+	if err != nil {
+		t.Fatalf("Failed to dump JSON: %v", err)
+	}
+
+	// Read the file back and verify content
+	fileContent, err := os.ReadFile(testFile)
+	if err != nil {
+		t.Fatalf("Failed to read JSON file: %v", err)
+	}
+
+	// Parse the JSON to ensure it's valid
+	var parsedData map[string]interface{}
+	err = json.Unmarshal(fileContent, &parsedData)
+	if err != nil {
+		t.Fatalf("Failed to parse JSON: %v", err)
+	}
+
+	// Verify Chinese characters are preserved
+	if parsedData["name"] != "连连看小游戏自动化测试" {
+		t.Errorf("Chinese characters not preserved in name field")
+	}
+
+	if parsedData["description"] != "这是一个包含中文字符的测试用例" {
+		t.Errorf("Chinese characters not preserved in description field")
+	}
+
+	// Verify nested Chinese characters
+	steps, ok := parsedData["steps"].([]interface{})
+	if !ok {
+		t.Fatalf("Steps field is not an array")
+	}
+
+	firstStep, ok := steps[0].(map[string]interface{})
+	if !ok {
+		t.Fatalf("First step is not a map")
+	}
+
+	if firstStep["name"] != "启动抖音「连了又连」小游戏" {
+		t.Errorf("Chinese characters not preserved in step name")
+	}
+
+	t.Logf("UTF-8 encoding test passed. File content length: %d bytes", len(fileContent))
 }

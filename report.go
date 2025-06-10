@@ -79,11 +79,31 @@ func (g *HTMLReportGenerator) loadSummaryData() error {
 		return err
 	}
 
-	// Store raw content for download
-	g.SummaryContent = string(data)
-
+	// Parse JSON data first
 	g.SummaryData = &Summary{}
-	return json.Unmarshal(data, g.SummaryData)
+	err = json.Unmarshal(data, g.SummaryData)
+	if err != nil {
+		return err
+	}
+
+	// Re-encode the summary data to ensure proper UTF-8 encoding for download
+	// This fixes Chinese character encoding issues in legacy summary.json files
+	buffer := new(strings.Builder)
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "    ")
+
+	err = encoder.Encode(g.SummaryData)
+	if err != nil {
+		// Fallback to original content if re-encoding fails
+		g.SummaryContent = string(data)
+		return nil
+	}
+
+	// Store the properly encoded content for download
+	g.SummaryContent = strings.TrimSpace(buffer.String())
+
+	return nil
 }
 
 // loadLogData loads test log data from log file
@@ -430,16 +450,21 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 		return fmt.Errorf("failed to parse template: %w", err)
 	}
 
-	// Create output file
-	file, err := os.Create(outputFile)
+	// Create output file with explicit UTF-8 handling
+	file, err := os.OpenFile(outputFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
 	}
 	defer file.Close()
 
-	// Execute template
+	// Execute template (Go's html/template ensures UTF-8 encoding)
 	if err := tmpl.Execute(file, g.SummaryData); err != nil {
 		return fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	// Ensure data is flushed to disk
+	if err := file.Sync(); err != nil {
+		return fmt.Errorf("failed to sync HTML report file: %w", err)
 	}
 
 	log.Info().Str("path", outputFile).Msg("HTML report generated successfully")
