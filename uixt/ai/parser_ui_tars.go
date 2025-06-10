@@ -290,6 +290,26 @@ func convertProcessedArgs(processedArgs map[string]interface{}, actionType strin
 		return options.ToMap(), nil
 	}
 
+	// For scroll operations, handle both coordinates and direction
+	if actionType == "scroll" && hasStartBox {
+		startCoords, ok := startBox.([]float64)
+		if !ok {
+			return nil, fmt.Errorf("invalid coordinate format for scroll operation")
+		}
+
+		options := option.ActionOptions{
+			X: builtin.RoundToOneDecimal(startCoords[0]),
+			Y: builtin.RoundToOneDecimal(startCoords[1]),
+		}
+
+		// Add direction parameter if present
+		if direction, hasDirection := processedArgs["direction"]; hasDirection {
+			options.Direction = direction.(string)
+		}
+
+		return options.ToMap(), nil
+	}
+
 	// For single coordinate operations, return the coordinate array directly
 	if hasStartBox {
 		startCoords, ok := startBox.([]float64)

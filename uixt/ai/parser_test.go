@@ -1276,3 +1276,83 @@ func TestNormalizeActionCoordinates_StringArray(t *testing.T) {
 		})
 	}
 }
+
+func TestUITARSContentParser_ParseScrollAction(t *testing.T) {
+	parser := &UITARSContentParser{
+		modelType:     option.DOUBAO_1_5_UI_TARS_250328,
+		systemPrompt:  doubao_1_5_ui_tars_planning_prompt,
+		actionMapping: doubao_1_5_ui_tars_action_mapping,
+	}
+
+	size := types.Size{Width: 1080, Height: 1920}
+
+	tests := []struct {
+		name              string
+		content           string
+		expectedDirection string
+	}{
+		{
+			name: "scroll left with bbox format",
+			content: `Thought: 我需要向左滑动
+Action: scroll(direction='left', start_box='<bbox>850 500 850 500</bbox>')`,
+			expectedDirection: "left",
+		},
+		{
+			name: "scroll up with array format",
+			content: `Thought: 我需要向上滑动
+Action: scroll(direction='up', start_box='[400, 600]')`,
+			expectedDirection: "up",
+		},
+		{
+			name: "scroll down with array format",
+			content: `Thought: 我需要向下滑动
+Action: scroll(direction='down', start_box='[500, 800]')`,
+			expectedDirection: "down",
+		},
+		{
+			name: "real log example - scroll left",
+			content: `Thought: 我仔细观察了当前的游戏局面，发现两个2分别位于右下角和右中位置。之前尝试了几次滑动都没有成功，现在我需要重新思考策略。既然向上滑动没有效果，那我决定换个方向，尝试向左滑动看看。这样应该能让这两个2相遇并合并，为后续的游戏进展打下基础。
+Action: scroll(direction='left', start_box='<bbox>850 500 850 500</bbox>')`,
+			expectedDirection: "left",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := parser.Parse(tt.content, size)
+			assert.NoError(t, err)
+			assert.NotNil(t, result)
+			assert.Len(t, result.ToolCalls, 1)
+
+			toolCall := result.ToolCalls[0]
+
+			// Verify tool call structure
+			assert.Equal(t, "uixt__swipe", toolCall.Function.Name)
+			assert.Equal(t, "function", toolCall.Type)
+			assert.NotEmpty(t, toolCall.ID)
+
+			// Parse and verify arguments
+			var args map[string]interface{}
+			err = json.Unmarshal([]byte(toolCall.Function.Arguments), &args)
+			assert.NoError(t, err)
+
+			// Verify direction parameter is present and correct
+			assert.Contains(t, args, "direction")
+			assert.Equal(t, tt.expectedDirection, args["direction"])
+
+			// Verify coordinates are present and reasonable
+			assert.Contains(t, args, "x")
+			assert.Contains(t, args, "y")
+			assert.IsType(t, float64(0), args["x"])
+			assert.IsType(t, float64(0), args["y"])
+
+			// Verify coordinates are within screen bounds
+			x := args["x"].(float64)
+			y := args["y"].(float64)
+			assert.Greater(t, x, 0.0)
+			assert.Less(t, x, float64(size.Width))
+			assert.Greater(t, y, 0.0)
+			assert.Less(t, y, float64(size.Height))
+		})
+	}
+}
