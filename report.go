@@ -440,6 +440,9 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 		},
 		"mul":   func(a, b float64) float64 { return a * b },
 		"add":   func(a, b int) int { return a + b },
+		"sub":   func(a, b int) int { return a - b },
+		"lt":    func(a, b int) bool { return a < b },
+		"gt":    func(a, b int) bool { return a > b },
 		"base":  filepath.Base,
 		"index": func(m map[string]any, key string) any { return m[key] },
 	}
@@ -1014,29 +1017,29 @@ const htmlTemplate = `<!DOCTYPE html>
             font-weight: bold;
         }
 
-        .plan-next-action {
-            margin: 15px 0;
-            padding: 15px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border: 2px solid #dee2e6;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
 
-        .plan-next-action h5 {
-            color: #495057;
-            margin-bottom: 10px;
-            font-size: 1.0em;
-            font-weight: 600;
-        }
 
-        .planning-two-columns {
+        .planning-three-columns {
             display: flex;
             gap: 20px;
             margin: 15px 0;
         }
 
-        .planning-column-left, .planning-column-right {
+        .planning-column-screenshot {
+            flex: 0.9;
+            min-width: 250px;
+            max-width: 35%;
+        }
+
+        .planning-column-right-container {
+            flex: 1.6;
+            min-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .planning-column-model, .planning-column-actions {
             flex: 1;
             min-width: 0;
         }
@@ -1046,6 +1049,11 @@ const htmlTemplate = `<!DOCTYPE html>
             border: 1px solid #dee2e6;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .planning-column-screenshot .planning-step-compact {
+            height: auto;
         }
 
         .step-header-compact {
@@ -1073,27 +1081,198 @@ const htmlTemplate = `<!DOCTYPE html>
         }
 
         .screenshot-item-compact .screenshot-image {
-            min-height: 200px;
-            padding: 10px 0;
+            padding: 15px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 6px;
             display: flex;
             justify-content: center;
             align-items: center;
+            position: relative;
+            overflow: hidden;
         }
 
         .screenshot-item-compact .screenshot-image img {
-            max-width: 100%;
-            max-height: 180px;
+            width: 100%;
+            height: auto;
+            max-height: 400px;
             border-radius: 4px;
             cursor: pointer;
             transition: transform 0.2s;
             object-fit: contain;
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: block;
+        }
+
+        /* Handle very tall screenshots */
+        .screenshot-item-compact .screenshot-image img[style*="height"] {
+            max-height: 400px;
+            width: auto;
+            max-width: 100%;
         }
 
         .screenshot-item-compact .screenshot-image img:hover {
             transform: scale(1.02);
+        }
+
+        .actions-details {
+            padding: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .action-detail-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 8px;
+            margin: 6px 0;
+            font-size: 0.85em;
+        }
+
+        .action-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .action-detail-header .action-name {
+            background: #6f42c1;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .action-detail-header .duration {
+            background: #6c757d;
+            color: white;
+            padding: 1px 4px;
+            border-radius: 8px;
+            font-size: 0.75em;
+        }
+
+        .action-detail-header .success {
+            color: #28a745;
+            font-size: 0.9em;
+        }
+
+        .action-detail-header .error {
+            color: #dc3545;
+            font-size: 0.9em;
+        }
+
+        .action-arguments {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 4px 6px;
+            margin: 4px 0;
+            font-family: monospace;
+            font-size: 0.8em;
+            color: #495057;
+            word-break: break-all;
+        }
+
+        .action-requests {
+            margin-top: 6px;
+        }
+
+        .requests-toggle-compact {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-bottom: 6px;
+            transition: background-color 0.3s;
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
+
+        .requests-toggle-compact:hover {
+            background: #5a6268;
+        }
+
+        .requests-content-compact {
+            display: none;
+        }
+
+        .requests-content-compact.show {
+            display: block;
+        }
+
+        .request-item-compact {
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 6px;
+            margin: 4px 0;
+            font-size: 0.75em;
+        }
+
+        .request-header-compact {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .request-header-compact .method {
+            background: #007bff;
+            color: white;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .url-compact {
+            color: #495057;
+            font-family: monospace;
+            font-size: 0.7em;
+            word-break: break-all;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .request-header-compact .status.success {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 0.7em;
+        }
+
+        .request-header-compact .status.failure {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 0.7em;
+        }
+
+        .request-header-compact .duration {
+            background: #6c757d;
+            color: white;
+            padding: 1px 4px;
+            border-radius: 8px;
+            font-size: 0.7em;
+            font-weight: 500;
+        }
+
+        .request-body-compact, .response-body-compact {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 3px;
+            padding: 4px;
+            margin: 2px 0;
+            font-family: monospace;
+            font-size: 0.7em;
+            max-height: 60px;
+            overflow-y: auto;
+            word-break: break-all;
         }
 
         .model-output-compact {
@@ -1111,9 +1290,30 @@ const htmlTemplate = `<!DOCTYPE html>
         }
 
         @media screen and (max-width: 768px) {
-            .planning-two-columns {
+            .planning-three-columns {
                 flex-direction: column;
                 gap: 15px;
+            }
+
+            .planning-column-screenshot {
+                flex: none;
+                min-width: auto;
+                max-width: none;
+            }
+
+            .planning-column-right-container {
+                flex: none;
+                min-width: auto;
+                gap: 10px;
+            }
+
+            .screenshot-item-compact .screenshot-image {
+                padding: 10px;
+            }
+
+            .screenshot-item-compact .screenshot-image img {
+                width: 100%;
+                height: auto;
             }
         }
 
@@ -1160,51 +1360,9 @@ const htmlTemplate = `<!DOCTYPE html>
 
 
 
-        .sub-actions {
-            margin-top: 15px;
-            padding-left: 20px;
-            border-left: 3px solid #dee2e6;
-        }
 
-        .sub-action-item {
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 10px;
-        }
 
-        .sub-action-content {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
 
-        .sub-action-left {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .sub-action-right {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .sub-action-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-
-        .action-name {
-            background: #6f42c1;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
 
         .thought {
             background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
@@ -1353,7 +1511,7 @@ const htmlTemplate = `<!DOCTYPE html>
             overflow-y: auto;
         }
 
-        .sub-action-screenshots, .screenshots-section {
+        .screenshots-section {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border: 2px solid #28a745;
             border-radius: 12px;
@@ -1361,7 +1519,7 @@ const htmlTemplate = `<!DOCTYPE html>
             box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
         }
 
-        .sub-action-screenshots h5, .screenshots-section h4 {
+        .screenshots-section h4 {
             color: #155724;
             margin-bottom: 10px;
             font-size: 1.0em;
@@ -1859,10 +2017,7 @@ const htmlTemplate = `<!DOCTYPE html>
                 gap: 6px;
             }
 
-            .sub-action-content {
-                flex-direction: column;
-                gap: 15px;
-            }
+
 
             .screenshots-grid {
                 grid-template-columns: 1fr;
@@ -2103,14 +2258,10 @@ const htmlTemplate = `<!DOCTYPE html>
                                         <div class="thought">{{$planning.Thought}}</div>
                                         {{end}}
 
-                                        <!-- Planning Section -->
-                                        <div class="plan-next-action">
-                                            <h5>📋 Planning</h5>
-
-                                            <!-- Two-column layout for screenshot and model output -->
-                                            <div class="planning-two-columns">
-                                                <!-- Left column: Screenshot -->
-                                                <div class="planning-column-left">
+                                        <!-- Three-column layout: screenshot left, model output and actions right -->
+                                        <div class="planning-three-columns">
+                                                <!-- Left column: Screenshot (larger) -->
+                                                <div class="planning-column-screenshot">
                                                     <div class="planning-step-compact">
                                                         <div class="step-header-compact">
                                                             <span class="step-name">📸 Take Screenshot</span>
@@ -2132,96 +2283,76 @@ const htmlTemplate = `<!DOCTYPE html>
                                                     </div>
                                                 </div>
 
-                                                <!-- Right column: Model Output -->
-                                                <div class="planning-column-right">
-                                                    <div class="planning-step-compact">
-                                                        <div class="step-header-compact">
-                                                            <span class="step-name">🤖 Call Model & Parse Result</span>
-                                                            <span class="duration">{{formatDuration $planning.ModelCallElapsed}}</span>
-                                                        </div>
-                                                        <div class="model-output-compact">
-                                                            {{if $planning.ModelName}}
-                                                            <div class="model-info">🤖 Model: {{$planning.ModelName}}</div>
-                                                            {{end}}
-                                                            {{if $planning.Usage}}
-                                                            <div class="usage-info">📊 Tokens: {{$planning.Usage.PromptTokens}} in / {{$planning.Usage.CompletionTokens}} out / {{$planning.Usage.TotalTokens}} total</div>
-                                                            {{end}}
-                                                            {{if $planning.ToolCallsCount}}
-                                                            <div class="tool-calls-info">🔧 Tool Calls: {{$planning.ToolCallsCount}}</div>
-                                                            {{end}}
-                                                            {{if $planning.ActionNames}}
-                                                            <div class="actions-info">🎯 Actions: {{safeHTML (toJSON $planning.ActionNames)}}</div>
-                                                            {{end}}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {{if $planning.SubActions}}
-                                        <div class="sub-actions">
-                                            <h5>🎯 Actions</h5>
-                                            {{range $subAction := $planning.SubActions}}
-                                            <div class="sub-action-item">
-                                                <div class="sub-action-header">
-                                                    <span class="action-name">{{$subAction.ActionName}}</span>
-                                                    <span class="duration">{{formatDuration $subAction.Elapsed}}</span>
-                                                    {{if $subAction.Error}}<span class="error">Error: {{$subAction.Error}}</span>{{end}}
-                                                </div>
-
-                                                <div class="sub-action-content">
-                                                    <div class="sub-action-left">
-                                                        {{if $subAction.Arguments}}
-                                                        <div class="arguments">Arguments: {{safeHTML (toJSON $subAction.Arguments)}}</div>
-                                                        {{end}}
-
-                                                        {{if $subAction.Requests}}
-                                                        <div class="requests">
-                                                            <button class="requests-toggle" onclick="toggleRequests(this)">
-                                                                📡 Show Requests ({{len $subAction.Requests}})
-                                                            </button>
-                                                            <div class="requests-content">
-                                                                {{range $request := $subAction.Requests}}
-                                                                <div class="request-item">
-                                                                    <div class="request-header">
-                                                                        <span class="method">{{$request.RequestMethod}}</span>
-                                                                        <span class="url">{{$request.RequestUrl}}</span>
-                                                                        <span class="status {{if $request.Success}}success{{else}}failure{{end}}">Status: {{$request.ResponseStatus}}</span>
-                                                                        <span class="duration">{{formatDuration $request.ResponseDuration}}</span>
-                                                                    </div>
-                                                                    {{if $request.RequestBody}}
-                                                                    <div class="request-body">Request: {{$request.RequestBody}}</div>
-                                                                    {{end}}
-                                                                    {{if $request.ResponseBody}}
-                                                                    <div class="response-body">Response: {{$request.ResponseBody}}</div>
-                                                                    {{end}}
-                                                                </div>
+                                                <!-- Right column: Model Output and Actions -->
+                                                <div class="planning-column-right-container">
+                                                    <!-- Top right: Model Output -->
+                                                    <div class="planning-column-model">
+                                                        <div class="planning-step-compact">
+                                                            <div class="step-header-compact">
+                                                                <span class="step-name">🤖 Call Model & Parse Result</span>
+                                                                <span class="duration">{{formatDuration $planning.ModelCallElapsed}}</span>
+                                                            </div>
+                                                            <div class="model-output-compact">
+                                                                {{if $planning.ModelName}}
+                                                                <div class="model-info">🤖 Model: {{$planning.ModelName}}</div>
+                                                                {{end}}
+                                                                {{if $planning.Usage}}
+                                                                <div class="usage-info">📊 Tokens: {{$planning.Usage.PromptTokens}} in / {{$planning.Usage.CompletionTokens}} out / {{$planning.Usage.TotalTokens}} total</div>
+                                                                {{end}}
+                                                                {{if $planning.ToolCallsCount}}
+                                                                <div class="tool-calls-info">🔧 Tool Calls: {{$planning.ToolCallsCount}}</div>
+                                                                {{end}}
+                                                                {{if $planning.ActionNames}}
+                                                                <div class="actions-info">🎯 Actions: {{safeHTML (toJSON $planning.ActionNames)}}</div>
                                                                 {{end}}
                                                             </div>
                                                         </div>
-                                                        {{end}}
                                                     </div>
 
-                                                    {{if $subAction.ScreenResults}}
-                                                    <div class="sub-action-right">
-                                                        <div class="sub-action-screenshots">
-                                                            <h5>📸 Screenshots</h5>
-                                                            <div class="screenshots-grid">
-                                                                {{range $screenshot := $subAction.ScreenResults}}
-                                                                {{$base64Image := encodeImageBase64 $screenshot.ImagePath}}
-                                                                {{if $base64Image}}
-                                                                <div class="screenshot-item small">
-                                                                    <div class="screenshot-info">
-                                                                        <span class="filename">{{base $screenshot.ImagePath}}</span>
-                                                                        {{if $screenshot.Resolution}}
-                                                                        <span class="resolution">{{$screenshot.Resolution.Width}}x{{$screenshot.Resolution.Height}}</span>
-                                                                        {{end}}
+                                                    <!-- Bottom right: Actions Details -->
+                                                    {{if $planning.SubActions}}
+                                                    <div class="planning-column-actions">
+                                                        <div class="planning-step-compact">
+                                                            <div class="step-header-compact">
+                                                                <span class="step-name">🎯 Actions ({{len $planning.SubActions}})</span>
+                                                            </div>
+                                                            <div class="actions-details">
+                                                                {{range $subAction := $planning.SubActions}}
+                                                                <div class="action-detail-item">
+                                                                    <div class="action-detail-header">
+                                                                        <span class="action-name">{{$subAction.ActionName}}</span>
+                                                                        <span class="duration">{{formatDuration $subAction.Elapsed}}</span>
+                                                                        {{if $subAction.Error}}<span class="error">❌</span>{{else}}<span class="success">✅</span>{{end}}
                                                                     </div>
-                                                                    <div class="screenshot-image">
-                                                                        <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Screenshot" onclick="openImageModal(this.src)" />
+                                                                    {{if $subAction.Arguments}}
+                                                                    <div class="action-arguments">{{safeHTML (toJSON $subAction.Arguments)}}</div>
+                                                                    {{end}}
+                                                                    {{if $subAction.Requests}}
+                                                                    <div class="action-requests">
+                                                                        <button class="requests-toggle-compact" onclick="toggleRequestsCompact(this)">
+                                                                            📡 {{len $subAction.Requests}} request(s)
+                                                                        </button>
+                                                                        <div class="requests-content-compact">
+                                                                            {{range $request := $subAction.Requests}}
+                                                                            <div class="request-item-compact">
+                                                                                <div class="request-header-compact">
+                                                                                    <span class="method">{{$request.RequestMethod}}</span>
+                                                                                    <span class="url-compact">{{$request.RequestUrl}}</span>
+                                                                                    <span class="status {{if $request.Success}}success{{else}}failure{{end}}">{{$request.ResponseStatus}}</span>
+                                                                                    <span class="duration">{{formatDuration $request.ResponseDuration}}</span>
+                                                                                </div>
+                                                                                {{if $request.RequestBody}}
+                                                                                <div class="request-body-compact">Request: {{$request.RequestBody}}</div>
+                                                                                {{end}}
+                                                                                {{if $request.ResponseBody}}
+                                                                                <div class="response-body-compact">Response: {{$request.ResponseBody}}</div>
+                                                                                {{end}}
+                                                                            </div>
+                                                                            {{end}}
+                                                                        </div>
                                                                     </div>
+                                                                    {{end}}
                                                                 </div>
-                                                                {{end}}
                                                                 {{end}}
                                                             </div>
                                                         </div>
@@ -2229,9 +2360,8 @@ const htmlTemplate = `<!DOCTYPE html>
                                                     {{end}}
                                                 </div>
                                             </div>
-                                            {{end}}
-                                        </div>
-                                        {{end}}
+
+                                        {{/* SubActions are now displayed in the right panel, so we don't show them here */}}
                                     </div>
                                     {{end}}
                                 </div>
@@ -2505,6 +2635,19 @@ const htmlTemplate = `<!DOCTYPE html>
                 function toggleRequests(buttonElement) {
             const requestsDiv = buttonElement.parentElement;
             const requestsContent = requestsDiv.querySelector('.requests-content');
+
+            if (requestsContent.classList.contains('show')) {
+                requestsContent.classList.remove('show');
+                buttonElement.textContent = buttonElement.textContent.replace('Hide', 'Show');
+            } else {
+                requestsContent.classList.add('show');
+                buttonElement.textContent = buttonElement.textContent.replace('Show', 'Hide');
+            }
+        }
+
+        function toggleRequestsCompact(buttonElement) {
+            const requestsDiv = buttonElement.parentElement;
+            const requestsContent = requestsDiv.querySelector('.requests-content-compact');
 
             if (requestsContent.classList.contains('show')) {
                 requestsContent.classList.remove('show');
