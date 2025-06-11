@@ -335,110 +335,133 @@ func parseCustomSchemaResult(content string, outputSchema interface{}) (*QueryRe
 		}, nil
 	}
 
-	// Create a new instance of the same type as outputSchema
-	schemaType := reflect.TypeOf(outputSchema)
-	if schemaType.Kind() == reflect.Ptr {
-		schemaType = schemaType.Elem()
-	}
+	// Handle OpenAI structured output properties wrapper
+	actualJSONContent := unwrapPropertiesIfNeeded(jsonContent)
 
-	// Create a new instance of the schema type
-	newInstance := reflect.New(schemaType).Interface()
-
-	// Try to unmarshal directly into the schema type
-	if err := json.Unmarshal([]byte(jsonContent), newInstance); err == nil {
-		// Successfully parsed into the expected schema type
-		result := &QueryResult{
-			Data: newInstance, // Store the typed pointer directly
-		}
-
-		// Try to extract content and thought if the schema has these fields
-		schemaValue := reflect.ValueOf(newInstance).Elem()
-		if contentField := schemaValue.FieldByName("Content"); contentField.IsValid() && contentField.Kind() == reflect.String {
-			result.Content = contentField.String()
-		}
-		if thoughtField := schemaValue.FieldByName("Thought"); thoughtField.IsValid() && thoughtField.Kind() == reflect.String {
-			result.Thought = thoughtField.String()
-		}
-
-		// If no standard fields found, try to extract from map representation
-		if result.Content == "" && result.Thought == "" {
-			var dataMap map[string]interface{}
-			if err := json.Unmarshal([]byte(jsonContent), &dataMap); err == nil {
-				if content, exists := dataMap["content"]; exists {
-					if contentStr, ok := content.(string); ok {
-						result.Content = contentStr
-					}
-				}
-				if thought, exists := dataMap["thought"]; exists {
-					if thoughtStr, ok := thought.(string); ok {
-						result.Thought = thoughtStr
-					}
-				}
-			}
-		}
-
-		// Ensure default values are set
-		ensureDefaultValues(result, newInstance)
+	// Try direct unmarshaling first (most efficient)
+	if result, err := tryDirectUnmarshal(actualJSONContent, outputSchema); err == nil {
 		return result, nil
 	}
 
-	// Fallback: try to parse as generic map and then convert
-	var structuredData interface{}
-	if err := json.Unmarshal([]byte(jsonContent), &structuredData); err == nil {
-		// Try to convert the generic data to the expected schema type
-		if convertedData, err := convertToSchemaType(structuredData, outputSchema); err == nil {
-			result := &QueryResult{
-				Data: convertedData, // Store the converted typed data
-			}
-
-			// Extract content and thought from the original map
-			if dataMap, ok := structuredData.(map[string]interface{}); ok {
-				if content, exists := dataMap["content"]; exists {
-					if contentStr, ok := content.(string); ok {
-						result.Content = contentStr
-					}
-				}
-				if thought, exists := dataMap["thought"]; exists {
-					if thoughtStr, ok := thought.(string); ok {
-						result.Thought = thoughtStr
-					}
-				}
-			}
-
-			// Ensure default values are set
-			ensureDefaultValues(result, convertedData)
-			return result, nil
-		}
-
-		// If conversion failed, fall back to storing the generic data
-		if dataMap, ok := structuredData.(map[string]interface{}); ok {
-			result := &QueryResult{
-				Data: structuredData,
-			}
-
-			// Extract content and thought if present
-			if content, exists := dataMap["content"]; exists {
-				if contentStr, ok := content.(string); ok {
-					result.Content = contentStr
-				}
-			}
-			if thought, exists := dataMap["thought"]; exists {
-				if thoughtStr, ok := thought.(string); ok {
-					result.Thought = thoughtStr
-				}
-			}
-
-			// Ensure default values are set
-			ensureDefaultValues(result, nil)
-			return result, nil
-		}
+	// Fallback: try generic parsing and conversion
+	if result, err := tryGenericParsingAndConversion(actualJSONContent, outputSchema); err == nil {
+		return result, nil
 	}
 
-	// Fallback to treating as plain text
+	// Final fallback: treat as plain text
 	return &QueryResult{
 		Content: content,
 		Thought: "Failed to parse as structured data, returning raw content",
 	}, nil
+}
+
+// unwrapPropertiesIfNeeded handles OpenAI structured output properties wrapper
+func unwrapPropertiesIfNeeded(jsonContent string) string {
+	var tempMap map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonContent), &tempMap); err == nil {
+		if properties, exists := tempMap["properties"]; exists {
+			if propertiesBytes, err := json.Marshal(properties); err == nil {
+				return string(propertiesBytes)
+			}
+		}
+	}
+	return jsonContent
+}
+
+// tryDirectUnmarshal attempts to unmarshal directly into the schema type
+func tryDirectUnmarshal(jsonContent string, outputSchema interface{}) (*QueryResult, error) {
+	// Create a new instance of the schema type
+	newInstance := createSchemaInstance(outputSchema)
+
+	// Try to unmarshal directly into the schema type
+	if err := json.Unmarshal([]byte(jsonContent), newInstance); err != nil {
+		return nil, err
+	}
+
+	// Create result with the typed data
+	result := &QueryResult{Data: newInstance}
+
+	// Extract content and thought fields
+	extractContentAndThoughtFromStruct(result, newInstance)
+	if result.Content == "" && result.Thought == "" {
+		extractContentAndThoughtFromJSON(result, jsonContent)
+	}
+
+	// Ensure default values are set
+	ensureDefaultValues(result, newInstance)
+	return result, nil
+}
+
+// tryGenericParsingAndConversion attempts generic parsing and type conversion
+func tryGenericParsingAndConversion(jsonContent string, outputSchema interface{}) (*QueryResult, error) {
+	var structuredData interface{}
+	if err := json.Unmarshal([]byte(jsonContent), &structuredData); err != nil {
+		return nil, err
+	}
+
+	// Try to convert to the expected schema type
+	if convertedData, err := convertToSchemaType(structuredData, outputSchema); err == nil {
+		result := &QueryResult{Data: convertedData}
+		extractContentAndThoughtFromMap(result, structuredData)
+		ensureDefaultValues(result, convertedData)
+		return result, nil
+	}
+
+	// If conversion failed, store the generic data
+	if dataMap, ok := structuredData.(map[string]interface{}); ok {
+		result := &QueryResult{Data: structuredData}
+		extractContentAndThoughtFromMap(result, dataMap)
+		ensureDefaultValues(result, nil)
+		return result, nil
+	}
+
+	return nil, errors.New("failed to parse structured data")
+}
+
+// createSchemaInstance creates a new instance of the schema type
+func createSchemaInstance(outputSchema interface{}) interface{} {
+	schemaType := reflect.TypeOf(outputSchema)
+	if schemaType.Kind() == reflect.Ptr {
+		schemaType = schemaType.Elem()
+	}
+	return reflect.New(schemaType).Interface()
+}
+
+// extractContentAndThoughtFromStruct extracts content and thought from struct fields using reflection
+func extractContentAndThoughtFromStruct(result *QueryResult, structData interface{}) {
+	schemaValue := reflect.ValueOf(structData).Elem()
+
+	if contentField := schemaValue.FieldByName("Content"); contentField.IsValid() && contentField.Kind() == reflect.String {
+		result.Content = contentField.String()
+	}
+
+	if thoughtField := schemaValue.FieldByName("Thought"); thoughtField.IsValid() && thoughtField.Kind() == reflect.String {
+		result.Thought = thoughtField.String()
+	}
+}
+
+// extractContentAndThoughtFromJSON extracts content and thought from JSON map
+func extractContentAndThoughtFromJSON(result *QueryResult, jsonContent string) {
+	var dataMap map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonContent), &dataMap); err == nil {
+		extractContentAndThoughtFromMap(result, dataMap)
+	}
+}
+
+// extractContentAndThoughtFromMap extracts content and thought from a map
+func extractContentAndThoughtFromMap(result *QueryResult, dataMap interface{}) {
+	if mapData, ok := dataMap.(map[string]interface{}); ok {
+		if content, exists := mapData["content"]; exists {
+			if contentStr, ok := content.(string); ok {
+				result.Content = contentStr
+			}
+		}
+		if thought, exists := mapData["thought"]; exists {
+			if thoughtStr, ok := thought.(string); ok {
+				result.Thought = thoughtStr
+			}
+		}
+	}
 }
 
 // convertToSchemaType converts generic data to the specified schema type

@@ -183,6 +183,9 @@ func TestQueryFunctionality(t *testing.T) {
 		assert.NotNil(t, gameInfo)
 		assert.NotEmpty(t, gameInfo.Content)
 		assert.NotEmpty(t, gameInfo.Thought)
+		assert.Equal(t, 4, gameInfo.Rows)
+		assert.Equal(t, 3, gameInfo.Cols)
+		assert.Equal(t, 5, gameInfo.TotalIcons)
 
 		t.Logf("Custom Schema Query Result: %+v", gameInfo)
 	})
@@ -205,6 +208,16 @@ func TestQueryFunctionality(t *testing.T) {
 		assert.NotEmpty(t, result.Content)
 		assert.NotEmpty(t, result.Thought)
 		assert.NotNil(t, result.Data)
+
+		gameAnalysisResult, ok := result.Data.(*GameAnalysisResult)
+		assert.True(t, ok)
+		assert.NotNil(t, gameAnalysisResult)
+		assert.NotEmpty(t, gameAnalysisResult.Content)
+		assert.NotEmpty(t, gameAnalysisResult.Thought)
+		assert.NotEmpty(t, gameAnalysisResult.GameType)
+		assert.Equal(t, 4, gameAnalysisResult.Dimensions.Rows)
+		assert.Equal(t, 3, gameAnalysisResult.Dimensions.Cols)
+		assert.Equal(t, 12, len(gameAnalysisResult.Elements))
 
 		t.Logf("Comprehensive Analysis Result: %+v", result.Data)
 	})
