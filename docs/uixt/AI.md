@@ -256,6 +256,83 @@ if gameInfo, ok := result.Data.(*GameInfo); ok {
 }
 ```
 
+#### 高级查询场景
+
+**UI 元素分析**：
+```go
+type UIAnalysis struct {
+    Content  string      `json:"content"`
+    Thought  string      `json:"thought"`
+    Elements []UIElement `json:"elements"`
+}
+
+type UIElement struct {
+    Type      string      `json:"type"`        // button, text, input等
+    Text      string      `json:"text"`        // 文本内容
+    BoundBox  BoundingBox `json:"boundBox"`    // 位置坐标
+    Clickable bool        `json:"clickable"`   // 是否可点击
+}
+
+result, err := service.Query(ctx, &ai.QueryOptions{
+    Query: `分析这张截图并提供结构化信息：
+1. 识别界面类型和主要元素
+2. 提取所有可交互元素的位置和属性
+3. 统计各类元素的数量`,
+    Screenshot:   screenshot,
+    Size:         screenSize,
+    OutputSchema: UIAnalysis{},
+})
+```
+
+**网格游戏分析**：
+```go
+type GridGame struct {
+    Content string     `json:"content"`
+    Thought string     `json:"thought"`
+    Grid    [][]Cell   `json:"grid"`       // 网格数据
+    Stats   Statistics `json:"statistics"` // 统计信息
+}
+
+type Cell struct {
+    Type  string `json:"type"`  // 单元格类型
+    Value string `json:"value"` // 单元格值
+    Row   int    `json:"row"`   // 行索引
+    Col   int    `json:"col"`   // 列索引
+}
+
+result, err := service.Query(ctx, &ai.QueryOptions{
+    Query:        "分析这个网格游戏的布局和状态",
+    Screenshot:   screenshot,
+    Size:         screenSize,
+    OutputSchema: GridGame{},
+})
+```
+
+**表单数据提取**：
+```go
+type FormAnalysis struct {
+    Content string      `json:"content"`
+    Thought string      `json:"thought"`
+    Fields  []FormField `json:"fields"`
+    Actions []Action    `json:"actions"`
+}
+
+type FormField struct {
+    Label    string      `json:"label"`    // 字段标签
+    Type     string      `json:"type"`     // 字段类型
+    Value    string      `json:"value"`    // 当前值
+    Required bool        `json:"required"` // 是否必填
+    BoundBox BoundingBox `json:"boundBox"` // 位置
+}
+
+result, err := service.Query(ctx, &ai.QueryOptions{
+    Query:        "提取表单中的所有字段信息和操作按钮",
+    Screenshot:   screenshot,
+    Size:         screenSize,
+    OutputSchema: FormAnalysis{},
+})
+```
+
 ### 4. 计算机视觉 (CV)
 
 提供 OCR 文本识别、UI 元素检测、弹窗识别等计算机视觉功能。
@@ -310,20 +387,37 @@ center := targetText.Center()
 
 ### 4. 自定义输出格式
 
-查询功能支持用户定义的复杂结构化输出格式：
+查询功能支持用户定义的复杂结构化输出格式，具有以下核心特性：
 
+#### 自动类型转换
+- 指定 `OutputSchema` 时，`QueryResult.Data` 自动转换为指定类型
+- 支持直接类型断言：`result.Data.(*YourType)`
+- 无需手动调用转换函数
+
+#### 多级回退机制
+1. 优先解析为指定的结构化类型
+2. 失败时尝试通用JSON解析
+3. 最终回退到纯文本响应
+
+#### 向后兼容
+- 不指定 `OutputSchema` 时行为不变
+- 现有代码无需修改
+
+**结构体设计最佳实践**：
 ```go
-type UIAnalysisResult struct {
-    Content    string      `json:"content"`
-    Elements   []UIElement `json:"elements"`
-    Statistics Statistics  `json:"statistics"`
+// 推荐：包含标准字段
+type YourSchema struct {
+    Content string `json:"content"` // 必须：人类可读描述
+    Thought string `json:"thought"` // 必须：AI推理过程
+    // 自定义字段...
+    Data    CustomData `json:"data"`
 }
 
-type UIElement struct {
-    Type        string      `json:"type"`
-    Text        string      `json:"text"`
-    BoundingBox BoundingBox `json:"boundingBox"`
-    Clickable   bool        `json:"clickable"`
+// 使用描述性的JSON标签
+type Element struct {
+    Type     string `json:"elementType"`   // 清晰的字段名
+    Position Point  `json:"gridPosition"`  // 描述性标签
+    Visible  bool   `json:"isVisible"`     // 布尔值清晰性
 }
 ```
 
