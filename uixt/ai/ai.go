@@ -16,21 +16,42 @@ type ILLMService interface {
 	RegisterTools(tools []*schema.ToolInfo) error
 }
 
+// NewLLMService creates a new LLM service with the same model for all components (backward compatibility)
 func NewLLMService(modelType option.LLMServiceType) (ILLMService, error) {
-	modelConfig, err := GetModelConfig(modelType)
+	config := option.NewLLMServiceConfig(modelType)
+	return NewLLMServiceWithOptionConfig(config)
+}
+
+// NewLLMServiceWithOptionConfig creates a new LLM service with different models for each component
+func NewLLMServiceWithOptionConfig(config *option.LLMServiceConfig) (ILLMService, error) {
+	// Get model configs for each component
+	plannerModelConfig, err := GetModelConfig(config.PlannerModel)
 	if err != nil {
 		return nil, err
 	}
 
-	planner, err := NewPlanner(context.Background(), modelConfig)
+	asserterModelConfig, err := GetModelConfig(config.AsserterModel)
 	if err != nil {
 		return nil, err
 	}
-	asserter, err := NewAsserter(context.Background(), modelConfig)
+
+	querierModelConfig, err := GetModelConfig(config.QuerierModel)
 	if err != nil {
 		return nil, err
 	}
-	querier, err := NewQuerier(context.Background(), modelConfig)
+
+	// Create components with their respective model configs
+	planner, err := NewPlanner(context.Background(), plannerModelConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	asserter, err := NewAsserter(context.Background(), asserterModelConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	querier, err := NewQuerier(context.Background(), querierModelConfig)
 	if err != nil {
 		return nil, err
 	}

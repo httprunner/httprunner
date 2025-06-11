@@ -11,6 +11,7 @@ func NewAIServiceOptions(opts ...AIServiceOption) *AIServiceOptions {
 type AIServiceOptions struct {
 	CVService  CVServiceType
 	LLMService LLMServiceType
+	LLMConfig  *LLMServiceConfig // New field for advanced LLM configuration
 }
 
 type AIServiceOption func(*AIServiceOptions)
@@ -46,5 +47,67 @@ const (
 func WithLLMService(modelType LLMServiceType) AIServiceOption {
 	return func(opts *AIServiceOptions) {
 		opts.LLMService = modelType
+	}
+}
+
+// LLMServiceConfig defines configuration for different LLM service components
+type LLMServiceConfig struct {
+	PlannerModel  LLMServiceType `json:"planner_model"`  // Model type for planner component
+	AsserterModel LLMServiceType `json:"asserter_model"` // Model type for asserter component
+	QuerierModel  LLMServiceType `json:"querier_model"`  // Model type for querier component
+}
+
+// NewLLMServiceConfig creates a new LLMServiceConfig with the same model for all components
+func NewLLMServiceConfig(modelType LLMServiceType) *LLMServiceConfig {
+	return &LLMServiceConfig{
+		PlannerModel:  modelType,
+		AsserterModel: modelType,
+		QuerierModel:  modelType,
+	}
+}
+
+// WithPlannerModel sets the model type for planner component
+func (c *LLMServiceConfig) WithPlannerModel(modelType LLMServiceType) *LLMServiceConfig {
+	c.PlannerModel = modelType
+	return c
+}
+
+// WithAsserterModel sets the model type for asserter component
+func (c *LLMServiceConfig) WithAsserterModel(modelType LLMServiceType) *LLMServiceConfig {
+	c.AsserterModel = modelType
+	return c
+}
+
+// WithQuerierModel sets the model type for querier component
+func (c *LLMServiceConfig) WithQuerierModel(modelType LLMServiceType) *LLMServiceConfig {
+	c.QuerierModel = modelType
+	return c
+}
+
+// WithLLMConfig sets the advanced LLM configuration
+func WithLLMConfig(config *LLMServiceConfig) AIServiceOption {
+	return func(opts *AIServiceOptions) {
+		opts.LLMConfig = config
+	}
+}
+
+// RecommendedConfigurations provides some recommended model configurations for different use cases
+func RecommendedConfigurations() map[string]*LLMServiceConfig {
+	return map[string]*LLMServiceConfig{
+		"cost_effective": NewLLMServiceConfig(DOUBAO_1_5_THINKING_VISION_PRO_250428).
+			WithPlannerModel(DOUBAO_1_5_UI_TARS_250328).
+			WithAsserterModel(DOUBAO_1_5_THINKING_VISION_PRO_250428).
+			WithQuerierModel(DOUBAO_1_5_THINKING_VISION_PRO_250428),
+
+		"high_performance": NewLLMServiceConfig(OPENAI_GPT_4O),
+
+		"mixed_optimal": NewLLMServiceConfig(DOUBAO_1_5_THINKING_VISION_PRO_250428).
+			WithPlannerModel(DOUBAO_1_5_UI_TARS_250328). // Best for UI understanding
+			WithAsserterModel(OPENAI_GPT_4O).            // Best for reasoning
+			WithQuerierModel(DEEPSEEK_R1_250528),        // Cost-effective for queries
+
+		"ui_focused": NewLLMServiceConfig(DOUBAO_1_5_UI_TARS_250328),
+
+		"reasoning_focused": NewLLMServiceConfig(DOUBAO_1_5_THINKING_VISION_PRO_250428),
 	}
 }

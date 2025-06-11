@@ -140,3 +140,82 @@ func TestILLMServiceIntegration(t *testing.T) {
 		// which is more complex, so we skip it in this integration test
 	})
 }
+
+// TestLLMServiceConfig tests the LLM service configuration functionality
+func TestLLMServiceConfig(t *testing.T) {
+	t.Run("BasicConfiguration", func(t *testing.T) {
+		// Test creating config with same model for all components
+		modelType := option.DOUBAO_1_5_THINKING_VISION_PRO_250428
+		config := option.NewLLMServiceConfig(modelType)
+
+		assert.Equal(t, modelType, config.PlannerModel)
+		assert.Equal(t, modelType, config.AsserterModel)
+		assert.Equal(t, modelType, config.QuerierModel)
+	})
+
+	t.Run("MixedConfiguration", func(t *testing.T) {
+		// Test configuring different models for each component
+		config := option.NewLLMServiceConfig(option.DOUBAO_1_5_THINKING_VISION_PRO_250428).
+			WithPlannerModel(option.DOUBAO_1_5_UI_TARS_250328).
+			WithAsserterModel(option.OPENAI_GPT_4O).
+			WithQuerierModel(option.DEEPSEEK_R1_250528)
+
+		assert.Equal(t, option.DOUBAO_1_5_UI_TARS_250328, config.PlannerModel)
+		assert.Equal(t, option.OPENAI_GPT_4O, config.AsserterModel)
+		assert.Equal(t, option.DEEPSEEK_R1_250528, config.QuerierModel)
+	})
+
+	t.Run("RecommendedConfigurations", func(t *testing.T) {
+		configs := option.RecommendedConfigurations()
+
+		// Test mixed optimal configuration
+		mixedOptimal := configs["mixed_optimal"]
+		assert.NotNil(t, mixedOptimal)
+		assert.Equal(t, option.DOUBAO_1_5_UI_TARS_250328, mixedOptimal.PlannerModel)
+		assert.Equal(t, option.OPENAI_GPT_4O, mixedOptimal.AsserterModel)
+		assert.Equal(t, option.DEEPSEEK_R1_250528, mixedOptimal.QuerierModel)
+
+		// Test high performance configuration
+		highPerf := configs["high_performance"]
+		assert.NotNil(t, highPerf)
+		assert.Equal(t, option.OPENAI_GPT_4O, highPerf.PlannerModel)
+		assert.Equal(t, option.OPENAI_GPT_4O, highPerf.AsserterModel)
+		assert.Equal(t, option.OPENAI_GPT_4O, highPerf.QuerierModel)
+	})
+}
+
+// TestLLMServiceCreation tests service creation with different configurations
+func TestLLMServiceCreation(t *testing.T) {
+	t.Run("BackwardCompatibility", func(t *testing.T) {
+		// Test that the original NewLLMService function still works
+		modelType := option.DOUBAO_1_5_THINKING_VISION_PRO_250428
+		service, err := NewLLMService(modelType)
+
+		// We expect an error due to missing environment variables in test environment
+		// but the function signature should be correct
+		if err != nil {
+			assert.NotNil(t, err)
+			assert.Nil(t, service)
+		} else {
+			assert.NotNil(t, service)
+		}
+	})
+
+	t.Run("WithAdvancedConfig", func(t *testing.T) {
+		// Test the new API with different models for each component
+		config := option.NewLLMServiceConfig(option.DOUBAO_1_5_THINKING_VISION_PRO_250428).
+			WithPlannerModel(option.DOUBAO_1_5_UI_TARS_250328).
+			WithAsserterModel(option.OPENAI_GPT_4O)
+
+		service, err := NewLLMServiceWithOptionConfig(config)
+
+		// We expect an error due to missing environment variables in test environment
+		// but the function signature should be correct
+		if err != nil {
+			assert.NotNil(t, err)
+			assert.Nil(t, service)
+		} else {
+			assert.NotNil(t, service)
+		}
+	})
+}

@@ -33,13 +33,24 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 			return nil, err
 		}
 	}
-	if services.LLMService != "" {
+
+	// Handle LLM service initialization
+	if services.LLMConfig != nil {
+		// Use advanced LLM configuration if provided
+		driverExt.LLMService, err = ai.NewLLMServiceWithOptionConfig(services.LLMConfig)
+		if err != nil {
+			return nil, errors.Wrap(err, "init llm service with config failed")
+		}
+	} else if services.LLMService != "" {
+		// Fallback to simple LLM service if no config provided
 		driverExt.LLMService, err = ai.NewLLMService(services.LLMService)
 		if err != nil {
 			return nil, errors.Wrap(err, "init llm service failed")
 		}
+	}
 
-		// Register uixt MCP tools to LLM service
+	// Register uixt MCP tools to LLM service if it exists
+	if driverExt.LLMService != nil {
 		mcpTools := driverExt.client.Server.ListTools()
 		einoTools := ai.ConvertMCPToolsToEinoToolInfos(mcpTools, "uixt")
 		if err := driverExt.LLMService.RegisterTools(einoTools); err != nil {
