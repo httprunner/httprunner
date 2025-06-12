@@ -127,6 +127,7 @@ func (s *MCPServer4XTDriver) registerTools() {
 	// AI Tools
 	s.registerTool(&ToolStartToGoal{})
 	s.registerTool(&ToolAIAction{})
+	s.registerTool(&ToolAIQuery{})
 	s.registerTool(&ToolFinished{})
 }
 

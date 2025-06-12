@@ -201,6 +201,18 @@ func (s *StepMobile) AIAction(prompt string, opts ...option.ActionOption) *StepM
 	return s
 }
 
+// AIQuery query information from screen using VLM
+func (s *StepMobile) AIQuery(prompt string, opts ...option.ActionOption) *StepMobile {
+	action := option.MobileAction{
+		Method:  option.ACTION_Query,
+		Params:  prompt,
+		Options: option.NewActionOptions(opts...),
+	}
+
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
 // DoubleTapXY double taps the point {X,Y}, X & Y is percentage of coordinates
 func (s *StepMobile) DoubleTapXY(x, y float64, opts ...option.ActionOption) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
@@ -863,11 +875,15 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 						action.Method == option.ACTION_AIAssert || action.Method == option.ACTION_Query {
 						if config.LLMService != "" && action.Options.LLMService == "" {
 							action.Options.LLMService = string(config.LLMService)
-							log.Debug().Str("action", string(action.Method)).Str("llmService", action.Options.LLMService).Msg("Applied global LLM service config to action")
+							log.Debug().Str("action", string(action.Method)).
+								Str("llmService", action.Options.LLMService).
+								Msg("Applied global LLM service config to action")
 						}
 						if config.CVService != "" && action.Options.CVService == "" {
 							action.Options.CVService = string(config.CVService)
-							log.Debug().Str("action", string(action.Method)).Str("cvService", action.Options.CVService).Msg("Applied global CV service config to action")
+							log.Debug().Str("action", string(action.Method)).
+								Str("cvService", action.Options.CVService).
+								Msg("Applied global CV service config to action")
 						}
 					}
 				}

@@ -509,3 +509,209 @@ type Element struct {
    ```
 
 通过 HttpRunner UIXT AI 模块，您可以轻松实现智能化的 UI 自动化测试，大幅提升测试效率和准确性。
+
+# AI 功能使用指南
+
+HttpRunner v5 提供了强大的 AI 功能，支持基于视觉语言模型（VLM）的智能化测试操作。
+
+## 功能概述
+
+HttpRunner v5 集成了多种 AI 功能：
+
+- **AIAction**: 使用自然语言执行 UI 操作
+- **AIAssert**: 使用自然语言进行断言验证
+- **AIQuery**: 使用自然语言从屏幕中提取信息
+- **StartToGoal**: 目标导向的智能操作序列
+
+## AIQuery 功能详解
+
+### 概述
+
+AIQuery 是 HttpRunner v5 中新增的 AI 查询功能，允许用户使用自然语言从屏幕截图中提取信息。它基于视觉语言模型（VLM），能够理解屏幕内容并返回结构化的查询结果。
+
+### 功能特点
+
+- **自然语言查询**: 使用自然语言描述要查询的信息
+- **智能屏幕分析**: 基于 AI 视觉模型分析屏幕内容
+- **结构化输出**: 返回格式化的查询结果
+- **多平台支持**: 支持 Android、iOS、Browser 等平台
+
+### 基本用法
+
+#### 1. 在测试步骤中使用 AIQuery
+
+```go
+// 基本查询示例
+hrp.NewStep("Query Screen Content").
+    Android().
+    AIQuery("Please describe what is displayed on the screen")
+
+// 提取特定信息
+hrp.NewStep("Extract App List").
+    Android().
+    AIQuery("What apps are visible on the home screen? List them as a comma-separated string")
+
+// UI 元素分析
+hrp.NewStep("Analyze Buttons").
+    Android().
+    AIQuery("Are there any buttons visible? Describe their text and positions")
+```
+
+#### 2. 配置 LLM 服务
+
+在使用 AIQuery 之前，需要配置 LLM 服务：
+
+```go
+testcase := &hrp.TestCase{
+    Config: hrp.NewConfig("AIQuery Test").
+        SetLLMService(option.OPENAI_GPT_4O), // 配置 LLM 服务
+    TestSteps: []hrp.IStep{
+        // 使用 AIQuery 的步骤
+    },
+}
+```
+
+#### 3. 支持的选项
+
+AIQuery 支持以下选项：
+
+```go
+hrp.NewStep("Query with Options").
+    Android().
+    AIQuery("Describe the screen content",
+        option.WithLLMService("openai_gpt_4o"),  // 指定 LLM 服务
+        option.WithCVService("openai_gpt_4o"),   // 指定 CV 服务
+        option.WithOutputSchema(CustomSchema{}), // 自定义输出格式
+    )
+```
+
+#### 4. 自定义输出格式 (OutputSchema)
+
+AIQuery 支持自定义输出格式，可以返回结构化数据：
+
+```go
+// 定义自定义输出格式
+type GameAnalysis struct {
+    Content     string   `json:"content"`     // 必须：人类可读描述
+    Thought     string   `json:"thought"`     // 必须：AI推理过程
+    GameType    string   `json:"game_type"`   // 游戏类型
+    Rows        int      `json:"rows"`        // 行数
+    Cols        int      `json:"cols"`        // 列数
+    Icons       []string `json:"icons"`       // 图标类型
+    TotalIcons  int      `json:"total_icons"` // 图标总数
+}
+
+// 使用自定义格式查询
+hrp.NewStep("Analyze Game Interface").
+    Android().
+    AIQuery("分析这个连连看游戏界面，告诉我有多少行多少列，有哪些不同类型的图案",
+        option.WithOutputSchema(GameAnalysis{}))
+```
+
+### 实际应用场景
+
+#### 1. 游戏界面分析
+
+```go
+// 分析连连看游戏界面
+hrp.NewStep("Analyze Game Board").
+    Android().
+    AIQuery("This is a LianLianKan (连连看) game interface. Please analyze: 1) How many rows and columns are there? 2) What types of icons are present?")
+```
+
+#### 2. 应用状态检查
+
+```go
+// 检查应用状态
+hrp.NewStep("Check App State").
+    Android().
+    AIQuery("Is the login screen displayed? Are there any error messages visible?")
+```
+
+#### 3. 内容提取
+
+```go
+// 提取列表内容
+hrp.NewStep("Extract List Items").
+    Android().
+    AIQuery("Extract all items from the list displayed on screen as a JSON array")
+```
+
+### 与其他 AI 功能的对比
+
+| 功能 | 用途 | 返回值 | 使用场景 |
+|------|------|--------|----------|
+| AIAction | 执行操作 | 无 | 点击、输入、滑动等交互操作 |
+| AIAssert | 断言验证 | 布尔值 | 验证界面状态、元素存在性 |
+| AIQuery | 信息查询 | 字符串 | 提取屏幕信息、分析内容 |
+
+### 最佳实践
+
+#### 1. 明确的查询描述
+
+```go
+// 好的示例：具体明确
+AIQuery("How many unread messages are shown in the notification badge?")
+
+// 避免：过于模糊
+AIQuery("Tell me about the screen")
+```
+
+#### 2. 结构化查询
+
+```go
+// 请求结构化输出
+AIQuery("List all visible buttons with their text and approximate positions in JSON format")
+```
+
+#### 3. 上下文相关查询
+
+```go
+// 结合应用上下文
+AIQuery("In this shopping app, what products are displayed in the current category? Include product names and prices")
+```
+
+### 错误处理
+
+AIQuery 可能遇到的常见错误：
+
+1. **LLM 服务未配置**: 确保在测试配置中设置了 LLM 服务
+2. **网络连接问题**: 检查网络连接和 API 密钥配置
+3. **屏幕截图失败**: 确保设备连接正常
+
+### 注意事项
+
+1. AIQuery 需要网络连接来访问 LLM 服务
+2. 查询结果的准确性依赖于所使用的 LLM 模型
+3. 建议在查询中使用具体、明确的描述以获得更好的结果
+4. 对于复杂的信息提取，可以要求返回 JSON 格式的结构化数据
+
+## 完整示例
+
+以下是一个完整的 AIQuery 使用示例：
+
+```go
+func TestAIQuery(t *testing.T) {
+    testCase := &hrp.TestCase{
+        Config: hrp.NewConfig("AIQuery Demo").
+            SetLLMService(option.OPENAI_GPT_4O),
+        TestSteps: []hrp.IStep{
+            hrp.NewStep("Take Screenshot").
+                Android().
+                ScreenShot(),
+            hrp.NewStep("Query Screen Content").
+                Android().
+                AIQuery("Please describe what is displayed on the screen and identify any interactive elements"),
+            hrp.NewStep("Extract App Information").
+                Android().
+                AIQuery("What apps are visible on the screen? List them as a comma-separated string"),
+            hrp.NewStep("Analyze UI Elements").
+                Android().
+                AIQuery("Are there any buttons or clickable elements visible? Describe their locations and purposes"),
+        },
+    }
+
+    err := hrp.NewRunner(t).Run(testCase)
+    assert.Nil(t, err)
+}
+```

@@ -115,6 +115,7 @@ func TestToolInterfaces(t *testing.T) {
 		&ToolSecondaryClickBySelector{},
 		&ToolWebCloseTab{},
 		&ToolAIAction{},
+		&ToolAIQuery{},
 		&ToolFinished{},
 	}
 
@@ -1302,6 +1303,39 @@ func TestToolAIAction(t *testing.T) {
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
 		Method: option.ACTION_AIAction,
+		Params: 123, // should be string
+	}
+	_, err = tool.ConvertActionToCallToolRequest(invalidAction)
+	assert.Error(t, err)
+}
+
+// TestToolAIQuery tests the ToolAIQuery implementation
+func TestToolAIQuery(t *testing.T) {
+	tool := &ToolAIQuery{}
+
+	// Test Name
+	assert.Equal(t, option.ACTION_Query, tool.Name())
+
+	// Test Description
+	assert.NotEmpty(t, tool.Description())
+
+	// Test Options
+	options := tool.Options()
+	assert.NotNil(t, options)
+
+	// Test ConvertActionToCallToolRequest with valid params
+	action := option.MobileAction{
+		Method: option.ACTION_Query,
+		Params: "What is displayed on the screen?",
+	}
+	request, err := tool.ConvertActionToCallToolRequest(action)
+	assert.NoError(t, err)
+	assert.Equal(t, string(option.ACTION_Query), request.Params.Name)
+	assert.Equal(t, "What is displayed on the screen?", request.Params.Arguments["prompt"])
+
+	// Test ConvertActionToCallToolRequest with invalid params
+	invalidAction := option.MobileAction{
+		Method: option.ACTION_Query,
 		Params: 123, // should be string
 	}
 	_, err = tool.ConvertActionToCallToolRequest(invalidAction)

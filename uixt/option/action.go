@@ -184,11 +184,12 @@ type ActionOptions struct {
 	Params []float64 `json:"params,omitempty" yaml:"params,omitempty" desc:"Generic parameter array"`
 
 	// AI related
-	Prompt       string `json:"prompt,omitempty" yaml:"prompt,omitempty" desc:"AI action prompt"`
-	Content      string `json:"content,omitempty" yaml:"content,omitempty" desc:"Content for finished action"`
-	LLMService   string `json:"llm_service,omitempty" yaml:"llm_service,omitempty" desc:"LLM service type for AI actions"`
-	CVService    string `json:"cv_service,omitempty" yaml:"cv_service,omitempty" desc:"Computer vision service type for AI actions"`
-	ResetHistory bool   `json:"reset_history,omitempty" yaml:"reset_history,omitempty" desc:"Whether to reset conversation history before AI planning"`
+	Prompt       string      `json:"prompt,omitempty" yaml:"prompt,omitempty" desc:"AI action prompt"`
+	Content      string      `json:"content,omitempty" yaml:"content,omitempty" desc:"Content for finished action"`
+	LLMService   string      `json:"llm_service,omitempty" yaml:"llm_service,omitempty" desc:"LLM service type for AI actions"`
+	CVService    string      `json:"cv_service,omitempty" yaml:"cv_service,omitempty" desc:"Computer vision service type for AI actions"`
+	ResetHistory bool        `json:"reset_history,omitempty" yaml:"reset_history,omitempty" desc:"Whether to reset conversation history before AI planning"`
+	OutputSchema interface{} `json:"output_schema,omitempty" yaml:"output_schema,omitempty" desc:"Custom output schema for structured AI query response"`
 
 	// Time related
 	Seconds      float64 `json:"seconds,omitempty" yaml:"seconds,omitempty" desc:"Sleep duration in seconds"`
@@ -558,6 +559,13 @@ func WithResetHistory(resetHistory bool) ActionOption {
 	}
 }
 
+// WithOutputSchema sets the custom output schema for structured AI query response
+func WithOutputSchema(schema interface{}) ActionOption {
+	return func(o *ActionOptions) {
+		o.OutputSchema = schema
+	}
+}
+
 // HTTP API direct usage methods
 
 // ValidateForHTTPAPI validates the request for HTTP API usage
@@ -700,6 +708,9 @@ func (o *ActionOptions) validateActionSpecificFields(actionType ActionName) erro
 		ACTION_StartToGoal: func() error {
 			return o.requireFields("prompt", o.Prompt != "")
 		},
+		ACTION_Query: func() error {
+			return o.requireFields("prompt", o.Prompt != "")
+		},
 		ACTION_Finished: func() error {
 			return o.requireFields("content", o.Content != "")
 		},
@@ -774,6 +785,8 @@ func (o *ActionOptions) GetMCPOptions(actionType ActionName) []mcp.ToolOption {
 		ACTION_SleepRandom:              {"platform", "serial", "params"},
 		ACTION_AIAction:                 {"platform", "serial", "prompt", "llm_service", "cv_service"},
 		ACTION_StartToGoal:              {"platform", "serial", "prompt", "llm_service", "cv_service"},
+		ACTION_Query:                    {"platform", "serial", "prompt", "llm_service", "cv_service", "output_schema"},
+		ACTION_AIAssert:                 {"platform", "serial", "prompt", "llm_service", "cv_service"},
 		ACTION_Finished:                 {"content"},
 		ACTION_ListAvailableDevices:     {},
 		ACTION_SelectDevice:             {"platform", "serial"},
@@ -862,7 +875,15 @@ func (o *ActionOptions) generateMCPOptionsForFields(fields []string) []mcp.ToolO
 				}
 			}
 		case reflect.Map, reflect.Interface:
-			// Skip map and interface types for now
+			// Handle OutputSchema as object type
+			if name == "output_schema" {
+				if required {
+					options = append(options, mcp.WithObject(name, mcp.Required(), mcp.Description(desc)))
+				} else {
+					options = append(options, mcp.WithObject(name, mcp.Description(desc)))
+				}
+			}
+			// Skip other map and interface types for now
 			continue
 		default:
 			log.Warn().Str("field_type", fieldType.String()).Msg("Unsupported field type")

@@ -130,6 +130,71 @@ func (t *ToolAIAction) ConvertActionToCallToolRequest(action option.MobileAction
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid AI action params: %v", action.Params)
 }
 
+// ToolAIQuery implements the ai_query tool call.
+type ToolAIQuery struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Prompt string `json:"prompt" desc:"AI query prompt that was executed"`
+	Result string `json:"result" desc:"Query result content"`
+}
+
+func (t *ToolAIQuery) Name() option.ActionName {
+	return option.ACTION_Query
+}
+
+func (t *ToolAIQuery) Description() string {
+	return "Query information from screen using AI vision model with natural language prompts"
+}
+
+func (t *ToolAIQuery) Options() []mcp.ToolOption {
+	unifiedReq := &option.ActionOptions{}
+	return unifiedReq.GetMCPOptions(option.ACTION_Query)
+}
+
+func (t *ToolAIQuery) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		if err != nil {
+			return nil, err
+		}
+
+		// Build action options from unified request
+		opts := unifiedReq.Options()
+
+		// AI query logic with options
+		result, err := driverExt.AIQuery(unifiedReq.Prompt, opts...)
+		if err != nil {
+			return NewMCPErrorResponse(fmt.Sprintf("AI query failed: %s", err.Error())), nil
+		}
+
+		message := fmt.Sprintf("Successfully queried information with prompt: %s", unifiedReq.Prompt)
+		returnData := ToolAIQuery{
+			Prompt: unifiedReq.Prompt,
+			Result: result,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
+	}
+}
+
+func (t *ToolAIQuery) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
+	if prompt, ok := action.Params.(string); ok {
+		arguments := map[string]any{
+			"prompt": prompt,
+		}
+
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
+
+		return buildMCPCallToolRequest(t.Name(), arguments), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid AI query params: %v", action.Params)
+}
+
 // ToolFinished implements the finished tool call.
 type ToolFinished struct {
 	// Return data fields - these define the structure of data returned by this tool

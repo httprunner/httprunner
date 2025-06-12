@@ -322,7 +322,37 @@ type SessionData struct {
 }
 
 func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (string, error) {
-	return "", nil
+	if dExt.LLMService == nil {
+		return "", errors.New("LLM service is not initialized")
+	}
+
+	screenShotBase64, err := GetScreenShotBufferBase64(dExt.IDriver)
+	if err != nil {
+		return "", err
+	}
+
+	// get window size
+	size, err := dExt.IDriver.WindowSize()
+	if err != nil {
+		return "", errors.Wrap(err, "get window size for AI query failed")
+	}
+
+	// parse action options to extract OutputSchema
+	actionOptions := option.NewActionOptions(opts...)
+
+	// execute query
+	queryOpts := &ai.QueryOptions{
+		Query:        text,
+		Screenshot:   screenShotBase64,
+		Size:         size,
+		OutputSchema: actionOptions.OutputSchema,
+	}
+	result, err := dExt.LLMService.Query(context.Background(), queryOpts)
+	if err != nil {
+		return "", errors.Wrap(err, "AI query failed")
+	}
+
+	return result.Content, nil
 }
 
 func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) error {
