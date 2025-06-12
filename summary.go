@@ -76,20 +76,8 @@ func (s *Summary) AddCaseSummary(caseSummary *TestCaseSummary) {
 	}
 }
 
-func (s *Summary) SetupDirPath() (path string, err error) {
-	dirPath := filepath.Join(s.rootDir, config.GetConfig().ResultsDir)
-	err = builtin.EnsureFolderExists(dirPath)
-	if err != nil {
-		return "", err
-	}
-	return dirPath, nil
-}
-
 func (s *Summary) GenHTMLReport() error {
-	reportsDir, err := s.SetupDirPath()
-	if err != nil {
-		return err
-	}
+	reportsDir := config.GetConfig().ResultsPath()
 
 	// Find summary.json and hrp.log files
 	summaryPath := filepath.Join(reportsDir, "summary.json")
@@ -107,11 +95,7 @@ func (s *Summary) GenHTMLReport() error {
 }
 
 func (s *Summary) GenSummary() (path string, err error) {
-	reportsDir, err := s.SetupDirPath()
-	if err != nil {
-		return "", err
-	}
-
+	reportsDir := config.GetConfig().ResultsPath()
 	path = filepath.Join(reportsDir, "summary.json")
 	err = builtin.Dump2JSON(s, path)
 	if err != nil {

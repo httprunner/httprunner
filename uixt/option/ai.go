@@ -31,6 +31,7 @@ func WithCVService(service CVServiceType) AIServiceOption {
 
 type LLMServiceType string
 
+// UI-TARS do not support function calling and json response
 func IS_UI_TARS(modelType LLMServiceType) bool {
 	return modelType == DOUBAO_1_5_UI_TARS_250328 ||
 		modelType == DOUBAO_1_5_UI_TARS_250428
@@ -38,8 +39,9 @@ func IS_UI_TARS(modelType LLMServiceType) bool {
 
 const (
 	DOUBAO_1_5_UI_TARS_250328             LLMServiceType = "doubao-1.5-ui-tars-250328"
-	DOUBAO_1_5_UI_TARS_250428             LLMServiceType = "doubao-1.5-ui-tars-250428" // not support function calling and json response
+	DOUBAO_1_5_UI_TARS_250428             LLMServiceType = "doubao-1.5-ui-tars-250428"
 	DOUBAO_1_5_THINKING_VISION_PRO_250428 LLMServiceType = "doubao-1.5-thinking-vision-pro-250428"
+	DOUBAO_SEED_1_6_250615                LLMServiceType = "doubao-seed-1.6-250615"
 	OPENAI_GPT_4O                         LLMServiceType = "openai/gpt-4o"
 	DEEPSEEK_R1_250528                    LLMServiceType = "deepseek-r1-250528"
 )

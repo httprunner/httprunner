@@ -20,7 +20,6 @@ const (
 
 type Config struct {
 	RootDir                 string
-	ResultsDir              string
 	resultsPath             string
 	downloadsPath           string
 	screenShotsPath         string
@@ -48,11 +47,11 @@ func GetConfig() *Config {
 		}
 
 		startTimeStr := cfg.StartTime.Format("20060102150405")
-		cfg.ResultsDir = filepath.Join(ResultsDirName, startTimeStr)
-		cfg.resultsPath = filepath.Join(cfg.RootDir, cfg.ResultsDir)
+		resultsDir := filepath.Join(ResultsDirName, startTimeStr)
+		cfg.resultsPath = filepath.Join(cfg.RootDir, resultsDir)
 		cfg.downloadsPath = filepath.Join(cfg.RootDir, filepath.Join(DownloadsDirName, startTimeStr))
 		cfg.screenShotsPath = filepath.Join(cfg.resultsPath, ScreenshotsDirName)
-		cfg.ActionLogFilePath = filepath.Join(cfg.ResultsDir, ActionLogDirName)
+		cfg.ActionLogFilePath = filepath.Join(resultsDir, ActionLogDirName)
 		cfg.DeviceActionLogFilePath = "/sdcard/Android/data/io.appium.uiautomator2.server/files/hodor"
 
 		globalConfig = cfg
@@ -71,7 +70,7 @@ func (c *Config) ResultsPath() string {
 		if err := builtin.EnsureFolderExists(c.resultsPath); err != nil {
 			log.Error().Err(err).Str("path", c.resultsPath).Msg("failed to create results directory")
 		} else {
-			log.Info().Str("path", c.resultsPath).Msg("create folder")
+			log.Info().Str("path", c.resultsPath).Msg("created results folder")
 		}
 	}
 	return c.resultsPath
@@ -86,6 +85,8 @@ func (c *Config) DownloadsPath() string {
 	if _, err := os.Stat(c.downloadsPath); os.IsNotExist(err) {
 		if err := builtin.EnsureFolderExists(c.downloadsPath); err != nil {
 			log.Error().Err(err).Str("path", c.downloadsPath).Msg("failed to create downloads directory")
+		} else {
+			log.Info().Str("path", c.downloadsPath).Msg("created downloads folder")
 		}
 	}
 	return c.downloadsPath
@@ -100,6 +101,8 @@ func (c *Config) ScreenShotsPath() string {
 	if _, err := os.Stat(c.screenShotsPath); os.IsNotExist(err) {
 		if err := builtin.EnsureFolderExists(c.screenShotsPath); err != nil {
 			log.Error().Err(err).Str("path", c.screenShotsPath).Msg("failed to create screenshots directory")
+		} else {
+			log.Info().Str("path", c.screenShotsPath).Msg("created screenshots folder")
 		}
 	}
 	return c.screenShotsPath

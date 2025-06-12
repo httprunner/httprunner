@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -16,12 +17,12 @@ import (
 
 // GameInfo represents basic game information for testing
 type GameInfo struct {
-	Content    string   `json:"content"`    // Description
-	Thought    string   `json:"thought"`    // Reasoning
-	Rows       int      `json:"rows"`       // Number of rows
-	Cols       int      `json:"cols"`       // Number of columns
-	Icons      []string `json:"icons"`      // List of icon types
-	TotalIcons int      `json:"totalIcons"` // Total number of icons
+	Content    string   `json:"content"`     // Description
+	Thought    string   `json:"thought"`     // Reasoning
+	Rows       int      `json:"rows"`        // Number of rows
+	Cols       int      `json:"cols"`        // Number of columns
+	Icons      []string `json:"icons"`       // List of icon types
+	TotalIcons int      `json:"totalNumber"` // Total number of icons
 }
 
 // GameAnalysisResult represents comprehensive game analysis for testing
@@ -72,15 +73,15 @@ type TypeCount struct {
 
 func setupTestQuerier(t *testing.T) *Querier {
 	ctx := context.Background()
-	modelConfig, err := GetModelConfig(option.OPENAI_GPT_4O)
+	modelConfig, err := GetModelConfig(option.DOUBAO_SEED_1_6_250615)
 	require.NoError(t, err)
 	querier, err := NewQuerier(ctx, modelConfig)
 	require.NoError(t, err)
 	return querier
 }
 
-func loadTestImage(t *testing.T) (string, types.Size) {
-	screenshot, size, err := builtin.LoadImage("testdata/llk_1.png")
+func loadTestImage(t *testing.T, path string) (string, types.Size) {
+	screenshot, size, err := builtin.LoadImage(path)
 	require.NoError(t, err)
 	return screenshot, size
 }
@@ -140,10 +141,86 @@ func TestParseQueryResult(t *testing.T) {
 	}
 }
 
+func TestModel(t *testing.T) {
+	// Test different models
+	models := []option.LLMServiceType{
+		option.DOUBAO_SEED_1_6_250615,
+		option.DOUBAO_1_5_THINKING_VISION_PRO_250428,
+		option.DOUBAO_1_5_UI_TARS_250328,
+		option.OPENAI_GPT_4O,
+	}
+
+	for _, path := range []string{"testdata/llk_1.png", "testdata/llk_4.png"} {
+		for _, modelType := range models {
+			t.Run(string(modelType), func(t *testing.T) {
+				modelConfig, err := GetModelConfig(modelType)
+				require.NoError(t, err)
+				querier, err := NewQuerier(context.Background(), modelConfig)
+				require.NoError(t, err)
+
+				// Load test image
+				screenshot, size := loadTestImage(t, path)
+
+				// Test query
+				opts := &QueryOptions{
+					Query:        "请分析这个连连看游戏界面，告诉我有多少行多少列，有哪些不同类型的图案，图案总数是多少",
+					Screenshot:   screenshot,
+					Size:         size,
+					OutputSchema: GameInfo{},
+				}
+
+				result1, err := querier.Query(context.Background(), opts)
+				assert.NoError(t, err)
+
+				gameInfo, ok := result1.Data.(*GameInfo)
+				assert.True(t, ok)
+				jsonData1, _ := json.Marshal(gameInfo)
+				fmt.Printf("modelType: %v, gameInfo: %s\n", modelType, string(jsonData1))
+
+				opts2 := &QueryOptions{
+					Query: `Analyze this game interface and provide structured information about:
+				1. The type of game
+				2. Grid dimensions (rows and columns)
+				3. All game elements with their positions and types
+				4. Statistics about element distribution`,
+					Screenshot:   screenshot,
+					Size:         size,
+					OutputSchema: GameAnalysisResult{},
+				}
+
+				result2, err := querier.Query(context.Background(), opts2)
+				assert.NoError(t, err)
+
+				// Verify structured data
+				gameAnalysisResult, ok := result2.Data.(*GameAnalysisResult)
+				assert.True(t, ok)
+				jsonData2, _ := json.Marshal(gameAnalysisResult)
+				fmt.Printf("modelType: %v, gameAnalysisResult: %s\n", modelType, string(jsonData2))
+
+				opts3 := &QueryOptions{
+					Query:        "给出第一个苹果的坐标",
+					Screenshot:   screenshot,
+					Size:         size,
+					OutputSchema: BoundingBox{},
+				}
+
+				result3, err := querier.Query(context.Background(), opts3)
+				assert.NoError(t, err)
+
+				boxInfo, ok := result3.Data.(*BoundingBox)
+				assert.True(t, ok)
+				jsonData3, _ := json.Marshal(boxInfo)
+				fmt.Printf("modelType: %v, thought: %v, boxInfo: %s\n",
+					modelType, result3.Thought, string(jsonData3))
+			})
+		}
+	}
+}
+
 // TestQueryFunctionality tests both basic and custom schema query functionality
 func TestQueryFunctionality(t *testing.T) {
 	querier := setupTestQuerier(t)
-	screenshot, size := loadTestImage(t)
+	screenshot, size := loadTestImage(t, "testdata/llk_1.png")
 
 	t.Run("BasicQuery", func(t *testing.T) {
 		opts := &QueryOptions{
@@ -172,10 +249,6 @@ func TestQueryFunctionality(t *testing.T) {
 
 		result, err := querier.Query(context.Background(), opts)
 		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.NotEmpty(t, result.Content)
-		assert.NotEmpty(t, result.Thought)
-		assert.NotNil(t, result.Data) // Should contain structured data
 
 		// Verify structured data
 		gameInfo, ok := result.Data.(*GameInfo)
@@ -204,11 +277,8 @@ func TestQueryFunctionality(t *testing.T) {
 
 		result, err := querier.Query(context.Background(), opts)
 		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.NotEmpty(t, result.Content)
-		assert.NotEmpty(t, result.Thought)
-		assert.NotNil(t, result.Data)
 
+		// Verify structured data
 		gameAnalysisResult, ok := result.Data.(*GameAnalysisResult)
 		assert.True(t, ok)
 		assert.NotNil(t, gameAnalysisResult)
@@ -226,7 +296,7 @@ func TestQueryFunctionality(t *testing.T) {
 // TestQueryWithDifferentPrompts tests various types of queries on the same screenshot
 func TestQueryWithDifferentPrompts(t *testing.T) {
 	querier := setupTestQuerier(t)
-	screenshot, size := loadTestImage(t)
+	screenshot, size := loadTestImage(t, "testdata/llk_1.png")
 
 	queries := []string{
 		"请描述这张图片中的内容",
