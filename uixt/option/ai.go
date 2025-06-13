@@ -9,9 +9,23 @@ func NewAIServiceOptions(opts ...AIServiceOption) *AIServiceOptions {
 }
 
 type AIServiceOptions struct {
-	CVService  CVServiceType
-	LLMService LLMServiceType
-	LLMConfig  *LLMServiceConfig // New field for advanced LLM configuration
+	CVService  CVServiceType     `json:"cv_service,omitempty" yaml:"cv_service,omitempty"`
+	LLMService LLMServiceType    `json:"llm_service,omitempty" yaml:"llm_service,omitempty"`
+	LLMConfig  *LLMServiceConfig `json:"llm_config,omitempty" yaml:"llm_config,omitempty"` // advanced LLM configuration
+}
+
+func (opts *AIServiceOptions) Options() []AIServiceOption {
+	aiOpts := []AIServiceOption{}
+	if opts.CVService != "" {
+		aiOpts = append(aiOpts, WithCVService(opts.CVService))
+	}
+	if opts.LLMService != "" {
+		aiOpts = append(aiOpts, WithLLMService(opts.LLMService))
+	}
+	if opts.LLMConfig != nil {
+		aiOpts = append(aiOpts, WithLLMConfig(opts.LLMConfig))
+	}
+	return aiOpts
 }
 
 type AIServiceOption func(*AIServiceOptions)

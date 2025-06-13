@@ -316,14 +316,14 @@ type SessionData struct {
 	ScreenResults []*ScreenResult   `json:"screen_results,omitempty"` // store sub-action specific screen_results
 }
 
-func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (string, error) {
+func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*ai.QueryResult, error) {
 	if dExt.LLMService == nil {
-		return "", errors.New("LLM service is not initialized")
+		return nil, errors.New("LLM service is not initialized")
 	}
 
 	screenShotBase64, size, err := dExt.GetScreenshotBase64WithSize()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// parse action options to extract OutputSchema
@@ -338,10 +338,10 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (string,
 	}
 	result, err := dExt.LLMService.Query(context.Background(), queryOpts)
 	if err != nil {
-		return "", errors.Wrap(err, "AI query failed")
+		return nil, errors.Wrap(err, "AI query failed")
 	}
 
-	return result.Content, nil
+	return result, nil
 }
 
 func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) error {

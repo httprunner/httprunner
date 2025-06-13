@@ -68,7 +68,7 @@ func (c *Config) ResultsPath() string {
 	// Check if directory exists, create if it doesn't
 	if _, err := os.Stat(c.resultsPath); os.IsNotExist(err) {
 		if err := builtin.EnsureFolderExists(c.resultsPath); err != nil {
-			log.Error().Err(err).Str("path", c.resultsPath).Msg("failed to create results directory")
+			log.Fatal().Err(err).Str("path", c.resultsPath).Msg("failed to create results directory")
 		} else {
 			log.Info().Str("path", c.resultsPath).Msg("created results folder")
 		}
@@ -84,7 +84,7 @@ func (c *Config) DownloadsPath() string {
 	// Check if directory exists, create if it doesn't
 	if _, err := os.Stat(c.downloadsPath); os.IsNotExist(err) {
 		if err := builtin.EnsureFolderExists(c.downloadsPath); err != nil {
-			log.Error().Err(err).Str("path", c.downloadsPath).Msg("failed to create downloads directory")
+			log.Fatal().Err(err).Str("path", c.downloadsPath).Msg("failed to create downloads directory")
 		} else {
 			log.Info().Str("path", c.downloadsPath).Msg("created downloads folder")
 		}
@@ -100,7 +100,7 @@ func (c *Config) ScreenShotsPath() string {
 	// Check if directory exists, create if it doesn't
 	if _, err := os.Stat(c.screenShotsPath); os.IsNotExist(err) {
 		if err := builtin.EnsureFolderExists(c.screenShotsPath); err != nil {
-			log.Error().Err(err).Str("path", c.screenShotsPath).Msg("failed to create screenshots directory")
+			log.Fatal().Err(err).Str("path", c.screenShotsPath).Msg("failed to create screenshots directory")
 		} else {
 			log.Info().Str("path", c.screenShotsPath).Msg("created screenshots folder")
 		}

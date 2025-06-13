@@ -744,22 +744,8 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 	// Extract AI service options from global configuration
 	if s.caseRunner != nil && s.caseRunner.Config != nil {
 		globalConfig := s.caseRunner.Config.Get()
-		if globalConfig != nil {
-			var aiOpts []option.AIServiceOption
-
-			// Add LLM service if configured
-			if globalConfig.LLMService != "" {
-				aiOpts = append(aiOpts, option.WithLLMService(globalConfig.LLMService))
-				log.Debug().Str("llmService", string(globalConfig.LLMService)).Msg("Applied global LLM service to XTDriver config")
-			}
-
-			// Add CV service if configured
-			if globalConfig.CVService != "" {
-				aiOpts = append(aiOpts, option.WithCVService(globalConfig.CVService))
-				log.Debug().Str("cvService", string(globalConfig.CVService)).Msg("Applied global CV service to XTDriver config")
-			}
-
-			config.AIOptions = aiOpts
+		if globalConfig != nil && globalConfig.AIOptions != nil {
+			config.AIOptions = globalConfig.AIOptions.Options()
 		}
 	}
 
@@ -871,16 +857,16 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 					}
 
 					// Apply global LLM service configuration for AI actions
-					if action.Method == option.ACTION_AIAction || action.Method == option.ACTION_StartToGoal ||
-						action.Method == option.ACTION_AIAssert || action.Method == option.ACTION_Query {
-						if config.LLMService != "" && action.Options.LLMService == "" {
-							action.Options.LLMService = string(config.LLMService)
+					if config.AIOptions != nil && (action.Method == option.ACTION_AIAction || action.Method == option.ACTION_StartToGoal ||
+						action.Method == option.ACTION_AIAssert || action.Method == option.ACTION_Query) {
+						if config.AIOptions.LLMService != "" && action.Options.LLMService == "" {
+							action.Options.LLMService = string(config.AIOptions.LLMService)
 							log.Debug().Str("action", string(action.Method)).
 								Str("llmService", action.Options.LLMService).
 								Msg("Applied global LLM service config to action")
 						}
-						if config.CVService != "" && action.Options.CVService == "" {
-							action.Options.CVService = string(config.CVService)
+						if config.AIOptions.CVService != "" && action.Options.CVService == "" {
+							action.Options.CVService = string(config.AIOptions.CVService)
 							log.Debug().Str("action", string(action.Method)).
 								Str("cvService", action.Options.CVService).
 								Msg("Applied global CV service config to action")

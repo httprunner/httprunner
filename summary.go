@@ -76,8 +76,12 @@ func (s *Summary) AddCaseSummary(caseSummary *TestCaseSummary) {
 	}
 }
 
+func (s *Summary) GetResultsPath() string {
+	return config.GetConfig().ResultsPath()
+}
+
 func (s *Summary) GenHTMLReport() error {
-	reportsDir := config.GetConfig().ResultsPath()
+	reportsDir := s.GetResultsPath()
 
 	// Find summary.json and hrp.log files
 	summaryPath := filepath.Join(reportsDir, "summary.json")

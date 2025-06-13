@@ -174,7 +174,7 @@ func (t *ToolAIQuery) Implement() server.ToolHandlerFunc {
 		message := fmt.Sprintf("Successfully queried information with prompt: %s", unifiedReq.Prompt)
 		returnData := ToolAIQuery{
 			Prompt: unifiedReq.Prompt,
-			Result: result,
+			Result: result.Content,
 		}
 
 		return NewMCPSuccessResponse(message, &returnData), nil

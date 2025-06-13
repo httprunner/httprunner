@@ -45,8 +45,7 @@ type TConfig struct {
 	MCPConfigPath     string                         `json:"mcp_config_path,omitempty" yaml:"mcp_config_path,omitempty"`
 	AntiRisk          bool                           `json:"anti_risk,omitempty" yaml:"anti_risk,omitempty"` // global anti-risk switch
 	IgnorePopup       bool                           `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
-	LLMService        option.LLMServiceType          `json:"llm_service,omitempty" yaml:"llm_service,omitempty"`
-	CVService         option.CVServiceType           `json:"cv_service,omitempty" yaml:"cv_service,omitempty"`
+	AIOptions         *option.AIServiceOptions       `json:"ai_options,omitempty" yaml:"ai_options,omitempty"`
 }
 
 func (c *TConfig) Get() *TConfig {
@@ -119,15 +118,27 @@ func (c *TConfig) SetWeight(weight int) *TConfig {
 	return c
 }
 
+// SetAIOptions sets AI service options for current testcase.
+func (c *TConfig) SetAIOptions(opts ...option.AIServiceOption) *TConfig {
+	c.AIOptions = option.NewAIServiceOptions(opts...)
+	return c
+}
+
 // SetLLMService sets LLM service for current testcase.
-func (c *TConfig) SetLLMService(llmService option.LLMServiceType) *TConfig {
-	c.LLMService = llmService
+func (c *TConfig) SetLLMService(service option.LLMServiceType) *TConfig {
+	if c.AIOptions == nil {
+		c.AIOptions = option.NewAIServiceOptions()
+	}
+	c.AIOptions.LLMService = service
 	return c
 }
 
 // SetCVService sets CV service for current testcase.
-func (c *TConfig) SetCVService(cvService option.CVServiceType) *TConfig {
-	c.CVService = cvService
+func (c *TConfig) SetCVService(service option.CVServiceType) *TConfig {
+	if c.AIOptions == nil {
+		c.AIOptions = option.NewAIServiceOptions()
+	}
+	c.AIOptions.CVService = service
 	return c
 }
 

@@ -26,12 +26,16 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 	services := option.NewAIServiceOptions(opts...)
 
 	var err error
-	if services.CVService != "" {
-		driverExt.CVService, err = ai.NewCVService(services.CVService)
-		if err != nil {
-			log.Error().Err(err).Msg("init vedem image service failed")
-			return nil, err
-		}
+
+	// default to vedem CV service
+	if services.CVService == "" {
+		log.Warn().Msg("no CV service config provided, use default vedem")
+		services.CVService = option.CVServiceTypeVEDEM
+	}
+	driverExt.CVService, err = ai.NewCVService(services.CVService)
+	if err != nil {
+		log.Error().Err(err).Msg("init vedem image service failed")
+		return nil, err
 	}
 
 	// Handle LLM service initialization
@@ -47,6 +51,8 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 		if err != nil {
 			return nil, errors.Wrap(err, "init llm service failed")
 		}
+	} else {
+		log.Warn().Msg("no LLM service config provided")
 	}
 
 	// Register uixt MCP tools to LLM service if it exists

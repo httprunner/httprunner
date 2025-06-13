@@ -492,14 +492,9 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 
 	// ai options
 	aiOpts := []option.AIServiceOption{}
-	if parsedConfig.LLMService != "" {
-		aiOpts = append(aiOpts, option.WithLLMService(option.LLMServiceType(parsedConfig.LLMService)))
+	if parsedConfig.AIOptions != nil {
+		aiOpts = parsedConfig.AIOptions.Options()
 	}
-	if parsedConfig.CVService == "" {
-		// default to vedem
-		parsedConfig.CVService = option.CVServiceTypeVEDEM
-	}
-	aiOpts = append(aiOpts, option.WithCVService(parsedConfig.CVService))
 
 	var driverConfigs []uixt.DriverCacheConfig
 	// parse android devices config
@@ -714,9 +709,6 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 		case <-r.caseRunner.hrpRunner.caseTimeoutTimer.C:
 			log.Warn().Msg("timeout in session runner")
 			return summary, errors.Wrap(code.TimeoutError, "session runner timeout")
-		case <-r.caseRunner.hrpRunner.interruptSignal:
-			log.Warn().Msg("interrupted in session runner")
-			return summary, errors.Wrap(code.InterruptError, "session runner interrupted")
 		default:
 			_, err := r.RunStep(step)
 			if err == nil {
@@ -739,6 +731,14 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 }
 
 func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) {
+	// check for interrupt signal before running step
+	select {
+	case <-r.caseRunner.hrpRunner.interruptSignal:
+		log.Warn().Msg("interrupted in RunStep")
+		return nil, errors.Wrap(code.InterruptError, "RunStep interrupted")
+	default:
+	}
+
 	// parse step struct
 	if err = r.ParseStep(step); err != nil {
 		log.Error().Err(err).Msg("parse step struct failed")

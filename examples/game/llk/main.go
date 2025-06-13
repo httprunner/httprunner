@@ -2,18 +2,18 @@ package llk
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
-	"time"
 
+	hrp "github.com/httprunner/httprunner/v5"
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/rs/zerolog/log"
 )
 
@@ -45,101 +45,63 @@ type Position struct {
 
 // LLKGameBot represents the main bot for playing LianLianKan game
 type LLKGameBot struct {
-	Driver       *uixt.XTDriver
-	ctx          context.Context
+	*hrp.UIXTRunner
+
 	analyzeIndex int
 }
 
 // NewLLKGameBot creates a new LianLianKan game bot
 func NewLLKGameBot(platform string, serial string) (*LLKGameBot, error) {
-	ctx := context.Background()
-
 	// Create driver cache config
-	config := uixt.DriverCacheConfig{
-		Platform: platform,
-		Serial:   serial,
-		AIOptions: []option.AIServiceOption{
-			option.WithCVService(option.CVServiceTypeVEDEM),
-			option.WithLLMConfig(
-				option.NewLLMServiceConfig(option.DOUBAO_1_5_UI_TARS_250328).
-					WithQuerierModel(option.DOUBAO_SEED_1_6_250615),
-			),
+	config := hrp.UIXTConfig{
+		DriverCacheConfig: uixt.DriverCacheConfig{
+			Platform: platform,
+			Serial:   serial,
+			AIOptions: []option.AIServiceOption{
+				option.WithCVService(option.CVServiceTypeVEDEM),
+				option.WithLLMConfig(
+					option.NewLLMServiceConfig(option.DOUBAO_1_5_UI_TARS_250328).
+						WithQuerierModel(option.DOUBAO_SEED_1_6_250615),
+				),
+			},
 		},
 	}
-
-	// Get or create XTDriver
-	driver, err := uixt.GetOrCreateXTDriver(config)
+	uixtRunner, err := hrp.NewUIXTRunner(&config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create XTDriver: %w", err)
+		return nil, fmt.Errorf("failed to create session runner: %w", err)
 	}
-
-	// Initialize driver session
-	if err := driver.InitSession(nil); err != nil {
-		return nil, fmt.Errorf("failed to initialize driver session: %w", err)
-	}
-
 	bot := &LLKGameBot{
-		ctx:    ctx,
-		Driver: driver,
+		UIXTRunner:   uixtRunner,
+		analyzeIndex: 0,
 	}
 
 	log.Info().Msg("LianLianKan game bot initialized successfully")
-	log.Info().Str("platform", platform).Str("serial", driver.GetDevice().UUID()).Msg("Bot configuration")
-
 	return bot, nil
 }
 
 func (bot *LLKGameBot) EnterGame(ctx context.Context) error {
-	_, err := bot.Driver.StartToGoal(ctx, "启动抖音，搜索「连了又连」小游戏，并启动游戏")
+	_, err := bot.Session.RunStep(
+		hrp.NewStep("进入游戏").
+			Android().StartToGoal(
+			"启动抖音，搜索「连了又连」小游戏，并启动游戏",
+		),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to enter game: %w", err)
 	}
 	return nil
 }
 
-// TakeScreenshot captures a screenshot and returns base64 encoded image with size
-func (bot *LLKGameBot) TakeScreenshot() (string, types.Size, error) {
-	// Take screenshot
-	screenshotBuffer, err := bot.Driver.ScreenShot()
-	if err != nil {
-		return "", types.Size{}, fmt.Errorf("failed to take screenshot: %w", err)
-	}
-
-	// Get screen size
-	size, err := bot.Driver.WindowSize()
-	if err != nil {
-		return "", types.Size{}, fmt.Errorf("failed to get window size: %w", err)
-	}
-
-	// Convert to base64
-	screenshot := base64.StdEncoding.EncodeToString(screenshotBuffer.Bytes())
-	screenshot = "data:image/png;base64," + screenshot
-
-	log.Info().Int("width", size.Width).Int("height", size.Height).Msg("Screenshot captured successfully")
-	return screenshot, size, nil
-}
-
 // AnalyzeGameInterface analyzes the game interface and extracts element information
 func (bot *LLKGameBot) AnalyzeGameInterface() (*GameElement, error) {
-	// Take screenshot
-	screenshot, size, err := bot.TakeScreenshot()
-	if err != nil {
-		return nil, fmt.Errorf("failed to take screenshot: %w", err)
-	}
-
-	// Prepare query options with custom schema
-	opts := &ai.QueryOptions{
-		Query: `Analyze this LianLianKan (连连看) game interface and provide structured information about:
-1. Grid dimensions (rows and columns)
-2. All game elements with their positions and types`,
-		Screenshot:   screenshot,
-		Size:         size,
-		OutputSchema: GameElement{},
-	}
 	bot.analyzeIndex++
+	query := `Analyze this LianLianKan (连连看) game interface and provide structured information about:
+1. Grid dimensions (rows and columns)
+2. All game elements with their positions and types`
 
 	// Query the AI model
-	result, err := bot.Driver.LLMService.Query(bot.ctx, opts)
+	result, err := bot.DriverExt.AIQuery(query,
+		option.WithOutputSchema(GameElement{}))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query AI model: %w", err)
 	}
@@ -232,18 +194,36 @@ func (bot *LLKGameBot) Play() error {
 		log.Fatal().Err(err).Msg("Failed to solve game")
 	}
 
+	systemPrompt := `连连看是一款经典的益智消除类小游戏，通常以图案或图标为主要元素。以下是连连看的基本规则说明：
+1. 游戏目标: 玩家需要通过连接相同的图案或图标，将它们从游戏界面中消除。
+2. 连接规则:
+- 两个相同的图案可以通过不超过三条直线连接。
+- 连接线可以水平或垂直，但不能斜线，也不能跨过其他图案。
+- 连接线的转折次数不能超过两次。
+3. 游戏界面:
+- 游戏界面是一个矩形区域，内含多个图案或图标，排列成行和列；图案或图标在未选中状态下背景为白色，选中状态下背景为绿色。
+- 游戏界面下方是道具区域，共有 3 种道具，从左到右分别是：「高亮显示」、「随机打乱」、「减少种类」。
+4、游戏攻略：
+- 游戏失败后，可观看广告视频，待屏幕右上角出现「领取成功」后，点击其右侧的 X 即可关闭广告，继续游戏
+
+请严格按照以上游戏规则，仅完成如下2个相同图标的点击，完成后即结束，等待下一次任务：
+`
+
 	// Execute all clicks in sequence
 	for _, pair := range clickSequence {
-		prompt := fmt.Sprintf("请点击连连看游戏界面上的 2 个相同图标 %s，坐标序列分别为 %+v, %+v",
+		prompt := fmt.Sprintf("点击连连看游戏界面上的 2 个相同图标 %s，坐标序列分别为 %+v, %+v",
 			pair[0].Type, pair[0].Position, pair[1].Position)
 		log.Info().Msg(prompt)
-		_, err := bot.Driver.StartToGoal(context.Background(),
-			prompt, option.WithMaxRetryTimes(2))
-		if err != nil {
+
+		_, err := bot.Session.RunStep(
+			hrp.NewStep("").
+				Android().StartToGoal(
+				systemPrompt+prompt, option.WithMaxRetryTimes(2),
+			),
+		)
+		if err != nil && !errors.Is(err, code.MaxRetryError) {
 			log.Error().Err(err).Msg("Failed to click game interface")
 		}
-
-		time.Sleep(1 * time.Second)
 	}
 
 	return nil
@@ -251,12 +231,12 @@ func (bot *LLKGameBot) Play() error {
 
 // Close cleans up resources
 func (bot *LLKGameBot) Close() error {
-	if bot.Driver != nil {
-		if err := bot.Driver.DeleteSession(); err != nil {
+	if bot.DriverExt != nil {
+		if err := bot.DriverExt.DeleteSession(); err != nil {
 			log.Warn().Err(err).Msg("Warning: failed to delete driver session")
 		}
 		// Release driver from cache
-		serial := bot.Driver.GetDevice().UUID()
+		serial := bot.DriverExt.GetDevice().UUID()
 		if err := uixt.ReleaseXTDriver(serial); err != nil {
 			log.Warn().Err(err).Msg("Warning: failed to release driver")
 		}
