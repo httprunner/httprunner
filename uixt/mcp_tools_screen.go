@@ -34,7 +34,7 @@ func (t *ToolScreenShot) Implement() server.ToolHandlerFunc {
 		if err != nil {
 			return nil, err
 		}
-		bufferBase64, err := GetScreenShotBufferBase64(driverExt.IDriver)
+		bufferBase64, _, err := driverExt.GetScreenshotBase64WithSize()
 		if err != nil {
 			log.Error().Err(err).Msg("ScreenShot failed")
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to take screenshot: %v", err)), nil

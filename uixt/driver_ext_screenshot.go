@@ -49,6 +49,26 @@ func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) ai.OCRTexts {
 	})
 }
 
+// GetScreenshotBase64WithSize takes a screenshot, returns the compressed image buffer in base64 format and screen size
+func (dExt *XTDriver) GetScreenshotBase64WithSize() (compressedBufBase64 string, size types.Size, err error) {
+	compressBufSource, err := getScreenShotBuffer(dExt)
+	if err != nil {
+		return "", types.Size{}, err
+	}
+
+	// convert buffer to base64 string
+	screenShotBase64 := "data:image/jpeg;base64," +
+		base64.StdEncoding.EncodeToString(compressBufSource.Bytes())
+
+	// get screen size
+	size, err = dExt.IDriver.WindowSize()
+	if err != nil {
+		return "", types.Size{}, errors.Wrap(err, "get window size failed")
+	}
+
+	return screenShotBase64, size, nil
+}
+
 // GetScreenResult takes a screenshot, returns the image recognition result
 func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
 	// get compressed screenshot buffer
@@ -220,20 +240,6 @@ func getScreenShotBuffer(driver IDriver) (compressedBufSource *bytes.Buffer, err
 	}
 
 	return compressBufSource, nil
-}
-
-// GetScreenShotBufferBase64 takes a screenshot, returns the compressed image buffer in base64 format
-func GetScreenShotBufferBase64(driver IDriver) (compressedBufBase64 string, err error) {
-	compressBufSource, err := getScreenShotBuffer(driver)
-	if err != nil {
-		return "", err
-	}
-
-	// convert buffer to base64 string
-	screenShotBase64 := "data:image/jpeg;base64," +
-		base64.StdEncoding.EncodeToString(compressBufSource.Bytes())
-
-	return screenShotBase64, nil
 }
 
 // saveScreenShot saves compressed image file with file name

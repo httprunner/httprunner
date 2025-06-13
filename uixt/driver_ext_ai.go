@@ -2,7 +2,6 @@ package uixt
 
 import (
 	"context"
-	"encoding/base64"
 	"time"
 
 	"github.com/cloudwego/eino/schema"
@@ -177,12 +176,8 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 	// The planning screenshot is already stored in planningResult.ScreenResult
 	dExt.GetSession().GetData(true) // reset session data to exclude planning screenshot from sub-actions
 
-	// convert buffer to base64 string for LLM
-	screenShotBase64 := "data:image/jpeg;base64," +
-		base64.StdEncoding.EncodeToString(screenResult.bufSource.Bytes())
-
-	// get window size
-	size, err := dExt.IDriver.WindowSize()
+	// get screen shot buffer base64 and size
+	screenShotBase64, size, err := dExt.GetScreenshotBase64WithSize()
 	if err != nil {
 		return nil, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
@@ -326,15 +321,9 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (string,
 		return "", errors.New("LLM service is not initialized")
 	}
 
-	screenShotBase64, err := GetScreenShotBufferBase64(dExt.IDriver)
+	screenShotBase64, size, err := dExt.GetScreenshotBase64WithSize()
 	if err != nil {
 		return "", err
-	}
-
-	// get window size
-	size, err := dExt.IDriver.WindowSize()
-	if err != nil {
-		return "", errors.Wrap(err, "get window size for AI query failed")
 	}
 
 	// parse action options to extract OutputSchema
@@ -360,15 +349,9 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) er
 		return errors.New("LLM service is not initialized")
 	}
 
-	screenShotBase64, err := GetScreenShotBufferBase64(dExt.IDriver)
+	screenShotBase64, size, err := dExt.GetScreenshotBase64WithSize()
 	if err != nil {
 		return err
-	}
-
-	// get window size
-	size, err := dExt.IDriver.WindowSize()
-	if err != nil {
-		return errors.Wrap(err, "get window size for AI assertion failed")
 	}
 
 	// execute assertion
