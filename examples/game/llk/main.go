@@ -223,10 +223,15 @@ func (bot *LLKGameBot) Play() error {
 		)
 		if err != nil && !errors.Is(err, code.MaxRetryError) {
 			log.Error().Err(err).Msg("Failed to click game interface")
+			return err
 		}
 	}
 
 	return nil
+}
+
+func (bot *LLKGameBot) GenerateReport() error {
+	return bot.Session.GenerateReport()
 }
 
 // Close cleans up resources
