@@ -458,17 +458,18 @@ func (s *StepMobile) ScreenShot(opts ...option.ActionOption) *StepMobile {
 	return s
 }
 
-func (s *StepMobile) DisableAutoPopupHandler() *StepMobile {
-	s.IgnorePopup = true
-	return s
-}
-
 func (s *StepMobile) ClosePopups(opts ...option.ActionOption) *StepMobile {
 	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
 		Method:  option.ACTION_ClosePopups,
 		Params:  nil,
 		Options: option.NewActionOptions(opts...),
 	})
+	return s
+}
+
+// EnableAutoPopupHandler enables auto popup handler for this step.
+func (s *StepMobile) EnableAutoPopupHandler() *StepMobile {
+	s.AutoPopupHandler = true
 	return s
 }
 
@@ -713,19 +714,19 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 
 	var stepVariables map[string]interface{}
 	var stepValidators []interface{}
-	var ignorePopup bool
+	var stepAutoPopupHandler bool
 
 	var mobileStep *MobileUI
 	switch stepMobile := step.(type) {
 	case *StepMobile:
 		mobileStep = stepMobile.obj()
 		stepVariables = stepMobile.Variables
-		ignorePopup = stepMobile.IgnorePopup
+		stepAutoPopupHandler = stepMobile.AutoPopupHandler
 	case *StepMobileUIValidation:
 		mobileStep = stepMobile.obj()
 		stepVariables = stepMobile.Variables
 		stepValidators = stepMobile.Validators
-		ignorePopup = stepMobile.StepMobile.IgnorePopup
+		stepAutoPopupHandler = stepMobile.StepMobile.AutoPopupHandler
 	default:
 		return stepResult, errors.New("invalid mobile UI step type")
 	}
@@ -792,12 +793,22 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
-		// automatic handling of pop-up windows on each step finished
 		var config *TConfig
 		if s.caseRunner != nil && s.caseRunner.Config != nil {
 			config = s.caseRunner.Config.Get()
 		}
-		if !ignorePopup && (config == nil || !config.IgnorePopup) && uiDriver != nil {
+		// automatic handling of pop-up windows on each step finished
+		// priority: testcase config > step config, default to disabled
+		shouldHandlePopup := false
+		if config != nil && config.AutoPopupHandler {
+			// testcase level config has higher priority
+			shouldHandlePopup = true
+		} else if stepAutoPopupHandler {
+			// step level config
+			shouldHandlePopup = true
+		}
+
+		if shouldHandlePopup && uiDriver != nil {
 			startTime := time.Now()
 			actionResult := &ActionResult{
 				MobileAction: option.MobileAction{

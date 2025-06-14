@@ -25,7 +25,6 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/httpstat"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
 type HTTPMethod string
@@ -560,9 +559,7 @@ func (s *StepRequest) HTTP2() *StepRequest {
 
 // Loop specify running times for the current step
 func (s *StepRequest) Loop(times int) *StepRequest {
-	s.Loops = &types.IntOrString{
-		IntValue: &times,
-	}
+	s.Loops = times
 	return s
 }
 

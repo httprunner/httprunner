@@ -220,15 +220,15 @@ v5 版本增加了完善的超时和中断处理机制：
 步骤配置支持更多选项：
 ```go
 type StepConfig struct {
-	StepName      string                 `json:"name" yaml:"name"` // required
-	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
-	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
-	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
-	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
-	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
-	StepExport    []string               `json:"export,omitempty" yaml:"export,omitempty"`
-	Loops         *types.IntOrString     `json:"loops,omitempty" yaml:"loops,omitempty"`
-	IgnorePopup   bool                   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
+	StepName         string                 `json:"name" yaml:"name"` // required
+	Variables        map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	SetupHooks       []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
+	TeardownHooks    []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
+	Extract          map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
+	Validators       []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
+	StepExport       []string               `json:"export,omitempty" yaml:"export,omitempty"`
+	Loops            *types.IntOrString     `json:"loops,omitempty" yaml:"loops,omitempty"`
+	AutoPopupHandler bool                   `json:"auto_popup_handler,omitempty" yaml:"auto_popup_handler,omitempty"` // enable auto popup handler for this step
 }
 ```
 

@@ -43,8 +43,8 @@ type TConfig struct {
 	Path              string                         `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
 	PluginSetting     *PluginConfig                  `json:"plugin,omitempty" yaml:"plugin,omitempty"` // plugin config
 	MCPConfigPath     string                         `json:"mcp_config_path,omitempty" yaml:"mcp_config_path,omitempty"`
-	AntiRisk          bool                           `json:"anti_risk,omitempty" yaml:"anti_risk,omitempty"` // global anti-risk switch
-	IgnorePopup       bool                           `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
+	AntiRisk          bool                           `json:"anti_risk,omitempty" yaml:"anti_risk,omitempty"`                   // global anti-risk switch
+	AutoPopupHandler  bool                           `json:"auto_popup_handler,omitempty" yaml:"auto_popup_handler,omitempty"` // enable auto popup handler
 	AIOptions         *option.AIServiceOptions       `json:"ai_options,omitempty" yaml:"ai_options,omitempty"`
 }
 
@@ -230,8 +230,10 @@ func (c *TConfig) EnablePlugin() *TConfig {
 	return c
 }
 
-func (c *TConfig) DisableAutoPopupHandler() *TConfig {
-	c.IgnorePopup = true
+// EnableAutoPopupHandler enables auto popup handler for current testcase.
+// default to disable auto popup handler
+func (c *TConfig) EnableAutoPopupHandler() *TConfig {
+	c.AutoPopupHandler = true
 	return c
 }
 

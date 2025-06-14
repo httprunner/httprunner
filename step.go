@@ -3,7 +3,6 @@ package hrp
 import (
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
 type StepType string
@@ -28,15 +27,15 @@ const (
 )
 
 type StepConfig struct {
-	StepName      string                 `json:"name" yaml:"name"` // required
-	Variables     map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
-	SetupHooks    []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
-	TeardownHooks []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
-	Extract       map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
-	Validators    []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
-	StepExport    []string               `json:"export,omitempty" yaml:"export,omitempty"`
-	Loops         *types.IntOrString     `json:"loops,omitempty" yaml:"loops,omitempty"`
-	IgnorePopup   bool                   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
+	StepName         string                 `json:"name" yaml:"name"` // required
+	Variables        map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	SetupHooks       []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
+	TeardownHooks    []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
+	Extract          map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
+	Validators       []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
+	StepExport       []string               `json:"export,omitempty" yaml:"export,omitempty"`
+	Loops            int                    `json:"loops,omitempty" yaml:"loops,omitempty"`
+	AutoPopupHandler bool                   `json:"auto_popup_handler,omitempty" yaml:"auto_popup_handler,omitempty"` // enable auto popup handler for this step
 }
 
 // define struct for teststep

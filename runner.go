@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
-	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -752,9 +751,11 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 	log.Info().Str("step", stepName).Str("type", stepType).Msg("run step start")
 
 	// run times of step
-	loopTimes, err := r.getLoopTimes(step)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get loop times")
+	loopTimes := step.Config().Loops
+	if loopTimes == 0 {
+		loopTimes = 1 // default run once
+	} else if loopTimes > 1 {
+		log.Info().Int("loops", loopTimes).Msg("set multiple loop times")
 	}
 
 	// run step with specified loop times
@@ -802,6 +803,15 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 func (r *SessionRunner) GetSummary() *TestCaseSummary {
 	r.summary.Time.Duration = time.Since(r.summary.Time.StartAt).Seconds()
 	return r.summary
+}
+
+// GenerateReport generates report for the testcase.
+func (r *SessionRunner) GenerateReport() error {
+	summary := NewSummary()
+	caseSummary := r.GetSummary()
+	summary.AddCaseSummary(caseSummary)
+	summary.Time.Duration = time.Since(caseSummary.Time.StartAt).Seconds()
+	return summary.GenHTMLReport()
 }
 
 func (r *SessionRunner) ParseStep(step IStep) error {
@@ -879,40 +889,4 @@ func (r *SessionRunner) GetSessionVariables() map[string]interface{} {
 
 func (r *SessionRunner) GetTransactions() map[string]map[TransactionType]time.Time {
 	return r.transactions
-}
-
-func (r *SessionRunner) getLoopTimes(step IStep) (int, error) {
-	loops := step.Config().Loops
-	if loops == nil {
-		// default run once
-		return 1, nil
-	}
-
-	loopTimes, err := loops.Value()
-	if err != nil {
-		parsed, err := r.caseRunner.parser.ParseString(
-			*loops.StringValue, step.Config().Variables)
-		if err != nil {
-			return 0, errors.Wrap(err, "failed to parse loop times")
-		}
-		switch v := parsed.(type) {
-		case int:
-			loopTimes = v
-		case string:
-			n, err := strconv.Atoi(v)
-			if err != nil {
-				return 0, errors.Wrap(err, "failed to parse loop times")
-			}
-			loopTimes = n
-		}
-	}
-	if loopTimes < 0 {
-		return 0, fmt.Errorf("loop times should be positive, got %d", loopTimes)
-	} else if loopTimes == 0 {
-		loopTimes = 1
-	} else if loopTimes > 1 {
-		log.Info().Int("loops", loopTimes).Msg("set multiple loop times")
-	}
-
-	return loopTimes, nil
 }
