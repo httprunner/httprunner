@@ -2,12 +2,16 @@ package hrp
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image"
 	"image/color"
 	"io"
 	"net/http"
 	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/httprunner/httprunner/v5/code"
@@ -20,6 +24,7 @@ import (
 )
 
 type UIXTRunner struct {
+	Ctx       context.Context
 	Configs   *UIXTConfig
 	Session   *SessionRunner
 	DriverExt *uixt.XTDriver
@@ -31,6 +36,8 @@ type UIXTRunner struct {
 type UIXTConfig struct {
 	uixt.DriverCacheConfig
 
+	Ctx                context.Context
+	Cancel             context.CancelFunc
 	JSONCase           ITestCase
 	UIA2               bool    // UIAutomator2（Android）
 	LogOn              bool    // 开启打点日志
@@ -41,6 +48,11 @@ type UIXTConfig struct {
 
 	WDAPort      int
 	WDAMjpegPort int
+
+	OSType      string // platform
+	Serial      string
+	PackageName string
+	LLMService  option.LLMServiceType // LLM 服务类型
 }
 
 const (
@@ -71,14 +83,7 @@ func NewUIXTRunner(configs *UIXTConfig) (runner *UIXTRunner, err error) {
 	}
 	config.SetAIOptions(configs.AIOptions...)
 
-	testcase := TestCase{
-		Config:    config,
-		TestSteps: testSteps,
-	}
-
-	var caseRunner *CaseRunner
-
-	switch configs.Platform {
+	switch configs.OSType {
 	case "ios":
 		port, err := configs.getWDALocalPort(configs.Serial)
 		if err != nil {
@@ -97,9 +102,28 @@ func NewUIXTRunner(configs *UIXTConfig) (runner *UIXTRunner, err error) {
 		config.SetHarmony(
 			option.WithConnectKey(configs.Serial),
 		)
+	case "darwin":
+		width, height := 1920, 1080
+		osWidth := os.Getenv("OSWidth")
+		osHeight := os.Getenv("OSHeight")
+		if osHeight != "" && osWidth != "" {
+			width, err = strconv.Atoi(osWidth)
+			if err != nil {
+				log.Warn().Msg("get OSWidth failed, use default value")
+			}
+			height, err = strconv.Atoi(osHeight)
+			if err != nil {
+				log.Warn().Msg("get OSHeight failed, use default value")
+			}
+		}
+		log.Info().Int("width", width).Int("height", height).Msg("get darwin screen size")
+		config.SetBrowser(
+			option.WithBrowserLogOn(false),
+			option.WithBrowserPageSize(width, height),
+		)
 	default:
 		// default to android
-		configs.Platform = "android"
+		configs.OSType = "android"
 		config.SetAndroid(
 			option.WithSerialNumber(configs.Serial),
 			option.WithUIA2(configs.UIA2),
@@ -107,15 +131,25 @@ func NewUIXTRunner(configs *UIXTConfig) (runner *UIXTRunner, err error) {
 		)
 	}
 
+	testcase := TestCase{
+		Config:    config,
+		TestSteps: testSteps,
+	}
+
 	// create runner with HTML report enabled for UIXT
 	hrpRunner := NewRunner(nil).SetSaveTests(true).GenHTMLReport()
-	caseRunner, err = NewCaseRunner(testcase, hrpRunner)
+	caseRunner, err := NewCaseRunner(testcase, hrpRunner)
 	if err != nil {
 		return nil, errors.Wrap(err, "init case runner failed")
 	}
 	sessionRunner := caseRunner.NewSession()
 
-	dExt, err := uixt.GetOrCreateXTDriver(configs.DriverCacheConfig)
+	driverCacheConfig := uixt.DriverCacheConfig{
+		Platform:  configs.OSType,
+		Serial:    configs.Serial,
+		AIOptions: config.AIOptions.Options(),
+	}
+	dExt, err := uixt.GetOrCreateXTDriver(driverCacheConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "get driver failed")
 	}
@@ -125,12 +159,24 @@ func NewUIXTRunner(configs *UIXTConfig) (runner *UIXTRunner, err error) {
 		return nil, err
 	}
 
+	ctx, cancel := context.WithCancel(configs.Ctx)
+	// create a channel to receive signals
+	interruptSignal := make(chan os.Signal, 1)
+	signal.Notify(interruptSignal, syscall.SIGINT, syscall.SIGTERM)
+
+	// cancel when interrupted
+	go func() {
+		<-interruptSignal
+		log.Warn().Msg("interrupted in uixt runner")
+		cancel()
+	}()
+
 	runner = &UIXTRunner{
+		Ctx:       ctx,
 		Configs:   configs,
 		Session:   sessionRunner,
 		DriverExt: dExt,
 	}
-
 	return runner, nil
 }
 
