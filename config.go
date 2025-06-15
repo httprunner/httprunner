@@ -42,9 +42,10 @@ type TConfig struct {
 	Weight            int                            `json:"weight,omitempty" yaml:"weight,omitempty"`
 	Path              string                         `json:"path,omitempty" yaml:"path,omitempty"`     // testcase file path
 	PluginSetting     *PluginConfig                  `json:"plugin,omitempty" yaml:"plugin,omitempty"` // plugin config
-	IgnorePopup       bool                           `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`
-	LLMService        option.LLMServiceType          `json:"llm_service,omitempty" yaml:"llm_service,omitempty"`
-	CVService         option.CVServiceType           `json:"cv_service,omitempty" yaml:"cv_service,omitempty"`
+	MCPConfigPath     string                         `json:"mcp_config_path,omitempty" yaml:"mcp_config_path,omitempty"`
+	AntiRisk          bool                           `json:"anti_risk,omitempty" yaml:"anti_risk,omitempty"`                   // global anti-risk switch
+	AutoPopupHandler  bool                           `json:"auto_popup_handler,omitempty" yaml:"auto_popup_handler,omitempty"` // enable auto popup handler
+	AIOptions         *option.AIServiceOptions       `json:"ai_options,omitempty" yaml:"ai_options,omitempty"`
 }
 
 func (c *TConfig) Get() *TConfig {
@@ -72,6 +73,12 @@ func (c *TConfig) SetHeaders(headers map[string]string) *TConfig {
 // SetVerifySSL sets whether to verify SSL for current testcase.
 func (c *TConfig) SetVerifySSL(verify bool) *TConfig {
 	c.Verify = verify
+	return c
+}
+
+// SetAntiRisk sets global anti-risk switch for current testcase.
+func (c *TConfig) SetAntiRisk(antiRisk bool) *TConfig {
+	c.AntiRisk = antiRisk
 	return c
 }
 
@@ -111,15 +118,27 @@ func (c *TConfig) SetWeight(weight int) *TConfig {
 	return c
 }
 
+// SetAIOptions sets AI service options for current testcase.
+func (c *TConfig) SetAIOptions(opts ...option.AIServiceOption) *TConfig {
+	c.AIOptions = option.NewAIServiceOptions(opts...)
+	return c
+}
+
 // SetLLMService sets LLM service for current testcase.
-func (c *TConfig) SetLLMService(llmService option.LLMServiceType) *TConfig {
-	c.LLMService = llmService
+func (c *TConfig) SetLLMService(service option.LLMServiceType) *TConfig {
+	if c.AIOptions == nil {
+		c.AIOptions = option.NewAIServiceOptions()
+	}
+	c.AIOptions.LLMService = service
 	return c
 }
 
 // SetCVService sets CV service for current testcase.
-func (c *TConfig) SetCVService(cvService option.CVServiceType) *TConfig {
-	c.CVService = cvService
+func (c *TConfig) SetCVService(service option.CVServiceType) *TConfig {
+	if c.AIOptions == nil {
+		c.AIOptions = option.NewAIServiceOptions()
+	}
+	c.AIOptions.CVService = service
 	return c
 }
 
@@ -211,8 +230,10 @@ func (c *TConfig) EnablePlugin() *TConfig {
 	return c
 }
 
-func (c *TConfig) DisableAutoPopupHandler() *TConfig {
-	c.IgnorePopup = true
+// EnableAutoPopupHandler enables auto popup handler for current testcase.
+// default to disable auto popup handler
+func (c *TConfig) EnableAutoPopupHandler() *TConfig {
+	c.AutoPopupHandler = true
 	return c
 }
 

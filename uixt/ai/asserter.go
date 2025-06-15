@@ -3,9 +3,6 @@ package ai
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"strings"
-	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	openai2 "github.com/cloudwego/eino-ext/libs/acl/openai"
@@ -17,12 +14,11 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 // IAsserter interface defines the contract for assertion operations
 type IAsserter interface {
-	Assert(opts *AssertOptions) (*AssertionResponse, error)
+	Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error)
 }
 
 // AssertOptions represents the input options for assertion
@@ -32,15 +28,14 @@ type AssertOptions struct {
 	Size       types.Size `json:"size"`       // Screen dimensions
 }
 
-// AssertionResponse represents the response from an AI assertion
-type AssertionResponse struct {
+// AssertionResult represents the response from an AI assertion
+type AssertionResult struct {
 	Pass    bool   `json:"pass"`
 	Thought string `json:"thought"`
 }
 
 // Asserter handles assertion using different AI models
 type Asserter struct {
-	ctx          context.Context
 	modelConfig  *ModelConfig
 	model        model.ToolCallingChatModel
 	systemPrompt string
@@ -50,14 +45,13 @@ type Asserter struct {
 // NewAsserter creates a new Asserter instance
 func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, error) {
 	asserter := &Asserter{
-		ctx:          ctx,
 		modelConfig:  modelConfig,
 		systemPrompt: defaultAssertionPrompt,
 	}
 
-	if modelConfig.ModelType == option.LLMServiceTypeUITARS {
-		asserter.systemPrompt += "\n\n" + uiTarsAssertionResponseFormat
-	} else if modelConfig.ModelType == option.LLMServiceTypeGPT {
+	if option.IS_UI_TARS(modelConfig.ModelType) {
+		asserter.systemPrompt += "\n" + uiTarsAssertionResponseFormat
+	} else {
 		// define output format
 		type OutputFormat struct {
 			Thought string `json:"thought"`
@@ -79,8 +73,6 @@ func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, erro
 				Strict:      false,
 			},
 		}
-	} else {
-		asserter.systemPrompt += "\n\n" + defaultAssertionResponseJsonFormat
 	}
 
 	var err error
@@ -93,7 +85,7 @@ func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, erro
 }
 
 // Assert performs the assertion check on the screenshot
-func (a *Asserter) Assert(opts *AssertOptions) (*AssertionResponse, error) {
+func (a *Asserter) Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error) {
 	// Validate input parameters
 	if err := validateAssertionInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate assertion parameters failed")
@@ -134,18 +126,14 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	a.history.Append(userMsg)
 
 	// Call model service, generate response
-	logRequest(a.history)
-	startTime := time.Now()
-	resp, err := a.model.Generate(a.ctx, a.history)
-	log.Info().Float64("elapsed(s)", time.Since(startTime).Seconds()).
-		Str("model", string(a.modelConfig.ModelType)).Msg("call model service for assertion")
+	message, err := callModelWithLogging(ctx, a.model, a.history,
+		a.modelConfig.ModelType, "assertion")
 	if err != nil {
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
-	logResponse(resp)
 
 	// Parse result
-	result, err := parseAssertionResult(resp.Content)
+	result, err := parseAssertionResult(message.Content)
 	if err != nil {
 		return nil, errors.Wrap(code.LLMParseAssertionResponseError, err.Error())
 	}
@@ -153,7 +141,7 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 	// Append assistant message to history
 	a.history.Append(&schema.Message{
 		Role:    schema.Assistant,
-		Content: resp.Content,
+		Content: message.Content,
 	})
 
 	return result, nil
@@ -171,53 +159,18 @@ func validateAssertionInput(opts *AssertOptions) error {
 }
 
 // parseAssertionResult parses the model response into AssertionResponse
-func parseAssertionResult(content string) (*AssertionResponse, error) {
+func parseAssertionResult(content string) (*AssertionResult, error) {
 	// Extract JSON content from response
-	jsonContent := extractJSON(content)
+	jsonContent := extractJSONFromContent(content)
 	if jsonContent == "" {
 		return nil, errors.New("could not extract JSON from response")
 	}
 
 	// Parse JSON response
-	var result AssertionResponse
+	var result AssertionResult
 	if err := json.Unmarshal([]byte(jsonContent), &result); err != nil {
 		return nil, errors.Wrap(code.LLMParseAssertionResponseError, err.Error())
 	}
 
 	return &result, nil
-}
-
-// extractJSON extracts JSON content from a string that might contain markdown or other formatting
-func extractJSON(content string) string {
-	content = strings.TrimSpace(content)
-
-	// If the content is already a valid JSON, return it
-	if strings.HasPrefix(content, "{") && strings.HasSuffix(content, "}") {
-		return content
-	}
-
-	// Try to extract JSON from markdown code blocks
-	jsonRegex := regexp.MustCompile(`(?:json)?\s*({[\s\S]*?})\s*`)
-	matches := jsonRegex.FindStringSubmatch(content)
-	if len(matches) > 1 {
-		return strings.TrimSpace(matches[1])
-	}
-
-	// Try a more robust approach for JSON with Chinese characters
-	startIdx := strings.Index(content, "{")
-	if startIdx >= 0 {
-		depth := 1
-		for i := startIdx + 1; i < len(content); i++ {
-			if content[i] == '{' {
-				depth++
-			} else if content[i] == '}' {
-				depth--
-				if depth == 0 {
-					return content[startIdx : i+1]
-				}
-			}
-		}
-	}
-
-	return content
 }

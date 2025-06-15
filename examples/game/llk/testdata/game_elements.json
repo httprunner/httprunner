@@ -1,0 +1,801 @@
+{
+    "content": "Structured data extracted successfully",
+    "thought": "Parsed structured response according to custom schema",
+    "dimensions": {
+        "rows": 14,
+        "cols": 8
+    },
+    "elements": [
+        {
+            "type": "green bag",
+            "position": {
+                "row": 1,
+                "col": 1
+            }
+        },
+        {
+            "type": "acorn",
+            "position": {
+                "row": 1,
+                "col": 2
+            }
+        },
+        {
+            "type": "wheat",
+            "position": {
+                "row": 1,
+                "col": 3
+            }
+        },
+        {
+            "type": "pear",
+            "position": {
+                "row": 1,
+                "col": 4
+            }
+        },
+        {
+            "type": "brush",
+            "position": {
+                "row": 1,
+                "col": 5
+            }
+        },
+        {
+            "type": "apple",
+            "position": {
+                "row": 1,
+                "col": 6
+            }
+        },
+        {
+            "type": "spatula",
+            "position": {
+                "row": 1,
+                "col": 7
+            }
+        },
+        {
+            "type": "wheel",
+            "position": {
+                "row": 1,
+                "col": 8
+            }
+        },
+        {
+            "type": "scissors",
+            "position": {
+                "row": 2,
+                "col": 1
+            }
+        },
+        {
+            "type": "apple",
+            "position": {
+                "row": 2,
+                "col": 2
+            }
+        },
+        {
+            "type": "cloche",
+            "position": {
+                "row": 2,
+                "col": 3
+            }
+        },
+        {
+            "type": "trowel",
+            "position": {
+                "row": 2,
+                "col": 4
+            }
+        },
+        {
+            "type": "lollipop",
+            "position": {
+                "row": 2,
+                "col": 5
+            }
+        },
+        {
+            "type": "brush",
+            "position": {
+                "row": 2,
+                "col": 6
+            }
+        },
+        {
+            "type": "wheat",
+            "position": {
+                "row": 2,
+                "col": 7
+            }
+        },
+        {
+            "type": "clover",
+            "position": {
+                "row": 2,
+                "col": 8
+            }
+        },
+        {
+            "type": "leaf",
+            "position": {
+                "row": 3,
+                "col": 1
+            }
+        },
+        {
+            "type": "green bag",
+            "position": {
+                "row": 3,
+                "col": 2
+            }
+        },
+        {
+            "type": "apple",
+            "position": {
+                "row": 3,
+                "col": 3
+            }
+        },
+        {
+            "type": "cloche",
+            "position": {
+                "row": 3,
+                "col": 4
+            }
+        },
+        {
+            "type": "meat",
+            "position": {
+                "row": 3,
+                "col": 5
+            }
+        },
+        {
+            "type": "acorn",
+            "position": {
+                "row": 3,
+                "col": 6
+            }
+        },
+        {
+            "type": "wheat",
+            "position": {
+                "row": 3,
+                "col": 7
+            }
+        },
+        {
+            "type": "saw",
+            "position": {
+                "row": 3,
+                "col": 8
+            }
+        },
+        {
+            "type": "target",
+            "position": {
+                "row": 4,
+                "col": 1
+            }
+        },
+        {
+            "type": "cloche",
+            "position": {
+                "row": 4,
+                "col": 2
+            }
+        },
+        {
+            "type": "meat",
+            "position": {
+                "row": 4,
+                "col": 3
+            }
+        },
+        {
+            "type": "green bag",
+            "position": {
+                "row": 4,
+                "col": 4
+            }
+        },
+        {
+            "type": "saw",
+            "position": {
+                "row": 4,
+                "col": 5
+            }
+        },
+        {
+            "type": "wheel",
+            "position": {
+                "row": 4,
+                "col": 6
+            }
+        },
+        {
+            "type": "brush",
+            "position": {
+                "row": 4,
+                "col": 7
+            }
+        },
+        {
+            "type": "brush",
+            "position": {
+                "row": 4,
+                "col": 8
+            }
+        },
+        {
+            "type": "cherries",
+            "position": {
+                "row": 5,
+                "col": 1
+            }
+        },
+        {
+            "type": "clover",
+            "position": {
+                "row": 5,
+                "col": 2
+            }
+        },
+        {
+            "type": "apple",
+            "position": {
+                "row": 5,
+                "col": 3
+            }
+        },
+        {
+            "type": "trowel",
+            "position": {
+                "row": 5,
+                "col": 4
+            }
+        },
+        {
+            "type": "bread",
+            "position": {
+                "row": 5,
+                "col": 5
+            }
+        },
+        {
+            "type": "green bag",
+            "position": {
+                "row": 5,
+                "col": 6
+            }
+        },
+        {
+            "type": "lollipop",
+            "position": {
+                "row": 5,
+                "col": 7
+            }
+        },
+        {
+            "type": "trowel",
+            "position": {
+                "row": 5,
+                "col": 8
+            }
+        },
+        {
+            "type": "broom",
+            "position": {
+                "row": 6,
+                "col": 1
+            }
+        },
+        {
+            "type": "brush",
+            "position": {
+                "row": 6,
+                "col": 2
+            }
+        },
+        {
+            "type": "leaf",
+            "position": {
+                "row": 6,
+                "col": 3
+            }
+        },
+        {
+            "type": "clover",
+            "position": {
+                "row": 6,
+                "col": 4
+            }
+        },
+        {
+            "type": "apple",
+            "position": {
+                "row": 6,
+                "col": 5
+            }
+        },
+        {
+            "type": "cloche",
+            "position": {
+                "row": 6,
+                "col": 6
+            }
+        },
+        {
+            "type": "mushroom",
+            "position": {
+                "row": 6,
+                "col": 7
+            }
+        },
+        {
+            "type": "leaf",
+            "position": {
+                "row": 6,
+                "col": 8
+            }
+        },
+        {
+            "type": "cherries",
+            "position": {
+                "row": 7,
+                "col": 1
+            }
+        },
+        {
+            "type": "chicken",
+            "position": {
+                "row": 7,
+                "col": 2
+            }
+        },
+        {
+            "type": "grapes",
+            "position": {
+                "row": 7,
+                "col": 3
+            }
+        },
+        {
+            "type": "wheel",
+            "position": {
+                "row": 7,
+                "col": 4
+            }
+        },
+        {
+            "type": "trowel",
+            "position": {
+                "row": 7,
+                "col": 5
+            }
+        },
+        {
+            "type": "cloche",
+            "position": {
+                "row": 7,
+                "col": 6
+            }
+        },
+        {
+            "type": "clover",
+            "position": {
+                "row": 7,
+                "col": 7
+            }
+        },
+        {
+            "type": "scissors",
+            "position": {
+                "row": 7,
+                "col": 8
+            }
+        },
+        {
+            "type": "spatula",
+            "position": {
+                "row": 8,
+                "col": 1
+            }
+        },
+        {
+            "type": "trowel",
+            "position": {
+                "row": 8,
+                "col": 2
+            }
+        },
+        {
+            "type": "green bag",
+            "position": {
+                "row": 8,
+                "col": 3
+            }
+        },
+        {
+            "type": "mushroom",
+            "position": {
+                "row": 8,
+                "col": 4
+            }
+        },
+        {
+            "type": "saw",
+            "position": {
+                "row": 8,
+                "col": 5
+            }
+        },
+        {
+            "type": "apple",
+            "position": {
+                "row": 8,
+                "col": 6
+            }
+        },
+        {
+            "type": "pear",
+            "position": {
+                "row": 8,
+                "col": 7
+            }
+        },
+        {
+            "type": "target",
+            "position": {
+                "row": 8,
+                "col": 8
+            }
+        },
+        {
+            "type": "apple",
+            "position": {
+                "row": 9,
+                "col": 1
+            }
+        },
+        {
+            "type": "mushroom",
+            "position": {
+                "row": 9,
+                "col": 2
+            }
+        },
+        {
+            "type": "saw",
+            "position": {
+                "row": 9,
+                "col": 3
+            }
+        },
+        {
+            "type": "leaf",
+            "position": {
+                "row": 9,
+                "col": 4
+            }
+        },
+        {
+            "type": "wheel",
+            "position": {
+                "row": 9,
+                "col": 5
+            }
+        },
+        {
+            "type": "trowel",
+            "position": {
+                "row": 9,
+                "col": 6
+            }
+        },
+        {
+            "type": "cloche",
+            "position": {
+                "row": 9,
+                "col": 7
+            }
+        },
+        {
+            "type": "wheel",
+            "position": {
+                "row": 9,
+                "col": 8
+            }
+        },
+        {
+            "type": "wheel",
+            "position": {
+                "row": 10,
+                "col": 1
+            }
+        },
+        {
+            "type": "chicken",
+            "position": {
+                "row": 10,
+                "col": 2
+            }
+        },
+        {
+            "type": "jam jar",
+            "position": {
+                "row": 10,
+                "col": 3
+            }
+        },
+        {
+            "type": "scissors",
+            "position": {
+                "row": 10,
+                "col": 4
+            }
+        },
+        {
+            "type": "scissors",
+            "position": {
+                "row": 10,
+                "col": 5
+            }
+        },
+        {
+            "type": "green bag",
+            "position": {
+                "row": 10,
+                "col": 6
+            }
+        },
+        {
+            "type": "saw",
+            "position": {
+                "row": 10,
+                "col": 7
+            }
+        },
+        {
+            "type": "brush",
+            "position": {
+                "row": 10,
+                "col": 8
+            }
+        },
+        {
+            "type": "milk bottle",
+            "position": {
+                "row": 11,
+                "col": 1
+            }
+        },
+        {
+            "type": "jam jar",
+            "position": {
+                "row": 11,
+                "col": 2
+            }
+        },
+        {
+            "type": "coffee cup",
+            "position": {
+                "row": 11,
+                "col": 3
+            }
+        },
+        {
+            "type": "milk bottle",
+            "position": {
+                "row": 11,
+                "col": 4
+            }
+        },
+        {
+            "type": "wheat",
+            "position": {
+                "row": 11,
+                "col": 5
+            }
+        },
+        {
+            "type": "spatula",
+            "position": {
+                "row": 11,
+                "col": 6
+            }
+        },
+        {
+            "type": "trowel",
+            "position": {
+                "row": 11,
+                "col": 7
+            }
+        },
+        {
+            "type": "target",
+            "position": {
+                "row": 11,
+                "col": 8
+            }
+        },
+        {
+            "type": "scissors",
+            "position": {
+                "row": 12,
+                "col": 1
+            }
+        },
+        {
+            "type": "chicken",
+            "position": {
+                "row": 12,
+                "col": 2
+            }
+        },
+        {
+            "type": "milk bottle",
+            "position": {
+                "row": 12,
+                "col": 3
+            }
+        },
+        {
+            "type": "blue bottle",
+            "position": {
+                "row": 12,
+                "col": 4
+            }
+        },
+        {
+            "type": "broom",
+            "position": {
+                "row": 12,
+                "col": 5
+            }
+        },
+        {
+            "type": "bread",
+            "position": {
+                "row": 12,
+                "col": 6
+            }
+        },
+        {
+            "type": "trowel",
+            "position": {
+                "row": 12,
+                "col": 7
+            }
+        },
+        {
+            "type": "chicken",
+            "position": {
+                "row": 12,
+                "col": 8
+            }
+        },
+        {
+            "type": "coffee cup",
+            "position": {
+                "row": 13,
+                "col": 1
+            }
+        },
+        {
+            "type": "scissors",
+            "position": {
+                "row": 13,
+                "col": 2
+            }
+        },
+        {
+            "type": "spatula",
+            "position": {
+                "row": 13,
+                "col": 3
+            }
+        },
+        {
+            "type": "leaf",
+            "position": {
+                "row": 13,
+                "col": 4
+            }
+        },
+        {
+            "type": "grapes",
+            "position": {
+                "row": 13,
+                "col": 5
+            }
+        },
+        {
+            "type": "apple",
+            "position": {
+                "row": 13,
+                "col": 6
+            }
+        },
+        {
+            "type": "blue bottle",
+            "position": {
+                "row": 13,
+                "col": 7
+            }
+        },
+        {
+            "type": "clover",
+            "position": {
+                "row": 13,
+                "col": 8
+            }
+        },
+        {
+            "type": "meat",
+            "position": {
+                "row": 14,
+                "col": 1
+            }
+        },
+        {
+            "type": "target",
+            "position": {
+                "row": 14,
+                "col": 2
+            }
+        },
+        {
+            "type": "meat",
+            "position": {
+                "row": 14,
+                "col": 3
+            }
+        },
+        {
+            "type": "clover",
+            "position": {
+                "row": 14,
+                "col": 4
+            }
+        },
+        {
+            "type": "milk bottle",
+            "position": {
+                "row": 14,
+                "col": 5
+            }
+        },
+        {
+            "type": "saw",
+            "position": {
+                "row": 14,
+                "col": 6
+            }
+        },
+        {
+            "type": "mushroom",
+            "position": {
+                "row": 14,
+                "col": 7
+            }
+        },
+        {
+            "type": "leaf",
+            "position": {
+                "row": 14,
+                "col": 8
+            }
+        },
+        {
+            "type": "",
+            "position": {
+                "row": 0,
+                "col": 0
+            }
+        }
+    ]
+}

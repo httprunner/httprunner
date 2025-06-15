@@ -5,10 +5,8 @@ import (
 	_ "image/gif"
 	_ "image/png"
 
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -50,6 +48,8 @@ type IDriver interface {
 	Home() error
 	Unlock() error
 	Back() error
+	PressButton(button types.DeviceButton) error
+
 	// hover
 	HoverBySelector(selector string, opts ...option.ActionOption) error
 	// tap
@@ -86,37 +86,4 @@ type IDriver interface {
 	// triggers the log capture and returns the log entries
 	StartCaptureLog(identifier ...string) error
 	StopCaptureLog() (result interface{}, err error)
-}
-
-func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, error) {
-	driverExt := &XTDriver{
-		IDriver: driver,
-	}
-
-	services := option.NewAIServiceOptions(opts...)
-
-	var err error
-	if services.CVService != "" {
-		driverExt.CVService, err = ai.NewCVService(services.CVService)
-		if err != nil {
-			log.Error().Err(err).Msg("init vedem image service failed")
-			return nil, err
-		}
-	}
-	if services.LLMService != "" {
-		driverExt.LLMService, err = ai.NewLLMService(services.LLMService)
-		if err != nil {
-			log.Error().Err(err).Msg("init llm service failed")
-			return nil, err
-		}
-	}
-
-	return driverExt, nil
-}
-
-// XTDriver = IDriver + AI
-type XTDriver struct {
-	IDriver
-	CVService  ai.ICVService  // OCR/CV
-	LLMService ai.ILLMService // LLM
 }

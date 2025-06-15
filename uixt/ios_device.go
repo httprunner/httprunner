@@ -317,6 +317,18 @@ func (dev *IOSDevice) GetDeviceInfo() (*DeviceDetail, error) {
 	return detail, err
 }
 
+func (dev *IOSDevice) ListPackages() ([]string, error) {
+	apps, err := dev.ListApps(ApplicationTypeAny)
+	if err != nil {
+		return nil, err
+	}
+	var packages []string
+	for _, app := range apps {
+		packages = append(packages, app.CFBundleIdentifier)
+	}
+	return packages, nil
+}
+
 func (dev *IOSDevice) ListApps(appType ApplicationType) (apps []installationproxy.AppInfo, err error) {
 	svc, _ := installationproxy.New(dev.DeviceEntry)
 	defer svc.Close()

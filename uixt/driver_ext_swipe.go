@@ -96,6 +96,7 @@ func (dExt *XTDriver) SwipeToTapTexts(texts []string, opts ...option.ActionOptio
 		return errors.New("no text to tap")
 	}
 
+	log.Info().Strs("texts", texts).Msg("swipe to tap texts")
 	opts = append(opts, option.WithMatchOne(true), option.WithRegex(true))
 	actionOptions := option.NewActionOptions(opts...)
 	actionOptions.Identifier = ""
@@ -136,6 +137,8 @@ func (dExt *XTDriver) SwipeToTapTexts(texts []string, opts ...option.ActionOptio
 }
 
 func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption) error {
+	log.Info().Str("appName", appName).Msg("swipe to tap app")
+
 	// go to home screen
 	if err := dExt.Home(); err != nil {
 		return errors.Wrap(err, "go to home screen failed")

@@ -15,8 +15,29 @@ var loadEnvOnce sync.Once
 
 // LoadEnv loads environment variables from .env file
 // it will search for .env file from current working directory upward recursively
+// if not found, it will try to load from ~/.hrp/.env as fallback
+// Priority: current working directory > ~/.hrp/.env > system environment variables
 func LoadEnv() (err error) {
 	loadEnvOnce.Do(func() {
+		// first try to load from ~/.hrp/.env, override system env variables (medium priority)
+		var homeDir string
+		homeDir, err = os.UserHomeDir()
+		if err != nil {
+			log.Warn().Err(err).Msg("get user home directory failed")
+		} else {
+			globalEnvFile := filepath.Join(homeDir, ".hrp", ".env")
+			if _, e := os.Stat(globalEnvFile); e == nil {
+				// load global .env file and override system environment variables
+				err = godotenv.Overload(globalEnvFile)
+				if err != nil {
+					log.Error().Err(err).
+						Str("path", globalEnvFile).Msg("load global env file failed")
+					return
+				}
+				log.Info().Str("path", globalEnvFile).Msg("load global env success")
+			}
+		}
+
 		// get current working directory
 		var cwd string
 		cwd, err = os.Getwd()
@@ -31,7 +52,7 @@ func LoadEnv() (err error) {
 			envFile := filepath.Join(envPath, ".env")
 			if _, e := os.Stat(envFile); e == nil {
 				// found .env file
-				// override existing env variables
+				// override existing env variables (highest priority)
 				err = godotenv.Overload(envFile)
 				if err != nil {
 					log.Error().Err(err).

@@ -76,6 +76,17 @@ func (s *DriverSession) Reset() {
 	s.screenResults = make([]*ScreenResult, 0)
 }
 
+func (s *DriverSession) GetData(withReset bool) SessionData {
+	sessionData := SessionData{
+		Requests:      s.History(),
+		ScreenResults: s.screenResults,
+	}
+	if withReset {
+		s.Reset()
+	}
+	return sessionData
+}
+
 func (s *DriverSession) SetBaseURL(baseUrl string) {
 	s.baseUrl = baseUrl
 }
@@ -272,7 +283,7 @@ func (s *DriverSession) Request(method string, urlStr string, rawBody []byte) (
 func (s *DriverSession) SetupPortForward(localPort int) error {
 	s.client.Transport = &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			return net.Dial(network, fmt.Sprintf("127.0.0.1:%d", localPort))
+			return net.Dial(network, fmt.Sprintf("localhost:%d", localPort))
 		},
 		MaxIdleConns:        10,
 		IdleConnTimeout:     30 * time.Second,

@@ -5,13 +5,13 @@
 			"args": [
 				"-y",
 				"@modelcontextprotocol/server-filesystem",
-				"/tmp"
+				"./"
 			]
 		},
 		"weather": {
 			"args": [
 				"--directory",
-				"/Users/debugtalk/MyProjects/HttpRunner-dev/httprunner/internal/mcp/testdata",
+				"/Users/debugtalk/MyProjects/HttpRunner-dev/httprunner/mcphost/testdata",
 				"run",
 				"demo_weather.py"
 			],
@@ -22,6 +22,17 @@
 			"env": {
 				"ABC": "123"
 			}
+		},
+		"evalpkgs": {
+			"command": "/Users/debugtalk/MyProjects/ByteDance/evalpkgs/dist/mcpserver",
+			"args": [],
+			"env": {
+			}
+		},
+		"disabled_server": {
+			"command": "echo",
+			"args": ["disabled"],
+			"disabled": true
 		}
 	}
 }

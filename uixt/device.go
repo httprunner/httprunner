@@ -18,6 +18,8 @@ type IDevice interface {
 	Install(appPath string, opts ...option.InstallOption) error
 	Uninstall(packageName string) error
 
+	ListPackages() ([]string, error)
+
 	GetPackageInfo(packageName string) (types.AppInfo, error)
 	ScreenShot() (*bytes.Buffer, error)
 	// TODO: remove?

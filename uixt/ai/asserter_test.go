@@ -12,7 +12,7 @@ import (
 )
 
 func createAsserter(t *testing.T) *Asserter {
-	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
+	modelConfig, err := GetModelConfig(option.DOUBAO_1_5_UI_TARS_250328)
 	require.NoError(t, err)
 	asserter, err := NewAsserter(context.Background(), modelConfig)
 	require.NoError(t, err)
@@ -54,7 +54,7 @@ func TestValidAssertions(t *testing.T) {
 			imageBase64, size, err := builtin.LoadImage(tc.imagePath)
 			require.NoError(t, err)
 
-			result, err := asserter.Assert(&AssertOptions{
+			result, err := asserter.Assert(context.Background(), &AssertOptions{
 				Assertion:  tc.assertion,
 				Screenshot: imageBase64,
 				Size:       size,
@@ -94,7 +94,7 @@ func TestInvalidParameters(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := asserter.Assert(&AssertOptions{
+			_, err := asserter.Assert(context.Background(), &AssertOptions{
 				Assertion:  tc.assertion,
 				Screenshot: tc.screenshot,
 				Size:       tc.size,

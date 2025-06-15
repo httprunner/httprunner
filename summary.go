@@ -1,11 +1,8 @@
 package hrp
 
 import (
-	"bufio"
 	_ "embed"
 	"fmt"
-	"html/template"
-	"os"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -15,7 +12,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/version"
-	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func NewSummary() *Summary {
@@ -28,7 +25,7 @@ func NewSummary() *Summary {
 		Success: true,
 		Stat: &Stat{
 			TestSteps: TestStepStat{
-				Actions: make(map[uixt.ActionMethod]int),
+				Actions: make(map[option.ActionName]int),
 			},
 		},
 		Time: &TestCaseTime{
@@ -79,50 +76,30 @@ func (s *Summary) AddCaseSummary(caseSummary *TestCaseSummary) {
 	}
 }
 
-func (s *Summary) SetupDirPath() (path string, err error) {
-	dirPath := filepath.Join(s.rootDir, config.GetConfig().ResultsDir)
-	err = builtin.EnsureFolderExists(dirPath)
-	if err != nil {
-		return "", err
-	}
-	return dirPath, nil
+func (s *Summary) GetResultsPath() string {
+	return config.GetConfig().ResultsPath()
 }
 
 func (s *Summary) GenHTMLReport() error {
-	reportsDir, err := s.SetupDirPath()
-	if err != nil {
-		return err
+	reportsDir := s.GetResultsPath()
+
+	// Find summary.json and hrp.log files
+	summaryPath := filepath.Join(reportsDir, "summary.json")
+	logPath := filepath.Join(reportsDir, "hrp.log")
+	reportPath := filepath.Join(reportsDir, "report.html")
+
+	// Check if summary.json exists, if not create it first
+	if !builtin.FileExists(summaryPath) {
+		if _, err := s.GenSummary(); err != nil {
+			return fmt.Errorf("failed to generate summary.json: %w", err)
+		}
 	}
 
-	reportPath := filepath.Join(reportsDir, "report.html")
-	file, err := os.Open(reportPath)
-	if err != nil {
-		log.Error().Err(err).Msg("open file failed")
-		return err
-	}
-	defer file.Close()
-	writer := bufio.NewWriter(file)
-	tmpl := template.Must(template.New("report").Parse(reportTemplate))
-	err = tmpl.Execute(writer, s)
-	if err != nil {
-		log.Error().Err(err).Msg("execute applies a parsed template to the specified data object failed")
-		return err
-	}
-	err = writer.Flush()
-	if err == nil {
-		log.Info().Str("path", reportPath).Msg("generate HTML report")
-	} else {
-		log.Error().Str("path", reportPath).Msg("generate HTML report failed")
-	}
-	return err
+	return GenerateHTMLReportFromFiles(summaryPath, logPath, reportPath)
 }
 
 func (s *Summary) GenSummary() (path string, err error) {
-	reportsDir, err := s.SetupDirPath()
-	if err != nil {
-		return "", err
-	}
-
+	reportsDir := config.GetConfig().ResultsPath()
 	path = filepath.Join(reportsDir, "summary.json")
 	err = builtin.Dump2JSON(s, path)
 	if err != nil {
@@ -130,9 +107,6 @@ func (s *Summary) GenSummary() (path string, err error) {
 	}
 	return path, nil
 }
-
-//go:embed internal/scaffold/templates/report/template.html
-var reportTemplate string
 
 type Stat struct {
 	TestCases TestCaseStat `json:"testcases" yaml:"testcases"`
@@ -149,7 +123,7 @@ type TestStepStat struct {
 	Total     int                       `json:"total" yaml:"total"`
 	Successes int                       `json:"successes" yaml:"successes"`
 	Failures  int                       `json:"failures" yaml:"failures"`
-	Actions   map[uixt.ActionMethod]int `json:"actions" yaml:"actions"` // record action stats
+	Actions   map[option.ActionName]int `json:"actions" yaml:"actions"` // record action stats
 }
 
 type TestCaseTime struct {
@@ -167,7 +141,7 @@ func NewCaseSummary() *TestCaseSummary {
 	return &TestCaseSummary{
 		Success: true,
 		Stat: &TestStepStat{
-			Actions: make(map[uixt.ActionMethod]int),
+			Actions: make(map[option.ActionName]int),
 		},
 		Time: &TestCaseTime{
 			StartAt: time.Now(),

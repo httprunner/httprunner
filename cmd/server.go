@@ -10,23 +10,20 @@ import (
 // serverCmd represents the server command
 var CmdServer = &cobra.Command{
 	Use:   "server start",
-	Short: "start hrp server",
-	Long:  `start hrp server, call httprunner by HTTP`,
+	Short: "Start hrp server",
+	Long:  `Start hrp server, call httprunner by HTTP`,
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		router := server.NewRouter()
 		mcpConfigPath = os.ExpandEnv(mcpConfigPath)
 		if mcpConfigPath != "" {
-			router.InitMCPHub(mcpConfigPath)
+			router.InitMCPHost(mcpConfigPath)
 		}
 		return router.Run(port)
 	},
 }
 
-var (
-	port          int
-	mcpConfigPath string
-)
+var port int
 
 func init() {
 	CmdServer.Flags().IntVarP(&port, "port", "p", 8082, "port to run the server on")

@@ -16,7 +16,7 @@ import (
 
 var CmdConvert = &cobra.Command{
 	Use:          "convert $path...",
-	Short:        "convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases",
+	Short:        "Convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases",
 	Args:         cobra.MinimumNArgs(1),
 	SilenceUsage: false,
 	RunE: func(cmd *cobra.Command, args []string) error {

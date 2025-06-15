@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -35,8 +36,8 @@ func (s *StepThinkTime) Run(r *SessionRunner) (*StepResult, error) {
 	log.Info().Float64("time", thinkTime.Time).Msg("think time")
 
 	stepResult := &StepResult{
-		Name:     s.StepName,
-		StepType: StepTypeThinkTime,
+		Name:     s.Name(),
+		StepType: s.Type(),
 		Success:  true,
 	}
 
@@ -76,6 +77,19 @@ func (s *StepThinkTime) Run(r *SessionRunner) (*StepResult, error) {
 		}
 	}
 
-	time.Sleep(tt)
+	// Use interruptible sleep that can respond to signals
+	log.Debug().Float64("duration_ms", float64(tt.Milliseconds())).Msg("starting think time")
+
+	select {
+	case <-time.After(tt):
+		// Normal completion
+		log.Debug().Float64("duration_ms", float64(tt.Milliseconds())).Msg("think time completed normally")
+	case <-r.caseRunner.hrpRunner.interruptSignal:
+		// Interrupted by signal
+		log.Info().Float64("planned_duration_ms", float64(tt.Milliseconds())).
+			Msg("think time interrupted by signal")
+		return stepResult, fmt.Errorf("think time interrupted")
+	}
+
 	return stepResult, nil
 }

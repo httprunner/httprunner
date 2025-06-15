@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -15,10 +16,10 @@ import (
 )
 
 type MobileUI struct {
-	OSType            string `json:"os_type,omitempty" yaml:"os_type,omitempty"` // mobile device os type
-	Serial            string `json:"serial,omitempty" yaml:"serial,omitempty"`   // mobile device serial number
-	uixt.MobileAction `yaml:",inline"`
-	Actions           []uixt.MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
+	OSType              string `json:"os_type,omitempty" yaml:"os_type,omitempty"` // mobile device os type
+	Serial              string `json:"serial,omitempty" yaml:"serial,omitempty"`   // mobile device serial number
+	option.MobileAction `yaml:",inline"`
+	Actions             []option.MobileAction `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
 
 // StepMobile implements IStep interface.
@@ -67,49 +68,49 @@ func (s *StepMobile) Serial(serial string) *StepMobile {
 	return s
 }
 
-func (s *StepMobile) Log(actionName uixt.ActionMethod) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_LOG,
+func (s *StepMobile) Log(actionName option.ActionName) *StepMobile {
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method: option.ACTION_LOG,
 		Params: actionName,
 	})
 	return s
 }
 
 func (s *StepMobile) InstallApp(path string) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_AppInstall,
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method: option.ACTION_AppInstall,
 		Params: path,
 	})
 	return s
 }
 
 func (s *StepMobile) WebLoginNoneUI(packageName, phoneNumber string, captcha, password string) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_WebLoginNoneUI,
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method: option.ACTION_WebLoginNoneUI,
 		Params: []string{packageName, phoneNumber, captcha, password},
 	})
 	return s
 }
 
 func (s *StepMobile) AppLaunch(bundleId string) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_AppLaunch,
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method: option.ACTION_AppLaunch,
 		Params: bundleId,
 	})
 	return s
 }
 
 func (s *StepMobile) AppTerminate(bundleId string) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_AppTerminate,
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method: option.ACTION_AppTerminate,
 		Params: bundleId,
 	})
 	return s
 }
 
 func (s *StepMobile) Home() *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method: uixt.ACTION_Home,
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method: option.ACTION_Home,
 		Params: nil,
 	})
 	return s
@@ -119,8 +120,8 @@ func (s *StepMobile) Home() *StepMobile {
 // if X<1 & Y<1, {X,Y} will be considered as percentage
 // else, X & Y will be considered as absolute coordinates
 func (s *StepMobile) TapXY(x, y float64, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_TapXY,
+	action := option.MobileAction{
+		Method:  option.ACTION_TapXY,
 		Params:  []float64{x, y},
 		Options: option.NewActionOptions(opts...),
 	}
@@ -131,8 +132,8 @@ func (s *StepMobile) TapXY(x, y float64, opts ...option.ActionOption) *StepMobil
 
 // TapAbsXY taps the point {X,Y}, X & Y is absolute coordinates
 func (s *StepMobile) TapAbsXY(x, y float64, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_TapAbsXY,
+	action := option.MobileAction{
+		Method:  option.ACTION_TapAbsXY,
 		Params:  []float64{x, y},
 		Options: option.NewActionOptions(opts...),
 	}
@@ -143,8 +144,8 @@ func (s *StepMobile) TapAbsXY(x, y float64, opts ...option.ActionOption) *StepMo
 
 // TapByOCR taps on the target element by OCR recognition
 func (s *StepMobile) TapByOCR(ocrText string, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_TapByOCR,
+	action := option.MobileAction{
+		Method:  option.ACTION_TapByOCR,
 		Params:  ocrText,
 		Options: option.NewActionOptions(opts...),
 	}
@@ -155,8 +156,8 @@ func (s *StepMobile) TapByOCR(ocrText string, opts ...option.ActionOption) *Step
 
 // TapByCV taps on the target element by CV recognition
 func (s *StepMobile) TapByCV(imagePath string, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_TapByCV,
+	action := option.MobileAction{
+		Method:  option.ACTION_TapByCV,
 		Params:  imagePath,
 		Options: option.NewActionOptions(opts...),
 	}
@@ -167,8 +168,20 @@ func (s *StepMobile) TapByCV(imagePath string, opts ...option.ActionOption) *Ste
 
 // TapByUITypes taps on the target element specified by uiTypes, the higher the uiTypes, the higher the priority
 func (s *StepMobile) TapByUITypes(opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_TapByCV,
+	action := option.MobileAction{
+		Method:  option.ACTION_TapByCV,
+		Options: option.NewActionOptions(opts...),
+	}
+
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+// StartToGoal do goal-oriented actions with VLM
+func (s *StepMobile) StartToGoal(prompt string, opts ...option.ActionOption) *StepMobile {
+	action := option.MobileAction{
+		Method:  option.ACTION_StartToGoal,
+		Params:  prompt,
 		Options: option.NewActionOptions(opts...),
 	}
 
@@ -178,8 +191,20 @@ func (s *StepMobile) TapByUITypes(opts ...option.ActionOption) *StepMobile {
 
 // AIAction do actions with VLM
 func (s *StepMobile) AIAction(prompt string, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_AIAction,
+	action := option.MobileAction{
+		Method:  option.ACTION_AIAction,
+		Params:  prompt,
+		Options: option.NewActionOptions(opts...),
+	}
+
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+// AIQuery query information from screen using VLM
+func (s *StepMobile) AIQuery(prompt string, opts ...option.ActionOption) *StepMobile {
+	action := option.MobileAction{
+		Method:  option.ACTION_Query,
 		Params:  prompt,
 		Options: option.NewActionOptions(opts...),
 	}
@@ -190,8 +215,8 @@ func (s *StepMobile) AIAction(prompt string, opts ...option.ActionOption) *StepM
 
 // DoubleTapXY double taps the point {X,Y}, X & Y is percentage of coordinates
 func (s *StepMobile) DoubleTapXY(x, y float64, opts ...option.ActionOption) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method:  uixt.ACTION_DoubleTapXY,
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method:  option.ACTION_DoubleTapXY,
 		Params:  []float64{x, y},
 		Options: option.NewActionOptions(opts...),
 	})
@@ -199,8 +224,8 @@ func (s *StepMobile) DoubleTapXY(x, y float64, opts ...option.ActionOption) *Ste
 }
 
 func (s *StepMobile) Back() *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_Back,
+	action := option.MobileAction{
+		Method:  option.ACTION_Back,
 		Params:  nil,
 		Options: nil,
 	}
@@ -211,8 +236,8 @@ func (s *StepMobile) Back() *StepMobile {
 
 // Swipe drags from [sx, sy] to [ex, ey]
 func (s *StepMobile) Swipe(sx, sy, ex, ey float64, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_Swipe,
+	action := option.MobileAction{
+		Method:  option.ACTION_SwipeCoordinate,
 		Params:  []float64{sx, sy, ex, ey},
 		Options: option.NewActionOptions(opts...),
 	}
@@ -222,8 +247,8 @@ func (s *StepMobile) Swipe(sx, sy, ex, ey float64, opts ...option.ActionOption) 
 }
 
 func (s *StepMobile) SwipeUp(opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_Swipe,
+	action := option.MobileAction{
+		Method:  option.ACTION_SwipeDirection,
 		Params:  "up",
 		Options: option.NewActionOptions(opts...),
 	}
@@ -233,8 +258,8 @@ func (s *StepMobile) SwipeUp(opts ...option.ActionOption) *StepMobile {
 }
 
 func (s *StepMobile) SwipeDown(opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_Swipe,
+	action := option.MobileAction{
+		Method:  option.ACTION_SwipeDirection,
 		Params:  "down",
 		Options: option.NewActionOptions(opts...),
 	}
@@ -244,8 +269,8 @@ func (s *StepMobile) SwipeDown(opts ...option.ActionOption) *StepMobile {
 }
 
 func (s *StepMobile) SwipeLeft(opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_Swipe,
+	action := option.MobileAction{
+		Method:  option.ACTION_SwipeDirection,
 		Params:  "left",
 		Options: option.NewActionOptions(opts...),
 	}
@@ -255,8 +280,8 @@ func (s *StepMobile) SwipeLeft(opts ...option.ActionOption) *StepMobile {
 }
 
 func (s *StepMobile) SwipeRight(opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_Swipe,
+	action := option.MobileAction{
+		Method:  option.ACTION_SwipeDirection,
 		Params:  "right",
 		Options: option.NewActionOptions(opts...),
 	}
@@ -266,8 +291,8 @@ func (s *StepMobile) SwipeRight(opts ...option.ActionOption) *StepMobile {
 }
 
 func (s *StepMobile) SwipeToTapApp(appName string, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_SwipeToTapApp,
+	action := option.MobileAction{
+		Method:  option.ACTION_SwipeToTapApp,
 		Params:  appName,
 		Options: option.NewActionOptions(opts...),
 	}
@@ -277,8 +302,8 @@ func (s *StepMobile) SwipeToTapApp(appName string, opts ...option.ActionOption) 
 }
 
 func (s *StepMobile) SwipeToTapText(text string, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_SwipeToTapText,
+	action := option.MobileAction{
+		Method:  option.ACTION_SwipeToTapText,
 		Params:  text,
 		Options: option.NewActionOptions(opts...),
 	}
@@ -288,8 +313,8 @@ func (s *StepMobile) SwipeToTapText(text string, opts ...option.ActionOption) *S
 }
 
 func (s *StepMobile) SwipeToTapTexts(texts interface{}, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_SwipeToTapTexts,
+	action := option.MobileAction{
+		Method:  option.ACTION_SwipeToTapTexts,
 		Params:  texts,
 		Options: option.NewActionOptions(opts...),
 	}
@@ -299,8 +324,8 @@ func (s *StepMobile) SwipeToTapTexts(texts interface{}, opts ...option.ActionOpt
 }
 
 func (s *StepMobile) SecondaryClick(x, y float64, options ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_SecondaryClick,
+	action := option.MobileAction{
+		Method:  option.ACTION_SecondaryClick,
 		Params:  []float64{x, y},
 		Options: option.NewActionOptions(options...),
 	}
@@ -309,8 +334,8 @@ func (s *StepMobile) SecondaryClick(x, y float64, options ...option.ActionOption
 }
 
 func (s *StepMobile) SecondaryClickBySelector(selector string, options ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_SecondaryClickBySelector,
+	action := option.MobileAction{
+		Method:  option.ACTION_SecondaryClickBySelector,
 		Params:  selector,
 		Options: option.NewActionOptions(options...),
 	}
@@ -319,8 +344,8 @@ func (s *StepMobile) SecondaryClickBySelector(selector string, options ...option
 }
 
 func (s *StepMobile) HoverBySelector(selector string, options ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_HoverBySelector,
+	action := option.MobileAction{
+		Method:  option.ACTION_HoverBySelector,
 		Params:  selector,
 		Options: option.NewActionOptions(options...),
 	}
@@ -329,8 +354,8 @@ func (s *StepMobile) HoverBySelector(selector string, options ...option.ActionOp
 }
 
 func (s *StepMobile) TapBySelector(selector string, options ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_TapBySelector,
+	action := option.MobileAction{
+		Method:  option.ACTION_TapBySelector,
 		Params:  selector,
 		Options: option.NewActionOptions(options...),
 	}
@@ -339,8 +364,8 @@ func (s *StepMobile) TapBySelector(selector string, options ...option.ActionOpti
 }
 
 func (s *StepMobile) WebCloseTab(idx int, options ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_WebCloseTab,
+	action := option.MobileAction{
+		Method:  option.ACTION_WebCloseTab,
 		Params:  idx,
 		Options: option.NewActionOptions(options...),
 	}
@@ -349,8 +374,8 @@ func (s *StepMobile) WebCloseTab(idx int, options ...option.ActionOption) *StepM
 }
 
 func (s *StepMobile) GetElementTextBySelector(selector string, options ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_GetElementTextBySelector,
+	action := option.MobileAction{
+		Method:  option.ACTION_GetElementTextBySelector,
 		Params:  selector,
 		Options: option.NewActionOptions(options...),
 	}
@@ -359,8 +384,8 @@ func (s *StepMobile) GetElementTextBySelector(selector string, options ...option
 }
 
 func (s *StepMobile) Input(text string, opts ...option.ActionOption) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_Input,
+	action := option.MobileAction{
+		Method:  option.ACTION_Input,
 		Params:  text,
 		Options: option.NewActionOptions(opts...),
 	}
@@ -371,8 +396,8 @@ func (s *StepMobile) Input(text string, opts ...option.ActionOption) *StepMobile
 
 // Sleep specify sleep seconds after last action
 func (s *StepMobile) Sleep(nSeconds float64, startTime ...time.Time) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_Sleep,
+	action := option.MobileAction{
+		Method:  option.ACTION_Sleep,
 		Params:  nSeconds,
 		Options: nil,
 	}
@@ -387,8 +412,8 @@ func (s *StepMobile) Sleep(nSeconds float64, startTime ...time.Time) *StepMobile
 }
 
 func (s *StepMobile) SleepMS(nMilliseconds int64, startTime ...time.Time) *StepMobile {
-	action := uixt.MobileAction{
-		Method:  uixt.ACTION_SleepMS,
+	action := option.MobileAction{
+		Method:  option.ACTION_SleepMS,
 		Params:  nMilliseconds,
 		Options: nil,
 	}
@@ -407,8 +432,8 @@ func (s *StepMobile) SleepMS(nMilliseconds int64, startTime ...time.Time) *StepM
 // 1. [min, max] : min and max are float64 time range boundaries
 // 2. [min1, max1, weight1, min2, max2, weight2, ...] : weight is the probability of the time range
 func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method:  uixt.ACTION_SleepRandom,
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method:  option.ACTION_SleepRandom,
 		Params:  params,
 		Options: nil,
 	})
@@ -416,8 +441,8 @@ func (s *StepMobile) SleepRandom(params ...float64) *StepMobile {
 }
 
 func (s *StepMobile) EndToEndDelay(opts ...option.ActionOption) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method:  uixt.ACTION_EndToEndDelay,
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method:  option.ACTION_EndToEndDelay,
 		Params:  nil,
 		Options: option.NewActionOptions(opts...),
 	})
@@ -425,31 +450,32 @@ func (s *StepMobile) EndToEndDelay(opts ...option.ActionOption) *StepMobile {
 }
 
 func (s *StepMobile) ScreenShot(opts ...option.ActionOption) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method:  uixt.ACTION_ScreenShot,
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method:  option.ACTION_ScreenShot,
 		Params:  nil,
 		Options: option.NewActionOptions(opts...),
 	})
-	return s
-}
-
-func (s *StepMobile) DisableAutoPopupHandler() *StepMobile {
-	s.IgnorePopup = true
 	return s
 }
 
 func (s *StepMobile) ClosePopups(opts ...option.ActionOption) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method:  uixt.ACTION_ClosePopups,
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method:  option.ACTION_ClosePopups,
 		Params:  nil,
 		Options: option.NewActionOptions(opts...),
 	})
 	return s
 }
 
+// EnableAutoPopupHandler enables auto popup handler for this step.
+func (s *StepMobile) EnableAutoPopupHandler() *StepMobile {
+	s.AutoPopupHandler = true
+	return s
+}
+
 func (s *StepMobile) Call(name string, fn func(), opts ...option.ActionOption) *StepMobile {
-	s.obj().Actions = append(s.obj().Actions, uixt.MobileAction{
-		Method:  uixt.ACTION_CallFunction,
+	s.obj().Actions = append(s.obj().Actions, option.MobileAction{
+		Method:  option.ACTION_CallFunction,
 		Params:  name, // function description
 		Fn:      fn,
 		Options: option.NewActionOptions(opts...),
@@ -493,8 +519,8 @@ type StepMobileUIValidation struct {
 
 func (s *StepMobileUIValidation) AssertNameExists(expectedName string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
-		Check:  uixt.SelectorName,
-		Assert: uixt.AssertionExists,
+		Check:  option.SelectorName,
+		Assert: option.AssertionExists,
 		Expect: expectedName,
 	}
 	if len(msg) > 0 {
@@ -508,8 +534,8 @@ func (s *StepMobileUIValidation) AssertNameExists(expectedName string, msg ...st
 
 func (s *StepMobileUIValidation) AssertNameNotExists(expectedName string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
-		Check:  uixt.SelectorName,
-		Assert: uixt.AssertionNotExists,
+		Check:  option.SelectorName,
+		Assert: option.AssertionNotExists,
 		Expect: expectedName,
 	}
 	if len(msg) > 0 {
@@ -523,8 +549,8 @@ func (s *StepMobileUIValidation) AssertNameNotExists(expectedName string, msg ..
 
 func (s *StepMobileUIValidation) AssertLabelExists(expectedLabel string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
-		Check:  uixt.SelectorLabel,
-		Assert: uixt.AssertionExists,
+		Check:  option.SelectorLabel,
+		Assert: option.AssertionExists,
 		Expect: expectedLabel,
 	}
 	if len(msg) > 0 {
@@ -538,8 +564,8 @@ func (s *StepMobileUIValidation) AssertLabelExists(expectedLabel string, msg ...
 
 func (s *StepMobileUIValidation) AssertLabelNotExists(expectedLabel string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
-		Check:  uixt.SelectorLabel,
-		Assert: uixt.AssertionNotExists,
+		Check:  option.SelectorLabel,
+		Assert: option.AssertionNotExists,
 		Expect: expectedLabel,
 	}
 	if len(msg) > 0 {
@@ -553,8 +579,8 @@ func (s *StepMobileUIValidation) AssertLabelNotExists(expectedLabel string, msg 
 
 func (s *StepMobileUIValidation) AssertOCRExists(expectedText string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
-		Check:  uixt.SelectorOCR,
-		Assert: uixt.AssertionExists,
+		Check:  option.SelectorOCR,
+		Assert: option.AssertionExists,
 		Expect: expectedText,
 	}
 	if len(msg) > 0 {
@@ -568,8 +594,8 @@ func (s *StepMobileUIValidation) AssertOCRExists(expectedText string, msg ...str
 
 func (s *StepMobileUIValidation) AssertOCRNotExists(expectedText string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
-		Check:  uixt.SelectorOCR,
-		Assert: uixt.AssertionNotExists,
+		Check:  option.SelectorOCR,
+		Assert: option.AssertionNotExists,
 		Expect: expectedText,
 	}
 	if len(msg) > 0 {
@@ -583,8 +609,8 @@ func (s *StepMobileUIValidation) AssertOCRNotExists(expectedText string, msg ...
 
 func (s *StepMobileUIValidation) AssertImageExists(expectedImagePath string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
-		Check:  uixt.SelectorImage,
-		Assert: uixt.AssertionExists,
+		Check:  option.SelectorImage,
+		Assert: option.AssertionExists,
 		Expect: expectedImagePath,
 	}
 	if len(msg) > 0 {
@@ -598,8 +624,8 @@ func (s *StepMobileUIValidation) AssertImageExists(expectedImagePath string, msg
 
 func (s *StepMobileUIValidation) AssertImageNotExists(expectedImagePath string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
-		Check:  uixt.SelectorImage,
-		Assert: uixt.AssertionNotExists,
+		Check:  option.SelectorImage,
+		Assert: option.AssertionNotExists,
 		Expect: expectedImagePath,
 	}
 	if len(msg) > 0 {
@@ -613,8 +639,8 @@ func (s *StepMobileUIValidation) AssertImageNotExists(expectedImagePath string, 
 
 func (s *StepMobileUIValidation) AssertAI(prompt string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
-		Check:  uixt.SelectorAI,
-		Assert: uixt.AssertionAI,
+		Check:  option.SelectorAI,
+		Assert: option.AssertionAI,
 		Expect: prompt,
 	}
 	if len(msg) > 0 {
@@ -628,8 +654,8 @@ func (s *StepMobileUIValidation) AssertAI(prompt string, msg ...string) *StepMob
 
 func (s *StepMobileUIValidation) AssertAppInForeground(packageName string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
-		Check:  uixt.SelectorForegroundApp,
-		Assert: uixt.AssertionEqual,
+		Check:  option.SelectorForegroundApp,
+		Assert: option.AssertionEqual,
 		Expect: packageName,
 	}
 	if len(msg) > 0 {
@@ -643,8 +669,8 @@ func (s *StepMobileUIValidation) AssertAppInForeground(packageName string, msg .
 
 func (s *StepMobileUIValidation) AssertAppNotInForeground(packageName string, msg ...string) *StepMobileUIValidation {
 	v := Validator{
-		Check:  uixt.SelectorForegroundApp,
-		Assert: uixt.AssertionNotEqual,
+		Check:  option.SelectorForegroundApp,
+		Assert: option.AssertionNotEqual,
 		Expect: packageName,
 	}
 	if len(msg) > 0 {
@@ -677,23 +703,32 @@ func (s *StepMobileUIValidation) Run(r *SessionRunner) (*StepResult, error) {
 }
 
 func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err error) {
+	start := time.Now()
+	stepResult = &StepResult{
+		Name:        step.Name(),
+		StepType:    step.Type(),
+		Success:     false,
+		ContentSize: 0,
+		StartTime:   start.Unix(),
+	}
+
 	var stepVariables map[string]interface{}
 	var stepValidators []interface{}
-	var ignorePopup bool
+	var stepAutoPopupHandler bool
 
 	var mobileStep *MobileUI
 	switch stepMobile := step.(type) {
 	case *StepMobile:
 		mobileStep = stepMobile.obj()
 		stepVariables = stepMobile.Variables
-		ignorePopup = stepMobile.IgnorePopup
+		stepAutoPopupHandler = stepMobile.AutoPopupHandler
 	case *StepMobileUIValidation:
 		mobileStep = stepMobile.obj()
 		stepVariables = stepMobile.Variables
 		stepValidators = stepMobile.Validators
-		ignorePopup = stepMobile.StepMobile.IgnorePopup
+		stepAutoPopupHandler = stepMobile.StepMobile.AutoPopupHandler
 	default:
-		return nil, errors.New("invalid mobile UI step type")
+		return stepResult, errors.New("invalid mobile UI step type")
 	}
 
 	// report GA event
@@ -702,9 +737,22 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 	})
 
 	// init wda/uia/hdc driver
-	uiDriver, err := s.caseRunner.GetUIXTDriver(mobileStep.Serial)
+	config := uixt.DriverCacheConfig{
+		Platform: mobileStep.OSType,
+		Serial:   mobileStep.Serial,
+	}
+
+	// Extract AI service options from global configuration
+	if s.caseRunner != nil && s.caseRunner.Config != nil {
+		globalConfig := s.caseRunner.Config.Get()
+		if globalConfig != nil && globalConfig.AIOptions != nil {
+			config.AIOptions = globalConfig.AIOptions.Options()
+		}
+	}
+
+	uiDriver, err := uixt.GetOrCreateXTDriver(config)
 	if err != nil {
-		return
+		return stepResult, err
 	}
 
 	identifier := mobileStep.Identifier
@@ -719,16 +767,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			}
 		}
 	}
-
-	start := time.Now()
-	stepResult = &StepResult{
-		Name:        step.Name(),
-		Identifier:  identifier,
-		StepType:    step.Type(),
-		Success:     false,
-		ContentSize: 0,
-		StartTime:   start.Unix(),
-	}
+	stepResult.Identifier = identifier
 
 	defer func() {
 		attachments := uixt.Attachments{}
@@ -738,42 +777,56 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			// save foreground app
 			startTime := time.Now()
 			actionResult := &ActionResult{
-				MobileAction: uixt.MobileAction{
-					Method: uixt.ACTION_GetForegroundApp,
+				MobileAction: option.MobileAction{
+					Method: option.ACTION_GetForegroundApp,
 					Params: "[ForDebug] check foreground app",
 				},
 				StartTime: startTime.Unix(),
 			}
-			if app, err1 := uiDriver.ForegroundInfo(); err1 == nil {
-				attachments["foreground_app"] = app.AppBaseInfo
-			} else {
-				log.Warn().Err(err1).Msg("save foreground app failed, ignore")
+			subActionResults, err1 := uiDriver.ExecuteAction(
+				context.Background(), actionResult.MobileAction)
+			if err1 != nil {
+				log.Warn().Err(err1).Msg("get foreground app failed, ignore")
 			}
 			actionResult.Elapsed = time.Since(startTime).Milliseconds()
+			actionResult.SubActions = subActionResults
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
+		var config *TConfig
+		if s.caseRunner != nil && s.caseRunner.Config != nil {
+			config = s.caseRunner.Config.Get()
+		}
 		// automatic handling of pop-up windows on each step finished
-		if !ignorePopup && !s.caseRunner.Config.Get().IgnorePopup {
+		// priority: testcase config > step config, default to disabled
+		shouldHandlePopup := false
+		if config != nil && config.AutoPopupHandler {
+			// testcase level config has higher priority
+			shouldHandlePopup = true
+		} else if stepAutoPopupHandler {
+			// step level config
+			shouldHandlePopup = true
+		}
+
+		if shouldHandlePopup && uiDriver != nil {
 			startTime := time.Now()
 			actionResult := &ActionResult{
-				MobileAction: uixt.MobileAction{
-					Method: uixt.ACTION_ClosePopups,
+				MobileAction: option.MobileAction{
+					Method: option.ACTION_ClosePopups,
 					Params: "[ForDebug] close popups handler",
 				},
 				StartTime: startTime.Unix(),
 			}
-			if err2 := uiDriver.ClosePopupsHandler(); err2 != nil {
-				log.Error().Err(err2).Str("step", step.Name()).Msg("auto handle popup failed")
+			subActionResults, err2 := uiDriver.ExecuteAction(
+				context.Background(), actionResult.MobileAction)
+			if err2 != nil {
+				log.Warn().Err(err2).Str("step", step.Name()).Msg("auto handle popup failed")
 			}
 			actionResult.Elapsed = time.Since(startTime).Milliseconds()
+			actionResult.SubActions = subActionResults
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
-		// save attachments
-		for key, value := range uiDriver.GetData(true) {
-			attachments[key] = value
-		}
 		stepResult.Attachments = attachments
 		stepResult.Elapsed = time.Since(start).Milliseconds()
 	}()
@@ -801,16 +854,92 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				return stepResult, err
 			}
 
+			// Apply global configuration from testcase config
+			if s.caseRunner != nil && s.caseRunner.Config != nil {
+				config := s.caseRunner.Config.Get()
+				if config != nil {
+					if action.Options == nil {
+						action.Options = &option.ActionOptions{}
+					}
+
+					// Apply global AntiRisk configuration
+					if config.AntiRisk && !action.Options.AntiRisk {
+						action.Options.AntiRisk = true
+					}
+
+					// Apply global LLM service configuration for AI actions
+					if config.AIOptions != nil && (action.Method == option.ACTION_AIAction || action.Method == option.ACTION_StartToGoal ||
+						action.Method == option.ACTION_AIAssert || action.Method == option.ACTION_Query) {
+						if config.AIOptions.LLMService != "" && action.Options.LLMService == "" {
+							action.Options.LLMService = string(config.AIOptions.LLMService)
+							log.Debug().Str("action", string(action.Method)).
+								Str("llmService", action.Options.LLMService).
+								Msg("Applied global LLM service config to action")
+						}
+						if config.AIOptions.CVService != "" && action.Options.CVService == "" {
+							action.Options.CVService = string(config.AIOptions.CVService)
+							log.Debug().Str("action", string(action.Method)).
+								Str("cvService", action.Options.CVService).
+								Msg("Applied global CV service config to action")
+						}
+					}
+				}
+			}
+
 			// stat uixt action
-			if action.Method == uixt.ACTION_LOG {
+			if action.Method == option.ACTION_LOG {
 				log.Info().Interface("action", action.Params).Msg("stat uixt action")
-				actionMethod := uixt.ActionMethod(action.Params.(string))
+				actionMethod := option.ActionName(action.Params.(string))
 				s.summary.Stat.Actions[actionMethod]++
 				continue
 			}
 
-			err = uiDriver.DoAction(action)
+			// call custom function
+			if action.Method == option.ACTION_CallFunction {
+				if funcDesc, ok := action.Params.(string); ok {
+					err := Call(funcDesc, action.Fn, action.GetOptions()...)
+					if err != nil {
+						return stepResult, err
+					}
+				}
+				continue
+			}
+
+			// call MCP tool to execute action with cancellable context
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			// Create a goroutine to monitor for interrupt signals
+			go func() {
+				select {
+				case <-s.caseRunner.hrpRunner.interruptSignal:
+					log.Warn().Msg("cancelling action due to interrupt signal")
+					cancel()
+				case <-ctx.Done():
+					// Context already cancelled
+				}
+			}()
+
+			// handle start_to_goal action
+			if action.Method == option.ACTION_StartToGoal {
+				planningResults, err := uiDriver.StartToGoal(ctx,
+					action.Params.(string), action.GetOptions()...)
+				actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
+				actionResult.Plannings = planningResults
+				stepResult.Actions = append(stepResult.Actions, actionResult)
+				if err != nil {
+					if !code.IsErrorPredefined(err) {
+						err = errors.Wrap(code.MobileUIDriverError, err.Error())
+					}
+					return stepResult, err
+				}
+				continue
+			}
+
+			// handle other actions
+			subActionResults, err := uiDriver.ExecuteAction(ctx, action)
 			actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
+			actionResult.SubActions = subActionResults
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 			if err != nil {
 				if !code.IsErrorPredefined(err) {

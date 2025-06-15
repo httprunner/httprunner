@@ -1,11 +1,10 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/internal/mcp"
+	"github.com/httprunner/httprunner/v5/mcphost"
 	"github.com/httprunner/httprunner/v5/uixt"
 
 	"github.com/gin-gonic/gin"
@@ -22,23 +21,16 @@ func NewRouter() *Router {
 
 type Router struct {
 	*gin.Engine
-	mcpHub *mcp.MCPHub
+	mcpHost *mcphost.MCPHost
 }
 
-func (r *Router) InitMCPHub(configPath string) error {
-	mcpHub, err := mcp.NewMCPHub(configPath)
+func (r *Router) InitMCPHost(configPath string) error {
+	mcpHost, err := mcphost.NewMCPHost(configPath, true)
 	if err != nil {
-		log.Error().Err(err).Msg("init MCP hub failed")
+		log.Error().Err(err).Msg("init MCP host failed")
 		return err
 	}
-
-	err = mcpHub.InitServers(context.Background())
-	if err != nil {
-		log.Error().Err(err).Msg("init MCP servers failed")
-		return err
-	}
-
-	r.mcpHub = mcpHub
+	r.mcpHost = mcpHost
 	return nil
 }
 
@@ -94,7 +86,7 @@ func (r *Router) Init() {
 }
 
 func (r *Router) Run(port int) error {
-	err := r.Engine.Run(fmt.Sprintf("127.0.0.1:%d", port))
+	err := r.Engine.Run(fmt.Sprintf("localhost:%d", port))
 	if err != nil {
 		log.Err(err).Msg("failed to start http server")
 		return err

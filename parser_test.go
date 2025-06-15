@@ -1,6 +1,7 @@
 package hrp
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/httprunner/httprunner/v5/internal/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -433,24 +435,42 @@ func TestCallBuiltinFunction(t *testing.T) {
 	parser := NewParser()
 
 	// call function without arguments
-	_, err := parser.callFunc("get_timestamp")
+	_, err := parser.CallFunc("get_timestamp")
 	assert.Nil(t, err)
 
 	// call function with one argument
 	timeStart := time.Now()
-	_, err = parser.callFunc("sleep", 1)
+	_, err = parser.CallFunc("sleep", 1)
 	assert.Nil(t, err)
 	assert.Greater(t, time.Since(timeStart), time.Duration(1)*time.Second)
 
 	// call function with one argument
-	result, err := parser.callFunc("gen_random_string", 10)
+	result, err := parser.CallFunc("gen_random_string", 10)
 	assert.Nil(t, err)
 	assert.Equal(t, 10, len(result.(string)))
 
 	// call function with two argument
-	result, err = parser.callFunc("max", float64(10), 9.99)
+	result, err = parser.CallFunc("max", float64(10), 9.99)
 	assert.Nil(t, err)
 	assert.Equal(t, float64(10), result.(float64))
+}
+
+func TestCallMCPTool(t *testing.T) {
+	// Create a new case runner for testing
+	caseRunner, err := NewCaseRunner(TestCase{
+		Config: &TConfig{
+			MCPConfigPath: "mcphost/testdata/test.mcp.json",
+		},
+	}, nil)
+	require.Nil(t, err)
+
+	parser := caseRunner.GetParser()
+
+	resp, err := parser.CallMCPTool(context.Background(), "filesystem", "read_file",
+		map[string]interface{}{"path": "internal/version/VERSION"})
+	assert.Nil(t, err)
+	t.Logf("resp: %v", resp)
+	assert.Contains(t, resp, version.VERSION)
 }
 
 func TestLiteralEval(t *testing.T) {

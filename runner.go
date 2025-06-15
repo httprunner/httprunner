@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
-	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -28,6 +27,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/internal/version"
+	"github.com/httprunner/httprunner/v5/mcphost"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
@@ -51,6 +51,7 @@ func NewRunner(t *testing.T) *HRPRunner {
 		t:             t,
 		failfast:      true, // default to failfast
 		genHTMLReport: false,
+		mcpConfigPath: "",
 		httpClient: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -83,6 +84,7 @@ type HRPRunner struct {
 	venv             string
 	saveTests        bool
 	genHTMLReport    bool
+	mcpConfigPath    string // MCP config file path
 	httpClient       *http.Client
 	http2Client      *http.Client
 	wsDialer         *websocket.Dialer
@@ -192,6 +194,13 @@ func (r *HRPRunner) GenHTMLReport() *HRPRunner {
 	return r
 }
 
+// SetMCPConfigPath configures the MCP config path.
+func (r *HRPRunner) SetMCPConfigPath(mcpConfigPath string) *HRPRunner {
+	log.Info().Str("mcpConfigPath", mcpConfigPath).Msg("[init] SetMCPConfigPath")
+	r.mcpConfigPath = mcpConfigPath
+	return r
+}
+
 // Run starts to execute one or multiple testcases.
 func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	log.Info().Str("hrp_version", version.VERSION).Msg("start running")
@@ -208,6 +217,31 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	// record execution data to summary
 	s := NewSummary()
 
+	// defer summary saving and HTML report generation
+	// this ensures they run regardless of how the function exits
+	defer func() {
+		s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
+		log.Info().Int("duration(s)", int(s.Time.Duration)).Msg("run testcase finished")
+
+		// save summary
+		if r.saveTests {
+			if summaryPath, saveErr := s.GenSummary(); saveErr != nil {
+				log.Error().Err(saveErr).Msg("failed to save summary")
+			} else {
+				log.Info().Str("path", summaryPath).Msg("summary saved successfully")
+			}
+		}
+
+		// generate HTML report
+		if r.genHTMLReport {
+			if reportErr := s.GenHTMLReport(); reportErr != nil {
+				log.Error().Err(reportErr).Msg("failed to generate HTML report")
+			} else {
+				log.Info().Msg("HTML report generated successfully")
+			}
+		}
+	}()
+
 	// load all testcases
 	testCases, err := LoadTestCases(testcases...)
 	if err != nil {
@@ -215,7 +249,10 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 		return err
 	}
 
-	// quit all plugins
+	// collect all MCP hosts for cleanup
+	var mcpHosts []*mcphost.MCPHost
+
+	// quit all plugins and close MCP hosts
 	defer func() {
 		pluginMap.Range(func(key, value interface{}) bool {
 			if plugin, ok := value.(funplugin.IPlugin); ok {
@@ -223,11 +260,40 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			}
 			return true
 		})
+
+		// Close all MCP hosts with timeout
+		if len(mcpHosts) > 0 {
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				for _, host := range mcpHosts {
+					if host != nil {
+						host.Shutdown()
+					}
+				}
+			}()
+
+			// Wait for cleanup with timeout
+			select {
+			case <-done:
+				log.Debug().Msg("All MCP hosts cleaned up successfully")
+			case <-time.After(10 * time.Second):
+				log.Warn().Msg("MCP hosts cleanup timeout")
+			}
+		}
 	}()
 
 	var runErr error
 	// run testcase one by one
 	for _, testcase := range testCases {
+		// check for interrupt signal before processing each testcase
+		select {
+		case <-r.interruptSignal:
+			log.Warn().Msg("interrupted in main runner")
+			return errors.Wrap(code.InterruptError, "main runner interrupted")
+		default:
+		}
+
 		// each testcase has its own case runner
 		caseRunner, err := NewCaseRunner(*testcase, r)
 		if err != nil {
@@ -235,14 +301,20 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			return err
 		}
 
-		// release UI driver session
-		defer func() {
-			for _, client := range caseRunner.uixtDrivers {
-				client.DeleteSession()
-			}
-		}()
+		// collect MCP host for cleanup
+		if caseRunner.parser.MCPHost != nil {
+			mcpHosts = append(mcpHosts, caseRunner.parser.MCPHost)
+		}
 
 		for it := caseRunner.parametersIterator; it.HasNext(); {
+			// check for interrupt signal before each iteration
+			select {
+			case <-r.interruptSignal:
+				log.Warn().Msg("interrupted in parameter iteration")
+				return errors.Wrap(code.InterruptError, "parameter iteration interrupted")
+			default:
+			}
+
 			// case runner can run multiple times with different parameters
 			// each run has its own session runner
 			sessionRunner := caseRunner.NewSession()
@@ -250,27 +322,11 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 			s.AddCaseSummary(caseSummary)
 			if err != nil {
 				log.Error().Err(err).Msg("[Run] run testcase failed")
+				if r.failfast {
+					return err
+				}
 				runErr = err
 			}
-
-			if runErr != nil && r.failfast {
-				break
-			}
-		}
-	}
-	s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
-
-	// save summary
-	if r.saveTests {
-		if _, err := s.GenSummary(); err != nil {
-			return err
-		}
-	}
-
-	// generate HTML report
-	if r.genHTMLReport {
-		if err := s.GenHTMLReport(); err != nil {
-			return err
 		}
 	}
 
@@ -285,10 +341,9 @@ func NewCaseRunner(testcase TestCase, hrpRunner *HRPRunner) (*CaseRunner, error)
 		hrpRunner = NewRunner(nil)
 	}
 	caseRunner := &CaseRunner{
-		TestCase:    testcase,
-		hrpRunner:   hrpRunner,
-		parser:      NewParser(),
-		uixtDrivers: make(map[string]*uixt.XTDriver),
+		TestCase:  testcase,
+		hrpRunner: hrpRunner,
+		parser:    NewParser(),
 	}
 	config := testcase.Config.Get()
 
@@ -313,6 +368,20 @@ func NewCaseRunner(testcase TestCase, hrpRunner *HRPRunner) (*CaseRunner, error)
 		log.Info().Str("pluginPath", pluginPath).
 			Str("pluginType", config.PluginSetting.Type).
 			Msg("plugin info loaded")
+	}
+
+	// init MCP servers
+	mcpConfigPath := hrpRunner.mcpConfigPath
+	if mcpConfigPath == "" {
+		mcpConfigPath = config.MCPConfigPath
+	}
+	if mcpConfigPath != "" {
+		mcpHost, err := mcphost.NewMCPHost(mcpConfigPath, false)
+		if err != nil {
+			return nil, errors.Wrapf(err, "init mcp config %s failed", mcpConfigPath)
+		}
+		caseRunner.parser.MCPHost = mcpHost
+		log.Info().Str("mcpConfigPath", mcpConfigPath).Msg("mcp server loaded")
 	}
 
 	// parse testcase config
@@ -341,9 +410,6 @@ type CaseRunner struct {
 	parser    *Parser    // each CaseRunner init its own Parser
 
 	parametersIterator *ParametersIterator
-
-	// UI automation clients for iOS and Android, key is udid/serial
-	uixtDrivers map[string]*uixt.XTDriver
 }
 
 func (r *CaseRunner) GetParametersIterator() *ParametersIterator {
@@ -425,15 +491,11 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 
 	// ai options
 	aiOpts := []option.AIServiceOption{}
-	if parsedConfig.LLMService != "" {
-		aiOpts = append(aiOpts, option.WithLLMService(option.LLMServiceType(parsedConfig.LLMService)))
+	if parsedConfig.AIOptions != nil {
+		aiOpts = parsedConfig.AIOptions.Options()
 	}
-	if parsedConfig.CVService == "" {
-		// default to vedem
-		parsedConfig.CVService = option.CVServiceTypeVEDEM
-	}
-	aiOpts = append(aiOpts, option.WithCVService(parsedConfig.CVService))
 
+	var driverConfigs []uixt.DriverCacheConfig
 	// parse android devices config
 	for _, androidDeviceOptions := range parsedConfig.Android {
 		err := r.parseDeviceConfig(androidDeviceOptions, parsedConfig.Variables)
@@ -441,21 +503,12 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse android config failed: %v", err))
 		}
-
-		device, err := uixt.NewAndroidDevice(androidDeviceOptions.Options()...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init android device failed")
-		}
-		driver, err := device.NewDriver()
-		if err != nil {
-			return nil, errors.Wrap(err, "init android driver failed")
-		}
-
-		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init android XTDriver failed")
-		}
-		r.RegisterUIXTDriver(androidDeviceOptions.SerialNumber, driverExt)
+		driverConfigs = append(driverConfigs, uixt.DriverCacheConfig{
+			Platform:   "android",
+			Serial:     androidDeviceOptions.SerialNumber,
+			AIOptions:  aiOpts,
+			DeviceOpts: option.FromAndroidOptions(androidDeviceOptions),
+		})
 	}
 	// parse iOS devices config
 	for _, iosDeviceOptions := range parsedConfig.IOS {
@@ -464,21 +517,12 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse ios config failed: %v", err))
 		}
-
-		device, err := uixt.NewIOSDevice(iosDeviceOptions.Options()...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init ios device failed")
-		}
-		driver, err := device.NewDriver()
-		if err != nil {
-			return nil, errors.Wrap(err, "init ios driver failed")
-		}
-
-		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init ios XTDriver failed")
-		}
-		r.RegisterUIXTDriver(iosDeviceOptions.UDID, driverExt)
+		driverConfigs = append(driverConfigs, uixt.DriverCacheConfig{
+			Platform:   "ios",
+			Serial:     iosDeviceOptions.UDID,
+			AIOptions:  aiOpts,
+			DeviceOpts: option.FromIOSOptions(iosDeviceOptions),
+		})
 	}
 	// parse harmony devices config
 	for _, harmonyDeviceOptions := range parsedConfig.Harmony {
@@ -487,21 +531,12 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse harmony config failed: %v", err))
 		}
-
-		device, err := uixt.NewHarmonyDevice(harmonyDeviceOptions.Options()...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init harmony device failed")
-		}
-		driver, err := device.NewDriver()
-		if err != nil {
-			return nil, errors.Wrap(err, "init harmony driver failed")
-		}
-
-		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init harmony XTDriver failed")
-		}
-		r.RegisterUIXTDriver(harmonyDeviceOptions.ConnectKey, driverExt)
+		driverConfigs = append(driverConfigs, uixt.DriverCacheConfig{
+			Platform:   "harmony",
+			Serial:     harmonyDeviceOptions.ConnectKey,
+			AIOptions:  aiOpts,
+			DeviceOpts: option.FromHarmonyOptions(harmonyDeviceOptions),
+		})
 	}
 	// parse browser devices config
 	for _, browserDeviceOptions := range parsedConfig.Browser {
@@ -510,26 +545,42 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 			return nil, errors.Wrap(code.InvalidCaseError,
 				fmt.Sprintf("parse browser config failed: %v", err))
 		}
-		device, err := uixt.NewBrowserDevice(browserDeviceOptions.Options()...)
+		driverConfigs = append(driverConfigs, uixt.DriverCacheConfig{
+			Platform:   "browser",
+			Serial:     browserDeviceOptions.BrowserID,
+			AIOptions:  aiOpts,
+			DeviceOpts: option.FromBrowserOptions(browserDeviceOptions),
+		})
+	}
+
+	// init XTDriver and register to unified cache
+	for _, driverConfig := range driverConfigs {
+		driver, err := uixt.GetOrCreateXTDriver(driverConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "init browser device failed")
+			return nil, errors.Wrapf(err, "init %s XTDriver failed", driverConfig.Platform)
 		}
-		driver, err := device.NewDriver()
-		if err != nil {
-			return nil, errors.Wrap(err, "init browser driver failed")
+
+		// Set MCP clients if MCPHost is available
+		if r.parser.MCPHost != nil {
+			mcpClients := r.parser.MCPHost.GetAllClients()
+			driver.SetMCPClients(mcpClients)
+			log.Debug().Str("serial", driverConfig.Serial).
+				Int("mcp_clients", len(mcpClients)).
+				Msg("Set MCP clients for XTDriver")
 		}
-		driverExt, err := uixt.NewXTDriver(driver, aiOpts...)
-		if err != nil {
-			return nil, errors.Wrap(err, "init browser XTDriver failed")
-		}
-		r.RegisterUIXTDriver(browserDeviceOptions.BrowserID, driverExt)
 	}
 
 	return parsedConfig, nil
 }
 
-func (r *CaseRunner) RegisterUIXTDriver(serial string, driver *uixt.XTDriver) {
-	r.uixtDrivers[serial] = driver
+// RegisterUIXTDriver is used to register a external driver to the unified cache
+func (r *CaseRunner) RegisterUIXTDriver(serial string, driver *uixt.XTDriver) error {
+	if err := uixt.RegisterXTDriver(serial, driver); err != nil {
+		log.Error().Err(err).Str("serial", serial).Msg("register XTDriver failed")
+		return err
+	}
+	log.Info().Str("serial", serial).Msg("register XTDriver success")
+	return nil
 }
 
 func (r *CaseRunner) parseDeviceConfig(device interface{}, configVariables map[string]interface{}) error {
@@ -566,21 +617,6 @@ func (r *CaseRunner) parseDeviceConfig(device interface{}, configVariables map[s
 		}
 	}
 	return nil
-}
-
-func (r *CaseRunner) GetUIXTDriver(serial string) (driver *uixt.XTDriver, err error) {
-	for key, driver := range r.uixtDrivers {
-		// return the driver with the same serial
-		if key == serial {
-			return driver, nil
-		}
-		// or return the first driver if serial is empty
-		if serial == "" {
-			r.uixtDrivers[serial] = driver
-			return driver, nil
-		}
-	}
-	return nil, errors.New("no driver found")
 }
 
 // each boomer task initiates a new session
@@ -641,12 +677,14 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 		summary.InOut.ConfigVars = config.Variables
 
 		// TODO: move to mobile ui step
-		for uuid, client := range r.caseRunner.uixtDrivers {
+		// Collect logs from cached drivers
+		for _, cached := range uixt.ListCachedDrivers() {
 			// add WDA/UIA logs to summary
 			logs := map[string]interface{}{
-				"uuid": uuid,
+				"uuid": cached.Serial,
 			}
 
+			client := cached.Driver
 			if client.GetDevice().LogEnabled() {
 				log, err1 := client.StopCaptureLog()
 				if err1 != nil {
@@ -670,9 +708,6 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 		case <-r.caseRunner.hrpRunner.caseTimeoutTimer.C:
 			log.Warn().Msg("timeout in session runner")
 			return summary, errors.Wrap(code.TimeoutError, "session runner timeout")
-		case <-r.caseRunner.hrpRunner.interruptSignal:
-			log.Warn().Msg("interrupted in session runner")
-			return summary, errors.Wrap(code.InterruptError, "session runner interrupted")
 		default:
 			_, err := r.RunStep(step)
 			if err == nil {
@@ -695,6 +730,14 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 }
 
 func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) {
+	// check for interrupt signal before running step
+	select {
+	case <-r.caseRunner.hrpRunner.interruptSignal:
+		log.Warn().Msg("interrupted in RunStep")
+		return nil, errors.Wrap(code.InterruptError, "RunStep interrupted")
+	default:
+	}
+
 	// parse step struct
 	if err = r.ParseStep(step); err != nil {
 		log.Error().Err(err).Msg("parse step struct failed")
@@ -708,9 +751,11 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 	log.Info().Str("step", stepName).Str("type", stepType).Msg("run step start")
 
 	// run times of step
-	loopTimes, err := r.getLoopTimes(step)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get loop times")
+	loopTimes := step.Config().Loops
+	if loopTimes == 0 {
+		loopTimes = 1 // default run once
+	} else if loopTimes > 1 {
+		log.Info().Int("loops", loopTimes).Msg("set multiple loop times")
 	}
 
 	// run step with specified loop times
@@ -758,6 +803,15 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 func (r *SessionRunner) GetSummary() *TestCaseSummary {
 	r.summary.Time.Duration = time.Since(r.summary.Time.StartAt).Seconds()
 	return r.summary
+}
+
+// GenerateReport generates report for the testcase.
+func (r *SessionRunner) GenerateReport() error {
+	summary := NewSummary()
+	caseSummary := r.GetSummary()
+	summary.AddCaseSummary(caseSummary)
+	summary.Time.Duration = time.Since(caseSummary.Time.StartAt).Seconds()
+	return summary.GenHTMLReport()
 }
 
 func (r *SessionRunner) ParseStep(step IStep) error {
@@ -835,40 +889,4 @@ func (r *SessionRunner) GetSessionVariables() map[string]interface{} {
 
 func (r *SessionRunner) GetTransactions() map[string]map[TransactionType]time.Time {
 	return r.transactions
-}
-
-func (r *SessionRunner) getLoopTimes(step IStep) (int, error) {
-	loops := step.Config().Loops
-	if loops == nil {
-		// default run once
-		return 1, nil
-	}
-
-	loopTimes, err := loops.Value()
-	if err != nil {
-		parsed, err := r.caseRunner.parser.ParseString(
-			*loops.StringValue, step.Config().Variables)
-		if err != nil {
-			return 0, errors.Wrap(err, "failed to parse loop times")
-		}
-		switch v := parsed.(type) {
-		case int:
-			loopTimes = v
-		case string:
-			n, err := strconv.Atoi(v)
-			if err != nil {
-				return 0, errors.Wrap(err, "failed to parse loop times")
-			}
-			loopTimes = n
-		}
-	}
-	if loopTimes < 0 {
-		return 0, fmt.Errorf("loop times should be positive, got %d", loopTimes)
-	} else if loopTimes == 0 {
-		loopTimes = 1
-	} else if loopTimes > 1 {
-		log.Info().Int("loops", loopTimes).Msg("set multiple loop times")
-	}
-
-	return loopTimes, nil
 }

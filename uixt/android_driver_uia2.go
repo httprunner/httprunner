@@ -262,7 +262,7 @@ func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error
 	if err != nil {
 		return err
 	}
-	defer postHandler(ud, ACTION_DoubleTapXY, actionOptions)
+	defer postHandler(ud, option.ACTION_DoubleTapXY, actionOptions)
 
 	data := map[string]interface{}{
 		"actions": []interface{}{
@@ -304,7 +304,7 @@ func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error 
 	if err != nil {
 		return err
 	}
-	defer postHandler(ud, ACTION_TapAbsXY, actionOptions)
+	defer postHandler(ud, option.ACTION_TapAbsXY, actionOptions)
 
 	duration := 100.0
 	if actionOptions.PressDuration > 0 {
@@ -367,7 +367,7 @@ func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.Action
 	if err != nil {
 		return err
 	}
-	defer postHandler(ud, ACTION_Drag, actionOptions)
+	defer postHandler(ud, option.ACTION_Drag, actionOptions)
 
 	data := map[string]interface{}{
 		"startX": fromX,
@@ -394,11 +394,11 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 		Float64("toX", toX).Float64("toY", toY).Msg("UIA2Driver.Swipe")
 
 	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err := preHandler_Swipe(ud, actionOptions, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err := preHandler_Swipe(ud, option.ACTION_SwipeCoordinate, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	defer postHandler(ud, ACTION_Swipe, actionOptions)
+	defer postHandler(ud, option.ACTION_SwipeCoordinate, actionOptions)
 
 	duration := 200.0
 	if actionOptions.PressDuration > 0 {

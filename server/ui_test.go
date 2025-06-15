@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,16 +18,16 @@ func TestTapHandler(t *testing.T) {
 	tests := []struct {
 		name       string
 		path       string
-		tapReq     TapRequest
+		req        option.ActionOptions
 		wantStatus int
 		wantResp   HttpResponse
 	}{
 		{
 			name: "tap abs xy",
 			path: fmt.Sprintf("/api/v1/android/%s/ui/tap", "4622ca24"),
-			tapReq: TapRequest{
-				X:        500,
-				Y:        800,
+			req: option.ActionOptions{
+				X:        500.0,
+				Y:        800.0,
 				Duration: 0,
 			},
 			wantStatus: http.StatusOK,
@@ -39,7 +40,7 @@ func TestTapHandler(t *testing.T) {
 		{
 			name: "tap relative xy",
 			path: fmt.Sprintf("/api/v1/android/%s/ui/tap", "4622ca24"),
-			tapReq: TapRequest{
+			req: option.ActionOptions{
 				X:        0.5,
 				Y:        0.6,
 				Duration: 0,
@@ -55,7 +56,7 @@ func TestTapHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			reqBody, _ := json.Marshal(tt.tapReq)
+			reqBody, _ := json.Marshal(tt.req)
 			req := httptest.NewRequest(http.MethodPost, tt.path, bytes.NewBuffer(reqBody))
 			req.Header.Set("Content-Type", "application/json")
 
@@ -74,7 +75,7 @@ func TestTapHandler(t *testing.T) {
 
 func TestInvokeToolHandler(t *testing.T) {
 	router := NewRouter()
-	router.InitMCPHub("../internal/mcp/testdata/test.mcp.json")
+	router.InitMCPHost("../internal/mcp/testdata/test.mcp.json")
 
 	tests := []struct {
 		name       string

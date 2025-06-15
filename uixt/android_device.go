@@ -303,6 +303,10 @@ func (dev *AndroidDevice) GetCurrentWindow() (windowInfo types.WindowInfo, err e
 	return types.WindowInfo{}, errors.New("failed to extract current window")
 }
 
+func (dev *AndroidDevice) ListPackages() ([]string, error) {
+	return dev.Device.ListPackages()
+}
+
 func (dev *AndroidDevice) GetPackageInfo(packageName string) (types.AppInfo, error) {
 	appInfo := types.AppInfo{
 		Name: packageName,

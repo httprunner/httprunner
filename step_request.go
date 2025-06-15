@@ -25,7 +25,6 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/httpstat"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
 type HTTPMethod string
@@ -282,8 +281,8 @@ func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err e
 	stepRequest := step.(*StepRequestWithOptionalArgs)
 	start := time.Now()
 	stepResult = &StepResult{
-		Name:        stepRequest.StepName,
-		StepType:    StepTypeRequest,
+		Name:        step.Name(),
+		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
 		StartTime:   start.Unix(),
@@ -560,9 +559,7 @@ func (s *StepRequest) HTTP2() *StepRequest {
 
 // Loop specify running times for the current step
 func (s *StepRequest) Loop(times int) *StepRequest {
-	s.Loops = &types.IntOrString{
-		IntValue: &times,
-	}
+	s.Loops = times
 	return s
 }
 
@@ -925,7 +922,7 @@ func (s *StepRequestWithOptionalArgs) Name() string {
 }
 
 func (s *StepRequestWithOptionalArgs) Type() StepType {
-	return StepType(fmt.Sprintf("request-%v", s.Request.Method))
+	return StepType(fmt.Sprintf("%s-%v", StepTypeRequest, s.Request.Method))
 }
 
 func (s *StepRequestWithOptionalArgs) Config() *StepConfig {
@@ -959,7 +956,7 @@ func (s *StepRequestExtraction) Name() string {
 }
 
 func (s *StepRequestExtraction) Type() StepType {
-	stepType := StepType(fmt.Sprintf("request-%v", s.Request.Method))
+	stepType := StepType(fmt.Sprintf("%s-%v", StepTypeRequest, s.Request.Method))
 	return stepType + stepTypeSuffixExtraction
 }
 
@@ -987,7 +984,7 @@ func (s *StepRequestValidation) Name() string {
 }
 
 func (s *StepRequestValidation) Type() StepType {
-	stepType := StepType(fmt.Sprintf("request-%v", s.Request.Method))
+	stepType := StepType(fmt.Sprintf("%s-%v", StepTypeRequest, s.Request.Method))
 	return stepType + stepTypeSuffixValidation
 }
 

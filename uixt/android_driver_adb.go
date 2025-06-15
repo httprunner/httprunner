@@ -281,7 +281,9 @@ func (ad *ADBDriver) AppLaunch(packageName string) (err error) {
 		return errors.Wrap(code.MobileUILaunchAppError,
 			fmt.Sprintf("monkey aborted: %s", strings.TrimSpace(sOutput)))
 	}
-	return nil
+
+	return postHandler(ad, option.ACTION_SetTouchInfo,
+		option.NewActionOptions(option.WithAntiRisk(true)))
 }
 
 func (ad *ADBDriver) AppTerminate(packageName string) (successful bool, err error) {
@@ -312,7 +314,7 @@ func (ad *ADBDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	if err != nil {
 		return err
 	}
-	defer postHandler(ad, ACTION_TapAbsXY, actionOptions)
+	defer postHandler(ad, option.ACTION_TapAbsXY, actionOptions)
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
@@ -331,7 +333,7 @@ func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	if err != nil {
 		return err
 	}
-	defer postHandler(ad, ACTION_DoubleTapXY, actionOptions)
+	defer postHandler(ad, option.ACTION_DoubleTapXY, actionOptions)
 
 	// adb shell input tap x y
 	xStr := fmt.Sprintf("%.1f", x)
@@ -380,7 +382,7 @@ func (ad *ADBDriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	if err != nil {
 		return err
 	}
-	defer postHandler(ad, ACTION_Drag, actionOptions)
+	defer postHandler(ad, option.ACTION_Drag, actionOptions)
 
 	duration := 200.0
 	if actionOptions.Duration > 0 {
@@ -408,11 +410,11 @@ func (ad *ADBDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 		Float64("toX", toX).Float64("toY", toY).Msg("ADBDriver.Swipe")
 
 	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err := preHandler_Swipe(ad, actionOptions, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err := preHandler_Swipe(ad, option.ACTION_SwipeCoordinate, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	defer postHandler(ad, ACTION_Swipe, actionOptions)
+	defer postHandler(ad, option.ACTION_SwipeCoordinate, actionOptions)
 
 	// adb shell input swipe fromX fromY toX toY
 	_, err = ad.runShellCommand(
@@ -740,6 +742,7 @@ func (ad *ADBDriver) ForegroundInfo() (app types.AppInfo, err error) {
 }
 
 func (ad *ADBDriver) SetIme(imeRegx string) error {
+	log.Info().Str("imeRegx", imeRegx).Msg("ADBDriver.SetIme")
 	imeList := ad.ListIme()
 	ime := ""
 	for _, imeName := range imeList {
@@ -804,7 +807,7 @@ func (ad *ADBDriver) ScreenRecord(opts ...option.ActionOption) (videoPath string
 		filePath = options.ScreenRecordPath
 	} else {
 		timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
-		filePath = filepath.Join(config.GetConfig().ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
+		filePath = filepath.Join(config.GetConfig().ScreenShotsPath(), fmt.Sprintf("%s.mp4", timestamp))
 	}
 
 	var ctx context.Context
@@ -934,6 +937,23 @@ func (ad *ADBDriver) OpenUrl(url string) (err error) {
 		"am", "start", "-W", "-a", "android.intent.action.VIEW",
 		"-d", fmt.Sprintf("'%s'", url))
 	return
+}
+
+var androidButtonMap = map[types.DeviceButton]string{
+	types.DeviceButtonBack:       "KEYCODE_BACK",
+	types.DeviceButtonHome:       "KEYCODE_HOME",
+	types.DeviceButtonEnter:      "KEYCODE_ENTER",
+	types.DeviceButtonVolumeUp:   "KEYCODE_VOLUME_UP",
+	types.DeviceButtonVolumeDown: "KEYCODE_VOLUME_DOWN",
+}
+
+func (ad *ADBDriver) PressButton(button types.DeviceButton) error {
+	buttonName, ok := androidButtonMap[button]
+	if !ok {
+		return fmt.Errorf("unsupported button: %s", button)
+	}
+	_, err := ad.runShellCommand("input", "keyevent", buttonName)
+	return err
 }
 
 func (ad *ADBDriver) PushImage(localPath string) error {

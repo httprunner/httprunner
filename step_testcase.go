@@ -48,8 +48,8 @@ func (s *StepTestCaseWithOptionalArgs) Config() *StepConfig {
 func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepResult, err error) {
 	start := time.Now()
 	stepResult = &StepResult{
-		Name:      s.StepName,
-		StepType:  StepTypeTestCase,
+		Name:      s.Name(),
+		StepType:  s.Type(),
 		Success:   false,
 		StartTime: start.Unix(),
 	}

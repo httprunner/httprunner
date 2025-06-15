@@ -8,7 +8,6 @@ import (
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +29,7 @@ func TestVLMPlanning(t *testing.T) {
 
 	userInstruction += "\n\n请基于以上游戏规则，给出下一步可点击的两个图标坐标"
 
-	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
+	modelConfig, err := GetModelConfig(option.DOUBAO_1_5_UI_TARS_250328)
 	require.NoError(t, err)
 
 	planner, err := NewPlanner(context.Background(), modelConfig)
@@ -53,48 +52,18 @@ func TestVLMPlanning(t *testing.T) {
 	}
 
 	// 执行规划
-	result, err := planner.Call(opts)
+	result, err := planner.Plan(context.Background(), opts)
 
 	// 验证结果
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotEmpty(t, result.NextActions)
+	require.NotEmpty(t, result.ToolCalls)
 
 	// 验证动作
-	action := result.NextActions[0]
-	assert.NotEmpty(t, action.ActionType)
-	assert.NotEmpty(t, action.Thought)
-
-	// 根据动作类型验证参数
-	switch action.ActionType {
-	case "click", "drag", "left_double", "right_single", "scroll":
-		// 这些动作需要验证坐标
-		assert.NotEmpty(t, action.ActionInputs["startBox"])
-
-		// 验证坐标格式
-		coords, ok := action.ActionInputs["startBox"].([]float64)
-		require.True(t, ok)
-		require.True(t, len(coords) >= 2) // 至少有 x, y 坐标
-
-		// 验证坐标范围
-		for _, coord := range coords {
-			assert.GreaterOrEqual(t, coord, float64(0))
-		}
-
-	case "type":
-		// 验证文本内容
-		assert.NotEmpty(t, action.ActionInputs["content"])
-
-	case "hotkey":
-		// 验证按键
-		assert.NotEmpty(t, action.ActionInputs["key"])
-
-	case "wait", "finished", "call_user":
-		// 这些动作不需要额外参数
-
-	default:
-		t.Fatalf("未知的动作类型: %s", action.ActionType)
-	}
+	toolCall := result.ToolCalls[0]
+	assert.NotEmpty(t, toolCall.Function.Name)
+	assert.NotEmpty(t, result.Thought)
+	assert.NotEmpty(t, result.Content)
 }
 
 func TestXHSPlanning(t *testing.T) {
@@ -103,7 +72,7 @@ func TestXHSPlanning(t *testing.T) {
 
 	userInstruction := "点击第二个帖子的作者头像"
 
-	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
+	modelConfig, err := GetModelConfig(option.DOUBAO_1_5_UI_TARS_250328)
 	require.NoError(t, err)
 
 	planner, err := NewPlanner(context.Background(), modelConfig)
@@ -126,48 +95,18 @@ func TestXHSPlanning(t *testing.T) {
 	}
 
 	// 执行规划
-	result, err := planner.Call(opts)
+	result, err := planner.Plan(context.Background(), opts)
 
 	// 验证结果
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotEmpty(t, result.NextActions)
+	require.NotEmpty(t, result.ToolCalls)
 
 	// 验证动作
-	action := result.NextActions[0]
-	assert.NotEmpty(t, action.ActionType)
-	assert.NotEmpty(t, action.Thought)
-
-	// 根据动作类型验证参数
-	switch action.ActionType {
-	case "click", "drag", "left_double", "right_single", "scroll":
-		// 这些动作需要验证坐标
-		assert.NotEmpty(t, action.ActionInputs["startBox"])
-
-		// 验证坐标格式
-		coords, ok := action.ActionInputs["startBox"].([]float64)
-		require.True(t, ok)
-		require.True(t, len(coords) >= 2) // 至少有 x, y 坐标
-
-		// 验证坐标范围
-		for _, coord := range coords {
-			assert.GreaterOrEqual(t, coord, float64(0))
-		}
-
-	case "type":
-		// 验证文本内容
-		assert.NotEmpty(t, action.ActionInputs["content"])
-
-	case "hotkey":
-		// 验证按键
-		assert.NotEmpty(t, action.ActionInputs["key"])
-
-	case "wait", "finished", "call_user":
-		// 这些动作不需要额外参数
-
-	default:
-		t.Fatalf("未知的动作类型: %s", action.ActionType)
-	}
+	toolCall := result.ToolCalls[0]
+	assert.NotEmpty(t, toolCall.Function.Name)
+	assert.NotEmpty(t, result.Thought)
+	assert.NotEmpty(t, result.Content)
 }
 
 func TestChatList(t *testing.T) {
@@ -176,7 +115,7 @@ func TestChatList(t *testing.T) {
 
 	userInstruction := "请结合图片的文字信息，请告诉我一共有多少个群聊，哪些群聊右下角有绿点"
 
-	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
+	modelConfig, err := GetModelConfig(option.DOUBAO_1_5_UI_TARS_250328)
 	require.NoError(t, err)
 
 	planner, err := NewPlanner(context.Background(), modelConfig)
@@ -199,7 +138,7 @@ func TestChatList(t *testing.T) {
 	}
 
 	// 执行规划
-	result, err := planner.Call(opts)
+	result, err := planner.Plan(context.Background(), opts)
 
 	// 验证结果
 	require.NoError(t, err)
@@ -207,10 +146,8 @@ func TestChatList(t *testing.T) {
 }
 
 func TestHandleSwitch(t *testing.T) {
-	userInstruction := "发送框下方的联网搜索开关是开启状态" // 点击开启联网搜索开关
-	// 检查发送框下方的联网搜索开关，蓝色为开启状态，灰色为关闭状态；若开关处于关闭状态，则点击进行开启
-
-	modelConfig, err := GetModelConfig(option.LLMServiceTypeUITARS)
+	userInstruction := "检查发送框下方的联网搜索开关，蓝色为开启状态，灰色为关闭状态；若开关处于关闭状态，则点击进行开启"
+	modelConfig, err := GetModelConfig(option.DOUBAO_1_5_UI_TARS_250328)
 	require.NoError(t, err)
 
 	planner, err := NewPlanner(context.Background(), modelConfig)
@@ -218,11 +155,11 @@ func TestHandleSwitch(t *testing.T) {
 
 	testCases := []struct {
 		imageFile  string
-		actionType ActionType
+		actionType string
 	}{
-		{"testdata/deepseek_think_off.png", ActionTypeClick},
-		{"testdata/deepseek_think_on.png", ActionTypeFinished},
-		{"testdata/deepseek_network_on.png", ActionTypeFinished},
+		{"testdata/deepseek_think_off.png", "uixt__tap_xy"},    // 关闭状态，需要点击开启
+		{"testdata/deepseek_think_on.png", "uixt__tap_xy"},     // 关闭状态，需要点击开启
+		{"testdata/deepseek_network_on.png", "uixt__finished"}, // 开启状态，无需操作
 	}
 
 	for _, tc := range testCases {
@@ -246,12 +183,12 @@ func TestHandleSwitch(t *testing.T) {
 		}
 
 		// Execute planning
-		result, err := planner.Call(opts)
+		result, err := planner.Plan(context.Background(), opts)
 
 		// Validate results
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		require.Equal(t, result.NextActions[0].ActionType, tc.actionType,
+		require.Equal(t, result.ToolCalls[0].Function.Name, tc.actionType,
 			"Unexpected action type for image file: %s", tc.imageFile)
 	}
 }
@@ -332,52 +269,6 @@ func TestValidateInput(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-		})
-	}
-}
-
-func TestProcessVLMResponse(t *testing.T) {
-	tests := []struct {
-		name    string
-		actions []ParsedAction
-		wantErr bool
-	}{
-		{
-			name: "valid response",
-			actions: []ParsedAction{
-				{
-					ActionType: "click",
-					ActionInputs: map[string]interface{}{
-						"startBox": []float64{0.5, 0.5},
-					},
-					Thought: "点击中心位置",
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name:    "empty actions",
-			actions: []ParsedAction{},
-			wantErr: true,
-		},
-	}
-
-	size := types.Size{
-		Width:  1000,
-		Height: 1000,
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := processVLMResponse(tt.actions, size)
-			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Nil(t, result)
-				return
-			}
-
-			assert.NoError(t, err)
-			assert.NotNil(t, result)
-			assert.Equal(t, tt.actions, result.NextActions)
 		})
 	}
 }

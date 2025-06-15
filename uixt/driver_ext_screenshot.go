@@ -2,6 +2,7 @@ package uixt
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"image"
 	"image/color"
@@ -48,6 +49,26 @@ func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) ai.OCRTexts {
 	})
 }
 
+// GetScreenshotBase64WithSize takes a screenshot, returns the compressed image buffer in base64 format and screen size
+func (dExt *XTDriver) GetScreenshotBase64WithSize() (compressedBufBase64 string, size types.Size, err error) {
+	compressBufSource, err := getScreenShotBuffer(dExt)
+	if err != nil {
+		return "", types.Size{}, err
+	}
+
+	// convert buffer to base64 string
+	screenShotBase64 := "data:image/jpeg;base64," +
+		base64.StdEncoding.EncodeToString(compressBufSource.Bytes())
+
+	// get screen size
+	size, err = dExt.IDriver.WindowSize()
+	if err != nil {
+		return "", types.Size{}, errors.Wrap(err, "get window size failed")
+	}
+
+	return screenShotBase64, size, nil
+}
+
 // GetScreenResult takes a screenshot, returns the image recognition result
 func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
 	// get compressed screenshot buffer
@@ -69,7 +90,7 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 		fileName = builtin.GenNameWithTimestamp("%d_screenshot")
 	}
 	imagePath := filepath.Join(
-		config.GetConfig().ScreenShotsPath,
+		config.GetConfig().ScreenShotsPath(),
 		fmt.Sprintf("%s.%s", fileName, "jpeg"),
 	)
 	go func() {
@@ -212,7 +233,7 @@ func getScreenShotBuffer(driver IDriver) (compressedBufSource *bytes.Buffer, err
 	}
 
 	// compress screenshot
-	compressBufSource, err := compressImageBuffer(bufSource)
+	compressBufSource, err := compressImageBufferWithOptions(bufSource, false, 800)
 	if err != nil {
 		return nil, errors.Wrapf(code.DeviceScreenShotError,
 			"compress screenshot failed %v", err)
@@ -276,33 +297,137 @@ func saveScreenShot(raw *bytes.Buffer, screenshotPath string) error {
 	return nil
 }
 
-func compressImageBuffer(raw *bytes.Buffer) (compressed *bytes.Buffer, err error) {
+// compressImageBufferWithOptions compresses image buffer with advanced options
+func compressImageBufferWithOptions(raw *bytes.Buffer, enableResize bool, maxWidth int) (compressed *bytes.Buffer, err error) {
+	rawSize := raw.Len()
 	// decode image from buffer
 	img, format, err := image.Decode(raw)
 	if err != nil {
 		return nil, err
 	}
 
-	var buf bytes.Buffer
+	// Get original image dimensions
+	bounds := img.Bounds()
+	originalWidth := bounds.Dx()
+	originalHeight := bounds.Dy()
 
-	switch format {
-	// compress image
-	case "jpeg", "png":
-		jpegOptions := &jpeg.Options{Quality: 60}
-		err = jpeg.Encode(&buf, img, jpegOptions)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("unsupported image format: %s", format)
+	// Calculate new dimensions for compression if resize is enabled
+	var newWidth, newHeight int
+	var resizedImg image.Image = img
+
+	if enableResize && originalWidth > maxWidth {
+		ratio := float64(maxWidth) / float64(originalWidth)
+		newWidth = maxWidth
+		newHeight = int(float64(originalHeight) * ratio)
+		resizedImg = resizeImage(img, newWidth, newHeight)
+	} else {
+		newWidth = originalWidth
+		newHeight = originalHeight
 	}
+
+	// Determine JPEG quality based on image size for optimal compression
+	jpegQuality := 60                // Default quality for better compression
+	if newWidth*newHeight > 500000 { // For very large images, use lower quality
+		jpegQuality = 50
+	} else if newWidth*newHeight < 100000 { // For small images, use higher quality
+		jpegQuality = 70
+	}
+
+	var buf bytes.Buffer
+	switch strings.ToLower(format) {
+	case "jpeg", "jpg":
+		// Use adaptive JPEG compression quality
+		err = jpeg.Encode(&buf, resizedImg, &jpeg.Options{Quality: jpegQuality})
+	case "png":
+		// Convert PNG to JPEG for better compression
+		err = jpeg.Encode(&buf, resizedImg, &jpeg.Options{Quality: jpegQuality})
+	case "gif":
+		// Keep GIF format but with reduced colors for better compression
+		err = gif.Encode(&buf, resizedImg, &gif.Options{NumColors: 64})
+	default:
+		// Default to JPEG for unknown formats
+		err = jpeg.Encode(&buf, resizedImg, &jpeg.Options{Quality: jpegQuality})
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	compressedSize := buf.Len()
+	log.Debug().
+		Int("rawSize", rawSize).
+		Int("originalWidth", originalWidth).
+		Int("originalHeight", originalHeight).
+		Int("newWidth", newWidth).
+		Int("newHeight", newHeight).
+		Int("jpegQuality", jpegQuality).
+		Int("compressedSize", compressedSize).
+		Bool("resized", enableResize && originalWidth > maxWidth).
+		Msg("compress image buffer")
 
 	// return compressed image buffer
 	return &buf, nil
 }
 
+// resizeImage resizes an image using simple nearest neighbor algorithm
+func resizeImage(src image.Image, width, height int) image.Image {
+	srcBounds := src.Bounds()
+	srcWidth := srcBounds.Dx()
+	srcHeight := srcBounds.Dy()
+
+	// Create a new image with the target dimensions
+	dst := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	// Simple nearest neighbor resizing
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			// Map destination coordinates to source coordinates
+			srcX := x * srcWidth / width
+			srcY := y * srcHeight / height
+
+			// Ensure we don't go out of bounds
+			if srcX >= srcWidth {
+				srcX = srcWidth - 1
+			}
+			if srcY >= srcHeight {
+				srcY = srcHeight - 1
+			}
+
+			// Copy pixel from source to destination
+			dst.Set(x, y, src.At(srcBounds.Min.X+srcX, srcBounds.Min.Y+srcY))
+		}
+	}
+
+	return dst
+}
+
+// CompressImageFile compresses an image file and returns the compressed data
+func CompressImageFile(imagePath string, enableResize bool, maxWidth int) ([]byte, error) {
+	// Read the original image file
+	file, err := os.Open(imagePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open image file: %w", err)
+	}
+	defer file.Close()
+
+	// Read file content into buffer
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read image file: %w", err)
+	}
+
+	// Compress using the buffer compression function
+	compressedBuf, err := compressImageBufferWithOptions(&buf, enableResize, maxWidth)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compress image: %w", err)
+	}
+
+	return compressedBuf.Bytes(), nil
+}
+
 // MarkUIOperation add operation mark for UI operation
-func MarkUIOperation(driver IDriver, actionType ActionMethod, actionCoordinates []float64) error {
+func MarkUIOperation(driver IDriver, actionType option.ActionName, actionCoordinates []float64) error {
 	if actionType == "" || len(actionCoordinates) == 0 {
 		return nil
 	}
@@ -317,18 +442,18 @@ func MarkUIOperation(driver IDriver, actionType ActionMethod, actionCoordinates 
 	// create screenshot save path
 	timestamp := builtin.GenNameWithTimestamp("%d")
 	imagePath := filepath.Join(
-		config.GetConfig().ScreenShotsPath,
+		config.GetConfig().ScreenShotsPath(),
 		fmt.Sprintf("action_%s_pre_%s.png", timestamp, actionType),
 	)
 
-	if actionType == ACTION_TapAbsXY || actionType == ACTION_DoubleTapXY {
+	if actionType == option.ACTION_TapAbsXY || actionType == option.ACTION_DoubleTapXY {
 		if len(actionCoordinates) != 2 {
 			return fmt.Errorf("invalid tap action coordinates: %v", actionCoordinates)
 		}
 		x, y := actionCoordinates[0], actionCoordinates[1]
 		point := image.Point{X: int(x), Y: int(y)}
 		err = SaveImageWithCircleMarker(compressedBufSource, point, imagePath)
-	} else if actionType == ACTION_Swipe || actionType == ACTION_Drag {
+	} else if actionType == option.ACTION_SwipeDirection || actionType == option.ACTION_SwipeCoordinate || actionType == option.ACTION_Drag {
 		if len(actionCoordinates) != 4 {
 			return fmt.Errorf("invalid swipe action coordinates: %v", actionCoordinates)
 		}

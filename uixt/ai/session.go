@@ -44,7 +44,7 @@ func (h *ConversationHistory) Append(msg *schema.Message) {
 
 	// for assistant message:
 	// - keep at most the last 10 assistant messages
-	if msg.Role == schema.Assistant {
+	if msg.Role == schema.Assistant || msg.Role == schema.Tool {
 		// add the new assistant message to the history
 		*h = append(*h, msg)
 
@@ -59,6 +59,18 @@ func (h *ConversationHistory) Append(msg *schema.Message) {
 			}
 		}
 	}
+}
+
+func (h *ConversationHistory) Clear() {
+	// Check if history is empty
+	if len(*h) == 0 {
+		log.Info().Msg("conversation history is already empty")
+		return
+	}
+
+	// Clear everything including system message
+	*h = ConversationHistory{}
+	log.Warn().Msg("conversation history cleared completely")
 }
 
 func logRequest(messages ConversationHistory) {
@@ -90,14 +102,29 @@ func logRequest(messages ConversationHistory) {
 	log.Debug().Interface("messages", msgs).Msg("log request messages")
 }
 
-func logResponse(resp *schema.Message) {
-	logger := log.Info().Str("role", string(resp.Role)).
-		Str("content", resp.Content)
-	if resp.ResponseMeta != nil {
-		logger = logger.Interface("response_meta", resp.ResponseMeta)
+func logResponse(message *schema.Message) {
+	logger := log.Debug().Str("role", string(message.Role)).
+		Str("content", message.Content)
+
+	var toolCalls []string
+	if len(message.ToolCalls) > 0 {
+		for _, toolCall := range message.ToolCalls {
+			toolCalls = append(toolCalls, toolCall.Function.Name)
+		}
+		logger = logger.Strs("tool_calls", toolCalls)
 	}
-	if resp.Extra != nil {
-		logger = logger.Interface("extra", resp.Extra)
+
+	if message.ResponseMeta != nil {
+		logger = logger.Str("finish_reason", message.ResponseMeta.FinishReason)
+		// Log usage statistics
+		if usage := message.ResponseMeta.Usage; usage != nil {
+			log.Debug().Int("input_tokens", usage.PromptTokens).
+				Int("output_tokens", usage.CompletionTokens).
+				Int("total_tokens", usage.TotalTokens).Msg("usage statistics")
+		}
+	}
+	if message.Extra != nil {
+		logger = logger.Interface("extra", message.Extra)
 	}
 	logger.Msg("log response message")
 }

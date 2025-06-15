@@ -119,7 +119,7 @@ func (wd *BrowserDriver) Drag(fromX, fromY, toX, toY float64, options ...option.
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_Drag, actionOptions)
+	defer postHandler(wd, option.ACTION_Drag, actionOptions)
 
 	data := map[string]interface{}{
 		"from_x": fromX,
@@ -201,6 +201,7 @@ func (wd *BrowserDriver) CreateNetListener() (*websocket.Conn, error) {
 }
 
 func (wd *BrowserDriver) CloseTab(pageIndex int) (err error) {
+	log.Info().Int("pageIndex", pageIndex).Msg("BrowserDriver.CloseTab")
 	data := map[string]interface{}{
 		"page_index": pageIndex,
 	}
@@ -210,6 +211,7 @@ func (wd *BrowserDriver) CloseTab(pageIndex int) (err error) {
 }
 
 func (wd *BrowserDriver) HoverBySelector(selector string, options ...option.ActionOption) (err error) {
+	log.Info().Str("selector", selector).Msg("BrowserDriver.HoverBySelector")
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -222,6 +224,7 @@ func (wd *BrowserDriver) HoverBySelector(selector string, options ...option.Acti
 }
 
 func (wd *BrowserDriver) TapBySelector(selector string, options ...option.ActionOption) (err error) {
+	log.Info().Str("selector", selector).Msg("BrowserDriver.TapBySelector")
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -234,6 +237,7 @@ func (wd *BrowserDriver) TapBySelector(selector string, options ...option.Action
 }
 
 func (wd *BrowserDriver) SecondaryClick(x, y float64) (err error) {
+	log.Info().Float64("x", x).Float64("y", y).Msg("BrowserDriver.SecondaryClick")
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
@@ -243,6 +247,7 @@ func (wd *BrowserDriver) SecondaryClick(x, y float64) (err error) {
 }
 
 func (wd *BrowserDriver) SecondaryClickBySelector(selector string, options ...option.ActionOption) (err error) {
+	log.Info().Str("selector", selector).Msg("BrowserDriver.SecondaryClickBySelector")
 	data := map[string]interface{}{
 		"selector": selector,
 	}
@@ -518,7 +523,7 @@ func (wd *BrowserDriver) TapFloat(x, y float64, opts ...option.ActionOption) err
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_TapAbsXY, actionOptions)
+	defer postHandler(wd, option.ACTION_TapAbsXY, actionOptions)
 
 	duration := 0.1
 	if actionOptions.Duration > 0 {
@@ -542,7 +547,7 @@ func (wd *BrowserDriver) DoubleTap(x, y float64, options ...option.ActionOption)
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_DoubleTapXY, actionOptions)
+	defer postHandler(wd, option.ACTION_DoubleTapXY, actionOptions)
 
 	data := map[string]interface{}{
 		"x": x,
@@ -610,7 +615,7 @@ func (wd *BrowserDriver) PressBack(options ...option.ActionOption) error {
 	return err
 }
 
-func (wd *BrowserDriver) PressKeyCode(keyCode KeyCode) (err error) {
+func (wd *BrowserDriver) PressButton(button types.DeviceButton) error {
 	return errors.New("not support")
 }
 

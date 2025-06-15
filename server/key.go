@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func (r *Router) unlockHandler(c *gin.Context) {
@@ -33,19 +34,20 @@ func (r *Router) homeHandler(c *gin.Context) {
 }
 
 func (r *Router) backspaceHandler(c *gin.Context) {
-	var deleteReq DeleteRequest
-	if err := c.ShouldBindJSON(&deleteReq); err != nil {
-		RenderErrorValidateRequest(c, err)
+	req, err := r.processUnifiedRequest(c, option.ACTION_Backspace)
+	if err != nil {
 		return
 	}
-	if deleteReq.Count == 0 {
-		deleteReq.Count = 20
+
+	count := req.Count
+	if count == 0 {
+		count = 20
 	}
 	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
-	err = driver.Backspace(deleteReq.Count)
+	err = driver.Backspace(count)
 	if err != nil {
 		RenderError(c, err)
 		return
@@ -54,18 +56,18 @@ func (r *Router) backspaceHandler(c *gin.Context) {
 }
 
 func (r *Router) keycodeHandler(c *gin.Context) {
-	var keycodeReq KeycodeRequest
-	if err := c.ShouldBindJSON(&keycodeReq); err != nil {
-		RenderErrorValidateRequest(c, err)
+	req, err := r.processUnifiedRequest(c, option.ACTION_KeyCode)
+	if err != nil {
 		return
 	}
+
 	driver, err := r.GetDriver(c)
 	if err != nil {
 		return
 	}
 	// TODO FIXME
 	err = driver.IDriver.(*uixt.ADBDriver).
-		PressKeyCode(uixt.KeyCode(keycodeReq.Keycode), uixt.KMEmpty)
+		PressKeyCode(uixt.KeyCode(req.Keycode), uixt.KMEmpty)
 	if err != nil {
 		RenderError(c, err)
 		return

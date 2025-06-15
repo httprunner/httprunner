@@ -7,7 +7,6 @@ import (
 	builtinJSON "encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"net"
 	"net/http"
 	"os"
@@ -602,7 +601,7 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_TapAbsXY, actionOptions)
+	defer postHandler(wd, option.ACTION_TapAbsXY, actionOptions)
 
 	data := map[string]interface{}{
 		"x": x,
@@ -627,7 +626,7 @@ func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_DoubleTapXY, actionOptions)
+	defer postHandler(wd, option.ACTION_DoubleTapXY, actionOptions)
 
 	data := map[string]interface{}{
 		"x": x,
@@ -664,13 +663,13 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	if err != nil {
 		return err
 	}
-	defer postHandler(wd, ACTION_Drag, actionOptions)
+	defer postHandler(wd, option.ACTION_Drag, actionOptions)
 
 	data := map[string]interface{}{
-		"fromX": math.Round(fromX*10) / 10,
-		"fromY": math.Round(fromY*10) / 10,
-		"toX":   math.Round(toX*10) / 10,
-		"toY":   math.Round(toY*10) / 10,
+		"fromX": builtin.RoundToOneDecimal(fromX),
+		"fromY": builtin.RoundToOneDecimal(fromY),
+		"toX":   builtin.RoundToOneDecimal(toX),
+		"toY":   builtin.RoundToOneDecimal(toY),
 	}
 	option.MergeOptions(data, opts...)
 	// wda 43 version
@@ -744,9 +743,14 @@ func (wd *WDADriver) Back() (err error) {
 	return wd.Swipe(0, 0.5, 0.6, 0.5)
 }
 
-func (wd *WDADriver) PressButton(devBtn types.DeviceButton) (err error) {
+func (wd *WDADriver) PressButton(button types.DeviceButton) (err error) {
 	// [[FBRoute POST:@"/wda/pressButton"] respondWithTarget:self action:@selector(handlePressButtonCommand:)]
-	data := map[string]interface{}{"name": devBtn}
+
+	if button == types.DeviceButtonEnter {
+		return wd.Input("\n")
+	}
+
+	data := map[string]interface{}{"name": button}
 	urlStr := fmt.Sprintf("/session/%s/wda/pressButton", wd.Session.ID)
 	_, err = wd.Session.POST(data, urlStr)
 	return
@@ -906,7 +910,7 @@ func (wd *WDADriver) triggerWDALog(data map[string]interface{}) (rawResp []byte,
 func (wd *WDADriver) ScreenRecord(opts ...option.ActionOption) (videoPath string, err error) {
 	log.Info().Msg("WDADriver.ScreenRecord")
 	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
-	fileName := filepath.Join(config.GetConfig().ScreenShotsPath, fmt.Sprintf("%s.mp4", timestamp))
+	fileName := filepath.Join(config.GetConfig().ScreenShotsPath(), fmt.Sprintf("%s.mp4", timestamp))
 
 	options := option.NewActionOptions(opts...)
 	duration := time.Duration(options.Duration * float64(time.Second))

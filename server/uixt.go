@@ -2,7 +2,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/rs/zerolog/log"
 )
 
@@ -13,13 +13,13 @@ func (r *Router) uixtActionHandler(c *gin.Context) {
 		return
 	}
 
-	var req uixt.MobileAction
+	var req option.MobileAction
 	if err := c.ShouldBindJSON(&req); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
 
-	if err = dExt.DoAction(req); err != nil {
+	if _, err = dExt.ExecuteAction(c.Request.Context(), req); err != nil {
 		log.Err(err).Interface("action", req).
 			Msg("exec uixt action failed")
 		RenderError(c, err)
@@ -35,14 +35,14 @@ func (r *Router) uixtActionsHandler(c *gin.Context) {
 		return
 	}
 
-	var actions []uixt.MobileAction
+	var actions []option.MobileAction
 	if err := c.ShouldBindJSON(&actions); err != nil {
 		RenderErrorValidateRequest(c, err)
 		return
 	}
 
 	for _, action := range actions {
-		if err = dExt.DoAction(action); err != nil {
+		if _, err = dExt.ExecuteAction(c.Request.Context(), action); err != nil {
 			log.Err(err).Interface("action", action).
 				Msg("exec uixt action failed")
 			RenderError(c, err)

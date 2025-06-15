@@ -2,34 +2,56 @@ package ai
 
 import (
 	"context"
-	"os"
-	"time"
 
-	"github.com/cloudwego/eino-ext/components/model/openai"
-	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/internal/config"
+	"github.com/cloudwego/eino/schema"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
-// ILLMService 定义了 LLM 服务接口，包括规划和断言功能
+// ILLMService 定义了 LLM 服务接口，包括规划、断言和查询功能
 type ILLMService interface {
-	Call(opts *PlanningOptions) (*PlanningResult, error)
-	Assert(opts *AssertOptions) (*AssertionResponse, error)
+	Plan(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error)
+	Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error)
+	Query(ctx context.Context, opts *QueryOptions) (*QueryResult, error)
+	// RegisterTools registers tools for function calling
+	RegisterTools(tools []*schema.ToolInfo) error
 }
 
+// NewLLMService creates a new LLM service with the same model for all components (backward compatibility)
 func NewLLMService(modelType option.LLMServiceType) (ILLMService, error) {
-	modelConfig, err := GetModelConfig(modelType)
+	config := option.NewLLMServiceConfig(modelType)
+	return NewLLMServiceWithOptionConfig(config)
+}
+
+// NewLLMServiceWithOptionConfig creates a new LLM service with different models for each component
+func NewLLMServiceWithOptionConfig(config *option.LLMServiceConfig) (ILLMService, error) {
+	// Get model configs for each component
+	plannerModelConfig, err := GetModelConfig(config.PlannerModel)
 	if err != nil {
 		return nil, err
 	}
 
-	planner, err := NewPlanner(context.Background(), modelConfig)
+	asserterModelConfig, err := GetModelConfig(config.AsserterModel)
 	if err != nil {
 		return nil, err
 	}
-	asserter, err := NewAsserter(context.Background(), modelConfig)
+
+	querierModelConfig, err := GetModelConfig(config.QuerierModel)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create components with their respective model configs
+	planner, err := NewPlanner(context.Background(), plannerModelConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	asserter, err := NewAsserter(context.Background(), asserterModelConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	querier, err := NewQuerier(context.Background(), querierModelConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -37,91 +59,38 @@ func NewLLMService(modelType option.LLMServiceType) (ILLMService, error) {
 	return &combinedLLMService{
 		planner:  planner,
 		asserter: asserter,
+		querier:  querier,
 	}, nil
 }
 
-// combinedLLMService 实现了 ILLMService 接口，组合了规划和断言功能
-// ⭐️支持采用不同的模型服务进行规划和断言
+// combinedLLMService 实现了 ILLMService 接口，组合了规划、断言和查询功能
+// ⭐️支持采用不同的模型服务进行规划、断言和查询
 type combinedLLMService struct {
 	planner  IPlanner  // 提供规划功能
 	asserter IAsserter // 提供断言功能
+	querier  IQuerier  // 提供查询功能
 }
 
-// Call 执行规划功能
-func (c *combinedLLMService) Call(opts *PlanningOptions) (*PlanningResult, error) {
-	return c.planner.Call(opts)
+// Plan 执行规划功能
+func (c *combinedLLMService) Plan(ctx context.Context, opts *PlanningOptions) (*PlanningResult, error) {
+	return c.planner.Plan(ctx, opts)
 }
 
 // Assert 执行断言功能
-func (c *combinedLLMService) Assert(opts *AssertOptions) (*AssertionResponse, error) {
-	return c.asserter.Assert(opts)
+func (c *combinedLLMService) Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error) {
+	return c.asserter.Assert(ctx, opts)
 }
 
-// LLM model config env variables
-const (
-	EnvOpenAIBaseURL = "OPENAI_BASE_URL"
-	EnvOpenAIAPIKey  = "OPENAI_API_KEY"
-	EnvModelName     = "LLM_MODEL_NAME"
-)
-
-const (
-	defaultTimeout = 30 * time.Second
-)
-
-type ModelConfig struct {
-	*openai.ChatModelConfig
-	ModelType option.LLMServiceType
+// Query 执行查询功能
+func (c *combinedLLMService) Query(ctx context.Context, opts *QueryOptions) (*QueryResult, error) {
+	return c.querier.Query(ctx, opts)
 }
 
-// GetModelConfig get OpenAI config
-func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
-	if err := config.LoadEnv(); err != nil {
-		return nil, errors.Wrap(code.LoadEnvError, err.Error())
+// RegisterTools registers tools for function calling
+func (c *combinedLLMService) RegisterTools(tools []*schema.ToolInfo) error {
+	// Only register tools to planner since asserter and querier don't need tools
+	if planner, ok := c.planner.(*Planner); ok {
+		return planner.RegisterTools(tools)
 	}
-
-	openaiBaseURL := os.Getenv(EnvOpenAIBaseURL)
-	if openaiBaseURL == "" {
-		return nil, errors.Wrapf(code.LLMEnvMissedError,
-			"env %s missed", EnvOpenAIBaseURL)
-	}
-	openaiAPIKey := os.Getenv(EnvOpenAIAPIKey)
-	if openaiAPIKey == "" {
-		return nil, errors.Wrapf(code.LLMEnvMissedError,
-			"env %s missed", EnvOpenAIAPIKey)
-	}
-	modelName := os.Getenv(EnvModelName)
-	if modelName == "" {
-		return nil, errors.Wrapf(code.LLMEnvMissedError,
-			"env %s missed", EnvModelName)
-	}
-
-	temperature := float32(0.01)
-	modelConfig := &openai.ChatModelConfig{
-		BaseURL:     openaiBaseURL,
-		APIKey:      openaiAPIKey,
-		Model:       modelName,
-		Timeout:     defaultTimeout,
-		Temperature: &temperature,
-	}
-
-	// log config info
-	log.Info().Str("model", modelConfig.Model).
-		Str("baseURL", modelConfig.BaseURL).
-		Str("apiKey", maskAPIKey(modelConfig.APIKey)).
-		Str("timeout", defaultTimeout.String()).
-		Msg("get model config")
-
-	return &ModelConfig{
-		ChatModelConfig: modelConfig,
-		ModelType:       modelType,
-	}, nil
-}
-
-// maskAPIKey masks the API key
-func maskAPIKey(key string) string {
-	if len(key) <= 8 {
-		return "******"
-	}
-
-	return key[:4] + "******" + key[len(key)-4:]
+	return nil
 }

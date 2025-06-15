@@ -2,31 +2,218 @@ package option
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"math/rand/v2"
+	"reflect"
+	"strings"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/uixt/types"
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/rs/zerolog/log"
 )
 
-type ActionOptions struct {
-	Context context.Context `json:"-" yaml:"-"`
-	// log
-	Identifier string `json:"identifier,omitempty" yaml:"identifier,omitempty"` // used to identify the action in log
+type MobileAction struct {
+	Method  ActionName     `json:"method,omitempty" yaml:"method,omitempty"`
+	Params  interface{}    `json:"params,omitempty" yaml:"params,omitempty"`
+	Fn      func()         `json:"-" yaml:"-"` // used for function action, not serialized
+	Options *ActionOptions `json:"options,omitempty" yaml:"options,omitempty"`
+	ActionOptions
+}
 
-	// control related
-	MaxRetryTimes int         `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty"` // max retry times
-	Interval      float64     `json:"interval,omitempty" yaml:"interval,omitempty"`               // interval between retries in seconds
-	Duration      float64     `json:"duration,omitempty" yaml:"duration,omitempty"`               // used to set duration in seconds
-	PressDuration float64     `json:"press_duration,omitempty" yaml:"press_duration,omitempty"`   // used to set press duration in seconds
-	Steps         int         `json:"steps,omitempty" yaml:"steps,omitempty"`                     // used to set steps of action
-	Direction     interface{} `json:"direction,omitempty" yaml:"direction,omitempty"`             // used by swipe to tap text or app
-	Timeout       int         `json:"timeout,omitempty" yaml:"timeout,omitempty"`                 // TODO: wait timeout in seconds for mobile action
-	Frequency     int         `json:"frequency,omitempty" yaml:"frequency,omitempty"`
+func (ma MobileAction) GetOptions() []ActionOption {
+	var actionOptionList []ActionOption
+	// Notice: merge options from ma.Options and ma.ActionOptions
+	if ma.Options != nil {
+		actionOptionList = append(actionOptionList, ma.Options.Options()...)
+	}
+	actionOptionList = append(actionOptionList, ma.ActionOptions.Options()...)
+	return actionOptionList
+}
+
+type ActionName string
+
+const (
+	ACTION_LOG              ActionName = "log"
+	ACTION_ListPackages     ActionName = "list_packages"
+	ACTION_AppInstall       ActionName = "app_install"
+	ACTION_AppUninstall     ActionName = "app_uninstall"
+	ACTION_WebLoginNoneUI   ActionName = "web_login_none_ui"
+	ACTION_AppClear         ActionName = "app_clear"
+	ACTION_AppStart         ActionName = "app_start"
+	ACTION_AppLaunch        ActionName = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
+	ACTION_AppTerminate     ActionName = "app_terminate"
+	ACTION_AppStop          ActionName = "app_stop"
+	ACTION_ScreenShot       ActionName = "screenshot"
+	ACTION_ScreenRecord     ActionName = "screenrecord"
+	ACTION_GetScreenSize    ActionName = "get_screen_size"
+	ACTION_Sleep            ActionName = "sleep"
+	ACTION_SleepMS          ActionName = "sleep_ms"
+	ACTION_SleepRandom      ActionName = "sleep_random"
+	ACTION_SetIme           ActionName = "set_ime"
+	ACTION_GetSource        ActionName = "get_source"
+	ACTION_GetForegroundApp ActionName = "get_foreground_app"
+	ACTION_AppInfo          ActionName = "app_info" // get app info action
+
+	// UI handling
+	ACTION_Home                     ActionName = "home"
+	ACTION_Tap                      ActionName = "tap" // generic tap action
+	ACTION_TapXY                    ActionName = "tap_xy"
+	ACTION_TapAbsXY                 ActionName = "tap_abs_xy"
+	ACTION_TapByOCR                 ActionName = "tap_ocr"
+	ACTION_TapByCV                  ActionName = "tap_cv"
+	ACTION_DoubleTap                ActionName = "double_tap" // generic double tap action
+	ACTION_DoubleTapXY              ActionName = "double_tap_xy"
+	ACTION_Swipe                    ActionName = "swipe"            // swipe by direction or coordinates
+	ACTION_SwipeDirection           ActionName = "swipe_direction"  // swipe by direction (up, down, left, right)
+	ACTION_SwipeCoordinate          ActionName = "swipe_coordinate" // swipe by coordinates (fromX, fromY, toX, toY)
+	ACTION_Drag                     ActionName = "drag"
+	ACTION_Input                    ActionName = "input"
+	ACTION_PressButton              ActionName = "press_button"
+	ACTION_Back                     ActionName = "back"
+	ACTION_KeyCode                  ActionName = "keycode"
+	ACTION_Delete                   ActionName = "delete"    // delete action
+	ACTION_Backspace                ActionName = "backspace" // backspace action
+	ACTION_TapBySelector            ActionName = "tap_by_selector"
+	ACTION_HoverBySelector          ActionName = "hover_by_selector"
+	ACTION_Hover                    ActionName = "hover"       // generic hover action
+	ACTION_RightClick               ActionName = "right_click" // right click action
+	ACTION_WebCloseTab              ActionName = "web_close_tab"
+	ACTION_SecondaryClick           ActionName = "secondary_click"
+	ACTION_SecondaryClickBySelector ActionName = "secondary_click_by_selector"
+	ACTION_GetElementTextBySelector ActionName = "get_element_text_by_selector"
+	ACTION_Scroll                   ActionName = "scroll"         // scroll action
+	ACTION_Upload                   ActionName = "upload"         // upload action
+	ACTION_PushMedia                ActionName = "push_media"     // push media action
+	ACTION_CreateBrowser            ActionName = "create_browser" // create browser action
+
+	// device actions
+	ACTION_ListAvailableDevices ActionName = "list_available_devices"
+	ACTION_SelectDevice         ActionName = "select_device"
+
+	// custom actions
+	ACTION_SwipeToTapApp   ActionName = "swipe_to_tap_app"   // swipe left & right to find app and tap
+	ACTION_SwipeToTapText  ActionName = "swipe_to_tap_text"  // swipe up & down to find text and tap
+	ACTION_SwipeToTapTexts ActionName = "swipe_to_tap_texts" // swipe up & down to find text and tap
+	ACTION_ClosePopups     ActionName = "close_popups"
+	ACTION_EndToEndDelay   ActionName = "live_e2e"
+	ACTION_InstallApp      ActionName = "install_app"
+	ACTION_UninstallApp    ActionName = "uninstall_app"
+	ACTION_DownloadApp     ActionName = "download_app"
+	ACTION_CallFunction    ActionName = "call_function"
+
+	// AI actions
+	ACTION_StartToGoal ActionName = "start_to_goal" // start to goal action
+	ACTION_AIAction    ActionName = "ai_action"     // action with ai
+	ACTION_AIAssert    ActionName = "ai_assert"     // assert with ai
+	ACTION_Query       ActionName = "ai_query"      // query with ai
+	ACTION_Finished    ActionName = "finished"      // finished action
+
+	// anti-risk actions
+	ACTION_SetTouchInfo     ActionName = "set_touch_info"
+	ACTION_SetTouchInfoList ActionName = "set_touch_info_list"
+)
+
+const (
+	// UI validation
+	// selectors
+	SelectorName          string = "ui_name"
+	SelectorLabel         string = "ui_label"
+	SelectorOCR           string = "ui_ocr"
+	SelectorImage         string = "ui_image"
+	SelectorAI            string = "ui_ai" // ui query with ai
+	SelectorForegroundApp string = "ui_foreground_app"
+	SelectorSelector      string = "ui_selector"
+	// assertions
+	AssertionEqual     string = "equal"
+	AssertionNotEqual  string = "not_equal"
+	AssertionExists    string = "exists"
+	AssertionNotExists string = "not_exists"
+	AssertionAI        string = "ai_assert" // assert with ai
+)
+
+type ActionOptions struct {
+	// Device targeting
+	Platform string `json:"platform,omitempty" yaml:"platform,omitempty" binding:"omitempty" desc:"Device platform: android/ios/browser"`
+	Serial   string `json:"serial,omitempty" yaml:"serial,omitempty" binding:"omitempty" desc:"Device serial/udid/browser id"`
+
+	// Common action parameters
+	X     float64 `json:"x,omitempty" yaml:"x,omitempty" binding:"omitempty,min=0" desc:"X coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	Y     float64 `json:"y,omitempty" yaml:"y,omitempty" binding:"omitempty,min=0" desc:"Y coordinate (0.0~1.0 for percent, or absolute pixel value)"`
+	FromX float64 `json:"from_x,omitempty" yaml:"from_x,omitempty" binding:"omitempty,min=0" desc:"Starting X coordinate"`
+	FromY float64 `json:"from_y,omitempty" yaml:"from_y,omitempty" binding:"omitempty,min=0" desc:"Starting Y coordinate"`
+	ToX   float64 `json:"to_x,omitempty" yaml:"to_x,omitempty" binding:"omitempty,min=0" desc:"Ending X coordinate"`
+	ToY   float64 `json:"to_y,omitempty" yaml:"to_y,omitempty" binding:"omitempty,min=0" desc:"Ending Y coordinate"`
+	Text  string  `json:"text,omitempty" yaml:"text,omitempty" desc:"Text content for input/search operations"`
+
+	// App/Package related
+	PackageName        string `json:"packageName,omitempty" yaml:"packageName,omitempty" desc:"Package name of the app"`
+	AppName            string `json:"appName,omitempty" yaml:"appName,omitempty" desc:"App name to find"`
+	AppUrl             string `json:"appUrl,omitempty" yaml:"appUrl,omitempty" desc:"App URL for installation"`
+	MappingUrl         string `json:"mappingUrl,omitempty" yaml:"mappingUrl,omitempty" desc:"Mapping URL for app installation"`
+	ResourceMappingUrl string `json:"resourceMappingUrl,omitempty" yaml:"resourceMappingUrl,omitempty" desc:"Resource mapping URL for app installation"`
+
+	// Web/Browser related
+	Selector    string `json:"selector,omitempty" yaml:"selector,omitempty" desc:"CSS or XPath selector"`
+	TabIndex    int    `json:"tabIndex,omitempty" yaml:"tabIndex,omitempty" desc:"Browser tab index"`
+	PhoneNumber string `json:"phoneNumber,omitempty" yaml:"phoneNumber,omitempty" desc:"Phone number for login"`
+	Captcha     string `json:"captcha,omitempty" yaml:"captcha,omitempty" desc:"Captcha code"`
+	Password    string `json:"password,omitempty" yaml:"password,omitempty" desc:"Password for login"`
+
+	// Button/Key related
+	Button  types.DeviceButton `json:"button,omitempty" yaml:"button,omitempty" desc:"Device button to press"`
+	Ime     string             `json:"ime,omitempty" yaml:"ime,omitempty" desc:"IME package name"`
+	Count   int                `json:"count,omitempty" yaml:"count,omitempty" desc:"Count for delete operations"`
+	Keycode int                `json:"keycode,omitempty" yaml:"keycode,omitempty" desc:"Keycode for key press operations"`
+
+	// Image/CV related
+	ImagePath string `json:"imagePath,omitempty" yaml:"imagePath,omitempty" desc:"Path to reference image for CV recognition"`
+
+	// HTTP API specific fields
+	FileUrl    string `json:"file_url,omitempty" yaml:"file_url,omitempty" desc:"File URL for upload operations"`
+	FileFormat string `json:"file_format,omitempty" yaml:"file_format,omitempty" desc:"File format for upload operations"`
+	ImageUrl   string `json:"imageUrl,omitempty" yaml:"imageUrl,omitempty" desc:"Image URL for media operations"`
+	VideoUrl   string `json:"videoUrl,omitempty" yaml:"videoUrl,omitempty" desc:"Video URL for media operations"`
+	Delta      int    `json:"delta,omitempty" yaml:"delta,omitempty" desc:"Delta value for scroll operations"`
+	Width      int    `json:"width,omitempty" yaml:"width,omitempty" desc:"Width for browser creation"`
+	Height     int    `json:"height,omitempty" yaml:"height,omitempty" desc:"Height for browser creation"`
+
+	// Array parameters
+	Texts  []string  `json:"texts,omitempty" yaml:"texts,omitempty" desc:"List of texts to search"`
+	Params []float64 `json:"params,omitempty" yaml:"params,omitempty" desc:"Generic parameter array"`
+
+	// AI related
+	Prompt       string      `json:"prompt,omitempty" yaml:"prompt,omitempty" desc:"AI action prompt"`
+	Content      string      `json:"content,omitempty" yaml:"content,omitempty" desc:"Content for finished action"`
+	LLMService   string      `json:"llm_service,omitempty" yaml:"llm_service,omitempty" desc:"LLM service type for AI actions"`
+	CVService    string      `json:"cv_service,omitempty" yaml:"cv_service,omitempty" desc:"Computer vision service type for AI actions"`
+	ResetHistory bool        `json:"reset_history,omitempty" yaml:"reset_history,omitempty" desc:"Whether to reset conversation history before AI planning"`
+	OutputSchema interface{} `json:"output_schema,omitempty" yaml:"output_schema,omitempty" desc:"Custom output schema for structured AI query response"`
+
+	// Time related
+	Seconds      float64 `json:"seconds,omitempty" yaml:"seconds,omitempty" desc:"Sleep duration in seconds"`
+	Milliseconds int64   `json:"milliseconds,omitempty" yaml:"milliseconds,omitempty" desc:"Sleep duration in milliseconds"`
+
+	// Control options
+	Context       context.Context `json:"-" yaml:"-"`
+	Identifier    string          `json:"identifier,omitempty" yaml:"identifier,omitempty" desc:"Action identifier for logging"`
+	MaxRetryTimes int             `json:"max_retry_times,omitempty" yaml:"max_retry_times,omitempty" desc:"Maximum retry times"`
+	Interval      float64         `json:"interval,omitempty" yaml:"interval,omitempty" desc:"Interval between retries in seconds"`
+	Duration      float64         `json:"duration,omitempty" yaml:"duration,omitempty" desc:"Action duration in seconds"`
+	PressDuration float64         `json:"press_duration,omitempty" yaml:"press_duration,omitempty" desc:"Press duration in seconds"`
+	Steps         int             `json:"steps,omitempty" yaml:"steps,omitempty" desc:"Number of steps for action"`
+	Direction     interface{}     `json:"direction,omitempty" yaml:"direction,omitempty" desc:"Direction for swipe operations or custom coordinates"`
+	Timeout       int             `json:"timeout,omitempty" yaml:"timeout,omitempty" desc:"Timeout in seconds"`
+	Frequency     int             `json:"frequency,omitempty" yaml:"frequency,omitempty" desc:"Action frequency"`
 
 	ScreenOptions
 
-	// set custiom options such as textview, id, description
-	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty"`
+	// Anti-risk options
+	AntiRisk bool `json:"anti_risk,omitempty" yaml:"anti_risk,omitempty" desc:"Enable anti-risk MCP tool calls"`
+
+	// Custom options
+	Custom map[string]interface{} `json:"custom,omitempty" yaml:"custom,omitempty" desc:"Custom options"`
 }
 
 func (o *ActionOptions) Options() []ActionOption {
@@ -136,6 +323,10 @@ func (o *ActionOptions) Options() []ActionOption {
 		options = append(options, WithMatchOne(true))
 	}
 
+	if o.AntiRisk {
+		options = append(options, WithAntiRisk(true))
+	}
+
 	// custom options
 	if o.Custom != nil {
 		for k, v := range o.Custom {
@@ -148,6 +339,18 @@ func (o *ActionOptions) Options() []ActionOption {
 	options = append(options, o.GetMarkOperationOptions()...)
 
 	return options
+}
+
+func (o *ActionOptions) ToMap() map[string]interface{} {
+	result := make(map[string]interface{})
+	b, err := json.Marshal(o)
+	if err != nil {
+		return nil
+	}
+	if err := json.Unmarshal(b, &result); err != nil {
+		return nil
+	}
+	return result
 }
 
 func (o *ActionOptions) ApplyTapOffset(absX, absY float64) (float64, float64) {
@@ -342,4 +545,350 @@ func WithIgnoreNotFoundError(ignoreError bool) ActionOption {
 	return func(o *ActionOptions) {
 		o.IgnoreNotFoundError = ignoreError
 	}
+}
+
+func WithAntiRisk(antiRisk bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.AntiRisk = antiRisk
+	}
+}
+
+func WithResetHistory(resetHistory bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ResetHistory = resetHistory
+	}
+}
+
+// WithOutputSchema sets the custom output schema for structured AI query response
+func WithOutputSchema(schema interface{}) ActionOption {
+	return func(o *ActionOptions) {
+		o.OutputSchema = schema
+	}
+}
+
+// HTTP API direct usage methods
+
+// ValidateForHTTPAPI validates the request for HTTP API usage
+func (o *ActionOptions) ValidateForHTTPAPI(actionType ActionName) error {
+	// Basic validation - Platform and Serial are set from URL, so skip here
+	// They will be validated by setRequestContextFromURL
+
+	// Action-specific validation using a more efficient approach
+	return o.validateActionSpecificFields(actionType)
+}
+
+// validateActionSpecificFields performs action-specific field validation
+func (o *ActionOptions) validateActionSpecificFields(actionType ActionName) error {
+	// Define validation rules for each action type using ActionMethod constants
+	validationRules := map[ActionName]func() error{
+		ACTION_Tap: func() error {
+			return o.requireFields("x and y coordinates", o.X != 0 && o.Y != 0)
+		},
+		ACTION_TapXY: func() error {
+			return o.requireFields("x and y coordinates", o.X != 0 && o.Y != 0)
+		},
+		ACTION_TapAbsXY: func() error {
+			return o.requireFields("x and y coordinates", o.X != 0 && o.Y != 0)
+		},
+		ACTION_DoubleTap: func() error {
+			return o.requireFields("x and y coordinates", o.X != 0 && o.Y != 0)
+		},
+		ACTION_DoubleTapXY: func() error {
+			return o.requireFields("x and y coordinates", o.X != 0 && o.Y != 0)
+		},
+		ACTION_RightClick: func() error {
+			return o.requireFields("x and y coordinates", o.X != 0 && o.Y != 0)
+		},
+		ACTION_SecondaryClick: func() error {
+			return o.requireFields("x and y coordinates", o.X != 0 && o.Y != 0)
+		},
+		ACTION_Hover: func() error {
+			return o.requireFields("x and y coordinates", o.X != 0 && o.Y != 0)
+		},
+		ACTION_Drag: func() error {
+			return o.requireFields("fromX, fromY, toX, toY coordinates",
+				o.FromX != 0 && o.FromY != 0 && o.ToX != 0 && o.ToY != 0)
+		},
+		ACTION_SwipeCoordinate: func() error {
+			return o.requireFields("fromX, fromY, toX, toY coordinates",
+				o.FromX != 0 && o.FromY != 0 && o.ToX != 0 && o.ToY != 0)
+		},
+		ACTION_Swipe: func() error {
+			return o.requireFields("direction", o.Direction != nil && o.Direction != "")
+		},
+		ACTION_SwipeDirection: func() error {
+			return o.requireFields("direction", o.Direction != nil && o.Direction != "")
+		},
+		ACTION_Input: func() error {
+			return o.requireFields("text", o.Text != "")
+		},
+		ACTION_Delete: func() error {
+			// Count is optional, will use default if not provided
+			return nil
+		},
+		ACTION_Backspace: func() error {
+			// Count is optional, will use default if not provided
+			return nil
+		},
+		ACTION_KeyCode: func() error {
+			return o.requireFields("keycode", o.Keycode != 0)
+		},
+		ACTION_Scroll: func() error {
+			return o.requireFields("delta", o.Delta != 0)
+		},
+		ACTION_AppInfo: func() error {
+			return o.requireFields("packageName", o.PackageName != "")
+		},
+		ACTION_AppClear: func() error {
+			return o.requireFields("packageName", o.PackageName != "")
+		},
+		ACTION_AppLaunch: func() error {
+			return o.requireFields("packageName", o.PackageName != "")
+		},
+		ACTION_AppTerminate: func() error {
+			return o.requireFields("packageName", o.PackageName != "")
+		},
+		ACTION_AppUninstall: func() error {
+			return o.requireFields("packageName", o.PackageName != "")
+		},
+		ACTION_AppInstall: func() error {
+			return o.requireFields("appUrl", o.AppUrl != "")
+		},
+		ACTION_GetForegroundApp: func() error {
+			return nil
+		},
+		ACTION_TapByOCR: func() error {
+			return o.requireFields("text", o.Text != "")
+		},
+		ACTION_SwipeToTapText: func() error {
+			return o.requireFields("text", o.Text != "")
+		},
+		ACTION_TapByCV: func() error {
+			return o.requireFields("imagePath", o.ImagePath != "")
+		},
+		ACTION_SwipeToTapApp: func() error {
+			return o.requireFields("appName", o.AppName != "")
+		},
+		ACTION_SwipeToTapTexts: func() error {
+			return o.requireFields("texts array", len(o.Texts) > 0)
+		},
+		ACTION_TapBySelector: func() error {
+			return o.requireFields("selector", o.Selector != "")
+		},
+		ACTION_HoverBySelector: func() error {
+			return o.requireFields("selector", o.Selector != "")
+		},
+		ACTION_SecondaryClickBySelector: func() error {
+			return o.requireFields("selector", o.Selector != "")
+		},
+		ACTION_WebCloseTab: func() error {
+			return o.requireFields("tabIndex", o.TabIndex != 0)
+		},
+		ACTION_WebLoginNoneUI: func() error {
+			if o.PackageName == "" || o.PhoneNumber == "" || o.Captcha == "" || o.Password == "" {
+				return fmt.Errorf("packageName, phoneNumber, captcha, and password are required for web_login_none_ui action")
+			}
+			return nil
+		},
+		ACTION_SetIme: func() error {
+			return o.requireFields("ime", o.Ime != "")
+		},
+		ACTION_GetSource: func() error {
+			return o.requireFields("packageName", o.PackageName != "")
+		},
+		ACTION_SleepMS: func() error {
+			return o.requireFields("milliseconds", o.Milliseconds != 0)
+		},
+		ACTION_SleepRandom: func() error {
+			return o.requireFields("params array", len(o.Params) > 0)
+		},
+		ACTION_AIAction: func() error {
+			return o.requireFields("prompt", o.Prompt != "")
+		},
+		ACTION_StartToGoal: func() error {
+			return o.requireFields("prompt", o.Prompt != "")
+		},
+		ACTION_Query: func() error {
+			return o.requireFields("prompt", o.Prompt != "")
+		},
+		ACTION_Finished: func() error {
+			return o.requireFields("content", o.Content != "")
+		},
+		ACTION_Upload: func() error {
+			if o.X == 0 || o.Y == 0 || o.FileUrl == "" {
+				return fmt.Errorf("x, y coordinates and fileUrl are required for upload action")
+			}
+			return nil
+		},
+		ACTION_PushMedia: func() error {
+			if o.ImageUrl == "" && o.VideoUrl == "" {
+				return fmt.Errorf("either imageUrl or videoUrl is required for push_media action")
+			}
+			return nil
+		},
+		ACTION_CreateBrowser: func() error {
+			return o.requireFields("timeout", o.Timeout != 0)
+		},
+	}
+
+	// Execute validation rule for the action type
+	if validator, exists := validationRules[actionType]; exists {
+		return validator()
+	}
+
+	// No specific validation needed for this action type
+	return nil
+}
+
+// requireFields is a helper function to generate consistent error messages
+func (o *ActionOptions) requireFields(fieldDesc string, condition bool) error {
+	if !condition {
+		return fmt.Errorf("%s is required for this action", fieldDesc)
+	}
+	return nil
+}
+
+// GetMCPOptions generates MCP tool options for specific action types
+func (o *ActionOptions) GetMCPOptions(actionType ActionName) []mcp.ToolOption {
+	// Define field mappings for different action types
+	fieldMappings := map[ActionName][]string{
+		ACTION_TapXY:                    {"platform", "serial", "x", "y", "duration"},
+		ACTION_TapAbsXY:                 {"platform", "serial", "x", "y", "duration"},
+		ACTION_TapByOCR:                 {"platform", "serial", "text", "ignoreNotFoundError", "maxRetryTimes", "index", "regex", "tapRandomRect"},
+		ACTION_TapByCV:                  {"platform", "serial", "ignoreNotFoundError", "maxRetryTimes", "index", "tapRandomRect"},
+		ACTION_DoubleTapXY:              {"platform", "serial", "x", "y"},
+		ACTION_SwipeDirection:           {"platform", "serial", "direction", "duration", "pressDuration"},
+		ACTION_SwipeCoordinate:          {"platform", "serial", "fromX", "fromY", "toX", "toY", "duration", "pressDuration"},
+		ACTION_Swipe:                    {"platform", "serial", "direction", "fromX", "fromY", "toX", "toY", "duration", "pressDuration"},
+		ACTION_Drag:                     {"platform", "serial", "fromX", "fromY", "toX", "toY", "duration", "pressDuration"},
+		ACTION_Input:                    {"platform", "serial", "text", "frequency"},
+		ACTION_AppLaunch:                {"platform", "serial", "packageName"},
+		ACTION_AppTerminate:             {"platform", "serial", "packageName"},
+		ACTION_AppInstall:               {"platform", "serial", "appUrl", "packageName"},
+		ACTION_AppUninstall:             {"platform", "serial", "packageName"},
+		ACTION_AppClear:                 {"platform", "serial", "packageName"},
+		ACTION_GetForegroundApp:         {"platform", "serial"},
+		ACTION_PressButton:              {"platform", "serial", "button"},
+		ACTION_SwipeToTapApp:            {"platform", "serial", "appName", "ignoreNotFoundError", "maxRetryTimes", "index"},
+		ACTION_SwipeToTapText:           {"platform", "serial", "text", "ignoreNotFoundError", "maxRetryTimes", "index", "regex"},
+		ACTION_SwipeToTapTexts:          {"platform", "serial", "texts", "ignoreNotFoundError", "maxRetryTimes", "index", "regex"},
+		ACTION_SecondaryClick:           {"platform", "serial", "x", "y"},
+		ACTION_HoverBySelector:          {"platform", "serial", "selector"},
+		ACTION_TapBySelector:            {"platform", "serial", "selector"},
+		ACTION_SecondaryClickBySelector: {"platform", "serial", "selector"},
+		ACTION_WebCloseTab:              {"platform", "serial", "tabIndex"},
+		ACTION_WebLoginNoneUI:           {"platform", "serial", "packageName", "phoneNumber", "captcha", "password"},
+		ACTION_SetIme:                   {"platform", "serial", "ime"},
+		ACTION_GetSource:                {"platform", "serial", "packageName"},
+		ACTION_Sleep:                    {"seconds"},
+		ACTION_SleepMS:                  {"platform", "serial", "milliseconds"},
+		ACTION_SleepRandom:              {"platform", "serial", "params"},
+		ACTION_AIAction:                 {"platform", "serial", "prompt", "llm_service", "cv_service"},
+		ACTION_StartToGoal:              {"platform", "serial", "prompt", "llm_service", "cv_service"},
+		ACTION_Query:                    {"platform", "serial", "prompt", "llm_service", "cv_service", "output_schema"},
+		ACTION_AIAssert:                 {"platform", "serial", "prompt", "llm_service", "cv_service"},
+		ACTION_Finished:                 {"content"},
+		ACTION_ListAvailableDevices:     {},
+		ACTION_SelectDevice:             {"platform", "serial"},
+		ACTION_ScreenShot:               {"platform", "serial"},
+		ACTION_ScreenRecord:             {"platform", "serial", "duration", "screenRecordPath", "screenRecordWithAudio", "screenRecordWithScrcpy"},
+		ACTION_GetScreenSize:            {"platform", "serial"},
+		ACTION_Home:                     {"platform", "serial"},
+		ACTION_Back:                     {"platform", "serial"},
+		ACTION_ListPackages:             {"platform", "serial"},
+		ACTION_ClosePopups:              {"platform", "serial"},
+	}
+
+	fields := fieldMappings[actionType]
+	// Generate options for specified fields, or all fields if not mapped
+	return o.generateMCPOptionsForFields(fields)
+}
+
+// generateMCPOptionsForFields generates MCP options for specific fields
+func (o *ActionOptions) generateMCPOptionsForFields(fields []string) []mcp.ToolOption {
+	options := make([]mcp.ToolOption, 0)
+
+	// If no fields are specified, return empty options (e.g., for ACTION_ListAvailableDevices)
+	if len(fields) == 0 {
+		return options
+	}
+
+	rType := reflect.TypeOf(*o)
+
+	// Process specific fields
+	fieldMap := make(map[string]reflect.StructField)
+	for i := 0; i < rType.NumField(); i++ {
+		field := rType.Field(i)
+		jsonTag := field.Tag.Get("json")
+		if jsonTag != "" && jsonTag != "-" {
+			name := strings.Split(jsonTag, ",")[0]
+			fieldMap[name] = field
+		}
+	}
+
+	for _, fieldName := range fields {
+		field, exists := fieldMap[fieldName]
+		if !exists {
+			continue
+		}
+
+		jsonTag := field.Tag.Get("json")
+		if jsonTag == "" || jsonTag == "-" {
+			continue
+		}
+		name := strings.Split(jsonTag, ",")[0]
+		binding := field.Tag.Get("binding")
+		required := strings.Contains(binding, "required")
+		desc := field.Tag.Get("desc")
+
+		// Handle pointer types
+		fieldType := field.Type
+		if fieldType.Kind() == reflect.Ptr {
+			fieldType = fieldType.Elem()
+		}
+
+		switch fieldType.Kind() {
+		case reflect.Float64, reflect.Float32, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			if required {
+				options = append(options, mcp.WithNumber(name, mcp.Required(), mcp.Description(desc)))
+			} else {
+				options = append(options, mcp.WithNumber(name, mcp.Description(desc)))
+			}
+		case reflect.String:
+			if required {
+				options = append(options, mcp.WithString(name, mcp.Required(), mcp.Description(desc)))
+			} else {
+				options = append(options, mcp.WithString(name, mcp.Description(desc)))
+			}
+		case reflect.Bool:
+			if required {
+				options = append(options, mcp.WithBoolean(name, mcp.Required(), mcp.Description(desc)))
+			} else {
+				options = append(options, mcp.WithBoolean(name, mcp.Description(desc)))
+			}
+		case reflect.Slice:
+			if fieldType.Elem().Kind() == reflect.String || fieldType.Elem().Kind() == reflect.Float64 {
+				if required {
+					options = append(options, mcp.WithArray(name, mcp.Required(), mcp.Description(desc)))
+				} else {
+					options = append(options, mcp.WithArray(name, mcp.Description(desc)))
+				}
+			}
+		case reflect.Map, reflect.Interface:
+			// Handle OutputSchema as object type
+			if name == "output_schema" {
+				if required {
+					options = append(options, mcp.WithObject(name, mcp.Required(), mcp.Description(desc)))
+				} else {
+					options = append(options, mcp.WithObject(name, mcp.Description(desc)))
+				}
+			}
+			// Skip other map and interface types for now
+			continue
+		default:
+			log.Warn().Str("field_type", fieldType.String()).Msg("Unsupported field type")
+		}
+	}
+
+	return options
 }

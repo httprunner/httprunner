@@ -1,4 +1,4 @@
-package mcp
+package mcphost
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 
 func TestLoadSettings(t *testing.T) {
 	// Load settings from test.mcp.json
-	settings, err := LoadSettings("testdata/test.mcp.json")
+	settings, err := LoadMCPConfig("testdata/test.mcp.json")
 	if err != nil {
 		t.Fatalf("Failed to load settings: %v", err)
 	}
@@ -19,13 +19,12 @@ func TestLoadSettings(t *testing.T) {
 	assert.Contains(t, settings.MCPServers, "weather")
 
 	// Verify specific server configurations
-	filesystemConfig := settings.MCPServers["filesystem"]
+	filesystemConfig := settings.MCPServers["filesystem"].Config.(STDIOServerConfig)
 	assert.Equal(t, "npx", filesystemConfig.Command)
-	assert.Equal(t, []string{"-y", "@modelcontextprotocol/server-filesystem", "/tmp"}, filesystemConfig.Args)
+	assert.Equal(t, []string{"-y", "@modelcontextprotocol/server-filesystem", "./"}, filesystemConfig.Args)
 
-	weatherConfig := settings.MCPServers["weather"]
+	weatherConfig := settings.MCPServers["weather"].Config.(STDIOServerConfig)
 	assert.Equal(t, "uv", weatherConfig.Command)
-	assert.Equal(t, []string{"--directory", "/Users/debugtalk/MyProjects/HttpRunner-dev/httprunner/internal/mcp/testdata", "run", "demo_weather.py"}, weatherConfig.Args)
-	assert.Equal(t, []string{"get_forecast"}, weatherConfig.AutoApprove)
+	assert.Equal(t, []string{"--directory", "/Users/debugtalk/MyProjects/HttpRunner-dev/httprunner/mcphost/testdata", "run", "demo_weather.py"}, weatherConfig.Args)
 	assert.Equal(t, map[string]string{"ABC": "123"}, weatherConfig.Env)
 }

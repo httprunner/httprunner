@@ -159,7 +159,7 @@ func (hd *HDCDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	if err != nil {
 		return err
 	}
-	defer postHandler(hd, ACTION_TapAbsXY, actionOptions)
+	defer postHandler(hd, option.ACTION_TapAbsXY, actionOptions)
 
 	if actionOptions.Identifier != "" {
 		startTime := int(time.Now().UnixMilli())
@@ -187,11 +187,11 @@ func (hd *HDCDriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 		Float64("toX", toX).Float64("toY", toY).Msg("HDCDriver.Swipe")
 
 	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err := preHandler_Swipe(hd, actionOptions, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err := preHandler_Swipe(hd, option.ACTION_SwipeCoordinate, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
-	defer postHandler(hd, ACTION_Swipe, actionOptions)
+	defer postHandler(hd, option.ACTION_SwipeCoordinate, actionOptions)
 
 	duration := 200
 	if actionOptions.PressDuration > 0 {
@@ -228,6 +228,22 @@ func (hd *HDCDriver) Backspace(count int, opts ...option.ActionOption) (err erro
 }
 
 func (hd *HDCDriver) PressHarmonyKeyCode(keyCode ghdc.KeyCode) (err error) {
+	return hd.uiDriver.PressKey(keyCode)
+}
+
+var harmonyButtonMap = map[types.DeviceButton]ghdc.KeyCode{
+	types.DeviceButtonBack:       ghdc.KEYCODE_BACK,
+	types.DeviceButtonHome:       ghdc.KEYCODE_HOME,
+	types.DeviceButtonEnter:      ghdc.KEYCODE_ENTER,
+	types.DeviceButtonVolumeUp:   ghdc.KEYCODE_VOLUME_UP,
+	types.DeviceButtonVolumeDown: ghdc.KEYCODE_VOLUME_DOWN,
+}
+
+func (hd *HDCDriver) PressButton(button types.DeviceButton) (err error) {
+	keyCode, ok := harmonyButtonMap[button]
+	if !ok {
+		return fmt.Errorf("unsupported button: %s", button)
+	}
 	return hd.uiDriver.PressKey(keyCode)
 }
 

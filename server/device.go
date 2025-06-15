@@ -101,7 +101,6 @@ func createBrowserHandler(c *gin.Context) {
 		return
 	}
 	RenderSuccess(c, browserInfo)
-	return
 }
 
 func (r *Router) deleteBrowserHandler(c *gin.Context) {

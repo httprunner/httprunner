@@ -127,6 +127,7 @@ var (
 	LLMRequestServiceError         = errors.New("request LLM service error")          // 112
 	LLMParsePlanningResponseError  = errors.New("parse LLM planning response error")  // 113
 	LLMParseAssertionResponseError = errors.New("parse LLM assertion response error") // 114
+	LLMParseQueryResponseError     = errors.New("parse LLM query response error")     // 115
 )
 
 var errorsMap = map[error]int{
@@ -217,6 +218,7 @@ var errorsMap = map[error]int{
 	LLMRequestServiceError:         112,
 	LLMParsePlanningResponseError:  113,
 	LLMParseAssertionResponseError: 114,
+	LLMParseQueryResponseError:     115,
 
 	// trackings related
 	TrackingGetError:   90,

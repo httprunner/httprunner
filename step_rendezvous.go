@@ -42,8 +42,8 @@ func (s *StepRendezvous) Run(r *SessionRunner) (*StepResult, error) {
 		Msg("rendezvous")
 
 	stepResult := &StepResult{
-		Name:     rendezvous.Name,
-		StepType: StepTypeRendezvous,
+		Name:     s.Name(),
+		StepType: s.Type(),
 		Success:  true,
 	}
 

@@ -15,7 +15,7 @@ import (
 
 var CmdPytest = &cobra.Command{
 	Use:                "pytest $path ...",
-	Short:              "run API test with pytest",
+	Short:              "Run API test with pytest",
 	Args:               cobra.MinimumNArgs(1),
 	DisableFlagParsing: true, // allow to pass any args to pytest
 	RunE: func(cmd *cobra.Command, args []string) (err error) {

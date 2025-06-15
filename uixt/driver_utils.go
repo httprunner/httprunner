@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"fmt"
 	"io"
-	"math"
 	"math/rand/v2"
 	"net/http"
 	"os"
@@ -53,8 +52,8 @@ func convertToAbsolutePoint(driver IDriver, x, y float64) (absX, absY float64, e
 			return 0, 0, err
 		}
 
-		absX = math.Round(float64(windowSize.Width)*x*10) / 10
-		absY = math.Round(float64(windowSize.Height)*y*10) / 10
+		absX = builtin.RoundToOneDecimal(float64(windowSize.Width) * x)
+		absY = builtin.RoundToOneDecimal(float64(windowSize.Height) * y)
 		return absX, absY, nil
 	}
 
@@ -113,40 +112,28 @@ func (dExt *XTDriver) Setup() error {
 	return nil
 }
 
-func (dExt *XTDriver) GetData(withReset bool) map[string]interface{} {
-	session := dExt.GetSession()
-	data := map[string]interface{}{
-		"requests":       session.History(),
-		"screen_results": session.screenResults,
-	}
-	if withReset {
-		session.Reset()
-	}
-	return data
-}
-
 func (dExt *XTDriver) assertOCR(text, assert string) error {
 	var opts []option.ActionOption
 	opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("assert_ocr_%s", text)))
 
 	switch assert {
-	case AssertionEqual:
+	case option.AssertionEqual:
 		_, err := dExt.FindScreenText(text, opts...)
 		if err != nil {
 			return errors.Wrap(err, "assert ocr equal failed")
 		}
-	case AssertionNotEqual:
+	case option.AssertionNotEqual:
 		_, err := dExt.FindScreenText(text, opts...)
 		if err == nil {
 			return errors.New("assert ocr not equal failed")
 		}
-	case AssertionExists:
+	case option.AssertionExists:
 		opts = append(opts, option.WithRegex(true))
 		_, err := dExt.FindScreenText(text, opts...)
 		if err != nil {
 			return errors.Wrap(err, "assert ocr exists failed")
 		}
-	case AssertionNotExists:
+	case option.AssertionNotExists:
 		opts = append(opts, option.WithRegex(true))
 		_, err := dExt.FindScreenText(text, opts...)
 		if err == nil {
@@ -166,11 +153,11 @@ func (dExt *XTDriver) assertForegroundApp(appName, assert string) error {
 	}
 
 	switch assert {
-	case AssertionEqual:
+	case option.AssertionEqual:
 		if app.PackageName != appName {
 			return errors.Wrap(err, "assert foreground app equal failed")
 		}
-	case AssertionNotEqual:
+	case option.AssertionNotEqual:
 		if app.PackageName == appName {
 			return errors.New("assert foreground app not equal failed")
 		}
@@ -186,12 +173,12 @@ func (dExt *XTDriver) assertSelector(selector, assert string) error {
 		return errors.New("assert selector only supports browser driver")
 	}
 	switch assert {
-	case AssertionExists:
+	case option.AssertionExists:
 		_, err := driver.IsElementExistBySelector(selector)
 		if err != nil {
 			return errors.Wrap(err, "assert ocr exists failed")
 		}
-	case AssertionNotExists:
+	case option.AssertionNotExists:
 		_, err := driver.IsElementExistBySelector(selector)
 		if err == nil {
 			return errors.New("assert ocr not exists failed")
@@ -204,13 +191,13 @@ func (dExt *XTDriver) assertSelector(selector, assert string) error {
 
 func (dExt *XTDriver) DoValidation(check, assert, expected string, message ...string) (err error) {
 	switch check {
-	case SelectorOCR:
+	case option.SelectorOCR:
 		err = dExt.assertOCR(expected, assert)
-	case SelectorAI:
+	case option.SelectorAI:
 		err = dExt.AIAssert(expected)
-	case SelectorForegroundApp:
+	case option.SelectorForegroundApp:
 		err = dExt.assertForegroundApp(expected, assert)
-	case SelectorSelector:
+	case option.SelectorSelector:
 		err = dExt.assertSelector(expected, assert)
 	default:
 		return fmt.Errorf("validator %s not implemented", check)
@@ -318,7 +305,7 @@ var (
 func DownloadFileByUrl(fileUrl string) (filePath string, err error) {
 	hash := md5.Sum([]byte(fileUrl))
 	fileName := fmt.Sprintf("%x", hash)
-	filePath = filepath.Join(config.GetConfig().DownloadsPath, fileName)
+	filePath = filepath.Join(config.GetConfig().DownloadsPath(), fileName)
 
 	// get or create file lock
 	lockI, _ := fileLocks.LoadOrStore(filePath, &sync.Mutex{})

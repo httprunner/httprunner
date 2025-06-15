@@ -8,7 +8,6 @@ import (
 
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
@@ -138,17 +137,17 @@ func convertCompatMobileStep(mobileUI *MobileUI) {
 		ma := mobileUI.Actions[i]
 		actionOptions := option.NewActionOptions(ma.GetOptions()...)
 		// append tap_cv params to screenshot_with_ui_types option
-		if ma.Method == uixt.ACTION_TapByCV {
+		if ma.Method == option.ACTION_TapByCV {
 			uiTypes, _ := builtin.ConvertToStringSlice(ma.Params)
 			ma.ActionOptions.ScreenShotWithUITypes = append(ma.ActionOptions.ScreenShotWithUITypes, uiTypes...)
 			ma.ActionOptions.ScreenShotWithUpload = true
 		}
 		// set default max_retry_times to 10 for swipe_to_tap_texts
-		if ma.Method == uixt.ACTION_SwipeToTapTexts && actionOptions.MaxRetryTimes == 0 {
+		if ma.Method == option.ACTION_SwipeToTapTexts && actionOptions.MaxRetryTimes == 0 {
 			ma.ActionOptions.MaxRetryTimes = 10
 		}
 		// set default max_retry_times to 10 for swipe_to_tap_text
-		if ma.Method == uixt.ACTION_SwipeToTapText && actionOptions.MaxRetryTimes == 0 {
+		if ma.Method == option.ACTION_SwipeToTapText && actionOptions.MaxRetryTimes == 0 {
 			ma.ActionOptions.MaxRetryTimes = 10
 		}
 		mobileUI.Actions[i] = ma
