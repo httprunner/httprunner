@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	hrp "github.com/httprunner/httprunner/v5"
+	"github.com/httprunner/httprunner/v5/internal/config"
 )
 
 var CmdReport = &cobra.Command{
@@ -24,9 +25,9 @@ Examples:
 		resultFolder := args[0]
 
 		// Construct file paths
-		summaryFile := filepath.Join(resultFolder, "summary.json")
-		logFile := filepath.Join(resultFolder, "hrp.log")
-		reportFile := filepath.Join(resultFolder, "report.html")
+		summaryFile := filepath.Join(resultFolder, config.SummaryFileName)
+		logFile := filepath.Join(resultFolder, config.LogFileName)
+		reportFile := filepath.Join(resultFolder, config.ReportFileName)
 
 		// Generate HTML report
 		if err := hrp.GenerateHTMLReportFromFiles(summaryFile, logFile, reportFile); err != nil {

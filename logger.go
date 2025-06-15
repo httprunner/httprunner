@@ -3,7 +3,6 @@ package hrp
 import (
 	"io"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -65,8 +64,7 @@ func InitLogger(logLevel string, logJSON bool, logFile bool) {
 	}
 
 	// file writer - write to results/taskID/hrp.log
-	cfg := config.GetConfig()
-	logFilePath := filepath.Join(cfg.ResultsPath(), "hrp.log")
+	logFilePath := config.GetConfig().LogFilePath()
 
 	// create or open log file
 	logFileWriter, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
