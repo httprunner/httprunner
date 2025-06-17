@@ -181,6 +181,9 @@ func NewUIXTRunner(configs *UIXTConfig) (runner *UIXTRunner, err error) {
 }
 
 func (configs *UIXTConfig) addDefault() {
+	if configs.Ctx == nil {
+		configs.Ctx = context.Background()
+	}
 	if configs.Timeout == 0 {
 		configs.Timeout = DEFAULT_TIMEOUT
 	}
