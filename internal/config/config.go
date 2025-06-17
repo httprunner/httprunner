@@ -12,21 +12,32 @@ import (
 )
 
 const (
-	ResultsDirName     = "results"
-	DownloadsDirName   = "downloads"
-	ScreenshotsDirName = "screenshots"
-	ActionLogDirName   = "action_log"
+	// results directory names
+	ResultsDirName     = "results"     // $PWD/results/
+	DownloadsDirName   = "downloads"   // $PWD/results/20060102150405/downloads/
+	ScreenshotsDirName = "screenshots" // $PWD/results/20060102150405/screenshots/
+	ActionLogDirName   = "action_log"  // $PWD/results/20060102150405/action_log/
+
+	// results file names
+	SummaryFileName = "hrp_summary.json" // $PWD/results/20060102150405/hrp_summary.json
+	LogFileName     = "hrp.log"          // $PWD/results/20060102150405/hrp.log
+	ReportFileName  = "report.html"      // $PWD/results/20060102150405/report.html
+
+	// mobile device path
+	DeviceActionLogFilePath = "/sdcard/Android/data/io.appium.uiautomator2.server/files/hodor"
 )
 
 type Config struct {
-	RootDir                 string
-	resultsPath             string
-	downloadsPath           string
-	screenShotsPath         string
-	StartTime               time.Time
-	ActionLogFilePath       string
-	DeviceActionLogFilePath string
-	mu                      sync.Mutex
+	StartTime        time.Time
+	RootDir          string
+	resultsPath      string
+	downloadsPath    string
+	screenShotsPath  string
+	summaryFilePath  string
+	logFilePath      string
+	reportFilePath   string
+	actionLogDirPath string
+	mu               sync.Mutex
 }
 
 var (
@@ -51,20 +62,15 @@ func GetConfig() *Config {
 		cfg.resultsPath = filepath.Join(cfg.RootDir, resultsDir)
 		cfg.downloadsPath = filepath.Join(cfg.RootDir, filepath.Join(DownloadsDirName, startTimeStr))
 		cfg.screenShotsPath = filepath.Join(cfg.resultsPath, ScreenshotsDirName)
-		cfg.ActionLogFilePath = filepath.Join(resultsDir, ActionLogDirName)
-		cfg.DeviceActionLogFilePath = "/sdcard/Android/data/io.appium.uiautomator2.server/files/hodor"
-
+		cfg.actionLogDirPath = filepath.Join(resultsDir, ActionLogDirName)
 		globalConfig = cfg
 	})
 
 	return globalConfig
 }
 
-// ResultsPath returns the results path and creates the directory if it doesn't exist
-func (c *Config) ResultsPath() string {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
+// resultsPathUnlocked returns the results path and creates the directory if it doesn't exist (internal use, no lock)
+func (c *Config) resultsPathUnlocked() string {
 	// Check if directory exists, create if it doesn't
 	if _, err := os.Stat(c.resultsPath); os.IsNotExist(err) {
 		if err := builtin.EnsureFolderExists(c.resultsPath); err != nil {
@@ -74,6 +80,14 @@ func (c *Config) ResultsPath() string {
 		}
 	}
 	return c.resultsPath
+}
+
+// ResultsPath returns the results path and creates the directory if it doesn't exist
+func (c *Config) ResultsPath() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.resultsPathUnlocked()
 }
 
 // DownloadsPath returns the downloads path and creates the directory if it doesn't exist
@@ -106,4 +120,62 @@ func (c *Config) ScreenShotsPath() string {
 		}
 	}
 	return c.screenShotsPath
+}
+
+// $PWD/results/20060102150405/action_log/
+func (c *Config) ActionLogDirPath() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Check if directory exists, create if it doesn't
+	if _, err := os.Stat(c.actionLogDirPath); os.IsNotExist(err) {
+		if err := builtin.EnsureFolderExists(c.actionLogDirPath); err != nil {
+			log.Fatal().Err(err).Str("path", c.actionLogDirPath).Msg("failed to create action log directory")
+		} else {
+			log.Info().Str("path", c.actionLogDirPath).Msg("created action log folder")
+		}
+	}
+	return c.actionLogDirPath
+}
+
+// $PWD/results/20060102150405/hrp_summary.json
+func (c *Config) SummaryFilePath() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.summaryFilePath != "" {
+		return c.summaryFilePath
+	}
+
+	// Ensure directory creation and set cached path
+	c.summaryFilePath = filepath.Join(c.resultsPathUnlocked(), SummaryFileName)
+	return c.summaryFilePath
+}
+
+// $PWD/results/20060102150405/hrp.log
+func (c *Config) LogFilePath() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.logFilePath != "" {
+		return c.logFilePath
+	}
+
+	// Ensure directory creation and set cached path
+	c.logFilePath = filepath.Join(c.resultsPathUnlocked(), LogFileName)
+	return c.logFilePath
+}
+
+// $PWD/results/20060102150405/report.html
+func (c *Config) ReportFilePath() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.reportFilePath != "" {
+		return c.reportFilePath
+	}
+
+	// Ensure directory creation and set cached path
+	c.reportFilePath = filepath.Join(c.resultsPathUnlocked(), ReportFileName)
+	return c.reportFilePath
 }

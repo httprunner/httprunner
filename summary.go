@@ -3,7 +3,6 @@ package hrp
 import (
 	_ "embed"
 	"fmt"
-	"path/filepath"
 	"runtime"
 	"time"
 
@@ -76,17 +75,11 @@ func (s *Summary) AddCaseSummary(caseSummary *TestCaseSummary) {
 	}
 }
 
-func (s *Summary) GetResultsPath() string {
-	return config.GetConfig().ResultsPath()
-}
-
 func (s *Summary) GenHTMLReport() error {
-	reportsDir := s.GetResultsPath()
-
 	// Find summary.json and hrp.log files
-	summaryPath := filepath.Join(reportsDir, "summary.json")
-	logPath := filepath.Join(reportsDir, "hrp.log")
-	reportPath := filepath.Join(reportsDir, "report.html")
+	summaryPath := config.GetConfig().SummaryFilePath()
+	logPath := config.GetConfig().LogFilePath()
+	reportPath := config.GetConfig().ReportFilePath()
 
 	// Check if summary.json exists, if not create it first
 	if !builtin.FileExists(summaryPath) {
@@ -99,13 +92,28 @@ func (s *Summary) GenHTMLReport() error {
 }
 
 func (s *Summary) GenSummary() (path string, err error) {
-	reportsDir := config.GetConfig().ResultsPath()
-	path = filepath.Join(reportsDir, "summary.json")
+	path = config.GetConfig().SummaryFilePath()
 	err = builtin.Dump2JSON(s, path)
 	if err != nil {
 		return "", err
 	}
 	return path, nil
+}
+
+func (s *Summary) GetResultsPath() string {
+	return config.GetConfig().ResultsPath()
+}
+
+func (s *Summary) GetSummaryFilePath() string {
+	return config.GetConfig().SummaryFilePath()
+}
+
+func (s *Summary) GetLogFilePath() string {
+	return config.GetConfig().LogFilePath()
+}
+
+func (s *Summary) GetReportFilePath() string {
+	return config.GetConfig().ReportFilePath()
 }
 
 type Stat struct {

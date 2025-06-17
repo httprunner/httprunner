@@ -100,7 +100,7 @@ type AndroidDevice struct {
 
 func (dev *AndroidDevice) Setup() error {
 	dev.Device.RunShellCommand("ime", "enable", option.UnicodeImePackageName)
-	dev.Device.RunShellCommand("rm", "-r", config.GetConfig().DeviceActionLogFilePath)
+	dev.Device.RunShellCommand("rm", "-r", config.DeviceActionLogFilePath)
 
 	// setup evalite
 	evalToolRaw, err := evalite.ReadFile("evalite")

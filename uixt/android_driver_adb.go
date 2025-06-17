@@ -676,10 +676,11 @@ func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 	// 没有解析到打点日志，走兜底逻辑
 	if len(pointRes) == 0 {
 		log.Info().Msg("action log is null, use action file >>>")
-		logFilePathPrefix := fmt.Sprintf("%v/data", config.GetConfig().ActionLogFilePath)
+		actionLogDirPath := config.GetConfig().ActionLogDirPath()
+		logFilePathPrefix := fmt.Sprintf("%v/data", actionLogDirPath)
 		files := []string{}
-		ad.Device.RunShellCommand("pull", config.GetConfig().DeviceActionLogFilePath, config.GetConfig().ActionLogFilePath)
-		err = filepath.Walk(config.GetConfig().ActionLogFilePath, func(path string, info fs.FileInfo, err error) error {
+		ad.Device.RunShellCommand("pull", config.DeviceActionLogFilePath, actionLogDirPath)
+		err = filepath.Walk(actionLogDirPath, func(path string, info fs.FileInfo, err error) error {
 			// 只是需要日志文件
 			if ok := strings.Contains(path, logFilePathPrefix); ok {
 				files = append(files, path)
