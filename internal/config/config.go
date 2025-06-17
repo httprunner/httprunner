@@ -63,20 +63,14 @@ func GetConfig() *Config {
 		cfg.downloadsPath = filepath.Join(cfg.RootDir, filepath.Join(DownloadsDirName, startTimeStr))
 		cfg.screenShotsPath = filepath.Join(cfg.resultsPath, ScreenshotsDirName)
 		cfg.actionLogDirPath = filepath.Join(resultsDir, ActionLogDirName)
-		cfg.logFilePath = filepath.Join(cfg.resultsPath, LogFileName)
-		cfg.summaryFilePath = filepath.Join(cfg.resultsPath, SummaryFileName)
-		cfg.reportFilePath = filepath.Join(cfg.resultsPath, ReportFileName)
 		globalConfig = cfg
 	})
 
 	return globalConfig
 }
 
-// ResultsPath returns the results path and creates the directory if it doesn't exist
-func (c *Config) ResultsPath() string {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
+// resultsPathUnlocked returns the results path and creates the directory if it doesn't exist (internal use, no lock)
+func (c *Config) resultsPathUnlocked() string {
 	// Check if directory exists, create if it doesn't
 	if _, err := os.Stat(c.resultsPath); os.IsNotExist(err) {
 		if err := builtin.EnsureFolderExists(c.resultsPath); err != nil {
@@ -86,6 +80,14 @@ func (c *Config) ResultsPath() string {
 		}
 	}
 	return c.resultsPath
+}
+
+// ResultsPath returns the results path and creates the directory if it doesn't exist
+func (c *Config) ResultsPath() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.resultsPathUnlocked()
 }
 
 // DownloadsPath returns the downloads path and creates the directory if it doesn't exist
@@ -145,7 +147,8 @@ func (c *Config) SummaryFilePath() string {
 		return c.summaryFilePath
 	}
 
-	c.summaryFilePath = filepath.Join(c.ResultsPath(), SummaryFileName)
+	// Ensure directory creation and set cached path
+	c.summaryFilePath = filepath.Join(c.resultsPathUnlocked(), SummaryFileName)
 	return c.summaryFilePath
 }
 
@@ -158,7 +161,8 @@ func (c *Config) LogFilePath() string {
 		return c.logFilePath
 	}
 
-	c.logFilePath = filepath.Join(c.ResultsPath(), LogFileName)
+	// Ensure directory creation and set cached path
+	c.logFilePath = filepath.Join(c.resultsPathUnlocked(), LogFileName)
 	return c.logFilePath
 }
 
@@ -171,6 +175,7 @@ func (c *Config) ReportFilePath() string {
 		return c.reportFilePath
 	}
 
-	c.reportFilePath = filepath.Join(c.ResultsPath(), ReportFileName)
+	// Ensure directory creation and set cached path
+	c.reportFilePath = filepath.Join(c.resultsPathUnlocked(), ReportFileName)
 	return c.reportFilePath
 }
