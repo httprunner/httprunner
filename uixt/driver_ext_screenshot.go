@@ -50,27 +50,25 @@ func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) ai.OCRTexts {
 }
 
 // GetScreenshotBase64WithSize takes a screenshot, returns the compressed image buffer in base64 format and screen size
+// Also saves the screenshot to session for report display
 func (dExt *XTDriver) GetScreenshotBase64WithSize() (compressedBufBase64 string, size types.Size, err error) {
-	compressBufSource, err := getScreenShotBuffer(dExt)
+	// Create screenshot with session saving, minimal CV processing for AI operations
+	screenResult, err := dExt.createScreenshotWithSession(
+		option.WithScreenShotFileName("screenshot_base64"),
+	)
 	if err != nil {
 		return "", types.Size{}, err
 	}
 
 	// convert buffer to base64 string
 	screenShotBase64 := "data:image/jpeg;base64," +
-		base64.StdEncoding.EncodeToString(compressBufSource.Bytes())
+		base64.StdEncoding.EncodeToString(screenResult.bufSource.Bytes())
 
-	// get screen size
-	size, err = dExt.IDriver.WindowSize()
-	if err != nil {
-		return "", types.Size{}, errors.Wrap(err, "get window size failed")
-	}
-
-	return screenShotBase64, size, nil
+	return screenShotBase64, screenResult.Resolution, nil
 }
 
-// GetScreenResult takes a screenshot, returns the image recognition result
-func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
+// createScreenshotWithSession creates a screenshot with optional OCR processing and saves to session
+func (dExt *XTDriver) createScreenshotWithSession(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
 	// get compressed screenshot buffer
 	compressBufSource, err := getScreenShotBuffer(dExt.IDriver)
 	if err != nil {
@@ -105,34 +103,40 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 		return nil, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 
-	// read image from buffer with CV
+	// create basic screen result
 	screenResult = &ScreenResult{
 		bufSource:  compressBufSource,
 		ImagePath:  imagePath,
 		Tags:       nil,
 		Resolution: windowSize,
 	}
-	imageResult, err := dExt.CVService.ReadFromBuffer(compressBufSource, opts...)
-	if err != nil {
-		log.Error().Err(err).Msg("ReadFromBuffer from ImageService failed")
-		return nil, err
-	}
-	if imageResult != nil {
-		screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
-		screenResult.UploadedURL = imageResult.URL
-		screenResult.Icons = imageResult.UIResult
 
-		if screenshotOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
-			screenResult.Popup = &PopupInfo{
-				ClosePopupsResult: imageResult.ClosePopupsResult,
-				PicName:           imagePath,
-				PicURL:            imageResult.URL,
-			}
+	logger := log.Debug().Str("imagePath", imagePath)
+	// perform CV processing if any CV-related option is enabled
+	if needsCVProcessing(screenshotOptions) {
+		imageResult, err := dExt.CVService.ReadFromBuffer(compressBufSource, opts...)
+		if err != nil {
+			log.Error().Err(err).Msg("ReadFromBuffer from ImageService failed")
+			return nil, err
+		}
+		if imageResult != nil {
+			screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
+			screenResult.UploadedURL = imageResult.URL
+			screenResult.Icons = imageResult.UIResult
 
-			closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
-			for _, closeArea := range closeAreas {
-				screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
+			if screenshotOptions.ScreenShotWithClosePopups && imageResult.ClosePopupsResult != nil {
+				screenResult.Popup = &PopupInfo{
+					ClosePopupsResult: imageResult.ClosePopupsResult,
+					PicName:           imagePath,
+					PicURL:            imageResult.URL,
+				}
+
+				closeAreas, _ := imageResult.UIResult.FilterUIResults([]string{"close"})
+				for _, closeArea := range closeAreas {
+					screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
+				}
 			}
+			logger.Str("imageUrl", screenResult.UploadedURL)
 		}
 	}
 
@@ -140,11 +144,26 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 	session := dExt.GetSession()
 	session.screenResults = append(session.screenResults, screenResult)
 
-	log.Debug().
-		Str("imagePath", imagePath).
-		Str("imageUrl", screenResult.UploadedURL).
-		Msg("log screenshot")
+	logger.Msg("log screenshot")
 	return screenResult, nil
+}
+
+// needsCVProcessing determines if CV service processing is required based on screenshot options
+func needsCVProcessing(options *option.ActionOptions) bool {
+	return options.ScreenShotWithOCR ||
+		options.ScreenShotWithUpload ||
+		options.ScreenShotWithLiveType ||
+		options.ScreenShotWithLivePopularity ||
+		len(options.ScreenShotWithUITypes) > 0 ||
+		options.ScreenShotWithClosePopups ||
+		options.ScreenShotWithOCRCluster != ""
+}
+
+// GetScreenResult takes a screenshot, returns the image recognition result
+func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
+	// Enable OCR processing for GetScreenResult
+	opts = append(opts, option.WithScreenShotOCR(true))
+	return dExt.createScreenshotWithSession(opts...)
 }
 
 func (dExt *XTDriver) GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error) {
