@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -43,10 +44,11 @@ type HTMLReportGenerator struct {
 
 // LogEntry represents a single log entry
 type LogEntry struct {
-	Time    string         `json:"time"`
-	Level   string         `json:"level"`
-	Message string         `json:"message"`
-	Fields  map[string]any `json:"-"` // Store all other fields
+	Time     string         `json:"time"`
+	Level    string         `json:"level"`
+	Message  string         `json:"message"`
+	Fields   map[string]any `json:"-"` // Store all other fields
+	LogIndex int            `json:"-"` // Original index to maintain order for same timestamps
 }
 
 // NewHTMLReportGenerator creates a new HTML report generator
@@ -126,6 +128,7 @@ func (g *HTMLReportGenerator) loadLogData() error {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+	logIndex := 0 // Track original order
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
@@ -141,8 +144,10 @@ func (g *HTMLReportGenerator) loadLogData() error {
 
 		// Create LogEntry with basic fields
 		logEntry := LogEntry{
-			Fields: make(map[string]any),
+			Fields:   make(map[string]any),
+			LogIndex: logIndex, // Store original order
 		}
+		logIndex++
 
 		// Extract standard fields
 		if time, ok := rawEntry["time"].(string); ok {
@@ -176,29 +181,181 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 
 	var stepLogs []LogEntry
 
-	// startTime is in seconds, elapsed is in milliseconds
-	// Calculate end time (startTime in seconds + elapsed in milliseconds converted to seconds)
-	endTime := startTime + elapsed/1000
+	// Handle different time units properly
+	// Check if startTime is already in milliseconds (> year 2100 in seconds)
+	var startTimeMs, endTimeMs int64
+	if startTime > 4000000000 { // If > year 2100, assume it's already in milliseconds
+		startTimeMs = startTime
+	} else {
+		// startTime is in seconds (backward compatibility), elapsed is in milliseconds
+		startTimeMs = startTime * 1000
+	}
+	endTimeMs = startTimeMs + elapsed
 
-	// Convert Unix timestamps to time.Time for comparison
-	startTimeObj := time.Unix(startTime, 0)
-	endTimeObj := time.Unix(endTime, 0)
+	// Find the actual time range of this step's logs by scanning for step boundaries
+	var actualStartTime, actualEndTime int64
+	actualStartTime = startTimeMs
+	actualEndTime = endTimeMs
 
+	// Look for step start/end markers to determine precise boundaries
 	for _, logEntry := range g.LogData {
-		// Parse log entry time
-		logTime, err := g.parseLogTime(logEntry.Time)
+		logTime, err := g.parseLogTimeMs(logEntry.Time)
 		if err != nil {
 			continue
 		}
 
-		// Check if log entry falls within step time range
-		if (logTime.Equal(startTimeObj) || logTime.After(startTimeObj)) &&
-			(logTime.Equal(endTimeObj) || logTime.Before(endTimeObj)) {
+		// Check for step start marker - more precise matching
+		if logEntry.Message == "run step start" {
+			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
+				if stepFieldValue == stepName {
+					actualStartTime = logTime
+				}
+			}
+		}
+		// Check for step end marker - more precise matching
+		if logEntry.Message == "run step end" {
+			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
+				if stepFieldValue == stepName {
+					actualEndTime = logTime
+				}
+			}
+		}
+	}
+
+	// Find the next step's start time to avoid overlapping logs
+	var nextStepStartTime int64 = 0
+	for _, logEntry := range g.LogData {
+		logTime, err := g.parseLogTimeMs(logEntry.Time)
+		if err != nil {
+			continue
+		}
+
+		// Find the next step start that occurs after our step's actual end time
+		if logEntry.Message == "run step start" && logTime > actualEndTime {
+			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
+				if stepFieldValue != stepName { // Make sure it's a different step
+					nextStepStartTime = logTime
+					break
+				}
+			}
+		}
+	}
+
+	// Add intelligent buffer for AI conversations, but respect step boundaries
+	var maxAIEndTime int64 = actualEndTime
+	var inAIConversation bool
+
+	for _, logEntry := range g.LogData {
+		logTime, err := g.parseLogTimeMs(logEntry.Time)
+		if err != nil {
+			continue
+		}
+
+		// Skip logs that are clearly before our step
+		if logTime < actualStartTime {
+			continue
+		}
+
+		// Skip logs that are after the next step starts
+		if nextStepStartTime > 0 && logTime >= nextStepStartTime {
+			break
+		}
+
+		// Track AI conversation patterns
+		if strings.Contains(logEntry.Message, "log request messages") {
+			if logTime >= actualStartTime && logTime <= actualEndTime+30000 { // 30s buffer for AI requests
+				inAIConversation = true
+			}
+		} else if strings.Contains(logEntry.Message, "log response message") && inAIConversation {
+			// Extend end time to include complete AI conversation, but respect next step boundary
+			extendedEndTime := logTime
+			if nextStepStartTime > 0 && extendedEndTime >= nextStepStartTime {
+				extendedEndTime = nextStepStartTime - 1 // Stop just before next step
+			}
+			if extendedEndTime > maxAIEndTime {
+				maxAIEndTime = extendedEndTime
+			}
+			inAIConversation = false
+		}
+	}
+
+	// Use the extended end time if AI conversation was detected
+	if maxAIEndTime > actualEndTime {
+		actualEndTime = maxAIEndTime
+	}
+
+	// Final boundary check: ensure we don't go beyond the next step
+	if nextStepStartTime > 0 && actualEndTime >= nextStepStartTime {
+		actualEndTime = nextStepStartTime - 1
+	}
+
+	// Final filtering: collect logs strictly within step boundaries
+	var inCurrentStep bool = false
+
+	for _, logEntry := range g.LogData {
+
+		// Check for step boundaries to control inclusion
+		if logEntry.Message == "run step start" {
+			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
+				if stepFieldValue == stepName {
+					inCurrentStep = true
+					stepLogs = append(stepLogs, logEntry)
+					continue
+				} else {
+					// This is a different step starting
+					if inCurrentStep {
+						// We were in our step, now we're not
+						break
+					}
+					continue
+				}
+			}
+		}
+
+		if logEntry.Message == "run step end" {
+			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
+				if stepFieldValue == stepName {
+					stepLogs = append(stepLogs, logEntry)
+					inCurrentStep = false
+					// Continue to check for AI conversations that might extend beyond
+					continue
+				}
+			}
+		}
+
+		// Only include logs when we're in the current step
+		if inCurrentStep {
 			stepLogs = append(stepLogs, logEntry)
 		}
 	}
 
+	// Sort logs by time, then by original index for stable ordering
+	sort.Slice(stepLogs, func(i, j int) bool {
+		timeI, errI := g.parseLogTime(stepLogs[i].Time)
+		timeJ, errJ := g.parseLogTime(stepLogs[j].Time)
+
+		if errI != nil || errJ != nil {
+			return stepLogs[i].LogIndex < stepLogs[j].LogIndex
+		}
+
+		if timeI.Equal(timeJ) {
+			// For same timestamps, use original log index to maintain order
+			return stepLogs[i].LogIndex < stepLogs[j].LogIndex
+		}
+		return timeI.Before(timeJ)
+	})
+
 	return stepLogs
+}
+
+// containsLogEntry checks if a log entry already exists in the slice
+func containsLogEntry(logs []LogEntry, entry LogEntry) bool {
+	for _, log := range logs {
+		if log.LogIndex == entry.LogIndex {
+			return true
+		}
+	}
+	return false
 }
 
 // parseLogTime parses various time formats from log entries
@@ -226,6 +383,15 @@ func (g *HTMLReportGenerator) parseLogTime(timeStr string) (time.Time, error) {
 	}
 
 	return time.Time{}, fmt.Errorf("unable to parse time: %s", timeStr)
+}
+
+// parseLogTimeMs parses time string to milliseconds since Unix epoch
+func (g *HTMLReportGenerator) parseLogTimeMs(timeStr string) (int64, error) {
+	t, err := g.parseLogTime(timeStr)
+	if err != nil {
+		return 0, err
+	}
+	return t.UnixNano() / 1000000, nil // Convert nanoseconds to milliseconds
 }
 
 // encodeImageToBase64 encodes an image file to base64 string with compression
