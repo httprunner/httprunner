@@ -852,16 +852,19 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			return stepResult, errors.Wrap(code.InterruptError, "mobile UI runner interrupted")
 		default:
 			actionStartTime := time.Now()
-			actionResult := &ActionResult{
-				MobileAction: action,
-				StartTime:    actionStartTime.UnixMilli(), // action 开始时间
-			}
+			// Parse action params first for variable substitution
 			if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
 				if !code.IsErrorPredefined(err) {
 					err = errors.Wrap(code.ParseError,
 						fmt.Sprintf("parse action params failed: %v", err))
 				}
 				return stepResult, err
+			}
+
+			// Create ActionResult with parsed params for accurate reporting
+			actionResult := &ActionResult{
+				MobileAction: action,                      // Now contains parsed params
+				StartTime:    actionStartTime.UnixMilli(), // action start time
 			}
 
 			// Apply global configuration from testcase config
@@ -961,55 +964,111 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 	}
 
 	// validate
-	validateResults, err := validateUI(uiDriver, stepValidators)
-	if err != nil {
-		if !code.IsErrorPredefined(err) {
-			err = errors.Wrap(code.MobileUIValidationError, err.Error())
-		}
-		return
-	}
+	validateResults, err := validateUI(uiDriver, stepValidators, s.caseRunner.parser, stepVariables)
 	if len(validateResults) > 0 {
+		// Always save validation results if any exist, regardless of success or failure
 		sessionData := &SessionData{
 			Validators: validateResults,
 		}
 		stepResult.Data = sessionData
 	}
+	if err != nil {
+		// Handle validation error after saving results
+		if !code.IsErrorPredefined(err) {
+			err = errors.Wrap(code.MobileUIValidationError, err.Error())
+		}
+		return stepResult, err
+	}
+
 	stepResult.Success = true
 	return stepResult, nil
 }
 
-func validateUI(ud *uixt.XTDriver, iValidators []interface{}) (validateResults []*ValidationResult, err error) {
+func validateUI(ud *uixt.XTDriver, iValidators []interface{}, parser *Parser, stepVariables map[string]interface{}) (validateResults []*ValidationResult, err error) {
+	// Parse all validators for variable substitution
+	parsedValidators, err := parseStepValidators(iValidators, parser, stepVariables)
+	if err != nil {
+		return nil, err
+	}
+
+	// Execute validation for each parsed validator
+	for _, validator := range parsedValidators {
+		// Debug: print validator details
+		log.Debug().
+			Str("check", validator.Check).
+			Str("assert", validator.Assert).
+			Interface("expect", validator.Expect).
+			Str("message", validator.Message).
+			Msg("processing validator")
+
+		validationResult := &ValidationResult{
+			Validator:   validator, // Use parsed validator for accurate reporting
+			CheckResult: "fail",
+		}
+
+		// Check if this is a UI validator or AI assert validator
+		if !strings.HasPrefix(validator.Check, "ui_") && validator.Assert != "ai_assert" {
+			validationResult.CheckResult = "skip"
+			log.Warn().Interface("validator", validator).Msg("skip validator")
+			validateResults = append(validateResults, validationResult)
+			continue
+		}
+
+		// Validate expected value type
+		expected, ok := validator.Expect.(string)
+		if !ok {
+			return nil, errors.New("validator expect should be string")
+		}
+
+		// Perform validation
+		err = ud.DoValidation(validator.Check, validator.Assert, expected, validator.Message)
+		if err != nil {
+			// Add the failed validation result to the list before returning error
+			validateResults = append(validateResults, validationResult)
+			return validateResults, errors.Wrap(err, "step validation failed")
+		}
+
+		validationResult.CheckResult = "pass"
+		validateResults = append(validateResults, validationResult)
+	}
+
+	return validateResults, nil
+}
+
+// parseStepValidators parses all validators for variable substitution
+func parseStepValidators(iValidators []interface{}, parser *Parser, stepVariables map[string]interface{}) ([]Validator, error) {
+	var parsedValidators []Validator
+
 	for _, iValidator := range iValidators {
 		validator, ok := iValidator.(Validator)
 		if !ok {
 			return nil, errors.New("validator type error")
 		}
 
-		validataResult := &ValidationResult{
-			Validator:   validator,
-			CheckResult: "fail",
+		parsedValidator := validator
+
+		// Parse Expect field for variable substitution
+		if expectedStr, ok := validator.Expect.(string); ok {
+			if parsedExpected, err := parser.Parse(expectedStr, stepVariables); err != nil {
+				return nil, errors.Wrap(err, "failed to parse validator expect field")
+			} else {
+				parsedValidator.Expect = parsedExpected
+			}
 		}
 
-		// parse check value
-		if !strings.HasPrefix(validator.Check, "ui_") {
-			validataResult.CheckResult = "skip"
-			log.Warn().Interface("validator", validator).Msg("skip validator")
-			validateResults = append(validateResults, validataResult)
-			continue
+		// Parse Message field for variable substitution
+		if validator.Message != "" {
+			if parsedMessage, err := parser.Parse(validator.Message, stepVariables); err != nil {
+				return nil, errors.Wrap(err, "failed to parse validator message field")
+			} else {
+				if msgStr, ok := parsedMessage.(string); ok {
+					parsedValidator.Message = msgStr
+				}
+			}
 		}
 
-		expected, ok := validator.Expect.(string)
-		if !ok {
-			return nil, errors.New("validator expect should be string")
-		}
-
-		err := ud.DoValidation(validator.Check, validator.Assert, expected, validator.Message)
-		if err != nil {
-			return validateResults, errors.Wrap(err, "step validation failed")
-		}
-
-		validataResult.CheckResult = "pass"
-		validateResults = append(validateResults, validataResult)
+		parsedValidators = append(parsedValidators, parsedValidator)
 	}
-	return validateResults, nil
+
+	return parsedValidators, nil
 }

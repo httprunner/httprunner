@@ -2575,7 +2575,7 @@ const htmlTemplate = `<!DOCTYPE html>
                                 {{end}}
 
                                 <!-- Enhanced AI Validator Display -->
-                                {{if eq $validator.check "ui_ai"}}
+                                {{if or (eq $validator.check "ui_ai") (eq $validator.assert "ai_assert")}}
                                 <div class="validator-ai-content">
                                     <!-- Extract AI validation details from step logs -->
                                     {{$stepLogs := getStepLogs $step}}
