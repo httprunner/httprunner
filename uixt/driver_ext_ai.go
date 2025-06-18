@@ -164,7 +164,7 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 	// Step 1: Take screenshot
 	screenshotStartTime := time.Now()
 	// Use GetScreenResult to handle screenshot capture, save, and session tracking
-	screenResult, err := dExt.GetScreenResult(
+	screenResult, err := dExt.createScreenshotWithSession(
 		option.WithScreenShotFileName(builtin.GenNameWithTimestamp("%d_screenshot")),
 	)
 	screenshotElapsed := time.Since(screenshotStartTime).Milliseconds()

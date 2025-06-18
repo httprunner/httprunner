@@ -793,6 +793,16 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
+		// Get session data and add to attachments, clear session for next step
+		if uiDriver != nil {
+			sessionData := uiDriver.GetSession().GetData(true) // clear session after getting data
+			if len(sessionData.ScreenResults) > 0 {
+				attachments["screen_results"] = sessionData.ScreenResults
+				log.Debug().Int("count", len(sessionData.ScreenResults)).
+					Str("step", step.Name()).Msg("added screen results to step attachments")
+			}
+		}
+
 		var config *TConfig
 		if s.caseRunner != nil && s.caseRunner.Config != nil {
 			config = s.caseRunner.Config.Get()
