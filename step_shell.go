@@ -95,7 +95,7 @@ func runStepShell(r *SessionRunner, step IStep) (stepResult *StepResult, err err
 		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
-		StartTime:   start.Unix(),
+		StartTime:   start.UnixMilli(),
 	}
 	defer func() {
 		stepResult.Elapsed = time.Since(start).Milliseconds()

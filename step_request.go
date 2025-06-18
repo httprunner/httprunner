@@ -285,7 +285,7 @@ func runStepRequest(r *SessionRunner, step IStep) (stepResult *StepResult, err e
 		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
-		StartTime:   start.Unix(),
+		StartTime:   start.UnixMilli(),
 	}
 
 	defer func() {

@@ -709,7 +709,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
-		StartTime:   start.Unix(),
+		StartTime:   start.UnixMilli(),
 	}
 
 	var stepVariables map[string]interface{}
@@ -781,7 +781,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 					Method: option.ACTION_GetForegroundApp,
 					Params: "[ForDebug] check foreground app",
 				},
-				StartTime: startTime.Unix(),
+				StartTime: startTime.UnixMilli(),
 			}
 			subActionResults, err1 := uiDriver.ExecuteAction(
 				context.Background(), actionResult.MobileAction)
@@ -815,7 +815,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 					Method: option.ACTION_ClosePopups,
 					Params: "[ForDebug] close popups handler",
 				},
-				StartTime: startTime.Unix(),
+				StartTime: startTime.UnixMilli(),
 			}
 			subActionResults, err2 := uiDriver.ExecuteAction(
 				context.Background(), actionResult.MobileAction)
@@ -844,7 +844,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			actionStartTime := time.Now()
 			actionResult := &ActionResult{
 				MobileAction: action,
-				StartTime:    actionStartTime.Unix(), // action 开始时间
+				StartTime:    actionStartTime.UnixMilli(), // action 开始时间
 			}
 			if action.Params, err = s.caseRunner.parser.Parse(action.Params, stepVariables); err != nil {
 				if !code.IsErrorPredefined(err) {
