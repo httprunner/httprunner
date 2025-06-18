@@ -169,24 +169,14 @@ func validateQueryInput(opts *QueryOptions) error {
 
 // parseQueryResult parses the model response into QueryResult
 func parseQueryResult(content string) (*QueryResult, error) {
-	// Extract JSON content from response
-	jsonContent := extractJSONFromContent(content)
-	if jsonContent == "" {
-		// If no JSON found, treat the entire content as the result
-		// This handles cases where the model returns plain text instead of JSON
-		return &QueryResult{
-			Content: content,
-			Thought: "Direct response from model",
-		}, nil
-	}
-
-	// Parse JSON response
 	var result QueryResult
-	if err := json.Unmarshal([]byte(jsonContent), &result); err != nil {
-		// If JSON parsing fails, treat the content as plain text result
+
+	// Use the generic structured response parser with enhanced error recovery
+	if err := parseStructuredResponse(content, &result); err != nil {
+		// If parseStructuredResponse fails completely, treat content as plain text
 		return &QueryResult{
 			Content: content,
-			Thought: "Failed to parse as JSON, returning raw content",
+			Thought: "Failed to parse response, returning raw content",
 		}, nil
 	}
 
