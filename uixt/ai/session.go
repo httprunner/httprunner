@@ -73,6 +73,11 @@ func (h *ConversationHistory) Clear() {
 	log.Warn().Msg("conversation history cleared completely")
 }
 
+const (
+	LOG_REQUEST_MESSAGES = "log request messages"
+	LOG_RESPONSE_MESSAGE = "log response message"
+)
+
 func logRequest(messages ConversationHistory) {
 	msgs := make(ConversationHistory, 0, len(messages))
 	for _, message := range messages {
@@ -99,7 +104,7 @@ func logRequest(messages ConversationHistory) {
 		}
 		msgs = append(msgs, msg)
 	}
-	log.Debug().Interface("messages", msgs).Msg("log request messages")
+	log.Debug().Interface("messages", msgs).Msg(LOG_REQUEST_MESSAGES)
 }
 
 func logResponse(message *schema.Message) {
@@ -126,5 +131,5 @@ func logResponse(message *schema.Message) {
 	if message.Extra != nil {
 		logger = logger.Interface("extra", message.Extra)
 	}
-	logger.Msg("log response message")
+	logger.Msg(LOG_RESPONSE_MESSAGE)
 }

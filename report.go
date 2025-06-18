@@ -14,6 +14,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -262,11 +263,11 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 		}
 
 		// Track AI conversation patterns
-		if strings.Contains(logEntry.Message, "log request messages") {
+		if strings.Contains(logEntry.Message, ai.LOG_REQUEST_MESSAGES) {
 			if logTime >= actualStartTime && logTime <= actualEndTime+30000 { // 30s buffer for AI requests
 				inAIConversation = true
 			}
-		} else if strings.Contains(logEntry.Message, "log response message") && inAIConversation {
+		} else if strings.Contains(logEntry.Message, ai.LOG_RESPONSE_MESSAGE) && inAIConversation {
 			// Extend end time to include complete AI conversation, but respect next step boundary
 			extendedEndTime := logTime
 			if nextStepStartTime > 0 && extendedEndTime >= nextStepStartTime {

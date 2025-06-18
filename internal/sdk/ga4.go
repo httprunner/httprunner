@@ -206,6 +206,6 @@ func SendGA4Event(name string, params map[string]interface{}) {
 	}
 	err := ga4Client.SendEvent(event)
 	if err != nil {
-		log.Error().Err(err).Msg("send GA4 event failed")
+		log.Warn().Err(err).Msg("send GA4 event failed")
 	}
 }

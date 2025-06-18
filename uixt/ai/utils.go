@@ -24,6 +24,45 @@ type PlanningJSONResponse struct {
 	Error   string   `json:"error"`
 }
 
+// parseStructuredResponse parses model response into structured format with error recovery
+func parseStructuredResponse(content string, result interface{}) error {
+	// Clean and validate UTF-8 content first
+	cleanContent := sanitizeUTF8Content(content)
+
+	// Extract JSON content from response
+	jsonContent := extractJSONFromContent(cleanContent)
+	if jsonContent == "" {
+		// If JSON extraction failed, try parsing the content directly as a fallback
+		jsonContent = cleanContent
+	}
+
+	// Parse JSON response with error recovery
+	return parseJSONWithFallback(jsonContent, result)
+}
+
+// sanitizeUTF8Content cleans invalid UTF-8 characters from content
+func sanitizeUTF8Content(content string) string {
+	if utf8.ValidString(content) {
+		return content
+	}
+
+	// Convert to bytes and filter out invalid UTF-8 sequences
+	bytes := []byte(content)
+	var validBytes []byte
+
+	for len(bytes) > 0 {
+		r, size := utf8.DecodeRune(bytes)
+		if r != utf8.RuneError {
+			// Valid rune, keep it
+			validBytes = append(validBytes, bytes[:size]...)
+		}
+		// Skip invalid bytes (including RuneError)
+		bytes = bytes[size:]
+	}
+
+	return string(validBytes)
+}
+
 // extractJSONFromContent extracts JSON content from various formats in the response
 // This function handles multiple formats:
 // 1. ```json ... ``` markdown code blocks
@@ -119,29 +158,6 @@ func extractJSONFromContent(content string) string {
 	}
 
 	return ""
-}
-
-// sanitizeUTF8Content cleans invalid UTF-8 characters from content
-func sanitizeUTF8Content(content string) string {
-	if utf8.ValidString(content) {
-		return content
-	}
-
-	// Convert to bytes and filter out invalid UTF-8 sequences
-	bytes := []byte(content)
-	var validBytes []byte
-
-	for len(bytes) > 0 {
-		r, size := utf8.DecodeRune(bytes)
-		if r != utf8.RuneError {
-			// Valid rune, keep it
-			validBytes = append(validBytes, bytes[:size]...)
-		}
-		// Skip invalid bytes (including RuneError)
-		bytes = bytes[size:]
-	}
-
-	return string(validBytes)
 }
 
 // parseJSONWithFallback attempts to parse JSON with multiple strategies for any struct type
@@ -430,22 +446,6 @@ func extractPlanningFieldsManually(content string) (*PlanningJSONResponse, error
 	}
 
 	return result, nil
-}
-
-// parseStructuredResponse parses model response into structured format with error recovery
-func parseStructuredResponse(content string, result interface{}) error {
-	// Clean and validate UTF-8 content first
-	cleanContent := sanitizeUTF8Content(content)
-
-	// Extract JSON content from response
-	jsonContent := extractJSONFromContent(cleanContent)
-	if jsonContent == "" {
-		// If JSON extraction failed, try parsing the content directly as a fallback
-		jsonContent = cleanContent
-	}
-
-	// Parse JSON response with error recovery
-	return parseJSONWithFallback(jsonContent, result)
 }
 
 // callModelWithLogging is a common function to call model with logging and timing
