@@ -30,10 +30,7 @@ func (s *StepShell) Type() StepType {
 }
 
 func (s *StepShell) Config() *StepConfig {
-	return &StepConfig{
-		StepName:  s.StepName,
-		Variables: s.Variables,
-	}
+	return &s.StepConfig
 }
 
 func (s *StepShell) Run(r *SessionRunner) (*StepResult, error) {
@@ -63,10 +60,7 @@ func (s *StepShellValidation) Type() StepType {
 }
 
 func (s *StepShellValidation) Config() *StepConfig {
-	return &StepConfig{
-		StepName:  s.StepName,
-		Variables: s.Variables,
-	}
+	return &s.StepConfig
 }
 
 func (s *StepShellValidation) Run(r *SessionRunner) (*StepResult, error) {

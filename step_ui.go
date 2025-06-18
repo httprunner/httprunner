@@ -691,11 +691,11 @@ func (s *StepMobileUIValidation) Type() StepType {
 }
 
 func (s *StepMobileUIValidation) Config() *StepConfig {
-	return &StepConfig{
-		StepName:   s.StepName,
-		Variables:  s.Variables,
-		Validators: s.Validators,
-	}
+	// Get the original StepConfig from embedded StepMobile
+	config := &s.StepMobile.StepConfig
+	// Sync validators to the StepConfig
+	config.Validators = s.Validators
+	return config
 }
 
 func (s *StepMobileUIValidation) Run(r *SessionRunner) (*StepResult, error) {

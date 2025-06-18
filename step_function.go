@@ -27,10 +27,7 @@ func (s *StepFunction) Type() StepType {
 }
 
 func (s *StepFunction) Config() *StepConfig {
-	return &StepConfig{
-		StepName:  s.StepName,
-		Variables: s.Variables,
-	}
+	return &s.StepConfig
 }
 
 func (s *StepFunction) Run(r *SessionRunner) (*StepResult, error) {

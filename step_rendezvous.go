@@ -26,10 +26,7 @@ func (s *StepRendezvous) Type() StepType {
 }
 
 func (s *StepRendezvous) Config() *StepConfig {
-	return &StepConfig{
-		StepName:  s.StepName,
-		Variables: s.Variables,
-	}
+	return &s.StepConfig
 }
 
 func (s *StepRendezvous) Run(r *SessionRunner) (*StepResult, error) {
