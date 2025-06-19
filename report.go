@@ -14,7 +14,6 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt"
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -174,127 +173,17 @@ func (g *HTMLReportGenerator) loadLogData() error {
 	return scanner.Err()
 }
 
-// getStepLogs filters log entries for a specific test step based on time range
+// getStepLogs filters log entries for a specific test step based on step boundaries
 func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elapsed int64) []LogEntry {
 	if len(g.LogData) == 0 {
 		return nil
 	}
 
 	var stepLogs []LogEntry
-
-	// Handle different time units properly
-	// Check if startTime is already in milliseconds (> year 2100 in seconds)
-	var startTimeMs, endTimeMs int64
-	if startTime > 4000000000 { // If > year 2100, assume it's already in milliseconds
-		startTimeMs = startTime
-	} else {
-		// startTime is in seconds (backward compatibility), elapsed is in milliseconds
-		startTimeMs = startTime * 1000
-	}
-	endTimeMs = startTimeMs + elapsed
-
-	// Find the actual time range of this step's logs by scanning for step boundaries
-	var actualStartTime, actualEndTime int64
-	actualStartTime = startTimeMs
-	actualEndTime = endTimeMs
-
-	// Look for step start/end markers to determine precise boundaries
-	for _, logEntry := range g.LogData {
-		logTime, err := g.parseLogTimeMs(logEntry.Time)
-		if err != nil {
-			continue
-		}
-
-		// Check for step start marker - more precise matching
-		if logEntry.Message == "run step start" {
-			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
-				if stepFieldValue == stepName {
-					actualStartTime = logTime
-				}
-			}
-		}
-		// Check for step end marker - more precise matching
-		if logEntry.Message == "run step end" {
-			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
-				if stepFieldValue == stepName {
-					actualEndTime = logTime
-				}
-			}
-		}
-	}
-
-	// Find the next step's start time to avoid overlapping logs
-	var nextStepStartTime int64 = 0
-	for _, logEntry := range g.LogData {
-		logTime, err := g.parseLogTimeMs(logEntry.Time)
-		if err != nil {
-			continue
-		}
-
-		// Find the next step start that occurs after our step's actual end time
-		if logEntry.Message == "run step start" && logTime > actualEndTime {
-			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
-				if stepFieldValue != stepName { // Make sure it's a different step
-					nextStepStartTime = logTime
-					break
-				}
-			}
-		}
-	}
-
-	// Add intelligent buffer for AI conversations, but respect step boundaries
-	var maxAIEndTime int64 = actualEndTime
-	var inAIConversation bool
-
-	for _, logEntry := range g.LogData {
-		logTime, err := g.parseLogTimeMs(logEntry.Time)
-		if err != nil {
-			continue
-		}
-
-		// Skip logs that are clearly before our step
-		if logTime < actualStartTime {
-			continue
-		}
-
-		// Skip logs that are after the next step starts
-		if nextStepStartTime > 0 && logTime >= nextStepStartTime {
-			break
-		}
-
-		// Track AI conversation patterns
-		if strings.Contains(logEntry.Message, ai.LOG_REQUEST_MESSAGES) {
-			if logTime >= actualStartTime && logTime <= actualEndTime+30000 { // 30s buffer for AI requests
-				inAIConversation = true
-			}
-		} else if strings.Contains(logEntry.Message, ai.LOG_RESPONSE_MESSAGE) && inAIConversation {
-			// Extend end time to include complete AI conversation, but respect next step boundary
-			extendedEndTime := logTime
-			if nextStepStartTime > 0 && extendedEndTime >= nextStepStartTime {
-				extendedEndTime = nextStepStartTime - 1 // Stop just before next step
-			}
-			if extendedEndTime > maxAIEndTime {
-				maxAIEndTime = extendedEndTime
-			}
-			inAIConversation = false
-		}
-	}
-
-	// Use the extended end time if AI conversation was detected
-	if maxAIEndTime > actualEndTime {
-		actualEndTime = maxAIEndTime
-	}
-
-	// Final boundary check: ensure we don't go beyond the next step
-	if nextStepStartTime > 0 && actualEndTime >= nextStepStartTime {
-		actualEndTime = nextStepStartTime - 1
-	}
-
-	// Final filtering: collect logs strictly within step boundaries
 	var inCurrentStep bool = false
 
+	// Simple approach: use step start/end markers for precise boundaries
 	for _, logEntry := range g.LogData {
-
 		// Check for step boundaries to control inclusion
 		if logEntry.Message == "run step start" {
 			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
@@ -302,13 +191,9 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 					inCurrentStep = true
 					stepLogs = append(stepLogs, logEntry)
 					continue
-				} else {
-					// This is a different step starting
-					if inCurrentStep {
-						// We were in our step, now we're not
-						break
-					}
-					continue
+				} else if inCurrentStep {
+					// This is a different step starting, we're done
+					break
 				}
 			}
 		}
@@ -318,7 +203,6 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 				if stepFieldValue == stepName {
 					stepLogs = append(stepLogs, logEntry)
 					inCurrentStep = false
-					// Continue to check for AI conversations that might extend beyond
 					continue
 				}
 			}
@@ -349,16 +233,6 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 	return stepLogs
 }
 
-// containsLogEntry checks if a log entry already exists in the slice
-func containsLogEntry(logs []LogEntry, entry LogEntry) bool {
-	for _, log := range logs {
-		if log.LogIndex == entry.LogIndex {
-			return true
-		}
-	}
-	return false
-}
-
 // parseLogTime parses various time formats from log entries
 func (g *HTMLReportGenerator) parseLogTime(timeStr string) (time.Time, error) {
 	// Handle different time formats that might appear in logs
@@ -384,15 +258,6 @@ func (g *HTMLReportGenerator) parseLogTime(timeStr string) (time.Time, error) {
 	}
 
 	return time.Time{}, fmt.Errorf("unable to parse time: %s", timeStr)
-}
-
-// parseLogTimeMs parses time string to milliseconds since Unix epoch
-func (g *HTMLReportGenerator) parseLogTimeMs(timeStr string) (int64, error) {
-	t, err := g.parseLogTime(timeStr)
-	if err != nil {
-		return 0, err
-	}
-	return t.UnixNano() / 1000000, nil // Convert nanoseconds to milliseconds
 }
 
 // encodeImageToBase64 encodes an image file to base64 string with compression
@@ -460,79 +325,39 @@ func (g *HTMLReportGenerator) getStepLogsForTemplate(step *StepResult) []LogEntr
 
 // calculateTotalActions calculates the total number of actions across all test cases
 func (g *HTMLReportGenerator) calculateTotalActions() int {
-	total := 0
-	if g.SummaryData == nil || g.SummaryData.Details == nil {
-		return total
-	}
-
-	for _, testCase := range g.SummaryData.Details {
-		if testCase.Records == nil {
-			continue
-		}
-		for _, step := range testCase.Records {
-			if step.Actions != nil {
-				total += len(step.Actions)
-			}
-		}
-	}
-	return total
+	return g.iterateTestData(func(action *ActionResult) int {
+		return 1 // Count each action
+	})
 }
 
 // calculateTotalSubActions calculates the total number of sub-actions across all test cases
 func (g *HTMLReportGenerator) calculateTotalSubActions() int {
-	total := 0
-	if g.SummaryData == nil || g.SummaryData.Details == nil {
-		return total
-	}
-
-	for _, testCase := range g.SummaryData.Details {
-		if testCase.Records == nil {
-			continue
+	return g.iterateTestData(func(action *ActionResult) int {
+		total := 0
+		// Count sub-actions from regular actions
+		if action.SubActions != nil {
+			total += len(action.SubActions)
 		}
-		for _, step := range testCase.Records {
-			if step.Actions != nil {
-				for _, action := range step.Actions {
-					// Count sub-actions from regular actions
-					if action.SubActions != nil {
-						total += len(action.SubActions)
-					}
-					// Count sub-actions from planning results
-					if action.Plannings != nil {
-						for _, planning := range action.Plannings {
-							if planning.SubActions != nil {
-								total += len(planning.SubActions)
-							}
-						}
-					}
+		// Count sub-actions from planning results
+		if action.Plannings != nil {
+			for _, planning := range action.Plannings {
+				if planning.SubActions != nil {
+					total += len(planning.SubActions)
 				}
 			}
 		}
-	}
-	return total
+		return total
+	})
 }
 
 // calculateTotalPlannings calculates the total number of planning results across all test cases
 func (g *HTMLReportGenerator) calculateTotalPlannings() int {
-	total := 0
-	if g.SummaryData == nil || g.SummaryData.Details == nil {
-		return total
-	}
-
-	for _, testCase := range g.SummaryData.Details {
-		if testCase.Records == nil {
-			continue
+	return g.iterateTestData(func(action *ActionResult) int {
+		if action.Plannings != nil {
+			return len(action.Plannings)
 		}
-		for _, step := range testCase.Records {
-			if step.Actions != nil {
-				for _, action := range step.Actions {
-					if action.Plannings != nil {
-						total += len(action.Plannings)
-					}
-				}
-			}
-		}
-	}
-	return total
+		return 0
+	})
 }
 
 // calculateTotalUsage calculates the total token usage across all test cases
@@ -571,6 +396,28 @@ func (g *HTMLReportGenerator) calculateTotalUsage() map[string]interface{} {
 		}
 	}
 	return totalUsage
+}
+
+// iterateTestData is a helper function that iterates through all actions and applies a counting function
+func (g *HTMLReportGenerator) iterateTestData(countFunc func(*ActionResult) int) int {
+	total := 0
+	if g.SummaryData == nil || g.SummaryData.Details == nil {
+		return total
+	}
+
+	for _, testCase := range g.SummaryData.Details {
+		if testCase.Records == nil {
+			continue
+		}
+		for _, step := range testCase.Records {
+			if step.Actions != nil {
+				for _, action := range step.Actions {
+					total += countFunc(action)
+				}
+			}
+		}
+	}
+	return total
 }
 
 // GenerateReport generates the complete HTML test report
