@@ -63,6 +63,7 @@ func (s *vedemCVService) ReadFromPath(imagePath string, opts ...option.ActionOpt
 func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.ActionOption) (
 	imageResult *CVResult, err error) {
 	actionOptions := option.NewActionOptions(opts...)
+	log.Debug().Interface("options", actionOptions).Msg("vedem.ReadFromBuffer")
 	screenshotActions := actionOptions.List()
 	if len(screenshotActions) == 0 {
 		// skip

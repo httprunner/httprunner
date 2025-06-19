@@ -136,7 +136,9 @@ func (dExt *XTDriver) createScreenshotWithSession(opts ...option.ActionOption) (
 					screenResult.Popup.ClosePoints = append(screenResult.Popup.ClosePoints, closeArea.Center())
 				}
 			}
-			logger.Str("imageUrl", screenResult.UploadedURL)
+			if screenResult.UploadedURL != "" {
+				logger.Str("imageUrl", screenResult.UploadedURL)
+			}
 		}
 	}
 

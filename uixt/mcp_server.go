@@ -226,6 +226,68 @@ func extractActionOptionsToArguments(actionOptions []option.ActionOption, argume
 	if tempOptions.CVService != "" {
 		arguments["cv_service"] = tempOptions.CVService
 	}
+
+	// Add UI/CV related options
+	if len(tempOptions.ScreenShotWithUITypes) > 0 {
+		arguments["screenshot_with_ui_types"] = tempOptions.ScreenShotWithUITypes
+	}
+	if len(tempOptions.Scope) == 4 {
+		arguments["scope"] = tempOptions.Scope
+	}
+	if len(tempOptions.AbsScope) == 4 {
+		arguments["abs_scope"] = tempOptions.AbsScope
+	}
+
+	// Add other screenshot options
+	if tempOptions.ScreenShotWithOCR {
+		arguments["screenshot_with_ocr"] = true
+	}
+	if tempOptions.ScreenShotWithUpload {
+		arguments["screenshot_with_upload"] = true
+	}
+	if tempOptions.ScreenShotWithLiveType {
+		arguments["screenshot_with_live_type"] = true
+	}
+	if tempOptions.ScreenShotWithLivePopularity {
+		arguments["screenshot_with_live_popularity"] = true
+	}
+	if tempOptions.ScreenShotWithClosePopups {
+		arguments["screenshot_with_close_popups"] = true
+	}
+	if tempOptions.ScreenShotWithOCRCluster != "" {
+		arguments["screenshot_with_ocr_cluster"] = tempOptions.ScreenShotWithOCRCluster
+	}
+	if tempOptions.ScreenShotFileName != "" {
+		arguments["screenshot_file_name"] = tempOptions.ScreenShotFileName
+	}
+
+	// Add tap/swipe offset options
+	if len(tempOptions.TapOffset) == 2 {
+		arguments["tap_offset"] = tempOptions.TapOffset
+	}
+	if len(tempOptions.SwipeOffset) == 4 {
+		arguments["swipe_offset"] = tempOptions.SwipeOffset
+	}
+	if len(tempOptions.OffsetRandomRange) == 2 {
+		arguments["offset_random_range"] = tempOptions.OffsetRandomRange
+	}
+
+	// Add string options
+	if tempOptions.Text != "" {
+		arguments["text"] = tempOptions.Text
+	}
+	if tempOptions.ImagePath != "" {
+		arguments["image_path"] = tempOptions.ImagePath
+	}
+	if tempOptions.AppName != "" {
+		arguments["app_name"] = tempOptions.AppName
+	}
+	if tempOptions.PackageName != "" {
+		arguments["package_name"] = tempOptions.PackageName
+	}
+	if tempOptions.Selector != "" {
+		arguments["selector"] = tempOptions.Selector
+	}
 }
 
 func getFloat64ValueOrDefault(value float64, defaultValue float64) float64 {
