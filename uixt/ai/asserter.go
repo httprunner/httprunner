@@ -10,10 +10,10 @@ import (
 	"github.com/cloudwego/eino/schema"
 	"github.com/getkin/kin-openapi/openapi3gen"
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 // IAsserter interface defines the contract for assertion operations
@@ -160,15 +160,13 @@ func validateAssertionInput(opts *AssertOptions) error {
 
 // parseAssertionResult parses the model response into AssertionResponse
 func parseAssertionResult(content string) (*AssertionResult, error) {
-	// Extract JSON content from response
-	jsonContent := extractJSONFromContent(content)
-	if jsonContent == "" {
-		return nil, errors.New("could not extract JSON from response")
-	}
-
-	// Parse JSON response
 	var result AssertionResult
-	if err := json.Unmarshal([]byte(jsonContent), &result); err != nil {
+
+	// Use the generic structured response parser
+	if err := parseStructuredResponse(content, &result); err != nil {
+		log.Warn().
+			Interface("original_content", content).
+			Msg("parse assertion result failed")
 		return nil, errors.Wrap(code.LLMParseAssertionResponseError, err.Error())
 	}
 

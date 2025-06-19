@@ -27,10 +27,7 @@ func (s *StepFunction) Type() StepType {
 }
 
 func (s *StepFunction) Config() *StepConfig {
-	return &StepConfig{
-		StepName:  s.StepName,
-		Variables: s.Variables,
-	}
+	return &s.StepConfig
 }
 
 func (s *StepFunction) Run(r *SessionRunner) (*StepResult, error) {
@@ -57,7 +54,7 @@ func runStepFunction(r *SessionRunner, step IStep) (stepResult *StepResult, err 
 		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
-		StartTime:   start.Unix(),
+		StartTime:   start.UnixMilli(),
 	}
 	defer func() {
 		attachments := uixt.Attachments{}

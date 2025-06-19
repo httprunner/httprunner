@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/cloudwego/eino/schema"
-	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/pkg/errors"
@@ -48,20 +47,9 @@ func (p *JSONContentParser) SystemPrompt() string {
 func (p *JSONContentParser) Parse(content string, size types.Size) (*PlanningResult, error) {
 	content = strings.TrimSpace(content)
 
-	// Extract JSON content from markdown code blocks
-	jsonContent := extractJSONFromContent(content)
-	if jsonContent == "" {
-		return nil, fmt.Errorf("no valid JSON content found in response")
-	}
-
-	// Define a temporary struct to parse the expected JSON format
-	var jsonResponse struct {
-		Actions []Action `json:"actions"`
-		Thought string   `json:"thought"`
-		Error   string   `json:"error"`
-	}
-
-	if err := json.Unmarshal([]byte(jsonContent), &jsonResponse); err != nil {
+	// Use the generic structured response parser
+	var jsonResponse PlanningJSONResponse
+	if err := parseStructuredResponse(content, &jsonResponse); err != nil {
 		return nil, fmt.Errorf("failed to parse VLM response: %v", err)
 	}
 

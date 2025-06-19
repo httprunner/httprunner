@@ -59,7 +59,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 					ModelName: "",
 					Error:     err.Error(),
 				},
-				StartTime: planningStartTime.Unix(),
+				StartTime: planningStartTime.UnixMilli(),
 				Elapsed:   time.Since(planningStartTime).Milliseconds(),
 			}
 			allPlannings = append(allPlannings, errorResult)
@@ -67,7 +67,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		}
 
 		// Set planning execution timing
-		planningResult.StartTime = planningStartTime.Unix()
+		planningResult.StartTime = planningStartTime.UnixMilli()
 		planningResult.SubActions = []*SubActionResult{}
 
 		// Check if task is finished BEFORE executing actions
@@ -96,7 +96,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 				subActionResult := &SubActionResult{
 					ActionName: toolCall.Function.Name,
 					Arguments:  toolCall.Function.Arguments,
-					StartTime:  subActionStartTime.Unix(),
+					StartTime:  subActionStartTime.UnixMilli(),
 				}
 
 				// Use defer to ensure sub-action is always processed and added to results
@@ -164,7 +164,7 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 	// Step 1: Take screenshot
 	screenshotStartTime := time.Now()
 	// Use GetScreenResult to handle screenshot capture, save, and session tracking
-	screenResult, err := dExt.GetScreenResult(
+	screenResult, err := dExt.createScreenshotWithSession(
 		option.WithScreenShotFileName(builtin.GenNameWithTimestamp("%d_screenshot")),
 	)
 	screenshotElapsed := time.Since(screenshotStartTime).Milliseconds()

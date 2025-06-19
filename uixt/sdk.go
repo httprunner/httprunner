@@ -132,7 +132,7 @@ func (dExt *XTDriver) ExecuteAction(ctx context.Context, action option.MobileAct
 	subActionResult := &SubActionResult{
 		ActionName: string(action.Method),
 		Arguments:  action.Params,
-		StartTime:  subActionStartTime.Unix(),
+		StartTime:  subActionStartTime.UnixMilli(),
 	}
 
 	// Execute via MCP tool

@@ -41,6 +41,8 @@ var doubao_1_5_ui_tars_action_mapping = map[string]option.ActionName{
 	"type":         option.ACTION_Input,
 	"scroll":       option.ACTION_Swipe, // swipe up/down/left/right
 	"wait":         option.ACTION_Sleep,
+	"press_home":   option.ACTION_Home,
+	"press_back":   option.ACTION_Back,
 	"finished":     option.ACTION_Finished,
 }
 
@@ -138,5 +140,7 @@ var doubao_1_5_thinking_vision_pro_action_mapping = map[string]option.ActionName
 	"type":         option.ACTION_Input,
 	"scroll":       option.ACTION_Swipe, // swipe up/down/left/right
 	"wait":         option.ACTION_Sleep,
+	"press_home":   option.ACTION_Home,
+	"press_back":   option.ACTION_Back,
 	"finished":     option.ACTION_Finished,
 }

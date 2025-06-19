@@ -381,7 +381,7 @@ func runStepWebSocket(r *SessionRunner, step IStep) (stepResult *StepResult, err
 		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
-		StartTime:   start.Unix(),
+		StartTime:   start.UnixMilli(),
 	}
 
 	defer func() {

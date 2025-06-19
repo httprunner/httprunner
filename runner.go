@@ -729,6 +729,11 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 	return summary, nil
 }
 
+const (
+	RUN_STEP_START = "run step start"
+	RUN_STEP_END   = "run step end"
+)
+
 func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) {
 	// check for interrupt signal before running step
 	select {
@@ -748,7 +753,7 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 
 	stepName := step.Name()
 	stepType := string(step.Type())
-	log.Info().Str("step", stepName).Str("type", stepType).Msg("run step start")
+	log.Info().Str("step", stepName).Str("type", stepType).Msg(RUN_STEP_START)
 
 	// run times of step
 	loopTimes := step.Config().Loops
@@ -785,7 +790,7 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 				Bool("success", true).
 				Int64("elapsed(ms)", stepResult.Elapsed).
 				Interface("exportVars", stepResult.ExportVars).
-				Msg("run step end")
+				Msg(RUN_STEP_END)
 			continue
 		}
 		// run step failed
@@ -793,7 +798,7 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 			Str("type", stepType).
 			Bool("success", false).
 			Int64("elapsed(ms)", stepResult.Elapsed).
-			Msg("run step end")
+			Msg(RUN_STEP_END)
 		return stepResult, err
 	}
 

@@ -51,7 +51,7 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 		Name:      s.Name(),
 		StepType:  s.Type(),
 		Success:   false,
-		StartTime: start.Unix(),
+		StartTime: start.UnixMilli(),
 	}
 
 	defer func() {

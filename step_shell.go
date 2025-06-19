@@ -30,10 +30,7 @@ func (s *StepShell) Type() StepType {
 }
 
 func (s *StepShell) Config() *StepConfig {
-	return &StepConfig{
-		StepName:  s.StepName,
-		Variables: s.Variables,
-	}
+	return &s.StepConfig
 }
 
 func (s *StepShell) Run(r *SessionRunner) (*StepResult, error) {
@@ -63,10 +60,7 @@ func (s *StepShellValidation) Type() StepType {
 }
 
 func (s *StepShellValidation) Config() *StepConfig {
-	return &StepConfig{
-		StepName:  s.StepName,
-		Variables: s.Variables,
-	}
+	return &s.StepConfig
 }
 
 func (s *StepShellValidation) Run(r *SessionRunner) (*StepResult, error) {
@@ -101,7 +95,7 @@ func runStepShell(r *SessionRunner, step IStep) (stepResult *StepResult, err err
 		StepType:    step.Type(),
 		Success:     false,
 		ContentSize: 0,
-		StartTime:   start.Unix(),
+		StartTime:   start.UnixMilli(),
 	}
 	defer func() {
 		stepResult.Elapsed = time.Since(start).Milliseconds()

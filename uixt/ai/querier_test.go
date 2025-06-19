@@ -95,38 +95,35 @@ func TestParseQueryResult(t *testing.T) {
 		expected *QueryResult
 	}{
 		{
-			name: "valid JSON response",
-			content: `{
-				"content": "这是一个14行8列的连连看游戏界面，包含25种不同的图案",
-				"thought": "通过分析图片，我识别出了游戏界面的结构和图案类型"
-			}`,
+			name:    "valid JSON response",
+			content: `{"content": "extracted information", "thought": "analysis complete"}`,
 			expected: &QueryResult{
-				Content: "这是一个14行8列的连连看游戏界面，包含25种不同的图案",
-				Thought: "通过分析图片，我识别出了游戏界面的结构和图案类型",
+				Content: "extracted information",
+				Thought: "analysis complete",
 			},
 		},
 		{
 			name:    "JSON in markdown",
-			content: "```json\n{\n  \"content\": \"游戏界面分析结果\",\n  \"thought\": \"分析过程\"\n}\n```",
+			content: "```json\n{\"content\": \"data from markdown\", \"thought\": \"parsed from code block\"}\n```",
 			expected: &QueryResult{
-				Content: "游戏界面分析结果",
-				Thought: "分析过程",
+				Content: "data from markdown",
+				Thought: "parsed from code block",
 			},
 		},
 		{
 			name:    "plain text response",
-			content: "这是一个连连看游戏界面，包含多种图案。",
+			content: "This is just plain text without JSON structure",
 			expected: &QueryResult{
-				Content: "这是一个连连看游戏界面，包含多种图案。",
-				Thought: "Direct response from model",
+				Content: "This is just plain text without JSON structure",
+				Thought: "Failed to parse as JSON, returning raw content",
 			},
 		},
 		{
 			name:    "invalid JSON",
 			content: `{"content": "incomplete json", "missing_closing_brace": true`,
 			expected: &QueryResult{
-				Content: `{"content": "incomplete json", "missing_closing_brace": true`,
-				Thought: "Direct response from model",
+				Content: "incomplete json",
+				Thought: "Partial extraction from malformed response",
 			},
 		},
 	}

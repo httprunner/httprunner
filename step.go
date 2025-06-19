@@ -58,7 +58,7 @@ type TStep struct {
 // one step contains one or multiple actions
 type ActionResult struct {
 	option.MobileAction `json:",inline"`
-	StartTime           int64                           `json:"start_time"`            // action start time
+	StartTime           int64                           `json:"start_time"`            // action start time in millisecond(ms)
 	Elapsed             int64                           `json:"elapsed_ms"`            // action elapsed time(ms)
 	Error               error                           `json:"error"`                 // action execution result
 	Plannings           []*uixt.PlanningExecutionResult `json:"plannings,omitempty"`   // store planning results for start_to_goal actions
@@ -69,7 +69,7 @@ type ActionResult struct {
 type StepResult struct {
 	Name        string                 `json:"name" yaml:"name"`                                     // step name
 	Identifier  string                 `json:"identifier,omitempty" yaml:"identifier,omitempty"`     // step identifier
-	StartTime   int64                  `json:"start_time" yaml:"time"`                               // step start time
+	StartTime   int64                  `json:"start_time" yaml:"time"`                               // step start time in millisecond(ms)
 	StepType    StepType               `json:"step_type" yaml:"step_type"`                           // step type, testcase/request/transaction/rendezvous
 	Success     bool                   `json:"success" yaml:"success"`                               // step execution result
 	Elapsed     int64                  `json:"elapsed_ms" yaml:"elapsed_ms"`                         // step execution time in millisecond(ms)

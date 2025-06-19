@@ -104,3 +104,46 @@ func TestInvalidParameters(t *testing.T) {
 		})
 	}
 }
+
+// Test the main parseAssertionResult function with problematic input
+func TestParseAssertionResult(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         string
+		shouldSucceed bool
+	}{
+		{
+			name:          "valid JSON response",
+			input:         `{"pass": true, "thought": "Assertion passed"}`,
+			shouldSucceed: true,
+		},
+		{
+			name:          "response with UTF-8 replacement characters",
+			input:         "浅蓝色的搜索框，里面显示着输入的\"ma\"，而\ufffd\ufffd且在搜索框的右上角有一个喇叭 {\"pass\": true, \"thought\": \"found search box\"}",
+			shouldSucceed: true,
+		},
+		{
+			name:          "malformed JSON with extraction",
+			input:         `malformed start {"pass": true, "thought": "extracted successfully"} malformed end`,
+			shouldSucceed: true,
+		},
+		{
+			name:          "completely malformed but analyzable",
+			input:         "This assertion test passed and was successful",
+			shouldSucceed: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := parseAssertionResult(tt.input)
+			if tt.shouldSucceed {
+				require.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.NotEmpty(t, result.Thought)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
