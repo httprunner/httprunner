@@ -14,6 +14,7 @@ import (
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -88,6 +89,9 @@ func (g *HTMLReportGenerator) loadSummaryData() error {
 		return err
 	}
 
+	// Initialize nil fields to prevent template execution errors
+	g.initializeSummaryFields()
+
 	// Re-encode the summary data to ensure proper UTF-8 encoding for download
 	// This fixes Chinese character encoding issues in legacy summary.json files
 	buffer := new(strings.Builder)
@@ -106,6 +110,37 @@ func (g *HTMLReportGenerator) loadSummaryData() error {
 	g.SummaryContent = strings.TrimSpace(buffer.String())
 
 	return nil
+}
+
+// initializeSummaryFields initializes nil fields in SummaryData to prevent template execution errors
+func (g *HTMLReportGenerator) initializeSummaryFields() {
+	if g.SummaryData == nil {
+		g.SummaryData = &Summary{}
+	}
+
+	// Initialize Stat if nil
+	if g.SummaryData.Stat == nil {
+		g.SummaryData.Stat = &Stat{}
+		// Initialize TestSteps.Actions map if needed
+		if g.SummaryData.Stat.TestSteps.Actions == nil {
+			g.SummaryData.Stat.TestSteps.Actions = make(map[option.ActionName]int)
+		}
+	}
+
+	// Initialize Platform if nil
+	if g.SummaryData.Platform == nil {
+		g.SummaryData.Platform = &Platform{}
+	}
+
+	// Initialize Time if nil
+	if g.SummaryData.Time == nil {
+		g.SummaryData.Time = &TestCaseTime{}
+	}
+
+	// Initialize Details if nil
+	if g.SummaryData.Details == nil {
+		g.SummaryData.Details = []*TestCaseSummary{}
+	}
 }
 
 // loadLogData loads test log data from log file

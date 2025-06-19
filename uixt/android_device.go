@@ -384,6 +384,9 @@ func (dev *AndroidDevice) getPackageVersion(packageName string) (string, error) 
 }
 
 func (dev *AndroidDevice) getPackagePath(packageName string) (string, error) {
+	if packageName == "" {
+		return "", errors.Wrap(code.InvalidParamError, "packageName is empty")
+	}
 	output, err := dev.Device.RunShellCommand("pm", "path", packageName)
 	if err != nil {
 		return "", errors.Wrap(err, "get package path failed")

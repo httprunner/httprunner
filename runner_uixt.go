@@ -49,10 +49,9 @@ type UIXTConfig struct {
 	WDAPort      int
 	WDAMjpegPort int
 
-	OSType      string // platform
-	Serial      string
-	PackageName string
-	LLMService  option.LLMServiceType // LLM 服务类型
+	OSType     string // platform
+	Serial     string
+	LLMService option.LLMServiceType // LLM 服务类型
 }
 
 const (
