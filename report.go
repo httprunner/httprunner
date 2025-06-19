@@ -185,7 +185,7 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 	// Simple approach: use step start/end markers for precise boundaries
 	for _, logEntry := range g.LogData {
 		// Check for step boundaries to control inclusion
-		if logEntry.Message == "run step start" {
+		if logEntry.Message == RUN_STEP_START {
 			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
 				if stepFieldValue == stepName {
 					inCurrentStep = true
@@ -198,7 +198,7 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 			}
 		}
 
-		if logEntry.Message == "run step end" {
+		if logEntry.Message == RUN_STEP_END {
 			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
 				if stepFieldValue == stepName {
 					stepLogs = append(stepLogs, logEntry)
