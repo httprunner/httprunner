@@ -369,10 +369,6 @@ func (g *HTMLReportGenerator) calculateTotalActions() int {
 func (g *HTMLReportGenerator) calculateTotalSubActions() int {
 	return g.iterateTestData(func(action *ActionResult) int {
 		total := 0
-		// Count sub-actions from regular actions
-		if action.SubActions != nil {
-			total += len(action.SubActions)
-		}
 		// Count sub-actions from planning results
 		if action.Plannings != nil {
 			for _, planning := range action.Plannings {
@@ -380,6 +376,8 @@ func (g *HTMLReportGenerator) calculateTotalSubActions() int {
 					total += len(planning.SubActions)
 				}
 			}
+		} else {
+			total += 1
 		}
 		return total
 	})
@@ -1207,6 +1205,8 @@ const htmlTemplate = `<!DOCTYPE html>
         .requests-content-compact.show {
             display: block;
         }
+
+
 
         .request-item-compact {
             background: #ffffff;
@@ -2085,6 +2085,28 @@ const htmlTemplate = `<!DOCTYPE html>
             line-height: 1.4;
         }
 
+        .action-session-data {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .session-requests {
+            margin-bottom: 15px;
+        }
+
+        .session-screenshots {
+            margin-top: 15px;
+        }
+
+        .sub-action-item {
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
 
     </style>
 </head>
@@ -2342,97 +2364,153 @@ const htmlTemplate = `<!DOCTYPE html>
                                                 </div>
                                             </div>
 
-                                        {{/* SubActions are now displayed in the right panel, so we don't show them here */}}
+
                                     </div>
                                     {{end}}
                                 {{end}}
 
                                 {{/* Handle special case: ai_query needs enhanced display even when not in planning */}}
-                                {{if $action.SubActions}}
-                                    {{range $subAction := $action.SubActions}}
-                                        {{if eq $subAction.ActionName "ai_query"}}
-                                        <div class="sub-action-item">
-                                            <!-- Enhanced AI Query Display -->
-                                            <div class="validator-ai-content">
-                                                <!-- Extract AI query details from step logs -->
-                                                {{$stepLogs := getStepLogs $step}}
-                                                {{$queryThought := ""}}
-                                                {{$queryModel := ""}}
-                                                {{$queryUsage := ""}}
-                                                {{$queryScreenshot := ""}}
-                                                {{$queryResult := ""}}
-                                                {{range $logEntry := $stepLogs}}
-                                                    {{if and (eq $logEntry.Message "log response message") (index $logEntry.Fields "content")}}
-                                                        {{$content := index $logEntry.Fields "content"}}
-                                                        {{if $content}}
-                                                            {{$queryResult = $content}}
-                                                        {{end}}
-                                                    {{end}}
-                                                    {{if and (eq $logEntry.Message "call model service for query") (index $logEntry.Fields "model")}}
-                                                        {{$queryModel = index $logEntry.Fields "model"}}
-                                                    {{end}}
-                                                    {{if and (eq $logEntry.Message "usage statistics") (index $logEntry.Fields "input_tokens")}}
-                                                        {{$inputTokens := index $logEntry.Fields "input_tokens"}}
-                                                        {{$outputTokens := index $logEntry.Fields "output_tokens"}}
-                                                        {{$totalTokens := index $logEntry.Fields "total_tokens"}}
-                                                        {{$queryUsage = printf "📊 Tokens: %v in / %v out / %v total" $inputTokens $outputTokens $totalTokens}}
-                                                    {{end}}
-                                                    {{if and (eq $logEntry.Message "log screenshot") (index $logEntry.Fields "imagePath")}}
-                                                        {{$queryScreenshot = index $logEntry.Fields "imagePath"}}
-                                                    {{end}}
+                                {{if eq $action.Method "ai_query"}}
+                                <div class="sub-action-item">
+                                    <!-- Enhanced AI Query Display -->
+                                    <div class="validator-ai-content">
+                                        <!-- Extract AI query details from step logs -->
+                                        {{$stepLogs := getStepLogs $step}}
+                                        {{$queryThought := ""}}
+                                        {{$queryModel := ""}}
+                                        {{$queryUsage := ""}}
+                                        {{$queryScreenshot := ""}}
+                                        {{$queryResult := ""}}
+                                        {{range $logEntry := $stepLogs}}
+                                            {{if and (eq $logEntry.Message "log response message") (index $logEntry.Fields "content")}}
+                                                {{$content := index $logEntry.Fields "content"}}
+                                                {{if $content}}
+                                                    {{$queryResult = $content}}
                                                 {{end}}
+                                            {{end}}
+                                            {{if and (eq $logEntry.Message "call model service for query") (index $logEntry.Fields "model")}}
+                                                {{$queryModel = index $logEntry.Fields "model"}}
+                                            {{end}}
+                                            {{if and (eq $logEntry.Message "usage statistics") (index $logEntry.Fields "input_tokens")}}
+                                                {{$inputTokens := index $logEntry.Fields "input_tokens"}}
+                                                {{$outputTokens := index $logEntry.Fields "output_tokens"}}
+                                                {{$totalTokens := index $logEntry.Fields "total_tokens"}}
+                                                {{$queryUsage = printf "📊 Tokens: %v in / %v out / %v total" $inputTokens $outputTokens $totalTokens}}
+                                            {{end}}
+                                            {{if and (eq $logEntry.Message "log screenshot") (index $logEntry.Fields "imagePath")}}
+                                                {{$queryScreenshot = index $logEntry.Fields "imagePath"}}
+                                            {{end}}
+                                        {{end}}
 
-                                                <!-- Display AI Query Result at the top -->
-                                                {{if $queryResult}}
-                                                <div class="thought">{{$queryResult}}</div>
-                                                {{end}}
+                                        <!-- Display AI Query Result at the top -->
+                                        {{if $queryResult}}
+                                        <div class="thought">{{$queryResult}}</div>
+                                        {{end}}
 
-                                                <!-- AI Query Layout - similar to validator layout -->
-                                                <div class="validator-ai-layout">
-                                                    <!-- Left column: Screenshot -->
-                                                    {{if $queryScreenshot}}
-                                                    <div class="validator-column-screenshot">
-                                                        <div class="validator-step-compact">
-                                                            <div class="step-header-compact">
-                                                                <span class="step-name">📸 Query Screenshot</span>
-                                                            </div>
-                                                            <div class="screenshot-display">
-                                                                {{$base64Image := encodeImageBase64 $queryScreenshot}}
-                                                                {{if $base64Image}}
-                                                                <div class="screenshot-item-compact">
-                                                                    <div class="screenshot-image">
-                                                                        <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Query Screenshot" onclick="openImageModal(this.src)" />
-                                                                    </div>
-                                                                </div>
-                                                                {{end}}
-                                                            </div>
-                                                        </div>
+                                        <!-- AI Query Layout - similar to validator layout -->
+                                        <div class="validator-ai-layout">
+                                            <!-- Left column: Screenshot -->
+                                            {{if $queryScreenshot}}
+                                            <div class="validator-column-screenshot">
+                                                <div class="validator-step-compact">
+                                                    <div class="step-header-compact">
+                                                        <span class="step-name">📸 Query Screenshot</span>
                                                     </div>
-                                                    {{end}}
-
-                                                    <!-- Right column: AI Query -->
-                                                    <div class="validator-column-analysis">
-                                                        <div class="validator-step-compact">
-                                                            <div class="step-header-compact">
-                                                                <span class="step-name">🤖 AI Query</span>
-                                                            </div>
-                                                            <div class="validator-ai-details">
-                                                                {{if $queryModel}}
-                                                                <div class="model-info">🤖 Model: {{$queryModel}}</div>
-                                                                {{end}}
-                                                                {{if $queryUsage}}
-                                                                <div class="usage-info">{{$queryUsage}}</div>
-                                                                {{end}}
+                                                    <div class="screenshot-display">
+                                                        {{$base64Image := encodeImageBase64 $queryScreenshot}}
+                                                        {{if $base64Image}}
+                                                        <div class="screenshot-item-compact">
+                                                            <div class="screenshot-image">
+                                                                <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Query Screenshot" onclick="openImageModal(this.src)" />
                                                             </div>
                                                         </div>
+                                                        {{end}}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {{end}}
+
+                                            <!-- Right column: AI Query -->
+                                            <div class="validator-column-analysis">
+                                                <div class="validator-step-compact">
+                                                    <div class="step-header-compact">
+                                                        <span class="step-name">🤖 AI Query</span>
+                                                    </div>
+                                                    <div class="validator-ai-details">
+                                                        {{if $queryModel}}
+                                                        <div class="model-info">🤖 Model: {{$queryModel}}</div>
+                                                        {{end}}
+                                                        {{if $queryUsage}}
+                                                        <div class="usage-info">{{$queryUsage}}</div>
+                                                        {{end}}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                                {{end}}
+
+                                {{/* Handle SessionData: display requests and screen results for non-planning actions */}}
+                                {{if not $action.Plannings}}
+                                    {{if or $action.Requests $action.ScreenResults}}
+                                    <div class="action-session-data">
+                                        <!-- Display requests if present -->
+                                        {{if $action.Requests}}
+                                        <div class="session-requests">
+                                            <button class="requests-toggle-compact" onclick="toggleRequestsCompact(this)">
+                                                📡 {{len $action.Requests}} request(s)
+                                            </button>
+                                            <div class="requests-content-compact">
+                                                {{range $request := $action.Requests}}
+                                                <div class="request-item-compact">
+                                                    <div class="request-header-compact">
+                                                        <span class="method">{{$request.RequestMethod}}</span>
+                                                        <span class="url-compact">{{$request.RequestUrl}}</span>
+                                                        <span class="status {{if $request.Success}}success{{else}}failure{{end}}">{{$request.ResponseStatus}}</span>
+                                                        <span class="duration">{{formatDuration $request.ResponseDuration}}</span>
+                                                    </div>
+                                                    {{if $request.RequestBody}}
+                                                    <div class="request-body-compact">Request: {{$request.RequestBody}}</div>
+                                                    {{end}}
+                                                    {{if $request.ResponseBody}}
+                                                    <div class="response-body-compact">Response: {{$request.ResponseBody}}</div>
+                                                    {{end}}
+                                                </div>
+                                                {{end}}
+                                            </div>
+                                        </div>
                                         {{end}}
+
+                                        <!-- Display screen results if present -->
+                                        {{if $action.ScreenResults}}
+                                        <div class="session-screenshots">
+                                            <h5 style="margin: 10px 0; color: #495057;">📸 Screen Results ({{len $action.ScreenResults}})</h5>
+                                            <div class="screenshots-horizontal">
+                                                {{range $screenshot := $action.ScreenResults}}
+                                                {{if $screenshot.ImagePath}}
+                                                {{$base64Image := encodeImageBase64 $screenshot.ImagePath}}
+                                                {{if $base64Image}}
+                                                <div class="screenshot-item small">
+                                                    <div class="screenshot-info">
+                                                        <span class="filename">{{base $screenshot.ImagePath}}</span>
+                                                        {{if $screenshot.Resolution}}
+                                                        <span class="resolution">{{$screenshot.Resolution.Width}}x{{$screenshot.Resolution.Height}}</span>
+                                                        {{end}}
+                                                    </div>
+                                                    <div class="screenshot-image">
+                                                        <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Screenshot" onclick="openImageModal(this.src)" />
+                                                    </div>
+                                                </div>
+                                                {{end}}
+                                                {{end}}
+                                                {{end}}
+                                            </div>
+                                        </div>
+                                        {{end}}
+                                    </div>
                                     {{end}}
                                 {{end}}
-                                {{/* Other SubActions (non-ai_query) are displayed in the Planning section's right panel to avoid duplication */}}
                                 </div>
                             </div>
                             {{end}}

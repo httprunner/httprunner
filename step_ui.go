@@ -783,13 +783,14 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				},
 				StartTime: startTime.UnixMilli(),
 			}
-			subActionResults, err1 := uiDriver.ExecuteAction(
+			sessionData, err1 := uiDriver.ExecuteAction(
 				context.Background(), actionResult.MobileAction)
 			if err1 != nil {
+				actionResult.Error = err1
 				log.Warn().Err(err1).Msg("get foreground app failed, ignore")
 			}
 			actionResult.Elapsed = time.Since(startTime).Milliseconds()
-			actionResult.SubActions = subActionResults
+			actionResult.SessionData = sessionData
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
@@ -827,13 +828,14 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				},
 				StartTime: startTime.UnixMilli(),
 			}
-			subActionResults, err2 := uiDriver.ExecuteAction(
+			sessionData, err2 := uiDriver.ExecuteAction(
 				context.Background(), actionResult.MobileAction)
 			if err2 != nil {
+				actionResult.Error = err2
 				log.Warn().Err(err2).Str("step", step.Name()).Msg("auto handle popup failed")
 			}
 			actionResult.Elapsed = time.Since(startTime).Milliseconds()
-			actionResult.SubActions = subActionResults
+			actionResult.SessionData = sessionData
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 		}
 
@@ -950,9 +952,10 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			}
 
 			// handle other actions
-			subActionResults, err := uiDriver.ExecuteAction(ctx, action)
+			sessionData, err := uiDriver.ExecuteAction(ctx, action)
+			actionResult.Error = err
 			actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
-			actionResult.SubActions = subActionResults
+			actionResult.SessionData = sessionData
 			stepResult.Actions = append(stepResult.Actions, actionResult)
 			if err != nil {
 				if !code.IsErrorPredefined(err) {

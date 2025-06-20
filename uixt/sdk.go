@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
@@ -113,34 +112,23 @@ func (c *MCPClient4XTDriver) GetToolByAction(actionName option.ActionName) Actio
 	return c.Server.GetToolByAction(actionName)
 }
 
-func (dExt *XTDriver) ExecuteAction(ctx context.Context, action option.MobileAction) ([]*SubActionResult, error) {
-	subActionStartTime := time.Now()
-
+func (dExt *XTDriver) ExecuteAction(ctx context.Context, action option.MobileAction) (SessionData, error) {
 	// Find the corresponding tool for this action method
 	tool := dExt.client.Server.GetToolByAction(action.Method)
 	if tool == nil {
-		return nil, fmt.Errorf("no tool found for action method: %s", action.Method)
+		return SessionData{}, fmt.Errorf("no tool found for action method: %s", action.Method)
 	}
 
 	// Use the tool's own conversion method
 	req, err := tool.ConvertActionToCallToolRequest(action)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert action to MCP tool call: %w", err)
-	}
-
-	// Create sub-action result
-	subActionResult := &SubActionResult{
-		ActionName: string(action.Method),
-		Arguments:  action.Params,
-		StartTime:  subActionStartTime.UnixMilli(),
+		return SessionData{}, fmt.Errorf("failed to convert action to MCP tool call: %w", err)
 	}
 
 	// Execute via MCP tool
 	result, err := dExt.client.CallTool(ctx, req)
-	subActionResult.Elapsed = time.Since(subActionStartTime).Milliseconds()
 	if err != nil {
-		subActionResult.Error = err
-		return []*SubActionResult{subActionResult}, fmt.Errorf("MCP tool call failed: %w", err)
+		return SessionData{}, fmt.Errorf("MCP tool call failed: %w", err)
 	}
 
 	// Check if the tool execution had business logic errors
@@ -152,16 +140,15 @@ func (dExt *XTDriver) ExecuteAction(ctx context.Context, action option.MobileAct
 			errMsg = fmt.Sprintf("invoke tool %s failed", tool.Name())
 		}
 		err := errors.New(errMsg)
-		subActionResult.Error = err
-		return []*SubActionResult{subActionResult}, err
+		return SessionData{}, err
 	}
 
-	// For regular actions, collect session data and return single sub-action result
-	subActionResult.SessionData = dExt.GetSession().GetData(true) // reset after getting data
+	// For regular actions, collect session data and return it directly
+	sessionData := dExt.GetSession().GetData(true) // reset after getting data
 
 	log.Debug().Str("tool", string(tool.Name())).
 		Msg("executed action via MCP tool")
-	return []*SubActionResult{subActionResult}, nil
+	return sessionData, nil
 }
 
 // NewDeviceWithDefault is a helper function to create a device with default options
