@@ -1,7 +1,12 @@
 package server
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/httprunner/httprunner/v5/mcphost"
@@ -51,11 +56,45 @@ func (r *Router) Init() {
 }
 
 func (r *Router) Run(port int) error {
-	err := r.Engine.Run(fmt.Sprintf("localhost:%d", port))
-	if err != nil {
-		log.Err(err).Msg("failed to start http server")
+	// Create HTTP server
+	server := &http.Server{
+		Addr:    fmt.Sprintf("localhost:%d", port),
+		Handler: r.Engine,
+	}
+
+	// Channel to listen for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	// Start server in a goroutine
+	go func() {
+		log.Info().Int("port", port).Msg("Starting hrp server")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Error().Err(err).Msg("HTTP server failed to start")
+		}
+	}()
+
+	// Wait for interrupt signal
+	<-quit
+	log.Info().Msg("Shutting down hrp server...")
+
+	// Create a context with timeout for graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Shutdown MCP host first if it exists
+	if r.mcpHost != nil {
+		log.Info().Msg("Shutting down MCP host...")
+		r.mcpHost.Shutdown()
+	}
+
+	// Shutdown HTTP server
+	if err := server.Shutdown(ctx); err != nil {
+		log.Error().Err(err).Msg("hrp server forced to shutdown")
 		return err
 	}
+
+	log.Info().Msg("hrp server exited")
 	return nil
 }
 
