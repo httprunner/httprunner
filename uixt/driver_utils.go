@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -274,7 +275,8 @@ func getSimulationDuration(params []float64) (milliseconds int64) {
 
 // sleepStrict sleeps strict duration with given params
 // startTime is used to correct sleep duration caused by process time
-func sleepStrict(startTime time.Time, strictMilliseconds int64) {
+// ctx allows for cancellation during sleep
+func sleepStrict(ctx context.Context, startTime time.Time, strictMilliseconds int64) {
 	var elapsed int64
 	if !startTime.IsZero() {
 		elapsed = time.Since(startTime).Milliseconds()
@@ -294,7 +296,18 @@ func sleepStrict(startTime time.Time, strictMilliseconds int64) {
 		Int64("elapsed(ms)", elapsed).
 		Int64("strictSleep(ms)", strictMilliseconds).
 		Msg("sleep remaining duration time")
-	time.Sleep(time.Duration(dur) * time.Millisecond)
+
+	// Use context-aware sleep instead of blocking time.Sleep
+	select {
+	case <-time.After(time.Duration(dur) * time.Millisecond):
+		// Normal completion
+		log.Debug().Int64("duration_ms", dur).Msg("strict sleep completed normally")
+	case <-ctx.Done():
+		// Interrupted by context cancellation (e.g., CTRL+C)
+		log.Info().Int64("planned_duration_ms", dur).
+			Msg("strict sleep interrupted by context cancellation")
+		return
+	}
 }
 
 // global file lock

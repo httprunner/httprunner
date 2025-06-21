@@ -10,6 +10,7 @@ import (
 
 func (dExt *XTDriver) TapByOCR(text string, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
+	log.Info().Str("text", text).Interface("options", actionOptions).Msg("TapByOCR")
 	if actionOptions.ScreenShotFileName == "" {
 		opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("tap_by_ocr_%s", text)))
 	}
@@ -36,7 +37,7 @@ func (dExt *XTDriver) TapByOCR(text string, opts ...option.ActionOption) error {
 
 func (dExt *XTDriver) TapByCV(opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
-
+	log.Info().Interface("options", actionOptions).Msg("TapByCV")
 	uiResult, err := dExt.FindUIResult(opts...)
 	if err != nil {
 		if actionOptions.IgnoreNotFoundError {

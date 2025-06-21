@@ -68,7 +68,15 @@ func (t *ToolSleep) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("unsupported sleep duration type: %T", v)
 		}
 
-		time.Sleep(duration)
+		// Use context-aware sleep instead of blocking time.Sleep
+		select {
+		case <-time.After(duration):
+			// Normal completion
+		case <-ctx.Done():
+			// Interrupted by context cancellation (e.g., CTRL+C)
+			log.Warn().Msg("sleep interrupted by cancellation")
+			return nil, fmt.Errorf("sleep interrupted: %w", ctx.Err())
+		}
 
 		message := fmt.Sprintf("Successfully slept for %v seconds", actualSeconds)
 		returnData := ToolSleep{
@@ -120,7 +128,18 @@ func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 
 		// Sleep MS action logic
 		log.Info().Int64("milliseconds", unifiedReq.Milliseconds).Msg("sleeping in milliseconds")
-		time.Sleep(time.Duration(unifiedReq.Milliseconds) * time.Millisecond)
+
+		duration := time.Duration(unifiedReq.Milliseconds) * time.Millisecond
+
+		// Use context-aware sleep instead of blocking time.Sleep
+		select {
+		case <-time.After(duration):
+			// Normal completion
+		case <-ctx.Done():
+			// Interrupted by context cancellation (e.g., CTRL+C)
+			log.Warn().Msg("sleep interrupted by cancellation")
+			return nil, fmt.Errorf("sleep interrupted: %w", ctx.Err())
+		}
 
 		message := fmt.Sprintf("Successfully slept for %d milliseconds", unifiedReq.Milliseconds)
 		returnData := ToolSleepMS{Milliseconds: unifiedReq.Milliseconds}
@@ -170,8 +189,8 @@ func (t *ToolSleepRandom) Implement() server.ToolHandlerFunc {
 			return nil, err
 		}
 
-		// Sleep random action logic
-		sleepStrict(time.Now(), getSimulationDuration(unifiedReq.Params))
+		// Sleep random action logic with context support
+		sleepStrict(ctx, time.Now(), getSimulationDuration(unifiedReq.Params))
 
 		message := fmt.Sprintf("Successfully slept for random duration with params: %v", unifiedReq.Params)
 		returnData := ToolSleepRandom{Params: unifiedReq.Params}

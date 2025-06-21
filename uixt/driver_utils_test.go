@@ -1,6 +1,7 @@
 package uixt
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -30,8 +31,9 @@ func TestGetSimulationDuration(t *testing.T) {
 }
 
 func TestSleepStrict(t *testing.T) {
+	ctx := context.Background()
 	startTime := time.Now()
-	sleepStrict(startTime, 1230)
+	sleepStrict(ctx, startTime, 1230)
 	dur := time.Since(startTime).Milliseconds()
 	t.Log(dur)
 	if dur < 1230 || dur > 1300 {

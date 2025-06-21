@@ -58,11 +58,11 @@ type TStep struct {
 // one step contains one or multiple actions
 type ActionResult struct {
 	option.MobileAction `json:",inline"`
-	StartTime           int64                           `json:"start_time"`            // action start time in millisecond(ms)
-	Elapsed             int64                           `json:"elapsed_ms"`            // action elapsed time(ms)
-	Error               error                           `json:"error"`                 // action execution result
-	Plannings           []*uixt.PlanningExecutionResult `json:"plannings,omitempty"`   // store planning results for start_to_goal actions
-	SubActions          []*uixt.SubActionResult         `json:"sub_actions,omitempty"` // store sub-actions for other actions
+	StartTime           int64                           `json:"start_time"`          // action start time in millisecond(ms)
+	Elapsed             int64                           `json:"elapsed_ms"`          // action elapsed time(ms)
+	Error               string                          `json:"error,omitempty"`     // action execution result
+	Plannings           []*uixt.PlanningExecutionResult `json:"plannings,omitempty"` // store planning results for start_to_goal actions, which contains multiple sub-actions
+	uixt.SessionData                                    // store session data for other actions besides start_to_goal
 }
 
 // one testcase contains one or multiple steps

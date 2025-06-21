@@ -125,7 +125,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		planningResult.Elapsed = time.Since(planningStartTime).Milliseconds()
 		allPlannings = append(allPlannings, planningResult)
 
-		if options.MaxRetryTimes > 1 && attempt >= options.MaxRetryTimes {
+		if options.MaxRetryTimes > 0 && attempt > options.MaxRetryTimes {
 			return allPlannings, errors.New("reached max retry times")
 		}
 	}
