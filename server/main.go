@@ -39,46 +39,11 @@ func (r *Router) Init() {
 	r.Engine.GET("/ping", r.pingHandler)
 	r.Engine.GET("/", r.pingHandler)
 	r.Engine.POST("/", r.pingHandler)
-	r.Engine.GET("/api/v1/devices", r.listDeviceHandler)
-	r.Engine.POST("/api/v1/browser/create_browser", createBrowserHandler)
 
 	apiV1PlatformSerial := r.Group("/api/v1").Group("/:platform").Group("/:serial")
 
 	// tool operations
 	apiV1PlatformSerial.POST("/tool/invoke", r.invokeToolHandler)
-
-	// UI operations
-	apiV1PlatformSerial.POST("/ui/tap", r.tapHandler)
-	apiV1PlatformSerial.POST("/ui/right_click", r.rightClickHandler)
-	apiV1PlatformSerial.POST("/ui/double_tap", r.doubleTapHandler)
-	apiV1PlatformSerial.POST("/ui/drag", r.dragHandler)
-	apiV1PlatformSerial.POST("/ui/input", r.inputHandler)
-	apiV1PlatformSerial.POST("/ui/home", r.homeHandler)
-	apiV1PlatformSerial.POST("/ui/upload", r.uploadHandler)
-	apiV1PlatformSerial.POST("/ui/hover", r.hoverHandler)
-	apiV1PlatformSerial.POST("/ui/scroll", r.scrollHandler)
-
-	// Key operations
-	apiV1PlatformSerial.POST("/key/unlock", r.unlockHandler)
-	apiV1PlatformSerial.POST("/key/home", r.homeHandler)
-	apiV1PlatformSerial.POST("/key/backspace", r.backspaceHandler)
-	apiV1PlatformSerial.POST("/key", r.keycodeHandler)
-
-	// APP operations
-	apiV1PlatformSerial.GET("/app/foreground", r.foregroundAppHandler)
-	apiV1PlatformSerial.GET("/app/appInfo", r.appInfoHandler)
-	apiV1PlatformSerial.POST("/app/clear", r.clearAppHandler)
-	apiV1PlatformSerial.POST("/app/launch", r.launchAppHandler)
-	apiV1PlatformSerial.POST("/app/terminal", r.terminalAppHandler)
-	apiV1PlatformSerial.POST("/app/uninstall", r.uninstallAppHandler)
-
-	// Device operations
-	apiV1PlatformSerial.GET("/screenshot", r.screenshotHandler)
-	apiV1PlatformSerial.DELETE("/close_browser", r.deleteBrowserHandler)
-	apiV1PlatformSerial.GET("/video", r.videoHandler)
-	apiV1PlatformSerial.POST("/device/push_image", r.pushImageHandler)
-	apiV1PlatformSerial.POST("/device/clear_image", r.clearImageHandler)
-	apiV1PlatformSerial.GET("/adb/source", r.adbSourceHandler)
 
 	// uixt operations
 	apiV1PlatformSerial.POST("/uixt/action", r.uixtActionHandler)

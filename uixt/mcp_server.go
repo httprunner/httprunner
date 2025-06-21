@@ -117,7 +117,6 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolClosePopups{})
 
 	// PC/Web Tools
-	s.registerTool(&ToolWebLoginNoneUI{})
 	s.registerTool(&ToolSecondaryClick{})
 	s.registerTool(&ToolHoverBySelector{})
 	s.registerTool(&ToolTapBySelector{})
