@@ -369,7 +369,7 @@ func (g *HTMLReportGenerator) calculateTotalActions() int {
 func (g *HTMLReportGenerator) calculateTotalSubActions() int {
 	return g.iterateTestData(func(action *ActionResult) int {
 		total := 0
-		// Count sub-actions from planning results
+		// Count sub-actions from start_to_goal results
 		if action.Plannings != nil {
 			for _, planning := range action.Plannings {
 				if planning.SubActions != nil {
@@ -377,6 +377,7 @@ func (g *HTMLReportGenerator) calculateTotalSubActions() int {
 				}
 			}
 		} else {
+			// Count other actions
 			total += 1
 		}
 		return total
@@ -965,10 +966,6 @@ const htmlTemplate = `<!DOCTYPE html>
             line-height: 1.4;
         }
 
-
-
-
-
         .action-content {
             display: block;
         }
@@ -1016,8 +1013,6 @@ const htmlTemplate = `<!DOCTYPE html>
             font-size: 0.9em;
             font-weight: bold;
         }
-
-
 
         .planning-three-columns {
             display: flex;
@@ -1206,8 +1201,6 @@ const htmlTemplate = `<!DOCTYPE html>
             display: block;
         }
 
-
-
         .request-item-compact {
             background: #ffffff;
             border: 1px solid #e9ecef;
@@ -1319,8 +1312,6 @@ const htmlTemplate = `<!DOCTYPE html>
             }
         }
 
-
-
         .action-details {
             display: flex;
             align-items: center;
@@ -1366,8 +1357,6 @@ const htmlTemplate = `<!DOCTYPE html>
             line-height: 1;
         }
 
-
-
         .arguments {
             background: #f8f9fa;
             border: 1px solid #dee2e6;
@@ -1377,8 +1366,6 @@ const htmlTemplate = `<!DOCTYPE html>
             font-family: monospace;
             font-size: 0.9em;
         }
-
-
 
         .screenshots-section {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -1973,8 +1960,6 @@ const htmlTemplate = `<!DOCTYPE html>
                 gap: 8px;
             }
 
-
-
             .logs-header {
                 flex-direction: column;
                 align-items: flex-start;
@@ -1990,8 +1975,6 @@ const htmlTemplate = `<!DOCTYPE html>
                 align-items: flex-start;
                 gap: 6px;
             }
-
-
 
             .screenshots-grid {
                 grid-template-columns: 1fr;
@@ -2106,8 +2089,6 @@ const htmlTemplate = `<!DOCTYPE html>
             margin-top: 15px;
             margin-bottom: 15px;
         }
-
-
     </style>
 </head>
 <body>
@@ -2200,8 +2181,6 @@ const htmlTemplate = `<!DOCTYPE html>
                 </div>
             </div>
         </div>
-
-
 
         <div class="test-cases">
             {{range $caseIndex, $testCase := .Details}}
