@@ -470,11 +470,6 @@ func (wd *BrowserDriver) AppTerminate(packageName string) (bool, error) {
 	return true, wd.DeleteSession()
 }
 
-// AssertForegroundApp returns nil if the given package and activity are in foreground
-func (wd *BrowserDriver) AssertForegroundApp(packageName string, activityType ...string) error {
-	return nil
-}
-
 func (wd *BrowserDriver) Back() error {
 	return wd.PressBack()
 }
