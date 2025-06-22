@@ -327,7 +327,7 @@ func NewMCPSuccessResponse(message string, actionTool ActionTool) *mcp.CallToolR
 		"message": message,
 	}
 
-	// Add all tool-specific fields at the same level
+	// Add tool-specific fields if provided
 	toolData := convertToolToData(actionTool)
 	for key, value := range toolData {
 		response[key] = value
@@ -336,7 +336,7 @@ func NewMCPSuccessResponse(message string, actionTool ActionTool) *mcp.CallToolR
 	return marshalToMCPResult(response)
 }
 
-// convertToolToData converts tool struct to map[string]any for Data field
+// convertToolToData converts tool struct to map for response
 func convertToolToData(tool interface{}) map[string]any {
 	data := make(map[string]any)
 
@@ -381,7 +381,7 @@ func convertToolToData(tool interface{}) map[string]any {
 	return data
 }
 
-// NewMCPErrorResponse creates an error response
+// NewMCPErrorResponse creates an error MCP response
 func NewMCPErrorResponse(message string) *mcp.CallToolResult {
 	response := map[string]any{
 		"success": false,
@@ -419,7 +419,7 @@ func GenerateReturnSchema(toolStruct interface{}) map[string]string {
 	for i := 0; i < structType.NumField(); i++ {
 		field := structType.Field(i)
 
-		// Skip embedded MCPResponse fields (though they shouldn't exist now)
+		// Skip embedded MCPResponse fields
 		if field.Type.Name() == "MCPResponse" {
 			continue
 		}
