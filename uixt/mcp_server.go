@@ -156,8 +156,8 @@ type ActionTool interface {
 	ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error)
 }
 
-// buildMCPCallToolRequest is a helper function to build mcp.CallToolRequest
-func buildMCPCallToolRequest(toolName option.ActionName, arguments map[string]any) mcp.CallToolRequest {
+// BuildMCPCallToolRequest is a helper function to build mcp.CallToolRequest
+func BuildMCPCallToolRequest(toolName option.ActionName, arguments map[string]any) mcp.CallToolRequest {
 	return mcp.CallToolRequest{
 		Params: struct {
 			Name      string         `json:"name"`

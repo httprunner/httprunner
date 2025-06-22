@@ -92,7 +92,7 @@ func (t *ToolSleep) ConvertActionToCallToolRequest(action option.MobileAction) (
 	arguments := map[string]any{
 		"seconds": action.Params,
 	}
-	return buildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
 // ToolSleepMS implements the sleep_ms tool call.
@@ -160,7 +160,7 @@ func (t *ToolSleepMS) ConvertActionToCallToolRequest(action option.MobileAction)
 	arguments := map[string]any{
 		"milliseconds": milliseconds,
 	}
-	return buildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
 // ToolSleepRandom implements the sleep_random tool call.
@@ -204,7 +204,7 @@ func (t *ToolSleepRandom) ConvertActionToCallToolRequest(action option.MobileAct
 		arguments := map[string]any{
 			"params": params,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid sleep random params: %v", action.Params)
 }
@@ -247,5 +247,5 @@ func (t *ToolClosePopups) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolClosePopups) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }

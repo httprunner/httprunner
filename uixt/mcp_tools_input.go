@@ -62,7 +62,7 @@ func (t *ToolInput) ConvertActionToCallToolRequest(action option.MobileAction) (
 	arguments := map[string]any{
 		"text": text,
 	}
-	return buildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
 // ToolSetIme implements the set_ime tool call.
@@ -114,7 +114,7 @@ func (t *ToolSetIme) ConvertActionToCallToolRequest(action option.MobileAction) 
 		arguments := map[string]any{
 			"ime": ime,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid set ime params: %v", action.Params)
 }

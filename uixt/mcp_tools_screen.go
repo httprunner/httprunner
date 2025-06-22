@@ -46,7 +46,7 @@ func (t *ToolScreenShot) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolScreenShot) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
 // ToolGetScreenSize implements the get_screen_size tool call.
@@ -92,7 +92,7 @@ func (t *ToolGetScreenSize) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolGetScreenSize) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
 // ToolGetSource implements the get_source tool call.
@@ -148,7 +148,7 @@ func (t *ToolGetSource) ConvertActionToCallToolRequest(action option.MobileActio
 		arguments := map[string]any{
 			"packageName": packageName,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid get source params: %v", action.Params)
 }

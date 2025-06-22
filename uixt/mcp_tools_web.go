@@ -63,7 +63,7 @@ func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolWebLoginNoneUI) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
 // ToolSecondaryClick implements the secondary_click tool call.
@@ -125,7 +125,7 @@ func (t *ToolSecondaryClick) ConvertActionToCallToolRequest(action option.Mobile
 			"x": params[0],
 			"y": params[1],
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click params: %v", action.Params)
 }
@@ -179,7 +179,7 @@ func (t *ToolHoverBySelector) ConvertActionToCallToolRequest(action option.Mobil
 		arguments := map[string]any{
 			"selector": selector,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid hover by selector params: %v", action.Params)
 }
@@ -233,7 +233,7 @@ func (t *ToolTapBySelector) ConvertActionToCallToolRequest(action option.MobileA
 		arguments := map[string]any{
 			"selector": selector,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by selector params: %v", action.Params)
 }
@@ -287,7 +287,7 @@ func (t *ToolSecondaryClickBySelector) ConvertActionToCallToolRequest(action opt
 		arguments := map[string]any{
 			"selector": selector,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click by selector params: %v", action.Params)
 }
@@ -361,5 +361,5 @@ func (t *ToolWebCloseTab) ConvertActionToCallToolRequest(action option.MobileAct
 	arguments := map[string]any{
 		"tabIndex": tabIndex,
 	}
-	return buildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments), nil
 }

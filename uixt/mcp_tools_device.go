@@ -82,7 +82,7 @@ func (t *ToolListAvailableDevices) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolListAvailableDevices) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
 // ToolSelectDevice implements the select_device tool call.
@@ -122,7 +122,7 @@ func (t *ToolSelectDevice) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolSelectDevice) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
 // ToolScreenRecord implements the screenrecord tool call.
@@ -212,5 +212,5 @@ func (t *ToolScreenRecord) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolScreenRecord) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }

@@ -53,7 +53,7 @@ func (t *ToolListPackages) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolListPackages) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
 // ToolLaunchApp implements the launch_app tool call.
@@ -109,7 +109,7 @@ func (t *ToolLaunchApp) ConvertActionToCallToolRequest(action option.MobileActio
 		arguments := map[string]any{
 			"packageName": packageName,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app launch params: %v", action.Params)
 }
@@ -174,7 +174,7 @@ func (t *ToolTerminateApp) ConvertActionToCallToolRequest(action option.MobileAc
 		arguments := map[string]any{
 			"packageName": packageName,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app terminate params: %v", action.Params)
 }
@@ -228,7 +228,7 @@ func (t *ToolAppInstall) ConvertActionToCallToolRequest(action option.MobileActi
 		arguments := map[string]any{
 			"appUrl": appUrl,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app install params: %v", action.Params)
 }
@@ -282,7 +282,7 @@ func (t *ToolAppUninstall) ConvertActionToCallToolRequest(action option.MobileAc
 		arguments := map[string]any{
 			"packageName": packageName,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app uninstall params: %v", action.Params)
 }
@@ -336,7 +336,7 @@ func (t *ToolAppClear) ConvertActionToCallToolRequest(action option.MobileAction
 		arguments := map[string]any{
 			"packageName": packageName,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app clear params: %v", action.Params)
 }
@@ -385,5 +385,5 @@ func (t *ToolGetForegroundApp) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolGetForegroundApp) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }

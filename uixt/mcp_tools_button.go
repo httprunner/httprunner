@@ -59,7 +59,7 @@ func (t *ToolPressButton) ConvertActionToCallToolRequest(action option.MobileAct
 		arguments := map[string]any{
 			"button": button,
 		}
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid press button params: %v", action.Params)
 }
@@ -102,7 +102,7 @@ func (t *ToolHome) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolHome) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
 
 // ToolBack implements the back tool call.
@@ -143,5 +143,5 @@ func (t *ToolBack) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolBack) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return buildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
 }
