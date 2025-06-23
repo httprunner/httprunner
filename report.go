@@ -657,9 +657,9 @@ const htmlTemplate = `<!DOCTYPE html>
 
         .summary h2 {
             color: #2c3e50;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
+            margin: 0;
+            padding: 0;
+            border: none;
         }
 
         .summary-grid {
@@ -667,6 +667,32 @@ const htmlTemplate = `<!DOCTYPE html>
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 20px;
+        }
+
+        .summary-title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .toggle-all-btn {
+            background-color: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .toggle-all-btn:hover {
+            background-color: #e0a800;
         }
 
         .summary-item {
@@ -2120,7 +2146,10 @@ const htmlTemplate = `<!DOCTYPE html>
         </div>
 
         <div class="summary">
-            <h2>📊 Test Summary</h2>
+            <div class="summary-title-bar">
+                <h2>📊 Test Summary</h2>
+                <button id="toggle-all-steps-btn" class="toggle-all-btn" onclick="toggleAllSteps()">Collapse All Steps</button>
+            </div>
             <div class="summary-grid">
                 <div class="summary-item success">
                     <div class="value">{{.Stat.TestCases.Success}}</div>
@@ -2818,6 +2847,35 @@ const htmlTemplate = `<!DOCTYPE html>
             contents.forEach(content => content.classList.add('show'));
             icons.forEach(icon => icon.classList.add('rotated'));
         });
+
+        function toggleAllSteps() {
+            const contents = document.querySelectorAll('.step-content');
+            const icons = document.querySelectorAll('.toggle-icon');
+            const btn = document.getElementById('toggle-all-steps-btn');
+
+            if (!contents || contents.length === 0) {
+                return;
+            }
+
+            // If any step is expanded, collapse all. Otherwise expand all.
+            let isAnyExpanded = false;
+            for (let i = 0; i < contents.length; i++) {
+                if (contents[i].classList.contains('show')) {
+                    isAnyExpanded = true;
+                    break;
+                }
+            }
+
+            if (isAnyExpanded) {
+                contents.forEach(content => content.classList.remove('show'));
+                icons.forEach(icon => icon.classList.remove('rotated'));
+                btn.textContent = 'Expand All Steps';
+            } else {
+                contents.forEach(content => content.classList.add('show'));
+                icons.forEach(icon => icon.classList.add('rotated'));
+                btn.textContent = 'Collapse All Steps';
+            }
+        }
     </script>
 </body>
 </html>`
