@@ -1,7 +1,12 @@
 package server
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/httprunner/httprunner/v5/mcphost"
@@ -39,46 +44,11 @@ func (r *Router) Init() {
 	r.Engine.GET("/ping", r.pingHandler)
 	r.Engine.GET("/", r.pingHandler)
 	r.Engine.POST("/", r.pingHandler)
-	r.Engine.GET("/api/v1/devices", r.listDeviceHandler)
-	r.Engine.POST("/api/v1/browser/create_browser", createBrowserHandler)
 
 	apiV1PlatformSerial := r.Group("/api/v1").Group("/:platform").Group("/:serial")
 
 	// tool operations
 	apiV1PlatformSerial.POST("/tool/invoke", r.invokeToolHandler)
-
-	// UI operations
-	apiV1PlatformSerial.POST("/ui/tap", r.tapHandler)
-	apiV1PlatformSerial.POST("/ui/right_click", r.rightClickHandler)
-	apiV1PlatformSerial.POST("/ui/double_tap", r.doubleTapHandler)
-	apiV1PlatformSerial.POST("/ui/drag", r.dragHandler)
-	apiV1PlatformSerial.POST("/ui/input", r.inputHandler)
-	apiV1PlatformSerial.POST("/ui/home", r.homeHandler)
-	apiV1PlatformSerial.POST("/ui/upload", r.uploadHandler)
-	apiV1PlatformSerial.POST("/ui/hover", r.hoverHandler)
-	apiV1PlatformSerial.POST("/ui/scroll", r.scrollHandler)
-
-	// Key operations
-	apiV1PlatformSerial.POST("/key/unlock", r.unlockHandler)
-	apiV1PlatformSerial.POST("/key/home", r.homeHandler)
-	apiV1PlatformSerial.POST("/key/backspace", r.backspaceHandler)
-	apiV1PlatformSerial.POST("/key", r.keycodeHandler)
-
-	// APP operations
-	apiV1PlatformSerial.GET("/app/foreground", r.foregroundAppHandler)
-	apiV1PlatformSerial.GET("/app/appInfo", r.appInfoHandler)
-	apiV1PlatformSerial.POST("/app/clear", r.clearAppHandler)
-	apiV1PlatformSerial.POST("/app/launch", r.launchAppHandler)
-	apiV1PlatformSerial.POST("/app/terminal", r.terminalAppHandler)
-	apiV1PlatformSerial.POST("/app/uninstall", r.uninstallAppHandler)
-
-	// Device operations
-	apiV1PlatformSerial.GET("/screenshot", r.screenshotHandler)
-	apiV1PlatformSerial.DELETE("/close_browser", r.deleteBrowserHandler)
-	apiV1PlatformSerial.GET("/video", r.videoHandler)
-	apiV1PlatformSerial.POST("/device/push_image", r.pushImageHandler)
-	apiV1PlatformSerial.POST("/device/clear_image", r.clearImageHandler)
-	apiV1PlatformSerial.GET("/adb/source", r.adbSourceHandler)
 
 	// uixt operations
 	apiV1PlatformSerial.POST("/uixt/action", r.uixtActionHandler)
@@ -86,11 +56,45 @@ func (r *Router) Init() {
 }
 
 func (r *Router) Run(port int) error {
-	err := r.Engine.Run(fmt.Sprintf("localhost:%d", port))
-	if err != nil {
-		log.Err(err).Msg("failed to start http server")
+	// Create HTTP server
+	server := &http.Server{
+		Addr:    fmt.Sprintf("localhost:%d", port),
+		Handler: r.Engine,
+	}
+
+	// Channel to listen for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	// Start server in a goroutine
+	go func() {
+		log.Info().Int("port", port).Msg("Starting hrp server")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Error().Err(err).Msg("HTTP server failed to start")
+		}
+	}()
+
+	// Wait for interrupt signal
+	<-quit
+	log.Info().Msg("Shutting down hrp server...")
+
+	// Create a context with timeout for graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Shutdown MCP host first if it exists
+	if r.mcpHost != nil {
+		log.Info().Msg("Shutting down MCP host...")
+		r.mcpHost.Shutdown()
+	}
+
+	// Shutdown HTTP server
+	if err := server.Shutdown(ctx); err != nil {
+		log.Error().Err(err).Msg("hrp server forced to shutdown")
 		return err
 	}
+
+	log.Info().Msg("hrp server exited")
 	return nil
 }
 

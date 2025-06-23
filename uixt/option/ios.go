@@ -66,7 +66,7 @@ const (
 	// It helps you to handle an arbitrary element as accept button in accept alert command.
 	// The selector should be a valid class chain expression, where the search root is the alert element itself.
 	// The default button location algorithm is used if the provided selector is wrong or does not match any element.
-	// e.g. **/XCUIElementTypeButton[`label CONTAINS[c] ‘accept’`]
+	// e.g. **/XCUIElementTypeButton[`label CONTAINS[c] 'accept'`]
 	acceptAlertButtonSelector  = "**/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','稍后再说'}`]"
 	dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
 )

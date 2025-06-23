@@ -681,10 +681,10 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 		for _, cached := range uixt.ListCachedDrivers() {
 			// add WDA/UIA logs to summary
 			logs := map[string]interface{}{
-				"uuid": cached.Serial,
+				"uuid": cached.Key,
 			}
 
-			client := cached.Driver
+			client := cached.Item
 			if client.GetDevice().LogEnabled() {
 				log, err1 := client.StopCaptureLog()
 				if err1 != nil {

@@ -188,7 +188,7 @@ func (t *ToolSwipeDirection) ConvertActionToCallToolRequest(action option.Mobile
 		// Extract all action options
 		extractActionOptionsToArguments(action.GetOptions(), arguments)
 
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v", action.Params)
 }
@@ -290,7 +290,7 @@ func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action option.Mobil
 		// Extract all action options
 		extractActionOptionsToArguments(action.GetOptions(), arguments)
 
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe advanced params: %v", action.Params)
 }
@@ -364,7 +364,7 @@ func (t *ToolSwipeToTapApp) ConvertActionToCallToolRequest(action option.MobileA
 		// Extract options to arguments
 		extractActionOptionsToArguments(action.GetOptions(), arguments)
 
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap app params: %v", action.Params)
 }
@@ -441,7 +441,7 @@ func (t *ToolSwipeToTapText) ConvertActionToCallToolRequest(action option.Mobile
 		// Extract options to arguments
 		extractActionOptionsToArguments(action.GetOptions(), arguments)
 
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap text params: %v", action.Params)
 }
@@ -529,7 +529,7 @@ func (t *ToolSwipeToTapTexts) ConvertActionToCallToolRequest(action option.Mobil
 	// Extract options to arguments
 	extractActionOptionsToArguments(action.GetOptions(), arguments)
 
-	return buildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
 // ToolDrag implements the drag tool call.
@@ -618,7 +618,7 @@ func (t *ToolDrag) ConvertActionToCallToolRequest(action option.MobileAction) (m
 		// Extract all action options
 		extractActionOptionsToArguments(action.GetOptions(), arguments)
 
-		return buildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid drag parameters: %v", action.Params)
 }

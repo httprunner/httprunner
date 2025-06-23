@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -12,10 +14,84 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
-func (r *Router) GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error) {
-	var device uixt.IDevice
-	var driver uixt.IDriver
+func (r *Router) GetDevice(c *gin.Context) (uixt.IDevice, error) {
+	platform := c.Param("platform")
+	switch strings.ToLower(platform) {
+	case "android":
+		serial := c.Param("serial")
+		if serial == "" {
+			err := fmt.Errorf("[%s]: serial is empty", c.HandlerName())
+			log.Error().Err(err).Str("platform", platform).Msg(err.Error())
+			RenderError(c, err)
+			return nil, err
+		}
+		device, err := uixt.NewAndroidDevice(option.WithSerialNumber(serial))
+		if err != nil {
+			time.Sleep(5 * time.Second)
+			device, err = uixt.NewAndroidDevice(option.WithSerialNumber(serial))
+			if err != nil {
+				log.Error().Err(err).Str("platform", platform).Str("serial", serial).
+					Msg(fmt.Sprintf("[%s]: Device Not Found; %s", c.HandlerName(), err.Error()))
+				RenderErrorInitDevice(c, err)
+				return nil, err
+			}
+		}
+		c.Set("device", device)
+		return device, nil
+
+	case "ios":
+		serial := c.Param("serial")
+		if serial == "" {
+			err := fmt.Errorf("[%s]: serial is empty", c.HandlerName())
+			log.Error().Err(err).Str("platform", platform).Msg(err.Error())
+			RenderError(c, err)
+			return nil, err
+		}
+		device, err := uixt.NewIOSDevice(
+			option.WithUDID(serial),
+			option.WithWDAPort(8700),
+			option.WithWDAMjpegPort(8800),
+			option.WithResetHomeOnStartup(false))
+		if err != nil {
+			log.Error().Err(err).Str("platform", platform).Str("serial", serial).
+				Msg(fmt.Sprintf("[%s]: Device Not Found", c.HandlerName()))
+			RenderErrorInitDevice(c, err)
+			return nil, err
+		}
+		c.Set("device", device)
+		return device, nil
+
+	case "browser":
+		serial := c.Param("serial")
+		if serial == "" {
+			err := fmt.Errorf("[%s]: serial is empty", c.HandlerName())
+			log.Error().Err(err).Str("platform", platform).Msg(err.Error())
+			RenderError(c, err)
+			return nil, err
+		}
+		device, err := uixt.NewBrowserDevice(option.WithBrowserID(serial))
+		if err != nil {
+			RenderErrorInitDevice(c, err)
+			return nil, err
+		}
+		c.Set("device", device)
+		return device, nil
+
+	default:
+		err := fmt.Errorf("[%s]: invalid platform", c.HandlerName())
+		RenderError(c, err)
+		return nil, err
+	}
+}
+
+func (r *Router) GetDriver(c *gin.Context) (*uixt.XTDriver, error) {
+	platform := c.Param("platform")
+
+	// Try to get existing device from context
 	deviceObj, exists := c.Get("device")
+	var device uixt.IDevice
+	var err error
+
 	if !exists {
 		device, err = r.GetDevice(c)
 		if err != nil {
@@ -25,32 +101,24 @@ func (r *Router) GetDriver(c *gin.Context) (driverExt *uixt.XTDriver, err error)
 		device = deviceObj.(uixt.IDevice)
 	}
 
-	driver, err = device.NewDriver()
+	// Create driver
+	driver, err := device.NewDriver()
 	if err != nil {
+		log.Error().Err(err).Str("platform", platform).Str("serial", device.UUID()).
+			Msg(fmt.Sprintf("[%s]: Failed New Driver", c.HandlerName()))
 		RenderErrorInitDriver(c, err)
-		return
+		return nil, err
 	}
 
-	driverExt, err = uixt.NewXTDriver(driver,
-		option.WithCVService(option.CVServiceTypeVEDEM))
+	// Create XTDriver wrapper
+	xtDriver, err := uixt.NewXTDriver(driver)
 	if err != nil {
 		RenderErrorInitDriver(c, err)
-		return
+		return nil, err
 	}
-	c.Set("driver", driverExt)
-	return driverExt, nil
-}
 
-func (r *Router) GetDevice(c *gin.Context) (device uixt.IDevice, err error) {
-	platform := c.Param("platform")
-	serial := c.Param("serial")
-	device, err = uixt.NewDeviceWithDefault(platform, serial)
-	if err != nil {
-		RenderErrorInitDriver(c, err)
-		return
-	}
-	c.Set("device", device)
-	return device, nil
+	c.Set("driver", xtDriver)
+	return xtDriver, nil
 }
 
 func RenderSuccess(c *gin.Context, result interface{}) {
@@ -82,6 +150,21 @@ func RenderErrorInitDriver(c *gin.Context, err error) {
 		HttpResponse{
 			Code:    errCode,
 			Message: "grey init driver failed",
+		},
+	)
+	c.Abort()
+}
+
+func RenderErrorInitDevice(c *gin.Context, err error) {
+	log.Error().Err(err).Msg("init device failed")
+	errCode := code.GetErrorCode(err)
+	if errCode == code.GeneralFail {
+		errCode = code.GetErrorCode(code.DeviceConnectionError)
+	}
+	c.JSON(http.StatusInternalServerError,
+		HttpResponse{
+			Code:    errCode,
+			Message: "grey init device failed",
 		},
 	)
 	c.Abort()

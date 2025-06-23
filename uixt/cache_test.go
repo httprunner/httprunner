@@ -33,7 +33,7 @@ func TestGetOrCreateXTDriver_EmptySerial_AutoDetect(t *testing.T) {
 		// Verify that a driver was created and cached with actual serial
 		drivers := ListCachedDrivers()
 		assert.Len(t, drivers, 1)
-		assert.NotEmpty(t, drivers[0].Serial) // Serial should be populated with actual device serial
+		assert.NotEmpty(t, drivers[0].Key) // Serial should be populated with actual device serial
 	}
 }
 
@@ -57,7 +57,7 @@ func TestGetOrCreateXTDriver_EmptySerial_DefaultPlatform(t *testing.T) {
 		// Verify that a driver was created and cached with actual serial
 		drivers := ListCachedDrivers()
 		assert.Len(t, drivers, 1)
-		assert.NotEmpty(t, drivers[0].Serial) // Serial should be populated with actual device serial
+		assert.NotEmpty(t, drivers[0].Key) // Serial should be populated with actual device serial
 	}
 }
 
@@ -168,9 +168,9 @@ func TestRegisterXTDriver_Success(t *testing.T) {
 	// Verify driver is cached
 	drivers := ListCachedDrivers()
 	assert.Len(t, drivers, 1)
-	assert.Equal(t, "external_001", drivers[0].Serial)
+	assert.Equal(t, "external_001", drivers[0].Key)
 	assert.Equal(t, int32(1), drivers[0].RefCount)
-	assert.Equal(t, xtDriver, drivers[0].Driver)
+	assert.Equal(t, xtDriver, drivers[0].Item)
 }
 
 func TestReleaseXTDriver_NonExistentSerial(t *testing.T) {
@@ -255,9 +255,9 @@ func TestListCachedDrivers_Multiple(t *testing.T) {
 	// Verify driver information
 	serials := make(map[string]bool)
 	for _, cached := range drivers {
-		serials[cached.Serial] = true
+		serials[cached.Key] = true
 		assert.Equal(t, int32(1), cached.RefCount)
-		assert.NotNil(t, cached.Driver)
+		assert.NotNil(t, cached.Item)
 	}
 	assert.True(t, serials["list_test_1"])
 	assert.True(t, serials["list_test_2"])
@@ -402,7 +402,7 @@ func TestIntegrationExample_TraditionalWay(t *testing.T) {
 	// Verify registration
 	drivers := ListCachedDrivers()
 	assert.Len(t, drivers, 1)
-	assert.Equal(t, "integration_002", drivers[0].Serial)
+	assert.Equal(t, "integration_002", drivers[0].Key)
 
 	// Clean up
 	err = ReleaseXTDriver("integration_002")
@@ -555,11 +555,9 @@ func TestCacheReferenceCountManagement(t *testing.T) {
 	assert.Len(t, drivers, 1)
 	assert.Equal(t, int32(1), drivers[0].RefCount)
 
-	// Simulate multiple references by manually incrementing
-	if cachedItem, ok := driverCache.Load(serial); ok {
-		if cached, ok := cachedItem.(*CachedXTDriver); ok {
-			cached.RefCount++
-		}
+	// Simulate multiple references by getting from cache (which increments ref count)
+	if cachedItem, ok := driverCacheManager.Get(serial); ok {
+		assert.NotNil(t, cachedItem.Item)
 	}
 
 	// Verify ref count increased
