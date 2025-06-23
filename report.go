@@ -221,8 +221,9 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 	for _, logEntry := range g.LogData {
 		// Check for step boundaries to control inclusion
 		if logEntry.Message == RUN_STEP_START {
-			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
-				if stepFieldValue == stepName {
+			if stepFieldValue, exists := logEntry.Fields["step"].(string); exists {
+				// use prefix matching for parameterized steps
+				if strings.HasPrefix(stepName, stepFieldValue) {
 					inCurrentStep = true
 					stepLogs = append(stepLogs, logEntry)
 					continue
@@ -234,8 +235,9 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 		}
 
 		if logEntry.Message == RUN_STEP_END {
-			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
-				if stepFieldValue == stepName {
+			if stepFieldValue, exists := logEntry.Fields["step"].(string); exists {
+				// use prefix matching for parameterized steps
+				if strings.HasPrefix(stepName, stepFieldValue) {
 					stepLogs = append(stepLogs, logEntry)
 					inCurrentStep = false
 					continue
