@@ -88,6 +88,20 @@ func (c *TConfig) WithParameters(parameters map[string]interface{}) *TConfig {
 	return c
 }
 
+// WithParametersSetting sets parameters setting for current testcase.
+func (c *TConfig) WithParametersSetting(options ...ParametersOption) *TConfig {
+	if c.ParametersSetting == nil {
+		c.ParametersSetting = &TParamsConfig{}
+	}
+
+	// apply all options
+	for _, option := range options {
+		option(c.ParametersSetting)
+	}
+
+	return c
+}
+
 // SetThinkTime sets think time config for current testcase.
 func (c *TConfig) SetThinkTime(strategy ThinkTimeStrategy, cfg interface{}, limit float64) *TConfig {
 	c.ThinkTimeSetting = &ThinkTimeConfig{strategy, cfg, limit}

@@ -543,6 +543,26 @@ func (s *StepRequest) WithVariables(variables map[string]interface{}) *StepReque
 	return s
 }
 
+// WithParameters sets parameters for step-level data driven
+func (s *StepRequest) WithParameters(parameters map[string]interface{}) *StepRequest {
+	s.Parameters = parameters
+	return s
+}
+
+// WithParametersSetting sets parameters setting for step-level data driven
+func (s *StepRequest) WithParametersSetting(options ...ParametersOption) *StepRequest {
+	if s.ParametersSetting == nil {
+		s.ParametersSetting = &TParamsConfig{}
+	}
+
+	// apply all options
+	for _, option := range options {
+		option(s.ParametersSetting)
+	}
+
+	return s
+}
+
 // SetupHook adds a setup hook for current teststep.
 func (s *StepRequest) SetupHook(hook string) *StepRequest {
 	s.SetupHooks = append(s.SetupHooks, hook)
@@ -557,7 +577,7 @@ func (s *StepRequest) HTTP2() *StepRequest {
 	return s
 }
 
-// Loop specify running times for the current step
+// Loop sets loop count for step execution.
 func (s *StepRequest) Loop(times int) *StepRequest {
 	s.Loops = times
 	return s
