@@ -2,7 +2,7 @@
 
 ## 概述
 
-HttpRunner 的 Summary 数据结构用于存储测试执行的完整汇总信息，包括测试结果、统计数据、时间信息、平台信息以及详细的测试步骤记录。本文档基于 `summary.go` 的代码定义和实际执行产物进行详细说明。
+HttpRunner 的 Summary 数据结构用于存储测试执行的完整汇总信息，包括测试结果、统计数据、时间信息、平台信息以及详细的测试步骤记录。本文档基于 `summary.go` 和相关代码的最新定义进行详细说明。
 
 ## 数据结构层次关系
 
@@ -32,6 +32,10 @@ Summary (根结构)
                 │   │   ├── Usage (模型使用统计)
                 │   │   ├── ScreenResult (屏幕结果)
                 │   │   └── SubActions (子操作)
+                │   ├── AIResult (统一AI操作结果)
+                │   │   ├── QueryResult (查询结果)
+                │   │   ├── PlanningResult (规划结果)
+                │   │   └── AssertionResult (断言结果)
                 │   └── ScreenResults (屏幕截图)
                 └── Attachments (附件信息)
 ```
@@ -184,14 +188,18 @@ Summary (根结构)
 
 | 字段名 | 类型 | JSON标签 | 说明 |
 |--------|------|----------|------|
-| name | string | `name` | 步骤名称 |
-| start_time | int64 | `start_time` | 开始时间（Unix时间戳，毫秒） |
-| step_type | string | `step_type` | 步骤类型（如 "android_validation", "android"） |
-| success | bool | `success` | 步骤执行是否成功 |
-| elapsed_ms | int | `elapsed_ms` | 执行耗时（毫秒） |
-| data | *SessionData | `data` | 步骤相关数据（包含请求响应和验证结果） |
-| actions | []Action | `actions` | 执行的操作列表 |
-| attachments | map[string]interface{} | `attachments` | 附件信息（如截图等） |
+| Name | string | `name` | 步骤名称 |
+| Identifier | string | `identifier,omitempty` | 步骤标识符 |
+| StartTime | int64 | `start_time` | 开始时间（Unix时间戳，毫秒） |
+| StepType | StepType | `step_type` | 步骤类型（如 "android_validation", "android"） |
+| Success | bool | `success` | 步骤执行是否成功 |
+| Elapsed | int64 | `elapsed_ms` | 执行耗时（毫秒） |
+| HttpStat | map[string]int64 | `httpstat,omitempty` | HTTP统计信息（毫秒） |
+| Data | interface{} | `data,omitempty` | 步骤相关数据 |
+| ContentSize | int64 | `content_size,omitempty` | 响应体长度 |
+| ExportVars | map[string]interface{} | `export_vars,omitempty` | 提取的变量 |
+| Actions | []*ActionResult | `actions,omitempty` | 执行的操作列表 |
+| Attachments | interface{} | `attachments,omitempty` | 附件信息（如截图等） |
 
 **示例数据**:
 ```json
@@ -207,7 +215,136 @@ Summary (根结构)
 }
 ```
 
-### 10. SessionData (步骤数据)
+### 10. ActionResult (操作结果)
+
+每个步骤可能包含多个操作，每个操作的详细执行信息：
+
+| 字段名 | 类型 | JSON标签 | 说明 |
+|--------|------|----------|------|
+| MobileAction | option.MobileAction | `,inline` | 移动端操作信息（内联） |
+| StartTime | int64 | `start_time` | 操作开始时间（Unix时间戳，毫秒） |
+| Elapsed | int64 | `elapsed_ms` | 操作耗时（毫秒） |
+| Error | string | `error,omitempty` | 操作执行错误信息 |
+| Plannings | []*uixt.PlanningExecutionResult | `plannings,omitempty` | AI规划执行结果（用于start_to_goal操作） |
+| AIResult | *uixt.AIExecutionResult | `ai_result,omitempty` | 统一AI执行结果（用于ai_query/ai_action/ai_assert操作） |
+| SessionData | uixt.SessionData | - | 会话数据（内联，包含请求和屏幕截图信息） |
+
+### 11. AIExecutionResult (统一AI执行结果)
+
+这是所有AI操作（ai_query、ai_action、ai_assert）的统一结果结构：
+
+| 字段名 | 类型 | JSON标签 | 说明 |
+|--------|------|----------|------|
+| Type | string | `type` | 操作类型："query"、"action"、"assert" |
+| ModelCallElapsed | int64 | `model_call_elapsed` | 模型调用耗时（毫秒） |
+| ScreenshotElapsed | int64 | `screenshot_elapsed` | 截图耗时（毫秒） |
+| ImagePath | string | `image_path` | 截图文件路径 |
+| Resolution | *types.Size | `resolution` | 屏幕分辨率 |
+| QueryResult | *ai.QueryResult | `query_result,omitempty` | 查询操作结果（仅query类型） |
+| PlanningResult | *ai.PlanningResult | `planning_result,omitempty` | 规划操作结果（仅action类型） |
+| AssertionResult | *ai.AssertionResult | `assertion_result,omitempty` | 断言操作结果（仅assert类型） |
+| Error | string | `error,omitempty` | 操作失败的错误信息 |
+
+**示例数据**:
+```json
+{
+    "type": "query",
+    "model_call_elapsed": 1234,
+    "screenshot_elapsed": 567,
+    "image_path": "/path/to/screenshot.png",
+    "resolution": {"width": 1080, "height": 1920},
+    "query_result": { /* 查询结果详情 */ }
+}
+```
+
+### 12. QueryResult (查询结果)
+
+用于ai_query操作的具体结果：
+
+| 字段名 | 类型 | JSON标签 | 说明 |
+|--------|------|----------|------|
+| Content | string | `content` | 提取的内容/信息 |
+| Thought | string | `thought` | AI的推理过程 |
+| Data | interface{} | `data,omitempty` | 结构化数据（当提供OutputSchema时） |
+| ModelName | string | `model_name` | 使用的模型名称 |
+| Usage | *schema.TokenUsage | `usage,omitempty` | token使用统计 |
+
+**示例数据**:
+```json
+{
+    "content": "搜索框位于屏幕右上角",
+    "thought": "通过分析截图，我看到了页面右上角有一个搜索图标",
+    "model_name": "doubao-1.5-thinking-vision-pro-250428",
+    "usage": {
+        "prompt_tokens": 1234,
+        "completion_tokens": 56,
+        "total_tokens": 1290
+    }
+}
+```
+
+### 13. PlanningResult (规划结果)
+
+用于ai_action操作的具体结果：
+
+| 字段名 | 类型 | JSON标签 | 说明 |
+|--------|------|----------|------|
+| ToolCalls | []schema.ToolCall | `tool_calls` | 工具调用列表 |
+| Thought | string | `thought` | AI的思考过程 |
+| Content | string | `content` | 模型的原始内容 |
+| Error | string | `error,omitempty` | 规划错误信息 |
+| ModelName | string | `model_name` | 使用的模型名称 |
+| Usage | *schema.TokenUsage | `usage,omitempty` | token使用统计 |
+
+**示例数据**:
+```json
+{
+    "tool_calls": [
+        {
+            "id": "tap_xy_1750657286",
+            "type": "function",
+            "function": {
+                "name": "uixt__tap_xy",
+                "arguments": "{\"x\":1107.6,\"y\":232.4}"
+            }
+        }
+    ],
+    "thought": "点击页面右上角的搜索图标，打开搜索界面",
+    "model_name": "doubao-1.5-thinking-vision-pro-250428",
+    "usage": {
+        "prompt_tokens": 2199,
+        "completion_tokens": 135,
+        "total_tokens": 2334
+    }
+}
+```
+
+### 14. AssertionResult (断言结果)
+
+用于ai_assert操作的具体结果：
+
+| 字段名 | 类型 | JSON标签 | 说明 |
+|--------|------|----------|------|
+| Pass | bool | `pass` | 断言是否通过 |
+| Thought | string | `thought` | AI的推理过程 |
+| ModelName | string | `model_name` | 使用的模型名称 |
+| Usage | *schema.TokenUsage | `usage,omitempty` | token使用统计 |
+
+**示例数据**:
+```json
+{
+    "pass": true,
+    "thought": "根据截图分析，当前页面确实显示了搜索结果",
+    "model_name": "doubao-1.5-thinking-vision-pro-250428",
+    "usage": {
+        "prompt_tokens": 1500,
+        "completion_tokens": 45,
+        "total_tokens": 1545
+    }
+}
+```
+
+### 15. SessionData (会话数据)
 
 | 字段名 | 类型 | JSON标签 | 说明 |
 |--------|------|----------|------|
@@ -215,14 +352,14 @@ Summary (根结构)
 | Address | *Address | `address,omitempty` | 网络地址信息 |
 | Validators | []*ValidationResult | `validators,omitempty` | 验证结果列表 |
 
-### 11. ReqResps (请求响应)
+### 16. ReqResps (请求响应)
 
 | 字段名 | 类型 | JSON标签 | 说明 |
 |--------|------|----------|------|
 | Request | interface{} | `request` | 请求信息 |
 | Response | interface{} | `response` | 响应信息 |
 
-### 12. ValidationResult (验证结果)
+### 17. ValidationResult (验证结果)
 
 | 字段名 | 类型 | JSON标签 | 说明 |
 |--------|------|----------|------|
@@ -245,166 +382,85 @@ Summary (根结构)
 }
 ```
 
-### 13. Action (操作信息)
+### 18. PlanningExecutionResult (规划执行结果)
 
-每个步骤可能包含多个操作：
-
-| 字段名 | 类型 | JSON标签 | 说明 |
-|--------|------|----------|------|
-| method | string | `method` | 操作方法名（如 "app_launch", "start_to_goal"） |
-| params | interface{} | `params` | 操作参数 |
-| start_time | int64 | `start_time` | 操作开始时间（Unix时间戳，毫秒） |
-| elapsed_ms | int | `elapsed_ms` | 操作耗时（毫秒） |
-| requests | []Request | `requests` | HTTP请求记录（如果有） |
-| plannings | []Planning | `plannings` | AI规划信息（UI自动化场景） |
-| screen_results | []ScreenResult | `screen_results` | 屏幕截图结果 |
-
-**示例数据**:
-```json
-{
-    "method": "start_to_goal",
-    "params": "搜索「青榕小剧场」，切换到「用户」搜索结果页，点击进入第一个搜索结果的用户个人主页",
-    "start_time": 1750657275855,
-    "elapsed_ms": 109543,
-    "plannings": [ /* AI规划列表 */ ]
-}
-```
-
-### 14. Request (请求记录)
-
-ADB或HTTP请求的详细记录：
+用于复杂的start_to_goal操作，包含规划和执行的完整信息：
 
 | 字段名 | 类型 | JSON标签 | 说明 |
 |--------|------|----------|------|
-| request_method | string | `request_method` | 请求方法（如 "adb", "http"） |
-| request_url | string | `request_url` | 请求URL或命令 |
-| request_body | string | `request_body` | 请求体或命令参数 |
-| request_time | string | `request_time` | 请求时间（ISO格式） |
-| response_status | int | `response_status` | 响应状态码 |
-| response_duration_ms | int | `response_duration(ms)` | 响应耗时（毫秒） |
-| response_body | string | `response_body` | 响应内容 |
-| success | bool | `success` | 请求是否成功 |
+| PlanningResult | ai.PlanningResult | - | 继承的规划结果字段 |
+| ScreenshotElapsed | int64 | `screenshot_elapsed_ms` | 截图耗时（毫秒） |
+| ImagePath | string | `image_path` | 截图文件路径 |
+| Resolution | *types.Size | `resolution` | 图像分辨率 |
+| ScreenResult | *ScreenResult | `screen_result` | 完整屏幕结果数据 |
+| ModelCallElapsed | int64 | `model_call_elapsed_ms` | 模型调用耗时（毫秒） |
+| ToolCallsCount | int | `tool_calls_count` | 生成的工具调用数量 |
+| ActionNames | []string | `action_names` | 解析的操作名称列表 |
+| StartTime | int64 | `start_time` | 规划开始时间 |
+| Elapsed | int64 | `elapsed_ms` | 规划耗时（毫秒） |
+| SubActions | []*SubActionResult | `sub_actions,omitempty` | 此规划生成的子操作 |
 
-**示例数据**:
-```json
-{
-    "request_method": "adb",
-    "request_url": "monkey",
-    "request_body": "-p com.smile.gifmaker -c android.intent.category.LAUNCHER 1",
-    "request_time": "2025-06-23T13:41:07.200504+08:00",
-    "response_status": 0,
-    "response_duration(ms)": 566,
-    "response_body": "Events injected: 1\n## Network stats: elapsed time=45ms",
-    "success": true
-}
-```
-
-### 15. Planning (AI规划信息)
-
-UI自动化测试中的AI规划详情：
-
-| 字段名 | 类型 | JSON标签 | 说明 |
-|--------|------|----------|------|
-| tool_calls | []ToolCall | `tool_calls` | 工具调用信息 |
-| thought | string | `thought` | AI的思考过程 |
-| content | string | `content` | 规划内容（JSON格式的操作描述） |
-| model_name | string | `model_name` | 使用的AI模型名称 |
-| usage | Usage | `usage` | 模型使用统计 |
-| screenshot_elapsed_ms | int | `screenshot_elapsed_ms` | 截图耗时（毫秒） |
-| image_path | string | `image_path` | 截图文件路径 |
-| resolution | Resolution | `resolution` | 屏幕分辨率 |
-| screen_result | ScreenResult | `screen_result` | 屏幕分析结果 |
-| model_call_elapsed_ms | int | `model_call_elapsed_ms` | 模型调用耗时（毫秒） |
-| tool_calls_count | int | `tool_calls_count` | 工具调用次数 |
-| action_names | []string | `action_names` | 执行的操作名称列表 |
-| start_time | int64 | `start_time` | 规划开始时间 |
-| elapsed_ms | int | `elapsed_ms` | 规划总耗时 |
-| sub_actions | []SubAction | `sub_actions` | 子操作列表 |
-
-**示例数据**:
-```json
-{
-    "tool_calls": [
-        {
-            "id": "tap_xy_1750657286",
-            "type": "function",
-            "function": {
-                "name": "uixt__tap_xy",
-                "arguments": "{\"x\":1107.6,\"y\":232.4}"
-            }
-        }
-    ],
-    "thought": "点击页面右上角的搜索图标，打开搜索界面以进行后续搜索操作。",
-    "model_name": "doubao-1.5-thinking-vision-pro-250428",
-    "usage": {
-        "prompt_tokens": 2199,
-        "completion_tokens": 135,
-        "total_tokens": 2334
-    }
-}
-```
-
-### 16. ToolCall (工具调用)
+### 19. ToolCall (工具调用)
 
 AI规划中的工具调用信息：
 
 | 字段名 | 类型 | JSON标签 | 说明 |
 |--------|------|----------|------|
-| id | string | `id` | 工具调用唯一标识 |
-| type | string | `type` | 调用类型（通常为 "function"） |
-| function | Function | `function` | 函数调用详情 |
+| ID | string | `id` | 工具调用唯一标识 |
+| Type | string | `type` | 调用类型（通常为 "function"） |
+| Function | Function | `function` | 函数调用详情 |
 
-### 17. Function (函数调用)
-
-| 字段名 | 类型 | JSON标签 | 说明 |
-|--------|------|----------|------|
-| name | string | `name` | 函数名称（如 "uixt__tap_xy"） |
-| arguments | string | `arguments` | 函数参数（JSON字符串格式） |
-
-### 18. Usage (模型使用统计)
+### 20. Function (函数调用)
 
 | 字段名 | 类型 | JSON标签 | 说明 |
 |--------|------|----------|------|
-| prompt_tokens | int | `prompt_tokens` | 输入token数量 |
-| completion_tokens | int | `completion_tokens` | 输出token数量 |
-| total_tokens | int | `total_tokens` | 总token数量 |
+| Name | string | `name` | 函数名称（如 "uixt__tap_xy"） |
+| Arguments | string | `arguments` | 函数参数（JSON字符串格式） |
 
-### 19. Resolution (分辨率)
-
-| 字段名 | 类型 | JSON标签 | 说明 |
-|--------|------|----------|------|
-| width | int | `width` | 屏幕宽度（像素） |
-| height | int | `height` | 屏幕高度（像素） |
-
-### 20. ScreenResult (屏幕结果)
+### 21. TokenUsage (token使用统计)
 
 | 字段名 | 类型 | JSON标签 | 说明 |
 |--------|------|----------|------|
-| image_path | string | `image_path` | 截图文件路径 |
-| resolution | Resolution | `resolution` | 屏幕分辨率 |
-| uploaded_url | string | `uploaded_url` | 上传后的URL（通常为空） |
-| texts | []Text | `texts` | 识别的文本信息（可为null） |
-| icons | []Icon | `icons` | 识别的图标信息（可为null） |
-| tags | []Tag | `tags` | 识别的标签信息（可为null） |
+| PromptTokens | int | `prompt_tokens` | 输入token数量 |
+| CompletionTokens | int | `completion_tokens` | 输出token数量 |
+| TotalTokens | int | `total_tokens` | 总token数量 |
 
-### 21. SubAction (子操作)
+### 22. Size (分辨率)
+
+| 字段名 | 类型 | JSON标签 | 说明 |
+|--------|------|----------|------|
+| Width | int | `width` | 屏幕宽度（像素） |
+| Height | int | `height` | 屏幕高度（像素） |
+
+### 23. ScreenResult (屏幕结果)
+
+| 字段名 | 类型 | JSON标签 | 说明 |
+|--------|------|----------|------|
+| ImagePath | string | `image_path` | 截图文件路径 |
+| Resolution | Size | `resolution` | 屏幕分辨率 |
+| UploadedURL | string | `uploaded_url` | 上传后的URL（通常为空） |
+| Texts | []Text | `texts` | 识别的文本信息（可为null） |
+| Icons | []Icon | `icons` | 识别的图标信息（可为null） |
+| Tags | []Tag | `tags` | 识别的标签信息（可为null） |
+
+### 24. SubActionResult (子操作结果)
 
 规划中实际执行的具体操作：
 
 | 字段名 | 类型 | JSON标签 | 说明 |
 |--------|------|----------|------|
-| action_name | string | `action_name` | 操作名称（如 "uixt__tap_xy"） |
-| arguments | string | `arguments` | 操作参数（JSON字符串） |
-| start_time | int64 | `start_time` | 操作开始时间 |
-| elapsed_ms | int | `elapsed_ms` | 操作耗时 |
-| requests | []Request | `requests` | 相关的请求记录 |
-| screen_results | []ScreenResult | `screen_results` | 操作后的屏幕截图 |
+| ActionName | string | `action_name` | 操作名称（如 "uixt__tap_xy"） |
+| Arguments | interface{} | `arguments,omitempty` | 操作参数 |
+| StartTime | int64 | `start_time` | 操作开始时间 |
+| Elapsed | int64 | `elapsed_ms` | 操作耗时 |
+| Error | error | `error,omitempty` | 操作执行错误 |
+| SessionData | SessionData | - | 会话数据（内联） |
 
 **示例数据**:
 ```json
 {
     "action_name": "uixt__tap_xy",
-    "arguments": "{\"x\":1107.6,\"y\":232.4}",
+    "arguments": {"x": 1107.6, "y": 232.4},
     "start_time": 1750657286274,
     "elapsed_ms": 319,
     "requests": [ /* 请求记录 */ ],
@@ -412,26 +468,30 @@ AI规划中的工具调用信息：
 }
 ```
 
-### 22. Attachments (附件信息)
+## 重要架构变更说明
 
-步骤执行过程中产生的附件，主要是截图：
+### AI操作统一架构
 
-| 字段名 | 类型 | JSON标签 | 说明 |
-|--------|------|----------|------|
-| screen_results | []ScreenResult | `screen_results` | 屏幕截图列表 |
+HttpRunner v5 引入了统一的AI操作架构：
 
-## 数据类型层次关系
+1. **统一结果结构**: `AIExecutionResult` 作为所有AI操作的统一容器
+2. **类型区分**: 通过 `Type` 字段区分不同的AI操作类型
+3. **具体结果**: 根据操作类型，在对应的结果字段中存储具体数据
+4. **统一时间统计**: 所有AI操作都包含模型调用和截图的时间统计
+5. **统一错误处理**: 通过 `Error` 字段统一处理所有AI操作的错误
 
-### 时间戳格式
+### 数据类型和时间格式
+
+#### 时间戳格式
 - **Unix时间戳（毫秒）**: 用于 `start_time` 字段，如 `1750657267057`
 - **ISO时间格式**: 用于 `start_at` 和 `request_time` 字段，如 `"2025-06-23T13:41:06.150641+08:00"`
 
-### 耗时统计
-- **毫秒级**: `elapsed_ms`, `response_duration(ms)`, `screenshot_elapsed_ms`, `model_call_elapsed_ms`
+#### 耗时统计
+- **毫秒级**: `elapsed_ms`, `model_call_elapsed`, `screenshot_elapsed` 等
 - **秒级**: `duration` 字段使用浮点数表示秒
 
-### 状态标识
-- **布尔值**: `success`, `Success` 表示操作或测试是否成功
+#### 状态标识
+- **布尔值**: `success`, `pass` 表示操作或测试是否成功
 - **字符串**: `check_result` 使用 "pass"/"fail" 表示验证结果
 
-这个数据结构设计充分考虑了测试执行的各种场景，特别是UI自动化测试中的复杂交互和AI规划过程，为测试结果的分析和报告提供了完整的数据基础。通过详细的嵌套字段定义，开发者可以精确理解和使用每个数据元素，实现更强大的测试分析和报告功能。
+这个数据结构设计充分考虑了现代UI自动化测试的需求，特别是AI驱动的测试场景。通过统一的AI操作架构和详细的嵌套字段定义，为测试结果的分析、报告生成和调试提供了完整的数据基础。
