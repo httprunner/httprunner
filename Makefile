@@ -38,49 +38,6 @@ build: ## build hrp cli tool
 		-o output/hrp ./cmd/cli
 	./output/hrp -v
 
-.PHONY: build-windows
-build-windows: ## build hrp cli tool for Windows amd64
-	@echo "[info] build hrp cli tool for Windows amd64"
-	go mod tidy
-	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -tags netgo,osusergo -trimpath -ldflags "\
-		-s -w \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.GitCommit=$(shell git rev-parse HEAD)' \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.GitBranch=$(shell git rev-parse --abbrev-ref HEAD)' \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.GitAuthor=$(shell git log -1 --pretty=format:%an)' \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.BuildTime=$(shell date "+%y%m%d%H%M")'" \
-		-o output/hrp.exe ./cmd/cli
-	@echo "[info] Windows binary built successfully: output/hrp.exe"
-
-.PHONY: build-windows-arm64
-build-windows-arm64: ## build hrp cli tool for Windows arm64
-	@echo "[info] build hrp cli tool for Windows arm64"
-	go mod tidy
-	GOOS=windows GOARCH=arm64 CGO_ENABLED=0 go build -tags netgo,osusergo -trimpath -ldflags "\
-		-s -w \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.GitCommit=$(shell git rev-parse HEAD)' \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.GitBranch=$(shell git rev-parse --abbrev-ref HEAD)' \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.GitAuthor=$(shell git log -1 --pretty=format:%an)' \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.BuildTime=$(shell date "+%y%m%d%H%M")'" \
-		-o output/hrp_arm64.exe ./cmd/cli
-	@echo "[info] Windows ARM64 binary built successfully: output/hrp_arm64.exe"
-
-.PHONY: build-linux
-build-linux: ## build hrp cli tool for Linux amd64
-	@echo "[info] build hrp cli tool for Linux amd64"
-	go mod tidy
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags netgo,osusergo -trimpath -ldflags "\
-		-s -w \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.GitCommit=$(shell git rev-parse HEAD)' \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.GitBranch=$(shell git rev-parse --abbrev-ref HEAD)' \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.GitAuthor=$(shell git log -1 --pretty=format:%an)' \
-		-X 'github.com/httprunner/httprunner/v5/internal/version.BuildTime=$(shell date "+%y%m%d%H%M")'" \
-		-o output/hrp_linux ./cmd/cli
-	@echo "[info] Linux binary built successfully: output/hrp_linux"
-
-.PHONY: build-all
-build-all: build build-windows build-windows-arm64 build-linux ## build hrp cli tool for all platforms
-	@echo "[info] All binaries built successfully"
-
 .PHONY: install-hooks
 install-hooks: ## install git hooks
 	@find scripts -name "install-*-hook" | awk -F'-' '{s=$$2;for(i=3;i<NF;i++){s=s"-"$$i;}print s;}' | while read f; do bash "scripts/install-$$f-hook"; done
