@@ -87,7 +87,6 @@ func loadTestImage(t *testing.T, path string) (string, types.Size) {
 }
 
 // Test functions
-
 func TestParseQueryResult(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -130,7 +129,7 @@ func TestParseQueryResult(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := parseQueryResult(tt.content)
+			result, err := parseQueryResult(tt.content, option.DOUBAO_1_5_UI_TARS_250328)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected.Content, result.Content)
 			assert.Equal(t, tt.expected.Thought, result.Thought)

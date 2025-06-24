@@ -155,8 +155,6 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 		ScreenshotElapsed: screenshotElapsed,
 		ImagePath:         screenResult.ImagePath,
 		Resolution:        &screenResult.Resolution,
-		ModelName:         planningResult.ModelName,
-		Usage:             planningResult.Usage,
 		PlanningResult:    &planningResult.PlanningResult,
 		Thought:           planningResult.Thought,
 		Content:           planningResult.Content,
@@ -331,13 +329,11 @@ type PlanningExecutionResult struct {
 
 // AIExecutionResult represents a unified result structure for all AI operations
 type AIExecutionResult struct {
-	Type              string             `json:"type"`               // operation type: "query", "action", "assert"
-	ModelCallElapsed  int64              `json:"model_call_elapsed"` // model call elapsed time in milliseconds
-	ScreenshotElapsed int64              `json:"screenshot_elapsed"` // screenshot elapsed time in milliseconds
-	ImagePath         string             `json:"image_path"`         // path to screenshot used for operation
-	Resolution        *types.Size        `json:"resolution"`         // screen resolution
-	ModelName         string             `json:"model_name"`         // model name used for operation
-	Usage             *schema.TokenUsage `json:"usage,omitempty"`    // token usage statistics
+	Type              string      `json:"type"`               // operation type: "query", "action", "assert"
+	ModelCallElapsed  int64       `json:"model_call_elapsed"` // model call elapsed time in milliseconds
+	ScreenshotElapsed int64       `json:"screenshot_elapsed"` // screenshot elapsed time in milliseconds
+	ImagePath         string      `json:"image_path"`         // path to screenshot used for operation
+	Resolution        *types.Size `json:"resolution"`         // screen resolution
 
 	// Operation-specific results (only one will be populated based on Type)
 	QueryResult     *ai.QueryResult     `json:"query_result,omitempty"`     // for ai_query operations

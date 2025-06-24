@@ -30,8 +30,10 @@ type AssertOptions struct {
 
 // AssertionResult represents the response from an AI assertion
 type AssertionResult struct {
-	Pass    bool   `json:"pass"`
-	Thought string `json:"thought"`
+	Pass      bool               `json:"pass"`
+	Thought   string             `json:"thought"`
+	ModelName string             `json:"model_name"`      // model name used for assertion
+	Usage     *schema.TokenUsage `json:"usage,omitempty"` // token usage statistics
 }
 
 // Asserter handles assertion using different AI models
@@ -85,7 +87,7 @@ func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, erro
 }
 
 // Assert performs the assertion check on the screenshot
-func (a *Asserter) Assert(ctx context.Context, opts *AssertOptions) (*AssertionResult, error) {
+func (a *Asserter) Assert(ctx context.Context, opts *AssertOptions) (result *AssertionResult, err error) {
 	// Validate input parameters
 	if err := validateAssertionInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate assertion parameters failed")
@@ -132,8 +134,15 @@ Here is the assertion. Please tell whether it is truthy according to the screens
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
 
+	defer func() {
+		// Extract usage information if available
+		if message.ResponseMeta != nil && message.ResponseMeta.Usage != nil {
+			result.Usage = message.ResponseMeta.Usage
+		}
+	}()
+
 	// Parse result
-	result, err := parseAssertionResult(message.Content)
+	result, err = parseAssertionResult(message.Content, a.modelConfig.ModelType)
 	if err != nil {
 		return nil, errors.Wrap(code.LLMParseAssertionResponseError, err.Error())
 	}
@@ -159,7 +168,7 @@ func validateAssertionInput(opts *AssertOptions) error {
 }
 
 // parseAssertionResult parses the model response into AssertionResponse
-func parseAssertionResult(content string) (*AssertionResult, error) {
+func parseAssertionResult(content string, modelType option.LLMServiceType) (*AssertionResult, error) {
 	var result AssertionResult
 
 	// Use the generic structured response parser
@@ -170,5 +179,6 @@ func parseAssertionResult(content string) (*AssertionResult, error) {
 		return nil, errors.Wrap(code.LLMParseAssertionResponseError, err.Error())
 	}
 
+	result.ModelName = string(modelType)
 	return &result, nil
 }

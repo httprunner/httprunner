@@ -417,16 +417,53 @@ func (g *HTMLReportGenerator) calculateTotalUsage() map[string]interface{} {
 				continue
 			}
 			for _, action := range step.Actions {
-				if action.Plannings == nil {
-					continue
-				}
-				for _, planning := range action.Plannings {
-					if planning.Usage == nil {
-						continue
+				// Calculate planning usage
+				if action.Plannings != nil {
+					for _, planning := range action.Plannings {
+						if planning.Usage != nil {
+							totalUsage["prompt_tokens"] = totalUsage["prompt_tokens"].(int) + planning.Usage.PromptTokens
+							totalUsage["completion_tokens"] = totalUsage["completion_tokens"].(int) + planning.Usage.CompletionTokens
+							totalUsage["total_tokens"] = totalUsage["total_tokens"].(int) + planning.Usage.TotalTokens
+						}
 					}
-					totalUsage["prompt_tokens"] = totalUsage["prompt_tokens"].(int) + planning.Usage.PromptTokens
-					totalUsage["completion_tokens"] = totalUsage["completion_tokens"].(int) + planning.Usage.CompletionTokens
-					totalUsage["total_tokens"] = totalUsage["total_tokens"].(int) + planning.Usage.TotalTokens
+				}
+
+				// Calculate AI operations usage (ai_query, ai_action, ai_assert)
+				if action.AIResult != nil {
+					var usage *map[string]interface{}
+
+					switch action.AIResult.Type {
+					case "query":
+						if action.AIResult.QueryResult != nil && action.AIResult.QueryResult.Usage != nil {
+							usage = &map[string]interface{}{
+								"prompt_tokens":     action.AIResult.QueryResult.Usage.PromptTokens,
+								"completion_tokens": action.AIResult.QueryResult.Usage.CompletionTokens,
+								"total_tokens":      action.AIResult.QueryResult.Usage.TotalTokens,
+							}
+						}
+					case "action":
+						if action.AIResult.PlanningResult != nil && action.AIResult.PlanningResult.Usage != nil {
+							usage = &map[string]interface{}{
+								"prompt_tokens":     action.AIResult.PlanningResult.Usage.PromptTokens,
+								"completion_tokens": action.AIResult.PlanningResult.Usage.CompletionTokens,
+								"total_tokens":      action.AIResult.PlanningResult.Usage.TotalTokens,
+							}
+						}
+					case "assert":
+						if action.AIResult.AssertionResult != nil && action.AIResult.AssertionResult.Usage != nil {
+							usage = &map[string]interface{}{
+								"prompt_tokens":     action.AIResult.AssertionResult.Usage.PromptTokens,
+								"completion_tokens": action.AIResult.AssertionResult.Usage.CompletionTokens,
+								"total_tokens":      action.AIResult.AssertionResult.Usage.TotalTokens,
+							}
+						}
+					}
+
+					if usage != nil {
+						totalUsage["prompt_tokens"] = totalUsage["prompt_tokens"].(int) + (*usage)["prompt_tokens"].(int)
+						totalUsage["completion_tokens"] = totalUsage["completion_tokens"].(int) + (*usage)["completion_tokens"].(int)
+						totalUsage["total_tokens"] = totalUsage["total_tokens"].(int) + (*usage)["total_tokens"].(int)
+					}
 				}
 			}
 		}
@@ -1316,6 +1353,21 @@ const htmlTemplate = `<!DOCTYPE html>
             margin: 6px 0;
             font-size: 0.85em;
             color: #495057;
+        }
+
+        .structured-data {
+            background: #f8f9fa;
+            border: 1px solid #28a745;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin: 8px 0;
+            font-size: 0.85em;
+            color: #495057;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         @media screen and (max-width: 768px) {
@@ -2431,14 +2483,36 @@ const htmlTemplate = `<!DOCTYPE html>
                                                         {{end}}
                                                     </div>
                                                     <div class="validator-ai-details">
-                                                        {{if $action.AIResult.ModelName}}
-                                                        <div class="model-info">🤖 Model: {{$action.AIResult.ModelName}}</div>
+                                                        {{/* Model name and usage from specific result types */}}
+                                                        {{if eq $action.AIResult.Type "query"}}
+                                                            {{if $action.AIResult.QueryResult.ModelName}}
+                                                                <div class="model-info">🤖 Model: {{$action.AIResult.QueryResult.ModelName}}</div>
+                                                            {{end}}
+                                                            {{if $action.AIResult.QueryResult.Usage}}
+                                                                <div class="usage-info">📊 Tokens: {{$action.AIResult.QueryResult.Usage.PromptTokens}} in / {{$action.AIResult.QueryResult.Usage.CompletionTokens}} out / {{$action.AIResult.QueryResult.Usage.TotalTokens}} total</div>
+                                                            {{end}}
+                                                            {{/* Display structured data for query results */}}
+                                                            {{if $action.AIResult.QueryResult.Data}}
+                                                                <div class="model-info">📥 Structured Data:</div>
+                                                                <div class="structured-data">{{safeHTML (toJSON $action.AIResult.QueryResult.Data)}}</div>
+                                                            {{end}}
+                                                        {{else if eq $action.AIResult.Type "action"}}
+                                                            {{if $action.AIResult.PlanningResult.ModelName}}
+                                                                <div class="model-info">🤖 Model: {{$action.AIResult.PlanningResult.ModelName}}</div>
+                                                            {{end}}
+                                                            {{if $action.AIResult.PlanningResult.Usage}}
+                                                                <div class="usage-info">📊 Tokens: {{$action.AIResult.PlanningResult.Usage.PromptTokens}} in / {{$action.AIResult.PlanningResult.Usage.CompletionTokens}} out / {{$action.AIResult.PlanningResult.Usage.TotalTokens}} total</div>
+                                                            {{end}}
+                                                        {{else if eq $action.AIResult.Type "assert"}}
+                                                            {{if $action.AIResult.AssertionResult.ModelName}}
+                                                                <div class="model-info">🤖 Model: {{$action.AIResult.AssertionResult.ModelName}}</div>
+                                                            {{end}}
+                                                            {{if $action.AIResult.AssertionResult.Usage}}
+                                                                <div class="usage-info">📊 Tokens: {{$action.AIResult.AssertionResult.Usage.PromptTokens}} in / {{$action.AIResult.AssertionResult.Usage.CompletionTokens}} out / {{$action.AIResult.AssertionResult.Usage.TotalTokens}} total</div>
+                                                            {{end}}
                                                         {{end}}
                                                         {{if $action.AIResult.Resolution}}
                                                         <div class="model-info">📐 Resolution: {{$action.AIResult.Resolution.Width}}x{{$action.AIResult.Resolution.Height}}</div>
-                                                        {{end}}
-                                                        {{if $action.AIResult.Usage}}
-                                                        <div class="usage-info">📊 Tokens: {{$action.AIResult.Usage.PromptTokens}} in / {{$action.AIResult.Usage.CompletionTokens}} out / {{$action.AIResult.Usage.TotalTokens}} total</div>
                                                         {{end}}
                                                         {{if $action.AIResult.Content}}
                                                         <div class="model-info">💬 {{title $action.AIResult.Type}} Result: {{$action.AIResult.Content}}</div>
@@ -2495,9 +2569,6 @@ const htmlTemplate = `<!DOCTYPE html>
                                                 <div class="screenshot-item small">
                                                     <div class="screenshot-info">
                                                         <span class="filename">{{base $screenshot.ImagePath}}</span>
-                                                        {{if $screenshot.Resolution}}
-                                                        <span class="resolution">{{$screenshot.Resolution.Width}}x{{$screenshot.Resolution.Height}}</span>
-                                                        {{end}}
                                                     </div>
                                                     <div class="screenshot-image">
                                                         <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Screenshot" onclick="openImageModal(this.src)" />
@@ -2560,12 +2631,6 @@ const htmlTemplate = `<!DOCTYPE html>
                                 <div class="screenshot-item">
                                     <div class="screenshot-info">
                                         <span class="filename">{{base $imagePath}}</span>
-                                        {{if $screenshot.Resolution}}
-                                        <span class="resolution">{{$screenshot.Resolution.Width}}x{{$screenshot.Resolution.Height}}</span>
-                                        {{else if index $screenshot "resolution"}}
-                                        {{$resolution := index $screenshot "resolution"}}
-                                        <span class="resolution">{{index $resolution "width"}}x{{index $resolution "height"}}</span>
-                                        {{end}}
                                     </div>
                                     <div class="screenshot-image">
                                         <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Screenshot" onclick="openImageModal(this.src)" />

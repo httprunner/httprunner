@@ -136,7 +136,7 @@ func TestParseAssertionResult(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := parseAssertionResult(tt.input)
+			result, err := parseAssertionResult(tt.input, option.DOUBAO_1_5_UI_TARS_250328)
 			if tt.shouldSucceed {
 				require.NoError(t, err)
 				assert.NotNil(t, result)
