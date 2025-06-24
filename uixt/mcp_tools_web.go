@@ -133,6 +133,8 @@ func (t *ToolSecondaryClick) ConvertActionToCallToolRequest(action option.Mobile
 			"x": params[0],
 			"y": params[1],
 		}
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
 		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click params: %v", action.Params)
@@ -168,9 +170,11 @@ func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
 		if err != nil {
 			return nil, err
 		}
+		// Get options directly since ActionOptions is now ActionOptions
+		opts := unifiedReq.Options()
 
 		// Hover by selector action logic
-		err = driverExt.HoverBySelector(unifiedReq.Selector)
+		err = driverExt.HoverBySelector(unifiedReq.Selector, opts...)
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("Hover by selector failed: %s", err.Error())), nil
 		}
@@ -187,6 +191,8 @@ func (t *ToolHoverBySelector) ConvertActionToCallToolRequest(action option.Mobil
 		arguments := map[string]any{
 			"selector": selector,
 		}
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
 		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid hover by selector params: %v", action.Params)
@@ -222,9 +228,11 @@ func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 		if err != nil {
 			return nil, err
 		}
+		// Get options directly since ActionOptions is now ActionOptions
+		opts := unifiedReq.Options()
 
 		// Tap by selector action logic
-		err = driverExt.TapBySelector(unifiedReq.Selector, option.WithIndex(unifiedReq.Index))
+		err = driverExt.TapBySelector(unifiedReq.Selector, opts...)
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("Tap by selector failed: %s", err.Error())), nil
 		}
@@ -278,9 +286,11 @@ func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
 		if err != nil {
 			return nil, err
 		}
+		// Get options directly since ActionOptions is now ActionOptions
+		opts := unifiedReq.Options()
 
 		// Secondary click by selector action logic
-		err = driverExt.SecondaryClickBySelector(unifiedReq.Selector)
+		err = driverExt.SecondaryClickBySelector(unifiedReq.Selector, opts...)
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("Secondary click by selector failed: %s", err.Error())), nil
 		}
@@ -297,6 +307,8 @@ func (t *ToolSecondaryClickBySelector) ConvertActionToCallToolRequest(action opt
 		arguments := map[string]any{
 			"selector": selector,
 		}
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
 		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click by selector params: %v", action.Params)
@@ -371,5 +383,7 @@ func (t *ToolWebCloseTab) ConvertActionToCallToolRequest(action option.MobileAct
 	arguments := map[string]any{
 		"tabIndex": tabIndex,
 	}
+	// Extract options to arguments
+	extractActionOptionsToArguments(action.GetOptions(), arguments)
 	return BuildMCPCallToolRequest(t.Name(), arguments), nil
 }
