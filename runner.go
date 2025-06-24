@@ -865,23 +865,9 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 
 	var stepResults []*StepResult
 
-	// execute with loops as outer iteration
-	for _, task := range tasks {
-		// execute step with merged variables
-		stepResult, err := r.executeStepWithVariables(step, task.stepName, task.parameters)
-		if err != nil {
-			if r.caseRunner.hrpRunner.failfast {
-				return nil, errors.Wrap(err, "execute step failed")
-			}
-			log.Error().Err(err).Str("step", task.stepName).Msg("execute step failed")
-		}
-
-		stepResults = append(stepResults, stepResult)
-	}
-
-	// return the last step result, or nil if no steps were executed
-	if len(stepResults) > 0 {
-		// add all step results to summary
+	// defer to save results regardless of how the function exits
+	defer func() {
+		// Save all completed results to summary
 		for _, result := range stepResults {
 			r.summary.AddStepResult(result)
 			// update extracted variables from the last result
@@ -891,22 +877,54 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 		}
 
 		// log final result
-		lastResult := stepResults[len(stepResults)-1]
-		if lastResult.Success {
+		if err == nil && stepResult.Success {
 			log.Info().Str("step", stepName).
 				Str("type", stepType).
 				Bool("success", true).
-				Int64("elapsed(ms)", lastResult.Elapsed).
-				Interface("exportVars", lastResult.ExportVars).
+				Int64("elapsed(ms)", stepResult.Elapsed).
+				Interface("exportVars", stepResult.ExportVars).
 				Msg(RUN_STEP_END)
-		} else {
+		} else if stepResult != nil {
 			log.Error().Str("step", stepName).
 				Str("type", stepType).
 				Bool("success", false).
-				Int64("elapsed(ms)", lastResult.Elapsed).
+				Int64("elapsed(ms)", stepResult.Elapsed).
+				Int("completed_tasks", len(stepResults)).
+				Int("total_tasks", len(tasks)).
 				Msg(RUN_STEP_END)
 		}
+	}()
 
+	// execute with loops as outer iteration
+	for _, task := range tasks {
+		// Check for interrupt signal before each parameter iteration
+		select {
+		case <-r.caseRunner.hrpRunner.interruptSignal:
+			log.Warn().Int("completed_tasks", len(stepResults)).
+				Int("total_tasks", len(tasks)).
+				Msg("interrupted during parameter iteration")
+			return nil, errors.Wrap(code.InterruptError, "parameter iteration interrupted")
+		default:
+		}
+
+		// execute step with merged variables
+		stepResult, stepErr := r.executeStepWithVariables(step, task.stepName, task.parameters)
+		if stepErr != nil {
+			if r.caseRunner.hrpRunner.failfast {
+				// failfast mode, abort running
+				return nil, errors.Wrap(stepErr, "execute step failed")
+			}
+			log.Error().Err(stepErr).Str("step", task.stepName).Msg("execute step failed")
+		}
+
+		if stepResult != nil {
+			stepResults = append(stepResults, stepResult)
+		}
+	}
+
+	// return last result
+	if len(stepResults) > 0 {
+		lastResult := stepResults[len(stepResults)-1]
 		return lastResult, nil
 	}
 
