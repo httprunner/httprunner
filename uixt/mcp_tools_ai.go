@@ -102,7 +102,7 @@ func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
 		}
 
 		// AI action logic
-		err = driverExt.AIAction(ctx, unifiedReq.Prompt)
+		_, err = driverExt.AIAction(ctx, unifiedReq.Prompt)
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("AI action failed: %s", err.Error())), nil
 		}

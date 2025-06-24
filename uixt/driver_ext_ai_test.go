@@ -15,10 +15,10 @@ import (
 
 func TestDriverExt_TapByLLM(t *testing.T) {
 	driver := setupDriverExt(t)
-	err := driver.AIAction(context.Background(), "点击第一个帖子的作者头像")
+	_, err := driver.AIAction(context.Background(), "点击第一个帖子的作者头像")
 	assert.Nil(t, err)
 
-	err = driver.AIAssert("当前在个人介绍页")
+	_, err = driver.AIAssert("当前在个人介绍页")
 	assert.Nil(t, err)
 }
 

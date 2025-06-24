@@ -935,7 +935,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				}
 			}()
 
-			// handle start_to_goal action
+			// handle start_to_goal AI action
 			if action.Method == option.ACTION_StartToGoal {
 				planningResults, err := uiDriver.StartToGoal(ctx,
 					action.Params.(string), action.GetOptions()...)
@@ -952,12 +952,23 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				continue
 			}
 
-			// handle ai_query action
-			if action.Method == option.ACTION_Query {
-				queryResult, err := uiDriver.AIQuery(
-					action.Params.(string), action.GetOptions()...)
+			// handle AI operations (ai_action, ai_query, ai_assert) with unified result storage
+			if action.Method == option.ACTION_AIAction || action.Method == option.ACTION_Query || action.Method == option.ACTION_AIAssert {
+				var aiResult *uixt.AIExecutionResult
+				var err error
+
+				prompt := action.Params.(string)
+				switch action.Method {
+				case option.ACTION_AIAction:
+					aiResult, err = uiDriver.AIAction(ctx, prompt, action.GetOptions()...)
+				case option.ACTION_Query:
+					aiResult, err = uiDriver.AIQuery(prompt, action.GetOptions()...)
+				case option.ACTION_AIAssert:
+					aiResult, err = uiDriver.AIAssert(prompt, action.GetOptions()...)
+				}
+
 				actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
-				actionResult.QueryResult = queryResult
+				actionResult.AIResult = aiResult
 				stepResult.Actions = append(stepResult.Actions, actionResult)
 				if err != nil {
 					actionResult.Error = err.Error()
@@ -969,7 +980,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				continue
 			}
 
-			// handle other actions
+			// handle other non-AI actions
 			sessionData, err := uiDriver.ExecuteAction(ctx, action)
 			actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
 			actionResult.SessionData = sessionData

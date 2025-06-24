@@ -491,6 +491,12 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 		"add":   func(a, b int) int { return a + b },
 		"base":  filepath.Base,
 		"index": func(m map[string]any, key string) any { return m[key] },
+		"title": func(s string) string {
+			if s == "" {
+				return ""
+			}
+			return strings.ToUpper(s[:1]) + s[1:]
+		},
 		"extractThought": func(content string) string {
 			if content == "" {
 				return ""
@@ -2379,34 +2385,34 @@ const htmlTemplate = `<!DOCTYPE html>
                                     {{end}}
                                 {{end}}
 
-                                {{/* Enhanced AI Query Display - using QueryResult data structure */}}
-                                {{if eq $action.Method "ai_query"}}
-                                {{if $action.QueryResult}}
+                                {{/* Enhanced AI Operations Display - using unified AIResult data structure */}}
+                                {{if or (eq $action.Method "ai_query") (eq $action.Method "ai_action") (eq $action.Method "ai_assert")}}
+                                {{if $action.AIResult}}
                                 <div class="sub-action-item">
                                     <div class="validator-ai-content">
                                         <!-- Display AI Thought -->
-                                        {{if $action.QueryResult.Thought}}
-                                        <div class="thought">{{$action.QueryResult.Thought}}</div>
+                                        {{if $action.AIResult.Thought}}
+                                        <div class="thought">{{$action.AIResult.Thought}}</div>
                                         {{end}}
 
-                                        <!-- AI Query Layout: Screenshot left, Analysis right -->
+                                        <!-- AI Operation Layout: Screenshot left, Analysis right -->
                                         <div class="validator-ai-layout">
                                             <!-- Left column: Screenshot -->
-                                            {{if $action.QueryResult.ImagePath}}
+                                            {{if $action.AIResult.ImagePath}}
                                             <div class="validator-column-screenshot">
                                                 <div class="validator-step-compact">
                                                     <div class="step-header-compact">
-                                                        <span class="step-name">📸 Query Screenshot</span>
-                                                        {{if $action.QueryResult.ScreenshotElapsed}}
-                                                        <span class="duration">{{formatDuration $action.QueryResult.ScreenshotElapsed}}</span>
+                                                        <span class="step-name">📸 {{title $action.AIResult.Type}} Screenshot</span>
+                                                        {{if $action.AIResult.ScreenshotElapsed}}
+                                                        <span class="duration">{{formatDuration $action.AIResult.ScreenshotElapsed}}</span>
                                                         {{end}}
                                                     </div>
                                                     <div class="screenshot-display">
-                                                        {{$base64Image := encodeImageBase64 $action.QueryResult.ImagePath}}
+                                                        {{$base64Image := encodeImageBase64 $action.AIResult.ImagePath}}
                                                         {{if $base64Image}}
                                                         <div class="screenshot-item-compact">
                                                             <div class="screenshot-image">
-                                                                <img src="data:image/jpeg;base64,{{$base64Image}}" alt="AI Query Screenshot" onclick="openImageModal(this.src)" />
+                                                                <img src="data:image/jpeg;base64,{{$base64Image}}" alt="AI {{title $action.AIResult.Type}} Screenshot" onclick="openImageModal(this.src)" />
                                                             </div>
                                                         </div>
                                                         {{end}}
@@ -2415,30 +2421,27 @@ const htmlTemplate = `<!DOCTYPE html>
                                             </div>
                                             {{end}}
 
-                                            <!-- Right column: AI Query Analysis -->
+                                            <!-- Right column: AI Analysis -->
                                             <div class="validator-column-analysis">
                                                 <div class="validator-step-compact">
                                                     <div class="step-header-compact">
-                                                        <span class="step-name">🤖 AI Query Analysis</span>
-                                                        {{if $action.QueryResult.ModelCallElapsed}}
-                                                        <span class="duration">{{formatDuration $action.QueryResult.ModelCallElapsed}}</span>
+                                                        <span class="step-name">🤖 AI {{title $action.AIResult.Type}} Analysis</span>
+                                                        {{if $action.AIResult.ModelCallElapsed}}
+                                                        <span class="duration">{{formatDuration $action.AIResult.ModelCallElapsed}}</span>
                                                         {{end}}
                                                     </div>
                                                     <div class="validator-ai-details">
-                                                        {{if $action.QueryResult.ModelName}}
-                                                        <div class="model-info">🤖 Model: {{$action.QueryResult.ModelName}}</div>
+                                                        {{if $action.AIResult.ModelName}}
+                                                        <div class="model-info">🤖 Model: {{$action.AIResult.ModelName}}</div>
                                                         {{end}}
-                                                        {{if $action.QueryResult.Resolution}}
-                                                        <div class="model-info">📐 Resolution: {{$action.QueryResult.Resolution.Width}}x{{$action.QueryResult.Resolution.Height}}</div>
+                                                        {{if $action.AIResult.Resolution}}
+                                                        <div class="model-info">📐 Resolution: {{$action.AIResult.Resolution.Width}}x{{$action.AIResult.Resolution.Height}}</div>
                                                         {{end}}
-                                                        {{if $action.QueryResult.Usage}}
-                                                        <div class="usage-info">📊 Tokens: {{$action.QueryResult.Usage.PromptTokens}} in / {{$action.QueryResult.Usage.CompletionTokens}} out / {{$action.QueryResult.Usage.TotalTokens}} total</div>
+                                                        {{if $action.AIResult.Usage}}
+                                                        <div class="usage-info">📊 Tokens: {{$action.AIResult.Usage.PromptTokens}} in / {{$action.AIResult.Usage.CompletionTokens}} out / {{$action.AIResult.Usage.TotalTokens}} total</div>
                                                         {{end}}
-                                                        {{if $action.QueryResult.Content}}
-                                                        <div class="model-info">💬 Query Result: {{$action.QueryResult.Content}}</div>
-                                                        {{end}}
-                                                        {{if $action.QueryResult.Error}}
-                                                        <div class="model-info" style="color: #dc3545;">❌ Error: {{$action.QueryResult.Error}}</div>
+                                                        {{if $action.AIResult.Content}}
+                                                        <div class="model-info">💬 {{title $action.AIResult.Type}} Result: {{$action.AIResult.Content}}</div>
                                                         {{end}}
                                                     </div>
                                                 </div>
@@ -2530,84 +2533,6 @@ const htmlTemplate = `<!DOCTYPE html>
                                 <div class="validator-expect">Expected: {{$validator.expect}}</div>
                                 {{if and $validator.msg (ne $validator.check_result "pass")}}
                                     <div class="validator-message">{{$validator.msg}}</div>
-                                {{end}}
-
-                                <!-- Enhanced AI Validator Display -->
-                                {{if or (eq $validator.check "ui_ai") (eq $validator.assert "ai_assert")}}
-                                <div class="validator-ai-content">
-                                    <!-- Extract AI validation details from step logs -->
-                                    {{$stepLogs := getStepLogs $step}}
-                                    {{$validationThought := ""}}
-                                    {{$validationModel := ""}}
-                                    {{$validationUsage := ""}}
-                                    {{$validationScreenshot := ""}}
-                                    {{range $logEntry := $stepLogs}}
-                                        {{if and (eq $logEntry.Message "log response message") (index $logEntry.Fields "content")}}
-                                            {{$content := index $logEntry.Fields "content"}}
-                                            {{if $content}}
-                                                {{$validationThought = $content}}
-                                            {{end}}
-                                        {{end}}
-                                        {{if and (eq $logEntry.Message "call model service for assertion") (index $logEntry.Fields "model")}}
-                                            {{$validationModel = index $logEntry.Fields "model"}}
-                                        {{end}}
-                                        {{if and (eq $logEntry.Message "usage statistics") (index $logEntry.Fields "input_tokens")}}
-                                            {{$inputTokens := index $logEntry.Fields "input_tokens"}}
-                                            {{$outputTokens := index $logEntry.Fields "output_tokens"}}
-                                            {{$totalTokens := index $logEntry.Fields "total_tokens"}}
-                                            {{$validationUsage = printf "📊 Tokens: %v in / %v out / %v total" $inputTokens $outputTokens $totalTokens}}
-                                        {{end}}
-                                        {{if and (eq $logEntry.Message "log screenshot") (index $logEntry.Fields "imagePath")}}
-                                            {{$validationScreenshot = index $logEntry.Fields "imagePath"}}
-                                        {{end}}
-                                    {{end}}
-
-                                    <!-- Display AI Thought at the top, same as planning -->
-                                    {{if $validationThought}}
-                                    <div class="thought">{{extractThought $validationThought}}</div>
-                                    {{end}}
-
-                                    <!-- AI Validation Layout - similar to planning layout -->
-                                    <div class="validator-ai-layout">
-                                        <!-- Left column: Screenshot -->
-                                        {{if $validationScreenshot}}
-                                        <div class="validator-column-screenshot">
-                                            <div class="validator-step-compact">
-                                                <div class="step-header-compact">
-                                                    <span class="step-name">📸 Validation Screenshot</span>
-                                                </div>
-                                                <div class="screenshot-display">
-                                                    {{$base64Image := encodeImageBase64 $validationScreenshot}}
-                                                    {{if $base64Image}}
-                                                    <div class="screenshot-item-compact">
-                                                        <div class="screenshot-image">
-                                                            <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Validation Screenshot" onclick="openImageModal(this.src)" />
-                                                        </div>
-                                                    </div>
-                                                    {{end}}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {{end}}
-
-                                        <!-- Right column: AI Analysis -->
-                                        <div class="validator-column-analysis">
-                                            <div class="validator-step-compact">
-                                                <div class="step-header-compact">
-                                                    <span class="step-name">🤖 AI Analysis</span>
-                                                </div>
-                                                <div class="validator-ai-details">
-                                                    {{if $validationModel}}
-                                                    <div class="model-info">🤖 Model: {{$validationModel}}</div>
-                                                    {{end}}
-                                                    {{if $validationUsage}}
-                                                    <div class="usage-info">{{$validationUsage}}</div>
-                                                    {{end}}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                                 {{end}}
                             </div>
                             {{end}}

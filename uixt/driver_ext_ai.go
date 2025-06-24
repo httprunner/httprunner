@@ -131,24 +131,52 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 	}
 }
 
-func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...option.ActionOption) error {
+// AIAction performs AI-driven action and returns detailed execution result
+func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...option.ActionOption) (*AIExecutionResult, error) {
 	log.Info().Str("prompt", prompt).Msg("performing AI action")
 
-	// plan next action
-	planningResult, err := dExt.PlanNextAction(ctx, prompt, opts...)
+	// Step 1: Take screenshot and measure time
+	screenshotStartTime := time.Now()
+	screenResult, err := dExt.createScreenshotWithSession(
+		option.WithScreenShotFileName(builtin.GenNameWithTimestamp("%d_screenshot")),
+	)
+	screenshotElapsed := time.Since(screenshotStartTime).Milliseconds()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// Invoke tool calls
+	// Step 2: Plan next action and measure time
+	modelCallStartTime := time.Now()
+	planningResult, err := dExt.PlanNextAction(ctx, prompt, opts...)
+	modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
+	aiExecutionResult := &AIExecutionResult{
+		Type:              "action",
+		ModelCallElapsed:  modelCallElapsed,
+		ScreenshotElapsed: screenshotElapsed,
+		ImagePath:         screenResult.ImagePath,
+		Resolution:        &screenResult.Resolution,
+		ModelName:         planningResult.ModelName,
+		Usage:             planningResult.Usage,
+		PlanningResult:    &planningResult.PlanningResult,
+		Thought:           planningResult.Thought,
+		Content:           planningResult.Content,
+	}
+
+	if err != nil {
+		aiExecutionResult.Error = err.Error()
+		return aiExecutionResult, errors.Wrap(err, "get next action failed")
+	}
+
+	// Step 3: Execute tool calls
 	for _, toolCall := range planningResult.ToolCalls {
 		err = dExt.invokeToolCall(ctx, toolCall)
 		if err != nil {
-			return err
+			aiExecutionResult.Error = err.Error()
+			return aiExecutionResult, errors.Wrap(err, "invoke tool call failed")
 		}
 	}
 
-	return nil
+	return aiExecutionResult, nil
 }
 
 // PlanNextAction performs planning and returns unified planning information
@@ -301,15 +329,25 @@ type PlanningExecutionResult struct {
 	SubActions []*SubActionResult `json:"sub_actions,omitempty"` // sub-actions generated from this planning
 }
 
-// QueryExecutionResult contains the result of AI query execution with timing and metadata
-type QueryExecutionResult struct {
-	ai.QueryResult                       // inherit from ai.QueryResult
+// AIExecutionResult represents a unified result structure for all AI operations
+type AIExecutionResult struct {
+	Type              string             `json:"type"`               // operation type: "query", "action", "assert"
 	ModelCallElapsed  int64              `json:"model_call_elapsed"` // model call elapsed time in milliseconds
 	ScreenshotElapsed int64              `json:"screenshot_elapsed"` // screenshot elapsed time in milliseconds
-	ImagePath         string             `json:"image_path"`         // path to screenshot used for query
+	ImagePath         string             `json:"image_path"`         // path to screenshot used for operation
 	Resolution        *types.Size        `json:"resolution"`         // screen resolution
-	ModelName         string             `json:"model_name"`         // model name used for query
+	ModelName         string             `json:"model_name"`         // model name used for operation
 	Usage             *schema.TokenUsage `json:"usage,omitempty"`    // token usage statistics
+
+	// Operation-specific results (only one will be populated based on Type)
+	QueryResult     *ai.QueryResult     `json:"query_result,omitempty"`     // for ai_query operations
+	PlanningResult  *ai.PlanningResult  `json:"planning_result,omitempty"`  // for ai_action operations
+	AssertionResult *ai.AssertionResult `json:"assertion_result,omitempty"` // for ai_assert operations
+
+	// Common fields
+	Thought string `json:"thought,omitempty"` // AI reasoning/thought process
+	Content string `json:"content,omitempty"` // operation result content
+	Error   string `json:"error,omitempty"`   // error message if operation failed
 }
 
 // SubActionResult represents a sub-action within a start_to_goal action
@@ -327,7 +365,7 @@ type SessionData struct {
 	ScreenResults []*ScreenResult   `json:"screen_results,omitempty"` // store sub-action specific screen_results
 }
 
-func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*QueryExecutionResult, error) {
+func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*AIExecutionResult, error) {
 	if dExt.LLMService == nil {
 		return nil, errors.New("LLM service is not initialized")
 	}
@@ -366,41 +404,77 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*QueryE
 		return nil, errors.Wrap(err, "AI query failed")
 	}
 
-	// Create QueryExecutionResult with all timing and metadata
-	queryExecResult := &QueryExecutionResult{
-		QueryResult:       *result,                  // inherit from ai.QueryResult
+	// Create AIExecutionResult with all timing and metadata
+	aiResult := &AIExecutionResult{
+		Type:              "query",
 		ModelCallElapsed:  modelCallElapsed,         // model call timing
 		ScreenshotElapsed: screenshotElapsed,        // screenshot timing
 		ImagePath:         screenResult.ImagePath,   // screenshot path
 		Resolution:        &screenResult.Resolution, // screen resolution
+		QueryResult:       result,                   // query-specific result
+		Thought:           result.Thought,           // AI reasoning
+		Content:           result.Content,           // query result content
 	}
-	return queryExecResult, nil
+	return aiResult, nil
 }
 
-func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) error {
+// AIAssert performs AI-driven assertion and returns detailed execution result
+func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*AIExecutionResult, error) {
 	if dExt.LLMService == nil {
-		return errors.New("LLM service is not initialized")
+		return nil, errors.New("LLM service is not initialized")
+	}
+
+	// Step 1: Take screenshot and measure time
+	screenshotStartTime := time.Now()
+	screenResult, err := dExt.createScreenshotWithSession(
+		option.WithScreenShotFileName(builtin.GenNameWithTimestamp("%d_screenshot")),
+	)
+	screenshotElapsed := time.Since(screenshotStartTime).Milliseconds()
+	if err != nil {
+		return nil, err
 	}
 
 	screenShotBase64, size, err := dExt.GetScreenshotBase64WithSize()
 	if err != nil {
-		return err
+		return &AIExecutionResult{
+			Type:              "assert",
+			ScreenshotElapsed: screenshotElapsed,
+			ImagePath:         screenResult.ImagePath,
+			Resolution:        &screenResult.Resolution,
+			Error:             err.Error(),
+		}, err
 	}
 
-	// execute assertion
+	// Step 2: Call model and measure time
+	modelCallStartTime := time.Now()
 	assertOpts := &ai.AssertOptions{
 		Assertion:  assertion,
 		Screenshot: screenShotBase64,
 		Size:       size,
 	}
 	result, err := dExt.LLMService.Assert(context.Background(), assertOpts)
+	modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
+
+	aiResult := &AIExecutionResult{
+		Type:              "assert",
+		ModelCallElapsed:  modelCallElapsed,
+		ScreenshotElapsed: screenshotElapsed,
+		ImagePath:         screenResult.ImagePath,
+		Resolution:        &screenResult.Resolution,
+		AssertionResult:   result,
+		Thought:           result.Thought,
+	}
+
 	if err != nil {
-		return errors.Wrap(err, "AI assertion failed")
+		aiResult.Error = err.Error()
+		return aiResult, errors.Wrap(err, "AI assertion failed")
 	}
 
 	if !result.Pass {
-		return errors.New(result.Thought)
+		aiResult.Error = result.Thought
+		return aiResult, errors.New(result.Thought)
 	}
 
-	return nil
+	aiResult.Content = "Assertion passed"
+	return aiResult, nil
 }
