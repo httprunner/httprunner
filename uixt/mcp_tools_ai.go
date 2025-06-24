@@ -166,7 +166,7 @@ func (t *ToolAIQuery) Implement() server.ToolHandlerFunc {
 		opts := unifiedReq.Options()
 
 		// AI query logic with options
-		result, err := driverExt.AIQuery(unifiedReq.Prompt, opts...)
+		queryResult, err := driverExt.AIQuery(unifiedReq.Prompt, opts...)
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("AI query failed: %s", err.Error())), nil
 		}
@@ -174,7 +174,7 @@ func (t *ToolAIQuery) Implement() server.ToolHandlerFunc {
 		message := fmt.Sprintf("Successfully queried information with prompt: %s", unifiedReq.Prompt)
 		returnData := ToolAIQuery{
 			Prompt: unifiedReq.Prompt,
-			Result: result.Content,
+			Result: queryResult.Content,
 		}
 
 		return NewMCPSuccessResponse(message, &returnData), nil

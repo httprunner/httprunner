@@ -943,6 +943,24 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				actionResult.Plannings = planningResults
 				stepResult.Actions = append(stepResult.Actions, actionResult)
 				if err != nil {
+					actionResult.Error = err.Error()
+					if !code.IsErrorPredefined(err) {
+						err = errors.Wrap(code.MobileUIDriverError, err.Error())
+					}
+					return stepResult, err
+				}
+				continue
+			}
+
+			// handle ai_query action
+			if action.Method == option.ACTION_Query {
+				queryResult, err := uiDriver.AIQuery(
+					action.Params.(string), action.GetOptions()...)
+				actionResult.Elapsed = time.Since(actionStartTime).Milliseconds()
+				actionResult.QueryResult = queryResult
+				stepResult.Actions = append(stepResult.Actions, actionResult)
+				if err != nil {
+					actionResult.Error = err.Error()
 					if !code.IsErrorPredefined(err) {
 						err = errors.Wrap(code.MobileUIDriverError, err.Error())
 					}

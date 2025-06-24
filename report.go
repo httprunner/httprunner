@@ -2379,59 +2379,34 @@ const htmlTemplate = `<!DOCTYPE html>
                                     {{end}}
                                 {{end}}
 
-                                {{/* Handle special case: ai_query needs enhanced display even when not in planning */}}
+                                {{/* Enhanced AI Query Display - using QueryResult data structure */}}
                                 {{if eq $action.Method "ai_query"}}
+                                {{if $action.QueryResult}}
                                 <div class="sub-action-item">
-                                    <!-- Enhanced AI Query Display -->
                                     <div class="validator-ai-content">
-                                        <!-- Extract AI query details from step logs -->
-                                        {{$stepLogs := getStepLogs $step}}
-                                        {{$queryThought := ""}}
-                                        {{$queryModel := ""}}
-                                        {{$queryUsage := ""}}
-                                        {{$queryScreenshot := ""}}
-                                        {{$queryResult := ""}}
-                                        {{range $logEntry := $stepLogs}}
-                                            {{if and (eq $logEntry.Message "log response message") (index $logEntry.Fields "content")}}
-                                                {{$content := index $logEntry.Fields "content"}}
-                                                {{if $content}}
-                                                    {{$queryResult = $content}}
-                                                {{end}}
-                                            {{end}}
-                                            {{if and (eq $logEntry.Message "call model service for query") (index $logEntry.Fields "model")}}
-                                                {{$queryModel = index $logEntry.Fields "model"}}
-                                            {{end}}
-                                            {{if and (eq $logEntry.Message "usage statistics") (index $logEntry.Fields "input_tokens")}}
-                                                {{$inputTokens := index $logEntry.Fields "input_tokens"}}
-                                                {{$outputTokens := index $logEntry.Fields "output_tokens"}}
-                                                {{$totalTokens := index $logEntry.Fields "total_tokens"}}
-                                                {{$queryUsage = printf "📊 Tokens: %v in / %v out / %v total" $inputTokens $outputTokens $totalTokens}}
-                                            {{end}}
-                                            {{if and (eq $logEntry.Message "log screenshot") (index $logEntry.Fields "imagePath")}}
-                                                {{$queryScreenshot = index $logEntry.Fields "imagePath"}}
-                                            {{end}}
+                                        <!-- Display AI Thought -->
+                                        {{if $action.QueryResult.Thought}}
+                                        <div class="thought">{{$action.QueryResult.Thought}}</div>
                                         {{end}}
 
-                                        <!-- Display AI Query Result at the top -->
-                                        {{if $queryResult}}
-                                        <div class="thought">{{$queryResult}}</div>
-                                        {{end}}
-
-                                        <!-- AI Query Layout - similar to validator layout -->
+                                        <!-- AI Query Layout: Screenshot left, Analysis right -->
                                         <div class="validator-ai-layout">
                                             <!-- Left column: Screenshot -->
-                                            {{if $queryScreenshot}}
+                                            {{if $action.QueryResult.ImagePath}}
                                             <div class="validator-column-screenshot">
                                                 <div class="validator-step-compact">
                                                     <div class="step-header-compact">
                                                         <span class="step-name">📸 Query Screenshot</span>
+                                                        {{if $action.QueryResult.ScreenshotElapsed}}
+                                                        <span class="duration">{{formatDuration $action.QueryResult.ScreenshotElapsed}}</span>
+                                                        {{end}}
                                                     </div>
                                                     <div class="screenshot-display">
-                                                        {{$base64Image := encodeImageBase64 $queryScreenshot}}
+                                                        {{$base64Image := encodeImageBase64 $action.QueryResult.ImagePath}}
                                                         {{if $base64Image}}
                                                         <div class="screenshot-item-compact">
                                                             <div class="screenshot-image">
-                                                                <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Query Screenshot" onclick="openImageModal(this.src)" />
+                                                                <img src="data:image/jpeg;base64,{{$base64Image}}" alt="AI Query Screenshot" onclick="openImageModal(this.src)" />
                                                             </div>
                                                         </div>
                                                         {{end}}
@@ -2440,18 +2415,30 @@ const htmlTemplate = `<!DOCTYPE html>
                                             </div>
                                             {{end}}
 
-                                            <!-- Right column: AI Query -->
+                                            <!-- Right column: AI Query Analysis -->
                                             <div class="validator-column-analysis">
                                                 <div class="validator-step-compact">
                                                     <div class="step-header-compact">
-                                                        <span class="step-name">🤖 AI Query</span>
+                                                        <span class="step-name">🤖 AI Query Analysis</span>
+                                                        {{if $action.QueryResult.ModelCallElapsed}}
+                                                        <span class="duration">{{formatDuration $action.QueryResult.ModelCallElapsed}}</span>
+                                                        {{end}}
                                                     </div>
                                                     <div class="validator-ai-details">
-                                                        {{if $queryModel}}
-                                                        <div class="model-info">🤖 Model: {{$queryModel}}</div>
+                                                        {{if $action.QueryResult.ModelName}}
+                                                        <div class="model-info">🤖 Model: {{$action.QueryResult.ModelName}}</div>
                                                         {{end}}
-                                                        {{if $queryUsage}}
-                                                        <div class="usage-info">{{$queryUsage}}</div>
+                                                        {{if $action.QueryResult.Resolution}}
+                                                        <div class="model-info">📐 Resolution: {{$action.QueryResult.Resolution.Width}}x{{$action.QueryResult.Resolution.Height}}</div>
+                                                        {{end}}
+                                                        {{if $action.QueryResult.Usage}}
+                                                        <div class="usage-info">📊 Tokens: {{$action.QueryResult.Usage.PromptTokens}} in / {{$action.QueryResult.Usage.CompletionTokens}} out / {{$action.QueryResult.Usage.TotalTokens}} total</div>
+                                                        {{end}}
+                                                        {{if $action.QueryResult.Content}}
+                                                        <div class="model-info">💬 Query Result: {{$action.QueryResult.Content}}</div>
+                                                        {{end}}
+                                                        {{if $action.QueryResult.Error}}
+                                                        <div class="model-info" style="color: #dc3545;">❌ Error: {{$action.QueryResult.Error}}</div>
                                                         {{end}}
                                                     </div>
                                                 </div>
@@ -2459,6 +2446,7 @@ const htmlTemplate = `<!DOCTYPE html>
                                         </div>
                                     </div>
                                 </div>
+                                {{end}}
                                 {{end}}
 
                                 {{/* Handle SessionData: display requests and screen results for non-planning actions */}}

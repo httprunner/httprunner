@@ -301,6 +301,17 @@ type PlanningExecutionResult struct {
 	SubActions []*SubActionResult `json:"sub_actions,omitempty"` // sub-actions generated from this planning
 }
 
+// QueryExecutionResult contains the result of AI query execution with timing and metadata
+type QueryExecutionResult struct {
+	ai.QueryResult                       // inherit from ai.QueryResult
+	ModelCallElapsed  int64              `json:"model_call_elapsed"` // model call elapsed time in milliseconds
+	ScreenshotElapsed int64              `json:"screenshot_elapsed"` // screenshot elapsed time in milliseconds
+	ImagePath         string             `json:"image_path"`         // path to screenshot used for query
+	Resolution        *types.Size        `json:"resolution"`         // screen resolution
+	ModelName         string             `json:"model_name"`         // model name used for query
+	Usage             *schema.TokenUsage `json:"usage,omitempty"`    // token usage statistics
+}
+
 // SubActionResult represents a sub-action within a start_to_goal action
 type SubActionResult struct {
 	ActionName string      `json:"action_name"`         // name of the sub-action (e.g., "tap", "input")
@@ -316,9 +327,19 @@ type SessionData struct {
 	ScreenResults []*ScreenResult   `json:"screen_results,omitempty"` // store sub-action specific screen_results
 }
 
-func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*ai.QueryResult, error) {
+func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*QueryExecutionResult, error) {
 	if dExt.LLMService == nil {
 		return nil, errors.New("LLM service is not initialized")
+	}
+
+	// Step 1: Take screenshot and measure time
+	screenshotStartTime := time.Now()
+	screenResult, err := dExt.createScreenshotWithSession(
+		option.WithScreenShotFileName(builtin.GenNameWithTimestamp("%d_screenshot")),
+	)
+	screenshotElapsed := time.Since(screenshotStartTime).Milliseconds()
+	if err != nil {
+		return nil, err
 	}
 
 	screenShotBase64, size, err := dExt.GetScreenshotBase64WithSize()
@@ -329,6 +350,9 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*ai.Que
 	// parse action options to extract OutputSchema
 	actionOptions := option.NewActionOptions(opts...)
 
+	// Step 2: Call model and measure time
+	modelCallStartTime := time.Now()
+
 	// execute query
 	queryOpts := &ai.QueryOptions{
 		Query:        text,
@@ -337,11 +361,20 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*ai.Que
 		OutputSchema: actionOptions.OutputSchema,
 	}
 	result, err := dExt.LLMService.Query(context.Background(), queryOpts)
+	modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
 	if err != nil {
 		return nil, errors.Wrap(err, "AI query failed")
 	}
 
-	return result, nil
+	// Create QueryExecutionResult with all timing and metadata
+	queryExecResult := &QueryExecutionResult{
+		QueryResult:       *result,                  // inherit from ai.QueryResult
+		ModelCallElapsed:  modelCallElapsed,         // model call timing
+		ScreenshotElapsed: screenshotElapsed,        // screenshot timing
+		ImagePath:         screenResult.ImagePath,   // screenshot path
+		Resolution:        &screenResult.Resolution, // screen resolution
+	}
+	return queryExecResult, nil
 }
 
 func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) error {
