@@ -424,15 +424,17 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 		return nil, err
 	}
 
+	assertResult := &AIExecutionResult{
+		Type:              "assert",
+		ScreenshotElapsed: screenshotElapsed,
+		ImagePath:         screenResult.ImagePath,
+		Resolution:        &screenResult.Resolution,
+	}
+
 	screenShotBase64, size, err := dExt.GetScreenshotBase64WithSize()
 	if err != nil {
-		return &AIExecutionResult{
-			Type:              "assert",
-			ScreenshotElapsed: screenshotElapsed,
-			ImagePath:         screenResult.ImagePath,
-			Resolution:        &screenResult.Resolution,
-			Error:             err.Error(),
-		}, err
+		assertResult.Error = err.Error()
+		return assertResult, err
 	}
 
 	// Step 2: Call model and measure time
@@ -443,26 +445,18 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 		Size:       size,
 	}
 	result, err := dExt.LLMService.Assert(context.Background(), assertOpts)
-	modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
-
-	aiResult := &AIExecutionResult{
-		Type:              "assert",
-		ModelCallElapsed:  modelCallElapsed,
-		ScreenshotElapsed: screenshotElapsed,
-		ImagePath:         screenResult.ImagePath,
-		Resolution:        &screenResult.Resolution,
-		AssertionResult:   result,
-	}
+	assertResult.ModelCallElapsed = time.Since(modelCallStartTime).Milliseconds()
+	assertResult.AssertionResult = result
 
 	if err != nil {
-		aiResult.Error = err.Error()
-		return aiResult, errors.Wrap(err, "AI assertion failed")
+		assertResult.Error = err.Error()
+		return assertResult, errors.Wrap(err, "AI assertion failed")
 	}
 
 	if !result.Pass {
-		aiResult.Error = result.Thought
-		return aiResult, errors.New(result.Thought)
+		assertResult.Error = result.Thought
+		return assertResult, errors.New(result.Thought)
 	}
 
-	return aiResult, nil
+	return assertResult, nil
 }
