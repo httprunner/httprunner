@@ -63,7 +63,15 @@ func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolWebLoginNoneUI) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	arguments := map[string]any{}
+	if textsSlice, ok := action.Params.([]interface{}); ok {
+		arguments["packageName"] = textsSlice[0].(string)
+		arguments["phoneNumber"] = textsSlice[1].(string)
+		arguments["captcha"] = textsSlice[2].(string)
+		arguments["password"] = textsSlice[3].(string)
+	}
+
+	return BuildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
 // ToolSecondaryClick implements the secondary_click tool call.
@@ -216,7 +224,7 @@ func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 		}
 
 		// Tap by selector action logic
-		err = driverExt.TapBySelector(unifiedReq.Selector)
+		err = driverExt.TapBySelector(unifiedReq.Selector, option.WithIndex(unifiedReq.Index))
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("Tap by selector failed: %s", err.Error())), nil
 		}
@@ -233,6 +241,8 @@ func (t *ToolTapBySelector) ConvertActionToCallToolRequest(action option.MobileA
 		arguments := map[string]any{
 			"selector": selector,
 		}
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
 		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by selector params: %v", action.Params)
