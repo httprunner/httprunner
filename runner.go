@@ -26,6 +26,7 @@ import (
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/internal/version"
 	"github.com/httprunner/httprunner/v5/mcphost"
@@ -677,6 +678,13 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 		summary.InOut.ExportVars = exportVars
 		summary.InOut.ConfigVars = config.Variables
 
+		// Save JSON case content to results directory
+		if config.Path != "" {
+			if err := saveJSONCase(config.Path); err != nil {
+				log.Warn().Err(err).Str("path", config.Path).Msg("save JSON case failed")
+			}
+		}
+
 		// TODO: move to mobile ui step
 		// Collect logs from cached drivers
 		for _, cached := range uixt.ListCachedDrivers() {
@@ -1021,4 +1029,26 @@ func (r *SessionRunner) GetSessionVariables() map[string]interface{} {
 
 func (r *SessionRunner) GetTransactions() map[string]map[TransactionType]time.Time {
 	return r.transactions
+}
+
+// saveJSONCase saves the original JSON case content to the results directory
+func saveJSONCase(casePath string) error {
+	// Read the original JSON case content
+	path := TestCasePath(casePath)
+	testCase, err := path.GetTestCase()
+	if err != nil {
+		return errors.Wrap(err, "load JSON case failed")
+	}
+
+	// remove environs from testcase config
+	tConfig := testCase.Config.(*TConfig)
+	tConfig.Environs = nil
+
+	// save JSON case to results directory
+	jsonCasePath := config.GetConfig().CaseFilePath()
+	err = testCase.Dump2JSON(jsonCasePath)
+	if err != nil {
+		return errors.Wrap(err, "dump JSON case failed")
+	}
+	return nil
 }
