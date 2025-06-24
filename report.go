@@ -2442,9 +2442,19 @@ const htmlTemplate = `<!DOCTYPE html>
                                 {{if $action.AIResult}}
                                 <div class="sub-action-item">
                                     <div class="validator-ai-content">
-                                        <!-- Display AI Thought -->
-                                        {{if $action.AIResult.Thought}}
-                                        <div class="thought">{{$action.AIResult.Thought}}</div>
+                                        <!-- Display AI Thought from specific result types -->
+                                        {{if eq $action.AIResult.Type "query"}}
+                                            {{if $action.AIResult.QueryResult.Thought}}
+                                                <div class="thought">{{$action.AIResult.QueryResult.Thought}}</div>
+                                            {{end}}
+                                        {{else if eq $action.AIResult.Type "action"}}
+                                            {{if $action.AIResult.PlanningResult.Thought}}
+                                                <div class="thought">{{$action.AIResult.PlanningResult.Thought}}</div>
+                                            {{end}}
+                                        {{else if eq $action.AIResult.Type "assert"}}
+                                            {{if $action.AIResult.AssertionResult.Thought}}
+                                                <div class="thought">{{$action.AIResult.AssertionResult.Thought}}</div>
+                                            {{end}}
                                         {{end}}
 
                                         <!-- AI Operation Layout: Screenshot left, Analysis right -->
@@ -2514,8 +2524,19 @@ const htmlTemplate = `<!DOCTYPE html>
                                                         {{if $action.AIResult.Resolution}}
                                                         <div class="model-info">📐 Resolution: {{$action.AIResult.Resolution.Width}}x{{$action.AIResult.Resolution.Height}}</div>
                                                         {{end}}
-                                                        {{if $action.AIResult.Content}}
-                                                        <div class="model-info">💬 {{title $action.AIResult.Type}} Result: {{$action.AIResult.Content}}</div>
+                                                        {{/* Display Content from specific result types */}}
+                                                        {{if eq $action.AIResult.Type "query"}}
+                                                            {{if $action.AIResult.QueryResult.Content}}
+                                                            <div class="model-info">💬 {{title $action.AIResult.Type}} Result: {{$action.AIResult.QueryResult.Content}}</div>
+                                                            {{end}}
+                                                        {{else if eq $action.AIResult.Type "action"}}
+                                                            {{if $action.AIResult.PlanningResult.Content}}
+                                                            <div class="model-info">💬 {{title $action.AIResult.Type}} Result: {{$action.AIResult.PlanningResult.Content}}</div>
+                                                            {{end}}
+                                                        {{else if eq $action.AIResult.Type "assert"}}
+                                                            {{if $action.AIResult.AssertionResult.Content}}
+                                                            <div class="model-info">💬 {{title $action.AIResult.Type}} Result: {{$action.AIResult.AssertionResult.Content}}</div>
+                                                            {{end}}
                                                         {{end}}
                                                     </div>
                                                 </div>

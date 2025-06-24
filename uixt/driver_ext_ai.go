@@ -156,8 +156,6 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 		ImagePath:         screenResult.ImagePath,
 		Resolution:        &screenResult.Resolution,
 		PlanningResult:    &planningResult.PlanningResult,
-		Thought:           planningResult.Thought,
-		Content:           planningResult.Content,
 	}
 
 	if err != nil {
@@ -341,9 +339,7 @@ type AIExecutionResult struct {
 	AssertionResult *ai.AssertionResult `json:"assertion_result,omitempty"` // for ai_assert operations
 
 	// Common fields
-	Thought string `json:"thought,omitempty"` // AI reasoning/thought process
-	Content string `json:"content,omitempty"` // operation result content
-	Error   string `json:"error,omitempty"`   // error message if operation failed
+	Error string `json:"error,omitempty"` // error message if operation failed
 }
 
 // SubActionResult represents a sub-action within a start_to_goal action
@@ -408,8 +404,6 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*AIExec
 		ImagePath:         screenResult.ImagePath,   // screenshot path
 		Resolution:        &screenResult.Resolution, // screen resolution
 		QueryResult:       result,                   // query-specific result
-		Thought:           result.Thought,           // AI reasoning
-		Content:           result.Content,           // query result content
 	}
 	return aiResult, nil
 }
@@ -458,7 +452,6 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 		ImagePath:         screenResult.ImagePath,
 		Resolution:        &screenResult.Resolution,
 		AssertionResult:   result,
-		Thought:           result.Thought,
 	}
 
 	if err != nil {
@@ -471,6 +464,5 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 		return aiResult, errors.New(result.Thought)
 	}
 
-	aiResult.Content = "Assertion passed"
 	return aiResult, nil
 }
