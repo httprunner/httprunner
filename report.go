@@ -541,7 +541,7 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 			// Try to parse as JSON to extract thought field
 			var data map[string]interface{}
 			if err := json.Unmarshal([]byte(content), &data); err == nil {
-				if thought, ok := data["thought"].(string); ok {
+				if thought, ok := data["thought"].(string); ok && thought != "" {
 					return thought
 				}
 			}
@@ -2325,8 +2325,15 @@ const htmlTemplate = `<!DOCTYPE html>
                                             {{if $planning.Error}}<span class="error">Error: {{$planning.Error}}</span>{{end}}
                                         </div>
 
-                                        {{if $planning.Thought}}
-                                        <div class="thought">{{$planning.Thought}}</div>
+                                        {{$extractedThought := extractThought $planning.Content}}
+                                        {{if or $planning.Thought $extractedThought}}
+                                            <div class="thought">
+                                                {{if $planning.Thought}}
+                                                    {{$planning.Thought}}
+                                                {{else}}
+                                                    {{$extractedThought}}
+                                                {{end}}
+                                            </div>
                                         {{end}}
 
                                         <!-- Three-column layout: screenshot left, model output and actions right -->
