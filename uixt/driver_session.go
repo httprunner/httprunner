@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -42,7 +41,6 @@ func NewDriverSession() *DriverSession {
 	timeout := 30 * time.Second
 	session := &DriverSession{
 		ctx:     context.Background(),
-		ID:      "<SessionNotInit>",
 		timeout: timeout,
 		client: &http.Client{
 			Timeout: timeout,
@@ -55,8 +53,6 @@ func NewDriverSession() *DriverSession {
 
 type DriverSession struct {
 	ctx      context.Context
-	ID       string
-	baseUrl  string
 	client   *http.Client
 	timeout  time.Duration
 	maxRetry int
@@ -88,7 +84,8 @@ func (s *DriverSession) GetData(withReset bool) SessionData {
 }
 
 func (s *DriverSession) SetBaseURL(baseUrl string) {
-	s.baseUrl = baseUrl
+	// This method is kept for backward compatibility but no longer stores baseUrl
+	// since we'll pass full URLs directly to GET/POST methods
 }
 
 func (s *DriverSession) RegisterResetHandler(fn func() error) {
@@ -103,23 +100,12 @@ func (s *DriverSession) History() []*DriverRequests {
 	return s.requests
 }
 
-func (s *DriverSession) concatURL(urlStr string) (string, error) {
-	if urlStr == "" || urlStr == "/" {
-		if s.baseUrl == "" {
-			return "", fmt.Errorf("base URL is empty")
-		}
-		return s.baseUrl, nil
+func (s *DriverSession) buildURL(urlStr string) (string, error) {
+	if urlStr == "" {
+		return "", fmt.Errorf("URL cannot be empty")
 	}
 
-	// replace with session ID
-	if s.ID != "" && !strings.Contains(urlStr, s.ID) {
-		sessionPattern := regexp.MustCompile(`/session/([^/]+)/`)
-		if matches := sessionPattern.FindStringSubmatch(urlStr); len(matches) != 0 {
-			urlStr = strings.Replace(urlStr, matches[1], s.ID, 1)
-		}
-	}
-
-	// 处理完整 URL
+	// Handle full URLs
 	if strings.HasPrefix(urlStr, "http://") || strings.HasPrefix(urlStr, "https://") {
 		u, err := url.Parse(urlStr)
 		if err != nil {
@@ -128,49 +114,55 @@ func (s *DriverSession) concatURL(urlStr string) (string, error) {
 		return u.String(), nil
 	}
 
-	// 处理相对路径
-	if s.baseUrl == "" {
-		return "", fmt.Errorf("base URL is empty")
-	}
-	u, err := url.Parse(s.baseUrl)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse base URL: %w", err)
-	}
-
-	// 处理路径和查询参数
-	parts := strings.SplitN(urlStr, "?", 2)
-	u.Path = path.Join(u.Path, parts[0])
-	if len(parts) > 1 {
-		query, err := url.ParseQuery(parts[1])
-		if err != nil {
-			return "", fmt.Errorf("failed to parse query params: %w", err)
-		}
-		u.RawQuery = query.Encode()
-	}
-
-	return u.String(), nil
+	// For relative paths, return as-is (caller should provide full URL)
+	return urlStr, nil
 }
 
-func (s *DriverSession) GET(urlStr string) (rawResp DriverRawResponse, err error) {
-	return s.RequestWithRetry(http.MethodGet, urlStr, nil)
+func (s *DriverSession) GET(fullURL string) (rawResp DriverRawResponse, err error) {
+	return s.RequestWithRetry(http.MethodGet, fullURL, nil)
 }
 
-func (s *DriverSession) POST(data interface{}, urlStr string) (rawResp DriverRawResponse, err error) {
+// GETWithBaseURL allows passing baseURL and path separately
+func (s *DriverSession) GETWithBaseURL(baseURL, path string) (rawResp DriverRawResponse, err error) {
+	fullURL := baseURL + path
+	return s.RequestWithRetry(http.MethodGet, fullURL, nil)
+}
+
+func (s *DriverSession) POST(data interface{}, fullURL string) (rawResp DriverRawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
 			return nil, err
 		}
 	}
-	return s.RequestWithRetry(http.MethodPost, urlStr, bsJSON)
+	return s.RequestWithRetry(http.MethodPost, fullURL, bsJSON)
 }
 
-func (s *DriverSession) DELETE(urlStr string) (rawResp DriverRawResponse, err error) {
-	return s.RequestWithRetry(http.MethodDelete, urlStr, nil)
+// POSTWithBaseURL allows passing baseURL and path separately
+func (s *DriverSession) POSTWithBaseURL(data interface{}, baseURL, path string) (rawResp DriverRawResponse, err error) {
+	var bsJSON []byte = nil
+	if data != nil {
+		if bsJSON, err = json.Marshal(data); err != nil {
+			return nil, err
+		}
+	}
+	fullURL := baseURL + path
+	return s.RequestWithRetry(http.MethodPost, fullURL, bsJSON)
+}
+
+func (s *DriverSession) DELETE(fullURL string) (rawResp DriverRawResponse, err error) {
+	return s.RequestWithRetry(http.MethodDelete, fullURL, nil)
+}
+
+// DELETEWithBaseURL allows passing baseURL and path separately
+func (s *DriverSession) DELETEWithBaseURL(baseURL, path string) (rawResp DriverRawResponse, err error) {
+	fullURL := baseURL + path
+	return s.RequestWithRetry(http.MethodDelete, fullURL, nil)
 }
 
 func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody []byte) (
-	rawResp DriverRawResponse, err error) {
+	rawResp DriverRawResponse, err error,
+) {
 	for count := 1; count <= s.maxRetry; count++ {
 		rawResp, err = s.Request(method, urlStr, rawBody)
 		if err == nil {
@@ -193,10 +185,10 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 }
 
 func (s *DriverSession) Request(method string, urlStr string, rawBody []byte) (
-	rawResp DriverRawResponse, err error) {
-
-	// concat url with base url
-	rawURL, err := s.concatURL(urlStr)
+	rawResp DriverRawResponse, err error,
+) {
+	// build final URL
+	rawURL, err := s.buildURL(urlStr)
 	if err != nil {
 		return nil, err
 	}
