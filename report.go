@@ -41,6 +41,7 @@ type HTMLReportGenerator struct {
 	ReportDir      string
 	SummaryContent string // Raw summary.json content for download
 	LogContent     string // Raw hrp.log content for download
+	CaseContent    string // Raw case.json content for display
 }
 
 // LogEntry represents a single log entry
@@ -70,6 +71,11 @@ func NewHTMLReportGenerator(summaryFile, logFile string) (*HTMLReportGenerator, 
 		if err := generator.loadLogData(); err != nil {
 			log.Warn().Err(err).Msg("failed to load log data, continuing without logs")
 		}
+	}
+
+	// Load case.json data if exists
+	if err := generator.loadCaseData(); err != nil {
+		log.Warn().Err(err).Msg("failed to load case data, continuing without case display")
 	}
 
 	return generator, nil
@@ -208,7 +214,24 @@ func (g *HTMLReportGenerator) loadLogData() error {
 	return scanner.Err()
 }
 
-// getStepLogs filters log entries for a specific test step based on step boundaries
+// loadCaseData loads test case data from case.json file
+func (g *HTMLReportGenerator) loadCaseData() error {
+	caseFile := filepath.Join(g.ReportDir, "case.json")
+	if !builtin.FileExists(caseFile) {
+		return nil // case.json is optional
+	}
+
+	data, err := os.ReadFile(caseFile)
+	if err != nil {
+		return err
+	}
+
+	// Store the case content for display
+	g.CaseContent = string(data)
+	return nil
+}
+
+// getStepLogs filters log entries for a specific test step using prefix matching and time range filtering
 func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elapsed int64) []LogEntry {
 	if len(g.LogData) == 0 {
 		return nil
@@ -217,8 +240,19 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 	var stepLogs []LogEntry
 	var inCurrentStep bool = false
 
-	// Simple approach: use step start/end markers for precise boundaries
+	// Calculate step end time (startTime + elapsed, both in milliseconds)
+	endTime := startTime + elapsed
+
+	// Convert step times to time.Time for comparison
+	// The startTime from step result is in milliseconds timestamp
+	stepStartTime := time.UnixMilli(startTime)
+	stepEndTime := time.UnixMilli(endTime)
+
+	// Use step start/end markers with prefix matching for precise boundaries
 	for _, logEntry := range g.LogData {
+		// Parse log entry timestamp for time range validation
+		logTime, timeParseErr := g.parseLogTime(logEntry.Time)
+
 		// Check for step boundaries to control inclusion
 		if logEntry.Message == RUN_STEP_START {
 			if stepFieldValue, exists := logEntry.Fields["step"].(string); exists {
@@ -228,7 +262,7 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 					stepLogs = append(stepLogs, logEntry)
 					continue
 				} else if inCurrentStep {
-					// This is a different step starting, we're done
+					// This is a different step starting, we're done with current step
 					break
 				}
 			}
@@ -240,31 +274,30 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 				if strings.HasPrefix(stepName, stepFieldValue) {
 					stepLogs = append(stepLogs, logEntry)
 					inCurrentStep = false
-					continue
+					break // End of current step, stop processing
 				}
 			}
 		}
 
-		// Only include logs when we're in the current step
+		// Include logs when we're in the current step AND within the time range
 		if inCurrentStep {
-			stepLogs = append(stepLogs, logEntry)
+			// Apply time range filtering if time parsing succeeded
+			if timeParseErr == nil {
+				// Only include logs within the step time range
+				if (logTime.Equal(stepStartTime) || logTime.After(stepStartTime)) &&
+					(logTime.Equal(stepEndTime) || logTime.Before(stepEndTime)) {
+					stepLogs = append(stepLogs, logEntry)
+				}
+			} else {
+				// If time parsing failed, include all logs in the step boundary
+				stepLogs = append(stepLogs, logEntry)
+			}
 		}
 	}
 
-	// Sort logs by time, then by original index for stable ordering
+	// Sort logs by original index to maintain chronological order
 	sort.Slice(stepLogs, func(i, j int) bool {
-		timeI, errI := g.parseLogTime(stepLogs[i].Time)
-		timeJ, errJ := g.parseLogTime(stepLogs[j].Time)
-
-		if errI != nil || errJ != nil {
-			return stepLogs[i].LogIndex < stepLogs[j].LogIndex
-		}
-
-		if timeI.Equal(timeJ) {
-			// For same timestamps, use original log index to maintain order
-			return stepLogs[i].LogIndex < stepLogs[j].LogIndex
-		}
-		return timeI.Before(timeJ)
+		return stepLogs[i].LogIndex < stepLogs[j].LogIndex
 	})
 
 	return stepLogs
@@ -513,6 +546,9 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 		},
 		"getLogContentBase64": func() string {
 			return base64.StdEncoding.EncodeToString([]byte(g.LogContent))
+		},
+		"getCaseContentBase64": func() string {
+			return base64.StdEncoding.EncodeToString([]byte(g.CaseContent))
 		},
 		"safeHTML": func(s string) template.HTML {
 			return template.HTML(s)
@@ -1908,6 +1944,105 @@ const htmlTemplate = `<!DOCTYPE html>
             object-fit: contain;
         }
 
+        .json-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            overflow: auto;
+        }
+
+        .json-modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 0;
+            border: none;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .json-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .json-modal-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .json-modal-body {
+            padding: 0;
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .json-content {
+            background: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #333;
+            overflow: auto;
+            flex: 1;
+            white-space: pre;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .json-toolbar {
+            background: #e9ecef;
+            padding: 10px 20px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .json-toolbar button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s;
+        }
+
+        .json-toolbar button:hover {
+            background: #0056b3;
+        }
+
+        .json-toolbar .copy-status {
+            font-size: 0.9em;
+            color: #28a745;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .json-toolbar .copy-status.show {
+            opacity: 1;
+        }
+
         .close {
             position: absolute;
             top: 15px;
@@ -1917,6 +2052,22 @@ const htmlTemplate = `<!DOCTYPE html>
             font-weight: bold;
             transition: 0.3s;
             cursor: pointer;
+        }
+
+        .json-close {
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+            background: none;
+            border: none;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .json-close:hover {
+            color: #ffcccc;
         }
 
         .close:hover,
@@ -2187,7 +2338,7 @@ const htmlTemplate = `<!DOCTYPE html>
                 </div>
                 <div class="header-right">
                     <div class="download-section">
-                        <div class="download-title">📥 Download</div>
+                        <div class="download-title">📥 Download & View</div>
                         <div class="download-buttons">
                             <button class="download-btn" onclick="downloadSummary()">
                                 <span>📄</span>
@@ -2197,6 +2348,12 @@ const htmlTemplate = `<!DOCTYPE html>
                                 <span>📋</span>
                                 <span>hrp.log</span>
                             </button>
+                            {{if getCaseContentBase64}}
+                            <button class="download-btn" onclick="showCaseJson()">
+                                <span>📋</span>
+                                <span>case.json</span>
+                            </button>
+                            {{end}}
                         </div>
                     </div>
                 </div>
@@ -2714,10 +2871,31 @@ const htmlTemplate = `<!DOCTYPE html>
         <img class="modal-content" id="modalImage">
     </div>
 
+    <!-- JSON Case Modal -->
+    <div id="jsonModal" class="json-modal">
+        <div class="json-modal-content">
+            <div class="json-modal-header">
+                <h2 class="json-modal-title">📋 Test Case JSON</h2>
+                <button class="json-close" onclick="closeJsonModal()">&times;</button>
+            </div>
+            <div class="json-modal-body">
+                <div class="json-toolbar">
+                    <div>
+                        <button onclick="copyJsonContent()">📋 Copy to Clipboard</button>
+                        <button onclick="downloadCaseJson()">📥 Download case.json</button>
+                    </div>
+                    <span class="copy-status" id="copyStatus">✅ Copied!</span>
+                </div>
+                <pre class="json-content" id="jsonContent"></pre>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Embedded file contents for download (Base64 encoded)
         const summaryContentBase64 = "{{getSummaryContentBase64}}";
         const logContentBase64 = "{{getLogContentBase64}}";
+        const caseContentBase64 = "{{getCaseContentBase64}}";
 
         // Decode Base64 content with proper UTF-8 handling
         function decodeBase64UTF8(base64) {
@@ -2738,6 +2916,7 @@ const htmlTemplate = `<!DOCTYPE html>
 
         const summaryContent = decodeBase64UTF8(summaryContentBase64);
         const logContent = decodeBase64UTF8(logContentBase64);
+        const caseContent = decodeBase64UTF8(caseContentBase64);
 
         // Download functions
         function downloadSummary() {
@@ -2766,6 +2945,59 @@ const htmlTemplate = `<!DOCTYPE html>
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
+        }
+
+        // JSON Case Modal functions
+        function showCaseJson() {
+            if (!caseContent) {
+                alert('Case JSON content not available');
+                return;
+            }
+
+            try {
+                // Parse and format JSON for beautiful display
+                const jsonObj = JSON.parse(caseContent);
+                const formattedJson = JSON.stringify(jsonObj, null, 2);
+
+                document.getElementById('jsonContent').textContent = formattedJson;
+                document.getElementById('jsonModal').style.display = 'block';
+            } catch (e) {
+                console.error('Failed to parse JSON:', e);
+                // Fallback to raw content if parsing fails
+                document.getElementById('jsonContent').textContent = caseContent;
+                document.getElementById('jsonModal').style.display = 'block';
+            }
+        }
+
+        function closeJsonModal() {
+            document.getElementById('jsonModal').style.display = 'none';
+        }
+
+        function copyJsonContent() {
+            const jsonContent = document.getElementById('jsonContent').textContent;
+            if (!jsonContent) {
+                alert('No content to copy');
+                return;
+            }
+
+            navigator.clipboard.writeText(jsonContent).then(function() {
+                const copyStatus = document.getElementById('copyStatus');
+                copyStatus.classList.add('show');
+                setTimeout(function() {
+                    copyStatus.classList.remove('show');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Failed to copy to clipboard:', err);
+                alert('Failed to copy to clipboard. Please select and copy manually.');
+            });
+        }
+
+        function downloadCaseJson() {
+            if (!caseContent) {
+                alert('Case JSON content not available');
+                return;
+            }
+            downloadFile(caseContent, 'case.json', 'application/json');
         }
 
         function toggleStep(stepIndex) {
@@ -2836,11 +3068,16 @@ const htmlTemplate = `<!DOCTYPE html>
             document.getElementById('imageModal').style.display = 'none';
         }
 
-        // Close modal when clicking outside the image
+        // Close modal when clicking outside the image or JSON modal
         window.onclick = function(event) {
-            const modal = document.getElementById('imageModal');
-            if (event.target == modal) {
-                modal.style.display = 'none';
+            const imageModal = document.getElementById('imageModal');
+            const jsonModal = document.getElementById('jsonModal');
+
+            if (event.target == imageModal) {
+                imageModal.style.display = 'none';
+            }
+            if (event.target == jsonModal) {
+                jsonModal.style.display = 'none';
             }
         }
 

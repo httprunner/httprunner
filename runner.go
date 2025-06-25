@@ -855,8 +855,6 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 	stepName := step.Name()
 	stepType := string(step.Type())
 
-	log.Info().Str("step", stepName).Str("type", stepType).Msg(RUN_STEP_START)
-
 	// execute step with parameters iterator
 	tasks, err := r.generateExecutionTasks(step)
 	if err != nil {
@@ -897,6 +895,8 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 
 	// execute with loops as outer iteration
 	for _, task := range tasks {
+		log.Info().Str("step", task.stepName).Str("type", stepType).Msg(RUN_STEP_START)
+
 		// Check for interrupt signal before each parameter iteration
 		select {
 		case <-r.caseRunner.hrpRunner.interruptSignal:
