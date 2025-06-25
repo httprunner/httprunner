@@ -2337,25 +2337,25 @@ const htmlTemplate = `<!DOCTYPE html>
                     <div class="subtitle">Start Time: {{.Time.StartAt.Format "2006-01-02 15:04:05"}}</div>
                 </div>
                 <div class="header-right">
-                    <div class="download-section">
-                        <div class="download-title">📥 Download & View</div>
-                        <div class="download-buttons">
-                            <button class="download-btn" onclick="downloadSummary()">
-                                <span>📄</span>
-                                <span>summary.json</span>
-                            </button>
-                            <button class="download-btn" onclick="downloadLog()">
-                                <span>📋</span>
-                                <span>hrp.log</span>
-                            </button>
-                            {{if getCaseContentBase64}}
-                            <button class="download-btn" onclick="showCaseJson()">
-                                <span>📋</span>
-                                <span>case.json</span>
-                            </button>
-                            {{end}}
+                        <div class="download-section">
+                            <div class="download-title">📥 View & Download</div>
+                            <div class="download-buttons">
+                                {{if getCaseContentBase64}}
+                                <button class="download-btn" onclick="showCaseJson()">
+                                    <span>📋</span>
+                                    <span>case.json</span>
+                                </button>
+                                {{end}}
+                                <button class="download-btn" onclick="showSummaryJson()">
+                                    <span>📄</span>
+                                    <span>summary.json</span>
+                                </button>
+                                <button class="download-btn" onclick="showLogContent()">
+                                    <span>📋</span>
+                                    <span>hrp.log</span>
+                                </button>
+                            </div>
                         </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -2891,6 +2891,46 @@ const htmlTemplate = `<!DOCTYPE html>
         </div>
     </div>
 
+    <!-- Summary JSON Modal -->
+    <div id="summaryModal" class="json-modal">
+        <div class="json-modal-content">
+            <div class="json-modal-header">
+                <h2 class="json-modal-title">📄 Summary JSON</h2>
+                <button class="json-close" onclick="closeSummaryModal()">&times;</button>
+            </div>
+            <div class="json-modal-body">
+                <div class="json-toolbar">
+                    <div>
+                        <button onclick="copySummaryContent()">📋 Copy to Clipboard</button>
+                        <button onclick="downloadSummary()">📥 Download summary.json</button>
+                    </div>
+                    <span class="copy-status" id="summaryStatus">✅ Copied!</span>
+                </div>
+                <pre class="json-content" id="summaryContent"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Content Modal -->
+    <div id="logModal" class="json-modal">
+        <div class="json-modal-content">
+            <div class="json-modal-header">
+                <h2 class="json-modal-title">📋 Log Content</h2>
+                <button class="json-close" onclick="closeLogModal()">&times;</button>
+            </div>
+            <div class="json-modal-body">
+                <div class="json-toolbar">
+                    <div>
+                        <button onclick="copyLogContent()">📋 Copy to Clipboard</button>
+                        <button onclick="downloadLog()">📥 Download hrp.log</button>
+                    </div>
+                    <span class="copy-status" id="logStatus">✅ Copied!</span>
+                </div>
+                <pre class="json-content" id="logContentDisplay"></pre>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Embedded file contents for download (Base64 encoded)
         const summaryContentBase64 = "{{getSummaryContentBase64}}";
@@ -3000,6 +3040,85 @@ const htmlTemplate = `<!DOCTYPE html>
             downloadFile(caseContent, 'case.json', 'application/json');
         }
 
+        // Summary JSON Modal functions
+        function showSummaryJson() {
+            if (!summaryContent) {
+                alert('Summary JSON content not available');
+                return;
+            }
+
+            try {
+                // Parse and format JSON for beautiful display
+                const jsonObj = JSON.parse(summaryContent);
+                const formattedJson = JSON.stringify(jsonObj, null, 2);
+
+                document.getElementById('summaryContent').textContent = formattedJson;
+                document.getElementById('summaryModal').style.display = 'block';
+            } catch (e) {
+                console.error('Failed to parse JSON:', e);
+                // Fallback to raw content if parsing fails
+                document.getElementById('summaryContent').textContent = summaryContent;
+                document.getElementById('summaryModal').style.display = 'block';
+            }
+        }
+
+        function closeSummaryModal() {
+            document.getElementById('summaryModal').style.display = 'none';
+        }
+
+        function copySummaryContent() {
+            const content = document.getElementById('summaryContent').textContent;
+            if (!content) {
+                alert('No content to copy');
+                return;
+            }
+
+            navigator.clipboard.writeText(content).then(function() {
+                const copyStatus = document.getElementById('summaryStatus');
+                copyStatus.classList.add('show');
+                setTimeout(function() {
+                    copyStatus.classList.remove('show');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Failed to copy to clipboard:', err);
+                alert('Failed to copy to clipboard. Please select and copy manually.');
+            });
+        }
+
+        // Log Content Modal functions
+        function showLogContent() {
+            if (!logContent) {
+                alert('Log content not available');
+                return;
+            }
+
+            document.getElementById('logContentDisplay').textContent = logContent;
+            document.getElementById('logModal').style.display = 'block';
+        }
+
+        function closeLogModal() {
+            document.getElementById('logModal').style.display = 'none';
+        }
+
+        function copyLogContent() {
+            const content = document.getElementById('logContentDisplay').textContent;
+            if (!content) {
+                alert('No content to copy');
+                return;
+            }
+
+            navigator.clipboard.writeText(content).then(function() {
+                const copyStatus = document.getElementById('logStatus');
+                copyStatus.classList.add('show');
+                setTimeout(function() {
+                    copyStatus.classList.remove('show');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Failed to copy to clipboard:', err);
+                alert('Failed to copy to clipboard. Please select and copy manually.');
+            });
+        }
+
         function toggleStep(stepIndex) {
             const content = document.getElementById('step-' + stepIndex);
             const icon = document.getElementById('toggle-' + stepIndex);
@@ -3068,16 +3187,24 @@ const htmlTemplate = `<!DOCTYPE html>
             document.getElementById('imageModal').style.display = 'none';
         }
 
-        // Close modal when clicking outside the image or JSON modal
+        // Close modal when clicking outside the image or JSON modals
         window.onclick = function(event) {
             const imageModal = document.getElementById('imageModal');
             const jsonModal = document.getElementById('jsonModal');
+            const summaryModal = document.getElementById('summaryModal');
+            const logModal = document.getElementById('logModal');
 
             if (event.target == imageModal) {
                 imageModal.style.display = 'none';
             }
             if (event.target == jsonModal) {
                 jsonModal.style.display = 'none';
+            }
+            if (event.target == summaryModal) {
+                summaryModal.style.display = 'none';
+            }
+            if (event.target == logModal) {
+                logModal.style.display = 'none';
             }
         }
 

@@ -424,6 +424,9 @@ func resizeImage(src image.Image, width, height int) image.Image {
 
 // CompressImageFile compresses an image file and returns the compressed data
 func CompressImageFile(imagePath string, enableResize bool, maxWidth int) ([]byte, error) {
+	log.Debug().Str("imagePath", imagePath).Bool("enableResize", enableResize).
+		Int("maxWidth", maxWidth).Msg("compress image file")
+
 	// Read the original image file
 	file, err := os.Open(imagePath)
 	if err != nil {
