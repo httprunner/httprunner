@@ -130,7 +130,7 @@ func (t *ToolGetSource) Implement() server.ToolHandlerFunc {
 		// Get source action logic
 		sourceData, err := driverExt.Source(option.WithProcessName(unifiedReq.PackageName))
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Get source failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Get source failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully retrieved source for package: %s", unifiedReq.PackageName)

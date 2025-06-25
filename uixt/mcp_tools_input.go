@@ -47,7 +47,7 @@ func (t *ToolInput) Implement() server.ToolHandlerFunc {
 		// Input action logic
 		err = driverExt.Input(unifiedReq.Text)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Input failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Input failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully input text: %s", unifiedReq.Text)
@@ -99,7 +99,7 @@ func (t *ToolSetIme) Implement() server.ToolHandlerFunc {
 		// Set IME action logic
 		err = driverExt.SetIme(unifiedReq.Ime)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Set IME failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Set IME failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully set IME to: %s", unifiedReq.Ime)

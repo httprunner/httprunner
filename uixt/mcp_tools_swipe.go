@@ -155,7 +155,7 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 		}
 
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Swipe failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Swipe failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully swiped %s", swipeDirection)
@@ -255,7 +255,7 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 		swipeAction := prepareSwipeAction(driverExt, params, opts...)
 		err = swipeAction(driverExt)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Advanced swipe failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Advanced swipe failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully performed advanced swipe from (%.2f, %.2f) to (%.2f, %.2f)",
@@ -345,7 +345,7 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 		// Swipe to tap app action logic
 		err = driverExt.SwipeToTapApp(unifiedReq.AppName, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Swipe to tap app failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Swipe to tap app failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully found and tapped app: %s", unifiedReq.AppName)
@@ -422,7 +422,7 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 		// Swipe to tap text action logic
 		err = driverExt.SwipeToTapTexts([]string{unifiedReq.Text}, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Swipe to tap text failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Swipe to tap text failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully found and tapped text: %s", unifiedReq.Text)
@@ -500,7 +500,7 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 		// Swipe to tap texts action logic
 		err = driverExt.SwipeToTapTexts(unifiedReq.Texts, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Swipe to tap texts failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Swipe to tap texts failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully found and tapped one of texts: %v", unifiedReq.Texts)
@@ -586,7 +586,7 @@ func (t *ToolDrag) Implement() server.ToolHandlerFunc {
 		// Drag action logic
 		err = driverExt.Swipe(unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Drag failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Drag failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully dragged from (%.2f, %.2f) to (%.2f, %.2f)",
