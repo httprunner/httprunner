@@ -191,8 +191,10 @@ func (r *HRPRunner) SetSaveTests(saveTests bool) *HRPRunner {
 
 // GenHTMLReport configures whether to gen html report of api tests.
 func (r *HRPRunner) GenHTMLReport() *HRPRunner {
-	log.Info().Bool("genHTMLReport", true).Msg("[init] SetgenHTMLReport")
+	log.Info().Bool("genHTMLReport", true).Bool("saveTests", true).
+		Msg("[init] SetGenHTMLReport")
 	r.genHTMLReport = true
+	r.saveTests = true
 	return r
 }
 
