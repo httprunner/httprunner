@@ -30,7 +30,10 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		// Check for context cancellation (interrupt signal)
 		select {
 		case <-ctx.Done():
-			log.Warn().Msg("interrupted in StartToGoal")
+			log.Warn().
+				Int("attempt", attempt).
+				Int("completed_plannings", len(allPlannings)).
+				Msg("interrupted in StartToGoal")
 			return allPlannings, errors.Wrap(code.InterruptError, "StartToGoal interrupted")
 		default:
 		}
@@ -83,7 +86,12 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 			// Check for context cancellation before each action
 			select {
 			case <-ctx.Done():
-				log.Warn().Msg("interrupted in invokeToolCalls")
+				log.Warn().
+					Int("attempt", attempt).
+					Int("completed_plannings", len(allPlannings)).
+					Int("completed_tool_calls", len(planningResult.SubActions)).
+					Int("total_tool_calls", len(planningResult.ToolCalls)).
+					Msg("interrupted in invokeToolCalls")
 				planningResult.Elapsed = time.Since(planningStartTime).Milliseconds()
 				allPlannings = append(allPlannings, planningResult)
 				return allPlannings, errors.Wrap(code.InterruptError, "invokeToolCalls interrupted")

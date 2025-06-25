@@ -909,16 +909,23 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 
 		// execute step with merged variables
 		stepResult, stepErr := r.executeStepWithVariables(step, task.stepName, task.parameters)
+
+		// Always add stepResult to stepResults if it exists, even on error
+		// This ensures data is saved in defer function for summary generation
+		if stepResult != nil {
+			stepResults = append(stepResults, stepResult)
+		}
+
 		if stepErr != nil {
 			if r.caseRunner.hrpRunner.failfast {
-				// failfast mode, abort running
+				// failfast mode, abort running but step result is already saved above
+				log.Error().Err(stepErr).
+					Str("step", task.stepName).
+					Int("completed_tasks", len(stepResults)).
+					Msg("execute step failed in failfast mode, step result saved")
 				return nil, errors.Wrap(stepErr, "execute step failed")
 			}
 			log.Error().Err(stepErr).Str("step", task.stepName).Msg("execute step failed")
-		}
-
-		if stepResult != nil {
-			stepResults = append(stepResults, stepResult)
 		}
 	}
 
