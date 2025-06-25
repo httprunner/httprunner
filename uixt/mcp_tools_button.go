@@ -44,7 +44,7 @@ func (t *ToolPressButton) Implement() server.ToolHandlerFunc {
 		// Press button action logic
 		err = driverExt.PressButton(types.DeviceButton(unifiedReq.Button))
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Press button failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Press button failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully pressed button: %s", unifiedReq.Button)
@@ -91,7 +91,7 @@ func (t *ToolHome) Implement() server.ToolHandlerFunc {
 		// Home action logic
 		err = driverExt.Home()
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Home button press failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Home button press failed: %s", err.Error())), err
 		}
 
 		message := "Successfully pressed home button"
@@ -132,7 +132,7 @@ func (t *ToolBack) Implement() server.ToolHandlerFunc {
 		// Back action logic
 		err = driverExt.Back()
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Back button press failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Back button press failed: %s", err.Error())), err
 		}
 
 		message := "Successfully pressed back button"

@@ -44,7 +44,7 @@ func (t *ToolStartToGoal) Implement() server.ToolHandlerFunc {
 		// Start to goal logic
 		_, err = driverExt.StartToGoal(ctx, unifiedReq.Prompt)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Failed to achieve goal: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Failed to achieve goal: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully achieved goal: %s", unifiedReq.Prompt)
@@ -104,7 +104,7 @@ func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
 		// AI action logic
 		err = driverExt.AIAction(ctx, unifiedReq.Prompt)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("AI action failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("AI action failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully performed AI action with prompt: %s", unifiedReq.Prompt)
@@ -168,7 +168,7 @@ func (t *ToolAIQuery) Implement() server.ToolHandlerFunc {
 		// AI query logic with options
 		result, err := driverExt.AIQuery(unifiedReq.Prompt, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("AI query failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("AI query failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully queried information with prompt: %s", unifiedReq.Prompt)

@@ -52,7 +52,7 @@ func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 
 		_, err = driver.LoginNoneUI(unifiedReq.PackageName, unifiedReq.PhoneNumber, unifiedReq.Captcha, unifiedReq.Password)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Web login failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Web login failed: %s", err.Error())), err
 		}
 
 		message := "Successfully performed web login without UI"
@@ -114,7 +114,7 @@ func (t *ToolSecondaryClick) Implement() server.ToolHandlerFunc {
 		// Secondary click action logic
 		err = driverExt.SecondaryClick(unifiedReq.X, unifiedReq.Y)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Secondary click failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Secondary click failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully performed secondary click at (%.2f, %.2f)", unifiedReq.X, unifiedReq.Y)
@@ -176,7 +176,7 @@ func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
 		// Hover by selector action logic
 		err = driverExt.HoverBySelector(unifiedReq.Selector, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Hover by selector failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Hover by selector failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully hovered over element with selector: %s", unifiedReq.Selector)
@@ -234,7 +234,7 @@ func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 		// Tap by selector action logic
 		err = driverExt.TapBySelector(unifiedReq.Selector, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Tap by selector failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Tap by selector failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully tapped element with selector: %s", unifiedReq.Selector)
@@ -292,7 +292,7 @@ func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
 		// Secondary click by selector action logic
 		err = driverExt.SecondaryClickBySelector(unifiedReq.Selector, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Secondary click by selector failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Secondary click by selector failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully performed secondary click on element with selector: %s", unifiedReq.Selector)
@@ -358,7 +358,7 @@ func (t *ToolWebCloseTab) Implement() server.ToolHandlerFunc {
 
 		err = browserDriver.CloseTab(unifiedReq.TabIndex)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Close tab failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Close tab failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully closed tab at index: %d", unifiedReq.TabIndex)

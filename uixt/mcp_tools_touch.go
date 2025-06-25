@@ -58,7 +58,7 @@ func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 		// Tap action logic
 		err = driverExt.TapXY(unifiedReq.X, unifiedReq.Y, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Tap failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Tap failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully tapped at coordinates (%.2f, %.2f)", unifiedReq.X, unifiedReq.Y)
@@ -144,7 +144,7 @@ func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 		// Tap absolute XY action logic
 		err = driverExt.TapAbsXY(unifiedReq.X, unifiedReq.Y, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Tap absolute XY failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Tap absolute XY failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully tapped at absolute coordinates (%.0f, %.0f)", unifiedReq.X, unifiedReq.Y)
@@ -224,7 +224,7 @@ func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
 		// Tap by OCR action logic
 		err = driverExt.TapByOCR(unifiedReq.Text, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Tap by OCR failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Tap by OCR failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully tapped on OCR text: %s", unifiedReq.Text)
@@ -290,7 +290,7 @@ func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
 		// We'll add a basic implementation that triggers CV recognition
 		err = driverExt.TapByCV(opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Tap by CV failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Tap by CV failed: %s", err.Error())), err
 		}
 
 		message := "Successfully tapped by computer vision"
@@ -352,7 +352,7 @@ func (t *ToolDoubleTapXY) Implement() server.ToolHandlerFunc {
 		// Double tap XY action logic
 		err = driverExt.DoubleTap(unifiedReq.X, unifiedReq.Y)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Double tap failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Double tap failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully double tapped at (%.2f, %.2f)", unifiedReq.X, unifiedReq.Y)
