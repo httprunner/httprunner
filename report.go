@@ -221,8 +221,9 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 	for _, logEntry := range g.LogData {
 		// Check for step boundaries to control inclusion
 		if logEntry.Message == RUN_STEP_START {
-			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
-				if stepFieldValue == stepName {
+			if stepFieldValue, exists := logEntry.Fields["step"].(string); exists {
+				// use prefix matching for parameterized steps
+				if strings.HasPrefix(stepName, stepFieldValue) {
 					inCurrentStep = true
 					stepLogs = append(stepLogs, logEntry)
 					continue
@@ -234,8 +235,9 @@ func (g *HTMLReportGenerator) getStepLogs(stepName string, startTime int64, elap
 		}
 
 		if logEntry.Message == RUN_STEP_END {
-			if stepFieldValue, exists := logEntry.Fields["step"]; exists {
-				if stepFieldValue == stepName {
+			if stepFieldValue, exists := logEntry.Fields["step"].(string); exists {
+				// use prefix matching for parameterized steps
+				if strings.HasPrefix(stepName, stepFieldValue) {
 					stepLogs = append(stepLogs, logEntry)
 					inCurrentStep = false
 					continue
@@ -415,16 +417,53 @@ func (g *HTMLReportGenerator) calculateTotalUsage() map[string]interface{} {
 				continue
 			}
 			for _, action := range step.Actions {
-				if action.Plannings == nil {
-					continue
-				}
-				for _, planning := range action.Plannings {
-					if planning.Usage == nil {
-						continue
+				// Calculate planning usage
+				if action.Plannings != nil {
+					for _, planning := range action.Plannings {
+						if planning.Usage != nil {
+							totalUsage["prompt_tokens"] = totalUsage["prompt_tokens"].(int) + planning.Usage.PromptTokens
+							totalUsage["completion_tokens"] = totalUsage["completion_tokens"].(int) + planning.Usage.CompletionTokens
+							totalUsage["total_tokens"] = totalUsage["total_tokens"].(int) + planning.Usage.TotalTokens
+						}
 					}
-					totalUsage["prompt_tokens"] = totalUsage["prompt_tokens"].(int) + planning.Usage.PromptTokens
-					totalUsage["completion_tokens"] = totalUsage["completion_tokens"].(int) + planning.Usage.CompletionTokens
-					totalUsage["total_tokens"] = totalUsage["total_tokens"].(int) + planning.Usage.TotalTokens
+				}
+
+				// Calculate AI operations usage (ai_query, ai_action, ai_assert)
+				if action.AIResult != nil {
+					var usage *map[string]interface{}
+
+					switch action.AIResult.Type {
+					case "query":
+						if action.AIResult.QueryResult != nil && action.AIResult.QueryResult.Usage != nil {
+							usage = &map[string]interface{}{
+								"prompt_tokens":     action.AIResult.QueryResult.Usage.PromptTokens,
+								"completion_tokens": action.AIResult.QueryResult.Usage.CompletionTokens,
+								"total_tokens":      action.AIResult.QueryResult.Usage.TotalTokens,
+							}
+						}
+					case "action":
+						if action.AIResult.PlanningResult != nil && action.AIResult.PlanningResult.Usage != nil {
+							usage = &map[string]interface{}{
+								"prompt_tokens":     action.AIResult.PlanningResult.Usage.PromptTokens,
+								"completion_tokens": action.AIResult.PlanningResult.Usage.CompletionTokens,
+								"total_tokens":      action.AIResult.PlanningResult.Usage.TotalTokens,
+							}
+						}
+					case "assert":
+						if action.AIResult.AssertionResult != nil && action.AIResult.AssertionResult.Usage != nil {
+							usage = &map[string]interface{}{
+								"prompt_tokens":     action.AIResult.AssertionResult.Usage.PromptTokens,
+								"completion_tokens": action.AIResult.AssertionResult.Usage.CompletionTokens,
+								"total_tokens":      action.AIResult.AssertionResult.Usage.TotalTokens,
+							}
+						}
+					}
+
+					if usage != nil {
+						totalUsage["prompt_tokens"] = totalUsage["prompt_tokens"].(int) + (*usage)["prompt_tokens"].(int)
+						totalUsage["completion_tokens"] = totalUsage["completion_tokens"].(int) + (*usage)["completion_tokens"].(int)
+						totalUsage["total_tokens"] = totalUsage["total_tokens"].(int) + (*usage)["total_tokens"].(int)
+					}
 				}
 			}
 		}
@@ -489,6 +528,12 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 		"add":   func(a, b int) int { return a + b },
 		"base":  filepath.Base,
 		"index": func(m map[string]any, key string) any { return m[key] },
+		"title": func(s string) string {
+			if s == "" {
+				return ""
+			}
+			return strings.ToUpper(s[:1]) + s[1:]
+		},
 		"extractThought": func(content string) string {
 			if content == "" {
 				return ""
@@ -496,7 +541,7 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 			// Try to parse as JSON to extract thought field
 			var data map[string]interface{}
 			if err := json.Unmarshal([]byte(content), &data); err == nil {
-				if thought, ok := data["thought"].(string); ok {
+				if thought, ok := data["thought"].(string); ok && thought != "" {
 					return thought
 				}
 			}
@@ -655,9 +700,9 @@ const htmlTemplate = `<!DOCTYPE html>
 
         .summary h2 {
             color: #2c3e50;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
+            margin: 0;
+            padding: 0;
+            border: none;
         }
 
         .summary-grid {
@@ -665,6 +710,32 @@ const htmlTemplate = `<!DOCTYPE html>
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 20px;
+        }
+
+        .summary-title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .toggle-all-btn {
+            background-color: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .toggle-all-btn:hover {
+            background-color: #e0a800;
         }
 
         .summary-item {
@@ -1282,6 +1353,21 @@ const htmlTemplate = `<!DOCTYPE html>
             margin: 6px 0;
             font-size: 0.85em;
             color: #495057;
+        }
+
+        .structured-data {
+            background: #f8f9fa;
+            border: 1px solid #28a745;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin: 8px 0;
+            font-size: 0.85em;
+            color: #495057;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         @media screen and (max-width: 768px) {
@@ -2118,7 +2204,10 @@ const htmlTemplate = `<!DOCTYPE html>
         </div>
 
         <div class="summary">
-            <h2>📊 Test Summary</h2>
+            <div class="summary-title-bar">
+                <h2>📊 Test Summary</h2>
+                <button id="toggle-all-steps-btn" class="toggle-all-btn" onclick="toggleAllSteps()">Collapse All Steps</button>
+            </div>
             <div class="summary-grid">
                 <div class="summary-item success">
                     <div class="value">{{.Stat.TestCases.Success}}</div>
@@ -2236,8 +2325,15 @@ const htmlTemplate = `<!DOCTYPE html>
                                             {{if $planning.Error}}<span class="error">Error: {{$planning.Error}}</span>{{end}}
                                         </div>
 
-                                        {{if $planning.Thought}}
-                                        <div class="thought">{{$planning.Thought}}</div>
+                                        {{$extractedThought := extractThought $planning.Content}}
+                                        {{if or $planning.Thought $extractedThought}}
+                                            <div class="thought">
+                                                {{if $planning.Thought}}
+                                                    {{$planning.Thought}}
+                                                {{else}}
+                                                    {{$extractedThought}}
+                                                {{end}}
+                                            </div>
                                         {{end}}
 
                                         <!-- Three-column layout: screenshot left, model output and actions right -->
@@ -2348,59 +2444,44 @@ const htmlTemplate = `<!DOCTYPE html>
                                     {{end}}
                                 {{end}}
 
-                                {{/* Handle special case: ai_query needs enhanced display even when not in planning */}}
-                                {{if eq $action.Method "ai_query"}}
+                                {{/* Enhanced AI Operations Display - using unified AIResult data structure */}}
+                                {{if or (eq $action.Method "ai_query") (eq $action.Method "ai_action") (eq $action.Method "ai_assert")}}
+                                {{if $action.AIResult}}
                                 <div class="sub-action-item">
-                                    <!-- Enhanced AI Query Display -->
                                     <div class="validator-ai-content">
-                                        <!-- Extract AI query details from step logs -->
-                                        {{$stepLogs := getStepLogs $step}}
-                                        {{$queryThought := ""}}
-                                        {{$queryModel := ""}}
-                                        {{$queryUsage := ""}}
-                                        {{$queryScreenshot := ""}}
-                                        {{$queryResult := ""}}
-                                        {{range $logEntry := $stepLogs}}
-                                            {{if and (eq $logEntry.Message "log response message") (index $logEntry.Fields "content")}}
-                                                {{$content := index $logEntry.Fields "content"}}
-                                                {{if $content}}
-                                                    {{$queryResult = $content}}
-                                                {{end}}
+                                        <!-- Display AI Thought from specific result types -->
+                                        {{if eq $action.AIResult.Type "query"}}
+                                            {{if $action.AIResult.QueryResult.Thought}}
+                                                <div class="thought">{{$action.AIResult.QueryResult.Thought}}</div>
                                             {{end}}
-                                            {{if and (eq $logEntry.Message "call model service for query") (index $logEntry.Fields "model")}}
-                                                {{$queryModel = index $logEntry.Fields "model"}}
+                                        {{else if eq $action.AIResult.Type "action"}}
+                                            {{if $action.AIResult.PlanningResult.Thought}}
+                                                <div class="thought">{{$action.AIResult.PlanningResult.Thought}}</div>
                                             {{end}}
-                                            {{if and (eq $logEntry.Message "usage statistics") (index $logEntry.Fields "input_tokens")}}
-                                                {{$inputTokens := index $logEntry.Fields "input_tokens"}}
-                                                {{$outputTokens := index $logEntry.Fields "output_tokens"}}
-                                                {{$totalTokens := index $logEntry.Fields "total_tokens"}}
-                                                {{$queryUsage = printf "📊 Tokens: %v in / %v out / %v total" $inputTokens $outputTokens $totalTokens}}
-                                            {{end}}
-                                            {{if and (eq $logEntry.Message "log screenshot") (index $logEntry.Fields "imagePath")}}
-                                                {{$queryScreenshot = index $logEntry.Fields "imagePath"}}
+                                        {{else if eq $action.AIResult.Type "assert"}}
+                                            {{if $action.AIResult.AssertionResult.Thought}}
+                                                <div class="thought">{{$action.AIResult.AssertionResult.Thought}}</div>
                                             {{end}}
                                         {{end}}
 
-                                        <!-- Display AI Query Result at the top -->
-                                        {{if $queryResult}}
-                                        <div class="thought">{{$queryResult}}</div>
-                                        {{end}}
-
-                                        <!-- AI Query Layout - similar to validator layout -->
+                                        <!-- AI Operation Layout: Screenshot left, Analysis right -->
                                         <div class="validator-ai-layout">
                                             <!-- Left column: Screenshot -->
-                                            {{if $queryScreenshot}}
+                                            {{if $action.AIResult.ImagePath}}
                                             <div class="validator-column-screenshot">
                                                 <div class="validator-step-compact">
                                                     <div class="step-header-compact">
-                                                        <span class="step-name">📸 Query Screenshot</span>
+                                                        <span class="step-name">📸 {{title $action.AIResult.Type}} Screenshot</span>
+                                                        {{if $action.AIResult.ScreenshotElapsed}}
+                                                        <span class="duration">{{formatDuration $action.AIResult.ScreenshotElapsed}}</span>
+                                                        {{end}}
                                                     </div>
                                                     <div class="screenshot-display">
-                                                        {{$base64Image := encodeImageBase64 $queryScreenshot}}
+                                                        {{$base64Image := encodeImageBase64 $action.AIResult.ImagePath}}
                                                         {{if $base64Image}}
                                                         <div class="screenshot-item-compact">
                                                             <div class="screenshot-image">
-                                                                <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Query Screenshot" onclick="openImageModal(this.src)" />
+                                                                <img src="data:image/jpeg;base64,{{$base64Image}}" alt="AI {{title $action.AIResult.Type}} Screenshot" onclick="openImageModal(this.src)" />
                                                             </div>
                                                         </div>
                                                         {{end}}
@@ -2409,18 +2490,60 @@ const htmlTemplate = `<!DOCTYPE html>
                                             </div>
                                             {{end}}
 
-                                            <!-- Right column: AI Query -->
+                                            <!-- Right column: AI Analysis -->
                                             <div class="validator-column-analysis">
                                                 <div class="validator-step-compact">
                                                     <div class="step-header-compact">
-                                                        <span class="step-name">🤖 AI Query</span>
+                                                        <span class="step-name">🤖 AI {{title $action.AIResult.Type}} Analysis</span>
+                                                        {{if $action.AIResult.ModelCallElapsed}}
+                                                        <span class="duration">{{formatDuration $action.AIResult.ModelCallElapsed}}</span>
+                                                        {{end}}
                                                     </div>
                                                     <div class="validator-ai-details">
-                                                        {{if $queryModel}}
-                                                        <div class="model-info">🤖 Model: {{$queryModel}}</div>
+                                                        {{/* Model name and usage from specific result types */}}
+                                                        {{if eq $action.AIResult.Type "query"}}
+                                                            {{if $action.AIResult.QueryResult.ModelName}}
+                                                                <div class="model-info">🤖 Model: {{$action.AIResult.QueryResult.ModelName}}</div>
+                                                            {{end}}
+                                                            {{if $action.AIResult.QueryResult.Usage}}
+                                                                <div class="usage-info">📊 Tokens: {{$action.AIResult.QueryResult.Usage.PromptTokens}} in / {{$action.AIResult.QueryResult.Usage.CompletionTokens}} out / {{$action.AIResult.QueryResult.Usage.TotalTokens}} total</div>
+                                                            {{end}}
+                                                            {{/* Display structured data for query results */}}
+                                                            {{if $action.AIResult.QueryResult.Data}}
+                                                                <div class="model-info">📥 Structured Data:</div>
+                                                                <div class="structured-data">{{safeHTML (toJSON $action.AIResult.QueryResult.Data)}}</div>
+                                                            {{end}}
+                                                        {{else if eq $action.AIResult.Type "action"}}
+                                                            {{if $action.AIResult.PlanningResult.ModelName}}
+                                                                <div class="model-info">🤖 Model: {{$action.AIResult.PlanningResult.ModelName}}</div>
+                                                            {{end}}
+                                                            {{if $action.AIResult.PlanningResult.Usage}}
+                                                                <div class="usage-info">📊 Tokens: {{$action.AIResult.PlanningResult.Usage.PromptTokens}} in / {{$action.AIResult.PlanningResult.Usage.CompletionTokens}} out / {{$action.AIResult.PlanningResult.Usage.TotalTokens}} total</div>
+                                                            {{end}}
+                                                        {{else if eq $action.AIResult.Type "assert"}}
+                                                            {{if $action.AIResult.AssertionResult.ModelName}}
+                                                                <div class="model-info">🤖 Model: {{$action.AIResult.AssertionResult.ModelName}}</div>
+                                                            {{end}}
+                                                            {{if $action.AIResult.AssertionResult.Usage}}
+                                                                <div class="usage-info">📊 Tokens: {{$action.AIResult.AssertionResult.Usage.PromptTokens}} in / {{$action.AIResult.AssertionResult.Usage.CompletionTokens}} out / {{$action.AIResult.AssertionResult.Usage.TotalTokens}} total</div>
+                                                            {{end}}
                                                         {{end}}
-                                                        {{if $queryUsage}}
-                                                        <div class="usage-info">{{$queryUsage}}</div>
+                                                        {{if $action.AIResult.Resolution}}
+                                                        <div class="model-info">📐 Resolution: {{$action.AIResult.Resolution.Width}}x{{$action.AIResult.Resolution.Height}}</div>
+                                                        {{end}}
+                                                        {{/* Display Content from specific result types */}}
+                                                        {{if eq $action.AIResult.Type "query"}}
+                                                            {{if $action.AIResult.QueryResult.Content}}
+                                                            <div class="model-info">💬 {{title $action.AIResult.Type}} Result: {{$action.AIResult.QueryResult.Content}}</div>
+                                                            {{end}}
+                                                        {{else if eq $action.AIResult.Type "action"}}
+                                                            {{if $action.AIResult.PlanningResult.Content}}
+                                                            <div class="model-info">💬 {{title $action.AIResult.Type}} Result: {{$action.AIResult.PlanningResult.Content}}</div>
+                                                            {{end}}
+                                                        {{else if eq $action.AIResult.Type "assert"}}
+                                                            {{if $action.AIResult.AssertionResult.Content}}
+                                                            <div class="model-info">💬 {{title $action.AIResult.Type}} Result: {{$action.AIResult.AssertionResult.Content}}</div>
+                                                            {{end}}
                                                         {{end}}
                                                     </div>
                                                 </div>
@@ -2428,6 +2551,7 @@ const htmlTemplate = `<!DOCTYPE html>
                                         </div>
                                     </div>
                                 </div>
+                                {{end}}
                                 {{end}}
 
                                 {{/* Handle SessionData: display requests and screen results for non-planning actions */}}
@@ -2473,9 +2597,6 @@ const htmlTemplate = `<!DOCTYPE html>
                                                 <div class="screenshot-item small">
                                                     <div class="screenshot-info">
                                                         <span class="filename">{{base $screenshot.ImagePath}}</span>
-                                                        {{if $screenshot.Resolution}}
-                                                        <span class="resolution">{{$screenshot.Resolution.Width}}x{{$screenshot.Resolution.Height}}</span>
-                                                        {{end}}
                                                     </div>
                                                     <div class="screenshot-image">
                                                         <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Screenshot" onclick="openImageModal(this.src)" />
@@ -2512,84 +2633,6 @@ const htmlTemplate = `<!DOCTYPE html>
                                 {{if and $validator.msg (ne $validator.check_result "pass")}}
                                     <div class="validator-message">{{$validator.msg}}</div>
                                 {{end}}
-
-                                <!-- Enhanced AI Validator Display -->
-                                {{if or (eq $validator.check "ui_ai") (eq $validator.assert "ai_assert")}}
-                                <div class="validator-ai-content">
-                                    <!-- Extract AI validation details from step logs -->
-                                    {{$stepLogs := getStepLogs $step}}
-                                    {{$validationThought := ""}}
-                                    {{$validationModel := ""}}
-                                    {{$validationUsage := ""}}
-                                    {{$validationScreenshot := ""}}
-                                    {{range $logEntry := $stepLogs}}
-                                        {{if and (eq $logEntry.Message "log response message") (index $logEntry.Fields "content")}}
-                                            {{$content := index $logEntry.Fields "content"}}
-                                            {{if $content}}
-                                                {{$validationThought = $content}}
-                                            {{end}}
-                                        {{end}}
-                                        {{if and (eq $logEntry.Message "call model service for assertion") (index $logEntry.Fields "model")}}
-                                            {{$validationModel = index $logEntry.Fields "model"}}
-                                        {{end}}
-                                        {{if and (eq $logEntry.Message "usage statistics") (index $logEntry.Fields "input_tokens")}}
-                                            {{$inputTokens := index $logEntry.Fields "input_tokens"}}
-                                            {{$outputTokens := index $logEntry.Fields "output_tokens"}}
-                                            {{$totalTokens := index $logEntry.Fields "total_tokens"}}
-                                            {{$validationUsage = printf "📊 Tokens: %v in / %v out / %v total" $inputTokens $outputTokens $totalTokens}}
-                                        {{end}}
-                                        {{if and (eq $logEntry.Message "log screenshot") (index $logEntry.Fields "imagePath")}}
-                                            {{$validationScreenshot = index $logEntry.Fields "imagePath"}}
-                                        {{end}}
-                                    {{end}}
-
-                                    <!-- Display AI Thought at the top, same as planning -->
-                                    {{if $validationThought}}
-                                    <div class="thought">{{extractThought $validationThought}}</div>
-                                    {{end}}
-
-                                    <!-- AI Validation Layout - similar to planning layout -->
-                                    <div class="validator-ai-layout">
-                                        <!-- Left column: Screenshot -->
-                                        {{if $validationScreenshot}}
-                                        <div class="validator-column-screenshot">
-                                            <div class="validator-step-compact">
-                                                <div class="step-header-compact">
-                                                    <span class="step-name">📸 Validation Screenshot</span>
-                                                </div>
-                                                <div class="screenshot-display">
-                                                    {{$base64Image := encodeImageBase64 $validationScreenshot}}
-                                                    {{if $base64Image}}
-                                                    <div class="screenshot-item-compact">
-                                                        <div class="screenshot-image">
-                                                            <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Validation Screenshot" onclick="openImageModal(this.src)" />
-                                                        </div>
-                                                    </div>
-                                                    {{end}}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {{end}}
-
-                                        <!-- Right column: AI Analysis -->
-                                        <div class="validator-column-analysis">
-                                            <div class="validator-step-compact">
-                                                <div class="step-header-compact">
-                                                    <span class="step-name">🤖 AI Analysis</span>
-                                                </div>
-                                                <div class="validator-ai-details">
-                                                    {{if $validationModel}}
-                                                    <div class="model-info">🤖 Model: {{$validationModel}}</div>
-                                                    {{end}}
-                                                    {{if $validationUsage}}
-                                                    <div class="usage-info">{{$validationUsage}}</div>
-                                                    {{end}}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {{end}}
                             </div>
                             {{end}}
                         </div>
@@ -2616,12 +2659,6 @@ const htmlTemplate = `<!DOCTYPE html>
                                 <div class="screenshot-item">
                                     <div class="screenshot-info">
                                         <span class="filename">{{base $imagePath}}</span>
-                                        {{if $screenshot.Resolution}}
-                                        <span class="resolution">{{$screenshot.Resolution.Width}}x{{$screenshot.Resolution.Height}}</span>
-                                        {{else if index $screenshot "resolution"}}
-                                        {{$resolution := index $screenshot "resolution"}}
-                                        <span class="resolution">{{index $resolution "width"}}x{{index $resolution "height"}}</span>
-                                        {{end}}
                                     </div>
                                     <div class="screenshot-image">
                                         <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Screenshot" onclick="openImageModal(this.src)" />
@@ -2816,6 +2853,35 @@ const htmlTemplate = `<!DOCTYPE html>
             contents.forEach(content => content.classList.add('show'));
             icons.forEach(icon => icon.classList.add('rotated'));
         });
+
+        function toggleAllSteps() {
+            const contents = document.querySelectorAll('.step-content');
+            const icons = document.querySelectorAll('.toggle-icon');
+            const btn = document.getElementById('toggle-all-steps-btn');
+
+            if (!contents || contents.length === 0) {
+                return;
+            }
+
+            // If any step is expanded, collapse all. Otherwise expand all.
+            let isAnyExpanded = false;
+            for (let i = 0; i < contents.length; i++) {
+                if (contents[i].classList.contains('show')) {
+                    isAnyExpanded = true;
+                    break;
+                }
+            }
+
+            if (isAnyExpanded) {
+                contents.forEach(content => content.classList.remove('show'));
+                icons.forEach(icon => icon.classList.remove('rotated'));
+                btn.textContent = 'Expand All Steps';
+            } else {
+                contents.forEach(content => content.classList.add('show'));
+                icons.forEach(icon => icon.classList.add('rotated'));
+                btn.textContent = 'Collapse All Steps';
+            }
+        }
     </script>
 </body>
 </html>`

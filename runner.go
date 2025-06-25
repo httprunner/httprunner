@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"sort"
 	"strings"
 	"syscall"
 	"testing"
@@ -25,6 +26,7 @@ import (
 	"github.com/httprunner/funplugin"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/sdk"
 	"github.com/httprunner/httprunner/v5/internal/version"
 	"github.com/httprunner/httprunner/v5/mcphost"
@@ -676,6 +678,13 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 		summary.InOut.ExportVars = exportVars
 		summary.InOut.ConfigVars = config.Variables
 
+		// Save JSON case content to results directory
+		if config.Path != "" {
+			if err := saveJSONCase(config.Path); err != nil {
+				log.Warn().Err(err).Str("path", config.Path).Msg("save JSON case failed")
+			}
+		}
+
 		// TODO: move to mobile ui step
 		// Collect logs from cached drivers
 		for _, cached := range uixt.ListCachedDrivers() {
@@ -734,6 +743,98 @@ const (
 	RUN_STEP_END   = "run step end"
 )
 
+// executionTask holds the necessary information for a single step execution.
+type executionTask struct {
+	stepName   string
+	parameters map[string]interface{}
+}
+
+// formatParameters formats parameter values into a string for display in step names.
+// e.g. {"foo": "bar", "age": 18} -> "bar-18"
+func formatParameters(params map[string]interface{}) string {
+	if len(params) == 0 {
+		return ""
+	}
+
+	// sort keys to ensure consistent order
+	keys := make([]string, 0, len(params))
+	for k := range params {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var values []string
+	for _, k := range keys {
+		values = append(values, fmt.Sprintf("%v", params[k]))
+	}
+	return strings.Join(values, "-")
+}
+
+// generateExecutionTasks generates a list of execution tasks based on step parameters and loops.
+func (r *SessionRunner) generateExecutionTasks(step IStep) ([]executionTask, error) {
+	stepConfig := step.Config()
+	stepName := step.Name()
+
+	// determine effective loop times
+	loopTimes := stepConfig.Loops
+	if loopTimes <= 0 {
+		loopTimes = 1 // default to 1 if not set
+	}
+
+	// initialize parameters iterator
+	parametersIterator, err := r.caseRunner.parser.InitParametersIterator(&TConfig{
+		Parameters:        stepConfig.Parameters,
+		ParametersSetting: stepConfig.ParametersSetting,
+		Variables:         stepConfig.Variables,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to initialize parameters iterator")
+	}
+
+	// collect all parameter combinations first
+	var allParameters []map[string]interface{}
+	if parametersIterator != nil {
+		for parametersIterator.HasNext() {
+			allParameters = append(allParameters, parametersIterator.Next())
+		}
+	}
+
+	// if no parameters are specified, but loop times are set,
+	// we should run the step loopTimes with empty parameters.
+	if len(allParameters) == 0 && loopTimes > 0 {
+		allParameters = append(allParameters, make(map[string]interface{}))
+	}
+
+	// generate execution tasks
+	var tasks []executionTask
+	for loopIndex := 1; loopIndex <= loopTimes; loopIndex++ {
+		for _, params := range allParameters {
+			// determine step name based on parameters and loops
+			currentStepName := stepName
+			hasParameters := len(params) > 0
+			hasLoops := loopTimes > 1
+
+			if hasParameters {
+				paramStr := formatParameters(params)
+				if hasLoops {
+					currentStepName = fmt.Sprintf("%s [loop_%d_params_%s]", stepName, loopIndex, paramStr)
+				} else {
+					currentStepName = fmt.Sprintf("%s [params_%s]", stepName, paramStr)
+				}
+			} else if hasLoops {
+				currentStepName = fmt.Sprintf("%s_loop_%d", stepName, loopIndex)
+			}
+
+			tasks = append(tasks, executionTask{
+				stepName:   currentStepName,
+				parameters: params,
+			})
+		}
+	}
+
+	return tasks, nil
+}
+
 func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) {
 	// check for interrupt signal before running step
 	select {
@@ -753,56 +854,115 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 
 	stepName := step.Name()
 	stepType := string(step.Type())
+
 	log.Info().Str("step", stepName).Str("type", stepType).Msg(RUN_STEP_START)
 
-	// run times of step
-	loopTimes := step.Config().Loops
-	if loopTimes == 0 {
-		loopTimes = 1 // default run once
-	} else if loopTimes > 1 {
-		log.Info().Int("loops", loopTimes).Msg("set multiple loop times")
+	// execute step with parameters iterator
+	tasks, err := r.generateExecutionTasks(step)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to generate execution tasks")
 	}
 
-	// run step with specified loop times
-	for i := 1; i <= loopTimes; i++ {
-		var loopIndex string
-		if loopTimes > 1 {
-			log.Info().Int("index", i).Msg("start running step in loop")
-			loopIndex = fmt.Sprintf("_loop_%d", i)
+	var stepResults []*StepResult
+
+	// defer to save results regardless of how the function exits
+	defer func() {
+		// Save all completed results to summary
+		for _, result := range stepResults {
+			r.summary.AddStepResult(result)
+			// update extracted variables from the last result
+			for k, v := range result.ExportVars {
+				r.sessionVariables[k] = v
+			}
 		}
 
-		// run step
-		stepResult, err = step.Run(r)
-		stepResult.Name = stepName + loopIndex
-
-		// add step result to summary
-		r.summary.AddStepResult(stepResult)
-
-		// update extracted variables
-		for k, v := range stepResult.ExportVars {
-			r.sessionVariables[k] = v
-		}
-
-		// run step success
-		if err == nil {
+		// log final result
+		if err == nil && stepResult.Success {
 			log.Info().Str("step", stepName).
 				Str("type", stepType).
 				Bool("success", true).
 				Int64("elapsed(ms)", stepResult.Elapsed).
 				Interface("exportVars", stepResult.ExportVars).
 				Msg(RUN_STEP_END)
-			continue
+		} else if stepResult != nil {
+			log.Error().Str("step", stepName).
+				Str("type", stepType).
+				Bool("success", false).
+				Int64("elapsed(ms)", stepResult.Elapsed).
+				Int("completed_tasks", len(stepResults)).
+				Int("total_tasks", len(tasks)).
+				Msg(RUN_STEP_END)
 		}
-		// run step failed
-		log.Error().Err(err).Str("step", stepName).
-			Str("type", stepType).
-			Bool("success", false).
-			Int64("elapsed(ms)", stepResult.Elapsed).
-			Msg(RUN_STEP_END)
-		return stepResult, err
+	}()
+
+	// execute with loops as outer iteration
+	for _, task := range tasks {
+		// Check for interrupt signal before each parameter iteration
+		select {
+		case <-r.caseRunner.hrpRunner.interruptSignal:
+			log.Warn().Int("completed_tasks", len(stepResults)).
+				Int("total_tasks", len(tasks)).
+				Msg("interrupted during parameter iteration")
+			return nil, errors.Wrap(code.InterruptError, "parameter iteration interrupted")
+		default:
+		}
+
+		// execute step with merged variables
+		stepResult, stepErr := r.executeStepWithVariables(step, task.stepName, task.parameters)
+
+		// Always add stepResult to stepResults if it exists, even on error
+		// This ensures data is saved in defer function for summary generation
+		if stepResult != nil {
+			stepResults = append(stepResults, stepResult)
+		}
+
+		if stepErr != nil {
+			if r.caseRunner.hrpRunner.failfast {
+				// failfast mode, abort running but step result is already saved above
+				log.Error().Err(stepErr).
+					Str("step", task.stepName).
+					Int("completed_tasks", len(stepResults)).
+					Msg("execute step failed in failfast mode, step result saved")
+				return nil, errors.Wrap(stepErr, "execute step failed")
+			}
+			log.Error().Err(stepErr).Str("step", task.stepName).Msg("execute step failed")
+		}
 	}
 
-	return stepResult, nil
+	// return last result
+	if len(stepResults) > 0 {
+		lastResult := stepResults[len(stepResults)-1]
+		return lastResult, nil
+	}
+
+	return nil, errors.New("no steps were executed")
+}
+
+// executeStepWithVariables executes a single step with given parameters
+// parameters will override step variables with the same name
+func (r *SessionRunner) executeStepWithVariables(step IStep, stepName string, parameters map[string]interface{}) (stepResult *StepResult, err error) {
+	stepConfig := step.Config()
+
+	// backup original variables
+	originalVariables := make(map[string]interface{})
+	for k, v := range stepConfig.Variables {
+		originalVariables[k] = v
+	}
+
+	// merge parameters into step variables
+	// parameters have higher priority than variables
+	for k, v := range parameters {
+		stepConfig.Variables[k] = v
+	}
+
+	// execute step
+	stepResult, err = step.Run(r)
+	stepResult.Name = stepName
+
+	// restore original variables to avoid side effects
+	stepConfig.Variables = originalVariables
+
+	return stepResult, err
 }
 
 func (r *SessionRunner) GetSummary() *TestCaseSummary {
@@ -894,4 +1054,26 @@ func (r *SessionRunner) GetSessionVariables() map[string]interface{} {
 
 func (r *SessionRunner) GetTransactions() map[string]map[TransactionType]time.Time {
 	return r.transactions
+}
+
+// saveJSONCase saves the original JSON case content to the results directory
+func saveJSONCase(casePath string) error {
+	// Read the original JSON case content
+	path := TestCasePath(casePath)
+	testCase, err := path.GetTestCase()
+	if err != nil {
+		return errors.Wrap(err, "load JSON case failed")
+	}
+
+	// remove environs from testcase config
+	tConfig := testCase.Config.(*TConfig)
+	tConfig.Environs = nil
+
+	// save JSON case to results directory
+	jsonCasePath := config.GetConfig().CaseFilePath()
+	err = testCase.Dump2JSON(jsonCasePath)
+	if err != nil {
+		return errors.Wrap(err, "dump JSON case failed")
+	}
+	return nil
 }

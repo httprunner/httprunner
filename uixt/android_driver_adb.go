@@ -339,15 +339,11 @@ func (ad *ADBDriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	xStr := fmt.Sprintf("%.1f", x)
 	yStr := fmt.Sprintf("%.1f", y)
 	_, err = ad.runShellCommand(
+		"input", "tap", xStr, yStr, ";",
+		"sleep", "0.05", ";",
 		"input", "tap", xStr, yStr)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
-	}
-	time.Sleep(time.Duration(100) * time.Millisecond)
-	_, err = ad.runShellCommand(
-		"input", "tap", xStr, yStr)
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("tap <%s, %s> failed", xStr, yStr))
+		return errors.Wrap(err, fmt.Sprintf("double tap <%s, %s> failed", xStr, yStr))
 	}
 	return nil
 }

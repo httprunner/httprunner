@@ -32,9 +32,11 @@ type QueryOptions struct {
 
 // QueryResult represents the response from an AI query
 type QueryResult struct {
-	Content string      `json:"content"`        // The extracted content/information
-	Thought string      `json:"thought"`        // The reasoning process
-	Data    interface{} `json:"data,omitempty"` // Structured data when OutputSchema is provided
+	Content   string             `json:"content"`         // The extracted content/information
+	Thought   string             `json:"thought"`         // The reasoning process
+	Data      interface{}        `json:"data,omitempty"`  // Structured data when OutputSchema is provided
+	ModelName string             `json:"model_name"`      // model name used for query
+	Usage     *schema.TokenUsage `json:"usage,omitempty"` // token usage statistics
 }
 
 // Querier handles query operations using different AI models
@@ -89,7 +91,7 @@ func NewQuerier(ctx context.Context, modelConfig *ModelConfig) (*Querier, error)
 // callModelWithLogging calls the model with automatic logging and timing
 
 // Query performs the information extraction from the screenshot
-func (q *Querier) Query(ctx context.Context, opts *QueryOptions) (*QueryResult, error) {
+func (q *Querier) Query(ctx context.Context, opts *QueryOptions) (result *QueryResult, err error) {
 	// Validate input parameters
 	if err := validateQueryInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate query parameters failed")
@@ -141,8 +143,15 @@ Here is the query. Please extract the requested information from the screenshot.
 		return nil, errors.Wrap(code.LLMRequestServiceError, err.Error())
 	}
 
+	defer func() {
+		// Extract usage information if available
+		if message.ResponseMeta != nil && message.ResponseMeta.Usage != nil {
+			result.Usage = message.ResponseMeta.Usage
+		}
+	}()
+
 	// Parse result
-	result, err := parseQueryResult(message.Content)
+	result, err = parseQueryResult(message.Content, q.modelConfig.ModelType)
 	if err != nil {
 		return nil, errors.Wrap(code.LLMParseQueryResponseError, err.Error())
 	}
@@ -168,18 +177,20 @@ func validateQueryInput(opts *QueryOptions) error {
 }
 
 // parseQueryResult parses the model response into QueryResult
-func parseQueryResult(content string) (*QueryResult, error) {
+func parseQueryResult(content string, modelType option.LLMServiceType) (*QueryResult, error) {
 	var result QueryResult
 
 	// Use the generic structured response parser with enhanced error recovery
 	if err := parseStructuredResponse(content, &result); err != nil {
 		// If parseStructuredResponse fails completely, treat content as plain text
 		return &QueryResult{
-			Content: content,
-			Thought: "Failed to parse response, returning raw content",
+			Content:   content,
+			Thought:   "Failed to parse response, returning raw content",
+			ModelName: string(modelType),
 		}, nil
 	}
 
+	result.ModelName = string(modelType)
 	return &result, nil
 }
 

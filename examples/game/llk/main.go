@@ -12,7 +12,6 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/uixt"
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/rs/zerolog/log"
 )
@@ -124,14 +123,19 @@ func (bot *LLKGameBot) AnalyzeGameInterface() (*GameElement, error) {
 	return gameElement, nil
 }
 
-// convertToGameElement converts AI query result to GameElement
-func convertToGameElement(result *ai.QueryResult) (*GameElement, error) {
+// convertToGameElement converts AI execution result to GameElement
+func convertToGameElement(result *uixt.AIExecutionResult) (*GameElement, error) {
 	if result == nil {
-		return nil, fmt.Errorf("query result is nil")
+		return nil, fmt.Errorf("AI execution result is nil")
 	}
 
+	if result.QueryResult == nil {
+		return nil, fmt.Errorf("query result is nil in AI execution result")
+	}
+	queryResult := result.QueryResult
+
 	// Try direct conversion first
-	if gameElement, ok := result.Data.(*GameElement); ok {
+	if gameElement, ok := queryResult.Data.(*GameElement); ok {
 		return gameElement, nil
 	}
 
@@ -140,11 +144,11 @@ func convertToGameElement(result *ai.QueryResult) (*GameElement, error) {
 	var sourceData interface{}
 
 	// Use Data if available, otherwise try Content
-	if result.Data != nil {
-		sourceData = result.Data
-	} else if result.Content != "" {
+	if queryResult.Data != nil {
+		sourceData = queryResult.Data
+	} else if queryResult.Content != "" {
 		var contentData map[string]interface{}
-		if err := json.Unmarshal([]byte(result.Content), &contentData); err != nil {
+		if err := json.Unmarshal([]byte(queryResult.Content), &contentData); err != nil {
 			return nil, fmt.Errorf("failed to parse JSON from Content: %w", err)
 		}
 		sourceData = contentData

@@ -27,15 +27,17 @@ const (
 )
 
 type StepConfig struct {
-	StepName         string                 `json:"name" yaml:"name"` // required
-	Variables        map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
-	SetupHooks       []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
-	TeardownHooks    []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
-	Extract          map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
-	Validators       []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
-	StepExport       []string               `json:"export,omitempty" yaml:"export,omitempty"`
-	Loops            int                    `json:"loops,omitempty" yaml:"loops,omitempty"`
-	AutoPopupHandler bool                   `json:"auto_popup_handler,omitempty" yaml:"auto_popup_handler,omitempty"` // enable auto popup handler for this step
+	StepName          string                 `json:"name" yaml:"name"` // required
+	Variables         map[string]interface{} `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Parameters        map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	ParametersSetting *TParamsConfig         `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
+	SetupHooks        []string               `json:"setup_hooks,omitempty" yaml:"setup_hooks,omitempty"`
+	TeardownHooks     []string               `json:"teardown_hooks,omitempty" yaml:"teardown_hooks,omitempty"`
+	Extract           map[string]string      `json:"extract,omitempty" yaml:"extract,omitempty"`
+	Validators        []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
+	StepExport        []string               `json:"export,omitempty" yaml:"export,omitempty"`
+	Loops             int                    `json:"loops,omitempty" yaml:"loops,omitempty"`
+	AutoPopupHandler  bool                   `json:"auto_popup_handler,omitempty" yaml:"auto_popup_handler,omitempty"` // enable auto popup handler for this step
 }
 
 // define struct for teststep
@@ -62,6 +64,7 @@ type ActionResult struct {
 	Elapsed             int64                           `json:"elapsed_ms"`          // action elapsed time(ms)
 	Error               string                          `json:"error,omitempty"`     // action execution result
 	Plannings           []*uixt.PlanningExecutionResult `json:"plannings,omitempty"` // store planning results for start_to_goal actions, which contains multiple sub-actions
+	AIResult            *uixt.AIExecutionResult         `json:"ai_result,omitempty"` // store unified AI execution result for ai_query/ai_action/ai_assert actions
 	uixt.SessionData                                    // store session data for other actions besides start_to_goal
 }
 

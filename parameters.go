@@ -11,10 +11,51 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// ParametersOption defines options for parameters configuration
+type ParametersOption func(*TParamsConfig)
+
+// WithSequentialOrder sets parameters to be picked in sequential order
+func WithSequentialOrder() ParametersOption {
+	return func(config *TParamsConfig) {
+		config.PickOrder = iteratorPickOrder("sequential")
+	}
+}
+
+// WithRandomOrder sets parameters to be picked in random order
+func WithRandomOrder() ParametersOption {
+	return func(config *TParamsConfig) {
+		config.PickOrder = iteratorPickOrder("random")
+	}
+}
+
+// WithUniqueOrder sets parameters to be picked uniquely (no duplicates)
+func WithUniqueOrder() ParametersOption {
+	return func(config *TParamsConfig) {
+		config.PickOrder = iteratorPickOrder("unique")
+	}
+}
+
+// WithLimit sets the limit count for parameter iteration
+func WithLimit(limit int) ParametersOption {
+	return func(config *TParamsConfig) {
+		config.Limit = limit
+	}
+}
+
+// WithStrategy sets individual strategy for a specific parameter
+func WithStrategy(paramName string, strategy IteratorStrategy) ParametersOption {
+	return func(config *TParamsConfig) {
+		if config.Strategies == nil {
+			config.Strategies = make(map[string]IteratorStrategy)
+		}
+		config.Strategies[paramName] = strategy
+	}
+}
+
 type TParamsConfig struct {
 	PickOrder  iteratorPickOrder           `json:"pick_order,omitempty" yaml:"pick_order,omitempty"` // overall pick-order strategy
 	Strategies map[string]IteratorStrategy `json:"strategies,omitempty" yaml:"strategies,omitempty"` // individual strategies for each parameters
-	Limit      int                         `json:"limit,omitempty" yaml:"limit,omitempty"`
+	Limit      int                         `json:"limit,omitempty" yaml:"limit,omitempty"`           // limit count for parameter iteration
 }
 
 type iteratorPickOrder string

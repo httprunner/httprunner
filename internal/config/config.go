@@ -22,6 +22,7 @@ const (
 	SummaryFileName = "hrp_summary.json" // $PWD/results/20060102150405/hrp_summary.json
 	LogFileName     = "hrp.log"          // $PWD/results/20060102150405/hrp.log
 	ReportFileName  = "report.html"      // $PWD/results/20060102150405/report.html
+	CaseFileName    = "case.json"        // $PWD/results/20060102150405/case.json
 
 	// mobile device path
 	DeviceActionLogFilePath = "/sdcard/Android/data/io.appium.uiautomator2.server/files/hodor"
@@ -36,6 +37,7 @@ type Config struct {
 	summaryFilePath  string
 	logFilePath      string
 	reportFilePath   string
+	caseFilePath     string
 	actionLogDirPath string
 	mu               sync.Mutex
 }
@@ -178,4 +180,18 @@ func (c *Config) ReportFilePath() string {
 	// Ensure directory creation and set cached path
 	c.reportFilePath = filepath.Join(c.resultsPathUnlocked(), ReportFileName)
 	return c.reportFilePath
+}
+
+// $PWD/results/20060102150405/case.json
+func (c *Config) CaseFilePath() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.caseFilePath != "" {
+		return c.caseFilePath
+	}
+
+	// Ensure directory creation and set cached path
+	c.caseFilePath = filepath.Join(c.resultsPathUnlocked(), CaseFileName)
+	return c.caseFilePath
 }

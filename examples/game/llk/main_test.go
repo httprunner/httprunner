@@ -2,6 +2,8 @@ package llk
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 
@@ -12,6 +14,47 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// convertToGameElementFromQueryResult converts AI query result to GameElement for testing
+func convertToGameElementFromQueryResult(result *ai.QueryResult) (*GameElement, error) {
+	if result == nil {
+		return nil, fmt.Errorf("query result is nil")
+	}
+
+	// Try direct conversion first
+	if gameElement, ok := result.Data.(*GameElement); ok {
+		return gameElement, nil
+	}
+
+	// Convert to JSON and back for flexible parsing
+	var gameElement GameElement
+	var sourceData interface{}
+
+	// Use Data if available, otherwise try Content
+	if result.Data != nil {
+		sourceData = result.Data
+	} else if result.Content != "" {
+		var contentData map[string]interface{}
+		if err := json.Unmarshal([]byte(result.Content), &contentData); err != nil {
+			return nil, fmt.Errorf("failed to parse JSON from Content: %w", err)
+		}
+		sourceData = contentData
+	} else {
+		return nil, fmt.Errorf("no data available in query result")
+	}
+
+	// Convert via JSON marshaling/unmarshaling
+	jsonBytes, err := json.Marshal(sourceData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal result data: %w", err)
+	}
+
+	if err := json.Unmarshal(jsonBytes, &gameElement); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal to GameElement: %w", err)
+	}
+
+	return &gameElement, nil
+}
 
 // hasRequiredEnvVars checks if the required environment variables are set for testing
 func hasRequiredEnvVars() bool {
@@ -83,7 +126,7 @@ Return JSON with: content, dimensions{rows,cols}, elements[{type,position{row,co
 		require.NoError(t, err, "Failed to query AI model")
 
 		// Convert result using enhanced compatibility logic
-		gameElement, err := convertToGameElement(result)
+		gameElement, err := convertToGameElementFromQueryResult(result)
 		require.NoError(t, err, "Failed to convert query result to GameElement")
 		require.NotNil(t, gameElement, "GameElement should not be nil")
 
