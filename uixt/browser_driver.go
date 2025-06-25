@@ -37,6 +37,7 @@ type CreateBrowserResponse struct {
 type BrowserDriver struct {
 	urlPrefix *url.URL
 	Session   *DriverSession
+	Device    *BrowserDevice
 }
 
 type BrowserInfo struct {
@@ -96,6 +97,7 @@ func CreateBrowser(timeout int, width, height int) (browserInfo *BrowserInfo, er
 func NewBrowserDriver(device *BrowserDevice) (driver *BrowserDriver, err error) {
 	log.Info().Msg("init NewBrowserDriver driver")
 	driver = new(BrowserDriver)
+	driver.Device = device
 	driver.urlPrefix = &url.URL{}
 	driver.urlPrefix.Host = BROWSER_LOCAL_ADDRESS
 	driver.urlPrefix.Scheme = "http"
@@ -597,7 +599,7 @@ func (wd *BrowserDriver) Clear(packageName string) error {
 }
 
 func (wd *BrowserDriver) GetDevice() IDevice {
-	return nil
+	return wd.Device
 }
 
 func (wd *BrowserDriver) ForegroundInfo() (app types.AppInfo, err error) {

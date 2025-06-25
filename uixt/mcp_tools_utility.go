@@ -236,7 +236,7 @@ func (t *ToolClosePopups) Implement() server.ToolHandlerFunc {
 		// Close popups action logic
 		err = driverExt.ClosePopupsHandler()
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Close popups failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Close popups failed: %s", err.Error())), err
 		}
 
 		message := "Successfully closed popups"

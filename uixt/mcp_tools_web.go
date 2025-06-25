@@ -52,7 +52,7 @@ func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 
 		_, err = driver.LoginNoneUI(unifiedReq.PackageName, unifiedReq.PhoneNumber, unifiedReq.Captcha, unifiedReq.Password)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Web login failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Web login failed: %s", err.Error())), err
 		}
 
 		message := "Successfully performed web login without UI"
@@ -63,7 +63,15 @@ func (t *ToolWebLoginNoneUI) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolWebLoginNoneUI) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	arguments := map[string]any{}
+	if textsSlice, ok := action.Params.([]interface{}); ok {
+		arguments["packageName"] = textsSlice[0].(string)
+		arguments["phoneNumber"] = textsSlice[1].(string)
+		arguments["captcha"] = textsSlice[2].(string)
+		arguments["password"] = textsSlice[3].(string)
+	}
+
+	return BuildMCPCallToolRequest(t.Name(), arguments), nil
 }
 
 // ToolSecondaryClick implements the secondary_click tool call.
@@ -106,7 +114,7 @@ func (t *ToolSecondaryClick) Implement() server.ToolHandlerFunc {
 		// Secondary click action logic
 		err = driverExt.SecondaryClick(unifiedReq.X, unifiedReq.Y)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Secondary click failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Secondary click failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully performed secondary click at (%.2f, %.2f)", unifiedReq.X, unifiedReq.Y)
@@ -125,6 +133,8 @@ func (t *ToolSecondaryClick) ConvertActionToCallToolRequest(action option.Mobile
 			"x": params[0],
 			"y": params[1],
 		}
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
 		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click params: %v", action.Params)
@@ -160,11 +170,13 @@ func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
 		if err != nil {
 			return nil, err
 		}
+		// Get options directly since ActionOptions is now ActionOptions
+		opts := unifiedReq.Options()
 
 		// Hover by selector action logic
-		err = driverExt.HoverBySelector(unifiedReq.Selector)
+		err = driverExt.HoverBySelector(unifiedReq.Selector, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Hover by selector failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Hover by selector failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully hovered over element with selector: %s", unifiedReq.Selector)
@@ -179,6 +191,8 @@ func (t *ToolHoverBySelector) ConvertActionToCallToolRequest(action option.Mobil
 		arguments := map[string]any{
 			"selector": selector,
 		}
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
 		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid hover by selector params: %v", action.Params)
@@ -214,11 +228,13 @@ func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 		if err != nil {
 			return nil, err
 		}
+		// Get options directly since ActionOptions is now ActionOptions
+		opts := unifiedReq.Options()
 
 		// Tap by selector action logic
-		err = driverExt.TapBySelector(unifiedReq.Selector)
+		err = driverExt.TapBySelector(unifiedReq.Selector, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Tap by selector failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Tap by selector failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully tapped element with selector: %s", unifiedReq.Selector)
@@ -233,6 +249,8 @@ func (t *ToolTapBySelector) ConvertActionToCallToolRequest(action option.MobileA
 		arguments := map[string]any{
 			"selector": selector,
 		}
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
 		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by selector params: %v", action.Params)
@@ -268,11 +286,13 @@ func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
 		if err != nil {
 			return nil, err
 		}
+		// Get options directly since ActionOptions is now ActionOptions
+		opts := unifiedReq.Options()
 
 		// Secondary click by selector action logic
-		err = driverExt.SecondaryClickBySelector(unifiedReq.Selector)
+		err = driverExt.SecondaryClickBySelector(unifiedReq.Selector, opts...)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Secondary click by selector failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Secondary click by selector failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully performed secondary click on element with selector: %s", unifiedReq.Selector)
@@ -287,6 +307,8 @@ func (t *ToolSecondaryClickBySelector) ConvertActionToCallToolRequest(action opt
 		arguments := map[string]any{
 			"selector": selector,
 		}
+		// Extract options to arguments
+		extractActionOptionsToArguments(action.GetOptions(), arguments)
 		return BuildMCPCallToolRequest(t.Name(), arguments), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click by selector params: %v", action.Params)
@@ -336,7 +358,7 @@ func (t *ToolWebCloseTab) Implement() server.ToolHandlerFunc {
 
 		err = browserDriver.CloseTab(unifiedReq.TabIndex)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Close tab failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Close tab failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully closed tab at index: %d", unifiedReq.TabIndex)
@@ -361,5 +383,7 @@ func (t *ToolWebCloseTab) ConvertActionToCallToolRequest(action option.MobileAct
 	arguments := map[string]any{
 		"tabIndex": tabIndex,
 	}
+	// Extract options to arguments
+	extractActionOptionsToArguments(action.GetOptions(), arguments)
 	return BuildMCPCallToolRequest(t.Name(), arguments), nil
 }

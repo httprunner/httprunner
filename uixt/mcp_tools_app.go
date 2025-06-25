@@ -94,7 +94,7 @@ func (t *ToolLaunchApp) Implement() server.ToolHandlerFunc {
 		// Launch app action logic
 		err = driverExt.AppLaunch(unifiedReq.PackageName)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Launch app failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Launch app failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully launched app: %s", unifiedReq.PackageName)
@@ -153,7 +153,7 @@ func (t *ToolTerminateApp) Implement() server.ToolHandlerFunc {
 		// Terminate app action logic
 		success, err := driverExt.AppTerminate(unifiedReq.PackageName)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Terminate app failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Terminate app failed: %s", err.Error())), err
 		}
 		if !success {
 			log.Warn().Str("packageName", unifiedReq.PackageName).Msg("app was not running")
@@ -213,7 +213,7 @@ func (t *ToolAppInstall) Implement() server.ToolHandlerFunc {
 		// App install action logic
 		err = driverExt.GetDevice().Install(unifiedReq.AppUrl)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("App install failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("App install failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully installed app from: %s", unifiedReq.AppUrl)
@@ -267,7 +267,7 @@ func (t *ToolAppUninstall) Implement() server.ToolHandlerFunc {
 		// App uninstall action logic
 		err = driverExt.GetDevice().Uninstall(unifiedReq.PackageName)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("App uninstall failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("App uninstall failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully uninstalled app: %s", unifiedReq.PackageName)
@@ -321,7 +321,7 @@ func (t *ToolAppClear) Implement() server.ToolHandlerFunc {
 		// App clear action logic
 		err = driverExt.AppClear(unifiedReq.PackageName)
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("App clear failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("App clear failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Successfully cleared app: %s", unifiedReq.PackageName)
@@ -371,7 +371,7 @@ func (t *ToolGetForegroundApp) Implement() server.ToolHandlerFunc {
 		// Get foreground app info
 		appInfo, err := driverExt.ForegroundInfo()
 		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Get foreground app failed: %s", err.Error())), nil
+			return NewMCPErrorResponse(fmt.Sprintf("Get foreground app failed: %s", err.Error())), err
 		}
 
 		message := fmt.Sprintf("Current foreground app: %s (%s)", appInfo.AppName, appInfo.PackageName)
