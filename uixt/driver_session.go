@@ -87,6 +87,7 @@ func (s *DriverSession) GetData(withReset bool) SessionData {
 }
 
 func (s *DriverSession) SetBaseURL(baseUrl string) {
+	log.Info().Str("baseUrl", baseUrl).Msg("set driver session base URL")
 	s.baseUrl = baseUrl
 }
 

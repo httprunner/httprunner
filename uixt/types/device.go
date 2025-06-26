@@ -29,6 +29,8 @@ import "fmt"
 type DeviceStatus struct {
 	Message string `json:"message"`
 	State   string `json:"state"`
+	Ready   bool   `json:"ready"`
+	Device  string `json:"device"`
 	OS      struct {
 		TestmanagerdVersion int    `json:"testmanagerdVersion"`
 		Name                string `json:"name"`
@@ -39,10 +41,11 @@ type DeviceStatus struct {
 		IP               string `json:"ip"`
 		SimulatorVersion string `json:"simulatorVersion"`
 	} `json:"ios"`
-	Ready bool `json:"ready"`
 	Build struct {
 		Time                    string `json:"time"`
 		ProductBundleIdentifier string `json:"productBundleIdentifier"`
+		Version                 string `json:"version"`       // OpenSource WDA version
+		GtfWDAVersion           string `json:"gtfWDAVersion"` // GTF WDA version
 	} `json:"build"`
 }
 

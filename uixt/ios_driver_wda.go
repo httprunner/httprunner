@@ -146,6 +146,13 @@ func (wd *WDADriver) Setup() error {
 		return err
 	}
 
+	wdaStatus, err := wd.Status()
+	if err != nil {
+		return err
+	}
+	log.Info().Interface("status", wdaStatus).
+		Msg("check WDA status")
+
 	// create new session
 	if err := wd.InitSession(nil); err != nil {
 		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
