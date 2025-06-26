@@ -166,7 +166,7 @@ func (p *Planner) Plan(ctx context.Context, opts *PlanningOptions) (result *Plan
 			Error:     err.Error(),
 			ModelName: string(p.modelConfig.ModelType),
 		}
-		log.Debug().Str("reason", err.Error()).Msg("parse content to actions failed")
+		log.Warn().Str("reason", err.Error()).Msg("parse content to actions failed")
 	}
 	// append assistant message (since we're parsing content, not using native function calling)
 	p.history.Append(&schema.Message{

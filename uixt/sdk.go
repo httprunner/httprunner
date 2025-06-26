@@ -147,6 +147,7 @@ func (dExt *XTDriver) ExecuteAction(ctx context.Context, action option.MobileAct
 	sessionData := dExt.GetSession().GetData(true) // reset after getting data
 
 	log.Debug().Str("tool", string(tool.Name())).
+		Interface("result", result.Content).
 		Msg("executed action via MCP tool")
 	return sessionData, nil
 }

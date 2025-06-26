@@ -456,30 +456,7 @@ func extractPlanningFieldsManually(content string) (*PlanningJSONResponse, error
 // 4. Log timing and model info
 // 5. Log response
 func callModelWithLogging(ctx context.Context, model model.ToolCallingChatModel, history ConversationHistory, modelType option.LLMServiceType, operation string) (*schema.Message, error) {
-	// Clean up messages before sending to avoid API 400 errors
-	// Some models require that messages with MultiContent should not have empty content
-	cleanedHistory := make(ConversationHistory, 0, len(history))
-	for _, message := range history {
-		cleanedMsg := &schema.Message{
-			Role:         message.Role,
-			Content:      message.Content,
-			MultiContent: message.MultiContent,
-			ToolCalls:    message.ToolCalls,
-			ToolCallID:   message.ToolCallID,
-			Extra:        message.Extra,
-		}
-
-		// For user messages with MultiContent, ensure content is not empty string
-		// to avoid "missing messages.content parameter" error
-		if message.Role == schema.User && len(message.MultiContent) > 0 && message.Content == "" {
-			// Don't set content field for messages with MultiContent
-			cleanedMsg.Content = ""
-		}
-
-		cleanedHistory = append(cleanedHistory, cleanedMsg)
-	}
-
-	logRequest(cleanedHistory)
+	logRequest(history)
 
 	startTime := time.Now()
 	defer func() {
@@ -488,7 +465,7 @@ func callModelWithLogging(ctx context.Context, model model.ToolCallingChatModel,
 			Msgf("call model service for %s", operation)
 	}()
 
-	message, err := model.Generate(ctx, cleanedHistory)
+	message, err := model.Generate(ctx, history)
 	if err != nil {
 		return nil, err
 	}
