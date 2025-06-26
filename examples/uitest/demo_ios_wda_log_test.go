@@ -43,7 +43,8 @@ func TestWDALog(t *testing.T) {
 				SwipeUp(option.WithIdentifier("第 2 次上划")).Sleep(2).
 				SwipeUp(option.WithIdentifier("第 3 次上划")).Sleep(2).
 				TapXY(0.9, 0.1, option.WithIdentifier("点击进入搜索框")).Sleep(2).
-				Input("httprunner", option.WithIdentifier("输入搜索关键词")),
+				Input("httprunner 发版记录", option.WithIdentifier("输入搜索关键词")).
+				TapByOCR("搜索", option.WithIdentifier("点击搜索")),
 		},
 	}
 
