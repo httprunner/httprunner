@@ -9,17 +9,33 @@ import (
 func TestDriverSession_buildURL(t *testing.T) {
 	tests := []struct {
 		name    string
+		baseURL string
 		urlStr  string
 		want    string
 		wantErr bool
 		errMsg  string
 	}{
+		// Error cases
 		{
-			name:    "empty url",
+			name:    "empty url without baseUrl",
 			urlStr:  "",
 			wantErr: true,
-			errMsg:  "URL cannot be empty",
+			errMsg:  "base URL is empty",
 		},
+		{
+			name:    "relative path without baseUrl",
+			urlStr:  "/api/users",
+			wantErr: true,
+			errMsg:  "base URL is empty",
+		},
+		{
+			name:    "invalid absolute url",
+			urlStr:  "http://[invalid-url",
+			wantErr: true,
+			errMsg:  "failed to parse URL",
+		},
+
+		// Absolute URLs (no baseURL needed)
 		{
 			name:   "absolute http url",
 			urlStr: "http://example.com/api",
@@ -30,27 +46,63 @@ func TestDriverSession_buildURL(t *testing.T) {
 			urlStr: "https://example.com/api",
 			want:   "https://example.com/api",
 		},
+
+		// Empty/root path with baseURL
 		{
-			name:    "invalid absolute url",
-			urlStr:  "http://[invalid-url",
-			wantErr: true,
-			errMsg:  "failed to parse URL",
+			name:    "empty url with baseUrl",
+			baseURL: "http://localhost:8080",
+			urlStr:  "",
+			want:    "http://localhost:8080",
 		},
 		{
-			name:   "relative path",
-			urlStr: "/api/users",
-			want:   "/api/users",
+			name:    "root path with baseUrl",
+			baseURL: "http://localhost:8080",
+			urlStr:  "/",
+			want:    "http://localhost:8080",
+		},
+
+		// Relative paths with baseURL
+		{
+			name:    "relative path with leading slash",
+			baseURL: "http://localhost:8080",
+			urlStr:  "/api/users",
+			want:    "http://localhost:8080/api/users",
 		},
 		{
-			name:   "relative path with query params",
-			urlStr: "/api/users?id=1&name=test",
-			want:   "/api/users?id=1&name=test",
+			name:    "relative path without leading slash",
+			baseURL: "http://localhost:8080/api",
+			urlStr:  "users",
+			want:    "http://localhost:8080/users",
+		},
+		{
+			name:    "relative path with query params",
+			baseURL: "http://localhost:8080",
+			urlStr:  "/api/users?id=1&name=test",
+			want:    "http://localhost:8080/api/users?id=1&name=test",
+		},
+
+		// BaseURL with path scenarios
+		{
+			name:    "baseUrl with path + relative path",
+			baseURL: "http://localhost:8080/api/v1",
+			urlStr:  "users",
+			want:    "http://localhost:8080/api/users",
+		},
+		{
+			name:    "baseUrl with trailing slash + relative path",
+			baseURL: "http://localhost:8080/api/",
+			urlStr:  "users",
+			want:    "http://localhost:8080/api/users",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewDriverSession()
+			if tt.baseURL != "" {
+				s.SetBaseURL(tt.baseURL)
+			}
+
 			got, err := s.buildURL(tt.urlStr)
 
 			if tt.wantErr {
@@ -65,61 +117,8 @@ func TestDriverSession_buildURL(t *testing.T) {
 	}
 }
 
-func TestDriverSession_WithBaseURL(t *testing.T) {
-	tests := []struct {
-		name    string
-		baseURL string
-		path    string
-		want    string
-	}{
-		{
-			name:    "base url with root path",
-			baseURL: "http://localhost:8080",
-			path:    "/",
-			want:    "http://localhost:8080/",
-		},
-		{
-			name:    "base url with api path",
-			baseURL: "http://localhost:8080",
-			path:    "/api/users",
-			want:    "http://localhost:8080/api/users",
-		},
-		{
-			name:    "base url with path and query params",
-			baseURL: "http://localhost:8080",
-			path:    "/api/users?id=1&name=test",
-			want:    "http://localhost:8080/api/users?id=1&name=test",
-		},
-		{
-			name:    "base url with trailing slash and path",
-			baseURL: "http://localhost:8080/",
-			path:    "api/users",
-			want:    "http://localhost:8080/api/users",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := NewDriverSession()
-
-			// Test that the URL concatenation works as expected
-			fullURL := tt.baseURL + tt.path
-			assert.Equal(t, tt.want, fullURL)
-
-			// Test that buildURL handles the resulting full URL correctly
-			if fullURL != "" {
-				got, err := s.buildURL(fullURL)
-				assert.NoError(t, err)
-				assert.Equal(t, tt.want, got)
-			}
-		})
-	}
-}
-
 func TestDriverSession(t *testing.T) {
 	session := NewDriverSession()
-
-	// Test backward compatibility with SetBaseURL (should not error)
 	session.SetBaseURL("https://postman-echo.com")
 
 	// Test GET with full URL
@@ -132,21 +131,22 @@ func TestDriverSession(t *testing.T) {
 	assert.Nil(t, err)
 	t.Log(resp)
 
-	// Test GETWithBaseURL
-	baseURL := "https://postman-echo.com"
-	resp, err = session.GET(baseURL + "/get")
+	// Test GET with relative path (using baseURL)
+	resp, err = session.GET("/get")
 	assert.Nil(t, err)
 	t.Log(resp)
 
+	// Verify request history
 	driverRequests := session.History()
 	assert.Equal(t, 3, len(driverRequests))
 
+	// Test reset functionality
 	session.Reset()
 	driverRequests = session.History()
 	assert.Equal(t, 0, len(driverRequests))
 
-	// Test POST with base URL and path
-	resp, err = session.POST(nil, baseURL+"/post")
+	// Test POST with relative path
+	resp, err = session.POST(nil, "/post")
 	assert.Nil(t, err)
 	t.Log(resp)
 

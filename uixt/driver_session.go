@@ -103,8 +103,11 @@ func (s *DriverSession) History() []*DriverRequests {
 }
 
 func (s *DriverSession) buildURL(urlStr string) (string, error) {
-	if urlStr == "" {
-		return "", fmt.Errorf("URL cannot be empty")
+	if urlStr == "" || urlStr == "/" {
+		if s.baseUrl == "" {
+			return "", fmt.Errorf("base URL is empty")
+		}
+		return s.baseUrl, nil
 	}
 
 	// Handle full URLs
@@ -116,26 +119,40 @@ func (s *DriverSession) buildURL(urlStr string) (string, error) {
 		return u.String(), nil
 	}
 
-	// For relative paths, return as-is (caller should provide full URL)
-	return urlStr, nil
+	// handle relative path using ResolveReference
+	if s.baseUrl == "" {
+		return "", fmt.Errorf("base URL is empty")
+	}
+	baseURL, err := url.Parse(s.baseUrl)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse base URL: %w", err)
+	}
+
+	relativeURL, err := url.Parse(urlStr)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse relative URL: %w", err)
+	}
+
+	finalURL := baseURL.ResolveReference(relativeURL)
+	return finalURL.String(), nil
 }
 
-func (s *DriverSession) GET(fullURL string) (rawResp DriverRawResponse, err error) {
-	return s.RequestWithRetry(http.MethodGet, fullURL, nil)
+func (s *DriverSession) GET(urlStr string) (rawResp DriverRawResponse, err error) {
+	return s.RequestWithRetry(http.MethodGet, urlStr, nil)
 }
 
-func (s *DriverSession) POST(data interface{}, fullURL string) (rawResp DriverRawResponse, err error) {
+func (s *DriverSession) POST(data interface{}, urlStr string) (rawResp DriverRawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
 			return nil, err
 		}
 	}
-	return s.RequestWithRetry(http.MethodPost, fullURL, bsJSON)
+	return s.RequestWithRetry(http.MethodPost, urlStr, bsJSON)
 }
 
-func (s *DriverSession) DELETE(fullURL string) (rawResp DriverRawResponse, err error) {
-	return s.RequestWithRetry(http.MethodDelete, fullURL, nil)
+func (s *DriverSession) DELETE(urlStr string) (rawResp DriverRawResponse, err error) {
+	return s.RequestWithRetry(http.MethodDelete, urlStr, nil)
 }
 
 func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody []byte) (
