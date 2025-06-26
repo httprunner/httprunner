@@ -665,7 +665,7 @@ func (wd *WDADriver) Input(text string, opts ...option.ActionOption) (err error)
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
 	data := map[string]interface{}{"value": strings.Split(text, "")}
 	option.MergeOptions(data, opts...)
-	_, err = wd.Session.POST(data, "/gtf/interaction/input")
+	_, err = wd.Session.POST(data, "/wings/interaction/keys")
 	return
 }
 
