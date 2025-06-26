@@ -52,8 +52,8 @@ func (dev *IOSDeviceOptions) Options() (deviceOptions []IOSDeviceOption) {
 }
 
 const (
-	defaultWDAPort   = 8100
-	defaultMjpegPort = 9100
+	defaultWDAPort   = 8700
+	defaultMjpegPort = 8800
 )
 
 func NewIOSDeviceOptions(opts ...IOSDeviceOption) *IOSDeviceOptions {
