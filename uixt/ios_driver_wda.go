@@ -179,7 +179,6 @@ func (wd *WDADriver) DeleteSession() (err error) {
 		wd.mjpegClient.CloseIdleConnections()
 	}
 
-	// [[FBRoute DELETE:@""] respondWithTarget:self action:@selector(handleDeleteSession:)]
 	wd.Session.client.CloseIdleConnections()
 	return
 }
@@ -625,7 +624,7 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 		"toY":   builtin.RoundToOneDecimal(toY),
 	}
 	option.MergeOptions(data, opts...)
-	// wda 43 version
+	// wda 50 version
 	_, err = wd.Session.POST(data, "/wings/interaction/drag")
 	return err
 }

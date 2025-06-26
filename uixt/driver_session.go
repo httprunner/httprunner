@@ -156,8 +156,7 @@ func (s *DriverSession) DELETE(urlStr string) (rawResp DriverRawResponse, err er
 }
 
 func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody []byte) (
-	rawResp DriverRawResponse, err error,
-) {
+	rawResp DriverRawResponse, err error) {
 	for count := 1; count <= s.maxRetry; count++ {
 		rawResp, err = s.Request(method, urlStr, rawBody)
 		if err == nil {
@@ -180,8 +179,7 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 }
 
 func (s *DriverSession) Request(method string, urlStr string, rawBody []byte) (
-	rawResp DriverRawResponse, err error,
-) {
+	rawResp DriverRawResponse, err error) {
 	// build final URL
 	rawURL, err := s.buildURL(urlStr)
 	if err != nil {
