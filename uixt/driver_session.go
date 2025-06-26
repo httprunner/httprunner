@@ -41,6 +41,7 @@ func NewDriverSession() *DriverSession {
 	timeout := 30 * time.Second
 	session := &DriverSession{
 		ctx:     context.Background(),
+		ID:      "<SessionNotInit>",
 		timeout: timeout,
 		client: &http.Client{
 			Timeout: timeout,
@@ -53,6 +54,7 @@ func NewDriverSession() *DriverSession {
 
 type DriverSession struct {
 	ctx      context.Context
+	ID       string
 	client   *http.Client
 	timeout  time.Duration
 	maxRetry int
