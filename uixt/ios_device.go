@@ -218,14 +218,6 @@ func (dev *IOSDevice) NewDriver() (driver IDriver, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
-	settings, err := wdaDriver.SetAppiumSettings(map[string]interface{}{
-		"snapshotMaxDepth":          dev.Options.SnapshotMaxDepth,
-		"acceptAlertButtonSelector": dev.Options.AcceptAlertButtonSelector,
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to set appium WDA settings")
-	}
-	log.Info().Interface("appiumWDASettings", settings).Msg("set appium WDA settings")
 
 	if dev.Options.ResetHomeOnStartup {
 		log.Info().Msg("go back to home screen")
