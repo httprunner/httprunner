@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -103,7 +102,7 @@ func (s *DriverSession) History() []*DriverRequests {
 	return s.requests
 }
 
-func (s *DriverSession) concatURL(urlStr string) (string, error) {
+func (s *DriverSession) buildURL(urlStr string) (string, error) {
 	if urlStr == "" || urlStr == "/" {
 		if s.baseUrl == "" {
 			return "", fmt.Errorf("base URL is empty")
@@ -111,15 +110,7 @@ func (s *DriverSession) concatURL(urlStr string) (string, error) {
 		return s.baseUrl, nil
 	}
 
-	// replace with session ID
-	if s.ID != "" && !strings.Contains(urlStr, s.ID) {
-		sessionPattern := regexp.MustCompile(`/session/([^/]+)/`)
-		if matches := sessionPattern.FindStringSubmatch(urlStr); len(matches) != 0 {
-			urlStr = strings.Replace(urlStr, matches[1], s.ID, 1)
-		}
-	}
-
-	// 处理完整 URL
+	// Handle full URLs
 	if strings.HasPrefix(urlStr, "http://") || strings.HasPrefix(urlStr, "https://") {
 		u, err := url.Parse(urlStr)
 		if err != nil {
@@ -128,27 +119,22 @@ func (s *DriverSession) concatURL(urlStr string) (string, error) {
 		return u.String(), nil
 	}
 
-	// 处理相对路径
+	// handle relative path using ResolveReference
 	if s.baseUrl == "" {
 		return "", fmt.Errorf("base URL is empty")
 	}
-	u, err := url.Parse(s.baseUrl)
+	baseURL, err := url.Parse(s.baseUrl)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse base URL: %w", err)
 	}
 
-	// 处理路径和查询参数
-	parts := strings.SplitN(urlStr, "?", 2)
-	u.Path = path.Join(u.Path, parts[0])
-	if len(parts) > 1 {
-		query, err := url.ParseQuery(parts[1])
-		if err != nil {
-			return "", fmt.Errorf("failed to parse query params: %w", err)
-		}
-		u.RawQuery = query.Encode()
+	relativeURL, err := url.Parse(urlStr)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse relative URL: %w", err)
 	}
 
-	return u.String(), nil
+	finalURL := baseURL.ResolveReference(relativeURL)
+	return finalURL.String(), nil
 }
 
 func (s *DriverSession) GET(urlStr string) (rawResp DriverRawResponse, err error) {
@@ -194,9 +180,8 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 
 func (s *DriverSession) Request(method string, urlStr string, rawBody []byte) (
 	rawResp DriverRawResponse, err error) {
-
-	// concat url with base url
-	rawURL, err := s.concatURL(urlStr)
+	// build final URL
+	rawURL, err := s.buildURL(urlStr)
 	if err != nil {
 		return nil, err
 	}
