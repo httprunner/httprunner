@@ -56,9 +56,11 @@ func (ud *UIA2Driver) Setup() error {
 	if err != nil {
 		return err
 	}
-	ud.Session.SetBaseURL(
-		fmt.Sprintf("http://forward-to-%d:%d/wd/hub",
-			localPort, ud.Device.Options.UIA2Port))
+
+	// Store base URL for building full URLs
+	baseURL := fmt.Sprintf("http://forward-to-%d:%d/wd/hub",
+		localPort, ud.Device.Options.UIA2Port)
+	ud.Session.SetBaseURL(baseURL)
 
 	// uiautomator2 server must be started before
 
