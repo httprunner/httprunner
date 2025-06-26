@@ -55,6 +55,7 @@ func NewDriverSession() *DriverSession {
 type DriverSession struct {
 	ctx      context.Context
 	ID       string
+	baseUrl  string
 	client   *http.Client
 	timeout  time.Duration
 	maxRetry int
@@ -86,8 +87,7 @@ func (s *DriverSession) GetData(withReset bool) SessionData {
 }
 
 func (s *DriverSession) SetBaseURL(baseUrl string) {
-	// This method is kept for backward compatibility but no longer stores baseUrl
-	// since we'll pass full URLs directly to GET/POST methods
+	s.baseUrl = baseUrl
 }
 
 func (s *DriverSession) RegisterResetHandler(fn func() error) {
@@ -124,12 +124,6 @@ func (s *DriverSession) GET(fullURL string) (rawResp DriverRawResponse, err erro
 	return s.RequestWithRetry(http.MethodGet, fullURL, nil)
 }
 
-// GETWithBaseURL allows passing baseURL and path separately
-func (s *DriverSession) GETWithBaseURL(baseURL, path string) (rawResp DriverRawResponse, err error) {
-	fullURL := baseURL + path
-	return s.RequestWithRetry(http.MethodGet, fullURL, nil)
-}
-
 func (s *DriverSession) POST(data interface{}, fullURL string) (rawResp DriverRawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
@@ -140,25 +134,7 @@ func (s *DriverSession) POST(data interface{}, fullURL string) (rawResp DriverRa
 	return s.RequestWithRetry(http.MethodPost, fullURL, bsJSON)
 }
 
-// POSTWithBaseURL allows passing baseURL and path separately
-func (s *DriverSession) POSTWithBaseURL(data interface{}, baseURL, path string) (rawResp DriverRawResponse, err error) {
-	var bsJSON []byte = nil
-	if data != nil {
-		if bsJSON, err = json.Marshal(data); err != nil {
-			return nil, err
-		}
-	}
-	fullURL := baseURL + path
-	return s.RequestWithRetry(http.MethodPost, fullURL, bsJSON)
-}
-
 func (s *DriverSession) DELETE(fullURL string) (rawResp DriverRawResponse, err error) {
-	return s.RequestWithRetry(http.MethodDelete, fullURL, nil)
-}
-
-// DELETEWithBaseURL allows passing baseURL and path separately
-func (s *DriverSession) DELETEWithBaseURL(baseURL, path string) (rawResp DriverRawResponse, err error) {
-	fullURL := baseURL + path
 	return s.RequestWithRetry(http.MethodDelete, fullURL, nil)
 }
 

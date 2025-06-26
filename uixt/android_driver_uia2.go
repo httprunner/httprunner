@@ -43,7 +43,6 @@ type UIA2Driver struct {
 
 	// cache to avoid repeated query
 	windowSize types.Size
-	baseURL    string // store base URL for building full URLs
 }
 
 func (ud *UIA2Driver) Setup() error {
@@ -59,10 +58,9 @@ func (ud *UIA2Driver) Setup() error {
 	}
 
 	// Store base URL for building full URLs
-	ud.baseURL = fmt.Sprintf("http://forward-to-%d:%d/wd/hub",
+	baseURL := fmt.Sprintf("http://forward-to-%d:%d/wd/hub",
 		localPort, ud.Device.Options.UIA2Port)
-	// Keep the old method call for backward compatibility
-	ud.Session.SetBaseURL(ud.baseURL)
+	ud.Session.SetBaseURL(baseURL)
 
 	// uiautomator2 server must be started before
 
@@ -112,7 +110,7 @@ func (ud *UIA2Driver) InitSession(capabilities option.Capabilities) (err error) 
 	} else {
 		data["capabilities"] = map[string]interface{}{"alwaysMatch": capabilities}
 	}
-	if rawResp, err = ud.Session.POSTWithBaseURL(data, ud.baseURL, "/session"); err != nil {
+	if rawResp, err = ud.Session.POST(data, "/session"); err != nil {
 		return err
 	}
 	reply := new(struct{ Value struct{ SessionId string } })
@@ -128,7 +126,7 @@ func (ud *UIA2Driver) DeleteSession() (err error) {
 		return nil
 	}
 	urlStr := fmt.Sprintf("/session/%s", ud.Session.ID)
-	if _, err = ud.Session.DELETEWithBaseURL(ud.baseURL, urlStr); err == nil {
+	if _, err = ud.Session.DELETE(urlStr); err == nil {
 		ud.Session.ID = ""
 	}
 
@@ -139,7 +137,7 @@ func (ud *UIA2Driver) Status() (deviceStatus types.DeviceStatus, err error) {
 	// register(getHandler, new Status("/wd/hub/status"))
 	var rawResp DriverRawResponse
 	// Notice: use Driver.GET instead of httpGET to avoid loop calling
-	if rawResp, err = ud.Session.GETWithBaseURL(ud.baseURL, "/status"); err != nil {
+	if rawResp, err = ud.Session.GET("/status"); err != nil {
 		return types.DeviceStatus{Ready: false}, err
 	}
 	reply := new(struct {
@@ -158,7 +156,7 @@ func (ud *UIA2Driver) DeviceInfo() (deviceInfo types.DeviceInfo, err error) {
 	// register(getHandler, new GetDeviceInfo("/wd/hub/session/:sessionId/appium/device/info"))
 	var rawResp DriverRawResponse
 	urlStr := fmt.Sprintf("/session/%s/appium/device/info", ud.Session.ID)
-	if rawResp, err = ud.Session.GETWithBaseURL(ud.baseURL, urlStr); err != nil {
+	if rawResp, err = ud.Session.GET(urlStr); err != nil {
 		return types.DeviceInfo{}, err
 	}
 	reply := new(struct{ Value struct{ types.DeviceInfo } })
@@ -173,7 +171,7 @@ func (ud *UIA2Driver) BatteryInfo() (batteryInfo types.BatteryInfo, err error) {
 	// register(getHandler, new GetBatteryInfo("/wd/hub/session/:sessionId/appium/device/battery_info"))
 	var rawResp DriverRawResponse
 	urlStr := fmt.Sprintf("/session/%s/appium/device/battery_info", ud.Session.ID)
-	if rawResp, err = ud.Session.GETWithBaseURL(ud.baseURL, urlStr); err != nil {
+	if rawResp, err = ud.Session.GET(urlStr); err != nil {
 		return types.BatteryInfo{}, err
 	}
 	reply := new(struct{ Value struct{ types.BatteryInfo } })
@@ -196,7 +194,7 @@ func (ud *UIA2Driver) WindowSize() (size types.Size, err error) {
 
 	var rawResp DriverRawResponse
 	urlStr := fmt.Sprintf("/session/%s/window/:windowHandle/size", ud.Session.ID)
-	if rawResp, err = ud.Session.GETWithBaseURL(ud.baseURL, urlStr); err != nil {
+	if rawResp, err = ud.Session.GET(urlStr); err != nil {
 		return types.Size{}, errors.Wrap(err, "get window size failed by UIA2 request")
 	}
 	reply := new(struct{ Value struct{ types.Size } })
@@ -224,7 +222,7 @@ func (ud *UIA2Driver) Back() (err error) {
 	log.Info().Msg("UIA2Driver.Back")
 	// register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"))
 	urlStr := fmt.Sprintf("/session/%s/back", ud.Session.ID)
-	_, err = ud.Session.POSTWithBaseURL(nil, ud.baseURL, urlStr)
+	_, err = ud.Session.POST(nil, urlStr)
 	return
 }
 
@@ -240,7 +238,7 @@ func (ud *UIA2Driver) PressKeyCodes(keyCode KeyCode, metaState KeyMeta, flags ..
 		data["flags"] = flags[0]
 	}
 	urlStr := fmt.Sprintf("/session/%s/appium/device/press_keycode", ud.Session.ID)
-	_, err = ud.Session.POSTWithBaseURL(data, ud.baseURL, urlStr)
+	_, err = ud.Session.POST(data, urlStr)
 	return
 }
 
@@ -248,7 +246,7 @@ func (ud *UIA2Driver) Orientation() (orientation types.Orientation, err error) {
 	// [[FBRoute GET:@"/orientation"] respondWithTarget:self action:@selector(handleGetOrientation:)]
 	var rawResp DriverRawResponse
 	urlStr := fmt.Sprintf("/session/%s/orientation", ud.Session.ID)
-	if rawResp, err = ud.Session.GETWithBaseURL(ud.baseURL, urlStr); err != nil {
+	if rawResp, err = ud.Session.GET(urlStr); err != nil {
 		return "", err
 	}
 	reply := new(struct{ Value types.Orientation })
@@ -286,7 +284,7 @@ func (ud *UIA2Driver) DoubleTap(x, y float64, opts ...option.ActionOption) error
 	}
 
 	urlStr := fmt.Sprintf("/session/%s/actions/tap", ud.Session.ID)
-	_, err = ud.Session.POSTWithBaseURL(data, ud.baseURL, urlStr)
+	_, err = ud.Session.POST(data, urlStr)
 	return err
 }
 
@@ -333,7 +331,7 @@ func (ud *UIA2Driver) TapAbsXY(x, y float64, opts ...option.ActionOption) error 
 	option.MergeOptions(data, opts...)
 
 	urlStr := fmt.Sprintf("/session/%s/actions/tap", ud.Session.ID)
-	_, err = ud.Session.POSTWithBaseURL(data, ud.baseURL, urlStr)
+	_, err = ud.Session.POST(data, urlStr)
 	return err
 }
 
@@ -354,7 +352,7 @@ func (ud *UIA2Driver) TouchAndHold(x, y float64, opts ...option.ActionOption) (e
 		},
 	}
 	urlStr := fmt.Sprintf("/session/%s/touch/longclick", ud.Session.ID)
-	_, err = ud.Session.POSTWithBaseURL(data, ud.baseURL, urlStr)
+	_, err = ud.Session.POST(data, urlStr)
 	return
 }
 
@@ -383,7 +381,7 @@ func (ud *UIA2Driver) Drag(fromX, fromY, toX, toY float64, opts ...option.Action
 
 	// register(postHandler, new Drag("/wd/hub/session/:sessionId/touch/drag"))
 	urlStr := fmt.Sprintf("/session/%s/touch/drag", ud.Session.ID)
-	_, err = ud.Session.POSTWithBaseURL(data, ud.baseURL, urlStr)
+	_, err = ud.Session.POST(data, urlStr)
 	return err
 }
 
@@ -426,7 +424,7 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 	option.MergeOptions(data, opts...)
 
 	urlStr := fmt.Sprintf("/session/%s/actions/swipe", ud.Session.ID)
-	_, err = ud.Session.POSTWithBaseURL(data, ud.baseURL, urlStr)
+	_, err = ud.Session.POST(data, urlStr)
 	return err
 }
 
@@ -447,7 +445,7 @@ func (ud *UIA2Driver) SetPasteboard(contentType types.PasteboardType, content st
 	}
 	// register(postHandler, new SetClipboard("/wd/hub/session/:sessionId/appium/device/set_clipboard"))
 	urlStr := fmt.Sprintf("/session/%s/appium/device/set_clipboard", ud.Session.ID)
-	_, err = ud.Session.POSTWithBaseURL(data, ud.baseURL, urlStr)
+	_, err = ud.Session.POST(data, urlStr)
 	return
 }
 
@@ -461,7 +459,7 @@ func (ud *UIA2Driver) GetPasteboard(contentType types.PasteboardType) (raw *byte
 	}
 	var rawResp DriverRawResponse
 	urlStr := fmt.Sprintf("/session/%s/appium/device/get_clipboard", ud.Session.ID)
-	if rawResp, err = ud.Session.POSTWithBaseURL(data, ud.baseURL, urlStr); err != nil {
+	if rawResp, err = ud.Session.POST(data, urlStr); err != nil {
 		return
 	}
 	reply := new(struct{ Value string })
@@ -492,7 +490,7 @@ func (ud *UIA2Driver) Input(text string, opts ...option.ActionOption) (err error
 	}
 	option.MergeOptions(data, opts...)
 	urlStr := fmt.Sprintf("/session/%s/keys", ud.Session.ID)
-	_, err = ud.Session.POSTWithBaseURL(data, ud.baseURL, urlStr)
+	_, err = ud.Session.POST(data, urlStr)
 	return
 }
 
@@ -550,7 +548,7 @@ func (ud *UIA2Driver) SendActionKey(text string, opts ...option.ActionOption) (e
 	option.MergeOptions(data, opts...)
 
 	urlStr := fmt.Sprintf("/session/%s/actions/keys", ud.Session.ID)
-	_, err = ud.Session.POSTWithBaseURL(data, ud.baseURL, urlStr)
+	_, err = ud.Session.POST(data, urlStr)
 	return
 }
 
@@ -558,7 +556,7 @@ func (ud *UIA2Driver) Rotation() (rotation types.Rotation, err error) {
 	// register(getHandler, new GetRotation("/wd/hub/session/:sessionId/rotation"))
 	var rawResp DriverRawResponse
 	urlStr := fmt.Sprintf("/session/%s/rotation", ud.Session.ID)
-	if rawResp, err = ud.Session.GETWithBaseURL(ud.baseURL, urlStr); err != nil {
+	if rawResp, err = ud.Session.GET(urlStr); err != nil {
 		return types.Rotation{}, err
 	}
 	reply := new(struct{ Value types.Rotation })
@@ -580,7 +578,7 @@ func (ud *UIA2Driver) Source(srcOpt ...option.SourceOption) (source string, err 
 	// register(getHandler, new Source("/wd/hub/session/:sessionId/source"))
 	var rawResp DriverRawResponse
 	urlStr := fmt.Sprintf("/session/%s/source", ud.Session.ID)
-	if rawResp, err = ud.Session.GETWithBaseURL(ud.baseURL, urlStr); err != nil {
+	if rawResp, err = ud.Session.GET(urlStr); err != nil {
 		return "", err
 	}
 	reply := new(struct{ Value string })

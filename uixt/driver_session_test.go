@@ -134,7 +134,7 @@ func TestDriverSession(t *testing.T) {
 
 	// Test GETWithBaseURL
 	baseURL := "https://postman-echo.com"
-	resp, err = session.GETWithBaseURL(baseURL, "/get")
+	resp, err = session.GET(baseURL + "/get")
 	assert.Nil(t, err)
 	t.Log(resp)
 
@@ -146,7 +146,7 @@ func TestDriverSession(t *testing.T) {
 	assert.Equal(t, 0, len(driverRequests))
 
 	// Test POST with base URL and path
-	resp, err = session.POSTWithBaseURL(nil, baseURL, "/post")
+	resp, err = session.POST(nil, baseURL+"/post")
 	assert.Nil(t, err)
 	t.Log(resp)
 
