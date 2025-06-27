@@ -36,12 +36,18 @@ func NewWDADriver(device *IOSDevice) (*WDADriver, error) {
 		Session: NewDriverSession(),
 	}
 
-	if !device.Options.LazySetup {
-		// setup driver
-		if err := driver.Setup(); err != nil {
-			return nil, err
-		}
+	// setup driver
+	if err := driver.Setup(); err != nil {
+		return nil, err
 	}
+
+	// check WDA status
+	wdaStatus, err := driver.Status()
+	if err != nil {
+		return nil, err
+	}
+	log.Info().Interface("status", wdaStatus).
+		Msg("check WDA status")
 
 	// register driver session reset handler
 	driver.Session.RegisterResetHandler(driver.Setup)
@@ -145,13 +151,6 @@ func (wd *WDADriver) Setup() error {
 	if err = wd.initMjpegClient(); err != nil {
 		return err
 	}
-
-	wdaStatus, err := wd.Status()
-	if err != nil {
-		return err
-	}
-	log.Info().Interface("status", wdaStatus).
-		Msg("check WDA status")
 
 	// create new session
 	if err := wd.InitSession(nil); err != nil {

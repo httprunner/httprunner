@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // ToolSwipe implements the generic swipe tool call.
@@ -124,15 +125,13 @@ func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 				swipeDirection, validDirections)
 		}
 
-		opts := []option.ActionOption{
-			option.WithDuration(getFloat64ValueOrDefault(unifiedReq.Duration, 0.5)),
-			option.WithPressDuration(getFloat64ValueOrDefault(unifiedReq.PressDuration, 0.1)),
+		// Build all options from request arguments
+		opts := unifiedReq.Options()
+		if unifiedReq.Duration == 0 {
+			opts = append(opts, option.WithDuration(0.5))
 		}
-		if unifiedReq.AntiRisk {
-			opts = append(opts, option.WithAntiRisk(true))
-		}
-		if unifiedReq.PreMarkOperation {
-			opts = append(opts, option.WithPreMarkOperation(true))
+		if unifiedReq.PressDuration == 0 {
+			opts = append(opts, option.WithPressDuration(0.1))
 		}
 
 		// Convert direction to coordinates and perform swipe
@@ -240,17 +239,8 @@ func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 
 		params := []float64{unifiedReq.FromX, unifiedReq.FromY, unifiedReq.ToX, unifiedReq.ToY}
 
-		// Build action options from the unified request
-		opts := []option.ActionOption{}
-		if unifiedReq.Duration > 0 {
-			opts = append(opts, option.WithDuration(unifiedReq.Duration))
-		}
-		if unifiedReq.PressDuration > 0 {
-			opts = append(opts, option.WithPressDuration(unifiedReq.PressDuration))
-		}
-		if unifiedReq.AntiRisk {
-			opts = append(opts, option.WithAntiRisk(true))
-		}
+		// Build all options from request arguments
+		opts := unifiedReq.Options()
 
 		swipeAction := prepareSwipeAction(driverExt, params, opts...)
 		err = swipeAction(driverExt)
@@ -327,7 +317,7 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 		}
 
 		// Build action options from request structure
-		var opts []option.ActionOption
+		opts := unifiedReq.Options()
 
 		// Add boolean options
 		if unifiedReq.IgnoreNotFoundError {
@@ -400,24 +390,8 @@ func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 			return nil, err
 		}
 
-		// Build action options from request structure
-		var opts []option.ActionOption
-
-		// Add boolean options
-		if unifiedReq.IgnoreNotFoundError {
-			opts = append(opts, option.WithIgnoreNotFoundError(true))
-		}
-		if unifiedReq.Regex {
-			opts = append(opts, option.WithRegex(true))
-		}
-
-		// Add numeric options
-		if unifiedReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(unifiedReq.MaxRetryTimes))
-		}
-		if unifiedReq.Index > 0 {
-			opts = append(opts, option.WithIndex(unifiedReq.Index))
-		}
+		// Build all options from request arguments
+		opts := unifiedReq.Options()
 
 		// Swipe to tap text action logic
 		err = driverExt.SwipeToTapTexts([]string{unifiedReq.Text}, opts...)
@@ -478,24 +452,8 @@ func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 			return nil, err
 		}
 
-		// Build action options from request structure
-		var opts []option.ActionOption
-
-		// Add boolean options
-		if unifiedReq.IgnoreNotFoundError {
-			opts = append(opts, option.WithIgnoreNotFoundError(true))
-		}
-		if unifiedReq.Regex {
-			opts = append(opts, option.WithRegex(true))
-		}
-
-		// Add numeric options
-		if unifiedReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(unifiedReq.MaxRetryTimes))
-		}
-		if unifiedReq.Index > 0 {
-			opts = append(opts, option.WithIndex(unifiedReq.Index))
-		}
+		// Build all options from request arguments
+		opts := unifiedReq.Options()
 
 		// Swipe to tap texts action logic
 		err = driverExt.SwipeToTapTexts(unifiedReq.Texts, opts...)
@@ -575,12 +533,10 @@ func (t *ToolDrag) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("from_x, from_y, to_x, and to_y coordinates are required")
 		}
 
-		opts := []option.ActionOption{}
-		if unifiedReq.Duration > 0 {
-			opts = append(opts, option.WithDuration(unifiedReq.Duration/1000.0))
-		}
-		if unifiedReq.AntiRisk {
-			opts = append(opts, option.WithAntiRisk(true))
+		// Build all options from request arguments
+		opts := unifiedReq.Options()
+		if unifiedReq.Duration == 0 {
+			opts = append(opts, option.WithDuration(0.5))
 		}
 
 		// Drag action logic

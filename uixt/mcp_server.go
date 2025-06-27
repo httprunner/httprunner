@@ -193,6 +193,8 @@ func extractActionOptionsToArguments(actionOptions []option.ActionOption, argume
 		"tap_random_rect":      tempOptions.TapRandomRect,
 		"anti_risk":            tempOptions.AntiRisk,
 		"pre_mark_operation":   tempOptions.PreMarkOperation,
+		"reset_history":        tempOptions.ResetHistory,
+		"match_one":            tempOptions.MatchOne,
 	}
 
 	// Add boolean options only if they are true
@@ -208,6 +210,18 @@ func extractActionOptionsToArguments(actionOptions []option.ActionOption, argume
 	}
 	if tempOptions.Index != 0 {
 		arguments["index"] = tempOptions.Index
+	}
+	if tempOptions.Interval > 0 {
+		arguments["interval"] = tempOptions.Interval
+	}
+	if tempOptions.Steps > 0 {
+		arguments["steps"] = tempOptions.Steps
+	}
+	if tempOptions.Timeout > 0 {
+		arguments["timeout"] = tempOptions.Timeout
+	}
+	if tempOptions.Frequency > 0 {
+		arguments["frequency"] = tempOptions.Frequency
 	}
 	// Only set duration if it's not already set (to avoid overriding tool-specific conversions)
 	if tempOptions.Duration > 0 {
@@ -288,13 +302,19 @@ func extractActionOptionsToArguments(actionOptions []option.ActionOption, argume
 	if tempOptions.Selector != "" {
 		arguments["selector"] = tempOptions.Selector
 	}
-}
-
-func getFloat64ValueOrDefault(value float64, defaultValue float64) float64 {
-	if value == 0 {
-		return defaultValue
+	if tempOptions.Identifier != "" {
+		arguments["identifier"] = tempOptions.Identifier
 	}
-	return value
+
+	// Add direction option (can be string or []float64)
+	if tempOptions.Direction != nil {
+		arguments["direction"] = tempOptions.Direction
+	}
+
+	// Add custom options
+	if len(tempOptions.Custom) > 0 {
+		arguments["custom"] = tempOptions.Custom
+	}
 }
 
 // parseActionOptions converts MCP request arguments to ActionOptions struct

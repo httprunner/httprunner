@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // ToolTapXY implements the tap_xy tool call.
@@ -42,13 +43,8 @@ func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 			return nil, err
 		}
 
-		// Get options directly since ActionOptions is now ActionOptions
+		// Build all options from request arguments
 		opts := unifiedReq.Options()
-
-		// Add configurable options based on request
-		if unifiedReq.PreMarkOperation {
-			opts = append(opts, option.WithPreMarkOperation(true))
-		}
 
 		// Validate required parameters
 		if unifiedReq.X == 0 || unifiedReq.Y == 0 {
@@ -123,18 +119,8 @@ func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 			return nil, err
 		}
 
-		// Get options directly since ActionOptions is now ActionOptions
+		// Build all options from request arguments
 		opts := unifiedReq.Options()
-
-		// Add configurable options based on request
-		if unifiedReq.PreMarkOperation {
-			opts = append(opts, option.WithPreMarkOperation(true))
-		}
-
-		// Add AntiRisk support
-		if unifiedReq.AntiRisk {
-			opts = append(opts, option.WithAntiRisk(true))
-		}
 
 		// Validate required parameters
 		if unifiedReq.X == 0 || unifiedReq.Y == 0 {
@@ -208,13 +194,8 @@ func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
 			return nil, err
 		}
 
-		// Get options directly since ActionOptions is now ActionOptions
+		// Build all options from request arguments
 		opts := unifiedReq.Options()
-
-		// Add configurable options based on request
-		if unifiedReq.PreMarkOperation {
-			opts = append(opts, option.WithPreMarkOperation(true))
-		}
 
 		// Validate required parameters
 		if unifiedReq.Text == "" {
@@ -277,13 +258,8 @@ func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
 			return nil, err
 		}
 
-		// Get options directly since ActionOptions is now ActionOptions
+		// Build all options from request arguments
 		opts := unifiedReq.Options()
-
-		// Add configurable options based on request
-		if unifiedReq.PreMarkOperation {
-			opts = append(opts, option.WithPreMarkOperation(true))
-		}
 
 		// For TapByCV, we need to check if there are UI types in the options
 		// In the original DoAction, it requires ScreenShotWithUITypes to be set

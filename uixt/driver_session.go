@@ -158,25 +158,42 @@ func (s *DriverSession) DELETE(urlStr string) (rawResp DriverRawResponse, err er
 
 func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody []byte) (
 	rawResp DriverRawResponse, err error) {
-	for count := 1; count <= s.maxRetry; count++ {
+	var lastError error
+
+	for attempt := 1; attempt <= s.maxRetry; attempt++ {
+		// Execute the request
 		rawResp, err = s.Request(method, urlStr, rawBody)
 		if err == nil {
-			return
+			if attempt > 1 {
+				log.Info().Msgf("request succeeded after %d attempts", attempt)
+			}
+			return rawResp, nil
 		}
+
+		lastError = err
+		log.Warn().Err(err).Msgf("request failed, attempt %d/%d", attempt, s.maxRetry)
+
+		// If this was the last attempt, break
+		if attempt == s.maxRetry {
+			log.Error().Err(lastError).Msgf("all %d retry attempts failed, giving up", s.maxRetry)
+			break
+		}
+
+		// Wait before next attempt
 		time.Sleep(3 * time.Second)
 
+		// Try to reset the session for the next attempt
 		if s.resetFn != nil {
-			log.Warn().Msg("reset driver session")
-			if err2 := s.resetFn(); err2 != nil {
-				log.Error().Err(err2).Msgf(
-					"failed to reset session, try count %v", count)
+			log.Warn().Msgf("attempting to reset driver session before attempt %d", attempt+1)
+			if resetErr := s.resetFn(); resetErr != nil {
+				log.Error().Err(resetErr).Msgf("failed to reset session, will retry without reset")
 			} else {
-				log.Info().Msgf(
-					"reset session success, try count %v", count)
+				log.Info().Msg("session reset successful")
 			}
 		}
 	}
-	return
+
+	return nil, lastError
 }
 
 func (s *DriverSession) Request(method string, urlStr string, rawBody []byte) (

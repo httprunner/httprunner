@@ -12,11 +12,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 // GenerateHTMLReportFromFiles is a convenience function to generate HTML report
@@ -553,13 +554,14 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 		"safeHTML": func(s string) template.HTML {
 			return template.HTML(s)
 		},
-		"toJSON": func(v any) string {
+		"toJSONFormatted": func(v any) string {
 			var buf strings.Builder
 			encoder := json.NewEncoder(&buf)
 			encoder.SetEscapeHTML(false)
+			encoder.SetIndent("", "    ")
 			_ = encoder.Encode(v)
-			result := buf.String()
-			return strings.TrimSpace(result)
+			result := strings.TrimSpace(buf.String())
+			return result
 		},
 		"add":   func(a, b int) int { return a + b },
 		"base":  filepath.Base,
@@ -582,6 +584,20 @@ func (g *HTMLReportGenerator) GenerateReport(outputFile string) error {
 				}
 			}
 			// If not JSON or no thought field, return original content
+			return content
+		},
+		"formatBodyContent": func(content string) string {
+			// Try to parse as JSON to format
+			var data interface{}
+			if err := json.Unmarshal([]byte(content), &data); err == nil {
+				var buf strings.Builder
+				encoder := json.NewEncoder(&buf)
+				encoder.SetEscapeHTML(false)
+				encoder.SetIndent("", "    ")
+				_ = encoder.Encode(data)
+				return strings.TrimSpace(buf.String())
+			}
+			// If not JSON, return original content
 			return content
 		},
 	}
@@ -1372,9 +1388,12 @@ const htmlTemplate = `<!DOCTYPE html>
             margin: 2px 0;
             font-family: monospace;
             font-size: 0.7em;
-            max-height: 60px;
+            max-height: 80px;
             overflow-y: auto;
             word-break: break-all;
+            white-space: nowrap;
+            overflow-x: auto;
+            line-height: 1.3;
         }
 
         .model-output-compact {
@@ -1502,12 +1521,6 @@ const htmlTemplate = `<!DOCTYPE html>
             margin-bottom: 10px;
             font-size: 1.0em;
             font-weight: 600;
-        }
-
-        .screenshots-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
         }
 
         .screenshots-horizontal {
@@ -1903,26 +1916,6 @@ const htmlTemplate = `<!DOCTYPE html>
             overflow: hidden;
         }
 
-        .controls {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .controls button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            margin: 0 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .controls button:hover {
-            background: #0056b3;
-        }
-
         /* Modal styles */
         .modal {
             display: none;
@@ -2006,6 +1999,68 @@ const htmlTemplate = `<!DOCTYPE html>
             flex: 1;
             white-space: pre;
             border-radius: 0 0 12px 12px;
+        }
+
+        /* JSON Syntax Highlighting */
+        .json-key {
+            color: #0066cc;
+            font-weight: bold;
+        }
+
+        .json-string {
+            color: #22863a;
+        }
+
+        .json-number {
+            color: #e36209;
+        }
+
+        .json-boolean {
+            color: #d73a49;
+            font-weight: bold;
+        }
+
+        .json-null {
+            color: #6f42c1;
+            font-weight: bold;
+        }
+
+        .json-punctuation {
+            color: #24292e;
+        }
+
+        .json-brace {
+            color: #586069;
+            font-weight: bold;
+        }
+
+        .json-bracket {
+            color: #586069;
+            font-weight: bold;
+        }
+
+        /* Inline JSON highlighting for smaller displays */
+        .json-inline .json-key {
+            color: #0066cc;
+            font-weight: 600;
+        }
+
+        .json-inline .json-string {
+            color: #22863a;
+        }
+
+        .json-inline .json-number {
+            color: #e36209;
+        }
+
+        .json-inline .json-boolean {
+            color: #d73a49;
+            font-weight: 600;
+        }
+
+        .json-inline .json-null {
+            color: #6f42c1;
+            font-weight: 600;
         }
 
         .json-toolbar {
@@ -2290,21 +2345,6 @@ const htmlTemplate = `<!DOCTYPE html>
             font-size: 0.95em;
         }
 
-        .action-output {
-            background: #f8f9fa;
-            border: 2px solid #6f42c1;
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 0.85em;
-            max-height: 120px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            color: #495057;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            line-height: 1.4;
-        }
-
         .action-session-data {
             margin-top: 15px;
             padding: 15px;
@@ -2538,7 +2578,7 @@ const htmlTemplate = `<!DOCTYPE html>
                                                                 <div class="tool-calls-info">🔧 Tool Calls: {{$planning.ToolCallsCount}}</div>
                                                                 {{end}}
                                                                 {{if $planning.ActionNames}}
-                                                                <div class="actions-info">🎯 Actions: {{safeHTML (toJSON $planning.ActionNames)}}</div>
+                                                                <div class="actions-info json-inline">🎯 Actions: {{toJSONFormatted $planning.ActionNames}}</div>
                                                                 {{end}}
                                                             </div>
                                                         </div>
@@ -2560,7 +2600,9 @@ const htmlTemplate = `<!DOCTYPE html>
                                                                         {{if $subAction.Error}}<span class="error">❌</span>{{else}}<span class="success">✅</span>{{end}}
                                                                     </div>
                                                                     {{if $subAction.Arguments}}
-                                                                    <div class="action-arguments">{{safeHTML (toJSON $subAction.Arguments)}}</div>
+                                                                        <div class="action-arguments json-inline">
+                                                                            {{toJSONFormatted $subAction.Arguments}}
+                                                                        </div>
                                                                     {{end}}
                                                                     {{if $subAction.Requests}}
                                                                     <div class="action-requests">
@@ -2668,7 +2710,7 @@ const htmlTemplate = `<!DOCTYPE html>
                                                             {{/* Display structured data for query results */}}
                                                             {{if $action.AIResult.QueryResult.Data}}
                                                                 <div class="model-info">📥 Structured Data:</div>
-                                                                <div class="structured-data">{{safeHTML (toJSON $action.AIResult.QueryResult.Data)}}</div>
+                                                                <div class="structured-data json-inline">{{toJSONFormatted $action.AIResult.QueryResult.Data}}</div>
                                                             {{end}}
                                                         {{else if eq $action.AIResult.Type "action"}}
                                                             {{if $action.AIResult.PlanningResult.ModelName}}
@@ -2850,7 +2892,9 @@ const htmlTemplate = `<!DOCTYPE html>
                                          {{end}}
                                      </div>
                                      {{if $logEntry.Fields}}
-                                     <div class="log-fields collapsed">{{safeHTML (toJSON $logEntry.Fields)}}</div>
+                                        <div class="log-fields collapsed json-inline">
+                                            {{toJSONFormatted $logEntry.Fields}}
+                                        </div>
                                      {{end}}
                                  </div>
                                 {{end}}
@@ -2958,6 +3002,121 @@ const htmlTemplate = `<!DOCTYPE html>
         const logContent = decodeBase64UTF8(logContentBase64);
         const caseContent = decodeBase64UTF8(caseContentBase64);
 
+        // Enhanced JSON highlighting with better parsing
+        function highlightJSONAdvanced(jsonString) {
+            if (!jsonString || typeof jsonString !== 'string') {
+                return jsonString;
+            }
+
+            let result = '';
+            let i = 0;
+            let inString = false;
+            let inKey = false;
+            let escaped = false;
+
+            while (i < jsonString.length) {
+                const char = jsonString[i];
+                const nextChar = jsonString[i + 1];
+
+                if (escaped) {
+                    result += char;
+                    escaped = false;
+                    i++;
+                    continue;
+                }
+
+                if (char === '\\' && inString) {
+                    escaped = true;
+                    result += char;
+                    i++;
+                    continue;
+                }
+
+                if (char === '"') {
+                    if (!inString) {
+                        // Starting a string
+                        inString = true;
+                        // Check if this is a key (followed by colon)
+                        let j = i + 1;
+                        let tempStr = '';
+                        let tempEscaped = false;
+                        while (j < jsonString.length) {
+                            const c = jsonString[j];
+                            if (tempEscaped) {
+                                tempEscaped = false;
+                                j++;
+                                continue;
+                            }
+                            if (c === '\\') {
+                                tempEscaped = true;
+                                j++;
+                                continue;
+                            }
+                            if (c === '"') {
+                                // End of string, check what follows
+                                j++;
+                                while (j < jsonString.length && /\s/.test(jsonString[j])) j++;
+                                if (j < jsonString.length && jsonString[j] === ':') {
+                                    inKey = true;
+                                }
+                                break;
+                            }
+                            j++;
+                        }
+
+                        if (inKey) {
+                            result += '<span class="json-key">"';
+                        } else {
+                            result += '<span class="json-string">"';
+                        }
+                    } else {
+                        // Ending a string
+                        inString = false;
+                        result += '"</span>';
+                        inKey = false;
+                    }
+                } else if (!inString) {
+                    // Handle non-string content
+                    if (char === ':') {
+                        result += '<span class="json-punctuation">:</span>';
+                    } else if (char === ',') {
+                        result += '<span class="json-punctuation">,</span>';
+                    } else if (char === '{' || char === '}') {
+                        result += '<span class="json-brace">' + char + '</span>';
+                    } else if (char === '[' || char === ']') {
+                        result += '<span class="json-bracket">' + char + '</span>';
+                    } else if (/\d/.test(char) || (char === '-' && /\d/.test(nextChar))) {
+                        // Handle numbers
+                        let numStr = '';
+                        while (i < jsonString.length && /[\d\.\-\+e]/i.test(jsonString[i])) {
+                            numStr += jsonString[i];
+                            i++;
+                        }
+                        result += '<span class="json-number">' + numStr + '</span>';
+                        i--; // Adjust for the loop increment
+                    } else if (char === 't' && jsonString.substr(i, 4) === 'true') {
+                        result += '<span class="json-boolean">true</span>';
+                        i += 3; // Skip the rest of 'true'
+                    } else if (char === 'f' && jsonString.substr(i, 5) === 'false') {
+                        result += '<span class="json-boolean">false</span>';
+                        i += 4; // Skip the rest of 'false'
+                    } else if (char === 'n' && jsonString.substr(i, 4) === 'null') {
+                        result += '<span class="json-null">null</span>';
+                        i += 3; // Skip the rest of 'null'
+                    } else {
+                        result += char;
+                    }
+                } else {
+                    // Inside string, just add character
+                    result += char;
+                }
+
+                i++;
+            }
+
+            return result;
+        }
+
         // Download functions
         function downloadSummary() {
             if (!summaryContent) {
@@ -2997,9 +3156,11 @@ const htmlTemplate = `<!DOCTYPE html>
             try {
                 // Parse and format JSON for beautiful display
                 const jsonObj = JSON.parse(caseContent);
-                const formattedJson = JSON.stringify(jsonObj, null, 2);
+                const formattedJson = JSON.stringify(jsonObj, null, 4);
 
-                document.getElementById('jsonContent').textContent = formattedJson;
+                // Apply syntax highlighting
+                const highlightedJson = highlightJSONAdvanced(formattedJson);
+                document.getElementById('jsonContent').innerHTML = highlightedJson;
                 document.getElementById('jsonModal').style.display = 'block';
             } catch (e) {
                 console.error('Failed to parse JSON:', e);
@@ -3014,22 +3175,39 @@ const htmlTemplate = `<!DOCTYPE html>
         }
 
         function copyJsonContent() {
-            const jsonContent = document.getElementById('jsonContent').textContent;
-            if (!jsonContent) {
+            // Copy the original formatted JSON content instead of highlighted HTML
+            if (!caseContent) {
                 alert('No content to copy');
                 return;
             }
 
-            navigator.clipboard.writeText(jsonContent).then(function() {
-                const copyStatus = document.getElementById('copyStatus');
-                copyStatus.classList.add('show');
-                setTimeout(function() {
-                    copyStatus.classList.remove('show');
-                }, 2000);
-            }).catch(function(err) {
-                console.error('Failed to copy to clipboard:', err);
-                alert('Failed to copy to clipboard. Please select and copy manually.');
-            });
+            try {
+                const jsonObj = JSON.parse(caseContent);
+                const formattedJson = JSON.stringify(jsonObj, null, 4);
+
+                navigator.clipboard.writeText(formattedJson).then(function() {
+                    const copyStatus = document.getElementById('copyStatus');
+                    copyStatus.classList.add('show');
+                    setTimeout(function() {
+                        copyStatus.classList.remove('show');
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Failed to copy to clipboard:', err);
+                    alert('Failed to copy to clipboard. Please select and copy manually.');
+                });
+            } catch (e) {
+                // Fallback to original content
+                navigator.clipboard.writeText(caseContent).then(function() {
+                    const copyStatus = document.getElementById('copyStatus');
+                    copyStatus.classList.add('show');
+                    setTimeout(function() {
+                        copyStatus.classList.remove('show');
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Failed to copy to clipboard:', err);
+                    alert('Failed to copy to clipboard. Please select and copy manually.');
+                });
+            }
         }
 
         function downloadCaseJson() {
@@ -3050,9 +3228,11 @@ const htmlTemplate = `<!DOCTYPE html>
             try {
                 // Parse and format JSON for beautiful display
                 const jsonObj = JSON.parse(summaryContent);
-                const formattedJson = JSON.stringify(jsonObj, null, 2);
+                const formattedJson = JSON.stringify(jsonObj, null, 4);
 
-                document.getElementById('summaryContent').textContent = formattedJson;
+                // Apply syntax highlighting
+                const highlightedJson = highlightJSONAdvanced(formattedJson);
+                document.getElementById('summaryContent').innerHTML = highlightedJson;
                 document.getElementById('summaryModal').style.display = 'block';
             } catch (e) {
                 console.error('Failed to parse JSON:', e);
@@ -3067,22 +3247,39 @@ const htmlTemplate = `<!DOCTYPE html>
         }
 
         function copySummaryContent() {
-            const content = document.getElementById('summaryContent').textContent;
-            if (!content) {
+            // Copy the original formatted JSON content instead of highlighted HTML
+            if (!summaryContent) {
                 alert('No content to copy');
                 return;
             }
 
-            navigator.clipboard.writeText(content).then(function() {
-                const copyStatus = document.getElementById('summaryStatus');
-                copyStatus.classList.add('show');
-                setTimeout(function() {
-                    copyStatus.classList.remove('show');
-                }, 2000);
-            }).catch(function(err) {
-                console.error('Failed to copy to clipboard:', err);
-                alert('Failed to copy to clipboard. Please select and copy manually.');
-            });
+            try {
+                const jsonObj = JSON.parse(summaryContent);
+                const formattedJson = JSON.stringify(jsonObj, null, 4);
+
+                navigator.clipboard.writeText(formattedJson).then(function() {
+                    const copyStatus = document.getElementById('summaryStatus');
+                    copyStatus.classList.add('show');
+                    setTimeout(function() {
+                        copyStatus.classList.remove('show');
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Failed to copy to clipboard:', err);
+                    alert('Failed to copy to clipboard. Please select and copy manually.');
+                });
+            } catch (e) {
+                // Fallback to original content
+                navigator.clipboard.writeText(summaryContent).then(function() {
+                    const copyStatus = document.getElementById('summaryStatus');
+                    copyStatus.classList.add('show');
+                    setTimeout(function() {
+                        copyStatus.classList.remove('show');
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Failed to copy to clipboard:', err);
+                    alert('Failed to copy to clipboard. Please select and copy manually.');
+                });
+            }
         }
 
         // Log Content Modal functions
@@ -3141,6 +3338,19 @@ const htmlTemplate = `<!DOCTYPE html>
                 if (fieldsElement.classList.contains('collapsed')) {
                     fieldsElement.classList.remove('collapsed');
                     toggleIcon.classList.add('rotated');
+                    // Apply JSON highlighting when expanding
+                    if (fieldsElement.classList.contains('json-inline')) {
+                        const text = fieldsElement.textContent;
+                        if (text && text.trim()) {
+                            try {
+                                JSON.parse(text);
+                                const highlighted = highlightJSONAdvanced(text);
+                                fieldsElement.innerHTML = highlighted;
+                            } catch (e) {
+                                // If not valid JSON, leave as is
+                            }
+                        }
+                    }
                 } else {
                     fieldsElement.classList.add('collapsed');
                     toggleIcon.classList.remove('rotated');
@@ -3173,7 +3383,62 @@ const htmlTemplate = `<!DOCTYPE html>
             } else {
                 requestsContent.classList.add('show');
                 buttonElement.textContent = buttonElement.textContent.replace('Show', 'Hide');
+
+                // Apply JSON highlighting to request/response bodies when expanding
+                setTimeout(() => {
+                    applyRequestResponseHighlighting(requestsContent);
+                }, 10);
             }
+        }
+
+        // Apply JSON highlighting to request/response content
+        function applyRequestResponseHighlighting(container) {
+            // Find all request-body-compact and response-body-compact elements
+            const requestBodies = container.querySelectorAll('.request-body-compact, .response-body-compact');
+
+            requestBodies.forEach(function(element) {
+                // Skip if already processed
+                if (element.querySelector('.json-key, .json-string, .json-number')) {
+                    return;
+                }
+
+                const text = element.textContent;
+                if (text && text.trim()) {
+                    // Extract the content after "Request:" or "Response:"
+                    const match = text.match(/^(Request|Response):\s*(.+)$/s);
+                    if (match) {
+                        const label = match[1];
+                        const content = match[2].trim();
+                        try {
+                            // Validate JSON by parsing it
+                            const parsedJson = JSON.parse(content);
+                            // Re-stringify to get a compact, normalized string, which removes extra spaces
+                            const compactJson = JSON.stringify(parsedJson);
+                            // Apply highlighting on the compact string
+                            const highlighted = highlightJSONAdvanced(compactJson);
+                            element.innerHTML = label + ': ' + highlighted;
+                        } catch (e) {
+                            // If not valid JSON, leave as is
+                            console.log('Not valid JSON for ' + label + ':', content);
+                        }
+                    } else {
+                        // Try to find JSON-like content even without exact format
+                        const jsonMatch = text.match(/(\{.*\}|\[.*\])/s);
+                        if (jsonMatch) {
+                            const jsonContent = jsonMatch[1].trim();
+                            try {
+                                JSON.parse(jsonContent);
+                                const beforeJson = text.substring(0, text.indexOf(jsonContent));
+                                const afterJson = text.substring(text.indexOf(jsonContent) + jsonContent.length);
+                                const highlighted = highlightJSONAdvanced(jsonContent);
+                                element.innerHTML = beforeJson + highlighted + afterJson;
+                            } catch (e) {
+                                // Not valid JSON, leave as is
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function openImageModal(src) {
@@ -3208,6 +3473,25 @@ const htmlTemplate = `<!DOCTYPE html>
             }
         }
 
+        // Apply syntax highlighting to inline JSON content
+        function applyInlineJSONHighlighting() {
+            document.querySelectorAll('.json-inline').forEach(function(element) {
+                const text = element.textContent;
+                if (text && text.trim()) {
+                    try {
+                        // Validate and parse JSON
+                        JSON.parse(text);
+                        // Apply highlighting if valid JSON
+                        const highlighted = highlightJSONAdvanced(text);
+                        element.innerHTML = highlighted;
+                    } catch (e) {
+                        // If not valid JSON, leave as is
+                        // This handles cases where content might not be pure JSON
+                    }
+                }
+            });
+        }
+
         // Auto-expand all steps on load to show actions
         document.addEventListener('DOMContentLoaded', function() {
             // Expand all steps to show the actions list
@@ -3216,6 +3500,14 @@ const htmlTemplate = `<!DOCTYPE html>
 
             contents.forEach(content => content.classList.add('show'));
             icons.forEach(icon => icon.classList.add('rotated'));
+
+            // Apply syntax highlighting to inline JSON content
+            applyInlineJSONHighlighting();
+
+            // Apply JSON highlighting to all visible request/response content
+            document.querySelectorAll('.requests-content-compact').forEach(function(container) {
+                applyRequestResponseHighlighting(container);
+            });
         });
 
         function toggleAllSteps() {
