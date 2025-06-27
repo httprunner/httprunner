@@ -765,6 +765,10 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				identifier = action.Identifier
 				break
 			}
+			if action.Options != nil && action.Options.Identifier != "" {
+				identifier = action.Options.Identifier
+				break
+			}
 		}
 	}
 	stepResult.Identifier = identifier

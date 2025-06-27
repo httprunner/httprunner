@@ -152,17 +152,6 @@ func WithDeviceWDAMjpegPort(port int) DeviceOption {
 	}
 }
 
-func WithDeviceLazySetup(lazySetup bool) DeviceOption {
-	return func(device *DeviceOptions) {
-		if device.IOSDeviceOptions != nil {
-			device.IOSDeviceOptions.LazySetup = lazySetup
-		}
-		if device.Platform == "" {
-			device.Platform = "ios"
-		}
-	}
-}
-
 func WithDeviceResetHomeOnStartup(reset bool) DeviceOption {
 	return func(device *DeviceOptions) {
 		if device.IOSDeviceOptions != nil {

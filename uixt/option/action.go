@@ -7,10 +7,11 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
 type MobileAction struct {
@@ -324,6 +325,10 @@ func (o *ActionOptions) Options() []ActionOption {
 
 	if o.AntiRisk {
 		options = append(options, WithAntiRisk(true))
+	}
+
+	if o.PreMarkOperation {
+		options = append(options, WithPreMarkOperation(true))
 	}
 
 	// custom options

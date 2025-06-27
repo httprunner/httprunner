@@ -11,7 +11,7 @@ PRE_COMMIT_FILE=.git/hooks/pre-commit
 # install pre-commit hook and make it executable
 function install() {
     go get mvdan.cc/gofumpt
-    go get github.com/incu6us/goimports-reviser/v2@latest
+    go get github.com/incu6us/goimports-reviser/v3@latest
     cat > $PRE_COMMIT_FILE <<'EOF'
 #!/bin/bash
 
@@ -45,7 +45,7 @@ done
 version_file=internal/version/VERSION
 
 # get current date
-current_date=$(date +"%y%m%d%H%M")
+current_date=$(date +"%y%m%d")
 
 # update version
 sed -i '' "s/[0-9]\{10\}/${current_date}/" "$version_file"

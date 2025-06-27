@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // ToolWebLoginNoneUI implements the web_login_none_ui tool call.
@@ -170,7 +171,7 @@ func (t *ToolHoverBySelector) Implement() server.ToolHandlerFunc {
 		if err != nil {
 			return nil, err
 		}
-		// Get options directly since ActionOptions is now ActionOptions
+		// Build all options from request arguments
 		opts := unifiedReq.Options()
 
 		// Hover by selector action logic
@@ -228,7 +229,7 @@ func (t *ToolTapBySelector) Implement() server.ToolHandlerFunc {
 		if err != nil {
 			return nil, err
 		}
-		// Get options directly since ActionOptions is now ActionOptions
+		// Build all options from request arguments
 		opts := unifiedReq.Options()
 
 		// Tap by selector action logic
@@ -286,7 +287,7 @@ func (t *ToolSecondaryClickBySelector) Implement() server.ToolHandlerFunc {
 		if err != nil {
 			return nil, err
 		}
-		// Get options directly since ActionOptions is now ActionOptions
+		// Build all options from request arguments
 		opts := unifiedReq.Options()
 
 		// Secondary click by selector action logic

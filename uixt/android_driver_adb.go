@@ -731,11 +731,21 @@ func (ad *ADBDriver) ForegroundInfo() (app types.AppInfo, err error) {
 	if err != nil {
 		return app, err
 	}
-	err = json.Unmarshal([]byte(strings.TrimSpace(packageInfo)), &app)
+
+	// Clean packageInfo: remove null bytes that cause JSON parsing issues
+	packageInfo = strings.ReplaceAll(packageInfo, "\x00", "")
+
+	// Check for empty response after cleaning
+	if strings.TrimSpace(packageInfo) == "" {
+		return app, errors.New("empty response from evalite process")
+	}
+
+	err = json.Unmarshal([]byte(packageInfo), &app)
 	if err != nil {
 		log.Error().Err(err).Str("packageInfo", packageInfo).Msg("get foreground app failed")
+		return app, err
 	}
-	return
+	return app, nil
 }
 
 func (ad *ADBDriver) SetIme(imeRegx string) error {

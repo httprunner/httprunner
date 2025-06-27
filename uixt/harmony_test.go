@@ -3,7 +3,6 @@
 package uixt
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/httprunner/httprunner/v5/uixt/option"
@@ -25,7 +24,7 @@ func TestWindowSize(t *testing.T) {
 	driver := setupHDCDriverExt(t)
 	size, err := driver.WindowSize()
 	assert.Nil(t, err)
-	t.Log(fmt.Sprintf("width: %d, height: %d", size.Width, size.Height))
+	assert.NotNil(t, size)
 }
 
 func TestHarmonyTap(t *testing.T) {

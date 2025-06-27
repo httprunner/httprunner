@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // ToolStartToGoal implements the start_to_goal tool call.
@@ -162,7 +163,7 @@ func (t *ToolAIQuery) Implement() server.ToolHandlerFunc {
 			return nil, err
 		}
 
-		// Build action options from unified request
+		// Build all options from request arguments
 		opts := unifiedReq.Options()
 
 		// AI query logic with options

@@ -36,12 +36,18 @@ func NewWDADriver(device *IOSDevice) (*WDADriver, error) {
 		Session: NewDriverSession(),
 	}
 
-	if !device.Options.LazySetup {
-		// setup driver
-		if err := driver.Setup(); err != nil {
-			return nil, err
-		}
+	// setup driver
+	if err := driver.Setup(); err != nil {
+		return nil, err
 	}
+
+	// check WDA status
+	wdaStatus, err := driver.Status()
+	if err != nil {
+		return nil, err
+	}
+	log.Info().Interface("status", wdaStatus).
+		Msg("check WDA status")
 
 	// register driver session reset handler
 	driver.Session.RegisterResetHandler(driver.Setup)
@@ -665,7 +671,7 @@ func (wd *WDADriver) Input(text string, opts ...option.ActionOption) (err error)
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
 	data := map[string]interface{}{"value": strings.Split(text, "")}
 	option.MergeOptions(data, opts...)
-	_, err = wd.Session.POST(data, "/gtf/interaction/input")
+	_, err = wd.Session.POST(data, "/wings/interaction/keys")
 	return
 }
 

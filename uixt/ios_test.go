@@ -38,8 +38,7 @@ func TestDevice_IOS_Install(t *testing.T) {
 func TestDriver_WDA_LazySetup(t *testing.T) {
 	device, err := NewIOSDevice(
 		option.WithWDAPort(8700),
-		option.WithWDAMjpegPort(8800),
-		option.WithLazySetup(true))
+		option.WithWDAMjpegPort(8800))
 	require.Nil(t, err)
 	driver, err := NewWDADriver(device)
 	require.Nil(t, err)

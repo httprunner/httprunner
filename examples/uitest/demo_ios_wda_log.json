@@ -6,16 +6,9 @@
         },
         "ios": [
             {
-                "perf_options": {
-                    "sys_cpu": true,
-                    "sys_mem": true,
-                    "fps": true,
-                    "network": true
-                },
                 "port": 8700,
                 "mjpeg_port": 8800,
-                "log_on": true,
-                "xctest_bundle_id": "com.gtf.wda.runner.xctrunner"
+                "log_on": true
             }
         ]
     },
@@ -23,6 +16,7 @@
         {
             "name": "启动抖音",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "home"
@@ -34,8 +28,10 @@
                     {
                         "method": "swipe_to_tap_app",
                         "params": "$app_name",
-                        "identifier": "启动抖音",
-                        "max_retry_times": 5
+                        "options": {
+                            "identifier": "启动抖音",
+                            "max_retry_times": 5
+                        }
                     },
                     {
                         "method": "sleep",
@@ -55,11 +51,14 @@
         {
             "name": "处理青少年弹窗",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "tap_ocr",
                         "params": "我知道了",
-                        "ignore_NotFoundError": true
+                        "options": {
+                            "ignore_NotFoundError": true
+                        }
                     }
                 ]
             }
@@ -67,11 +66,14 @@
         {
             "name": "进入购物页",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "tap_ocr",
                         "params": "商城",
-                        "identifier": "点击商城"
+                        "options": {
+                            "identifier": "点击商城"
+                        }
                     },
                     {
                         "method": "sleep",
@@ -83,11 +85,14 @@
         {
             "name": "进入推荐页",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "tap_ocr",
                         "params": "推荐",
-                        "identifier": "点击推荐"
+                        "options": {
+                            "identifier": "点击推荐"
+                        }
                     },
                     {
                         "method": "sleep",
@@ -99,29 +104,36 @@
         {
             "name": "向上滑动 2 次",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
-                        "method": "swipe",
+                        "method": "swipe_direction",
                         "params": "up",
-                        "identifier": "第 1 次上划"
+                        "options": {
+                            "identifier": "第 1 次上划"
+                        }
                     },
                     {
                         "method": "sleep",
                         "params": 2
                     },
                     {
-                        "method": "swipe",
+                        "method": "swipe_direction",
                         "params": "up",
-                        "identifier": "第 2 次上划"
+                        "options": {
+                            "identifier": "第 2 次上划"
+                        }
                     },
                     {
                         "method": "sleep",
                         "params": 2
                     },
                     {
-                        "method": "swipe",
+                        "method": "swipe_direction",
                         "params": "up",
-                        "identifier": "第 3 次上划"
+                        "options": {
+                            "identifier": "第 3 次上划"
+                        }
                     },
                     {
                         "method": "sleep",
@@ -133,7 +145,9 @@
                             0.9,
                             0.1
                         ],
-                        "identifier": "点击进入搜索框"
+                        "options": {
+                            "identifier": "点击进入搜索框"
+                        }
                     },
                     {
                         "method": "sleep",
@@ -141,8 +155,17 @@
                     },
                     {
                         "method": "input",
-                        "params": "httprunner",
-                        "identifier": "输入搜索关键词"
+                        "params": "httprunner 发版记录",
+                        "options": {
+                            "identifier": "输入搜索关键词"
+                        }
+                    },
+                    {
+                        "method": "tap_ocr",
+                        "params": "搜索",
+                        "options": {
+                            "identifier": "点击搜索"
+                        }
                     }
                 ]
             }

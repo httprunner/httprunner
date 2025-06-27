@@ -135,9 +135,17 @@ func (p *Planner) Plan(ctx context.Context, opts *PlanningOptions) (result *Plan
 		for _, toolCall := range message.ToolCalls {
 			toolCallID += toolCall.ID
 		}
+
+		// Ensure content is not empty for Tool messages to avoid API 400 errors
+		// Some models may return empty content when using function calling
+		toolContent := message.Content
+		if toolContent == "" {
+			toolContent = "Function call initiated"
+		}
+
 		p.history.Append(&schema.Message{
 			Role:       schema.Tool,
-			Content:    message.Content,
+			Content:    toolContent,
 			ToolCalls:  message.ToolCalls,
 			ToolCallID: toolCallID,
 		})
@@ -158,7 +166,7 @@ func (p *Planner) Plan(ctx context.Context, opts *PlanningOptions) (result *Plan
 			Error:     err.Error(),
 			ModelName: string(p.modelConfig.ModelType),
 		}
-		log.Debug().Str("reason", err.Error()).Msg("parse content to actions failed")
+		log.Warn().Str("reason", err.Error()).Msg("parse content to actions failed")
 	}
 	// append assistant message (since we're parsing content, not using native function calling)
 	p.history.Append(&schema.Message{
