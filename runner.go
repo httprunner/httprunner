@@ -18,12 +18,12 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/httprunner/funplugin"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/net/http2"
 
-	"github.com/httprunner/funplugin"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
@@ -50,10 +50,11 @@ func NewRunner(t *testing.T) *HRPRunner {
 	interruptSignal := make(chan os.Signal, 1)
 	signal.Notify(interruptSignal, syscall.SIGTERM, syscall.SIGINT)
 	return &HRPRunner{
-		t:             t,
-		failfast:      true, // default to failfast
-		genHTMLReport: false,
-		mcpConfigPath: "",
+		t:                t,
+		failfast:         true, // default to failfast
+		genHTMLReport:    false,
+		mcpConfigPath:    "",
+		autoPopupHandler: false,
 		httpClient: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -87,6 +88,7 @@ type HRPRunner struct {
 	saveTests        bool
 	genHTMLReport    bool
 	mcpConfigPath    string // MCP config file path
+	autoPopupHandler bool   // enable auto popup handler for all UI steps
 	httpClient       *http.Client
 	http2Client      *http.Client
 	wsDialer         *websocket.Dialer
@@ -195,6 +197,13 @@ func (r *HRPRunner) GenHTMLReport() *HRPRunner {
 		Msg("[init] SetGenHTMLReport")
 	r.genHTMLReport = true
 	r.saveTests = true
+	return r
+}
+
+// EnableAutoPopupHandler configures whether to enable auto popup handler for all UI steps.
+func (r *HRPRunner) EnableAutoPopupHandler(enabled bool) *HRPRunner {
+	log.Info().Bool("autoPopupHandler", enabled).Msg("[init] EnableAutoPopupHandler")
+	r.autoPopupHandler = enabled
 	return r
 }
 
@@ -392,6 +401,13 @@ func NewCaseRunner(testcase TestCase, hrpRunner *HRPRunner) (*CaseRunner, error)
 	parsedConfig, err := caseRunner.parseConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "parse testcase config failed")
+	}
+
+	// apply global auto popup handler setting if enabled
+	// priority: command line > testcase config > step config
+	if hrpRunner.autoPopupHandler {
+		parsedConfig.AutoPopupHandler = true
+		log.Info().Bool("autoPopupHandler", true).Msg("applied global auto popup handler setting")
 	}
 
 	// set request timeout in seconds

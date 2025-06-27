@@ -36,6 +36,7 @@ var (
 	genHTMLReport     bool
 	caseTimeout       float32
 	runMCPConfigPath  string // MCP config path for run command
+	autoPopupHandler  bool   // enable auto popup handler for all steps
 )
 
 func init() {
@@ -48,6 +49,7 @@ func init() {
 	CmdRun.Flags().BoolVarP(&genHTMLReport, "gen-html-report", "g", false, "generate html report")
 	CmdRun.Flags().Float32Var(&caseTimeout, "case-timeout", 3600, "set testcase timeout (seconds)")
 	CmdRun.Flags().StringVar(&runMCPConfigPath, "mcp-config", "", "path to the MCP config file")
+	CmdRun.Flags().BoolVar(&autoPopupHandler, "enable-auto-popup-handler", false, "enable auto popup handler for all UI steps")
 }
 
 func makeHRPRunner() *hrp.HRPRunner {
@@ -75,6 +77,9 @@ func makeHRPRunner() *hrp.HRPRunner {
 	}
 	if runMCPConfigPath != "" {
 		runner.SetMCPConfigPath(runMCPConfigPath)
+	}
+	if autoPopupHandler {
+		runner.EnableAutoPopupHandler(autoPopupHandler)
 	}
 	return runner
 }
