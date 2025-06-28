@@ -341,7 +341,7 @@ func (wd *WDADriver) ActiveAppInfo() (info types.AppInfo, err error) {
 	// [[FBRoute GET:@"/wda/activeAppInfo"] respondWithTarget:self action:@selector(handleActiveAppInfo:)]
 	// [[FBRoute GET:@"/wda/activeAppInfo"].withoutSession
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.Session.GET("/wda/activeAppInfo"); err != nil {
+	if rawResp, err = wd.Session.GET("/wings/activeAppInfo"); err != nil {
 		return types.AppInfo{}, err
 	}
 	reply := new(struct{ Value struct{ types.AppInfo } })
