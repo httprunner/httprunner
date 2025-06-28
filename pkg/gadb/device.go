@@ -728,7 +728,16 @@ func (d *Device) IsPackageInstalled(packageName string) bool {
 }
 
 func (d *Device) IsPackageRunning(packageName string) bool {
-	output, err := d.RunShellCommand("pidof", packageName)
+	packageName = strings.TrimSpace(packageName)
+	if packageName == "" {
+		log.Error().Msg("package name is empty, skip checking package running")
+		return false
+	}
+
+	// Use ps -ef command with grep to check if package is running
+	// ps -ef shows full command line which includes package name as argument
+	// This works for both regular apps and instrumentation test processes
+	output, err := d.RunShellCommand("ps -ef | grep " + packageName + " | grep -v grep")
 	if err != nil {
 		return false
 	}

@@ -28,7 +28,7 @@ build: ## build hrp cli tool
 	#   -w                  : 忽略 DWARF 调试信息
 	# -extldflags "-static" : 传递给外部链接器的标志，强制静态链接
 	@echo "[info] build hrp cli tool"
-	go mod tidy
+	GOTOOLCHAIN=go1.23 go mod tidy
 	GOOS=${TARGET_OS} GOARCH=${TARGET_ARCH} CGO_ENABLED=0 go build -tags netgo,osusergo -trimpath -ldflags "\
 		-s -w \
 		-X 'github.com/httprunner/httprunner/v5/internal/version.GitCommit=$(shell git rev-parse HEAD)' \
