@@ -94,6 +94,26 @@ func TestDriverSession_buildURL(t *testing.T) {
 			urlStr:  "users",
 			want:    "http://localhost:8080/api/users",
 		},
+		// Reproduction case: base URL with path + absolute path (leading slash)
+		{
+			name:    "baseUrl with path + absolute path should preserve base path",
+			baseURL: "http://forward-to-38153:6790/wd/hub",
+			urlStr:  "/session",
+			want:    "http://forward-to-38153:6790/wd/hub/session",
+		},
+		// Additional test cases for comprehensive coverage
+		{
+			name:    "baseUrl with path + absolute path with query params",
+			baseURL: "http://localhost:8080/api/v1",
+			urlStr:  "/session?timeout=30",
+			want:    "http://localhost:8080/api/v1/session?timeout=30",
+		},
+		{
+			name:    "baseUrl with path + absolute path with query params and fragment",
+			baseURL: "http://localhost:8080/wd/hub",
+			urlStr:  "/session/123?param=value#fragment",
+			want:    "http://localhost:8080/wd/hub/session/123?param=value#fragment",
+		},
 	}
 
 	for _, tt := range tests {

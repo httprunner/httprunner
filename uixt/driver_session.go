@@ -104,6 +104,7 @@ func (s *DriverSession) History() []*DriverRequests {
 }
 
 func (s *DriverSession) buildURL(urlStr string) (string, error) {
+	// Handle empty URL or root path
 	if urlStr == "" || urlStr == "/" {
 		if s.baseUrl == "" {
 			return "", fmt.Errorf("base URL is empty")
@@ -111,7 +112,7 @@ func (s *DriverSession) buildURL(urlStr string) (string, error) {
 		return s.baseUrl, nil
 	}
 
-	// Handle full URLs
+	// Handle full URLs (absolute URLs)
 	if strings.HasPrefix(urlStr, "http://") || strings.HasPrefix(urlStr, "https://") {
 		u, err := url.Parse(urlStr)
 		if err != nil {
@@ -120,10 +121,12 @@ func (s *DriverSession) buildURL(urlStr string) (string, error) {
 		return u.String(), nil
 	}
 
-	// handle relative path using ResolveReference
+	// Validate base URL
 	if s.baseUrl == "" {
 		return "", fmt.Errorf("base URL is empty")
 	}
+
+	// Parse both base URL and relative URL upfront
 	baseURL, err := url.Parse(s.baseUrl)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse base URL: %w", err)
@@ -134,8 +137,18 @@ func (s *DriverSession) buildURL(urlStr string) (string, error) {
 		return "", fmt.Errorf("failed to parse relative URL: %w", err)
 	}
 
-	finalURL := baseURL.ResolveReference(relativeURL)
-	return finalURL.String(), nil
+	// Special handling: when relative path starts with "/" and base URL has a non-root path,
+	// we want to append to base path instead of replacing it
+	if strings.HasPrefix(urlStr, "/") && baseURL.Path != "" && baseURL.Path != "/" {
+		finalURL := *baseURL
+		finalURL.Path = strings.TrimSuffix(baseURL.Path, "/") + relativeURL.Path
+		finalURL.RawQuery = relativeURL.RawQuery
+		finalURL.Fragment = relativeURL.Fragment
+		return finalURL.String(), nil
+	}
+
+	// Use standard URL resolution for all other cases
+	return baseURL.ResolveReference(relativeURL).String(), nil
 }
 
 func (s *DriverSession) GET(urlStr string) (rawResp DriverRawResponse, err error) {
@@ -157,7 +170,8 @@ func (s *DriverSession) DELETE(urlStr string) (rawResp DriverRawResponse, err er
 }
 
 func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody []byte) (
-	rawResp DriverRawResponse, err error) {
+	rawResp DriverRawResponse, err error,
+) {
 	var lastError error
 
 	for attempt := 1; attempt <= s.maxRetry; attempt++ {
@@ -197,7 +211,8 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 }
 
 func (s *DriverSession) Request(method string, urlStr string, rawBody []byte) (
-	rawResp DriverRawResponse, err error) {
+	rawResp DriverRawResponse, err error,
+) {
 	// build final URL
 	rawURL, err := s.buildURL(urlStr)
 	if err != nil {
