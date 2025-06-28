@@ -10,8 +10,9 @@ PRE_COMMIT_FILE=.git/hooks/pre-commit
 
 # install pre-commit hook and make it executable
 function install() {
-    go get mvdan.cc/gofumpt
-    go get github.com/incu6us/goimports-reviser/v3@latest
+    # Install tools without modifying go.mod to avoid Go toolchain upgrade
+    go install mvdan.cc/gofumpt@latest
+    go install github.com/incu6us/goimports-reviser/v3@latest
     cat > $PRE_COMMIT_FILE <<'EOF'
 #!/bin/bash
 
@@ -48,7 +49,7 @@ version_file=internal/version/VERSION
 current_date=$(date +"%y%m%d")
 
 # update version
-sed -i '' "s/[0-9]\{10\}/${current_date}/" "$version_file"
+sed -i '' "s/[0-9]\{6\}/${current_date}/" "$version_file"
 
 # add change to stage
 git add $version_file
