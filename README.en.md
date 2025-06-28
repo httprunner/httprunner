@@ -10,13 +10,14 @@
 
 `HttpRunner` (also known as hrp) is an open-source testing framework that was born in 2017. Initially, it was used for API interface and performance testing, and later evolved into a versatile and extensible testing framework.
 
-In 2022, HttpRunner began to support UI automation testing, currently supporting multiple system platforms such as Android/iOS/Harmony/Browser, and integrated large model technology in v5.
+In 2022, HttpRunner began to support UI automation testing, currently supporting multiple system platforms such as Android/iOS/Harmony/Browser, and integrated large model technology in v5, becoming a universal intelligent automation testing framework.
 
 Compared to other UI automation frameworks, HttpRunner's main features include:
 
-- Pure visual-driven solution (OCR/CV/LLM), pursuing universality and minimal performance loss
+- Pure visual-driven solution (OCR/CV/VLM), pursuing universality and minimal performance loss
 - Unified API across multiple platforms, reducing learning and horizontal expansion costs
 - Embracing the open-source ecosystem, fully reusing open-source components
+- Golang technology stack, binary distribution deployment
 
 > [HttpRunner v5 用户指南（更新中）](https://debugtalk.feishu.cn/wiki/RqGuw17bsizGTik9WuNcGQyhnaf)
 > [HttpRunner DeepWiki](https://deepwiki.com/httprunner/httprunner)
@@ -64,15 +65,18 @@ Usage:
 
 Available Commands:
   adb          simple utils for android device management
-  build        build plugin for testing
+  build        Build plugin for testing
   completion   Generate the autocompletion script for the specified shell
-  convert      convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases
+  convert      Convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases
   help         Help about any command
   ios          simple utils for ios device management
-  pytest       run API test with pytest
-  run          run API test with go engine
-  server       start hrp server
-  startproject create a scaffold project
+  mcp-server   Start MCP server for UI automation
+  mcphost      Start a chat session to interact with MCP tools
+  pytest       Run API test with pytest
+  report       Generate HTML report from test results
+  run          Run API test with go engine
+  server       Start hrp server
+  startproject Create a scaffold project
   wiki         visit https://httprunner.com
 
 Flags:

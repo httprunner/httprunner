@@ -10,13 +10,14 @@
 
 `HttpRunner`（简称 hrp） 是一个开源测试框架，诞生于 2017 年，最开始应用于 API 接口、性能测试，后面逐步进化为了一款通用、可拓展的测试框架。
 
-在 2022 年，HttpRunner 开始新增支持 UI 自动化测试，当前已经支持了 Android/iOS/Harmony/Browser 多种系统平台，并在 v5 版本融入了大模型技术。
+在 2022 年，HttpRunner 开始新增支持 UI 自动化测试，当前已经支持了 Android/iOS/Harmony/Browser 多种系统平台，并在 v5 版本融入了大模型技术，成长成为了一款通用的智能自动化测试框架。
 
 HttpRunner 相比其它 UI 自动化框架，主要特点包括：
 
-- 采用纯视觉驱动方案（OCR/CV/LLM），追求通用性和尽可能低的性能损耗
+- 采用纯视觉驱动方案（OCR/CV/VLM），追求通用性和尽可能低的性能损耗
 - 多端统一 API，降低学习和横向拓展的成本
 - 拥抱开源生态，充分复用开源组件
+- Golang 技术栈，二进制分发部署
 
 > [HttpRunner v5 用户指南（更新中）](https://debugtalk.feishu.cn/wiki/RqGuw17bsizGTik9WuNcGQyhnaf)
 > [HttpRunner DeepWiki](https://deepwiki.com/httprunner/httprunner)
@@ -67,15 +68,18 @@ Usage:
 
 Available Commands:
   adb          simple utils for android device management
-  build        build plugin for testing
+  build        Build plugin for testing
   completion   Generate the autocompletion script for the specified shell
-  convert      convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases
+  convert      Convert multiple source format to HttpRunner JSON/YAML/gotest/pytest cases
   help         Help about any command
   ios          simple utils for ios device management
-  pytest       run API test with pytest
-  run          run API test with go engine
-  server       start hrp server
-  startproject create a scaffold project
+  mcp-server   Start MCP server for UI automation
+  mcphost      Start a chat session to interact with MCP tools
+  pytest       Run API test with pytest
+  report       Generate HTML report from test results
+  run          Run API test with go engine
+  server       Start hrp server
+  startproject Create a scaffold project
   wiki         visit https://httprunner.com
 
 Flags:
