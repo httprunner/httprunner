@@ -62,7 +62,7 @@ func (ud *UIA2Driver) Setup() error {
 		localPort, ud.Device.Options.UIA2Port)
 	ud.Session.SetBaseURL(baseURL)
 
-	// uiautomator2 server must be started before
+	// Notice: uiautomator2 server must be started before running test
 
 	// check uiautomator server package installed
 	if !ud.Device.IsPackageInstalled(ud.Device.Options.UIA2ServerPackageName) {
@@ -74,19 +74,19 @@ func (ud *UIA2Driver) Setup() error {
 			"%s not installed", ud.Device.Options.UIA2ServerTestPackageName)
 	}
 
-	// TODO: check uiautomator server package running
-	// if dev.IsPackageRunning(UIA2ServerPackageName) {
-	// 	return nil
-	// }
-
-	// start uiautomator2 server
-	// Todo: keep-alive
-	go func() {
-		if err := ud.startUIA2Server(); err != nil {
-			log.Fatal().Err(err).Msg("start UIA2 failed")
-		}
-	}()
-	time.Sleep(5 * time.Second) // wait for uiautomator2 server start
+	// check uiautomator server package running
+	if ud.Device.IsPackageRunning(ud.Device.Options.UIA2ServerTestPackageName) {
+		log.Info().Str("package", ud.Device.Options.UIA2ServerTestPackageName).
+			Msg("uiautomator2 server is already running, skip starting")
+	} else {
+		// start uiautomator2 server
+		go func() {
+			if err := ud.startUIA2Server(); err != nil {
+				log.Fatal().Err(err).Msg("start UIA2 failed")
+			}
+		}()
+		time.Sleep(5 * time.Second) // wait for uiautomator2 server start
+	}
 
 	// create new session
 	err = ud.InitSession(nil)
@@ -604,7 +604,7 @@ func (ud *UIA2Driver) startUIA2Server() error {
 			log.Error().Err(err).Int("retryCount", maxRetries).Msg("start uiautomator server failed, retrying...")
 		}
 		if strings.Contains(out, "Process crashed") {
-			log.Error().Msg("uiautomator server crashed, retrying...")
+			log.Error().Str("output", out).Msg("uiautomator server crashed, retrying...")
 		}
 	}
 
