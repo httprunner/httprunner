@@ -16,6 +16,7 @@
         {
             "name": "启动抖音",
             "harmony": {
+                "os_type": "harmony",
                 "actions": [
                     {
                         "method": "app_terminate",
@@ -24,9 +25,7 @@
                     {
                         "method": "swipe_to_tap_app",
                         "params": "com.ss.hm.ugc.aweme",
-                        "options": {
-                            
-                        }
+                        "options": {}
                     },
                     {
                         "method": "home"
@@ -36,7 +35,7 @@
                         "params": "抖音",
                         "options": {
                             "max_retry_times": 5,
-                            "offset": [
+                            "tap_offset": [
                                 0,
                                 -50
                             ]
@@ -60,6 +59,7 @@
         {
             "name": "点击放大镜",
             "harmony": {
+                "os_type": "harmony",
                 "actions": [
                     {
                         "method": "tap_xy",
@@ -67,9 +67,7 @@
                             0.9,
                             0.08
                         ],
-                        "options": {
-                            
-                        }
+                        "options": {}
                     },
                     {
                         "method": "sleep",
@@ -81,13 +79,12 @@
         {
             "name": "输入账号名称",
             "harmony": {
+                "os_type": "harmony",
                 "actions": [
                     {
                         "method": "input",
                         "params": "$ups",
-                        "options": {
-                            
-                        }
+                        "options": {}
                     },
                     {
                         "method": "sleep",
@@ -99,13 +96,12 @@
         {
             "name": "点击搜索",
             "harmony": {
+                "os_type": "harmony",
                 "actions": [
                     {
                         "method": "tap_ocr",
                         "params": "搜索",
-                        "options": {
-                            
-                        }
+                        "options": {}
                     },
                     {
                         "method": "sleep",
@@ -116,14 +112,16 @@
         },
         {
             "name": "端到端采集",
+            "loops": 5,
             "harmony": {
+                "os_type": "harmony",
                 "actions": [
                     {
                         "method": "tap_ocr",
                         "params": "直播中",
                         "options": {
-                            "ignore_NotFoundError": true,
-                            "index": -1
+                            "index": -1,
+                            "ignore_NotFoundError": true
                         }
                     },
                     {
@@ -142,8 +140,7 @@
                         }
                     }
                 ]
-            },
-            "loops": 5
+            }
         }
     ]
 }

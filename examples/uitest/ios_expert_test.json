@@ -20,6 +20,7 @@
         {
             "name": "启动应用程序 app_launch",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "app_launch",
@@ -35,6 +36,7 @@
         {
             "name": "home 以及 swipe_to_tap_app 默认配置",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "home"
@@ -54,6 +56,7 @@
         {
             "name": "处理弹窗 close_popups 默认配置 以及 ui_ocr exists 断言",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "close_popups",
@@ -73,6 +76,7 @@
         {
             "name": "【直播】feed头像或卡片进房 swipe_to_tap_texts 自定义配置",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "swipe_to_tap_texts",
@@ -105,6 +109,7 @@
         {
             "name": "sleep 10s",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "sleep",
@@ -116,9 +121,10 @@
         {
             "name": "【直播】swipe 自定义配置 以及 back",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
-                        "method": "swipe",
+                        "method": "swipe_coordinate",
                         "params": [
                             0.5,
                             0.7,
@@ -134,8 +140,7 @@
                         "params": 5
                     },
                     {
-                        "method": "back",
-                        "options": {}
+                        "method": "back"
                     },
                     {
                         "method": "sleep",
@@ -147,6 +152,7 @@
         {
             "name": "【搜索】点击放大镜 tap_xy 自定义配置",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "tap_xy",
@@ -168,6 +174,7 @@
         {
             "name": "【搜索】输入query词 input",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "input",
@@ -186,6 +193,7 @@
         {
             "name": "【搜索】点击搜索按钮 tap_ocr 自定义配置",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "tap_ocr",
@@ -204,6 +212,7 @@
         {
             "name": "选择直播页签 tap_ocr 默认配置",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "tap_ocr",
@@ -220,6 +229,7 @@
         {
             "name": "【生活服务】进入直播间 tap_xy",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "tap_xy",
@@ -239,6 +249,7 @@
         {
             "name": "【生活服务】点击货架商品 tap_ocr 自定义配置",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "tap_cv",
@@ -260,6 +271,7 @@
         {
             "name": "终止应用程序 app_terminate",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "app_terminate",
@@ -275,6 +287,7 @@
         {
             "name": "home 以及 swipe_to_tap_app 自定义配置",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "home"
@@ -285,7 +298,7 @@
                         "options": {
                             "max_retry_times": 5,
                             "interval": 1,
-                            "offset": [
+                            "tap_offset": [
                                 0,
                                 -50
                             ]
@@ -301,6 +314,7 @@
         {
             "name": "处理弹窗 close_popups 自定义配置 以及 ui_ocr exists 断言",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "close_popups",
@@ -323,6 +337,7 @@
         {
             "name": "返回主界面，并打开本地时间戳",
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "home"
@@ -351,7 +366,9 @@
         },
         {
             "name": "screeshot 以及 sleep_random",
+            "loops": 3,
             "ios": {
+                "os_type": "ios",
                 "actions": [
                     {
                         "method": "screenshot",
@@ -365,8 +382,7 @@
                         ]
                     }
                 ]
-            },
-            "loops": 3
+            }
         }
     ]
 }
