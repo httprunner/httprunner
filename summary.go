@@ -14,9 +14,13 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
+func Version() string {
+	return version.VERSION
+}
+
 func NewSummary() *Summary {
 	platForm := &Platform{
-		HttprunnerVersion: version.VERSION,
+		HttprunnerVersion: Version(),
 		GoVersion:         runtime.Version(),
 		Platform:          fmt.Sprintf("%v-%v", runtime.GOOS, runtime.GOARCH),
 	}
