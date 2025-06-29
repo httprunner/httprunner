@@ -19,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/antchfx/xmlquery"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -617,6 +618,36 @@ func (ad *ADBDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, 
 		}
 	}
 	return nil
+}
+
+func (ud *ADBDriver) TapByXpath(xpath string, opts ...option.ActionOption) (err error) {
+	source, err := ud.Source()
+	doc, err := xmlquery.Parse(strings.NewReader(source))
+	if err != nil {
+		log.Error().Err(err).Str("serial", ud.Device.Serial())
+		return err
+	}
+	targetNodes := xmlquery.Find(doc, xpath)
+	if len(targetNodes) > 0 {
+		bounds := targetNodes[0].SelectAttr("bounds")
+		re := regexp.MustCompile(`\[(\d+),(\d+)\]\[(\d+),(\d+)\]`)
+
+		matches := re.FindStringSubmatch(bounds)
+		if len(matches) != 5 {
+			return fmt.Errorf("failed to parse bounds: %s", bounds)
+		}
+
+		x1, _ := strconv.Atoi(matches[1])
+		y1, _ := strconv.Atoi(matches[2])
+		x2, _ := strconv.Atoi(matches[3])
+		y2, _ := strconv.Atoi(matches[4])
+
+		centerX := float64(x1+x2) / 2
+		centerY := float64(y1+y2) / 2
+		log.Info().Str("serial", ud.Device.Serial()).Str("xpath", xpath).Str("bounds", bounds).Msg("find node by xpath success")
+		return ud.TapAbsXY(centerX, centerY, opts...)
+	}
+	return
 }
 
 func (ad *ADBDriver) searchNodes(nodes []Layout, text string, opts ...option.ActionOption) []Bounds {
