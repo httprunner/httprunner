@@ -154,4 +154,6 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.2.0 // indirect
 )
 
+replace github.com/danielpaulus/go-ios => code.byted.org/yuhongzheng/go-ios v0.0.0-20250619061606-bbfa2c208398
+
 // replace github.com/httprunner/funplugin => ../funplugin
