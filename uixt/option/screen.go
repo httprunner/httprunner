@@ -16,6 +16,7 @@ type ScreenShotOptions struct {
 	ScreenShotWithUpload         bool     `json:"screenshot_with_upload,omitempty" yaml:"screenshot_with_upload,omitempty"`
 	ScreenShotWithLiveType       bool     `json:"screenshot_with_live_type,omitempty" yaml:"screenshot_with_live_type,omitempty"`
 	ScreenShotWithLivePopularity bool     `json:"screenshot_with_live_popularity,omitempty" yaml:"screenshot_with_live_popularity,omitempty"`
+	ScreenShotWithBase64         bool     `json:"screenshot_with_base64,omitempty" yaml:"screenshot_with_base64,omitempty"`
 	ScreenShotWithUITypes        []string `json:"screenshot_with_ui_types,omitempty" yaml:"screenshot_with_ui_types,omitempty"`
 	ScreenShotWithClosePopups    bool     `json:"screenshot_with_close_popups,omitempty" yaml:"screenshot_with_close_popups,omitempty"`
 	ScreenShotWithOCRCluster     string   `json:"screenshot_with_ocr_cluster,omitempty" yaml:"screenshot_with_ocr_cluster,omitempty"`
@@ -52,6 +53,9 @@ func (o *ScreenShotOptions) GetScreenShotOptions() []ActionOption {
 	}
 	if o.ScreenShotFileName != "" {
 		options = append(options, WithScreenShotFileName(o.ScreenShotFileName))
+	}
+	if o.ScreenShotWithBase64 {
+		options = append(options, WithScreenShotBase64(true))
 	}
 
 	return options
@@ -126,6 +130,12 @@ func WithScreenOCRCluster(ocrCluster string) ActionOption {
 func WithScreenShotFileName(fileName string) ActionOption {
 	return func(o *ActionOptions) {
 		o.ScreenShotFileName = fileName
+	}
+}
+
+func WithScreenShotBase64(base64 bool) ActionOption {
+	return func(o *ActionOptions) {
+		o.ScreenShotWithBase64 = base64
 	}
 }
 

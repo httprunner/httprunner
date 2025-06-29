@@ -27,6 +27,7 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
+// ScreenResult represents the result of taking a screenshot, including image path, recognition results, and metadata
 type ScreenResult struct {
 	bufSource   *bytes.Buffer  // raw image buffer bytes
 	ImagePath   string         `json:"image_path"` // image file path
@@ -36,6 +37,8 @@ type ScreenResult struct {
 	Icons       ai.UIResultMap `json:"icons"`        // CV 识别的图标
 	Tags        []string       `json:"tags"`         // tags for image, e.g. ["feed", "ad", "live"]
 	Popup       *PopupInfo     `json:"popup,omitempty"`
+	Elapsed     int64          `json:"elapsed_ms,omitempty"` // screenshot elapsed time in milliseconds
+	Base64      string         `json:"-"`                    // base64 encoded screenshot
 }
 
 func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) ai.OCRTexts {
@@ -49,26 +52,11 @@ func (s *ScreenResult) FilterTextsByScope(x1, y1, x2, y2 float64) ai.OCRTexts {
 	})
 }
 
-// GetScreenshotBase64WithSize takes a screenshot, returns the compressed image buffer in base64 format and screen size
-// Also saves the screenshot to session for report display
-func (dExt *XTDriver) GetScreenshotBase64WithSize() (compressedBufBase64 string, size types.Size, err error) {
-	// Create screenshot with session saving, minimal CV processing for AI operations
-	screenResult, err := dExt.createScreenshotWithSession(
-		option.WithScreenShotFileName("screenshot_base64"),
-	)
-	if err != nil {
-		return "", types.Size{}, err
-	}
+// GetScreenResult takes a screenshot and returns the ScreenResult with metadata
+func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
+	// Take screenshot and measure time
+	screenshotStartTime := time.Now()
 
-	// convert buffer to base64 string
-	screenShotBase64 := "data:image/jpeg;base64," +
-		base64.StdEncoding.EncodeToString(screenResult.bufSource.Bytes())
-
-	return screenShotBase64, screenResult.Resolution, nil
-}
-
-// createScreenshotWithSession creates a screenshot with optional OCR processing and saves to session
-func (dExt *XTDriver) createScreenshotWithSession(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
 	// get compressed screenshot buffer
 	compressBufSource, err := getScreenShotBuffer(dExt.IDriver)
 	if err != nil {
@@ -146,6 +134,13 @@ func (dExt *XTDriver) createScreenshotWithSession(opts ...option.ActionOption) (
 	session := dExt.GetSession()
 	session.screenResults = append(session.screenResults, screenResult)
 
+	// Convert screenshot buffer to base64 string
+	if screenshotOptions.ScreenShotWithBase64 {
+		screenResult.Base64 = "data:image/jpeg;base64," +
+			base64.StdEncoding.EncodeToString(screenResult.bufSource.Bytes())
+	}
+
+	screenResult.Elapsed = time.Since(screenshotStartTime).Milliseconds()
 	logger.Msg("log screenshot")
 	return screenResult, nil
 }
@@ -161,13 +156,7 @@ func needsCVProcessing(options *option.ActionOptions) bool {
 		options.ScreenShotWithOCRCluster != ""
 }
 
-// GetScreenResult takes a screenshot, returns the image recognition result
-func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult *ScreenResult, err error) {
-	// Enable OCR processing for GetScreenResult
-	opts = append(opts, option.WithScreenShotOCR(true))
-	return dExt.createScreenshotWithSession(opts...)
-}
-
+// GetScreenTexts takes a screenshot, returns the OCR recognition result
 func (dExt *XTDriver) GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.OCRTexts, err error) {
 	options := option.NewActionOptions(opts...)
 	if options.ScreenShotFileName == "" {
@@ -467,17 +456,18 @@ func MarkUIOperation(driver IDriver, actionType option.ActionName, actionCoordin
 	timestamp := builtin.GenNameWithTimestamp("%d")
 	imagePath := filepath.Join(
 		config.GetConfig().ScreenShotsPath(),
-		fmt.Sprintf("action_%s_pre_%s.png", timestamp, actionType),
+		fmt.Sprintf("%s_pre_mark_%s.png", timestamp, actionType),
 	)
 
-	if actionType == option.ACTION_TapAbsXY || actionType == option.ACTION_DoubleTapXY {
+	switch actionType {
+	case option.ACTION_TapAbsXY, option.ACTION_DoubleTapXY:
 		if len(actionCoordinates) != 2 {
 			return fmt.Errorf("invalid tap action coordinates: %v", actionCoordinates)
 		}
 		x, y := actionCoordinates[0], actionCoordinates[1]
 		point := image.Point{X: int(x), Y: int(y)}
 		err = SaveImageWithCircleMarker(compressedBufSource, point, imagePath)
-	} else if actionType == option.ACTION_SwipeDirection || actionType == option.ACTION_SwipeCoordinate || actionType == option.ACTION_Drag {
+	case option.ACTION_SwipeDirection, option.ACTION_SwipeCoordinate, option.ACTION_Drag:
 		if len(actionCoordinates) != 4 {
 			return fmt.Errorf("invalid swipe action coordinates: %v", actionCoordinates)
 		}

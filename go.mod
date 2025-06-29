@@ -7,6 +7,7 @@ toolchain go1.23.7
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/andybalholm/brotli v1.0.4
+	github.com/antchfx/xmlquery v1.4.4
 	github.com/bytedance/sonic v1.13.2
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/huh v0.3.0
@@ -47,7 +48,6 @@ require (
 
 require (
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
-	github.com/antchfx/xmlquery v1.4.4 // indirect
 	github.com/antchfx/xpath v1.3.3 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

@@ -622,9 +622,13 @@ func (ad *ADBDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, 
 
 func (ud *ADBDriver) TapByXpath(xpath string, opts ...option.ActionOption) (err error) {
 	source, err := ud.Source()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get source")
+		return err
+	}
 	doc, err := xmlquery.Parse(strings.NewReader(source))
 	if err != nil {
-		log.Error().Err(err).Str("serial", ud.Device.Serial())
+		log.Error().Err(err).Msg("failed to parse source")
 		return err
 	}
 	targetNodes := xmlquery.Find(doc, xpath)
@@ -644,10 +648,12 @@ func (ud *ADBDriver) TapByXpath(xpath string, opts ...option.ActionOption) (err 
 
 		centerX := float64(x1+x2) / 2
 		centerY := float64(y1+y2) / 2
-		log.Info().Str("serial", ud.Device.Serial()).Str("xpath", xpath).Str("bounds", bounds).Msg("find node by xpath success")
+		log.Info().Str("xpath", xpath).Str("bounds", bounds).Msg("find node by xpath success")
 		return ud.TapAbsXY(centerX, centerY, opts...)
 	}
-	return
+
+	log.Error().Str("xpath", xpath).Msg("failed to find node by xpath")
+	return errors.New("failed to find node by xpath")
 }
 
 func (ad *ADBDriver) searchNodes(nodes []Layout, text string, opts ...option.ActionOption) []Bounds {
@@ -756,25 +762,42 @@ func (ad *ADBDriver) GetSession() *DriverSession {
 }
 
 func (ad *ADBDriver) ForegroundInfo() (app types.AppInfo, err error) {
-	packageInfo, err := ad.runShellCommand("CLASSPATH=/data/local/tmp/evalite", "app_process", "/", "com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
+	// Get foreground app package info using evalite service
+	packageInfo, err := ad.getForegroundPackageInfo()
 	if err != nil {
-		packageInfo, err = ad.runShellCommand("CLASSPATH=/data/local/tmp/evalite", "app_process", "/", "com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
-		if err != nil {
-			log.Error().Err(err).Str("serial", ad.Device.Serial()).Msg("failed to get foreground app")
-			return app, err
-		}
+		log.Error().Err(err).Msg("failed to get foreground app info")
+		return app, err
 	}
-	log.Info().Str("serial", ad.Device.Serial()).Msg("foreground app output: " + packageInfo)
-	if strings.TrimSpace(packageInfo) == "" {
-		log.Error().Str("serial", ad.Device.Serial()).Msg("foreground app output is empty")
-		return app, errors.New("foreground app output is empty")
+
+	// Parse package info JSON
+	packageInfo = strings.TrimSpace(packageInfo)
+	if packageInfo == "" {
+		err = errors.New("foreground app output is empty")
+		log.Error().Err(err).Msg("get foreground app info failed")
+		return app, err
 	}
-	err = json.Unmarshal([]byte(strings.TrimSpace(packageInfo)), &app)
-	if err != nil {
-		log.Error().Err(err).Str("serial", ad.Device.Serial()).Str("packageInfo", packageInfo).Msg("failed to parse package info")
+	if err = json.Unmarshal([]byte(packageInfo), &app); err != nil {
+		log.Error().Err(err).Str("packageInfo", packageInfo).Msg("failed to parse package info")
 		return app, err
 	}
 	return app, nil
+}
+
+// getForegroundPackageInfo executes the evalite service command to get foreground app info
+func (ad *ADBDriver) getForegroundPackageInfo() (string, error) {
+	const maxRetries = 2
+	var lastErr error
+	for i := 0; i < maxRetries; i++ {
+		packageInfo, err := ad.runShellCommand("CLASSPATH=/data/local/tmp/evalite",
+			"app_process", "/", "com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
+		if err == nil {
+			return packageInfo, nil
+		}
+		lastErr = err
+		log.Warn().Err(err).Int("attempt", i+1).Msg("failed to get foreground package info, retrying")
+	}
+
+	return "", lastErr
 }
 
 func (ad *ADBDriver) SetIme(imeRegx string) error {

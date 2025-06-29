@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // ToolScreenShot implements the screenshot tool call.
@@ -34,14 +35,17 @@ func (t *ToolScreenShot) Implement() server.ToolHandlerFunc {
 		if err != nil {
 			return nil, err
 		}
-		bufferBase64, _, err := driverExt.GetScreenshotBase64WithSize()
+		screenResult, err := driverExt.GetScreenResult(
+			option.WithScreenShotFileName("tool_screenshot"),
+			option.WithScreenShotBase64(true),
+		)
 		if err != nil {
 			log.Error().Err(err).Msg("ScreenShot failed")
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to take screenshot: %v", err)), nil
 		}
-		log.Debug().Int("imageBytes", len(bufferBase64)).Msg("take screenshot success")
+		log.Debug().Int("imageBytes", len(screenResult.Base64)).Msg("take screenshot success")
 
-		return mcp.NewToolResultImage("screenshot", bufferBase64, "image/jpeg"), nil
+		return mcp.NewToolResultImage("screenshot", screenResult.Base64, "image/jpeg"), nil
 	}
 }
 

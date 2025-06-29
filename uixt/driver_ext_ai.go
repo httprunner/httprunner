@@ -10,7 +10,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
@@ -115,7 +114,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 				}()
 
 				// Execute the tool call
-				if err := dExt.invokeToolCall(ctx, toolCall); err != nil {
+				if err := dExt.invokeToolCall(ctx, toolCall, opts...); err != nil {
 					subActionResult.Error = err
 					return err
 				}
@@ -136,6 +135,9 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		if options.MaxRetryTimes > 0 && attempt > options.MaxRetryTimes {
 			return allPlannings, errors.New("reached max retry times")
 		}
+
+		// wait 3 seconds for tool calls to complete
+		time.Sleep(3 * time.Second)
 	}
 }
 
@@ -143,12 +145,11 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...option.ActionOption) (*AIExecutionResult, error) {
 	log.Info().Str("prompt", prompt).Msg("performing AI action")
 
-	// Step 1: Take screenshot and measure time
-	screenshotStartTime := time.Now()
-	screenResult, err := dExt.createScreenshotWithSession(
-		option.WithScreenShotFileName(builtin.GenNameWithTimestamp("%d_screenshot")),
+	// Step 1: Take screenshot and convert to base64
+	screenResult, err := dExt.GetScreenResult(
+		option.WithScreenShotFileName("ai_action"),
+		option.WithScreenShotBase64(true),
 	)
-	screenshotElapsed := time.Since(screenshotStartTime).Milliseconds()
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +161,7 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 	aiExecutionResult := &AIExecutionResult{
 		Type:              "action",
 		ModelCallElapsed:  modelCallElapsed,
-		ScreenshotElapsed: screenshotElapsed,
+		ScreenshotElapsed: screenResult.Elapsed,
 		ImagePath:         screenResult.ImagePath,
 		Resolution:        &screenResult.Resolution,
 		PlanningResult:    &planningResult.PlanningResult,
@@ -173,7 +174,7 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 
 	// Step 3: Execute tool calls
 	for _, toolCall := range planningResult.ToolCalls {
-		err = dExt.invokeToolCall(ctx, toolCall)
+		err = dExt.invokeToolCall(ctx, toolCall, opts...)
 		if err != nil {
 			aiExecutionResult.Error = err.Error()
 			return aiExecutionResult, errors.Wrap(err, "invoke tool call failed")
@@ -193,13 +194,11 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 	options := option.NewActionOptions(opts...)
 	resetHistory := options.ResetHistory
 
-	// Step 1: Take screenshot
-	screenshotStartTime := time.Now()
-	// Use GetScreenResult to handle screenshot capture, save, and session tracking
-	screenResult, err := dExt.createScreenshotWithSession(
-		option.WithScreenShotFileName(builtin.GenNameWithTimestamp("%d_screenshot")),
+	// Step 1: Take screenshot and convert to base64
+	screenResult, err := dExt.GetScreenResult(
+		option.WithScreenShotFileName("ai_planning"),
+		option.WithScreenShotBase64(true),
 	)
-	screenshotElapsed := time.Since(screenshotStartTime).Milliseconds()
 	if err != nil {
 		return nil, err
 	}
@@ -207,12 +206,6 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 	// Clear session data after planning screenshot to avoid including it in sub-actions
 	// The planning screenshot is already stored in planningResult.ScreenResult
 	dExt.GetSession().GetData(true) // reset session data to exclude planning screenshot from sub-actions
-
-	// get screen shot buffer base64 and size
-	screenShotBase64, size, err := dExt.GetScreenshotBase64WithSize()
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceGetInfoError, err.Error())
-	}
 
 	// Step 2: Call model
 	modelCallStartTime := time.Now()
@@ -224,12 +217,12 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 				{
 					Type: schema.ChatMessagePartTypeImageURL,
 					ImageURL: &schema.ChatMessageImageURL{
-						URL: screenShotBase64,
+						URL: screenResult.Base64,
 					},
 				},
 			},
 		},
-		Size:         size,
+		Size:         screenResult.Resolution,
 		ResetHistory: resetHistory,
 	}
 
@@ -250,7 +243,7 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 	planningResult := &PlanningExecutionResult{
 		PlanningResult: *result, // Inherit all fields from ai.PlanningResult
 		// Planning process timing and metadata
-		ScreenshotElapsed: screenshotElapsed,
+		ScreenshotElapsed: screenResult.Elapsed,
 		ImagePath:         screenResult.ImagePath,
 		Resolution:        &screenResult.Resolution,
 		ScreenResult:      screenResult,
@@ -286,13 +279,17 @@ func (dExt *XTDriver) isTaskFinished(planningResult *PlanningExecutionResult) bo
 }
 
 // invokeToolCall invokes the tool call
-func (dExt *XTDriver) invokeToolCall(ctx context.Context, toolCall schema.ToolCall) error {
+func (dExt *XTDriver) invokeToolCall(ctx context.Context, toolCall schema.ToolCall, opts ...option.ActionOption) error {
 	// Parse arguments
 	arguments := make(map[string]interface{})
 	err := json.Unmarshal([]byte(toolCall.Function.Arguments), &arguments)
 	if err != nil {
 		return err
 	}
+
+	// Merge StartToGoal options into tool call arguments
+	// This ensures options like PreMarkOperation are passed to specific tool implementations
+	extractActionOptionsToArguments(opts, arguments)
 
 	// Execute the action
 	req := mcp.CallToolRequest{
@@ -370,17 +367,11 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*AIExec
 		return nil, errors.New("LLM service is not initialized")
 	}
 
-	// Step 1: Take screenshot and measure time
-	screenshotStartTime := time.Now()
-	screenResult, err := dExt.createScreenshotWithSession(
-		option.WithScreenShotFileName(builtin.GenNameWithTimestamp("%d_screenshot")),
+	// Step 1: Take screenshot and convert to base64
+	screenResult, err := dExt.GetScreenResult(
+		option.WithScreenShotFileName("ai_query"),
+		option.WithScreenShotBase64(true),
 	)
-	screenshotElapsed := time.Since(screenshotStartTime).Milliseconds()
-	if err != nil {
-		return nil, err
-	}
-
-	screenShotBase64, size, err := dExt.GetScreenshotBase64WithSize()
 	if err != nil {
 		return nil, err
 	}
@@ -394,8 +385,8 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*AIExec
 	// execute query
 	queryOpts := &ai.QueryOptions{
 		Query:        text,
-		Screenshot:   screenShotBase64,
-		Size:         size,
+		Screenshot:   screenResult.Base64,
+		Size:         screenResult.Resolution,
 		OutputSchema: actionOptions.OutputSchema,
 	}
 	result, err := dExt.LLMService.Query(context.Background(), queryOpts)
@@ -408,7 +399,7 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*AIExec
 	aiResult := &AIExecutionResult{
 		Type:              "query",
 		ModelCallElapsed:  modelCallElapsed,         // model call timing
-		ScreenshotElapsed: screenshotElapsed,        // screenshot timing
+		ScreenshotElapsed: screenResult.Elapsed,     // screenshot timing
 		ImagePath:         screenResult.ImagePath,   // screenshot path
 		Resolution:        &screenResult.Resolution, // screen resolution
 		QueryResult:       result,                   // query-specific result
@@ -422,35 +413,28 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 		return nil, errors.New("LLM service is not initialized")
 	}
 
-	// Step 1: Take screenshot and measure time
-	screenshotStartTime := time.Now()
-	screenResult, err := dExt.createScreenshotWithSession(
-		option.WithScreenShotFileName(builtin.GenNameWithTimestamp("%d_screenshot")),
+	// Step 1: Take screenshot and convert to base64
+	screenResult, err := dExt.GetScreenResult(
+		option.WithScreenShotFileName("ai_assert"),
+		option.WithScreenShotBase64(true),
 	)
-	screenshotElapsed := time.Since(screenshotStartTime).Milliseconds()
 	if err != nil {
 		return nil, err
 	}
 
 	assertResult := &AIExecutionResult{
 		Type:              "assert",
-		ScreenshotElapsed: screenshotElapsed,
+		ScreenshotElapsed: screenResult.Elapsed,
 		ImagePath:         screenResult.ImagePath,
 		Resolution:        &screenResult.Resolution,
-	}
-
-	screenShotBase64, size, err := dExt.GetScreenshotBase64WithSize()
-	if err != nil {
-		assertResult.Error = err.Error()
-		return assertResult, err
 	}
 
 	// Step 2: Call model and measure time
 	modelCallStartTime := time.Now()
 	assertOpts := &ai.AssertOptions{
 		Assertion:  assertion,
-		Screenshot: screenShotBase64,
-		Size:       size,
+		Screenshot: screenResult.Base64,
+		Size:       screenResult.Resolution,
 	}
 	result, err := dExt.LLMService.Assert(context.Background(), assertOpts)
 	assertResult.ModelCallElapsed = time.Since(modelCallStartTime).Milliseconds()

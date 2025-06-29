@@ -6,8 +6,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/httprunner/httprunner/v5/uixt/option"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // CacheManager provides a generic cache management interface
@@ -153,7 +156,7 @@ func (cm *CacheManager[T]) GetOrCreate(key string, factory func() (T, map[string
 	item, metadata, err := factory()
 	if err != nil {
 		var zero T
-		return zero, fmt.Errorf("failed to create item: %w", err)
+		return zero, err
 	}
 
 	// Store in cache
@@ -271,7 +274,7 @@ func createXTDriverWithConfig(config DriverCacheConfig) (*XTDriver, error) {
 			browserOpts := config.DeviceOpts.ToBrowserOptions().Options()
 			device, err = NewBrowserDevice(browserOpts...)
 		default:
-			return nil, fmt.Errorf("unsupported platform: %s", platform)
+			return nil, errors.Wrapf(code.InvalidParamError, "unsupported platform: %s", platform)
 		}
 	} else {
 		// Use default options, let NewXXDevice handle serial (empty or specified)
@@ -301,17 +304,17 @@ func createXTDriverWithConfig(config DriverCacheConfig) (*XTDriver, error) {
 				device, err = NewBrowserDevice()
 			}
 		default:
-			return nil, fmt.Errorf("unsupported platform: %s", platform)
+			return nil, errors.Wrapf(code.InvalidParamError, "unsupported platform: %s", platform)
 		}
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to create device: %w", err)
+		return nil, err
 	}
 
 	// Create driver
 	driver, err := device.NewDriver()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create driver: %w", err)
+		return nil, errors.Wrap(err, "failed to create driver")
 	}
 
 	// Create XTDriver with AI options
@@ -326,7 +329,7 @@ func createXTDriverWithConfig(config DriverCacheConfig) (*XTDriver, error) {
 
 	driverExt, err := NewXTDriver(driver, aiOpts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create XTDriver: %w", err)
+		return nil, errors.Wrap(err, "failed to create XTDriver")
 	}
 	return driverExt, nil
 }
