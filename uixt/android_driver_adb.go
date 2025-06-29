@@ -756,24 +756,22 @@ func (ad *ADBDriver) GetSession() *DriverSession {
 }
 
 func (ad *ADBDriver) ForegroundInfo() (app types.AppInfo, err error) {
-	packageInfo, err := ad.runShellCommand(
-		"CLASSPATH=/data/local/tmp/evalite", "app_process", "/",
-		"com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
+	packageInfo, err := ad.runShellCommand("CLASSPATH=/data/local/tmp/evalite", "app_process", "/", "com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
 	if err != nil {
-		return app, err
+		packageInfo, err = ad.runShellCommand("CLASSPATH=/data/local/tmp/evalite", "app_process", "/", "com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
+		if err != nil {
+			log.Error().Err(err).Str("serial", ad.Device.Serial()).Msg("failed to get foreground app")
+			return app, err
+		}
 	}
-
-	// Clean packageInfo: remove null bytes that cause JSON parsing issues
-	packageInfo = strings.ReplaceAll(packageInfo, "\x00", "")
-
-	// Check for empty response after cleaning
+	log.Info().Str("serial", ad.Device.Serial()).Msg("foreground app output: " + packageInfo)
 	if strings.TrimSpace(packageInfo) == "" {
-		return app, errors.New("empty response from evalite process")
+		log.Error().Str("serial", ad.Device.Serial()).Msg("foreground app output is empty")
+		return app, errors.New("foreground app output is empty")
 	}
-
-	err = json.Unmarshal([]byte(packageInfo), &app)
+	err = json.Unmarshal([]byte(strings.TrimSpace(packageInfo)), &app)
 	if err != nil {
-		log.Error().Err(err).Str("packageInfo", packageInfo).Msg("get foreground app failed")
+		log.Error().Err(err).Str("serial", ad.Device.Serial()).Str("packageInfo", packageInfo).Msg("failed to parse package info")
 		return app, err
 	}
 	return app, nil
