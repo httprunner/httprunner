@@ -19,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/antchfx/xmlquery"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -619,6 +620,36 @@ func (ad *ADBDriver) tapByTextUsingHierarchy(hierarchy *Hierarchy, text string, 
 	return nil
 }
 
+func (ud *ADBDriver) TapByXpath(xpath string, opts ...option.ActionOption) (err error) {
+	source, err := ud.Source()
+	doc, err := xmlquery.Parse(strings.NewReader(source))
+	if err != nil {
+		log.Error().Err(err).Str("serial", ud.Device.Serial())
+		return err
+	}
+	targetNodes := xmlquery.Find(doc, xpath)
+	if len(targetNodes) > 0 {
+		bounds := targetNodes[0].SelectAttr("bounds")
+		re := regexp.MustCompile(`\[(\d+),(\d+)\]\[(\d+),(\d+)\]`)
+
+		matches := re.FindStringSubmatch(bounds)
+		if len(matches) != 5 {
+			return fmt.Errorf("failed to parse bounds: %s", bounds)
+		}
+
+		x1, _ := strconv.Atoi(matches[1])
+		y1, _ := strconv.Atoi(matches[2])
+		x2, _ := strconv.Atoi(matches[3])
+		y2, _ := strconv.Atoi(matches[4])
+
+		centerX := float64(x1+x2) / 2
+		centerY := float64(y1+y2) / 2
+		log.Info().Str("serial", ud.Device.Serial()).Str("xpath", xpath).Str("bounds", bounds).Msg("find node by xpath success")
+		return ud.TapAbsXY(centerX, centerY, opts...)
+	}
+	return
+}
+
 func (ad *ADBDriver) searchNodes(nodes []Layout, text string, opts ...option.ActionOption) []Bounds {
 	actionOptions := option.NewActionOptions(opts...)
 	var results []Bounds
@@ -725,24 +756,22 @@ func (ad *ADBDriver) GetSession() *DriverSession {
 }
 
 func (ad *ADBDriver) ForegroundInfo() (app types.AppInfo, err error) {
-	packageInfo, err := ad.runShellCommand(
-		"CLASSPATH=/data/local/tmp/evalite", "app_process", "/",
-		"com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
+	packageInfo, err := ad.runShellCommand("CLASSPATH=/data/local/tmp/evalite", "app_process", "/", "com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
 	if err != nil {
-		return app, err
+		packageInfo, err = ad.runShellCommand("CLASSPATH=/data/local/tmp/evalite", "app_process", "/", "com.bytedance.iesqa.eval_process.PackageService", "2>/dev/null")
+		if err != nil {
+			log.Error().Err(err).Str("serial", ad.Device.Serial()).Msg("failed to get foreground app")
+			return app, err
+		}
 	}
-
-	// Clean packageInfo: remove null bytes that cause JSON parsing issues
-	packageInfo = strings.ReplaceAll(packageInfo, "\x00", "")
-
-	// Check for empty response after cleaning
+	log.Info().Str("serial", ad.Device.Serial()).Msg("foreground app output: " + packageInfo)
 	if strings.TrimSpace(packageInfo) == "" {
-		return app, errors.New("empty response from evalite process")
+		log.Error().Str("serial", ad.Device.Serial()).Msg("foreground app output is empty")
+		return app, errors.New("foreground app output is empty")
 	}
-
-	err = json.Unmarshal([]byte(packageInfo), &app)
+	err = json.Unmarshal([]byte(strings.TrimSpace(packageInfo)), &app)
 	if err != nil {
-		log.Error().Err(err).Str("packageInfo", packageInfo).Msg("get foreground app failed")
+		log.Error().Err(err).Str("serial", ad.Device.Serial()).Str("packageInfo", packageInfo).Msg("failed to parse package info")
 		return app, err
 	}
 	return app, nil

@@ -62,7 +62,7 @@ func GetConfig() *Config {
 		startTimeStr := cfg.StartTime.Format("20060102150405")
 		resultsDir := filepath.Join(ResultsDirName, startTimeStr)
 		cfg.resultsPath = filepath.Join(cfg.RootDir, resultsDir)
-		cfg.downloadsPath = filepath.Join(cfg.RootDir, filepath.Join(DownloadsDirName, startTimeStr))
+		cfg.downloadsPath = filepath.Join(cfg.RootDir, filepath.Join(DownloadsDirName))
 		cfg.screenShotsPath = filepath.Join(cfg.resultsPath, ScreenshotsDirName)
 		cfg.actionLogDirPath = filepath.Join(resultsDir, ActionLogDirName)
 		globalConfig = cfg
