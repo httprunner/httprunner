@@ -135,6 +135,9 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		if options.MaxRetryTimes > 0 && attempt > options.MaxRetryTimes {
 			return allPlannings, errors.New("reached max retry times")
 		}
+
+		// wait 3 seconds for tool calls to complete
+		time.Sleep(3 * time.Second)
 	}
 }
 
