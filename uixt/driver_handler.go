@@ -6,16 +6,17 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/rs/zerolog/log"
 )
 
 func preHandler_TapAbsXY(driver IDriver, options *option.ActionOptions, rawX, rawY float64) (
-	x, y float64, err error) {
-
+	x, y float64, err error,
+) {
 	// Call MCP action tool if anti-risk is enabled
 	if options.AntiRisk {
 		arguments := getAntiRisk_SetTouchInfoList_Arguments(driver, []ai.PointF{
@@ -40,8 +41,8 @@ func preHandler_TapAbsXY(driver IDriver, options *option.ActionOptions, rawX, ra
 }
 
 func preHandler_DoubleTap(driver IDriver, options *option.ActionOptions, rawX, rawY float64) (
-	x, y float64, err error) {
-
+	x, y float64, err error,
+) {
 	x, y, err = convertToAbsolutePoint(driver, rawX, rawY)
 	if err != nil {
 		return 0, 0, err
@@ -60,8 +61,8 @@ func preHandler_DoubleTap(driver IDriver, options *option.ActionOptions, rawX, r
 }
 
 func preHandler_Drag(driver IDriver, options *option.ActionOptions, rawFomX, rawFromY, rawToX, rawToY float64) (
-	fromX, fromY, toX, toY float64, err error) {
-
+	fromX, fromY, toX, toY float64, err error,
+) {
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(driver, rawFomX, rawFromY, rawToX, rawToY)
 	if err != nil {
 		return 0, 0, 0, 0, err
@@ -92,8 +93,8 @@ func preHandler_Drag(driver IDriver, options *option.ActionOptions, rawFomX, raw
 
 func preHandler_Swipe(driver IDriver, actionType option.ActionName,
 	options *option.ActionOptions, rawFomX, rawFromY, rawToX, rawToY float64) (
-	fromX, fromY, toX, toY float64, err error) {
-
+	fromX, fromY, toX, toY float64, err error,
+) {
 	fromX, fromY, toX, toY, err = convertToAbsoluteCoordinates(driver, rawFomX, rawFromY, rawToX, rawToY)
 	if err != nil {
 		return 0, 0, 0, 0, err
@@ -142,7 +143,7 @@ func postHandler(driver IDriver, actionType option.ActionName, options *option.A
 		timestamp := builtin.GenNameWithTimestamp("%d")
 		imagePath := filepath.Join(
 			config.GetConfig().ScreenShotsPath(),
-			fmt.Sprintf("action_%s_post_%s.png", timestamp, actionType),
+			fmt.Sprintf("%s_post_mark_%s.png", timestamp, actionType),
 		)
 
 		go func() {
@@ -157,7 +158,8 @@ func postHandler(driver IDriver, actionType option.ActionName, options *option.A
 
 // callMCPActionTool calls MCP tool for the given action
 func callMCPActionTool(driver IDriver,
-	serverName, actionType string, arguments map[string]any) {
+	serverName, actionType string, arguments map[string]any,
+) {
 	// Get XTDriver from cache
 	dExt := getXTDriverFromCache(driver)
 	if dExt == nil {

@@ -27,6 +27,7 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
+// ScreenResult represents the result of taking a screenshot, including image path, recognition results, and metadata
 type ScreenResult struct {
 	bufSource   *bytes.Buffer  // raw image buffer bytes
 	ImagePath   string         `json:"image_path"` // image file path
@@ -467,7 +468,7 @@ func MarkUIOperation(driver IDriver, actionType option.ActionName, actionCoordin
 	timestamp := builtin.GenNameWithTimestamp("%d")
 	imagePath := filepath.Join(
 		config.GetConfig().ScreenShotsPath(),
-		fmt.Sprintf("action_%s_pre_%s.png", timestamp, actionType),
+		fmt.Sprintf("%s_pre_mark_%s.png", timestamp, actionType),
 	)
 
 	switch actionType {

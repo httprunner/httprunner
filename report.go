@@ -1232,6 +1232,113 @@ const htmlTemplate = `<!DOCTYPE html>
             transform: scale(1.02);
         }
 
+        /* Horizontal scrolling screenshot styles */
+        .screenshot-horizontal-scroll {
+            display: flex;
+            gap: 0 !important;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 8px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            align-items: center;
+            justify-content: center;
+            line-height: 0;
+            font-size: 0;
+        }
+
+        .screenshot-horizontal-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .screenshot-horizontal-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .screenshot-horizontal-scroll::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .screenshot-horizontal-scroll::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .screenshot-item-horizontal {
+            flex: 0 0 auto;
+            min-width: 180px;
+            max-width: 280px;
+            text-align: center;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            outline: none;
+            line-height: 0;
+        }
+
+        .screenshot-item-horizontal .screenshot-image {
+            padding: 0;
+            margin: 0;
+            background: transparent;
+            border-radius: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            height: 250px;
+            border: none;
+        }
+
+        .screenshot-item-horizontal .screenshot-image img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 0;
+            cursor: pointer;
+            transition: transform 0.2s;
+            object-fit: contain;
+            box-shadow: none;
+            display: block;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            vertical-align: top;
+            float: left;
+            outline: none;
+        }
+
+        .screenshot-item-horizontal .screenshot-image img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Direct inline screenshot styles */
+        .screenshot-inline {
+            max-height: 250px;
+            object-fit: contain;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: inline-block;
+            margin: 0 4px 0 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            vertical-align: top;
+            outline: none;
+        }
+
+        .screenshot-inline:last-child {
+            margin-right: 0 !important;
+        }
+
+        .screenshot-inline:hover {
+            transform: scale(1.05);
+        }
+
         .actions-details {
             padding: 12px;
             max-height: 300px;
@@ -2542,19 +2649,30 @@ const htmlTemplate = `<!DOCTYPE html>
                                                             <span class="step-name">📸 Take Screenshot</span>
                                                             <span class="duration">{{formatDuration $planning.ScreenshotElapsed}}</span>
                                                         </div>
-                                                        {{if $planning.ScreenResult}}
-                                                        <div class="screenshot-display">
-                                                            {{$screenshot := $planning.ScreenResult}}
-                                                            {{$base64Image := encodeImageBase64 $screenshot.ImagePath}}
-                                                            {{if $base64Image}}
-                                                            <div class="screenshot-item-compact">
-                                                                <div class="screenshot-image">
-                                                                    <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Planning Screenshot" onclick="openImageModal(this.src)" />
-                                                                </div>
-                                                            </div>
+                                                        <div class="screenshot-display screenshot-horizontal-scroll">
+                                                            {{if $planning.ScreenResult}}
+                                                                {{if $planning.ScreenResult.ImagePath}}
+                                                                {{$base64Image := encodeImageBase64 $planning.ScreenResult.ImagePath}}
+                                                                {{if $base64Image}}
+                                                                    <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Planning Screenshot" onclick="openImageModal(this.src)" class="screenshot-inline" />
+                                                                {{end}}
+                                                                {{end}}
+                                                            {{end}}
+                                                            {{if $planning.SubActions}}
+                                                                {{range $subAction := $planning.SubActions}}
+                                                                    {{if $subAction.ScreenResults}}
+                                                                    {{range $subScreenshot := $subAction.ScreenResults}}
+                                                                    {{if $subScreenshot.ImagePath}}
+                                                                        {{$base64Image := encodeImageBase64 $subScreenshot.ImagePath}}
+                                                                        {{if $base64Image}}
+                                                                            <img src="data:image/jpeg;base64,{{$base64Image}}" alt="Sub-action Screenshot" onclick="openImageModal(this.src)" class="screenshot-inline" />
+                                                                        {{end}}
+                                                                        {{end}}
+                                                                    {{end}}
+                                                                    {{end}}
+                                                                {{end}}
                                                             {{end}}
                                                         </div>
-                                                        {{end}}
                                                     </div>
                                                 </div>
 
