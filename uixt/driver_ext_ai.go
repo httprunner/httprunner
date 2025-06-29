@@ -115,7 +115,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 				}()
 
 				// Execute the tool call
-				if err := dExt.invokeToolCall(ctx, toolCall); err != nil {
+				if err := dExt.invokeToolCall(ctx, toolCall, opts...); err != nil {
 					subActionResult.Error = err
 					return err
 				}
@@ -173,7 +173,7 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 
 	// Step 3: Execute tool calls
 	for _, toolCall := range planningResult.ToolCalls {
-		err = dExt.invokeToolCall(ctx, toolCall)
+		err = dExt.invokeToolCall(ctx, toolCall, opts...)
 		if err != nil {
 			aiExecutionResult.Error = err.Error()
 			return aiExecutionResult, errors.Wrap(err, "invoke tool call failed")
@@ -286,13 +286,17 @@ func (dExt *XTDriver) isTaskFinished(planningResult *PlanningExecutionResult) bo
 }
 
 // invokeToolCall invokes the tool call
-func (dExt *XTDriver) invokeToolCall(ctx context.Context, toolCall schema.ToolCall) error {
+func (dExt *XTDriver) invokeToolCall(ctx context.Context, toolCall schema.ToolCall, opts ...option.ActionOption) error {
 	// Parse arguments
 	arguments := make(map[string]interface{})
 	err := json.Unmarshal([]byte(toolCall.Function.Arguments), &arguments)
 	if err != nil {
 		return err
 	}
+
+	// Merge StartToGoal options into tool call arguments
+	// This ensures options like PreMarkOperation are passed to specific tool implementations
+	extractActionOptionsToArguments(opts, arguments)
 
 	// Execute the action
 	req := mcp.CallToolRequest{

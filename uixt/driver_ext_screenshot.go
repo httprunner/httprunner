@@ -470,14 +470,15 @@ func MarkUIOperation(driver IDriver, actionType option.ActionName, actionCoordin
 		fmt.Sprintf("action_%s_pre_%s.png", timestamp, actionType),
 	)
 
-	if actionType == option.ACTION_TapAbsXY || actionType == option.ACTION_DoubleTapXY {
+	switch actionType {
+	case option.ACTION_TapAbsXY, option.ACTION_DoubleTapXY:
 		if len(actionCoordinates) != 2 {
 			return fmt.Errorf("invalid tap action coordinates: %v", actionCoordinates)
 		}
 		x, y := actionCoordinates[0], actionCoordinates[1]
 		point := image.Point{X: int(x), Y: int(y)}
 		err = SaveImageWithCircleMarker(compressedBufSource, point, imagePath)
-	} else if actionType == option.ACTION_SwipeDirection || actionType == option.ACTION_SwipeCoordinate || actionType == option.ACTION_Drag {
+	case option.ACTION_SwipeDirection, option.ACTION_SwipeCoordinate, option.ACTION_Drag:
 		if len(actionCoordinates) != 4 {
 			return fmt.Errorf("invalid swipe action coordinates: %v", actionCoordinates)
 		}
