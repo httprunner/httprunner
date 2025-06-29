@@ -1212,7 +1212,7 @@ const htmlTemplate = `<!DOCTYPE html>
         .screenshot-item-compact .screenshot-image img {
             width: 100%;
             height: auto;
-            max-height: 400px;
+            max-height: 500px;
             border-radius: 4px;
             cursor: pointer;
             transition: transform 0.2s;
@@ -1290,7 +1290,7 @@ const htmlTemplate = `<!DOCTYPE html>
             align-items: center;
             position: relative;
             overflow: hidden;
-            height: 250px;
+            height: 350px;
             border: none;
         }
 
@@ -1317,7 +1317,7 @@ const htmlTemplate = `<!DOCTYPE html>
 
         /* Direct inline screenshot styles */
         .screenshot-inline {
-            max-height: 250px;
+            max-height: 350px;
             object-fit: contain;
             cursor: pointer;
             transition: transform 0.2s;
@@ -1645,12 +1645,12 @@ const htmlTemplate = `<!DOCTYPE html>
         }
 
         .screenshots-horizontal .screenshot-image {
-            min-height: 200px;
+            min-height: 300px;
             padding: 10px 0;
         }
 
         .screenshots-horizontal .screenshot-image img {
-            max-height: 250px;
+            max-height: 400px;
             width: auto;
         }
 
@@ -1699,7 +1699,7 @@ const htmlTemplate = `<!DOCTYPE html>
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 300px;
+            min-height: 400px;
             padding: 20px 0;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 8px;
@@ -1708,7 +1708,7 @@ const htmlTemplate = `<!DOCTYPE html>
 
         .screenshot-image img {
             max-width: 100%;
-            max-height: 400px;
+            max-height: 600px;
             border-radius: 6px;
             cursor: pointer;
             transition: transform 0.2s;
@@ -1721,12 +1721,12 @@ const htmlTemplate = `<!DOCTYPE html>
         }
 
         .screenshot-item.small .screenshot-image {
-            min-height: 250px;
+            min-height: 300px;
             padding: 15px 0;
         }
 
         .screenshot-item.small .screenshot-image img {
-            max-height: 200px;
+            max-height: 350px;
         }
 
         .validator-item {
@@ -2393,21 +2393,21 @@ const htmlTemplate = `<!DOCTYPE html>
             }
 
             .screenshot-image {
-                min-height: 250px;
+                min-height: 300px;
                 padding: 15px 0;
             }
 
             .screenshot-image img {
-                max-height: 250px;
+                max-height: 400px;
             }
 
             .screenshot-item.small .screenshot-image {
-                min-height: 200px;
+                min-height: 250px;
                 padding: 10px 0;
             }
 
             .screenshot-item.small .screenshot-image img {
-                max-height: 150px;
+                max-height: 300px;
             }
 
             .log-header {
@@ -2646,7 +2646,7 @@ const htmlTemplate = `<!DOCTYPE html>
                                                 <div class="planning-column-screenshot">
                                                     <div class="planning-step-compact">
                                                         <div class="step-header-compact">
-                                                            <span class="step-name">📸 Take Screenshot</span>
+                                                            <span class="step-name">📸 ScreenShots</span>
                                                             <span class="duration">{{formatDuration $planning.ScreenshotElapsed}}</span>
                                                         </div>
                                                         <div class="screenshot-display screenshot-horizontal-scroll">
@@ -2955,13 +2955,13 @@ const htmlTemplate = `<!DOCTYPE html>
                         </div>
                         {{end}}
 
-                        <!-- Screenshots -->
+                        <!-- ScreenShots -->
                         {{if $step.Attachments}}
                         {{$attachments := $step.Attachments}}
                         {{if eq (printf "%T" $attachments) "map[string]interface {}"}}
                         {{if index $attachments "screen_results"}}
                         <div class="screenshots-section">
-                            <h4>Screenshots</h4>
+                            <h4>Attachment ScreenShots</h4>
                             <div class="screenshots-horizontal">
                                 {{range $screenshot := index $attachments "screen_results"}}
                                 {{$imagePath := ""}}
