@@ -18,7 +18,17 @@ import (
 
 func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...option.ActionOption) ([]*PlanningExecutionResult, error) {
 	options := option.NewActionOptions(opts...)
-	log.Info().Int("max_retry_times", options.MaxRetryTimes).Msg("StartToGoal")
+	log.Info().Int("max_retry_times", options.MaxRetryTimes).
+		Int("timeout_seconds", options.Timeout).
+		Msg("StartToGoal")
+
+	// Create timeout context for entire StartToGoal process if Timeout is specified
+	if options.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(options.Timeout)*time.Second)
+		defer cancel()
+		log.Info().Int("timeout_seconds", options.Timeout).Msg("StartToGoal timeout configured for entire process")
+	}
 
 	var allPlannings []*PlanningExecutionResult
 	var attempt int
@@ -119,25 +129,11 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 					planningResult.SubActions = append(planningResult.SubActions, subActionResult)
 				}()
 
-				// Create action context with timeout if specified
-				actionCtx := ctx
-				if options.Timeout > 0 {
-					var cancel context.CancelFunc
-					actionCtx, cancel = context.WithTimeout(ctx, time.Duration(options.Timeout)*time.Second)
-					defer cancel()
-				}
-
-				// Execute the tool call with timeout
-				if err := dExt.invokeToolCall(actionCtx, toolCall, opts...); err != nil {
-					// Check if the error is due to timeout
-					if errors.Is(err, context.DeadlineExceeded) {
-						log.Warn().
-							Str("action", toolCall.Function.Name).
-							Int("timeout_seconds", options.Timeout).
-							Msg("action timeout exceeded, continuing to next action")
-						subActionResult.Error = errors.New("action timeout exceeded")
-						return nil // Continue to next action instead of failing the entire StartToGoal
-					}
+				if err := dExt.invokeToolCall(ctx, toolCall, opts...); err != nil {
+					log.Warn().
+						Str("action", toolCall.Function.Name).
+						Err(err).
+						Msg("invoke tool call failed")
 					subActionResult.Error = err
 					return err
 				}
