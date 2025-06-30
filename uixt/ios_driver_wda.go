@@ -41,14 +41,6 @@ func NewWDADriver(device *IOSDevice) (*WDADriver, error) {
 		return nil, err
 	}
 
-	// check WDA status
-	wdaStatus, err := driver.Status()
-	if err != nil {
-		return nil, err
-	}
-	log.Info().Interface("status", wdaStatus).
-		Msg("check WDA status")
-
 	// register driver session reset handler
 	driver.Session.RegisterResetHandler(driver.Setup)
 
@@ -157,10 +149,6 @@ func (wd *WDADriver) Setup() error {
 		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
 
-	// init WDA scale
-	if wd.scale, err = wd.Scale(); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -329,9 +317,10 @@ func (wd *WDADriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer,
 func (wd *WDADriver) toScale(x float64) float64 {
 	if wd.scale == 0 {
 		// not setup yet
-		if err := wd.Setup(); err != nil {
+		var err error
+		if wd.scale, err = wd.Scale(); err != nil {
 			log.Error().Err(err).Msg("init scale failed")
-			os.Exit(code.GetErrorCode(err))
+			// Todo: os.Exit(code.GetErrorCode(err)) 添加error处理。
 		}
 	}
 	return x / wd.scale

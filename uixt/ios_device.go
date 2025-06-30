@@ -217,6 +217,7 @@ func (dev *IOSDevice) getAppInfo(packageName string) (appInfo types.AppInfo, err
 
 func (dev *IOSDevice) NewDriver() (driver IDriver, err error) {
 	wdaDriver, err := NewWDADriver(dev)
+	_, _ = wdaDriver.Status()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
