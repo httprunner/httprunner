@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/httprunner/httprunner/v5/uixt/ai"
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/uixt/ai"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, error) {
@@ -30,11 +31,12 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 	if services.CVService == "" {
 		log.Warn().Msg("no CV service config provided, use default vedem")
 		services.CVService = option.CVServiceTypeVEDEM
-	}
-	driverExt.CVService, err = ai.NewCVService(services.CVService)
-	if err != nil {
-		log.Error().Err(err).Msg("init vedem image service failed")
-		return nil, err
+	} else {
+		driverExt.CVService, err = ai.NewCVService(services.CVService)
+		if err != nil {
+			log.Error().Err(err).Msg("init vedem image service failed")
+			return nil, err
+		}
 	}
 
 	// Handle LLM service initialization
@@ -200,7 +202,8 @@ func (dExt *XTDriver) GetMCPClient(serverName string) (client.MCPClient, bool) {
 
 // CallMCPTool calls the specified MCP tool
 func (dExt *XTDriver) CallMCPTool(ctx context.Context,
-	serverName, toolName string, arguments map[string]any) (result *mcp.CallToolResult, err error) {
+	serverName, toolName string, arguments map[string]any,
+) (result *mcp.CallToolResult, err error) {
 	// Get MCP client
 
 	mcpClient, exists := dExt.GetMCPClient(serverName)
