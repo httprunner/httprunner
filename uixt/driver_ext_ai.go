@@ -26,14 +26,17 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		attempt++
 		log.Info().Int("attempt", attempt).Msg("planning attempt")
 
-		// Check for context cancellation (interrupt signal)
+		// Check for context cancellation (interrupt signal or timeout)
 		select {
 		case <-ctx.Done():
+			cause := context.Cause(ctx)
 			log.Warn().
 				Int("attempt", attempt).
 				Int("completed_plannings", len(allPlannings)).
-				Msg("interrupted in StartToGoal")
-			return allPlannings, errors.Wrap(code.InterruptError, "StartToGoal interrupted")
+				Err(cause).
+				Msg("StartToGoal cancelled")
+			// Return the specific error type based on the cancellation cause
+			return allPlannings, errors.Wrap(cause, "StartToGoal cancelled")
 		default:
 		}
 
@@ -85,15 +88,18 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 			// Check for context cancellation before each action
 			select {
 			case <-ctx.Done():
+				cause := context.Cause(ctx)
 				log.Warn().
 					Int("attempt", attempt).
 					Int("completed_plannings", len(allPlannings)).
 					Int("completed_tool_calls", len(planningResult.SubActions)).
 					Int("total_tool_calls", len(planningResult.ToolCalls)).
-					Msg("interrupted in invokeToolCalls")
+					Err(cause).
+					Msg("invokeToolCalls cancelled")
 				planningResult.Elapsed = time.Since(planningStartTime).Milliseconds()
 				allPlannings = append(allPlannings, planningResult)
-				return allPlannings, errors.Wrap(code.InterruptError, "invokeToolCalls interrupted")
+				// Return the specific error type based on the cancellation cause
+				return allPlannings, errors.Wrap(cause, "invokeToolCalls cancelled")
 			default:
 			}
 

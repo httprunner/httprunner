@@ -925,18 +925,18 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			}
 
 			// call MCP tool to execute action with cancellable context
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx, cancel := context.WithCancelCause(context.Background())
+			defer cancel(nil)
 
-			// Create a goroutine to monitor for interrupt signals
+			// Create a goroutine to monitor for interrupt signals and timeouts
 			go func() {
 				select {
 				case <-s.caseRunner.hrpRunner.interruptSignal:
 					log.Warn().Msg("cancelling action due to interrupt signal")
-					cancel()
+					cancel(code.InterruptError)
 				case <-s.caseRunner.hrpRunner.caseTimeoutTimer.C:
 					log.Warn().Msg("cancelling action due to case timeout")
-					cancel()
+					cancel(code.TimeoutError)
 				case <-ctx.Done():
 					// Context already cancelled
 				}
