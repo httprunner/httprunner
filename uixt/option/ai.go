@@ -1,7 +1,9 @@
 package option
 
 func NewAIServiceOptions(opts ...AIServiceOption) *AIServiceOptions {
-	services := &AIServiceOptions{}
+	services := &AIServiceOptions{
+		Enable: true,
+	}
 	for _, option := range opts {
 		option(services)
 	}
@@ -9,6 +11,7 @@ func NewAIServiceOptions(opts ...AIServiceOption) *AIServiceOptions {
 }
 
 type AIServiceOptions struct {
+	Enable     bool              `json:"enable,omitempty" yaml:"enable,omitempty"`
 	CVService  CVServiceType     `json:"cv_service,omitempty" yaml:"cv_service,omitempty"`
 	LLMService LLMServiceType    `json:"llm_service,omitempty" yaml:"llm_service,omitempty"`
 	LLMConfig  *LLMServiceConfig `json:"llm_config,omitempty" yaml:"llm_config,omitempty"` // advanced LLM configuration

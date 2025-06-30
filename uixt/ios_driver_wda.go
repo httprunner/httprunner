@@ -139,11 +139,6 @@ func (wd *WDADriver) Setup() error {
 	// Store base URL for building full URLs
 	baseURL := fmt.Sprintf("http://localhost:%d", localPort)
 	wd.Session.SetBaseURL(baseURL)
-
-	if err = wd.initMjpegClient(); err != nil {
-		return err
-	}
-
 	// create new session
 	if err := wd.InitSession(nil); err != nil {
 		return errors.Wrap(code.DeviceHTTPDriverError, err.Error())
@@ -840,6 +835,10 @@ func (wd *WDADriver) triggerWDALog(data map[string]interface{}) (rawResp []byte,
 
 func (wd *WDADriver) ScreenRecord(opts ...option.ActionOption) (videoPath string, err error) {
 	log.Info().Msg("WDADriver.ScreenRecord")
+	err = wd.initMjpegClient()
+	if err != nil {
+		return "", err
+	}
 	timestamp := time.Now().Format("20060102_150405") + fmt.Sprintf("_%03d", time.Now().UnixNano()/1e6%1000)
 	fileName := filepath.Join(config.GetConfig().ScreenShotsPath(), fmt.Sprintf("%s.mp4", timestamp))
 
