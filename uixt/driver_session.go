@@ -46,7 +46,7 @@ func NewDriverSession() *DriverSession {
 		client: &http.Client{
 			Timeout: timeout,
 		},
-		maxRetry: 5,
+		maxRetry: 1,
 	}
 	session.Reset()
 	return session
