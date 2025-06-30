@@ -191,10 +191,6 @@ type ActionOptions struct {
 	ResetHistory bool        `json:"reset_history,omitempty" yaml:"reset_history,omitempty" desc:"Whether to reset conversation history before AI planning"`
 	OutputSchema interface{} `json:"output_schema,omitempty" yaml:"output_schema,omitempty" desc:"Custom output schema for structured AI query response"`
 
-	// Time related
-	Seconds      float64 `json:"seconds,omitempty" yaml:"seconds,omitempty" desc:"Sleep duration in seconds"`
-	Milliseconds int64   `json:"milliseconds,omitempty" yaml:"milliseconds,omitempty" desc:"Sleep duration in milliseconds"`
-
 	// Control options
 	Context       context.Context `json:"-" yaml:"-"`
 	Identifier    string          `json:"identifier,omitempty" yaml:"identifier,omitempty" desc:"Action identifier for logging"`
@@ -204,7 +200,7 @@ type ActionOptions struct {
 	PressDuration float64         `json:"press_duration,omitempty" yaml:"press_duration,omitempty" desc:"Press duration in seconds"`
 	Steps         int             `json:"steps,omitempty" yaml:"steps,omitempty" desc:"Number of steps for action"`
 	Direction     interface{}     `json:"direction,omitempty" yaml:"direction,omitempty" desc:"Direction for swipe operations or custom coordinates"`
-	Timeout       int             `json:"timeout,omitempty" yaml:"timeout,omitempty" desc:"Timeout in seconds"`
+	Timeout       int             `json:"timeout,omitempty" yaml:"timeout,omitempty" desc:"Timeout in seconds for action execution"`
 	Frequency     int             `json:"frequency,omitempty" yaml:"frequency,omitempty" desc:"Action frequency"`
 
 	ScreenOptions
@@ -368,7 +364,8 @@ func (o *ActionOptions) ApplyTapOffset(absX, absY float64) (float64, float64) {
 }
 
 func (o *ActionOptions) ApplySwipeOffset(absFromX, absFromY, absToX, absToY float64) (
-	float64, float64, float64, float64) {
+	float64, float64, float64, float64,
+) {
 	if len(o.SwipeOffset) == 4 {
 		absFromX += float64(o.SwipeOffset[0])
 		absFromY += float64(o.SwipeOffset[1])
@@ -536,9 +533,9 @@ func WithMaxRetryTimes(maxRetryTimes int) ActionOption {
 	}
 }
 
-func WithTimeout(timeout int) ActionOption {
+func WithTimeout(seconds int) ActionOption {
 	return func(o *ActionOptions) {
-		o.Timeout = timeout
+		o.Timeout = seconds
 	}
 }
 

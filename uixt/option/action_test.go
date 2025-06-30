@@ -140,16 +140,14 @@ func TestUnifiedActionRequest_CustomOptions(t *testing.T) {
 func TestUnifiedActionRequest_BasicTypeFields(t *testing.T) {
 	// Test basic type fields (no longer pointers)
 	unifiedReq := &ActionOptions{
-		Platform:     "android",
-		Serial:       "device123",
-		Count:        5,
-		Keycode:      123,
-		Delta:        10,
-		Width:        800,
-		Height:       600,
-		Seconds:      2.5,
-		Milliseconds: 1500,
-		TabIndex:     3,
+		Platform: "android",
+		Serial:   "device123",
+		Count:    5,
+		Keycode:  123,
+		Delta:    10,
+		Width:    800,
+		Height:   600,
+		TabIndex: 3,
 	}
 
 	// Test direct field access (no need for Getter methods)
@@ -158,8 +156,6 @@ func TestUnifiedActionRequest_BasicTypeFields(t *testing.T) {
 	assert.Equal(t, 10, unifiedReq.Delta)
 	assert.Equal(t, 800, unifiedReq.Width)
 	assert.Equal(t, 600, unifiedReq.Height)
-	assert.Equal(t, 2.5, unifiedReq.Seconds)
-	assert.Equal(t, int64(1500), unifiedReq.Milliseconds)
 	assert.Equal(t, 3, unifiedReq.TabIndex)
 
 	// Test zero value detection
@@ -169,7 +165,5 @@ func TestUnifiedActionRequest_BasicTypeFields(t *testing.T) {
 	assert.Equal(t, 0, emptyReq.Delta)
 	assert.Equal(t, 0, emptyReq.Width)
 	assert.Equal(t, 0, emptyReq.Height)
-	assert.Equal(t, 0.0, emptyReq.Seconds)
-	assert.Equal(t, int64(0), emptyReq.Milliseconds)
 	assert.Equal(t, 0, emptyReq.TabIndex)
 }

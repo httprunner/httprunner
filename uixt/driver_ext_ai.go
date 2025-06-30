@@ -18,7 +18,22 @@ import (
 
 func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...option.ActionOption) ([]*PlanningExecutionResult, error) {
 	options := option.NewActionOptions(opts...)
-	log.Info().Int("max_retry_times", options.MaxRetryTimes).Msg("StartToGoal")
+	logger := log.Info().Str("prompt", prompt)
+	if options.MaxRetryTimes > 0 {
+		logger = logger.Int("max_retry_times", options.MaxRetryTimes)
+	}
+	if options.Timeout > 0 {
+		logger = logger.Int("timeout_seconds", options.Timeout)
+	}
+	logger.Msg("StartToGoal")
+
+	// Create timeout context for entire StartToGoal process if Timeout is specified
+	if options.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(options.Timeout)*time.Second)
+		defer cancel()
+		log.Info().Int("timeout_seconds", options.Timeout).Msg("StartToGoal timeout configured for entire process")
+	}
 
 	var allPlannings []*PlanningExecutionResult
 	var attempt int
@@ -26,14 +41,17 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		attempt++
 		log.Info().Int("attempt", attempt).Msg("planning attempt")
 
-		// Check for context cancellation (interrupt signal)
+		// Check for context cancellation (interrupt signal or timeout)
 		select {
 		case <-ctx.Done():
+			cause := context.Cause(ctx)
 			log.Warn().
 				Int("attempt", attempt).
 				Int("completed_plannings", len(allPlannings)).
-				Msg("interrupted in StartToGoal")
-			return allPlannings, errors.Wrap(code.InterruptError, "StartToGoal interrupted")
+				Err(cause).
+				Msg("StartToGoal cancelled")
+			// Return the specific error type based on the cancellation cause
+			return allPlannings, errors.Wrap(cause, "StartToGoal cancelled")
 		default:
 		}
 
@@ -85,15 +103,18 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 			// Check for context cancellation before each action
 			select {
 			case <-ctx.Done():
+				cause := context.Cause(ctx)
 				log.Warn().
 					Int("attempt", attempt).
 					Int("completed_plannings", len(allPlannings)).
 					Int("completed_tool_calls", len(planningResult.SubActions)).
 					Int("total_tool_calls", len(planningResult.ToolCalls)).
-					Msg("interrupted in invokeToolCalls")
+					Err(cause).
+					Msg("invokeToolCalls cancelled")
 				planningResult.Elapsed = time.Since(planningStartTime).Milliseconds()
 				allPlannings = append(allPlannings, planningResult)
-				return allPlannings, errors.Wrap(code.InterruptError, "invokeToolCalls interrupted")
+				// Return the specific error type based on the cancellation cause
+				return allPlannings, errors.Wrap(cause, "invokeToolCalls cancelled")
 			default:
 			}
 
@@ -113,8 +134,10 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 					planningResult.SubActions = append(planningResult.SubActions, subActionResult)
 				}()
 
-				// Execute the tool call
 				if err := dExt.invokeToolCall(ctx, toolCall, opts...); err != nil {
+					log.Error().Err(err).
+						Str("action", toolCall.Function.Name).
+						Msg("invoke tool call failed")
 					subActionResult.Error = err
 					return err
 				}
@@ -176,6 +199,9 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 	for _, toolCall := range planningResult.ToolCalls {
 		err = dExt.invokeToolCall(ctx, toolCall, opts...)
 		if err != nil {
+			log.Error().Err(err).
+				Str("action", toolCall.Function.Name).
+				Msg("invoke tool call failed")
 			aiExecutionResult.Error = err.Error()
 			return aiExecutionResult, errors.Wrap(err, "invoke tool call failed")
 		}

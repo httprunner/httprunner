@@ -19,6 +19,7 @@ import (
 	"github.com/danielpaulus/go-ios/ios/instruments"
 	"github.com/danielpaulus/go-ios/ios/testmanagerd"
 	"github.com/danielpaulus/go-ios/ios/tunnel"
+	"github.com/danielpaulus/go-ios/ios/zipconduit"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -141,6 +142,7 @@ type DeviceDetail struct {
 	WiFiAddress       string `json:"wifiAddress,omitempty"`
 	BuildVersion      string `json:"buildVersion,omitempty"`
 }
+
 type ApplicationType string
 
 const (
@@ -238,11 +240,21 @@ func (dev *IOSDevice) NewDriver() (driver IDriver, err error) {
 }
 
 func (dev *IOSDevice) Install(appPath string, opts ...option.InstallOption) (err error) {
-	conn, err := installationproxy.New(dev.DeviceEntry)
-	if err != nil {
-		return err
+	installOpts := option.NewInstallOptions(opts...)
+	for i := 0; i <= installOpts.RetryTimes; i++ {
+		var conn *zipconduit.Connection
+		conn, err = zipconduit.New(dev.DeviceEntry)
+		if err != nil {
+			return errors.Wrap(err, "failed to create zipconduit connection")
+		}
+		defer conn.Close()
+		err = conn.SendFile(appPath)
+		if err != nil {
+			log.Error().Err(err).Int("retry_times", i).Msg("failed to install app")
+			continue
+		}
+		return nil
 	}
-	err = conn.Install(dev.DeviceEntry, appPath)
 	return err
 }
 
