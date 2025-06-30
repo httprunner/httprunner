@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // ToolSleep implements the sleep tool call.
@@ -98,7 +100,8 @@ func (t *ToolSleep) ConvertActionToCallToolRequest(action option.MobileAction) (
 // ToolSleepMS implements the sleep_ms tool call.
 type ToolSleepMS struct {
 	// Return data fields - these define the structure of data returned by this tool
-	Milliseconds int64 `json:"milliseconds" desc:"Duration in milliseconds that was slept"`
+	Milliseconds int64  `json:"milliseconds" desc:"Duration in milliseconds that was slept"`
+	Duration     string `json:"duration" desc:"Human-readable duration string"`
 }
 
 func (t *ToolSleepMS) Name() option.ActionName {
@@ -110,26 +113,44 @@ func (t *ToolSleepMS) Description() string {
 }
 
 func (t *ToolSleepMS) Options() []mcp.ToolOption {
-	unifiedReq := &option.ActionOptions{}
-	return unifiedReq.GetMCPOptions(option.ACTION_SleepMS)
+	return []mcp.ToolOption{
+		mcp.WithNumber("milliseconds", mcp.Description("Number of milliseconds to sleep")),
+	}
 }
 
 func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
-		if err != nil {
-			return nil, err
-		}
-
-		// Validate required parameters
-		if unifiedReq.Milliseconds == 0 {
-			return nil, fmt.Errorf("milliseconds is required")
+		milliseconds, ok := request.Params.Arguments["milliseconds"]
+		if !ok {
+			log.Warn().Msg("milliseconds parameter is required, using default value 1000 milliseconds")
+			milliseconds = 1000
 		}
 
 		// Sleep MS action logic
-		log.Info().Int64("milliseconds", unifiedReq.Milliseconds).Msg("sleeping in milliseconds")
+		log.Info().Interface("milliseconds", milliseconds).Msg("sleeping in milliseconds")
 
-		duration := time.Duration(unifiedReq.Milliseconds) * time.Millisecond
+		var duration time.Duration
+		var actualMilliseconds int64
+		switch v := milliseconds.(type) {
+		case float64:
+			actualMilliseconds = int64(v)
+			duration = time.Duration(v) * time.Millisecond
+		case int:
+			actualMilliseconds = int64(v)
+			duration = time.Duration(v) * time.Millisecond
+		case int64:
+			actualMilliseconds = v
+			duration = time.Duration(v) * time.Millisecond
+		case string:
+			ms, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid sleep duration: %v", v)
+			}
+			actualMilliseconds = ms
+			duration = time.Duration(ms) * time.Millisecond
+		default:
+			return nil, fmt.Errorf("unsupported sleep duration type: %T", v)
+		}
 
 		// Use context-aware sleep instead of blocking time.Sleep
 		select {
@@ -141,8 +162,11 @@ func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("sleep interrupted: %w", ctx.Err())
 		}
 
-		message := fmt.Sprintf("Successfully slept for %d milliseconds", unifiedReq.Milliseconds)
-		returnData := ToolSleepMS{Milliseconds: unifiedReq.Milliseconds}
+		message := fmt.Sprintf("Successfully slept for %d milliseconds", actualMilliseconds)
+		returnData := ToolSleepMS{
+			Milliseconds: actualMilliseconds,
+			Duration:     duration.String(),
+		}
 
 		return NewMCPSuccessResponse(message, &returnData), nil
 	}
