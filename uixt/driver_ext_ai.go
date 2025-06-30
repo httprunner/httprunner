@@ -119,8 +119,25 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 					planningResult.SubActions = append(planningResult.SubActions, subActionResult)
 				}()
 
-				// Execute the tool call
-				if err := dExt.invokeToolCall(ctx, toolCall, opts...); err != nil {
+				// Create action context with timeout if specified
+				actionCtx := ctx
+				if options.Timeout > 0 {
+					var cancel context.CancelFunc
+					actionCtx, cancel = context.WithTimeout(ctx, time.Duration(options.Timeout)*time.Second)
+					defer cancel()
+				}
+
+				// Execute the tool call with timeout
+				if err := dExt.invokeToolCall(actionCtx, toolCall, opts...); err != nil {
+					// Check if the error is due to timeout
+					if errors.Is(err, context.DeadlineExceeded) {
+						log.Warn().
+							Str("action", toolCall.Function.Name).
+							Int("timeout_seconds", options.Timeout).
+							Msg("action timeout exceeded, continuing to next action")
+						subActionResult.Error = errors.New("action timeout exceeded")
+						return nil // Continue to next action instead of failing the entire StartToGoal
+					}
 					subActionResult.Error = err
 					return err
 				}
