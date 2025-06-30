@@ -131,7 +131,7 @@ func RenderSuccess(c *gin.Context, result interface{}) {
 
 func RenderError(c *gin.Context, err error) {
 	log.Error().Err(err).Msgf("failed to %s", c.HandlerName())
-	c.JSON(http.StatusInternalServerError,
+	c.JSON(http.StatusOK,
 		HttpResponse{
 			Code:    code.GetErrorCode(err),
 			Message: "grey " + err.Error(),
@@ -146,7 +146,7 @@ func RenderErrorInitDriver(c *gin.Context, err error) {
 	if errCode == code.GeneralFail {
 		errCode = code.GetErrorCode(code.MobileUIDriverError)
 	}
-	c.JSON(http.StatusInternalServerError,
+	c.JSON(http.StatusOK,
 		HttpResponse{
 			Code:    errCode,
 			Message: "grey init driver failed",
