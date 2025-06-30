@@ -1,6 +1,9 @@
 {
     "config": {
         "name": "羊了个羊小游戏自动化测试",
+        "variables": {
+            "package_name": "com.ss.android.ugc.aweme"
+        },
         "ai_options": {
             "llm_service": "doubao-1.5-thinking-vision-pro-250428"
         }
@@ -13,7 +16,7 @@
                 "actions": [
                     {
                         "method": "app_launch",
-                        "params": "com.ss.android.ugc.aweme"
+                        "params": "$package_name"
                     },
                     {
                         "method": "sleep",
@@ -25,8 +28,8 @@
                 {
                     "check": "ui_foreground_app",
                     "assert": "equal",
-                    "expect": "com.ss.android.ugc.aweme",
-                    "msg": "app [com.ss.android.ugc.aweme] should be in foreground"
+                    "expect": "$package_name",
+                    "msg": "app [$package_name] should be in foreground"
                 }
             ]
         },
@@ -65,6 +68,18 @@
                             "timeout": 300,
                             "pre_mark_operation": true
                         }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "退出抖音 app",
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "app_terminate",
+                        "params": "$package_name"
                     }
                 ]
             }

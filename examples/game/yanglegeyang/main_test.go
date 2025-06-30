@@ -28,14 +28,17 @@ func TestGameYanglegeyang(t *testing.T) {
 
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("羊了个羊小游戏自动化测试").
-			SetLLMService(option.DOUBAO_1_5_THINKING_VISION_PRO_250428),
+			SetLLMService(option.DOUBAO_1_5_THINKING_VISION_PRO_250428).
+			WithVariables(map[string]interface{}{
+				"package_name": "com.ss.android.ugc.aweme",
+			}),
 		TestSteps: []hrp.IStep{
 			hrp.NewStep("启动抖音 app").
 				Android().
-				AppLaunch("com.ss.android.ugc.aweme").
+				AppLaunch("$package_name").
 				Sleep(5).
 				Validate().
-				AssertAppInForeground("com.ss.android.ugc.aweme"),
+				AssertAppInForeground("$package_name"),
 			hrp.NewStep("进入「羊了个羊」小游戏").
 				Android().
 				StartToGoal("搜索「羊了个羊星球」，进入小程序，加入羊群进入游戏",
@@ -47,6 +50,9 @@ func TestGameYanglegeyang(t *testing.T) {
 				StartToGoal(userInstruction,
 					option.WithPreMarkOperation(true),
 					option.WithTimeout(300)), // 5 minutes
+			hrp.NewStep("退出抖音 app").
+				Android().
+				AppTerminate("$package_name"),
 		},
 	}
 	err := testCase.Dump2JSON("game_yanglegeyang.json")
