@@ -851,10 +851,10 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 	for _, action := range mobileStep.Actions {
 		select {
 		case <-s.caseRunner.hrpRunner.caseTimeoutTimer.C:
-			log.Warn().Msg("timeout in mobile UI runner")
-			return stepResult, errors.Wrap(code.TimeoutError, "mobile UI runner timeout")
+			log.Warn().Msg("case timeout in mobile UI runner, abort running")
+			return stepResult, errors.Wrap(code.TimeoutError, "mobile UI runner case timeout")
 		case <-s.caseRunner.hrpRunner.interruptSignal:
-			log.Warn().Msg("interrupted in mobile UI runner")
+			log.Warn().Msg("interrupted in mobile UI runner, abort running")
 			return stepResult, errors.Wrap(code.InterruptError, "mobile UI runner interrupted")
 		default:
 			actionStartTime := time.Now()
@@ -933,6 +933,9 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				select {
 				case <-s.caseRunner.hrpRunner.interruptSignal:
 					log.Warn().Msg("cancelling action due to interrupt signal")
+					cancel()
+				case <-s.caseRunner.hrpRunner.caseTimeoutTimer.C:
+					log.Warn().Msg("cancelling action due to case timeout")
 					cancel()
 				case <-ctx.Done():
 					// Context already cancelled
