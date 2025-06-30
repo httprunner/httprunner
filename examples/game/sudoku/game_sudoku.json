@@ -1,0 +1,88 @@
+{
+    "config": {
+        "name": "每天数独小游戏自动化测试",
+        "variables": {
+            "package_name": "com.ss.android.ugc.aweme"
+        },
+        "ai_options": {
+            "llm_service": "doubao-1.5-thinking-vision-pro-250428"
+        }
+    },
+    "teststeps": [
+        {
+            "name": "启动抖音 app",
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "app_launch",
+                        "params": "$package_name"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            },
+            "validate": [
+                {
+                    "check": "ui_foreground_app",
+                    "assert": "equal",
+                    "expect": "$package_name",
+                    "msg": "app [$package_name] should be in foreground"
+                }
+            ]
+        },
+        {
+            "name": "进入「每天数独」小游戏",
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "start_to_goal",
+                        "params": "搜索「每天数独」，进入小游戏",
+                        "options": {
+                            "pre_mark_operation": true
+                        }
+                    }
+                ]
+            },
+            "validate": [
+                {
+                    "check": "ui_ai",
+                    "assert": "ai_assert",
+                    "expect": "当前页面底部包含「开始」按钮",
+                    "msg": "assert ai prompt [当前页面底部包含「开始」按钮] failed"
+                }
+            ]
+        },
+        {
+            "name": "开始游戏",
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "start_to_goal",
+                        "params": "每天数独是一款逻辑推理游戏，玩家需要通过推理来确定黄色方块的所在位置，以下是游戏的基本规则说明：\n1、方块外面的数字代表所在那一行或一列的黄色方块数量。\n2、初始状态为白色方块，选择正确后变为黄色方块，选择错误后变为红底的 X。\n3、如果同一行或列有两个数字，则至少需要一个白底 X 分割它们作为间隔。\n4、如果数字与格子最大数相同时，该列或行必然全都是黄色方块。\n5、只能点击白色方块，不要重复点击同一个方块。\n\n请严格按照以上游戏规则，开始游戏\n",
+                        "options": {
+                            "timeout": 300,
+                            "pre_mark_operation": true
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "退出抖音 app",
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "app_terminate",
+                        "params": "$package_name"
+                    }
+                ]
+            }
+        }
+    ]
+}
