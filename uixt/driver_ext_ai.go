@@ -18,9 +18,14 @@ import (
 
 func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...option.ActionOption) ([]*PlanningExecutionResult, error) {
 	options := option.NewActionOptions(opts...)
-	log.Info().Int("max_retry_times", options.MaxRetryTimes).
-		Int("timeout_seconds", options.Timeout).
-		Msg("StartToGoal")
+	logger := log.Info().Str("prompt", prompt)
+	if options.MaxRetryTimes > 0 {
+		logger = logger.Int("max_retry_times", options.MaxRetryTimes)
+	}
+	if options.Timeout > 0 {
+		logger = logger.Int("timeout_seconds", options.Timeout)
+	}
+	logger.Msg("StartToGoal")
 
 	// Create timeout context for entire StartToGoal process if Timeout is specified
 	if options.Timeout > 0 {
@@ -130,9 +135,8 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 				}()
 
 				if err := dExt.invokeToolCall(ctx, toolCall, opts...); err != nil {
-					log.Warn().
+					log.Error().Err(err).
 						Str("action", toolCall.Function.Name).
-						Err(err).
 						Msg("invoke tool call failed")
 					subActionResult.Error = err
 					return err
@@ -195,6 +199,9 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 	for _, toolCall := range planningResult.ToolCalls {
 		err = dExt.invokeToolCall(ctx, toolCall, opts...)
 		if err != nil {
+			log.Error().Err(err).
+				Str("action", toolCall.Function.Name).
+				Msg("invoke tool call failed")
 			aiExecutionResult.Error = err.Error()
 			return aiExecutionResult, errors.Wrap(err, "invoke tool call failed")
 		}
