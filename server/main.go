@@ -9,11 +9,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/mcphost"
-	"github.com/httprunner/httprunner/v5/uixt"
-
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/mcphost"
+	"github.com/httprunner/httprunner/v5/uixt"
 )
 
 func NewRouter() *Router {
@@ -32,7 +32,8 @@ type Router struct {
 func (r *Router) InitMCPHost(configPath string) error {
 	mcpHost, err := mcphost.NewMCPHost(configPath, true)
 	if err != nil {
-		log.Error().Err(err).Msg("init MCP host failed")
+		log.Error().Err(err).Str("configPath", configPath).
+			Msg("init MCP host failed")
 		return err
 	}
 	r.mcpHost = mcpHost

@@ -15,13 +15,14 @@ import (
 	mcpp "github.com/cloudwego/eino-ext/components/tool/mcp"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
-	"github.com/httprunner/httprunner/v5/internal/version"
-	"github.com/httprunner/httprunner/v5/uixt"
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/internal/version"
+	"github.com/httprunner/httprunner/v5/uixt"
+	"github.com/httprunner/httprunner/v5/uixt/ai"
 )
 
 // MCPHost manages MCP server connections and tools
@@ -71,7 +72,7 @@ func NewMCPHost(configPath string, withUIXT bool) (*MCPHost, error) {
 	// Initialize MCP servers
 	if err := host.InitServers(ctx); err != nil {
 		cancel()
-		return nil, fmt.Errorf("failed to initialize MCP servers: %w", err)
+		return nil, errors.Wrapf(err, "failed to initialize MCP servers")
 	}
 
 	return host, nil
@@ -95,7 +96,7 @@ func (h *MCPHost) InitServers(ctx context.Context) error {
 		}
 
 		if err := h.connectToServer(ctx, name, server.Config); err != nil {
-			return fmt.Errorf("failed to connect to server %s: %w", name, err)
+			return errors.Wrapf(err, "failed to connect to server %s", name)
 		}
 	}
 	return nil
@@ -118,7 +119,7 @@ func (h *MCPHost) connectToServer(ctx context.Context, serverName string, config
 	// Close existing connection if any
 	if existing, exists := h.connections[serverName]; exists {
 		if err := existing.Client.Close(); err != nil {
-			return fmt.Errorf("failed to close existing connection: %w", err)
+			return errors.Wrapf(err, "failed to close existing connection")
 		}
 		delete(h.connections, serverName)
 	}
@@ -153,7 +154,7 @@ func (h *MCPHost) connectToServer(ctx context.Context, serverName string, config
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to create client: %w", err)
+		return errors.Wrapf(err, "failed to create client")
 	}
 
 	// initialize client with timeout
