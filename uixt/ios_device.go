@@ -141,6 +141,7 @@ type DeviceDetail struct {
 	WiFiAddress       string `json:"wifiAddress,omitempty"`
 	BuildVersion      string `json:"buildVersion,omitempty"`
 }
+
 type ApplicationType string
 
 const (
@@ -220,11 +221,12 @@ func (dev *IOSDevice) NewDriver() (driver IDriver, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
-	wdaStatus, err := driver.Status()
+	wdaStatus, err := wdaDriver.Status()
 	if err != nil {
 		return nil, err
 	}
 	log.Info().Interface("status", wdaStatus).Msg("check WDA status")
+
 	if dev.Options.ResetHomeOnStartup {
 		log.Info().Msg("go back to home screen")
 		if err = wdaDriver.Home(); err != nil {
