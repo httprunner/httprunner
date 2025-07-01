@@ -114,6 +114,10 @@ func (dExt *XTDriver) createScreenshotWithSession(opts ...option.ActionOption) (
 	logger := log.Debug().Str("imagePath", imagePath)
 	// perform CV processing if any CV-related option is enabled
 	if needsCVProcessing(screenshotOptions) {
+		if err = dExt.initCVService(); err != nil {
+			return nil, err
+		}
+
 		imageResult, err := dExt.CVService.ReadFromBuffer(compressBufSource, opts...)
 		if err != nil {
 			log.Error().Err(err).Msg("ReadFromBuffer from ImageService failed")
