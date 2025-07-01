@@ -217,11 +217,14 @@ func (dev *IOSDevice) getAppInfo(packageName string) (appInfo types.AppInfo, err
 
 func (dev *IOSDevice) NewDriver() (driver IDriver, err error) {
 	wdaDriver, err := NewWDADriver(dev)
-	_, _ = wdaDriver.Status()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init WDA driver")
 	}
-
+	wdaStatus, err := driver.Status()
+	if err != nil {
+		return nil, err
+	}
+	log.Info().Interface("status", wdaStatus).Msg("check WDA status")
 	if dev.Options.ResetHomeOnStartup {
 		log.Info().Msg("go back to home screen")
 		if err = wdaDriver.Home(); err != nil {

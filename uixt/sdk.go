@@ -29,8 +29,7 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 
 	// default to vedem CV service
 	if services.CVService == "" {
-		log.Warn().Msg("no CV service config provided, use default vedem")
-		services.CVService = option.CVServiceTypeVEDEM
+		log.Warn().Msg("no CV service config provided, not using CV service")
 	} else {
 		driverExt.CVService, err = ai.NewCVService(services.CVService)
 		if err != nil {
