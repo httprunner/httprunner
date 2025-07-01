@@ -5,37 +5,27 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/httprunner/httprunner/v5/uixt/ai"
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/client"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/uixt/ai"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, error) {
+	services := option.NewAIServiceOptions(opts...)
 	driverExt := &XTDriver{
 		IDriver: driver,
 		client: &MCPClient4XTDriver{
 			Server: NewMCPServer(),
 		},
+		services:         services,
 		loadedMCPClients: make(map[string]client.MCPClient),
 	}
 
-	services := option.NewAIServiceOptions(opts...)
-
 	var err error
-
-	// default to vedem CV service
-	if services.CVService == "" {
-		log.Warn().Msg("no CV service config provided, use default vedem")
-		services.CVService = option.CVServiceTypeVEDEM
-	}
-	driverExt.CVService, err = ai.NewCVService(services.CVService)
-	if err != nil {
-		log.Error().Err(err).Msg("init vedem image service failed")
-		return nil, err
-	}
 
 	// Handle LLM service initialization
 	if services.LLMConfig != nil {
@@ -72,8 +62,28 @@ type XTDriver struct {
 	CVService  ai.ICVService  // OCR/CV
 	LLMService ai.ILLMService // LLM
 
+	services         *option.AIServiceOptions    // AI services options
 	client           *MCPClient4XTDriver         // MCP Client for built-in uixt server
 	loadedMCPClients map[string]client.MCPClient // External MCP clients
+}
+
+func (dExt *XTDriver) initCVService() error {
+	if dExt.CVService != nil {
+		return nil
+	}
+	cvServiceType := dExt.services.CVService
+	if cvServiceType == "" {
+		log.Warn().Msg("no CV service config provided, use default vedem")
+		cvServiceType = option.CVServiceTypeVEDEM
+	}
+	cvService, err := ai.NewCVService(cvServiceType)
+	if err != nil {
+		log.Error().Err(err).Str("type", string(cvServiceType)).
+			Msg("init cv service failed")
+		return errors.Wrap(err, "init cv service failed")
+	}
+	dExt.CVService = cvService
+	return nil
 }
 
 // MCPClient4XTDriver is a mock MCP client that only implements the methods used by the host
@@ -200,7 +210,8 @@ func (dExt *XTDriver) GetMCPClient(serverName string) (client.MCPClient, bool) {
 
 // CallMCPTool calls the specified MCP tool
 func (dExt *XTDriver) CallMCPTool(ctx context.Context,
-	serverName, toolName string, arguments map[string]any) (result *mcp.CallToolResult, err error) {
+	serverName, toolName string, arguments map[string]any,
+) (result *mcp.CallToolResult, err error) {
 	// Get MCP client
 
 	mcpClient, exists := dExt.GetMCPClient(serverName)
