@@ -313,7 +313,7 @@ func (wd *WDADriver) toScale(x float64) (float64, error) {
 	if wd.scale == 0 {
 		// not setup yet
 		var err error
-		if wd.scale, err = wd.Scale(); err != nil {
+		if wd.scale, err = wd.Scale(); err != nil || wd.scale == 0 {
 			log.Error().Err(err).Msg("get screen scale failed")
 			return 0, err
 		}
