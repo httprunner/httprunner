@@ -309,16 +309,16 @@ func (wd *WDADriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer,
 	return raw, nil
 }
 
-func (wd *WDADriver) toScale(x float64) float64 {
+func (wd *WDADriver) toScale(x float64) (float64, error) {
 	if wd.scale == 0 {
 		// not setup yet
 		var err error
 		if wd.scale, err = wd.Scale(); err != nil {
-			log.Error().Err(err).Msg("init scale failed")
-			// Todo: os.Exit(code.GetErrorCode(err)) 添加error处理。
+			log.Error().Err(err).Msg("get screen scale failed")
+			return 0, err
 		}
 	}
-	return x / wd.scale
+	return x / wd.scale, nil
 }
 
 func (wd *WDADriver) ActiveAppInfo() (info types.AppInfo, err error) {
@@ -537,11 +537,16 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	log.Info().Float64("x", x).Float64("y", y).Msg("WDADriver.TapAbsXY")
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 
-	x = wd.toScale(x)
-	y = wd.toScale(y)
+	var err error
+	if x, err = wd.toScale(x); err != nil {
+		return err
+	}
+	if y, err = wd.toScale(y); err != nil {
+		return err
+	}
 
 	actionOptions := option.NewActionOptions(opts...)
-	x, y, err := preHandler_TapAbsXY(wd, actionOptions, x, y)
+	x, y, err = preHandler_TapAbsXY(wd, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
@@ -561,11 +566,16 @@ func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	log.Info().Float64("x", x).Float64("y", y).Msg("WDADriver.DoubleTap")
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
 
-	x = wd.toScale(x)
-	y = wd.toScale(y)
+	var err error
+	if x, err = wd.toScale(x); err != nil {
+		return err
+	}
+	if y, err = wd.toScale(y); err != nil {
+		return err
+	}
 
 	actionOptions := option.NewActionOptions(opts...)
-	x, y, err := preHandler_DoubleTap(wd, actionOptions, x, y)
+	x, y, err = preHandler_DoubleTap(wd, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
@@ -595,13 +605,22 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 		Float64("toX", toX).Float64("toY", toY).Msg("WDADriver.Drag")
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
 
-	fromX = wd.toScale(fromX)
-	fromY = wd.toScale(fromY)
-	toX = wd.toScale(toX)
-	toY = wd.toScale(toY)
+	var err error
+	if fromX, err = wd.toScale(fromX); err != nil {
+		return err
+	}
+	if fromY, err = wd.toScale(fromY); err != nil {
+		return err
+	}
+	if toX, err = wd.toScale(toX); err != nil {
+		return err
+	}
+	if toY, err = wd.toScale(toY); err != nil {
+		return err
+	}
 
 	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err := preHandler_Drag(wd, actionOptions, fromX, fromY, toX, toY)
+	fromX, fromY, toX, toY, err = preHandler_Drag(wd, actionOptions, fromX, fromY, toX, toY)
 	if err != nil {
 		return err
 	}
