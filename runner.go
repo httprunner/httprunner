@@ -36,9 +36,7 @@ import (
 
 // Run starts to run testcase with default configs.
 func Run(t *testing.T, testcases ...ITestCase) error {
-	err := NewRunner(t).SetSaveTests(true).Run(testcases...)
-	code.GetErrorCode(err)
-	return err
+	return NewRunner(t).SetSaveTests(true).Run(testcases...)
 }
 
 // NewRunner constructs a new runner instance.
@@ -234,7 +232,9 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	// this ensures they run regardless of how the function exits
 	defer func() {
 		s.Time.Duration = time.Since(s.Time.StartAt).Seconds()
-		log.Info().Int("duration(s)", int(s.Time.Duration)).Msg("run testcase finished")
+		exitCode := code.GetErrorCode(err)
+		log.Info().Int("duration(s)", int(s.Time.Duration)).
+			Int("exitCode", exitCode).Msg("run testcase finished")
 
 		// save summary
 		if r.saveTests {

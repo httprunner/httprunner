@@ -14,13 +14,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/internal/version"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 type UIXTRunner struct {
@@ -219,7 +220,7 @@ func (configs *UIXTConfig) getWDALocalPort(udid string) (string, error) {
 		"device_id": udid,
 	})
 	req, err := http.NewRequest("POST",
-		fmt.Sprintf("http://127.0.0.1:%d/get_device_port", configs.WDAMjpegPort),
+		fmt.Sprintf("http://localhost:%d/get_device_port", configs.WDAMjpegPort),
 		bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		return "", errors.Wrap(err, "create request failed")
