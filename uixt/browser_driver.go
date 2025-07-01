@@ -19,7 +19,7 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
-const BROWSER_LOCAL_ADDRESS = "localhost:8093"
+const BROWSER_BASE_URL = "http://localhost:8093"
 
 type WebAgentResponse struct {
 	Code    int         `json:"code"`
@@ -35,9 +35,8 @@ type CreateBrowserResponse struct {
 }
 
 type BrowserDriver struct {
-	urlPrefix *url.URL
-	Session   *DriverSession
-	Device    *BrowserDevice
+	Session *DriverSession
+	Device  *BrowserDevice
 }
 
 type BrowserInfo struct {
@@ -61,7 +60,7 @@ func CreateBrowser(timeout int, width, height int) (browserInfo *BrowserInfo, er
 		return nil, err
 	}
 
-	rawURL := "http://" + BROWSER_LOCAL_ADDRESS + "/api/v1/create_browser"
+	rawURL := BROWSER_BASE_URL + "/api/v1/create_browser"
 	req, err := http.NewRequest(http.MethodPost, rawURL, bytes.NewBuffer(bsJSON))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -98,20 +97,23 @@ func NewBrowserDriver(device *BrowserDevice) (driver *BrowserDriver, err error) 
 	log.Info().Msg("init NewBrowserDriver driver")
 	driver = new(BrowserDriver)
 	driver.Device = device
-	driver.urlPrefix = &url.URL{}
-	driver.urlPrefix.Host = BROWSER_LOCAL_ADDRESS
-	driver.urlPrefix.Scheme = "http"
-	driver.Session = NewDriverSession()
-	driver.Session.ID = device.UUID()
+
+	err = driver.Setup()
+	if err != nil {
+		return nil, errors.Wrap(err, "setup browser driver failed")
+	}
+
 	return driver, nil
 }
 
 func (wd *BrowserDriver) Setup() error {
+	wd.Session = NewDriverSession()
 	err := wd.Session.SetupPortForward(8093)
 	if err != nil {
 		return err
 	}
-	wd.Session.SetBaseURL(BROWSER_LOCAL_ADDRESS)
+	wd.Session.SetBaseURL(BROWSER_BASE_URL)
+	wd.Session.ID = wd.Device.UUID()
 	return nil
 }
 
@@ -263,7 +265,7 @@ func (wd *BrowserDriver) SecondaryClickBySelector(selector string, options ...op
 
 func (wd *BrowserDriver) GetElementTextBySelector(selector string, options ...option.ActionOption) (text string, err error) {
 	actionOptions := option.NewActionOptions(options...)
-	baseURL := fmt.Sprintf("http://%s/api/v1/%s/element_text", BROWSER_LOCAL_ADDRESS, wd.Session.ID)
+	baseURL := fmt.Sprintf("%s/api/v1/%s/element_text", BROWSER_BASE_URL, wd.Session.ID)
 
 	// 使用 url.Values 构建查询参数
 	params := url.Values{}
@@ -404,10 +406,7 @@ func (wd *BrowserDriver) ScreenShot(options ...option.ActionOption) (*bytes.Buff
 }
 
 func (wd *BrowserDriver) concatURL(elem ...string) string {
-	tmp, _ := url.Parse(wd.urlPrefix.String())
-	commonPath := path.Join(append([]string{wd.urlPrefix.Path}, "api/v1/")...)
-	tmp.Path = path.Join(append([]string{commonPath}, elem...)...)
-	return tmp.String()
+	return path.Join(append([]string{"/api/v1"}, elem...)...)
 }
 
 func (wd *BrowserDriver) Status() (deviceStatus types.DeviceStatus, err error) {
