@@ -354,29 +354,52 @@ func (o *ActionOptions) ToMap() map[string]interface{} {
 }
 
 func (o *ActionOptions) ApplyTapOffset(absX, absY float64) (float64, float64) {
+	xOffset := 0.0
+	yOffset := 0.0
 	if len(o.TapOffset) == 2 {
-		absX += float64(o.TapOffset[0])
-		absY += float64(o.TapOffset[1])
+		xOffset += float64(o.TapOffset[0])
+		yOffset += float64(o.TapOffset[1])
 	}
-	absX += o.generateRandomOffset()
-	absY += o.generateRandomOffset()
-	return absX, absY
+	xOffset += o.generateRandomOffset()
+	yOffset += o.generateRandomOffset()
+
+	if xOffset != 0.0 || yOffset != 0.0 {
+		log.Debug().
+			Float64("x_offset", xOffset).
+			Float64("y_offset", yOffset).
+			Msg("ApplyTapOffset")
+	}
+	return absX + xOffset, absY + yOffset
 }
 
 func (o *ActionOptions) ApplySwipeOffset(absFromX, absFromY, absToX, absToY float64) (
 	float64, float64, float64, float64,
 ) {
+	fromXOffset := 0.0
+	fromYOffset := 0.0
+	toXOffset := 0.0
+	toYOffset := 0.0
 	if len(o.SwipeOffset) == 4 {
-		absFromX += float64(o.SwipeOffset[0])
-		absFromY += float64(o.SwipeOffset[1])
-		absToX += float64(o.SwipeOffset[2])
-		absToY += float64(o.SwipeOffset[3])
+		fromXOffset += float64(o.SwipeOffset[0])
+		fromYOffset += float64(o.SwipeOffset[1])
+		toXOffset += float64(o.SwipeOffset[2])
+		toYOffset += float64(o.SwipeOffset[3])
 	}
-	absFromX += o.generateRandomOffset()
-	absFromY += o.generateRandomOffset()
-	absToX += o.generateRandomOffset()
-	absToY += o.generateRandomOffset()
-	return absFromX, absFromY, absToX, absToY
+	fromXOffset += o.generateRandomOffset()
+	fromYOffset += o.generateRandomOffset()
+	toXOffset += o.generateRandomOffset()
+	toYOffset += o.generateRandomOffset()
+
+	if fromXOffset != 0.0 || fromYOffset != 0.0 || toXOffset != 0.0 || toYOffset != 0.0 {
+		log.Debug().
+			Float64("from_x_offset", fromXOffset).
+			Float64("from_y_offset", fromYOffset).
+			Float64("to_x_offset", toXOffset).
+			Float64("to_y_offset", toYOffset).
+			Msg("ApplySwipeOffset")
+	}
+	return absFromX + fromXOffset, absFromY + fromYOffset,
+		absToX + toXOffset, absToY + toYOffset
 }
 
 func (o *ActionOptions) generateRandomOffset() float64 {

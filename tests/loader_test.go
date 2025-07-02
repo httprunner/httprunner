@@ -75,6 +75,6 @@ func TestLoadCaseWithTapOffset(t *testing.T) {
 	action := tc.Steps[3].IOS.Actions[0]
 	assert.Equal(t, option.ACTION_TapByOCR, action.Method)
 	assert.Equal(t, "推荐", action.Params)
-	assert.Equal(t, "点击推荐", action.ActionOptions.Identifier)
-	assert.Equal(t, []int{0, -1}, action.ActionOptions.ScreenFilterOptions.TapOffset)
+	assert.Equal(t, "点击推荐", action.Options.Identifier)
+	assert.Equal(t, []int{0, -1}, action.Options.ScreenFilterOptions.TapOffset)
 }

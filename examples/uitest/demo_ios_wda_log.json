@@ -30,7 +30,8 @@
                         "params": "$app_name",
                         "options": {
                             "identifier": "启动抖音",
-                            "max_retry_times": 5
+                            "max_retry_times": 5,
+                            "pre_mark_operation": true
                         }
                     },
                     {
@@ -72,7 +73,8 @@
                         "method": "tap_ocr",
                         "params": "商城",
                         "options": {
-                            "identifier": "点击商城"
+                            "identifier": "点击商城",
+                            "pre_mark_operation": true
                         }
                     },
                     {
@@ -90,11 +92,14 @@
                     {
                         "method": "tap_ocr",
                         "params": "推荐",
-                        "identifier": "点击推荐",
-                        "offset": [
-                            0,
-                            -1
-                        ]
+                        "options": {
+                            "identifier": "点击推荐",
+                            "offset": [
+                                0,
+                                -1
+                            ],
+                            "pre_mark_operation": true
+                        }
                     },
                     {
                         "method": "sleep",
@@ -112,7 +117,8 @@
                         "method": "swipe_direction",
                         "params": "up",
                         "options": {
-                            "identifier": "第 1 次上划"
+                            "identifier": "第 1 次上划",
+                            "pre_mark_operation": true
                         }
                     },
                     {
@@ -123,7 +129,8 @@
                         "method": "swipe_direction",
                         "params": "up",
                         "options": {
-                            "identifier": "第 2 次上划"
+                            "identifier": "第 2 次上划",
+                            "pre_mark_operation": true
                         }
                     },
                     {
@@ -134,7 +141,8 @@
                         "method": "swipe_direction",
                         "params": "up",
                         "options": {
-                            "identifier": "第 3 次上划"
+                            "identifier": "第 3 次上划",
+                            "pre_mark_operation": true
                         }
                     },
                     {
@@ -148,7 +156,8 @@
                             0.1
                         ],
                         "options": {
-                            "identifier": "点击进入搜索框"
+                            "identifier": "点击进入搜索框",
+                            "pre_mark_operation": true
                         }
                     },
                     {
@@ -159,7 +168,8 @@
                         "method": "input",
                         "params": "httprunner 发版记录",
                         "options": {
-                            "identifier": "输入搜索关键词"
+                            "identifier": "输入搜索关键词",
+                            "pre_mark_operation": true
                         }
                     },
                     {

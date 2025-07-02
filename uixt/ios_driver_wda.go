@@ -538,19 +538,19 @@ func (wd *WDADriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 
 	var err error
-	if x, err = wd.toScale(x); err != nil {
-		return err
-	}
-	if y, err = wd.toScale(y); err != nil {
-		return err
-	}
-
 	actionOptions := option.NewActionOptions(opts...)
 	x, y, err = preHandler_TapAbsXY(wd, actionOptions, x, y)
 	if err != nil {
 		return err
 	}
 	defer postHandler(wd, option.ACTION_TapAbsXY, actionOptions)
+
+	if x, err = wd.toScale(x); err != nil {
+		return err
+	}
+	if y, err = wd.toScale(y); err != nil {
+		return err
+	}
 
 	data := map[string]interface{}{
 		"x": x,
@@ -567,13 +567,6 @@ func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	// [[FBRoute POST:@"/wda/doubleTap"] respondWithTarget:self action:@selector(handleDoubleTapCoordinate:)]
 
 	var err error
-	if x, err = wd.toScale(x); err != nil {
-		return err
-	}
-	if y, err = wd.toScale(y); err != nil {
-		return err
-	}
-
 	actionOptions := option.NewActionOptions(opts...)
 	x, y, err = preHandler_DoubleTap(wd, actionOptions, x, y)
 	if err != nil {
@@ -581,6 +574,12 @@ func (wd *WDADriver) DoubleTap(x, y float64, opts ...option.ActionOption) error 
 	}
 	defer postHandler(wd, option.ACTION_DoubleTapXY, actionOptions)
 
+	if x, err = wd.toScale(x); err != nil {
+		return err
+	}
+	if y, err = wd.toScale(y); err != nil {
+		return err
+	}
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
@@ -606,6 +605,13 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
 
 	var err error
+	actionOptions := option.NewActionOptions(opts...)
+	fromX, fromY, toX, toY, err = preHandler_Drag(wd, actionOptions, fromX, fromY, toX, toY)
+	if err != nil {
+		return err
+	}
+	defer postHandler(wd, option.ACTION_Drag, actionOptions)
+
 	if fromX, err = wd.toScale(fromX); err != nil {
 		return err
 	}
@@ -618,14 +624,6 @@ func (wd *WDADriver) Drag(fromX, fromY, toX, toY float64, opts ...option.ActionO
 	if toY, err = wd.toScale(toY); err != nil {
 		return err
 	}
-
-	actionOptions := option.NewActionOptions(opts...)
-	fromX, fromY, toX, toY, err = preHandler_Drag(wd, actionOptions, fromX, fromY, toX, toY)
-	if err != nil {
-		return err
-	}
-	defer postHandler(wd, option.ACTION_Drag, actionOptions)
-
 	data := map[string]interface{}{
 		"fromX": builtin.RoundToOneDecimal(fromX),
 		"fromY": builtin.RoundToOneDecimal(fromY),
