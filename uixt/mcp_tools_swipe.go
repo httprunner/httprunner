@@ -319,19 +319,6 @@ func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 		// Build action options from request structure
 		opts := unifiedReq.Options()
 
-		// Add boolean options
-		if unifiedReq.IgnoreNotFoundError {
-			opts = append(opts, option.WithIgnoreNotFoundError(true))
-		}
-
-		// Add numeric options
-		if unifiedReq.MaxRetryTimes > 0 {
-			opts = append(opts, option.WithMaxRetryTimes(unifiedReq.MaxRetryTimes))
-		}
-		if unifiedReq.Index > 0 {
-			opts = append(opts, option.WithIndex(unifiedReq.Index))
-		}
-
 		// Swipe to tap app action logic
 		err = driverExt.SwipeToTapApp(unifiedReq.AppName, opts...)
 		if err != nil {

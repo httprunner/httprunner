@@ -98,9 +98,6 @@ func (dExt *XTDriver) SwipeToTapTexts(texts []string, opts ...option.ActionOptio
 
 	log.Info().Strs("texts", texts).Msg("swipe to tap texts")
 	opts = append(opts, option.WithMatchOne(true), option.WithRegex(true))
-	actionOptions := option.NewActionOptions(opts...)
-	actionOptions.Identifier = ""
-	optionsWithoutIdentifier := actionOptions.Options()
 	var point ai.PointF
 	findTexts := func(d *XTDriver) error {
 		var err error
@@ -116,7 +113,7 @@ func (dExt *XTDriver) SwipeToTapTexts(texts []string, opts ...option.ActionOptio
 		}
 
 		points, err := screenResult.Texts.FindTexts(texts,
-			convertToAbsoluteScope(dExt.IDriver, optionsWithoutIdentifier...)...)
+			convertToAbsoluteScope(dExt.IDriver, opts...)...)
 		if err != nil {
 			log.Error().Err(err).Strs("texts", texts).Msg("find texts failed")
 			return err
@@ -132,8 +129,8 @@ func (dExt *XTDriver) SwipeToTapTexts(texts []string, opts ...option.ActionOptio
 		return d.TapAbsXY(point.X, point.Y, opts...)
 	}
 
-	findAction := prepareSwipeAction(dExt, nil, optionsWithoutIdentifier...)
-	return dExt.LoopUntil(findAction, findTexts, foundTextAction, optionsWithoutIdentifier...)
+	findAction := prepareSwipeAction(dExt, nil, opts...)
+	return dExt.LoopUntil(findAction, findTexts, foundTextAction, opts...)
 }
 
 func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption) error {
@@ -160,7 +157,7 @@ func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption)
 	actionOptions := option.NewActionOptions(opts...)
 	// tap app icon above the text
 	if len(actionOptions.TapOffset) == 0 {
-		opts = append(opts, option.WithTapOffset(0, -25))
+		opts = append(opts, option.WithTapOffset(0, -100))
 	}
 	// set default swipe interval to 1 second
 	if builtin.IsZeroFloat64(actionOptions.Interval) {
