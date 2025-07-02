@@ -90,9 +90,11 @@
                     {
                         "method": "tap_ocr",
                         "params": "推荐",
-                        "options": {
-                            "identifier": "点击推荐"
-                        }
+                        "identifier": "点击推荐",
+                        "offset": [
+                            0,
+                            -1
+                        ]
                     },
                     {
                         "method": "sleep",

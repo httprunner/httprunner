@@ -227,7 +227,7 @@ type ScreenFilterOptions struct {
 	AbsScope AbsScope `json:"abs_scope,omitempty" yaml:"abs_scope,omitempty"`
 
 	Regex               bool  `json:"regex,omitempty" yaml:"regex,omitempty"`                             // use regex to match text
-	TapOffset           []int `json:"tap_offset,omitempty" yaml:"tap_offset,omitempty"`                   // tap with absolute point offset
+	TapOffset           []int `json:"offset,omitempty" yaml:"offset,omitempty"`                           // tap with absolute point offset
 	TapRandomRect       bool  `json:"tap_random_rect,omitempty" yaml:"tap_random_rect,omitempty"`         // tap random point in text/image rectangle
 	SwipeOffset         []int `json:"swipe_offset,omitempty" yaml:"swipe_offset,omitempty"`               // swipe with direction offset
 	OffsetRandomRange   []int `json:"offset_random_range,omitempty" yaml:"offset_random_range,omitempty"` // set random range [min, max] for tap/swipe points
