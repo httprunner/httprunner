@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	hrp "github.com/httprunner/httprunner/v5"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func TestLoadTestCases(t *testing.T) {
@@ -62,4 +63,18 @@ func TestLoadCase(t *testing.T) {
 	assert.Equal(t, tcJSON.Config.BaseURL, tcYAML.Config.BaseURL)
 	assert.Equal(t, tcJSON.Steps[1].StepName, tcYAML.Steps[1].StepName)
 	assert.Equal(t, tcJSON.Steps[1].Request, tcJSON.Steps[1].Request)
+}
+
+func TestLoadCaseWithTapOffset(t *testing.T) {
+	// Load the android_swipe_tap_loadmore.json test case
+	testCasePath := "../examples/uitest/demo_ios_wda_log.json"
+	tc := &hrp.TestCaseDef{}
+	err := hrp.LoadFileObject(testCasePath, tc)
+	assert.Nil(t, err)
+
+	action := tc.Steps[3].IOS.Actions[0]
+	assert.Equal(t, option.ACTION_TapByOCR, action.Method)
+	assert.Equal(t, "推荐", action.Params)
+	assert.Equal(t, "点击推荐", action.ActionOptions.Identifier)
+	assert.Equal(t, []int{0, -1}, action.ActionOptions.ScreenFilterOptions.TapOffset)
 }

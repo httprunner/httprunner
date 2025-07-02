@@ -9,9 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func TestDriverExt_NewMethod1(t *testing.T) {
@@ -142,7 +143,7 @@ func TestDriverExt_prepareSwipeAction(t *testing.T) {
 
 func TestDriverExt_SwipeToTapApp(t *testing.T) {
 	driver := setupDriverExt(t)
-	err := driver.SwipeToTapApp("抖音")
+	err := driver.SwipeToTapApp("抖音", option.WithPreMarkOperation(true))
 	assert.Nil(t, err)
 }
 
