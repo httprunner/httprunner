@@ -85,6 +85,10 @@ func InitLogger(logLevel string, logJSON bool, logFile bool) {
 	}
 }
 
+func GetResultsPath() string {
+	return config.GetConfig().ResultsPath()
+}
+
 // parseLogLevel converts string log level to zerolog.Level
 func parseLogLevel(logLevel string) zerolog.Level {
 	level := strings.ToUpper(logLevel)
