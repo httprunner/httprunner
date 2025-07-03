@@ -158,15 +158,12 @@ type ActionTool interface {
 }
 
 // BuildMCPCallToolRequest is a helper function to build mcp.CallToolRequest
-func BuildMCPCallToolRequest(toolName option.ActionName, arguments map[string]any) mcp.CallToolRequest {
+func BuildMCPCallToolRequest(toolName option.ActionName, arguments map[string]any, action option.MobileAction) mcp.CallToolRequest {
+	// Automatically extract action options and add them to arguments
+	extractActionOptionsToArguments(action.GetOptions(), arguments)
+
 	return mcp.CallToolRequest{
-		Params: struct {
-			Name      string         `json:"name"`
-			Arguments map[string]any `json:"arguments,omitempty"`
-			Meta      *struct {
-				ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
-			} `json:"_meta,omitempty"`
-		}{
+		Params: mcp.CallToolParams{
 			Name:      string(toolName),
 			Arguments: arguments,
 		},

@@ -38,7 +38,7 @@ func (t *ToolSleep) Options() []mcp.ToolOption {
 
 func (t *ToolSleep) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		seconds, ok := request.Params.Arguments["seconds"]
+		seconds, ok := request.GetArguments()["seconds"]
 		if !ok {
 			log.Warn().Msg("seconds parameter is required, using default value 5.0 seconds")
 			seconds = 5.0
@@ -94,7 +94,7 @@ func (t *ToolSleep) ConvertActionToCallToolRequest(action option.MobileAction) (
 	arguments := map[string]any{
 		"seconds": action.Params,
 	}
-	return BuildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }
 
 // ToolSleepMS implements the sleep_ms tool call.
@@ -120,7 +120,7 @@ func (t *ToolSleepMS) Options() []mcp.ToolOption {
 
 func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		milliseconds, ok := request.Params.Arguments["milliseconds"]
+		milliseconds, ok := request.GetArguments()["milliseconds"]
 		if !ok {
 			log.Warn().Msg("milliseconds parameter is required, using default value 1000 milliseconds")
 			milliseconds = 1000
@@ -184,7 +184,7 @@ func (t *ToolSleepMS) ConvertActionToCallToolRequest(action option.MobileAction)
 	arguments := map[string]any{
 		"milliseconds": milliseconds,
 	}
-	return BuildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }
 
 // ToolSleepRandom implements the sleep_random tool call.
@@ -208,7 +208,7 @@ func (t *ToolSleepRandom) Options() []mcp.ToolOption {
 
 func (t *ToolSleepRandom) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(request.GetArguments())
 		if err != nil {
 			return nil, err
 		}
@@ -228,7 +228,7 @@ func (t *ToolSleepRandom) ConvertActionToCallToolRequest(action option.MobileAct
 		arguments := map[string]any{
 			"params": params,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid sleep random params: %v", action.Params)
 }
@@ -252,7 +252,7 @@ func (t *ToolClosePopups) Options() []mcp.ToolOption {
 
 func (t *ToolClosePopups) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		driverExt, err := setupXTDriver(ctx, request.GetArguments())
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
@@ -271,5 +271,5 @@ func (t *ToolClosePopups) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolClosePopups) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}, action), nil
 }

@@ -3,10 +3,11 @@ package uixt
 import (
 	"testing"
 
-	"github.com/httprunner/httprunner/v5/internal/json"
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func TestNewMCPServer(t *testing.T) {
@@ -154,7 +155,7 @@ func TestIgnoreNotFoundErrorOption(t *testing.T) {
 	assert.NoError(t, err, "Should convert action to request without error")
 
 	// Verify that ignore_NotFoundError option is included in arguments
-	args := request.Params.Arguments
+	args := request.GetArguments()
 	assert.Equal(t, true, args["ignore_NotFoundError"], "ignore_NotFoundError should be true")
 	assert.Equal(t, 2, args["max_retry_times"], "max_retry_times should be 2")
 	assert.Equal(t, 1, args["index"], "index should be 1")
@@ -211,7 +212,7 @@ func TestToolListAvailableDevices(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_ListAvailableDevices), request.Params.Name)
-	assert.Empty(t, request.Params.Arguments)
+	assert.Empty(t, request.GetArguments())
 }
 
 // TestToolSelectDevice tests the ToolSelectDevice implementation
@@ -264,9 +265,10 @@ func TestToolTapXY(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_TapXY), request.Params.Name)
-	assert.Equal(t, 0.5, request.Params.Arguments["x"])
-	assert.Equal(t, 0.6, request.Params.Arguments["y"])
-	assert.Equal(t, 1.5, request.Params.Arguments["duration"])
+	args := request.GetArguments()
+	assert.Equal(t, 0.5, args["x"])
+	assert.Equal(t, 0.6, args["y"])
+	assert.Equal(t, 1.5, args["duration"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -302,9 +304,10 @@ func TestToolTapAbsXY(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_TapAbsXY), request.Params.Name)
-	assert.Equal(t, 100.0, request.Params.Arguments["x"])
-	assert.Equal(t, 200.0, request.Params.Arguments["y"])
-	assert.Equal(t, 2.0, request.Params.Arguments["duration"])
+	args := request.GetArguments()
+	assert.Equal(t, 100.0, args["x"])
+	assert.Equal(t, 200.0, args["y"])
+	assert.Equal(t, 2.0, args["duration"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -345,12 +348,13 @@ func TestToolTapByOCR(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_TapByOCR), request.Params.Name)
-	assert.Equal(t, "test_text", request.Params.Arguments["text"])
-	assert.Equal(t, true, request.Params.Arguments["ignore_NotFoundError"])
-	assert.Equal(t, 3, request.Params.Arguments["max_retry_times"])
-	assert.Equal(t, 1, request.Params.Arguments["index"])
-	assert.Equal(t, true, request.Params.Arguments["regex"])
-	assert.Equal(t, true, request.Params.Arguments["tap_random_rect"])
+	args := request.GetArguments()
+	assert.Equal(t, "test_text", args["text"])
+	assert.Equal(t, true, args["ignore_NotFoundError"])
+	assert.Equal(t, 3, args["max_retry_times"])
+	assert.Equal(t, 1, args["index"])
+	assert.Equal(t, true, args["regex"])
+	assert.Equal(t, true, args["tap_random_rect"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -389,10 +393,11 @@ func TestToolTapByCV(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_TapByCV), request.Params.Name)
-	assert.Equal(t, "", request.Params.Arguments["imagePath"])
-	assert.Equal(t, true, request.Params.Arguments["ignore_NotFoundError"])
-	assert.Equal(t, 2, request.Params.Arguments["max_retry_times"])
-	assert.Equal(t, true, request.Params.Arguments["tap_random_rect"])
+	args := request.GetArguments()
+	assert.Equal(t, "", args["imagePath"])
+	assert.Equal(t, true, args["ignore_NotFoundError"])
+	assert.Equal(t, 2, args["max_retry_times"])
+	assert.Equal(t, true, args["tap_random_rect"])
 }
 
 // TestToolDoubleTapXY tests the ToolDoubleTapXY implementation
@@ -417,8 +422,9 @@ func TestToolDoubleTapXY(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_DoubleTapXY), request.Params.Name)
-	assert.Equal(t, 0.3, request.Params.Arguments["x"])
-	assert.Equal(t, 0.7, request.Params.Arguments["y"])
+	args := request.GetArguments()
+	assert.Equal(t, 0.3, args["x"])
+	assert.Equal(t, 0.7, args["y"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -455,9 +461,10 @@ func TestToolSwipe(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(directionAction)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_Swipe), request.Params.Name)
-	assert.Equal(t, "up", request.Params.Arguments["direction"])
-	assert.Equal(t, 1.5, request.Params.Arguments["duration"])
-	assert.Equal(t, 0.5, request.Params.Arguments["pressDuration"])
+	args := request.GetArguments()
+	assert.Equal(t, "up", args["direction"])
+	assert.Equal(t, 1.5, args["duration"])
+	assert.Equal(t, 0.5, args["pressDuration"])
 
 	// Test ConvertActionToCallToolRequest with coordinate params
 	coordinateAction := option.MobileAction{
@@ -471,12 +478,13 @@ func TestToolSwipe(t *testing.T) {
 	request, err = tool.ConvertActionToCallToolRequest(coordinateAction)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_Swipe), request.Params.Name)
-	assert.Equal(t, 0.1, request.Params.Arguments["from_x"])
-	assert.Equal(t, 0.2, request.Params.Arguments["from_y"])
-	assert.Equal(t, 0.8, request.Params.Arguments["to_x"])
-	assert.Equal(t, 0.9, request.Params.Arguments["to_y"])
-	assert.Equal(t, 2.0, request.Params.Arguments["duration"])
-	assert.Equal(t, 1.0, request.Params.Arguments["pressDuration"])
+	args = request.GetArguments()
+	assert.Equal(t, 0.1, args["from_x"])
+	assert.Equal(t, 0.2, args["from_y"])
+	assert.Equal(t, 0.8, args["to_x"])
+	assert.Equal(t, 0.9, args["to_y"])
+	assert.Equal(t, 2.0, args["duration"])
+	assert.Equal(t, 1.0, args["pressDuration"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -521,9 +529,10 @@ func TestToolSwipeDirection(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SwipeDirection), request.Params.Name)
-	assert.Equal(t, "up", request.Params.Arguments["direction"])
-	assert.Equal(t, 1.0, request.Params.Arguments["duration"])
-	assert.Equal(t, 0.5, request.Params.Arguments["pressDuration"])
+	args := request.GetArguments()
+	assert.Equal(t, "up", args["direction"])
+	assert.Equal(t, 1.0, args["duration"])
+	assert.Equal(t, 0.5, args["pressDuration"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -560,12 +569,13 @@ func TestToolSwipeCoordinate(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SwipeCoordinate), request.Params.Name)
-	assert.Equal(t, 0.1, request.Params.Arguments["from_x"])
-	assert.Equal(t, 0.2, request.Params.Arguments["from_y"])
-	assert.Equal(t, 0.8, request.Params.Arguments["to_x"])
-	assert.Equal(t, 0.9, request.Params.Arguments["to_y"])
-	assert.Equal(t, 2.0, request.Params.Arguments["duration"])
-	assert.Equal(t, 1.0, request.Params.Arguments["pressDuration"])
+	args := request.GetArguments()
+	assert.Equal(t, 0.1, args["from_x"])
+	assert.Equal(t, 0.2, args["from_y"])
+	assert.Equal(t, 0.8, args["to_x"])
+	assert.Equal(t, 0.9, args["to_y"])
+	assert.Equal(t, 2.0, args["duration"])
+	assert.Equal(t, 1.0, args["pressDuration"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -604,10 +614,11 @@ func TestToolSwipeToTapApp(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SwipeToTapApp), request.Params.Name)
-	assert.Equal(t, "WeChat", request.Params.Arguments["appName"])
-	assert.Equal(t, true, request.Params.Arguments["ignore_NotFoundError"])
-	assert.Equal(t, 3, request.Params.Arguments["max_retry_times"])
-	assert.Equal(t, 1, request.Params.Arguments["index"])
+	args := request.GetArguments()
+	assert.Equal(t, "WeChat", args["appName"])
+	assert.Equal(t, true, args["ignore_NotFoundError"])
+	assert.Equal(t, 3, args["max_retry_times"])
+	assert.Equal(t, 1, args["index"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -646,10 +657,11 @@ func TestToolSwipeToTapText(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SwipeToTapText), request.Params.Name)
-	assert.Equal(t, "Submit", request.Params.Arguments["text"])
-	assert.Equal(t, true, request.Params.Arguments["ignore_NotFoundError"])
-	assert.Equal(t, 2, request.Params.Arguments["max_retry_times"])
-	assert.Equal(t, true, request.Params.Arguments["regex"])
+	args := request.GetArguments()
+	assert.Equal(t, "Submit", args["text"])
+	assert.Equal(t, true, args["ignore_NotFoundError"])
+	assert.Equal(t, 2, args["max_retry_times"])
+	assert.Equal(t, true, args["regex"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -688,11 +700,12 @@ func TestToolSwipeToTapTexts(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SwipeToTapTexts), request.Params.Name)
 
-	texts, ok := request.Params.Arguments["texts"].([]string)
+	args := request.GetArguments()
+	texts, ok := args["texts"].([]string)
 	require.True(t, ok)
 	assert.Equal(t, []string{"OK", "确定", "Submit"}, texts)
-	assert.Equal(t, true, request.Params.Arguments["ignore_NotFoundError"])
-	assert.Equal(t, true, request.Params.Arguments["regex"])
+	assert.Equal(t, true, args["ignore_NotFoundError"])
+	assert.Equal(t, true, args["regex"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -728,11 +741,12 @@ func TestToolDrag(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_Drag), request.Params.Name)
-	assert.Equal(t, 0.1, request.Params.Arguments["from_x"])
-	assert.Equal(t, 0.2, request.Params.Arguments["from_y"])
-	assert.Equal(t, 0.8, request.Params.Arguments["to_x"])
-	assert.Equal(t, 0.9, request.Params.Arguments["to_y"])
-	assert.Equal(t, 2500.0, request.Params.Arguments["duration"]) // converted to milliseconds
+	args := request.GetArguments()
+	assert.Equal(t, 0.1, args["from_x"])
+	assert.Equal(t, 0.2, args["from_y"])
+	assert.Equal(t, 0.8, args["to_x"])
+	assert.Equal(t, 0.9, args["to_y"])
+	assert.Equal(t, 2500.0, args["duration"]) // converted to milliseconds
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -765,7 +779,7 @@ func TestToolInput(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_Input), request.Params.Name)
-	assert.Equal(t, "Hello World", request.Params.Arguments["text"])
+	assert.Equal(t, "Hello World", request.GetArguments()["text"])
 }
 
 // TestToolScreenShot tests the ToolScreenShot implementation
@@ -790,7 +804,7 @@ func TestToolScreenShot(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_ScreenShot), request.Params.Name)
-	assert.Empty(t, request.Params.Arguments)
+	assert.Empty(t, request.GetArguments())
 }
 
 // TestToolGetScreenSize tests the ToolGetScreenSize implementation
@@ -815,7 +829,7 @@ func TestToolGetScreenSize(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_GetScreenSize), request.Params.Name)
-	assert.Empty(t, request.Params.Arguments)
+	assert.Empty(t, request.GetArguments())
 }
 
 // TestToolPressButton tests the ToolPressButton implementation
@@ -840,7 +854,7 @@ func TestToolPressButton(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_PressButton), request.Params.Name)
-	assert.Equal(t, "HOME", request.Params.Arguments["button"])
+	assert.Equal(t, "HOME", request.GetArguments()["button"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -873,7 +887,7 @@ func TestToolHome(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_Home), request.Params.Name)
-	assert.Empty(t, request.Params.Arguments)
+	assert.Empty(t, request.GetArguments())
 }
 
 // TestToolBack tests the ToolBack implementation
@@ -898,7 +912,7 @@ func TestToolBack(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_Back), request.Params.Name)
-	assert.Empty(t, request.Params.Arguments)
+	assert.Empty(t, request.GetArguments())
 }
 
 // TestToolListPackages tests the ToolListPackages implementation
@@ -923,7 +937,7 @@ func TestToolListPackages(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_ListPackages), request.Params.Name)
-	assert.Empty(t, request.Params.Arguments)
+	assert.Empty(t, request.GetArguments())
 }
 
 // TestToolLaunchApp tests the ToolLaunchApp implementation
@@ -948,7 +962,7 @@ func TestToolLaunchApp(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_AppLaunch), request.Params.Name)
-	assert.Equal(t, "com.example.app", request.Params.Arguments["packageName"])
+	assert.Equal(t, "com.example.app", request.GetArguments()["packageName"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -981,7 +995,7 @@ func TestToolTerminateApp(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_AppTerminate), request.Params.Name)
-	assert.Equal(t, "com.example.app", request.Params.Arguments["packageName"])
+	assert.Equal(t, "com.example.app", request.GetArguments()["packageName"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1014,7 +1028,7 @@ func TestToolAppInstall(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_AppInstall), request.Params.Name)
-	assert.Equal(t, "https://example.com/app.apk", request.Params.Arguments["appUrl"])
+	assert.Equal(t, "https://example.com/app.apk", request.GetArguments()["appUrl"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1047,7 +1061,7 @@ func TestToolAppUninstall(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_AppUninstall), request.Params.Name)
-	assert.Equal(t, "com.example.app", request.Params.Arguments["packageName"])
+	assert.Equal(t, "com.example.app", request.GetArguments()["packageName"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1080,7 +1094,7 @@ func TestToolAppClear(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_AppClear), request.Params.Name)
-	assert.Equal(t, "com.example.app", request.Params.Arguments["packageName"])
+	assert.Equal(t, "com.example.app", request.GetArguments()["packageName"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1113,7 +1127,7 @@ func TestToolSleep(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_Sleep), request.Params.Name)
-	assert.Equal(t, 2.5, request.Params.Arguments["seconds"])
+	assert.Equal(t, 2.5, request.GetArguments()["seconds"])
 }
 
 // TestToolSleepMS tests the ToolSleepMS implementation
@@ -1138,7 +1152,7 @@ func TestToolSleepMS(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SleepMS), request.Params.Name)
-	assert.Equal(t, int64(1500), request.Params.Arguments["milliseconds"])
+	assert.Equal(t, int64(1500), request.GetArguments()["milliseconds"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1172,7 +1186,7 @@ func TestToolSleepRandom(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SleepRandom), request.Params.Name)
 
-	params, ok := request.Params.Arguments["params"].([]float64)
+	params, ok := request.GetArguments()["params"].([]float64)
 	require.True(t, ok)
 	assert.Equal(t, []float64{1.0, 3.0}, params)
 
@@ -1207,7 +1221,7 @@ func TestToolSetIme(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SetIme), request.Params.Name)
-	assert.Equal(t, "com.google.android.inputmethod.latin", request.Params.Arguments["ime"])
+	assert.Equal(t, "com.google.android.inputmethod.latin", request.GetArguments()["ime"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1240,7 +1254,7 @@ func TestToolGetSource(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_GetSource), request.Params.Name)
-	assert.Equal(t, "com.example.app", request.Params.Arguments["packageName"])
+	assert.Equal(t, "com.example.app", request.GetArguments()["packageName"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1273,7 +1287,7 @@ func TestToolClosePopups(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_ClosePopups), request.Params.Name)
-	assert.Empty(t, request.Params.Arguments)
+	assert.Empty(t, request.GetArguments())
 }
 
 // TestToolAIAction tests the ToolAIAction implementation
@@ -1298,7 +1312,7 @@ func TestToolAIAction(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_AIAction), request.Params.Name)
-	assert.Equal(t, "Click on the login button", request.Params.Arguments["prompt"])
+	assert.Equal(t, "Click on the login button", request.GetArguments()["prompt"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1331,7 +1345,7 @@ func TestToolAIQuery(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_Query), request.Params.Name)
-	assert.Equal(t, "What is displayed on the screen?", request.Params.Arguments["prompt"])
+	assert.Equal(t, "What is displayed on the screen?", request.GetArguments()["prompt"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1364,7 +1378,7 @@ func TestToolFinished(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_Finished), request.Params.Name)
-	assert.Equal(t, "Task completed successfully", request.Params.Arguments["content"])
+	assert.Equal(t, "Task completed successfully", request.GetArguments()["content"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1397,7 +1411,7 @@ func TestToolWebLoginNoneUI(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_WebLoginNoneUI), request.Params.Name)
-	assert.Empty(t, request.Params.Arguments)
+	assert.Empty(t, request.GetArguments())
 }
 
 // TestToolSecondaryClick tests the ToolSecondaryClick implementation
@@ -1422,8 +1436,9 @@ func TestToolSecondaryClick(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SecondaryClick), request.Params.Name)
-	assert.Equal(t, 0.5, request.Params.Arguments["x"])
-	assert.Equal(t, 0.6, request.Params.Arguments["y"])
+	args := request.GetArguments()
+	assert.Equal(t, 0.5, args["x"])
+	assert.Equal(t, 0.6, args["y"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1456,7 +1471,7 @@ func TestToolHoverBySelector(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_HoverBySelector), request.Params.Name)
-	assert.Equal(t, "#login-button", request.Params.Arguments["selector"])
+	assert.Equal(t, "#login-button", request.GetArguments()["selector"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1489,7 +1504,7 @@ func TestToolTapBySelector(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_TapBySelector), request.Params.Name)
-	assert.Equal(t, "//button[@id='submit']", request.Params.Arguments["selector"])
+	assert.Equal(t, "//button[@id='submit']", request.GetArguments()["selector"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1522,7 +1537,7 @@ func TestToolSecondaryClickBySelector(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SecondaryClickBySelector), request.Params.Name)
-	assert.Equal(t, ".context-menu-trigger", request.Params.Arguments["selector"])
+	assert.Equal(t, ".context-menu-trigger", request.GetArguments()["selector"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1555,7 +1570,7 @@ func TestToolWebCloseTab(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_WebCloseTab), request.Params.Name)
-	assert.Equal(t, 1, request.Params.Arguments["tabIndex"])
+	assert.Equal(t, 1, request.GetArguments()["tabIndex"])
 
 	// Test ConvertActionToCallToolRequest with invalid params
 	invalidAction := option.MobileAction{
@@ -1583,7 +1598,7 @@ func TestPreMarkOperationConfiguration(t *testing.T) {
 
 	request, err := tapTool.ConvertActionToCallToolRequest(actionWithPreMark)
 	assert.NoError(t, err)
-	assert.Equal(t, true, request.Params.Arguments["pre_mark_operation"])
+	assert.Equal(t, true, request.GetArguments()["pre_mark_operation"])
 
 	// Test conversion without pre_mark_operation
 	actionWithoutPreMark := option.MobileAction{
@@ -1595,7 +1610,7 @@ func TestPreMarkOperationConfiguration(t *testing.T) {
 	request2, err := tapTool.ConvertActionToCallToolRequest(actionWithoutPreMark)
 	assert.NoError(t, err)
 	// Should not have pre_mark_operation in arguments when false
-	_, exists := request2.Params.Arguments["pre_mark_operation"]
+	_, exists := request2.GetArguments()["pre_mark_operation"]
 	assert.False(t, exists)
 }
 

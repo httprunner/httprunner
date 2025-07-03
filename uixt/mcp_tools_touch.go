@@ -33,12 +33,13 @@ func (t *ToolTapXY) Options() []mcp.ToolOption {
 
 func (t *ToolTapXY) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -78,11 +79,7 @@ func (t *ToolTapXY) ConvertActionToCallToolRequest(action option.MobileAction) (
 		if duration := action.ActionOptions.Duration; duration > 0 {
 			arguments["duration"] = duration
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap params: %v", action.Params)
 }
@@ -109,12 +106,13 @@ func (t *ToolTapAbsXY) Options() []mcp.ToolOption {
 
 func (t *ToolTapAbsXY) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -154,11 +152,7 @@ func (t *ToolTapAbsXY) ConvertActionToCallToolRequest(action option.MobileAction
 		if duration := action.ActionOptions.Duration; duration > 0 {
 			arguments["duration"] = duration
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap abs params: %v", action.Params)
 }
@@ -184,12 +178,13 @@ func (t *ToolTapByOCR) Options() []mcp.ToolOption {
 
 func (t *ToolTapByOCR) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -220,11 +215,7 @@ func (t *ToolTapByOCR) ConvertActionToCallToolRequest(action option.MobileAction
 		arguments := map[string]any{
 			"text": text,
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by OCR params: %v", action.Params)
 }
@@ -248,12 +239,13 @@ func (t *ToolTapByCV) Options() []mcp.ToolOption {
 
 func (t *ToolTapByCV) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -281,11 +273,7 @@ func (t *ToolTapByCV) ConvertActionToCallToolRequest(action option.MobileAction)
 	arguments := map[string]any{
 		"imagePath": "", // Will be handled by the tool based on UI types
 	}
-
-	// Extract options to arguments
-	extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-	return BuildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }
 
 // ToolDoubleTapXY implements the double_tap_xy tool call.
@@ -310,12 +298,13 @@ func (t *ToolDoubleTapXY) Options() []mcp.ToolOption {
 
 func (t *ToolDoubleTapXY) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -348,7 +337,7 @@ func (t *ToolDoubleTapXY) ConvertActionToCallToolRequest(action option.MobileAct
 			"x": x,
 			"y": y,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid double tap params: %v", action.Params)
 }

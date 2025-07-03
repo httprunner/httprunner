@@ -755,24 +755,6 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		return stepResult, err
 	}
 
-	identifier := mobileStep.Identifier
-	if mobileStep.Options != nil && identifier == "" {
-		identifier = mobileStep.Options.Identifier
-	}
-	if len(mobileStep.Actions) != 0 && identifier == "" {
-		for _, action := range mobileStep.Actions {
-			if action.Identifier != "" {
-				identifier = action.Identifier
-				break
-			}
-			if action.Options != nil && action.Options.Identifier != "" {
-				identifier = action.Options.Identifier
-				break
-			}
-		}
-	}
-	stepResult.Identifier = identifier
-
 	defer func() {
 		attachments := uixt.Attachments{}
 		if err != nil {

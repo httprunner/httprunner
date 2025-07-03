@@ -32,12 +32,13 @@ func (t *ToolStartToGoal) Options() []mcp.ToolOption {
 
 func (t *ToolStartToGoal) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -62,11 +63,7 @@ func (t *ToolStartToGoal) ConvertActionToCallToolRequest(action option.MobileAct
 		arguments := map[string]any{
 			"prompt": prompt,
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid start to goal params: %v", action.Params)
 }
@@ -92,12 +89,13 @@ func (t *ToolAIAction) Options() []mcp.ToolOption {
 
 func (t *ToolAIAction) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -122,11 +120,7 @@ func (t *ToolAIAction) ConvertActionToCallToolRequest(action option.MobileAction
 		arguments := map[string]any{
 			"prompt": prompt,
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid AI action params: %v", action.Params)
 }
@@ -153,12 +147,13 @@ func (t *ToolAIQuery) Options() []mcp.ToolOption {
 
 func (t *ToolAIQuery) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -187,11 +182,7 @@ func (t *ToolAIQuery) ConvertActionToCallToolRequest(action option.MobileAction)
 		arguments := map[string]any{
 			"prompt": prompt,
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid AI query params: %v", action.Params)
 }
@@ -217,7 +208,7 @@ func (t *ToolFinished) Options() []mcp.ToolOption {
 
 func (t *ToolFinished) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(request.GetArguments())
 		if err != nil {
 			return nil, err
 		}
@@ -237,7 +228,7 @@ func (t *ToolFinished) ConvertActionToCallToolRequest(action option.MobileAction
 		arguments := map[string]any{
 			"content": reason,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid finished params: %v", action.Params)
 }

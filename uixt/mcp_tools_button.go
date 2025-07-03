@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+
+	"github.com/httprunner/httprunner/v5/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
 // ToolPressButton implements the press_button tool call.
@@ -31,12 +32,13 @@ func (t *ToolPressButton) Options() []mcp.ToolOption {
 
 func (t *ToolPressButton) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +61,7 @@ func (t *ToolPressButton) ConvertActionToCallToolRequest(action option.MobileAct
 		arguments := map[string]any{
 			"button": button,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid press button params: %v", action.Params)
 }
@@ -83,7 +85,7 @@ func (t *ToolHome) Options() []mcp.ToolOption {
 
 func (t *ToolHome) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		driverExt, err := setupXTDriver(ctx, request.GetArguments())
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
@@ -102,7 +104,7 @@ func (t *ToolHome) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolHome) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}, action), nil
 }
 
 // ToolBack implements the back tool call.
@@ -124,7 +126,7 @@ func (t *ToolBack) Options() []mcp.ToolOption {
 
 func (t *ToolBack) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		driverExt, err := setupXTDriver(ctx, request.GetArguments())
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
@@ -143,5 +145,5 @@ func (t *ToolBack) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolBack) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}, action), nil
 }

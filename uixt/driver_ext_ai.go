@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino/schema"
-	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -313,24 +312,16 @@ func (dExt *XTDriver) invokeToolCall(ctx context.Context, toolCall schema.ToolCa
 		return err
 	}
 
-	// Merge StartToGoal options into tool call arguments
-	// This ensures options like PreMarkOperation are passed to specific tool implementations
-	extractActionOptionsToArguments(opts, arguments)
-
-	// Execute the action
-	req := mcp.CallToolRequest{
-		Params: struct {
-			Name      string         `json:"name"`
-			Arguments map[string]any `json:"arguments,omitempty"`
-			Meta      *struct {
-				ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
-			} `json:"_meta,omitempty"`
-		}{
-			Name:      toolCall.Function.Name,
-			Arguments: arguments,
-		},
+	// Create a MobileAction with options to reuse BuildMCPCallToolRequest
+	action := option.MobileAction{
+		Options: option.NewActionOptions(opts...),
 	}
 
+	req := BuildMCPCallToolRequest(
+		option.ActionName(toolCall.Function.Name),
+		arguments,
+		action,
+	)
 	_, err = dExt.client.CallTool(ctx, req)
 	if err != nil {
 		return err

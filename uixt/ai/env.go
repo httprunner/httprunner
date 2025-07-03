@@ -5,12 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudwego/eino-ext/components/model/openai"
+	"github.com/cloudwego/eino-ext/components/model/ark"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 // LLM model config env variables
@@ -20,9 +21,7 @@ const (
 	EnvModelName     = "LLM_MODEL_NAME"
 )
 
-const (
-	defaultTimeout = 120 * time.Second
-)
+var defaultTimeout = 120 * time.Second
 
 // GetModelConfig get OpenAI config
 func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
@@ -38,11 +37,11 @@ func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 	// https://www.volcengine.com/docs/82379/1536429
 	temperature := float32(0)
 	topP := float32(0.7)
-	modelConfig := &openai.ChatModelConfig{
+	modelConfig := &ark.ChatModelConfig{
 		BaseURL:     baseURL,
 		APIKey:      apiKey,
 		Model:       modelName,
-		Timeout:     defaultTimeout,
+		Timeout:     &defaultTimeout,
 		Temperature: &temperature,
 		TopP:        &topP,
 	}
@@ -62,7 +61,7 @@ func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 }
 
 type ModelConfig struct {
-	*openai.ChatModelConfig
+	*ark.ChatModelConfig
 	ModelType option.LLMServiceType
 }
 
@@ -80,6 +79,7 @@ func getServiceEnvPrefix(modelType option.LLMServiceType) string {
 // It first tries to get service-specific config, then falls back to default config
 // Model name is derived from the service type, no need for separate MODEL_NAME env var
 func getModelConfigFromEnv(modelType option.LLMServiceType) (baseURL, apiKey, modelName string, err error) {
+	log.Info().Str("modelType", string(modelType)).Msg("getModelConfigFromEnv")
 	servicePrefix := getServiceEnvPrefix(modelType)
 
 	// Try to get service-specific configuration first

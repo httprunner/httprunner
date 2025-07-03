@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // ToolInput implements the input tool call.
@@ -30,12 +31,13 @@ func (t *ToolInput) Options() []mcp.ToolOption {
 
 func (t *ToolInput) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -44,8 +46,10 @@ func (t *ToolInput) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("text is required")
 		}
 
+		opts := unifiedReq.Options()
+
 		// Input action logic
-		err = driverExt.Input(unifiedReq.Text)
+		err = driverExt.Input(unifiedReq.Text, opts...)
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("Input failed: %s", err.Error())), err
 		}
@@ -62,7 +66,7 @@ func (t *ToolInput) ConvertActionToCallToolRequest(action option.MobileAction) (
 	arguments := map[string]any{
 		"text": text,
 	}
-	return BuildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }
 
 // ToolSetIme implements the set_ime tool call.
@@ -86,12 +90,13 @@ func (t *ToolSetIme) Options() []mcp.ToolOption {
 
 func (t *ToolSetIme) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +119,7 @@ func (t *ToolSetIme) ConvertActionToCallToolRequest(action option.MobileAction) 
 		arguments := map[string]any{
 			"ime": ime,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid set ime params: %v", action.Params)
 }

@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // ToolListPackages implements the list_packages tool call.
@@ -32,7 +33,7 @@ func (t *ToolListPackages) Options() []mcp.ToolOption {
 
 func (t *ToolListPackages) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		driverExt, err := setupXTDriver(ctx, request.GetArguments())
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +54,7 @@ func (t *ToolListPackages) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolListPackages) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}, action), nil
 }
 
 // ToolLaunchApp implements the launch_app tool call.
@@ -77,12 +78,13 @@ func (t *ToolLaunchApp) Options() []mcp.ToolOption {
 
 func (t *ToolLaunchApp) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +111,7 @@ func (t *ToolLaunchApp) ConvertActionToCallToolRequest(action option.MobileActio
 		arguments := map[string]any{
 			"packageName": packageName,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app launch params: %v", action.Params)
 }
@@ -136,12 +138,13 @@ func (t *ToolTerminateApp) Options() []mcp.ToolOption {
 
 func (t *ToolTerminateApp) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -174,7 +177,7 @@ func (t *ToolTerminateApp) ConvertActionToCallToolRequest(action option.MobileAc
 		arguments := map[string]any{
 			"packageName": packageName,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app terminate params: %v", action.Params)
 }
@@ -200,12 +203,13 @@ func (t *ToolAppInstall) Options() []mcp.ToolOption {
 
 func (t *ToolAppInstall) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -228,7 +232,7 @@ func (t *ToolAppInstall) ConvertActionToCallToolRequest(action option.MobileActi
 		arguments := map[string]any{
 			"appUrl": appUrl,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app install params: %v", action.Params)
 }
@@ -254,12 +258,13 @@ func (t *ToolAppUninstall) Options() []mcp.ToolOption {
 
 func (t *ToolAppUninstall) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -282,7 +287,7 @@ func (t *ToolAppUninstall) ConvertActionToCallToolRequest(action option.MobileAc
 		arguments := map[string]any{
 			"packageName": packageName,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app uninstall params: %v", action.Params)
 }
@@ -308,12 +313,13 @@ func (t *ToolAppClear) Options() []mcp.ToolOption {
 
 func (t *ToolAppClear) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -336,7 +342,7 @@ func (t *ToolAppClear) ConvertActionToCallToolRequest(action option.MobileAction
 		arguments := map[string]any{
 			"packageName": packageName,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid app clear params: %v", action.Params)
 }
@@ -363,7 +369,7 @@ func (t *ToolGetForegroundApp) Options() []mcp.ToolOption {
 
 func (t *ToolGetForegroundApp) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		driverExt, err := setupXTDriver(ctx, request.GetArguments())
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
@@ -385,5 +391,5 @@ func (t *ToolGetForegroundApp) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolGetForegroundApp) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}, action), nil
 }
