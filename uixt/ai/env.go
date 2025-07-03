@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cloudwego/eino-ext/components/model/openai"
+	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -21,9 +21,7 @@ const (
 	EnvModelName     = "LLM_MODEL_NAME"
 )
 
-const (
-	defaultTimeout = 120 * time.Second
-)
+var defaultTimeout = 120 * time.Second
 
 // GetModelConfig get OpenAI config
 func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
@@ -39,11 +37,11 @@ func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 	// https://www.volcengine.com/docs/82379/1536429
 	temperature := float32(0)
 	topP := float32(0.7)
-	modelConfig := &openai.ChatModelConfig{
+	modelConfig := &ark.ChatModelConfig{
 		BaseURL:     baseURL,
 		APIKey:      apiKey,
 		Model:       modelName,
-		Timeout:     defaultTimeout,
+		Timeout:     &defaultTimeout,
 		Temperature: &temperature,
 		TopP:        &topP,
 	}
@@ -63,7 +61,7 @@ func GetModelConfig(modelType option.LLMServiceType) (*ModelConfig, error) {
 }
 
 type ModelConfig struct {
-	*openai.ChatModelConfig
+	*ark.ChatModelConfig
 	ModelType option.LLMServiceType
 }
 

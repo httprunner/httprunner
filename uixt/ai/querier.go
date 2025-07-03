@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/cloudwego/eino-ext/components/model/openai"
-	openai2 "github.com/cloudwego/eino-ext/libs/acl/openai"
+	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
 	"github.com/getkin/kin-openapi/openapi3gen"
+	"github.com/pkg/errors"
+	arkModel "github.com/volcengine/volcengine-go-sdk/service/arkruntime/model"
+
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
-	"github.com/pkg/errors"
 )
 
 // IQuerier interface defines the contract for query operations
@@ -68,9 +69,9 @@ func NewQuerier(ctx context.Context, modelConfig *ModelConfig) (*Querier, error)
 			return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
 		}
 		// set structured response format
-		modelConfig.ChatModelConfig.ResponseFormat = &openai2.ChatCompletionResponseFormat{
-			Type: openai2.ChatCompletionResponseFormatTypeJSONSchema,
-			JSONSchema: &openai2.ChatCompletionResponseFormatJSONSchema{
+		modelConfig.ChatModelConfig.ResponseFormat = &ark.ResponseFormat{
+			Type: arkModel.ResponseFormatJSONSchema,
+			JSONSchema: &arkModel.ResponseFormatJSONSchemaJSONSchemaParam{
 				Name:        "query_result",
 				Description: "data that describes query result",
 				Schema:      outputFormatSchema.Value,
@@ -80,7 +81,7 @@ func NewQuerier(ctx context.Context, modelConfig *ModelConfig) (*Querier, error)
 	}
 
 	var err error
-	querier.model, err = openai.NewChatModel(ctx, modelConfig.ChatModelConfig)
+	querier.model, err = ark.NewChatModel(ctx, modelConfig.ChatModelConfig)
 	if err != nil {
 		return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
 	}
@@ -207,9 +208,9 @@ func (q *Querier) queryWithCustomSchema(ctx context.Context, opts *QueryOptions)
 		}
 
 		// Create custom response format with the provided schema
-		modelConfig.ChatModelConfig.ResponseFormat = &openai2.ChatCompletionResponseFormat{
-			Type: openai2.ChatCompletionResponseFormatTypeJSONSchema,
-			JSONSchema: &openai2.ChatCompletionResponseFormatJSONSchema{
+		modelConfig.ChatModelConfig.ResponseFormat = &ark.ResponseFormat{
+			Type: arkModel.ResponseFormatJSONSchema,
+			JSONSchema: &arkModel.ResponseFormatJSONSchemaJSONSchemaParam{
 				Name:        "custom_query_result",
 				Description: "custom structured data response",
 				Schema:      outputFormatSchema.Value,
@@ -219,7 +220,7 @@ func (q *Querier) queryWithCustomSchema(ctx context.Context, opts *QueryOptions)
 	}
 
 	// Create a new model instance with custom schema
-	model, err := openai.NewChatModel(ctx, modelConfig.ChatModelConfig)
+	model, err := ark.NewChatModel(ctx, modelConfig.ChatModelConfig)
 	if err != nil {
 		return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
 	}

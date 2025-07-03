@@ -14,9 +14,8 @@ require (
 	github.com/charmbracelet/huh/spinner v0.0.0-20250509124401-5fd7cf508477
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/cloudwego/eino v0.3.47
-	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250626134119-cf4f96ea0039
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.13
 	github.com/cloudwego/eino-ext/components/tool/mcp v0.0.3
-	github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250703030129-4213de139ae8
 	github.com/danielpaulus/go-ios v1.0.161
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/fatih/color v1.16.0
@@ -39,6 +38,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
+	github.com/volcengine/volcengine-go-sdk v1.1.16
 	golang.org/x/net v0.41.0
 	golang.org/x/term v0.32.0
 	golang.org/x/text v0.26.0
@@ -52,7 +52,6 @@ require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/bytedance/mockey v1.2.14 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/catppuccin/go v0.2.0 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
@@ -68,7 +67,6 @@ require (
 	github.com/dlclark/regexp2 v1.11.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
-	github.com/evanphx/json-patch v0.5.2 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
@@ -103,7 +101,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/meguminnnnnnnnn/go-openai v0.0.0-20250620092828-0d508a1dcdde // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/miekg/dns v1.1.57 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
@@ -134,6 +131,7 @@ require (
 	github.com/tadglines/go-pkgs v0.0.0-20210623144937-b983b20f54f9 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
+	github.com/volcengine/volc-sdk-golang v1.0.23 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect

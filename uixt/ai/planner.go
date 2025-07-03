@@ -3,14 +3,15 @@ package ai
 import (
 	"context"
 
-	"github.com/cloudwego/eino-ext/components/model/openai"
+	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 type IPlanner interface {
@@ -42,7 +43,7 @@ func NewPlanner(ctx context.Context, modelConfig *ModelConfig) (*Planner, error)
 	}
 
 	var err error
-	planner.model, err = openai.NewChatModel(ctx, modelConfig.ChatModelConfig)
+	planner.model, err = ark.NewChatModel(ctx, modelConfig.ChatModelConfig)
 	if err != nil {
 		return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
 	}

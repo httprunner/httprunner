@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cloudwego/eino-ext/components/model/openai"
-	openai2 "github.com/cloudwego/eino-ext/libs/acl/openai"
+	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
 	"github.com/getkin/kin-openapi/openapi3gen"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+	arkModel "github.com/volcengine/volcengine-go-sdk/service/arkruntime/model"
+
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 // IAsserter interface defines the contract for assertion operations
@@ -65,10 +66,9 @@ func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, erro
 			return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
 		}
 		// set structured response format
-		// https://github.com/cloudwego/eino-ext/blob/main/components/model/openai/examples/structured/structured.go
-		modelConfig.ChatModelConfig.ResponseFormat = &openai2.ChatCompletionResponseFormat{
-			Type: openai2.ChatCompletionResponseFormatTypeJSONSchema,
-			JSONSchema: &openai2.ChatCompletionResponseFormatJSONSchema{
+		modelConfig.ChatModelConfig.ResponseFormat = &ark.ResponseFormat{
+			Type: arkModel.ResponseFormatJSONSchema,
+			JSONSchema: &arkModel.ResponseFormatJSONSchemaJSONSchemaParam{
 				Name:        "assertion_result",
 				Description: "data that describes assertion result",
 				Schema:      outputFormatSchema.Value,
@@ -78,7 +78,7 @@ func NewAsserter(ctx context.Context, modelConfig *ModelConfig) (*Asserter, erro
 	}
 
 	var err error
-	asserter.model, err = openai.NewChatModel(ctx, modelConfig.ChatModelConfig)
+	asserter.model, err = ark.NewChatModel(ctx, modelConfig.ChatModelConfig)
 	if err != nil {
 		return nil, errors.Wrap(code.LLMPrepareRequestError, err.Error())
 	}
