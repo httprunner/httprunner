@@ -459,6 +459,12 @@ func (r *CaseRunner) parseConfig() (parsedConfig *TConfig, err error) {
 	}
 	parsedConfig.Variables = parsedVariables
 
+	// backup original user variables before merging env variables
+	parsedConfig.OriginalVariables = make(map[string]interface{})
+	for k, v := range parsedVariables {
+		parsedConfig.OriginalVariables[k] = v
+	}
+
 	// parse config name
 	parsedName, err := r.parser.ParseString(cfg.Name, parsedVariables)
 	if err != nil {
@@ -694,7 +700,9 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 			exportVars[value] = r.sessionVariables[value]
 		}
 		summary.InOut.ExportVars = exportVars
-		summary.InOut.ConfigVars = config.Variables
+
+		// dump summary with original user variables only (exclude environment variables)
+		summary.InOut.ConfigVars = config.OriginalVariables
 
 		// Save JSON case content to results directory
 		if config.Path != "" {

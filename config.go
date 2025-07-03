@@ -14,9 +14,10 @@ type IConfig interface {
 // NewConfig returns a new constructed testcase config with specified testcase name.
 func NewConfig(name string) *TConfig {
 	return &TConfig{
-		Name:      name,
-		Environs:  make(map[string]string),
-		Variables: make(map[string]interface{}),
+		Name:              name,
+		Environs:          make(map[string]string),
+		Variables:         make(map[string]interface{}),
+		OriginalVariables: make(map[string]interface{}),
 	}
 }
 
@@ -28,6 +29,7 @@ type TConfig struct {
 	Headers           map[string]string              `json:"headers,omitempty" yaml:"headers,omitempty"`     // public request headers
 	Environs          map[string]string              `json:"environs,omitempty" yaml:"environs,omitempty"`   // environment variables
 	Variables         map[string]interface{}         `json:"variables,omitempty" yaml:"variables,omitempty"` // global variables
+	OriginalVariables map[string]interface{}         `json:"-" yaml:"-"`                                     // original user variables before env merge (not serialized)
 	Parameters        map[string]interface{}         `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	ParametersSetting *TParamsConfig                 `json:"parameters_setting,omitempty" yaml:"parameters_setting,omitempty"`
 	ThinkTimeSetting  *ThinkTimeConfig               `json:"think_time,omitempty" yaml:"think_time,omitempty"`
