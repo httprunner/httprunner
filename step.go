@@ -71,7 +71,6 @@ type ActionResult struct {
 // one testcase contains one or multiple steps
 type StepResult struct {
 	Name        string                 `json:"name" yaml:"name"`                                     // step name
-	Identifier  string                 `json:"identifier,omitempty" yaml:"identifier,omitempty"`     // step identifier
 	StartTime   int64                  `json:"start_time" yaml:"time"`                               // step start time in millisecond(ms)
 	StepType    StepType               `json:"step_type" yaml:"step_type"`                           // step type, testcase/request/transaction/rendezvous
 	Success     bool                   `json:"success" yaml:"success"`                               // step execution result
