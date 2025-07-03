@@ -37,7 +37,7 @@ func (t *ToolSwipe) Options() []mcp.ToolOption {
 func (t *ToolSwipe) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		// Check if it's direction-based swipe (has "direction" parameter)
-		if _, exists := request.Params.Arguments["direction"]; exists {
+		if _, exists := request.GetArguments()["direction"]; exists {
 			// Delegate to ToolSwipeDirection
 			directionTool := &ToolSwipeDirection{}
 			return directionTool.Implement()(ctx, request)
@@ -104,12 +104,13 @@ func (t *ToolSwipeDirection) Options() []mcp.ToolOption {
 
 func (t *ToolSwipeDirection) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -212,12 +213,13 @@ func (t *ToolSwipeCoordinate) Options() []mcp.ToolOption {
 
 func (t *ToolSwipeCoordinate) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -298,12 +300,13 @@ func (t *ToolSwipeToTapApp) Options() []mcp.ToolOption {
 
 func (t *ToolSwipeToTapApp) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -355,12 +358,13 @@ func (t *ToolSwipeToTapText) Options() []mcp.ToolOption {
 
 func (t *ToolSwipeToTapText) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -413,12 +417,13 @@ func (t *ToolSwipeToTapTexts) Options() []mcp.ToolOption {
 
 func (t *ToolSwipeToTapTexts) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -481,21 +486,22 @@ func (t *ToolDrag) Options() []mcp.ToolOption {
 
 func (t *ToolDrag) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}
 
 		// Validate required parameters - check if coordinates are provided (not just non-zero)
-		_, hasFromX := request.Params.Arguments["from_x"]
-		_, hasFromY := request.Params.Arguments["from_y"]
-		_, hasToX := request.Params.Arguments["to_x"]
-		_, hasToY := request.Params.Arguments["to_y"]
+		_, hasFromX := arguments["from_x"]
+		_, hasFromY := arguments["from_y"]
+		_, hasToX := arguments["to_x"]
+		_, hasToY := arguments["to_y"]
 		if !hasFromX || !hasFromY || !hasToX || !hasToY {
 			return nil, fmt.Errorf("from_x, from_y, to_x, and to_y coordinates are required")
 		}

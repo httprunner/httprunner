@@ -163,13 +163,7 @@ func BuildMCPCallToolRequest(toolName option.ActionName, arguments map[string]an
 	extractActionOptionsToArguments(action.GetOptions(), arguments)
 
 	return mcp.CallToolRequest{
-		Params: struct {
-			Name      string         `json:"name"`
-			Arguments map[string]any `json:"arguments,omitempty"`
-			Meta      *struct {
-				ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
-			} `json:"_meta,omitempty"`
-		}{
+		Params: mcp.CallToolParams{
 			Name:      string(toolName),
 			Arguments: arguments,
 		},

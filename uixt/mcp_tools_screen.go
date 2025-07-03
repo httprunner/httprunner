@@ -31,7 +31,7 @@ func (t *ToolScreenShot) Options() []mcp.ToolOption {
 
 func (t *ToolScreenShot) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		driverExt, err := setupXTDriver(ctx, request.GetArguments())
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +75,7 @@ func (t *ToolGetScreenSize) Options() []mcp.ToolOption {
 
 func (t *ToolGetScreenSize) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		driverExt, err := setupXTDriver(ctx, request.GetArguments())
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
@@ -121,12 +121,13 @@ func (t *ToolGetSource) Options() []mcp.ToolOption {
 
 func (t *ToolGetSource) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, fmt.Errorf("setup driver failed: %w", err)
 		}
 
-		unifiedReq, err := parseActionOptions(request.Params.Arguments)
+		unifiedReq, err := parseActionOptions(arguments)
 		if err != nil {
 			return nil, err
 		}

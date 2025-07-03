@@ -109,7 +109,7 @@ func (t *ToolSelectDevice) Options() []mcp.ToolOption {
 
 func (t *ToolSelectDevice) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		driverExt, err := setupXTDriver(ctx, request.GetArguments())
 		if err != nil {
 			return nil, err
 		}
@@ -155,7 +155,8 @@ func (t *ToolScreenRecord) Options() []mcp.ToolOption {
 
 func (t *ToolScreenRecord) Implement() server.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		driverExt, err := setupXTDriver(ctx, request.Params.Arguments)
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
 		if err != nil {
 			return nil, err
 		}
@@ -163,19 +164,19 @@ func (t *ToolScreenRecord) Implement() server.ToolHandlerFunc {
 		// Parse options from arguments
 		var opts []option.ActionOption
 
-		if duration, ok := request.Params.Arguments["duration"].(float64); ok && duration > 0 {
+		if duration, ok := arguments["duration"].(float64); ok && duration > 0 {
 			opts = append(opts, option.WithDuration(duration))
 		}
 
-		if path, ok := request.Params.Arguments["screenRecordPath"].(string); ok && path != "" {
+		if path, ok := arguments["screenRecordPath"].(string); ok && path != "" {
 			opts = append(opts, option.WithScreenRecordPath(path))
 		}
 
-		if audio, ok := request.Params.Arguments["screenRecordWithAudio"].(bool); ok && audio {
+		if audio, ok := arguments["screenRecordWithAudio"].(bool); ok && audio {
 			opts = append(opts, option.WithScreenRecordAudio(true))
 		}
 
-		if scrcpy, ok := request.Params.Arguments["screenRecordWithScrcpy"].(bool); ok && scrcpy {
+		if scrcpy, ok := arguments["screenRecordWithScrcpy"].(bool); ok && scrcpy {
 			opts = append(opts, option.WithScreenRecordScrcpy(true))
 		}
 

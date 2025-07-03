@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 // LLM model config env variables
@@ -80,6 +81,7 @@ func getServiceEnvPrefix(modelType option.LLMServiceType) string {
 // It first tries to get service-specific config, then falls back to default config
 // Model name is derived from the service type, no need for separate MODEL_NAME env var
 func getModelConfigFromEnv(modelType option.LLMServiceType) (baseURL, apiKey, modelName string, err error) {
+	log.Info().Str("modelType", string(modelType)).Msg("getModelConfigFromEnv")
 	servicePrefix := getServiceEnvPrefix(modelType)
 
 	// Try to get service-specific configuration first
