@@ -183,11 +183,7 @@ func (t *ToolSwipeDirection) ConvertActionToCallToolRequest(action option.Mobile
 		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
 			arguments["pressDuration"] = pressDuration
 		}
-
-		// Extract all action options
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe params: %v", action.Params)
 }
@@ -276,11 +272,7 @@ func (t *ToolSwipeCoordinate) ConvertActionToCallToolRequest(action option.Mobil
 		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
 			arguments["pressDuration"] = pressDuration
 		}
-
-		// Extract all action options
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe advanced params: %v", action.Params)
 }
@@ -337,11 +329,7 @@ func (t *ToolSwipeToTapApp) ConvertActionToCallToolRequest(action option.MobileA
 		arguments := map[string]any{
 			"appName": appName,
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap app params: %v", action.Params)
 }
@@ -398,11 +386,7 @@ func (t *ToolSwipeToTapText) ConvertActionToCallToolRequest(action option.Mobile
 		arguments := map[string]any{
 			"text": text,
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid swipe to tap text params: %v", action.Params)
 }
@@ -470,11 +454,7 @@ func (t *ToolSwipeToTapTexts) ConvertActionToCallToolRequest(action option.Mobil
 	arguments := map[string]any{
 		"texts": texts,
 	}
-
-	// Extract options to arguments
-	extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-	return BuildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }
 
 // ToolDrag implements the drag tool call.
@@ -557,11 +537,7 @@ func (t *ToolDrag) ConvertActionToCallToolRequest(action option.MobileAction) (m
 		if duration := action.ActionOptions.Duration; duration > 0 {
 			arguments["duration"] = duration * 1000 // convert to milliseconds
 		}
-
-		// Extract all action options
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid drag parameters: %v", action.Params)
 }

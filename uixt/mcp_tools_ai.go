@@ -62,11 +62,7 @@ func (t *ToolStartToGoal) ConvertActionToCallToolRequest(action option.MobileAct
 		arguments := map[string]any{
 			"prompt": prompt,
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid start to goal params: %v", action.Params)
 }
@@ -122,11 +118,7 @@ func (t *ToolAIAction) ConvertActionToCallToolRequest(action option.MobileAction
 		arguments := map[string]any{
 			"prompt": prompt,
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid AI action params: %v", action.Params)
 }
@@ -187,11 +179,7 @@ func (t *ToolAIQuery) ConvertActionToCallToolRequest(action option.MobileAction)
 		arguments := map[string]any{
 			"prompt": prompt,
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid AI query params: %v", action.Params)
 }
@@ -237,7 +225,7 @@ func (t *ToolFinished) ConvertActionToCallToolRequest(action option.MobileAction
 		arguments := map[string]any{
 			"content": reason,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid finished params: %v", action.Params)
 }

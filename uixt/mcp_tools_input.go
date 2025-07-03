@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // ToolInput implements the input tool call.
@@ -44,8 +45,10 @@ func (t *ToolInput) Implement() server.ToolHandlerFunc {
 			return nil, fmt.Errorf("text is required")
 		}
 
+		opts := unifiedReq.Options()
+
 		// Input action logic
-		err = driverExt.Input(unifiedReq.Text)
+		err = driverExt.Input(unifiedReq.Text, opts...)
 		if err != nil {
 			return NewMCPErrorResponse(fmt.Sprintf("Input failed: %s", err.Error())), err
 		}
@@ -62,7 +65,7 @@ func (t *ToolInput) ConvertActionToCallToolRequest(action option.MobileAction) (
 	arguments := map[string]any{
 		"text": text,
 	}
-	return BuildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }
 
 // ToolSetIme implements the set_ime tool call.
@@ -114,7 +117,7 @@ func (t *ToolSetIme) ConvertActionToCallToolRequest(action option.MobileAction) 
 		arguments := map[string]any{
 			"ime": ime,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid set ime params: %v", action.Params)
 }

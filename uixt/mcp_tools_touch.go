@@ -78,11 +78,7 @@ func (t *ToolTapXY) ConvertActionToCallToolRequest(action option.MobileAction) (
 		if duration := action.ActionOptions.Duration; duration > 0 {
 			arguments["duration"] = duration
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap params: %v", action.Params)
 }
@@ -154,11 +150,7 @@ func (t *ToolTapAbsXY) ConvertActionToCallToolRequest(action option.MobileAction
 		if duration := action.ActionOptions.Duration; duration > 0 {
 			arguments["duration"] = duration
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap abs params: %v", action.Params)
 }
@@ -220,11 +212,7 @@ func (t *ToolTapByOCR) ConvertActionToCallToolRequest(action option.MobileAction
 		arguments := map[string]any{
 			"text": text,
 		}
-
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by OCR params: %v", action.Params)
 }
@@ -281,11 +269,7 @@ func (t *ToolTapByCV) ConvertActionToCallToolRequest(action option.MobileAction)
 	arguments := map[string]any{
 		"imagePath": "", // Will be handled by the tool based on UI types
 	}
-
-	// Extract options to arguments
-	extractActionOptionsToArguments(action.GetOptions(), arguments)
-
-	return BuildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }
 
 // ToolDoubleTapXY implements the double_tap_xy tool call.
@@ -348,7 +332,7 @@ func (t *ToolDoubleTapXY) ConvertActionToCallToolRequest(action option.MobileAct
 			"x": x,
 			"y": y,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid double tap params: %v", action.Params)
 }

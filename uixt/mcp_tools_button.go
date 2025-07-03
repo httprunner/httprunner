@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/httprunner/httprunner/v5/uixt/types"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+
+	"github.com/httprunner/httprunner/v5/uixt/option"
+	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
 // ToolPressButton implements the press_button tool call.
@@ -59,7 +60,7 @@ func (t *ToolPressButton) ConvertActionToCallToolRequest(action option.MobileAct
 		arguments := map[string]any{
 			"button": button,
 		}
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid press button params: %v", action.Params)
 }
@@ -102,7 +103,7 @@ func (t *ToolHome) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolHome) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}, action), nil
 }
 
 // ToolBack implements the back tool call.
@@ -143,5 +144,5 @@ func (t *ToolBack) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolBack) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}, action), nil
 }

@@ -5,11 +5,12 @@ import (
 	"fmt"
 
 	"github.com/danielpaulus/go-ios/ios"
-	"github.com/httprunner/httprunner/v5/pkg/gadb"
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/pkg/gadb"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 // ToolListAvailableDevices implements the list_available_devices tool call.
@@ -82,7 +83,7 @@ func (t *ToolListAvailableDevices) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolListAvailableDevices) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}, action), nil
 }
 
 // ToolSelectDevice implements the select_device tool call.
@@ -122,7 +123,7 @@ func (t *ToolSelectDevice) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolSelectDevice) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}, action), nil
 }
 
 // ToolScreenRecord implements the screenrecord tool call.
@@ -212,5 +213,5 @@ func (t *ToolScreenRecord) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolScreenRecord) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	return BuildMCPCallToolRequest(t.Name(), map[string]any{}), nil
+	return BuildMCPCallToolRequest(t.Name(), map[string]any{}, action), nil
 }

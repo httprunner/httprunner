@@ -71,8 +71,7 @@ func (t *ToolWebLoginNoneUI) ConvertActionToCallToolRequest(action option.Mobile
 		arguments["captcha"] = textsSlice[2].(string)
 		arguments["password"] = textsSlice[3].(string)
 	}
-
-	return BuildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }
 
 // ToolSecondaryClick implements the secondary_click tool call.
@@ -134,9 +133,7 @@ func (t *ToolSecondaryClick) ConvertActionToCallToolRequest(action option.Mobile
 			"x": params[0],
 			"y": params[1],
 		}
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click params: %v", action.Params)
 }
@@ -192,9 +189,7 @@ func (t *ToolHoverBySelector) ConvertActionToCallToolRequest(action option.Mobil
 		arguments := map[string]any{
 			"selector": selector,
 		}
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid hover by selector params: %v", action.Params)
 }
@@ -250,9 +245,7 @@ func (t *ToolTapBySelector) ConvertActionToCallToolRequest(action option.MobileA
 		arguments := map[string]any{
 			"selector": selector,
 		}
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid tap by selector params: %v", action.Params)
 }
@@ -308,9 +301,7 @@ func (t *ToolSecondaryClickBySelector) ConvertActionToCallToolRequest(action opt
 		arguments := map[string]any{
 			"selector": selector,
 		}
-		// Extract options to arguments
-		extractActionOptionsToArguments(action.GetOptions(), arguments)
-		return BuildMCPCallToolRequest(t.Name(), arguments), nil
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid secondary click by selector params: %v", action.Params)
 }
@@ -384,7 +375,5 @@ func (t *ToolWebCloseTab) ConvertActionToCallToolRequest(action option.MobileAct
 	arguments := map[string]any{
 		"tabIndex": tabIndex,
 	}
-	// Extract options to arguments
-	extractActionOptionsToArguments(action.GetOptions(), arguments)
-	return BuildMCPCallToolRequest(t.Name(), arguments), nil
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }
