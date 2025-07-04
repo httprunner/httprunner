@@ -75,9 +75,9 @@ func (t *ToolSleep) Implement() server.ToolHandlerFunc {
 		case <-time.After(duration):
 			// Normal completion
 		case <-ctx.Done():
-			// Interrupted by context cancellation (e.g., CTRL+C)
-			log.Warn().Msg("sleep interrupted by cancellation")
-			return nil, fmt.Errorf("sleep interrupted: %w", ctx.Err())
+			// Interrupted by context cancellation (interrupt signal, timeout, time limit)
+			log.Info().Msg("sleep interrupted by context cancellation")
+			// Don't return error - let the upper layer handle timeout/time limit logic
 		}
 
 		message := fmt.Sprintf("Successfully slept for %v seconds", actualSeconds)
@@ -157,9 +157,9 @@ func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 		case <-time.After(duration):
 			// Normal completion
 		case <-ctx.Done():
-			// Interrupted by context cancellation (e.g., CTRL+C)
-			log.Warn().Msg("sleep interrupted by cancellation")
-			return nil, fmt.Errorf("sleep interrupted: %w", ctx.Err())
+			// Interrupted by context cancellation (interrupt signal, timeout, time limit)
+			log.Info().Msg("sleep interrupted by context cancellation")
+			// Don't return error - let the upper layer handle timeout/time limit logic
 		}
 
 		message := fmt.Sprintf("Successfully slept for %d milliseconds", actualMilliseconds)
