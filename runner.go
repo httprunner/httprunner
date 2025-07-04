@@ -711,27 +711,27 @@ func (r *SessionRunner) Start(givenVars map[string]interface{}) (summary *TestCa
 			}
 		}
 
-		// TODO: move to mobile ui step
 		// Collect logs from cached drivers
 		for _, cached := range uixt.ListCachedDrivers() {
-			// add WDA/UIA logs to summary
+			client := cached.Item
+			if !client.GetDevice().LogEnabled() {
+				continue
+			}
+
+			// add WDA/UIA2 logs to summary
 			logs := map[string]interface{}{
 				"uuid": cached.Key,
 			}
-
-			client := cached.Item
-			if client.GetDevice().LogEnabled() {
-				log, err1 := client.StopCaptureLog()
-				if err1 != nil {
-					if err == nil {
-						err = errors.Wrap(err1, "stop capture log failed")
-					} else {
-						err = errors.Wrap(err, "stop capture log failed")
-					}
-					return
+			log, err1 := client.StopCaptureLog()
+			if err1 != nil {
+				if err == nil {
+					err = errors.Wrap(err1, "stop capture log failed")
+				} else {
+					err = errors.Wrap(err, "stop capture log failed")
 				}
-				logs["content"] = log
+				return
 			}
+			logs["content"] = log
 
 			summary.Logs = append(summary.Logs, logs)
 		}

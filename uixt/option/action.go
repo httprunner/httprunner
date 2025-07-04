@@ -201,6 +201,7 @@ type ActionOptions struct {
 	Steps         int             `json:"steps,omitempty" yaml:"steps,omitempty" desc:"Number of steps for action"`
 	Direction     interface{}     `json:"direction,omitempty" yaml:"direction,omitempty" desc:"Direction for swipe operations or custom coordinates"`
 	Timeout       int             `json:"timeout,omitempty" yaml:"timeout,omitempty" desc:"Timeout in seconds for action execution"`
+	TimeLimit     int             `json:"time_limit,omitempty" yaml:"time_limit,omitempty" desc:"Time limit in seconds for action execution, stops gracefully when reached"`
 	Frequency     int             `json:"frequency,omitempty" yaml:"frequency,omitempty" desc:"Action frequency"`
 
 	ScreenOptions
@@ -280,6 +281,9 @@ func (o *ActionOptions) Options() []ActionOption {
 
 	if o.Timeout != 0 {
 		options = append(options, WithTimeout(o.Timeout))
+	}
+	if o.TimeLimit != 0 {
+		options = append(options, WithTimeLimit(o.TimeLimit))
 	}
 	if o.Frequency != 0 {
 		options = append(options, WithFrequency(o.Frequency))
@@ -559,6 +563,12 @@ func WithMaxRetryTimes(maxRetryTimes int) ActionOption {
 func WithTimeout(seconds int) ActionOption {
 	return func(o *ActionOptions) {
 		o.Timeout = seconds
+	}
+}
+
+func WithTimeLimit(seconds int) ActionOption {
+	return func(o *ActionOptions) {
+		o.TimeLimit = seconds
 	}
 }
 

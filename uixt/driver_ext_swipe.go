@@ -98,6 +98,12 @@ func (dExt *XTDriver) SwipeToTapTexts(texts []string, opts ...option.ActionOptio
 
 	log.Info().Strs("texts", texts).Msg("swipe to tap texts")
 	opts = append(opts, option.WithMatchOne(true), option.WithRegex(true))
+
+	// Remove identifier for swipe operations to avoid WDA/UIA2 logging
+	actionOptions := option.NewActionOptions(opts...)
+	actionOptions.Identifier = ""
+	optionsWithoutIdentifier := actionOptions.Options()
+
 	var point ai.PointF
 	findTexts := func(d *XTDriver) error {
 		var err error
@@ -129,7 +135,7 @@ func (dExt *XTDriver) SwipeToTapTexts(texts []string, opts ...option.ActionOptio
 		return d.TapAbsXY(point.X, point.Y, opts...)
 	}
 
-	findAction := prepareSwipeAction(dExt, nil, opts...)
+	findAction := prepareSwipeAction(dExt, nil, optionsWithoutIdentifier...)
 	return dExt.LoopUntil(findAction, findTexts, foundTextAction, opts...)
 }
 
@@ -146,15 +152,19 @@ func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption)
 		log.Error().Err(err).Msg("auto handle popup failed")
 	}
 
+	// Remove identifier for swipe operations to avoid WDA/UIA2 logging
+	actionOptions := option.NewActionOptions(opts...)
+	actionOptions.Identifier = ""
+	optionsWithoutIdentifier := actionOptions.Options()
+
 	// swipe to first screen
 	for i := 0; i < 5; i++ {
-		dExt.Swipe(0.5, 0.5, 0.9, 0.5, opts...)
+		dExt.Swipe(0.5, 0.5, 0.9, 0.5, optionsWithoutIdentifier...)
 	}
 
 	opts = append(opts, option.WithDirection("left"))
 	opts = append(opts, option.WithMaxRetryTimes(5))
 
-	actionOptions := option.NewActionOptions(opts...)
 	// tap app icon above the text
 	if len(actionOptions.TapOffset) == 0 {
 		opts = append(opts, option.WithTapOffset(0, -100))
