@@ -1,0 +1,170 @@
+{
+    "config": {
+        "name": "验证 UIA2 打点数据准确性",
+        "variables": {
+            "app_name": "抖音"
+        },
+        "android": [
+            {
+                "log_on": true,
+                "adb_server_host": "localhost",
+                "adb_server_port": 5037,
+                "uia2_ip": "localhost",
+                "uia2_port": 6790,
+                "uia2_server_package_name": "io.appium.uiautomator2.server",
+                "uia2_server_test_package_name": "io.appium.uiautomator2.server.test"
+            }
+        ]
+    },
+    "teststeps": [
+        {
+            "name": "启动抖音",
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "home"
+                    },
+                    {
+                        "method": "app_terminate",
+                        "params": "com.ss.android.ugc.aweme"
+                    },
+                    {
+                        "method": "swipe_to_tap_app",
+                        "params": "$app_name",
+                        "options": {
+                            "identifier": "启动抖音",
+                            "max_retry_times": 5,
+                            "pre_mark_operation": true
+                        }
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            },
+            "validate": [
+                {
+                    "check": "ui_ocr",
+                    "assert": "exists",
+                    "expect": "推荐",
+                    "msg": "抖音启动失败，「推荐」不存在"
+                }
+            ]
+        },
+        {
+            "name": "处理青少年弹窗",
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "我知道了",
+                        "options": {
+                            "ignore_NotFoundError": true
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "进入推荐页",
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "tap_ocr",
+                        "params": "推荐",
+                        "options": {
+                            "identifier": "点击推荐",
+                            "offset": [
+                                0,
+                                -1
+                            ],
+                            "pre_mark_operation": true
+                        }
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            }
+        },
+        {
+            "name": "向上滑动 2 次",
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {
+                            "identifier": "第 1 次上划",
+                            "pre_mark_operation": true
+                        }
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 2
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {
+                            "identifier": "第 2 次上划",
+                            "pre_mark_operation": true
+                        }
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 2
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {
+                            "identifier": "第 3 次上划",
+                            "pre_mark_operation": true
+                        }
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 2
+                    },
+                    {
+                        "method": "tap_xy",
+                        "params": [
+                            0.9,
+                            0.1
+                        ],
+                        "options": {
+                            "identifier": "点击进入搜索框",
+                            "pre_mark_operation": true
+                        }
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 2
+                    },
+                    {
+                        "method": "input",
+                        "params": "httprunner 发版记录",
+                        "options": {
+                            "identifier": "输入搜索关键词",
+                            "pre_mark_operation": true
+                        }
+                    },
+                    {
+                        "method": "tap_ocr",
+                        "params": "搜索",
+                        "options": {
+                            "identifier": "点击搜索"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
