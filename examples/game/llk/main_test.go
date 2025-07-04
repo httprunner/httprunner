@@ -7,13 +7,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGameLianliankan(t *testing.T) {
@@ -45,7 +46,7 @@ func TestGameLianliankan(t *testing.T) {
 				AssertAI("当前位于抖音「连了又连」小游戏页面"),
 			hrp.NewStep("开始游戏").
 				Android().
-				StartToGoal(userInstruction, option.WithMaxRetryTimes(100)),
+				StartToGoal(userInstruction, option.WithTimeLimit(300)),
 		},
 	}
 	err := testCase.Dump2JSON("game_llk.json")

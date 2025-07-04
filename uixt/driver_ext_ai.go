@@ -21,18 +21,24 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 	if options.MaxRetryTimes > 0 {
 		logger = logger.Int("max_retry_times", options.MaxRetryTimes)
 	}
-	if options.Timeout > 0 {
-		logger = logger.Int("timeout_seconds", options.Timeout)
-	}
-	logger.Msg("StartToGoal")
 
-	// Create timeout context for entire StartToGoal process if Timeout is specified
-	if options.Timeout > 0 {
+	// Handle TimeLimit and Timeout with unified context mechanism
+	var isTimeLimitMode bool
+	if options.TimeLimit > 0 {
+		// TimeLimit takes precedence over Timeout
+		logger = logger.Int("time_limit_seconds", options.TimeLimit)
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(options.TimeLimit)*time.Second)
+		defer cancel()
+		isTimeLimitMode = true
+	} else if options.Timeout > 0 {
+		// Use Timeout only if TimeLimit is not set
+		logger = logger.Int("timeout_seconds", options.Timeout)
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, time.Duration(options.Timeout)*time.Second)
 		defer cancel()
-		log.Info().Int("timeout_seconds", options.Timeout).Msg("StartToGoal timeout configured for entire process")
 	}
+	logger.Msg("StartToGoal")
 
 	var allPlannings []*PlanningExecutionResult
 	var attempt int
@@ -40,16 +46,26 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 		attempt++
 		log.Info().Int("attempt", attempt).Msg("planning attempt")
 
-		// Check for context cancellation (interrupt signal or timeout)
+		// Check for context cancellation (timeout, time limit, or interrupt)
 		select {
 		case <-ctx.Done():
 			cause := context.Cause(ctx)
+			// Handle TimeLimit timeout - return success
+			if isTimeLimitMode && errors.Is(cause, context.DeadlineExceeded) {
+				log.Info().
+					Int("attempt", attempt).
+					Int("completed_plannings", len(allPlannings)).
+					Int("time_limit_seconds", options.TimeLimit).
+					Msg("StartToGoal time limit reached, stopping gracefully")
+				return allPlannings, nil
+			}
+
+			// Handle other cancellations (Timeout, interrupt, external cancellation) - return error
 			log.Warn().
 				Int("attempt", attempt).
 				Int("completed_plannings", len(allPlannings)).
 				Err(cause).
 				Msg("StartToGoal cancelled")
-			// Return the specific error type based on the cancellation cause
 			return allPlannings, errors.Wrap(cause, "StartToGoal cancelled")
 		default:
 		}
@@ -99,10 +115,25 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 
 		// Invoke tool calls
 		for _, toolCall := range planningResult.ToolCalls {
-			// Check for context cancellation before each action
+			// Check for context cancellation (timeout, time limit, or interrupt) before each action
 			select {
 			case <-ctx.Done():
 				cause := context.Cause(ctx)
+				// Handle TimeLimit timeout - return success
+				if isTimeLimitMode && errors.Is(cause, context.DeadlineExceeded) {
+					log.Info().
+						Int("attempt", attempt).
+						Int("completed_plannings", len(allPlannings)).
+						Int("completed_tool_calls", len(planningResult.SubActions)).
+						Int("total_tool_calls", len(planningResult.ToolCalls)).
+						Int("time_limit_seconds", options.TimeLimit).
+						Msg("StartToGoal time limit reached during tool call execution, stopping gracefully")
+					planningResult.Elapsed = time.Since(planningStartTime).Milliseconds()
+					allPlannings = append(allPlannings, planningResult)
+					return allPlannings, nil
+				}
+
+				// Handle other cancellations (Timeout, external cancellation) - return error
 				log.Warn().
 					Int("attempt", attempt).
 					Int("completed_plannings", len(allPlannings)).
@@ -112,7 +143,6 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 					Msg("invokeToolCalls cancelled")
 				planningResult.Elapsed = time.Since(planningStartTime).Milliseconds()
 				allPlannings = append(allPlannings, planningResult)
-				// Return the specific error type based on the cancellation cause
 				return allPlannings, errors.Wrap(cause, "invokeToolCalls cancelled")
 			default:
 			}

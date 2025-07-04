@@ -42,7 +42,7 @@ func TestGameRomanticRestaurant(t *testing.T) {
 				Android().
 				StartToGoal(userInstruction,
 					option.WithPreMarkOperation(true),
-					option.WithTimeout(300)), // 5 minutes
+					option.WithTimeLimit(300)), // 5 minutes
 			hrp.NewStep("退出抖音 app").
 				Android().
 				AppTerminate("$package_name"),

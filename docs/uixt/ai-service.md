@@ -686,6 +686,270 @@ AIQuery 可能遇到的常见错误：
 3. 建议在查询中使用具体、明确的描述以获得更好的结果
 4. 对于复杂的信息提取，可以要求返回 JSON 格式的结构化数据
 
+## StartToGoal 功能详解
+
+### 概述
+
+`StartToGoal` 是 HttpRunner v5 中的目标导向智能操作功能，它使用自然语言描述目标，然后自动规划和执行一系列操作来达成目标。该功能基于视觉语言模型（VLM）进行智能规划，能够理解屏幕内容并自动生成操作序列。
+
+### 功能特点
+
+- **目标导向**: 使用自然语言描述最终目标，AI 自动规划操作步骤
+- **智能规划**: 基于屏幕内容进行上下文相关的操作规划
+- **自动执行**: 自动执行规划的操作序列直到达成目标
+- **灵活控制**: 支持多种控制选项如重试次数、超时时间等
+
+### 基本用法
+
+#### 1. 基本示例
+
+```go
+// 基本目标导向操作
+results, err := driver.StartToGoal(ctx, "导航到设置页面并启用深色模式")
+
+// 带选项的目标导向操作
+results, err := driver.StartToGoal(ctx, "登录应用",
+    option.WithMaxRetryTimes(3),
+    option.WithIdentifier("user-login"),
+)
+```
+
+#### 2. 在测试步骤中使用
+
+```go
+hrp.NewStep("Navigate to Settings").
+    Android().
+    StartToGoal("打开设置页面")
+
+hrp.NewStep("Enable Feature").
+    Android().
+    StartToGoal("启用深色模式功能",
+        option.WithMaxRetryTimes(3),
+        option.WithIdentifier("enable-dark-mode"),
+    )
+```
+
+### TimeLimit 时间限制功能
+
+`StartToGoal` 支持 `TimeLimit` 选项，用于设置执行时间限制。这是一个重要的资源管理功能。
+
+#### 功能特性
+
+- **时间限制**: 支持设置执行时间上限（秒）
+- **优雅停止**: 超出时间限制后停止执行，但返回成功状态
+- **部分结果**: 即使达到时间限制，也会返回已完成的规划结果
+
+#### 使用方法
+
+##### 基本用法
+
+```go
+// 设置 30 秒时间限制
+results, err := driver.StartToGoal(ctx, prompt, option.WithTimeLimit(30))
+```
+
+##### 与其他选项结合使用
+
+```go
+results, err := driver.StartToGoal(ctx, prompt,
+    option.WithTimeLimit(45),           // 45秒时间限制
+    option.WithMaxRetryTimes(3),        // 最大重试3次
+    option.WithIdentifier("my-task"),   // 任务标识符
+)
+```
+
+#### TimeLimit vs Timeout
+
+| 特性 | TimeLimit | Timeout | Interrupt Signal |
+|------|-----------|---------|------------------|
+| 行为 | 优雅停止 | 强制取消 | 立即中断 |
+| 返回值 | 成功 (err == nil) | 错误 (err != nil) | 错误 (err != nil) |
+| 结果 | 返回部分结果 | 返回部分结果 | 返回部分结果 |
+| 用途 | 资源管理，时间预算 | 防止无限等待 | 用户主动中断 |
+| 优先级 | 中等 | 低 | 最高 |
+
+#### 使用场景
+
+##### 使用 TimeLimit 的场景：
+- 需要在指定时间内完成尽可能多的任务
+- 资源管理和时间预算控制
+- 希望获得部分结果而不是完全失败
+- 测试场景下的时间控制
+
+##### 使用 Timeout 的场景：
+- 防止无限等待
+- 超时即视为失败的场景
+- 需要严格的时间控制
+
+##### Interrupt Signal 的特点：
+- 用户主动中断（Ctrl+C）
+- 优先级最高，立即生效
+- 无论是否设置 TimeLimit，都返回错误
+- 适用于需要立即停止的场景
+
+#### 实现原理
+
+1. **Context 复用**: `TimeLimit` 和 `Timeout` 复用相同的 context 超时机制
+2. **模式标记**: 通过 `isTimeLimitMode` 标记区分当前是时间限制模式还是超时模式
+3. **优先级处理**: 在 `ctx.Done()` 时按优先级检查取消原因
+4. **结果收集**: 返回所有已完成的规划结果
+
+**技术实现**：
+```go
+// 复用 timeout context 机制，用标记区分模式
+var isTimeLimitMode bool
+if options.TimeLimit > 0 {
+    ctx, cancel = context.WithTimeout(ctx, time.Duration(options.TimeLimit)*time.Second)
+    isTimeLimitMode = true
+} else if options.Timeout > 0 {
+    ctx, cancel = context.WithTimeout(ctx, time.Duration(options.Timeout)*time.Second)
+}
+
+// 按优先级检查取消原因
+select {
+case <-ctx.Done():
+    cause := context.Cause(ctx)
+    // 1. 中断信号优先级最高，始终返回错误
+    if errors.Is(cause, code.InterruptError) {
+        return allPlannings, errors.Wrap(cause, "StartToGoal interrupted")
+    }
+    // 2. TimeLimit 超时返回成功
+    if isTimeLimitMode && errors.Is(cause, context.DeadlineExceeded) {
+        return allPlannings, nil
+    }
+    // 3. 其他取消原因返回错误
+    return allPlannings, errors.Wrap(cause, "StartToGoal cancelled")
+}
+```
+
+#### 注意事项
+
+1. **检测精度**: 时间限制的检测精度依赖于规划和工具调用的频率，基于 Go context 机制更加精确
+2. **资源清理**: 即使达到时间限制，也会完成当前操作以确保资源正确清理
+3. **结果可用性**: 返回的结果包含会话数据，可用于生成报告
+4. **Context 复用**: `TimeLimit` 和 `Timeout` 复用相同的 context 超时机制，简化了实现
+5. **优先级**: 如果同时设置了 `TimeLimit` 和 `Timeout`，`TimeLimit` 优先生效
+6. **中断信号**: 用户中断信号（如 Ctrl+C）优先级最高，无论是否设置 `TimeLimit` 都会返回错误
+
+### 支持的选项
+
+`StartToGoal` 支持多种控制选项：
+
+```go
+// 全面的选项示例
+results, err := driver.StartToGoal(ctx, prompt,
+    option.WithTimeLimit(60),           // 时间限制（秒）
+    option.WithTimeout(120),            // 超时时间（秒）
+    option.WithMaxRetryTimes(5),        // 最大重试次数
+    option.WithIdentifier("task-id"),   // 任务标识符
+    option.WithLLMService("gpt-4o"),    // LLM 服务
+    option.WithCVService("vedem"),      // CV 服务
+    option.WithResetHistory(true),      // 重置对话历史
+)
+```
+
+### 最佳实践
+
+#### 1. 明确的目标描述
+
+```go
+// 好的示例：具体明确
+StartToGoal("打开设置页面，找到显示选项，然后启用深色模式")
+
+// 避免：过于模糊
+StartToGoal("做一些设置")
+```
+
+#### 2. 合理的时间限制
+
+```go
+// 根据任务复杂度设置合理的时间限制
+StartToGoal("完成用户注册流程", option.WithTimeLimit(120)) // 复杂任务
+StartToGoal("点击登录按钮", option.WithTimeLimit(30))     // 简单任务
+```
+
+#### 3. 错误处理和重试
+
+```go
+// 设置重试机制
+results, err := driver.StartToGoal(ctx, prompt,
+    option.WithMaxRetryTimes(3),
+    option.WithTimeLimit(90),
+)
+
+if err != nil {
+    // 处理错误
+    log.Printf("StartToGoal failed: %v", err)
+    // 可以分析 results 中的部分结果
+}
+```
+
+### 实际应用场景
+
+#### 1. 复杂的操作流程
+
+```go
+// 完成整个购物流程
+hrp.NewStep("Complete Purchase").
+    Android().
+    StartToGoal("搜索商品'手机'，选择第一个商品，添加到购物车，然后结账",
+        option.WithTimeLimit(180),
+        option.WithMaxRetryTimes(2),
+    )
+```
+
+#### 2. 应用初始化设置
+
+```go
+// 首次使用应用的设置流程
+hrp.NewStep("Initial Setup").
+    Android().
+    StartToGoal("跳过引导页，允许所有权限，然后进入主界面",
+        option.WithTimeLimit(60),
+    )
+```
+
+#### 3. 测试场景验证
+
+```go
+// 验证特定功能流程
+hrp.NewStep("Verify Feature").
+    Android().
+    StartToGoal("验证分享功能是否正常工作",
+        option.WithTimeLimit(45),
+        option.WithIdentifier("share-test"),
+    )
+```
+
+### 返回结果
+
+`StartToGoal` 返回 `PlanningExecutionResult` 数组，包含详细的执行信息：
+
+```go
+type PlanningExecutionResult struct {
+    PlanningResult ai.PlanningResult `json:"planning_result"`
+    SubActions     []*SubActionResult `json:"sub_actions"`
+    StartTime      int64             `json:"start_time"`
+    Elapsed        int64             `json:"elapsed"`
+}
+```
+
+可以通过返回结果分析执行过程：
+
+```go
+results, err := driver.StartToGoal(ctx, prompt, option.WithTimeLimit(60))
+if err != nil {
+    log.Printf("Task failed: %v", err)
+}
+
+// 分析执行结果
+for i, result := range results {
+    log.Printf("Planning %d: %s", i+1, result.PlanningResult.Thought)
+    log.Printf("Actions executed: %d", len(result.SubActions))
+    log.Printf("Elapsed time: %d ms", result.Elapsed)
+}
+```
+
 ## 完整示例
 
 以下是一个完整的 AIQuery 使用示例：
@@ -708,6 +972,45 @@ func TestAIQuery(t *testing.T) {
             hrp.NewStep("Analyze UI Elements").
                 Android().
                 AIQuery("Are there any buttons or clickable elements visible? Describe their locations and purposes"),
+        },
+    }
+
+    err := hrp.NewRunner(t).Run(testCase)
+    assert.Nil(t, err)
+}
+```
+
+## StartToGoal 完整示例
+
+以下是 `StartToGoal` 功能的完整使用示例：
+
+```go
+func TestStartToGoal(t *testing.T) {
+    testCase := &hrp.TestCase{
+        Config: hrp.NewConfig("StartToGoal Demo").
+            SetLLMService(option.OPENAI_GPT_4O),
+        TestSteps: []hrp.IStep{
+            hrp.NewStep("App Launch").
+                Android().
+                AppLaunch("com.example.app"),
+            hrp.NewStep("Complete User Setup").
+                Android().
+                StartToGoal("跳过引导页，创建新用户账户",
+                    option.WithTimeLimit(120),
+                    option.WithMaxRetryTimes(3),
+                ),
+            hrp.NewStep("Navigate to Feature").
+                Android().
+                StartToGoal("导航到设置页面并启用深色模式",
+                    option.WithTimeLimit(60),
+                    option.WithIdentifier("enable-dark-mode"),
+                ),
+            hrp.NewStep("Complex Workflow").
+                Android().
+                StartToGoal("搜索'测试'，选择第一个结果，然后分享给朋友",
+                    option.WithTimeLimit(180),
+                    option.WithMaxRetryTimes(2),
+                ),
         },
     }
 
