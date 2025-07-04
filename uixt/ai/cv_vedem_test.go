@@ -23,7 +23,7 @@ func TestGetImageFromBuffer(t *testing.T) {
 	require.Nil(t, err)
 	cvResult, err := service.ReadFromBuffer(buf)
 	assert.Nil(t, err)
-	fmt.Println(fmt.Sprintf("cvResult: %v", cvResult))
+	fmt.Printf("cvResult: %v\n", cvResult)
 }
 
 func TestGetImageFromPath(t *testing.T) {
@@ -32,5 +32,5 @@ func TestGetImageFromPath(t *testing.T) {
 	require.Nil(t, err)
 	cvResult, err := service.ReadFromPath(imagePath)
 	assert.Nil(t, err)
-	fmt.Println(fmt.Sprintf("cvResult: %v", cvResult))
+	fmt.Printf("cvResult: %v\n", cvResult)
 }
