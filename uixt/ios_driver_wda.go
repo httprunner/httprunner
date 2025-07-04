@@ -947,7 +947,7 @@ func (wd *WDADriver) PushImage(localPath string) error {
 		return err
 	}
 
-	_, err = wd.Session.POST(data, "/gtf/albums/add")
+	_, err = wd.Session.POST(data, "/wings/albums/add")
 	return err
 }
 
@@ -960,7 +960,7 @@ func (wd *WDADriver) ClearImages() error {
 	log.Info().Msg("WDADriver.ClearImages")
 	data := map[string]interface{}{}
 
-	_, err := wd.Session.POST(data, "/gtf/albums/clear")
+	_, err := wd.Session.POST(data, "/wings/albums/clear")
 	return err
 }
 
