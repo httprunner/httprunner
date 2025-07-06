@@ -25,15 +25,22 @@ func TestGameYuedongxiaozi(t *testing.T) {
 				"package_name": "com.ss.android.ugc.aweme",
 			}),
 		TestSteps: []hrp.IStep{
-			hrp.NewStep("启动抖音 app").
-				Android().
-				AppLaunch("$package_name").
-				Sleep(5).
-				Validate().
-				AssertAppInForeground("$package_name"),
+			// hrp.NewStep("启动抖音 app").
+			// 	Android().
+			// 	AppLaunch("$package_name").
+			// 	Sleep(5).
+			// 	Validate().
+			// 	AssertAppInForeground("$package_name"),
+			// hrp.NewStep("启动「跃动小子」小游戏").
+			// 	Android().
+			// 	StartToGoal("搜索「跃动小子」，点击「小游戏」tab，进入小游戏",
+			// 		option.WithPreMarkOperation(true)).
+			// 	Validate().
+			// 	AssertAI("当前在小游戏页面"),
 			hrp.NewStep("启动「跃动小子」小游戏").
 				Android().
-				StartToGoal("搜索「跃动小子」，点击「小游戏」tab，进入小游戏",
+				Home().
+				StartToGoal("在手机桌面点击「跃动小子」启动小游戏，等待游戏加载完成",
 					option.WithPreMarkOperation(true)).
 				Validate().
 				AssertAI("当前在小游戏页面"),

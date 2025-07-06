@@ -27,15 +27,22 @@ func TestGameRomanticRestaurant(t *testing.T) {
 				"package_name": "com.ss.android.ugc.aweme",
 			}),
 		TestSteps: []hrp.IStep{
-			hrp.NewStep("启动抖音 app").
-				Android().
-				AppLaunch("$package_name").
-				Sleep(5).
-				Validate().
-				AssertAppInForeground("$package_name"),
+			// hrp.NewStep("启动抖音 app").
+			// 	Android().
+			// 	AppLaunch("$package_name").
+			// 	Sleep(5).
+			// 	Validate().
+			// 	AssertAppInForeground("$package_name"),
+			// hrp.NewStep("进入「浪漫餐厅」小游戏").
+			// 	Android().
+			// 	StartToGoal("搜索「浪漫餐厅」，点击进入「游戏」tab，进入小游戏",
+			// 		option.WithPreMarkOperation(true)).
+			// 	Validate().
+			// 	AssertAI("当前位于游戏界面"),
 			hrp.NewStep("进入「浪漫餐厅」小游戏").
 				Android().
-				StartToGoal("搜索「浪漫餐厅」，点击进入「游戏」tab，进入小游戏",
+				Home().
+				StartToGoal("在手机桌面点击「浪漫餐厅」启动小游戏，等待游戏加载完成",
 					option.WithPreMarkOperation(true)).
 				Validate().
 				AssertAI("当前位于游戏界面"),

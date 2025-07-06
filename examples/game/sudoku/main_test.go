@@ -10,7 +10,7 @@ import (
 )
 
 func TestGameSudoku(t *testing.T) {
-	startGameInstruction := `搜索「每天数独」，点击「小游戏」tab，启动小游戏程序
+	startGameInstruction := `在手机桌面点击「每天数独」启动小游戏，等待游戏加载完成
 
 1、点击【开始】按钮开始游戏，进入数独的棋盘界面
 2、若提示「体力不足」，可通过观看广告免费获得体力，观看完成后继续开始游戏
@@ -34,14 +34,15 @@ func TestGameSudoku(t *testing.T) {
 				"package_name": "com.ss.android.ugc.aweme",
 			}),
 		TestSteps: []hrp.IStep{
-			hrp.NewStep("启动抖音 app").
-				Android().
-				AppLaunch("$package_name").
-				Sleep(5).
-				Validate().
-				AssertAppInForeground("$package_name"),
+			// hrp.NewStep("启动抖音 app").
+			// 	Android().
+			// 	AppLaunch("$package_name").
+			// 	Sleep(5).
+			// 	Validate().
+			// 	AssertAppInForeground("$package_name"),
 			hrp.NewStep("进入「每天数独」小游戏").
 				Android().
+				Home().
 				StartToGoal(startGameInstruction,
 					option.WithPreMarkOperation(true)).
 				Validate().
