@@ -33,8 +33,9 @@ type AssertOptions struct {
 type AssertionResult struct {
 	Pass      bool               `json:"pass"`
 	Thought   string             `json:"thought"`
-	ModelName string             `json:"model_name"`      // model name used for assertion
-	Usage     *schema.TokenUsage `json:"usage,omitempty"` // token usage statistics
+	Content   string             `json:"content,omitempty"` // raw response content
+	ModelName string             `json:"model_name"`        // model name used for assertion
+	Usage     *schema.TokenUsage `json:"usage,omitempty"`   // token usage statistics
 }
 
 // Asserter handles assertion using different AI models
@@ -180,5 +181,6 @@ func parseAssertionResult(content string, modelType option.LLMServiceType) (*Ass
 	}
 
 	result.ModelName = string(modelType)
+	result.Content = content // Store the original response content
 	return &result, nil
 }
