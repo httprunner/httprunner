@@ -19,6 +19,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 type Attachments map[string]interface{}
@@ -151,32 +152,32 @@ func (s *DriverSession) buildURL(urlStr string) (string, error) {
 	return baseURL.ResolveReference(relativeURL).String(), nil
 }
 
-func (s *DriverSession) GET(urlStr string) (rawResp DriverRawResponse, err error) {
-	return s.RequestWithRetry(http.MethodGet, urlStr, nil)
+func (s *DriverSession) GET(urlStr string, opts ...option.ActionOption) (rawResp DriverRawResponse, err error) {
+	return s.RequestWithRetry(http.MethodGet, urlStr, nil, opts...)
 }
 
-func (s *DriverSession) POST(data interface{}, urlStr string) (rawResp DriverRawResponse, err error) {
+func (s *DriverSession) POST(data interface{}, urlStr string, opts ...option.ActionOption) (rawResp DriverRawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
 			return nil, err
 		}
 	}
-	return s.RequestWithRetry(http.MethodPost, urlStr, bsJSON)
+	return s.RequestWithRetry(http.MethodPost, urlStr, bsJSON, opts...)
 }
 
-func (s *DriverSession) DELETE(urlStr string) (rawResp DriverRawResponse, err error) {
-	return s.RequestWithRetry(http.MethodDelete, urlStr, nil)
+func (s *DriverSession) DELETE(urlStr string, opts ...option.ActionOption) (rawResp DriverRawResponse, err error) {
+	return s.RequestWithRetry(http.MethodDelete, urlStr, nil, opts...)
 }
 
-func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody []byte) (
+func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody []byte, opts ...option.ActionOption) (
 	rawResp DriverRawResponse, err error,
 ) {
 	var lastError error
 
 	for attempt := 1; attempt <= s.maxRetry; attempt++ {
 		// Execute the request
-		rawResp, err = s.Request(method, urlStr, rawBody)
+		rawResp, err = s.Request(method, urlStr, rawBody, opts...)
 		if err == nil {
 			if attempt > 1 {
 				log.Info().Msgf("request succeeded after %d attempts", attempt)
@@ -210,9 +211,15 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 	return nil, lastError
 }
 
-func (s *DriverSession) Request(method string, urlStr string, rawBody []byte) (
+func (s *DriverSession) Request(method string, urlStr string, rawBody []byte, opts ...option.ActionOption) (
 	rawResp DriverRawResponse, err error,
 ) {
+	timeout := s.timeout
+	options := option.NewActionOptions(opts...)
+	if options.Timeout > 0 {
+		timeout = time.Duration(options.Timeout) * time.Second
+	}
+
 	// build final URL
 	rawURL, err := s.buildURL(urlStr)
 	if err != nil {
@@ -252,7 +259,7 @@ func (s *DriverSession) Request(method string, urlStr string, rawBody []byte) (
 		logger.Msg("request uixt driver")
 	}()
 
-	ctx, cancel := context.WithTimeout(s.ctx, s.timeout)
+	ctx, cancel := context.WithTimeout(s.ctx, timeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, method, rawURL, bytes.NewBuffer(rawBody))
