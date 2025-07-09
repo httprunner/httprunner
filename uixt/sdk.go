@@ -27,29 +27,41 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 
 	var err error
 
+	// Initialize Wings service (always available)
+	driverExt.WingsService = ai.NewWingsService()
+	log.Info().Msg("Wings service initialized")
+
 	// Handle LLM service initialization
 	if services.LLMConfig != nil {
 		// Use advanced LLM configuration if provided
 		driverExt.LLMService, err = ai.NewLLMServiceWithOptionConfig(services.LLMConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "init llm service with config failed")
+			log.Warn().Err(err).Msg("init llm service with config failed, Wings service will be used")
+		} else {
+			log.Info().Msg("LLM service initialized with advanced config")
 		}
 	} else if services.LLMService != "" {
 		// Fallback to simple LLM service if no config provided
 		driverExt.LLMService, err = ai.NewLLMService(services.LLMService)
 		if err != nil {
-			return nil, errors.Wrap(err, "init llm service failed")
+			log.Warn().Err(err).Msg("init llm service failed, Wings service will be used")
+		} else {
+			log.Info().Msg("LLM service initialized")
 		}
 	} else {
-		log.Warn().Msg("no LLM service config provided")
+		log.Info().Msg("no LLM service config provided, using Wings service only")
 	}
 
 	// Register uixt MCP tools to LLM service if it exists
+	mcpTools := driverExt.client.Server.ListTools()
+	einoTools := ai.ConvertMCPToolsToEinoToolInfos(mcpTools, "uixt")
+	if err = driverExt.WingsService.RegisterTools(einoTools); err != nil {
+		log.Debug().Err(err).Msg("Wings service ignoring tool registration (expected)")
+	}
+
 	if driverExt.LLMService != nil {
-		mcpTools := driverExt.client.Server.ListTools()
-		einoTools := ai.ConvertMCPToolsToEinoToolInfos(mcpTools, "uixt")
-		if err := driverExt.LLMService.RegisterTools(einoTools); err != nil {
-			log.Warn().Err(err).Msg("failed to register uixt tools")
+		if err = driverExt.LLMService.RegisterTools(einoTools); err != nil {
+			log.Warn().Err(err).Msg("failed to register uixt tools to LLM service")
 		}
 	}
 
@@ -59,8 +71,9 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 // XTDriver = IDriver + AI
 type XTDriver struct {
 	IDriver
-	CVService  ai.ICVService  // OCR/CV
-	LLMService ai.ILLMService // LLM
+	CVService    ai.ICVService  // OCR/CV
+	LLMService   ai.ILLMService // LLM (fallback service)
+	WingsService ai.ILLMService // Wings API service (priority service)
 
 	services         *option.AIServiceOptions    // AI services options
 	client           *MCPClient4XTDriver         // MCP Client for built-in uixt server

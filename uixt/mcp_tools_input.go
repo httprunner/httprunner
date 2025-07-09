@@ -123,3 +123,131 @@ func (t *ToolSetIme) ConvertActionToCallToolRequest(action option.MobileAction) 
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid set ime params: %v", action.Params)
 }
+
+// ToolText implements the text tool call.
+type ToolText struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Text string `json:"text" desc:"Text that was input"`
+}
+
+func (t *ToolText) Name() option.ActionName {
+	return option.ACTION_Text
+}
+
+func (t *ToolText) Description() string {
+	return "Input text into the currently focused element or input field"
+}
+
+func (t *ToolText) Options() []mcp.ToolOption {
+	unifiedReq := &option.ActionOptions{}
+	return unifiedReq.GetMCPOptions(option.ACTION_Text)
+}
+
+func (t *ToolText) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		unifiedReq, err := parseActionOptions(arguments)
+		if err != nil {
+			return nil, err
+		}
+
+		if unifiedReq.Text == "" {
+			return nil, fmt.Errorf("text is required")
+		}
+
+		opts := unifiedReq.Options()
+
+		// Text input action logic
+		err = driverExt.Input(unifiedReq.Text, opts...)
+		if err != nil {
+			return NewMCPErrorResponse(fmt.Sprintf("Text input failed: %s", err.Error())), err
+		}
+
+		message := fmt.Sprintf("Successfully input text: %s", unifiedReq.Text)
+		returnData := ToolText{Text: unifiedReq.Text}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
+	}
+}
+
+func (t *ToolText) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
+	text := fmt.Sprintf("%v", action.Params)
+	arguments := map[string]any{
+		"text": text,
+	}
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
+}
+
+// ToolBackspace implements the backspace tool call.
+type ToolBackspace struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Count int `json:"count" desc:"Number of backspace operations performed"`
+}
+
+func (t *ToolBackspace) Name() option.ActionName {
+	return option.ACTION_Backspace
+}
+
+func (t *ToolBackspace) Description() string {
+	return "Perform backspace operations to delete characters"
+}
+
+func (t *ToolBackspace) Options() []mcp.ToolOption {
+	unifiedReq := &option.ActionOptions{}
+	return unifiedReq.GetMCPOptions(option.ACTION_Backspace)
+}
+
+func (t *ToolBackspace) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		unifiedReq, err := parseActionOptions(arguments)
+		if err != nil {
+			return nil, err
+		}
+
+		count := unifiedReq.Count
+		if count <= 0 {
+			count = 1 // Default to 1 backspace if not specified or invalid
+		}
+
+		opts := unifiedReq.Options()
+
+		// Backspace action logic
+		err = driverExt.Backspace(count, opts...)
+		if err != nil {
+			return NewMCPErrorResponse(fmt.Sprintf("Backspace failed: %s", err.Error())), err
+		}
+
+		message := fmt.Sprintf("Successfully performed %d backspace operations", count)
+		returnData := ToolBackspace{Count: count}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
+	}
+}
+
+func (t *ToolBackspace) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
+	var count int
+	switch v := action.Params.(type) {
+	case int:
+		count = v
+	case float64:
+		count = int(v)
+	default:
+		count = 1 // Default count
+	}
+
+	arguments := map[string]any{
+		"count": count,
+	}
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
+}

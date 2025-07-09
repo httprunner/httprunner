@@ -949,7 +949,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				prompt := action.Params.(string)
 				switch action.Method {
 				case option.ACTION_AIAction:
-					aiResult, err = uiDriver.AIAction(ctx, prompt, action.GetOptions()...)
+					aiResult, err = uiDriver.WingsAction(ctx, prompt, action.GetOptions()...)
 				case option.ACTION_Query:
 					aiResult, err = uiDriver.AIQuery(prompt, action.GetOptions()...)
 				case option.ACTION_AIAssert:
