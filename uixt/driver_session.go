@@ -175,7 +175,13 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 ) {
 	var lastError error
 
-	for attempt := 1; attempt <= s.maxRetry; attempt++ {
+	maxRetry := s.maxRetry
+	options := option.NewActionOptions(opts...)
+	if options.MaxRetryTimes > 0 {
+		maxRetry = options.MaxRetryTimes
+	}
+
+	for attempt := 1; attempt <= maxRetry; attempt++ {
 		// Execute the request
 		rawResp, err = s.Request(method, urlStr, rawBody, opts...)
 		if err == nil {
