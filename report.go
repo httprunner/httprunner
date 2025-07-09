@@ -1838,6 +1838,101 @@ const htmlTemplate = `<!DOCTYPE html>
             word-wrap: break-word;
         }
 
+        /* AI Assertion Styles */
+        .ai-assertion-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f0f8ff 0%, #f5f5ff 100%);
+            border: 2px solid #4169e1;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(65, 105, 225, 0.15);
+        }
+
+        .ai-assertion-section h5 {
+            margin: 0 0 15px 0;
+            color: #4169e1;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .ai-screenshot-container {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .ai-screenshot {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .ai-screenshot img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .ai-screenshot img:hover {
+            transform: scale(1.02);
+        }
+
+        .ai-analysis-container {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .ai-analysis-content {
+            margin-top: 10px;
+        }
+
+        .ai-thought {
+            background: linear-gradient(135deg, #e8f4fd 0%, #f0f8ff 100%);
+            border: 1px solid #4169e1;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+
+        .ai-thought .thought-content {
+            margin-top: 8px;
+            font-style: italic;
+            color: #34495e;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .ai-raw-response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+
+        .ai-raw-response .response-content {
+            margin-top: 8px;
+            font-family: monospace;
+            font-size: 0.9em;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
         @media screen and (max-width: 768px) {
             .validator-ai-layout {
                 flex-direction: column;
@@ -2949,6 +3044,60 @@ const htmlTemplate = `<!DOCTYPE html>
                                 <div class="validator-expect">Expected: {{$validator.expect}}</div>
                                 {{if and $validator.msg (ne $validator.check_result "pass")}}
                                     <div class="validator-message">{{$validator.msg}}</div>
+                                {{end}}
+
+                                <!-- AI Assertion Results -->
+                                {{if $validator.ai_result}}
+                                <div class="ai-assertion-section">
+                                    <h5>🤖 AI Assertion Details</h5>
+
+                                    <!-- AI Assertion Screenshot -->
+                                    {{if $validator.ai_result.image_path}}
+                                    <div class="ai-screenshot-container">
+                                        <span class="step-name">📸 AI Assertion Screenshot</span>
+                                        {{if $validator.ai_result.screenshot_elapsed}}
+                                        <span class="duration">{{formatDuration $validator.ai_result.screenshot_elapsed}}</span>
+                                        {{end}}
+                                        <div class="ai-screenshot">
+                                            {{$base64Image := encodeImageBase64 $validator.ai_result.image_path}}
+                                            {{if $base64Image}}
+                                            <img src="data:image/jpeg;base64,{{$base64Image}}" alt="AI Assertion Screenshot" onclick="openImageModal(this.src)" />
+                                            {{end}}
+                                        </div>
+                                    </div>
+                                    {{end}}
+
+                                    <!-- AI Model Analysis -->
+                                    <div class="ai-analysis-container">
+                                        <span class="step-name">🧠 AI Model Analysis</span>
+                                        {{if $validator.ai_result.model_call_elapsed}}
+                                        <span class="duration">{{formatDuration $validator.ai_result.model_call_elapsed}}</span>
+                                        {{end}}
+                                        <div class="ai-analysis-content">
+                                            {{if $validator.ai_result.assertion_result.model_name}}
+                                            <div class="model-info">🤖 Model: {{$validator.ai_result.assertion_result.model_name}}</div>
+                                            {{end}}
+                                            {{if $validator.ai_result.assertion_result.usage}}
+                                            <div class="usage-info">📊 Tokens: {{$validator.ai_result.assertion_result.usage.PromptTokens}} in / {{$validator.ai_result.assertion_result.usage.CompletionTokens}} out / {{$validator.ai_result.assertion_result.usage.TotalTokens}} total</div>
+                                            {{end}}
+                                            {{if $validator.ai_result.resolution}}
+                                            <div class="model-info">📐 Resolution: {{$validator.ai_result.resolution.Width}}x{{$validator.ai_result.resolution.Height}}</div>
+                                            {{end}}
+                                            {{if $validator.ai_result.assertion_result.thought}}
+                                            <div class="ai-thought">
+                                                <strong>💭 AI Reasoning:</strong>
+                                                <div class="thought-content">{{$validator.ai_result.assertion_result.thought}}</div>
+                                            </div>
+                                            {{end}}
+                                            {{if $validator.ai_result.assertion_result.content}}
+                                            <div class="ai-raw-response">
+                                                <strong>📝 Raw Model Response:</strong>
+                                                <div class="response-content">{{$validator.ai_result.assertion_result.content}}</div>
+                                            </div>
+                                            {{end}}
+                                        </div>
+                                    </div>
+                                </div>
                                 {{end}}
                             </div>
                             {{end}}

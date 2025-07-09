@@ -65,8 +65,8 @@ func convertToAbsolutePoint(driver IDriver, x, y float64) (absX, absY float64, e
 }
 
 func convertToAbsoluteCoordinates(driver IDriver, fromX, fromY, toX, toY float64) (
-	absFromX, absFromY, absToX, absToY float64, err error) {
-
+	absFromX, absFromY, absToX, absToY float64, err error,
+) {
 	// absolute coordinates
 	if fromX > 1 || toX > 1 || fromY > 1 || toY > 1 {
 		return fromX, fromY, toX, toY, nil
@@ -190,32 +190,43 @@ func (dExt *XTDriver) assertSelector(selector, assert string) error {
 	return nil
 }
 
-func (dExt *XTDriver) DoValidation(check, assert, expected string, message ...string) (err error) {
+func (dExt *XTDriver) DoValidation(check, assert, expected string, message ...string) (aiResult *AIExecutionResult, err error) {
 	switch check {
 	case option.SelectorOCR:
 		err = dExt.assertOCR(expected, assert)
 	case option.SelectorAI:
-		_, err = dExt.AIAssert(expected)
+		aiResult, err = dExt.AIAssert(expected)
 	case option.SelectorForegroundApp:
 		err = dExt.assertForegroundApp(expected, assert)
 	case option.SelectorSelector:
 		err = dExt.assertSelector(expected, assert)
 	default:
-		return fmt.Errorf("validator %s not implemented", check)
+		return nil, fmt.Errorf("validator %s not implemented", check)
 	}
 
 	if err != nil {
+		// Technical error (not assertion failure)
 		if message == nil {
 			message = []string{""}
 		}
 		log.Error().Err(err).Str("assert", assert).Str("expect", expected).
 			Str("msg", message[0]).Msg("validate failed")
-		return err
+		return nil, err
+	} else if aiResult != nil {
+		// Check assertion result instead of relying on error
+		if !aiResult.AssertionResult.Pass {
+			return aiResult, errors.New(aiResult.AssertionResult.Thought)
+		}
+		log.Info().Str("check", check).Str("assert", assert).
+			Str("expect", expected).
+			Interface("ai_assertion_result", aiResult.AssertionResult).
+			Msg("ai assertion passed")
+		return aiResult, nil
+	} else {
+		log.Info().Str("check", check).Str("assert", assert).
+			Str("expect", expected).Msg("validate success")
+		return nil, nil
 	}
-
-	log.Info().Str("check", check).Str("assert", assert).
-		Str("expect", expected).Msg("validate success")
-	return nil
 }
 
 type SleepConfig struct {

@@ -1042,7 +1042,8 @@ func validateUI(ud *uixt.XTDriver, iValidators []interface{}, parser *Parser, st
 		}
 
 		// Perform validation
-		err = ud.DoValidation(validator.Check, validator.Assert, expected, validator.Message)
+		validationResult.AIResult, err = ud.DoValidation(
+			validator.Check, validator.Assert, expected, validator.Message)
 		if err != nil {
 			// Add the failed validation result to the list before returning error
 			validateResults = append(validateResults, validationResult)
