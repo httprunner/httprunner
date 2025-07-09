@@ -28,22 +28,32 @@ func TestGameZhuadaE(t *testing.T) {
 				"package_name": "com.ss.android.ugc.aweme",
 			}),
 		TestSteps: []hrp.IStep{
-			hrp.NewStep("启动抖音 app").
-				Android().
-				AppLaunch("$package_name").
-				Sleep(5).
-				Validate().
-				AssertAppInForeground("$package_name"),
+			// hrp.NewStep("启动抖音 app").
+			// 	Android().
+			// 	AppLaunch("$package_name").
+			// 	Sleep(5).
+			// 	Validate().
+			// 	AssertAppInForeground("$package_name"),
+			// hrp.NewStep("启动「抓大鹅」小游戏").
+			// 	Android().
+			// 	StartToGoal("搜索「抓大鹅」，启动小游戏",
+			// 		option.WithPreMarkOperation(true)).
+			// 	Sleep(10).
+			// 	Validate().
+			// 	AssertAI("当前页面底部包含「抓大鹅」"),
 			hrp.NewStep("启动「抓大鹅」小游戏").
 				Android().
-				StartToGoal("搜索「抓大鹅」，启动小游戏",
+				Home().
+				StartToGoal("在手机桌面点击「抓大鹅」启动小游戏，处理弹窗，等待游戏加载完成",
 					option.WithPreMarkOperation(true)).
+				Sleep(10).
 				Validate().
-				AssertAI("当前页面底部包含「抓大鹅」按钮"),
+				AssertAI("当前页面底部包含「抓大鹅」"),
 			hrp.NewStep("进入「抓大鹅」小游戏").
 				Android().
 				StartToGoal("点击「抓大鹅」，进入小游戏",
 					option.WithPreMarkOperation(true)).
+				Sleep(10).
 				Validate().
 				AssertAI("当前页面底部包含「移出」「凑齐」「打乱」按钮"),
 			hrp.NewStep("开始游戏").

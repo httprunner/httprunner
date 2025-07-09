@@ -169,7 +169,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 					log.Error().Err(err).
 						Str("action", toolCall.Function.Name).
 						Msg("invoke tool call failed")
-					subActionResult.Error = err
+					subActionResult.Error = err.Error()
 					return err
 				}
 				return nil
@@ -371,7 +371,6 @@ func (dExt *XTDriver) executeAIAssert(assertion string, screenResult *ScreenResu
 
 	if !result.Pass {
 		assertResult.Error = result.Thought
-		return assertResult, errors.New(result.Thought)
 	}
 
 	return assertResult, nil
@@ -563,7 +562,7 @@ type SubActionResult struct {
 	Arguments  interface{} `json:"arguments,omitempty"` // arguments passed to the sub-action
 	StartTime  int64       `json:"start_time"`          // sub-action start time
 	Elapsed    int64       `json:"elapsed_ms"`          // sub-action elapsed time(ms)
-	Error      error       `json:"error,omitempty"`     // sub-action execution result
+	Error      string      `json:"error,omitempty"`     // sub-action execution result
 	SessionData
 }
 

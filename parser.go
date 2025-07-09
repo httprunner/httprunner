@@ -11,13 +11,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/httprunner/funplugin"
+	"github.com/httprunner/funplugin/fungo"
 	"github.com/maja42/goval"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/httprunner/funplugin"
-	"github.com/httprunner/funplugin/fungo"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/mcphost"
@@ -238,7 +238,7 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 			log.Debug().
 				Str("parsedString", parsedString).
 				Int("matchStartPosition", matchStartPosition).
-				Msg("[parseString] parse function")
+				Msg("parse string function")
 			continue
 		}
 
@@ -268,7 +268,7 @@ func (p *Parser) ParseString(raw string, variablesMapping map[string]interface{}
 			log.Debug().
 				Str("parsedString", parsedString).
 				Int("matchStartPosition", matchStartPosition).
-				Msg("[parseString] parse variable")
+				Msg("parse string variable")
 			continue
 		}
 
@@ -306,7 +306,8 @@ func (p *Parser) CallFunc(funcName string, arguments ...interface{}) (interface{
 
 // CallMCPTool calls a MCP tool on a specific MCP server
 func (p *Parser) CallMCPTool(ctx context.Context, serverName,
-	funcName string, arguments map[string]interface{}) (interface{}, error) {
+	funcName string, arguments map[string]interface{},
+) (interface{}, error) {
 	if p.MCPHost == nil {
 		return nil, fmt.Errorf("mcphost is not initialized")
 	}

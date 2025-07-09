@@ -9,11 +9,11 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
-func TestGameZhuadaE(t *testing.T) {
+func TestGameYuedongxiaozi(t *testing.T) {
 	userInstruction := `跃动小子是一款开宝箱类的小游戏，以下是游戏的基本规则说明：
 1、打开宝箱，按照游戏指引进行「出售」或「装备」操作。
 2、请持续推进游戏进程。
-3、屏幕底部的黑白按钮不要进行点击操作。
+3、游戏界面底部的黑白按钮不要进行点击操作。
 
 请严格按照以上游戏规则，开始游戏
 `
@@ -25,18 +25,25 @@ func TestGameZhuadaE(t *testing.T) {
 				"package_name": "com.ss.android.ugc.aweme",
 			}),
 		TestSteps: []hrp.IStep{
-			hrp.NewStep("启动抖音 app").
-				Android().
-				AppLaunch("$package_name").
-				Sleep(5).
-				Validate().
-				AssertAppInForeground("$package_name"),
+			// hrp.NewStep("启动抖音 app").
+			// 	Android().
+			// 	AppLaunch("$package_name").
+			// 	Sleep(5).
+			// 	Validate().
+			// 	AssertAppInForeground("$package_name"),
+			// hrp.NewStep("启动「跃动小子」小游戏").
+			// 	Android().
+			// 	StartToGoal("搜索「跃动小子」，点击「小游戏」tab，进入小游戏",
+			// 		option.WithPreMarkOperation(true)).
+			// 	Validate().
+			// 	AssertAI("当前在小游戏页面"),
 			hrp.NewStep("启动「跃动小子」小游戏").
 				Android().
-				StartToGoal("搜索「跃动小子」，启动小游戏",
+				Home().
+				StartToGoal("在手机桌面点击「跃动小子」启动小游戏，等待游戏加载完成",
 					option.WithPreMarkOperation(true)).
 				Validate().
-				AssertAI("当前页面底部包含「领地」「试炼」按钮"),
+				AssertAI("当前在小游戏页面"),
 			hrp.NewStep("开始游戏").
 				Android().
 				StartToGoal(userInstruction,

@@ -160,22 +160,22 @@ func (dev *IOSDevice) Setup() error {
 	if version.GreaterThan(semver.MustParse("17.4.0")) {
 		info, err := tunnel.TunnelInfoForDevice(dev.DeviceEntry.Properties.SerialNumber, ios.HttpApiHost(), ios.HttpApiPort())
 		if err != nil {
-			return err
+			return errors.Wrap(code.DeviceConnectionError, err.Error())
 		}
 		dev.DeviceEntry.UserspaceTUNPort = info.UserspaceTUNPort
 		dev.DeviceEntry.UserspaceTUN = info.UserspaceTUN
 		rsdService, err := ios.NewWithAddrPortDevice(info.Address, info.RsdPort, dev.DeviceEntry)
 		if err != nil {
-			return err
+			return errors.Wrap(code.DeviceConnectionError, err.Error())
 		}
 		defer rsdService.Close()
 		rsdProvider, err := rsdService.Handshake()
 		if err != nil {
-			return err
+			return errors.Wrap(code.DeviceConnectionError, err.Error())
 		}
 		device, err := ios.GetDeviceWithAddress(dev.DeviceEntry.Properties.SerialNumber, info.Address, rsdProvider)
 		if err != nil {
-			return err
+			return errors.Wrap(code.DeviceConnectionError, err.Error())
 		}
 		device.UserspaceTUN = dev.DeviceEntry.UserspaceTUN
 		device.UserspaceTUNPort = dev.DeviceEntry.UserspaceTUNPort
@@ -470,7 +470,7 @@ func (dev *IOSDevice) getVersion() (version *semver.Version, err error) {
 	version, err = ios.GetProductVersion(dev.DeviceEntry)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get version")
-		return nil, err
+		return nil, errors.Wrap(code.DeviceGetInfoError, err.Error())
 	}
 	log.Info().Str("version", version.String()).Msg("get ios device version")
 	return version, nil
