@@ -716,8 +716,6 @@ func (wd *BrowserDriver) PageAction(action string) (err error) {
 }
 
 func (wd *BrowserDriver) CustomePost(data interface{}, urlStr string) (response *WebAgentResponse, err error) {
-	//通过wd.Session.POST的opts参数设置重试次数为1
-
 	rawResp, err := wd.Session.POST(data, urlStr, option.WithMaxRetryTimes(1), option.WithTimeout(3*60))
 	if err != nil {
 		return nil, err
@@ -736,8 +734,6 @@ func (wd *BrowserDriver) CustomePost(data interface{}, urlStr string) (response 
 }
 
 func (wd *BrowserDriver) CustomeGet(urlStr string) (response *WebAgentResponse, err error) {
-	//通过wd.Session.POST的opts参数设置重试次数为1
-
 	rawResp, err := wd.Session.GET(urlStr, option.WithMaxRetryTimes(1), option.WithTimeout(3*60))
 	if err != nil {
 		return nil, err
