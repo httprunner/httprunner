@@ -492,9 +492,10 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 		return assertResult, errors.Wrap(err, "AI assertion failed")
 	}
 
+	// For assertion failure, we should still return success but mark the assertion as failed
+	// This ensures that the AIResult (including screenshot and thought) is properly saved and displayed
 	if !result.Pass {
-		assertResult.Error = result.Thought
-		return assertResult, errors.New(result.Thought)
+		assertResult.Error = result.Thought // Store the failure reason for reporting
 	}
 
 	return assertResult, nil

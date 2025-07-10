@@ -11,6 +11,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/version"
+	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
@@ -233,6 +234,7 @@ type Address struct {
 
 type ValidationResult struct {
 	Validator
-	CheckValue  interface{} `json:"check_value" yaml:"check_value"`
-	CheckResult string      `json:"check_result" yaml:"check_result"`
+	CheckValue  interface{}             `json:"check_value" yaml:"check_value"`
+	CheckResult string                  `json:"check_result" yaml:"check_result"`
+	AIResult    *uixt.AIExecutionResult `json:"ai_result,omitempty" yaml:"ai_result,omitempty"` // store AI assertion result for displaying in report
 }
