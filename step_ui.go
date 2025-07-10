@@ -798,12 +798,10 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 			config = s.caseRunner.Config.Get()
 		}
 		// automatic handling of pop-up windows on each step finished, default to disabled
-		// priority: testcase config ignore_popup > step ignore_popup > config auto_popup_handler > step auto_popup_handler
+		// priority: step ignore_popup > config auto_popup_handler > step auto_popup_handler
 		shouldHandlePopup := false
 
-		if config != nil && config.IgnorePopup {
-			shouldHandlePopup = false
-		} else if stepIgnorePopup {
+		if stepIgnorePopup {
 			// step level config, keep for compatibility
 			shouldHandlePopup = false
 		} else if config != nil && config.AutoPopupHandler {
