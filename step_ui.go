@@ -715,6 +715,7 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 	var stepVariables map[string]interface{}
 	var stepValidators []interface{}
 	var stepAutoPopupHandler bool
+	var stepIgnorePopup bool
 
 	var mobileStep *MobileUI
 	switch stepMobile := step.(type) {
@@ -722,11 +723,13 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		mobileStep = stepMobile.obj()
 		stepVariables = stepMobile.Variables
 		stepAutoPopupHandler = stepMobile.AutoPopupHandler
+		stepIgnorePopup = stepMobile.IgnorePopup
 	case *StepMobileUIValidation:
 		mobileStep = stepMobile.obj()
 		stepVariables = stepMobile.Variables
 		stepValidators = stepMobile.Validators
 		stepAutoPopupHandler = stepMobile.StepMobile.AutoPopupHandler
+		stepIgnorePopup = stepMobile.StepMobile.IgnorePopup
 	default:
 		return stepResult, errors.New("invalid mobile UI step type")
 	}
@@ -794,10 +797,14 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 		if s.caseRunner != nil && s.caseRunner.Config != nil {
 			config = s.caseRunner.Config.Get()
 		}
-		// automatic handling of pop-up windows on each step finished
-		// priority: testcase config > step config, default to disabled
+		// automatic handling of pop-up windows on each step finished, default to disabled
+		// priority: step ignore_popup > config auto_popup_handler > step auto_popup_handler
 		shouldHandlePopup := false
-		if config != nil && config.AutoPopupHandler {
+
+		if stepIgnorePopup {
+			// step level config, keep for compatibility
+			shouldHandlePopup = false
+		} else if config != nil && config.AutoPopupHandler {
 			// testcase level config has higher priority
 			shouldHandlePopup = true
 		} else if stepAutoPopupHandler {
