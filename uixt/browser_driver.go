@@ -706,3 +706,27 @@ func (wd *BrowserDriver) TapXY(x, y float64, opts ...option.ActionOption) error 
 func (wd *BrowserDriver) TapAbsXY(x, y float64, opts ...option.ActionOption) error {
 	return wd.TapFloat(x, y, opts...)
 }
+
+func (wd *BrowserDriver) SetHeader(headers string) (err error) {
+	data := map[string]interface{}{
+		"headers": headers,
+	}
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "set_headers"))
+	return err
+}
+
+func (wd *BrowserDriver) Keyboard(key string) (err error) {
+	data := map[string]interface{}{
+		"press": key,
+	}
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/keyboard"))
+	return err
+}
+
+func (wd *BrowserDriver) PageAction(action string) (err error) {
+	data := map[string]interface{}{
+		"action": action,
+	}
+	_, err = wd.Session.POST(data, wd.concatURL(wd.Session.ID, "ui/page/action"))
+	return err
+}
