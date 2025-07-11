@@ -635,7 +635,7 @@ const htmlTemplate = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HttpRunner Test Report</title>
+    <title>Wings Test Report</title>
     <style>
         * {
             margin: 0;
@@ -2489,7 +2489,7 @@ const htmlTemplate = `<!DOCTYPE html>
         <div class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <h1>🚀 HttpRunner Test Report</h1>
+                    <h1>🚀 Wings Test Report</h1>
                     <div class="subtitle">Start Time: {{.Time.StartAt.Format "2006-01-02 15:04:05"}}</div>
                 </div>
                 <div class="header-right">
