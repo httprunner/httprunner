@@ -156,9 +156,13 @@ func (dExt *XTDriver) ExecuteAction(ctx context.Context, action option.MobileAct
 	// For regular actions, collect session data and return it directly
 	sessionData := dExt.GetSession().GetData(true) // reset after getting data
 
-	log.Debug().Str("tool", string(tool.Name())).
-		Interface("result", result.Content).
-		Msg("executed action via MCP tool")
+	// Log execution result, but avoid printing base64 data for screenshot tools
+	logger := log.Debug().Str("tool", string(tool.Name()))
+	if tool.Name() != option.ACTION_ScreenShot {
+		logger.Interface("result", result.Content)
+	}
+	logger.Msg("executed action via MCP tool")
+
 	return sessionData, nil
 }
 
@@ -241,22 +245,27 @@ func (dExt *XTDriver) CallMCPTool(ctx context.Context,
 		log.Debug().Err(err).
 			Str("server", serverName).
 			Str("tool", toolName).
-			Msg("MCP hook call failed")
+			Msg("call MCP tool failed")
 		return nil, err
 	}
 
 	if result.IsError {
-		log.Debug().
+		logger := log.Debug().
 			Str("server", serverName).
-			Str("tool", toolName).
-			Interface("content", result.Content).
-			Msg("MCP hook returned error")
-		return nil, fmt.Errorf("MCP hook returned error")
+			Str("tool", toolName)
+
+		// Avoid printing base64 data for screenshot tools
+		if toolName != string(option.ACTION_ScreenShot) {
+			logger.Interface("content", result.Content)
+		}
+		logger.Msg("call MCP tool failed")
+
+		return nil, fmt.Errorf("call MCP tool %s failed", toolName)
 	}
 
 	log.Debug().
 		Str("server", serverName).
 		Str("tool", toolName).
-		Msg("MCP hook called successfully")
+		Msg("call MCP tool successfully")
 	return result, nil
 }
