@@ -196,7 +196,7 @@ func (wd *WDADriver) DeviceInfo() (deviceInfo types.DeviceInfo, err error) {
 	// [[FBRoute GET:@"/wda/device/info"].withoutSession
 	var rawResp DriverRawResponse
 	if rawResp, err = wd.Session.GET("/wda/device/info"); err != nil {
-		return types.DeviceInfo{}, err
+		return types.DeviceInfo{}, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 	}
 	reply := new(struct{ Value struct{ types.DeviceInfo } })
 	if err = json.Unmarshal(rawResp, reply); err != nil {
@@ -268,7 +268,7 @@ func (wd *WDADriver) Scale() (float64, error) {
 	}
 	screen, err := wd.Screen()
 	if err != nil {
-		return 0, errors.Wrap(code.MobileUIDriverError,
+		return 0, errors.Wrap(code.DeviceHTTPDriverError,
 			fmt.Sprintf("get screen info failed: %v", err))
 	}
 	return screen.Scale, nil
@@ -298,12 +298,12 @@ func (wd *WDADriver) ScreenShot(opts ...option.ActionOption) (raw *bytes.Buffer,
 	// [[FBRoute GET:@"/screenshot"].withoutSession respondWithTarget:self action:@selector(handleGetScreenshot:)]
 	rawResp, err := wd.Session.GET("/screenshot")
 	if err != nil {
-		return nil, errors.Wrap(code.DeviceScreenShotError,
+		return nil, errors.Wrap(code.DeviceHTTPDriverError,
 			fmt.Sprintf("WDA screenshot failed %v", err))
 	}
 	raw, err = rawResp.ValueDecodeAsBase64()
 	if err != nil {
-		return nil, errors.Wrap(code.DeviceScreenShotError,
+		return nil, errors.Wrap(code.DeviceHTTPDriverError,
 			fmt.Sprintf("decode WDA screenshot data failed: %v", err))
 	}
 	return raw, nil
@@ -454,7 +454,7 @@ func (wd *WDADriver) AppLaunch(bundleId string) (err error) {
 	}
 	_, err = wd.Session.POST(data, "/wings/apps/launch")
 	if err != nil {
-		return errors.Wrap(code.MobileUILaunchAppError,
+		return errors.Wrap(code.DeviceHTTPDriverError,
 			fmt.Sprintf("wda launch failed: %v", err))
 	}
 	return nil
@@ -466,7 +466,7 @@ func (wd *WDADriver) AppLaunchUnattached(bundleId string) (err error) {
 	data := map[string]interface{}{"bundleId": bundleId}
 	_, err = wd.Session.POST(data, "/wda/apps/launchUnattached")
 	if err != nil {
-		return errors.Wrap(code.MobileUILaunchAppError,
+		return errors.Wrap(code.DeviceHTTPDriverError,
 			fmt.Sprintf("wda launchUnattached failed: %v", err))
 	}
 	return nil

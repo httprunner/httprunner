@@ -18,6 +18,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
@@ -153,21 +154,33 @@ func (s *DriverSession) buildURL(urlStr string) (string, error) {
 }
 
 func (s *DriverSession) GET(urlStr string, opts ...option.ActionOption) (rawResp DriverRawResponse, err error) {
-	return s.RequestWithRetry(http.MethodGet, urlStr, nil, opts...)
+	rawResp, err = s.RequestWithRetry(http.MethodGet, urlStr, nil, opts...)
+	if err != nil {
+		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return rawResp, nil
 }
 
 func (s *DriverSession) POST(data interface{}, urlStr string, opts ...option.ActionOption) (rawResp DriverRawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
-			return nil, err
+			return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 		}
 	}
-	return s.RequestWithRetry(http.MethodPost, urlStr, bsJSON, opts...)
+	rawResp, err = s.RequestWithRetry(http.MethodPost, urlStr, bsJSON, opts...)
+	if err != nil {
+		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return rawResp, nil
 }
 
 func (s *DriverSession) DELETE(urlStr string, opts ...option.ActionOption) (rawResp DriverRawResponse, err error) {
-	return s.RequestWithRetry(http.MethodDelete, urlStr, nil, opts...)
+	rawResp, err = s.RequestWithRetry(http.MethodDelete, urlStr, nil, opts...)
+	if err != nil {
+		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+	}
+	return rawResp, nil
 }
 
 func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody []byte, opts ...option.ActionOption) (
