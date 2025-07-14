@@ -79,6 +79,7 @@ func TestToolInterfaces(t *testing.T) {
 	tools := []ActionTool{
 		&ToolListAvailableDevices{},
 		&ToolSelectDevice{},
+		&ToolTap{},
 		&ToolTapXY{},
 		&ToolTapAbsXY{},
 		&ToolTapByOCR{},
@@ -92,6 +93,8 @@ func TestToolInterfaces(t *testing.T) {
 		&ToolSwipeToTapTexts{},
 		&ToolDrag{},
 		&ToolInput{},
+		&ToolText{},
+		&ToolBackspace{},
 		&ToolScreenShot{},
 		&ToolGetScreenSize{},
 		&ToolPressButton{},
@@ -99,7 +102,10 @@ func TestToolInterfaces(t *testing.T) {
 		&ToolBack{},
 		&ToolListPackages{},
 		&ToolLaunchApp{},
+		&ToolOpenApp{},
 		&ToolTerminateApp{},
+		&ToolTerminateAppNew{},
+		&ToolColdLaunch{},
 		&ToolAppInstall{},
 		&ToolAppUninstall{},
 		&ToolAppClear{},
@@ -238,6 +244,45 @@ func TestToolSelectDevice(t *testing.T) {
 	request, err := tool.ConvertActionToCallToolRequest(action)
 	assert.NoError(t, err)
 	assert.Equal(t, string(option.ACTION_SelectDevice), request.Params.Name)
+}
+
+// TestToolTap tests the ToolTap implementation
+func TestToolTap(t *testing.T) {
+	tool := &ToolTap{}
+
+	// Test Name
+	assert.Equal(t, option.ACTION_Tap, tool.Name())
+
+	// Test Description
+	assert.NotEmpty(t, tool.Description())
+
+	// Test Options
+	options := tool.Options()
+	assert.NotNil(t, options)
+
+	// Test ConvertActionToCallToolRequest with valid params
+	action := option.MobileAction{
+		Method: option.ACTION_Tap,
+		Params: []float64{0.5, 0.6},
+		ActionOptions: option.ActionOptions{
+			Duration: 1.5,
+		},
+	}
+	request, err := tool.ConvertActionToCallToolRequest(action)
+	assert.NoError(t, err)
+	assert.Equal(t, string(option.ACTION_Tap), request.Params.Name)
+	args := request.GetArguments()
+	assert.Equal(t, 0.5, args["x"])
+	assert.Equal(t, 0.6, args["y"])
+	assert.Equal(t, 1.5, args["duration"])
+
+	// Test ConvertActionToCallToolRequest with invalid params
+	invalidAction := option.MobileAction{
+		Method: option.ACTION_Tap,
+		Params: "invalid",
+	}
+	_, err = tool.ConvertActionToCallToolRequest(invalidAction)
+	assert.Error(t, err)
 }
 
 // TestToolTapXY tests the ToolTapXY implementation
@@ -782,6 +827,74 @@ func TestToolInput(t *testing.T) {
 	assert.Equal(t, "Hello World", request.GetArguments()["text"])
 }
 
+// TestToolText tests the ToolText implementation
+func TestToolText(t *testing.T) {
+	tool := &ToolText{}
+
+	// Test Name
+	assert.Equal(t, option.ACTION_Text, tool.Name())
+
+	// Test Description
+	assert.NotEmpty(t, tool.Description())
+
+	// Test Options
+	options := tool.Options()
+	assert.NotNil(t, options)
+
+	// Test ConvertActionToCallToolRequest with valid params
+	action := option.MobileAction{
+		Method: option.ACTION_Text,
+		Params: "Hello World",
+	}
+	request, err := tool.ConvertActionToCallToolRequest(action)
+	assert.NoError(t, err)
+	assert.Equal(t, string(option.ACTION_Text), request.Params.Name)
+	assert.Equal(t, "Hello World", request.GetArguments()["text"])
+}
+
+// TestToolBackspace tests the ToolBackspace implementation
+func TestToolBackspace(t *testing.T) {
+	tool := &ToolBackspace{}
+
+	// Test Name
+	assert.Equal(t, option.ACTION_Backspace, tool.Name())
+
+	// Test Description
+	assert.NotEmpty(t, tool.Description())
+
+	// Test Options
+	options := tool.Options()
+	assert.NotNil(t, options)
+
+	// Test ConvertActionToCallToolRequest with valid int params
+	action := option.MobileAction{
+		Method: option.ACTION_Backspace,
+		Params: 3,
+	}
+	request, err := tool.ConvertActionToCallToolRequest(action)
+	assert.NoError(t, err)
+	assert.Equal(t, string(option.ACTION_Backspace), request.Params.Name)
+	assert.Equal(t, 3, request.GetArguments()["count"])
+
+	// Test ConvertActionToCallToolRequest with float64 params
+	actionFloat := option.MobileAction{
+		Method: option.ACTION_Backspace,
+		Params: 5.0,
+	}
+	requestFloat, err := tool.ConvertActionToCallToolRequest(actionFloat)
+	assert.NoError(t, err)
+	assert.Equal(t, 5, requestFloat.GetArguments()["count"])
+
+	// Test ConvertActionToCallToolRequest with invalid params (should default to 1)
+	invalidAction := option.MobileAction{
+		Method: option.ACTION_Backspace,
+		Params: "invalid",
+	}
+	requestDefault, err := tool.ConvertActionToCallToolRequest(invalidAction)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, requestDefault.GetArguments()["count"])
+}
+
 // TestToolScreenShot tests the ToolScreenShot implementation
 func TestToolScreenShot(t *testing.T) {
 	tool := &ToolScreenShot{}
@@ -973,6 +1086,39 @@ func TestToolLaunchApp(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// TestToolOpenApp tests the ToolOpenApp implementation
+func TestToolOpenApp(t *testing.T) {
+	tool := &ToolOpenApp{}
+
+	// Test Name
+	assert.Equal(t, option.ACTION_OpenApp, tool.Name())
+
+	// Test Description
+	assert.NotEmpty(t, tool.Description())
+
+	// Test Options
+	options := tool.Options()
+	assert.NotNil(t, options)
+
+	// Test ConvertActionToCallToolRequest with valid params
+	action := option.MobileAction{
+		Method: option.ACTION_OpenApp,
+		Params: "com.example.app",
+	}
+	request, err := tool.ConvertActionToCallToolRequest(action)
+	assert.NoError(t, err)
+	assert.Equal(t, string(option.ACTION_OpenApp), request.Params.Name)
+	assert.Equal(t, "com.example.app", request.GetArguments()["packageName"])
+
+	// Test ConvertActionToCallToolRequest with invalid params
+	invalidAction := option.MobileAction{
+		Method: option.ACTION_OpenApp,
+		Params: 123, // should be string
+	}
+	_, err = tool.ConvertActionToCallToolRequest(invalidAction)
+	assert.Error(t, err)
+}
+
 // TestToolTerminateApp tests the ToolTerminateApp implementation
 func TestToolTerminateApp(t *testing.T) {
 	tool := &ToolTerminateApp{}
@@ -1001,6 +1147,72 @@ func TestToolTerminateApp(t *testing.T) {
 	invalidAction := option.MobileAction{
 		Method: option.ACTION_AppTerminate,
 		Params: []int{1, 2, 3}, // should be string
+	}
+	_, err = tool.ConvertActionToCallToolRequest(invalidAction)
+	assert.Error(t, err)
+}
+
+// TestToolTerminateAppNew tests the ToolTerminateAppNew implementation
+func TestToolTerminateAppNew(t *testing.T) {
+	tool := &ToolTerminateAppNew{}
+
+	// Test Name
+	assert.Equal(t, option.ACTION_TerminateApp, tool.Name())
+
+	// Test Description
+	assert.NotEmpty(t, tool.Description())
+
+	// Test Options
+	options := tool.Options()
+	assert.NotNil(t, options)
+
+	// Test ConvertActionToCallToolRequest with valid params
+	action := option.MobileAction{
+		Method: option.ACTION_TerminateApp,
+		Params: "com.example.app",
+	}
+	request, err := tool.ConvertActionToCallToolRequest(action)
+	assert.NoError(t, err)
+	assert.Equal(t, string(option.ACTION_TerminateApp), request.Params.Name)
+	assert.Equal(t, "com.example.app", request.GetArguments()["packageName"])
+
+	// Test ConvertActionToCallToolRequest with invalid params
+	invalidAction := option.MobileAction{
+		Method: option.ACTION_TerminateApp,
+		Params: []int{1, 2, 3}, // should be string
+	}
+	_, err = tool.ConvertActionToCallToolRequest(invalidAction)
+	assert.Error(t, err)
+}
+
+// TestToolColdLaunch tests the ToolColdLaunch implementation
+func TestToolColdLaunch(t *testing.T) {
+	tool := &ToolColdLaunch{}
+
+	// Test Name
+	assert.Equal(t, option.ACTION_ColdLaunch, tool.Name())
+
+	// Test Description
+	assert.NotEmpty(t, tool.Description())
+
+	// Test Options
+	options := tool.Options()
+	assert.NotNil(t, options)
+
+	// Test ConvertActionToCallToolRequest with valid params
+	action := option.MobileAction{
+		Method: option.ACTION_ColdLaunch,
+		Params: "com.example.app",
+	}
+	request, err := tool.ConvertActionToCallToolRequest(action)
+	assert.NoError(t, err)
+	assert.Equal(t, string(option.ACTION_ColdLaunch), request.Params.Name)
+	assert.Equal(t, "com.example.app", request.GetArguments()["packageName"])
+
+	// Test ConvertActionToCallToolRequest with invalid params
+	invalidAction := option.MobileAction{
+		Method: option.ACTION_ColdLaunch,
+		Params: 123, // should be string
 	}
 	_, err = tool.ConvertActionToCallToolRequest(invalidAction)
 	assert.Error(t, err)

@@ -43,7 +43,10 @@ const (
 	ACTION_AppClear         ActionName = "app_clear"
 	ACTION_AppStart         ActionName = "app_start"
 	ACTION_AppLaunch        ActionName = "app_launch" // 启动 app 并堵塞等待 app 首屏加载完成
+	ACTION_OpenApp          ActionName = "open_app"   // 启动 app 并堵塞等待 app 首屏加载完成
 	ACTION_AppTerminate     ActionName = "app_terminate"
+	ACTION_TerminateApp     ActionName = "terminal_app"
+	ACTION_ColdLaunch       ActionName = "cold_launch"
 	ACTION_AppStop          ActionName = "app_stop"
 	ACTION_ScreenShot       ActionName = "screenshot"
 	ACTION_ScreenRecord     ActionName = "screenrecord"
@@ -70,6 +73,7 @@ const (
 	ACTION_SwipeCoordinate          ActionName = "swipe_coordinate" // swipe by coordinates (fromX, fromY, toX, toY)
 	ACTION_Drag                     ActionName = "drag"
 	ACTION_Input                    ActionName = "input"
+	ACTION_Text                     ActionName = "text"
 	ACTION_PressButton              ActionName = "press_button"
 	ACTION_Back                     ActionName = "back"
 	ACTION_KeyCode                  ActionName = "keycode"
@@ -601,6 +605,7 @@ func WithOutputSchema(schema interface{}) ActionOption {
 func (o *ActionOptions) GetMCPOptions(actionType ActionName) []mcp.ToolOption {
 	// Define field mappings for different action types
 	fieldMappings := map[ActionName][]string{
+		ACTION_Tap:                      {"platform", "serial", "x", "y", "duration"},
 		ACTION_TapXY:                    {"platform", "serial", "x", "y", "duration"},
 		ACTION_TapAbsXY:                 {"platform", "serial", "x", "y", "duration"},
 		ACTION_TapByOCR:                 {"platform", "serial", "text", "ignoreNotFoundError", "maxRetryTimes", "index", "regex", "tapRandomRect"},
@@ -611,8 +616,13 @@ func (o *ActionOptions) GetMCPOptions(actionType ActionName) []mcp.ToolOption {
 		ACTION_Swipe:                    {"platform", "serial", "direction", "fromX", "fromY", "toX", "toY", "duration", "pressDuration"},
 		ACTION_Drag:                     {"platform", "serial", "fromX", "fromY", "toX", "toY", "duration", "pressDuration"},
 		ACTION_Input:                    {"platform", "serial", "text", "frequency"},
+		ACTION_Text:                     {"platform", "serial", "text", "frequency"},
+		ACTION_Backspace:                {"platform", "serial", "count"},
 		ACTION_AppLaunch:                {"platform", "serial", "packageName"},
+		ACTION_OpenApp:                  {"platform", "serial", "packageName"},
 		ACTION_AppTerminate:             {"platform", "serial", "packageName"},
+		ACTION_TerminateApp:             {"platform", "serial", "packageName"},
+		ACTION_ColdLaunch:               {"platform", "serial", "packageName"},
 		ACTION_AppInstall:               {"platform", "serial", "appUrl", "packageName"},
 		ACTION_AppUninstall:             {"platform", "serial", "packageName"},
 		ACTION_AppClear:                 {"platform", "serial", "packageName"},

@@ -49,7 +49,8 @@ func NewVEDEMImageService() (*vedemCVService, error) {
 type vedemCVService struct{}
 
 func (s *vedemCVService) ReadFromPath(imagePath string, opts ...option.ActionOption) (
-	imageResult *CVResult, err error) {
+	imageResult *CVResult, err error,
+) {
 	imageBuf, err := os.ReadFile(imagePath)
 	if err != nil {
 		err = errors.Wrap(code.CVPrepareRequestError,
@@ -61,7 +62,8 @@ func (s *vedemCVService) ReadFromPath(imagePath string, opts ...option.ActionOpt
 }
 
 func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.ActionOption) (
-	imageResult *CVResult, err error) {
+	imageResult *CVResult, err error,
+) {
 	actionOptions := option.NewActionOptions(opts...)
 	log.Debug().Interface("options", actionOptions).Msg("vedem.ReadFromBuffer")
 	screenshotActions := actionOptions.List()
@@ -77,7 +79,7 @@ func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.A
 		if err != nil {
 			logger = log.Error().Err(err)
 		} else {
-			logger = log.Debug()
+			logger = log.Info()
 			if imageResult.URL != "" {
 				logger = logger.Str("url", imageResult.URL)
 			}

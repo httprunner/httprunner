@@ -71,6 +71,7 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolSelectDevice{})         // SelectDevice
 
 	// Touch Tools
+	s.registerTool(&ToolTap{})         // tap
 	s.registerTool(&ToolTapXY{})       // tap xy
 	s.registerTool(&ToolTapAbsXY{})    // tap abs xy
 	s.registerTool(&ToolTapByOCR{})    // tap by OCR
@@ -88,6 +89,8 @@ func (s *MCPServer4XTDriver) registerTools() {
 
 	// Input Tools
 	s.registerTool(&ToolInput{})
+	s.registerTool(&ToolText{})
+	s.registerTool(&ToolBackspace{})
 	s.registerTool(&ToolSetIme{})
 
 	// Button Tools
@@ -98,7 +101,10 @@ func (s *MCPServer4XTDriver) registerTools() {
 	// App Tools
 	s.registerTool(&ToolListPackages{})     // ListPackages
 	s.registerTool(&ToolLaunchApp{})        // LaunchApp
+	s.registerTool(&ToolOpenApp{})          // OpenApp
 	s.registerTool(&ToolTerminateApp{})     // TerminateApp
+	s.registerTool(&ToolTerminateAppNew{})  // TerminateApp (new)
+	s.registerTool(&ToolColdLaunch{})       // ColdLaunch
 	s.registerTool(&ToolAppInstall{})       // AppInstall
 	s.registerTool(&ToolAppUninstall{})     // AppUninstall
 	s.registerTool(&ToolAppClear{})         // AppClear

@@ -176,9 +176,6 @@ func (dExt *XTDriver) GetScreenTexts(opts ...option.ActionOption) (ocrTexts ai.O
 
 func (dExt *XTDriver) FindScreenText(text string, opts ...option.ActionOption) (textRect ai.OCRText, err error) {
 	options := option.NewActionOptions(opts...)
-	if options.ScreenShotFileName == "" {
-		opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("find_screen_text_%s", text)))
-	}
 
 	// convert relative scope to absolute scope
 	if options.AbsScope == nil && len(options.Scope) == 4 {

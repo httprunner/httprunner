@@ -2,6 +2,8 @@ package uixt
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/cloudwego/eino/schema"
@@ -9,12 +11,12 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
-	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 )
 
+// StartToGoal (original implementation - preserved)
 func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...option.ActionOption) ([]*PlanningExecutionResult, error) {
 	options := option.NewActionOptions(opts...)
 	logger := log.Info().Str("prompt", prompt)
@@ -193,7 +195,7 @@ func (dExt *XTDriver) StartToGoal(ctx context.Context, prompt string, opts ...op
 	}
 }
 
-// AIAction performs AI-driven action and returns detailed execution result
+// AIAction with WingsService priority support
 func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...option.ActionOption) (*AIExecutionResult, error) {
 	log.Info().Str("prompt", prompt).Msg("performing AI action")
 
@@ -206,25 +208,93 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 		return nil, err
 	}
 
-	// Step 2: Plan next action and measure time
+	// Step 2: Check if WingsService is available and prioritize it
+	if dExt.WingsService != nil {
+		log.Info().Msg("using Wings service for AI action")
+		return dExt.executeAIAction(ctx, prompt, screenResult, dExt.WingsService, "wings", opts...)
+	}
+
+	// Step 3: Fallback to LLM service
+	if dExt.LLMService == nil {
+		return nil, errors.New("neither Wings service nor LLM service is initialized")
+	}
+
+	log.Info().Msg("using LLM service for AI action")
+	return dExt.executeAIAction(ctx, prompt, screenResult, dExt.LLMService, "llm", opts...)
+}
+
+// executeAIAction executes AIAction using any AI service (generic implementation)
+func (dExt *XTDriver) executeAIAction(ctx context.Context, prompt string, screenResult *ScreenResult, service ai.ILLMService, serviceType string, opts ...option.ActionOption) (*AIExecutionResult, error) {
+	// Add device context for Wings service if needed
+	if serviceType == "wings" {
+		ctx = dExt.addDeviceContextForWings(ctx)
+	}
+
+	// Step 1: Plan next action and measure time
 	modelCallStartTime := time.Now()
-	planningResult, err := dExt.PlanNextAction(ctx, prompt, opts...)
+
+	var planningResult *ai.PlanningResult
+	var err error
+
+	if serviceType == "llm" {
+		// For LLM service, use PlanNextAction which includes additional processing
+		planningExecutionResult, planErr := dExt.PlanNextAction(ctx, prompt, opts...)
+		if planErr != nil {
+			modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
+			return &AIExecutionResult{
+				Type:              "action",
+				ModelCallElapsed:  modelCallElapsed,
+				ScreenshotElapsed: screenResult.Elapsed,
+				ImagePath:         screenResult.ImagePath,
+				Resolution:        &screenResult.Resolution,
+				Error:             planErr.Error(),
+			}, errors.Wrap(planErr, "get next action failed")
+		}
+		planningResult = &planningExecutionResult.PlanningResult
+	} else {
+		// For Wings service, call Plan directly
+		planningOpts := &ai.PlanningOptions{
+			UserInstruction: prompt,
+			Message: &schema.Message{
+				Role: schema.User,
+				MultiContent: []schema.ChatMessagePart{
+					{
+						Type: schema.ChatMessagePartTypeImageURL,
+						ImageURL: &schema.ChatMessageImageURL{
+							URL: screenResult.Base64,
+						},
+					},
+				},
+			},
+			Size: screenResult.Resolution,
+		}
+
+		planningResult, err = service.Plan(ctx, planningOpts)
+		if err != nil {
+			modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
+			return &AIExecutionResult{
+				Type:              "action",
+				ModelCallElapsed:  modelCallElapsed,
+				ScreenshotElapsed: screenResult.Elapsed,
+				ImagePath:         screenResult.ImagePath,
+				Resolution:        &screenResult.Resolution,
+				Error:             err.Error(),
+			}, errors.Wrap(err, fmt.Sprintf("%s service planning failed", serviceType))
+		}
+	}
+
 	modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
+
 	aiExecutionResult := &AIExecutionResult{
 		Type:              "action",
 		ModelCallElapsed:  modelCallElapsed,
 		ScreenshotElapsed: screenResult.Elapsed,
 		ImagePath:         screenResult.ImagePath,
 		Resolution:        &screenResult.Resolution,
-		PlanningResult:    &planningResult.PlanningResult,
+		PlanningResult:    planningResult,
 	}
 
-	if err != nil {
-		aiExecutionResult.Error = err.Error()
-		return aiExecutionResult, errors.Wrap(err, "get next action failed")
-	}
-
-	// Step 3: Execute tool calls
+	// Step 2: Execute tool calls
 	for _, toolCall := range planningResult.ToolCalls {
 		err = dExt.invokeToolCall(ctx, toolCall, opts...)
 		if err != nil {
@@ -239,7 +309,99 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 	return aiExecutionResult, nil
 }
 
-// PlanNextAction performs planning and returns unified planning information
+// AIAssert with WingsService priority support
+func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*AIExecutionResult, error) {
+	log.Info().Str("assertion", assertion).Msg("performing AI assertion")
+
+	// Step 1: Take screenshot and convert to base64
+	screenResult, err := dExt.GetScreenResult(
+		option.WithScreenShotFileName("ai_assert"),
+		option.WithScreenShotBase64(true),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 2: Check if WingsService is available and prioritize it
+	if dExt.WingsService != nil {
+		log.Info().Msg("using Wings service for AI assertion")
+		return dExt.executeAIAssert(assertion, screenResult, dExt.WingsService, "wings", opts...)
+	}
+
+	// Step 3: Fallback to LLM service
+	if dExt.LLMService == nil {
+		return nil, errors.New("neither Wings service nor LLM service is initialized")
+	}
+
+	log.Info().Msg("using LLM service for AI assertion")
+	return dExt.executeAIAssert(assertion, screenResult, dExt.LLMService, "llm", opts...)
+}
+
+// executeAIAssert executes AIAssert using any AI service (generic implementation)
+func (dExt *XTDriver) executeAIAssert(assertion string, screenResult *ScreenResult, service ai.ILLMService, serviceType string, opts ...option.ActionOption) (*AIExecutionResult, error) {
+	// Step 1: Prepare context and options
+	ctx := context.Background()
+	if serviceType == "wings" {
+		ctx = dExt.addDeviceContextForWings(ctx)
+	}
+
+	assertResult := &AIExecutionResult{
+		Type:              "assert",
+		ScreenshotElapsed: screenResult.Elapsed,
+		ImagePath:         screenResult.ImagePath,
+		Resolution:        &screenResult.Resolution,
+	}
+
+	// Step 2: Call service and measure time
+	modelCallStartTime := time.Now()
+	assertOpts := &ai.AssertOptions{
+		Assertion:  assertion,
+		Screenshot: screenResult.Base64,
+		Size:       screenResult.Resolution,
+	}
+
+	result, err := service.Assert(ctx, assertOpts)
+	assertResult.ModelCallElapsed = time.Since(modelCallStartTime).Milliseconds()
+	assertResult.AssertionResult = result
+
+	if err != nil {
+		assertResult.Error = err.Error()
+		return assertResult, errors.Wrap(err, fmt.Sprintf("%s assertion failed", serviceType))
+	}
+
+	if !result.Pass {
+		assertResult.Error = result.Thought
+	}
+
+	return assertResult, nil
+}
+
+// addDeviceContextForWings adds device information to context for Wings service
+func (dExt *XTDriver) addDeviceContextForWings(ctx context.Context) context.Context {
+	device := dExt.GetDevice()
+	if device == nil {
+		return ctx
+	}
+
+	// Add device ID to context
+	ctx = context.WithValue(ctx, "device_id", device.UUID())
+
+	// Add platform type to context
+	platformType := "android" // default
+	switch device.(type) {
+	case *AndroidDevice:
+		platformType = "android"
+	case *IOSDevice:
+		platformType = "ios"
+	case *HarmonyDevice:
+		platformType = "harmony"
+	}
+	ctx = context.WithValue(ctx, "platform_type", platformType)
+
+	return ctx
+}
+
+// PlanNextAction (original implementation - preserved)
 func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ...option.ActionOption) (*PlanningExecutionResult, error) {
 	if dExt.LLMService == nil {
 		return nil, errors.New("LLM service is not initialized")
@@ -314,7 +476,7 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 	return planningResult, nil
 }
 
-// isTaskFinished checks if the task is completed based on the planning result
+// isTaskFinished (original implementation - preserved)
 func (dExt *XTDriver) isTaskFinished(planningResult *PlanningExecutionResult) bool {
 	// Check if there are no tool calls (no actions to execute)
 	if len(planningResult.ToolCalls) == 0 {
@@ -333,7 +495,7 @@ func (dExt *XTDriver) isTaskFinished(planningResult *PlanningExecutionResult) bo
 	return false
 }
 
-// invokeToolCall invokes the tool call
+// invokeToolCall (original implementation - preserved)
 func (dExt *XTDriver) invokeToolCall(ctx context.Context, toolCall schema.ToolCall, opts ...option.ActionOption) error {
 	// Parse arguments
 	arguments := make(map[string]interface{})
@@ -360,7 +522,7 @@ func (dExt *XTDriver) invokeToolCall(ctx context.Context, toolCall schema.ToolCa
 	return nil
 }
 
-// PlanningExecutionResult represents a unified planning result that contains both planning information and execution results
+// PlanningExecutionResult (original implementation - preserved)
 type PlanningExecutionResult struct {
 	ai.PlanningResult // Inherit all fields from ai.PlanningResult (ToolCalls, Thought, Content, Error, ModelName)
 	// Planning process information
@@ -377,7 +539,7 @@ type PlanningExecutionResult struct {
 	SubActions []*SubActionResult `json:"sub_actions,omitempty"` // sub-actions generated from this planning
 }
 
-// AIExecutionResult represents a unified result structure for all AI operations
+// AIExecutionResult (original implementation - preserved)
 type AIExecutionResult struct {
 	Type              string      `json:"type"`               // operation type: "query", "action", "assert"
 	ModelCallElapsed  int64       `json:"model_call_elapsed"` // model call elapsed time in milliseconds
@@ -394,7 +556,7 @@ type AIExecutionResult struct {
 	Error string `json:"error,omitempty"` // error message if operation failed
 }
 
-// SubActionResult represents a sub-action within a start_to_goal action
+// SubActionResult (original implementation - preserved)
 type SubActionResult struct {
 	ActionName string      `json:"action_name"`         // name of the sub-action (e.g., "tap", "input")
 	Arguments  interface{} `json:"arguments,omitempty"` // arguments passed to the sub-action
@@ -409,6 +571,7 @@ type SessionData struct {
 	ScreenResults []*ScreenResult   `json:"screen_results,omitempty"` // store sub-action specific screen_results
 }
 
+// AIQuery (original implementation - preserved)
 func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*AIExecutionResult, error) {
 	if dExt.LLMService == nil {
 		return nil, errors.New("LLM service is not initialized")
@@ -452,51 +615,4 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*AIExec
 		QueryResult:       result,                   // query-specific result
 	}
 	return aiResult, nil
-}
-
-// AIAssert performs AI-driven assertion and returns detailed execution result
-func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*AIExecutionResult, error) {
-	if dExt.LLMService == nil {
-		return nil, errors.New("LLM service is not initialized")
-	}
-
-	// Step 1: Take screenshot and convert to base64
-	screenResult, err := dExt.GetScreenResult(
-		option.WithScreenShotFileName("ai_assert"),
-		option.WithScreenShotBase64(true),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	assertResult := &AIExecutionResult{
-		Type:              "assert",
-		ScreenshotElapsed: screenResult.Elapsed,
-		ImagePath:         screenResult.ImagePath,
-		Resolution:        &screenResult.Resolution,
-	}
-
-	// Step 2: Call model and measure time
-	modelCallStartTime := time.Now()
-	assertOpts := &ai.AssertOptions{
-		Assertion:  assertion,
-		Screenshot: screenResult.Base64,
-		Size:       screenResult.Resolution,
-	}
-	result, err := dExt.LLMService.Assert(context.Background(), assertOpts)
-	assertResult.ModelCallElapsed = time.Since(modelCallStartTime).Milliseconds()
-	assertResult.AssertionResult = result
-
-	if err != nil {
-		assertResult.Error = err.Error()
-		return assertResult, errors.Wrap(err, "AI assertion failed")
-	}
-
-	// For assertion failure, we should still return success but mark the assertion as failed
-	// This ensures that the AIResult (including screenshot and thought) is properly saved and displayed
-	if !result.Pass {
-		assertResult.Error = result.Thought // Store the failure reason for reporting
-	}
-
-	return assertResult, nil
 }
