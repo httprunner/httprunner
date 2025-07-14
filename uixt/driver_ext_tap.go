@@ -2,17 +2,20 @@ package uixt
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/rs/zerolog/log"
 )
 
 func (dExt *XTDriver) TapByOCR(text string, opts ...option.ActionOption) error {
 	actionOptions := option.NewActionOptions(opts...)
 	log.Info().Str("text", text).Interface("options", actionOptions).Msg("TapByOCR")
+
 	if actionOptions.ScreenShotFileName == "" {
-		opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("tap_by_ocr_%s", text)))
+		opts = append(opts, option.WithScreenShotFileName(fmt.Sprintf("%s_tap_by_ocr_%s", dExt.GetDevice().UUID(), time.Now().Format("20060102150405"))))
 	}
 
 	textRect, err := dExt.FindScreenText(text, opts...)
