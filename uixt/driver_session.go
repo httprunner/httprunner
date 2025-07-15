@@ -14,10 +14,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/json"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
@@ -160,7 +162,7 @@ func (s *DriverSession) POST(data interface{}, urlStr string, opts ...option.Act
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
-			return nil, err
+			return nil, errors.Wrap(code.InvalidParamError, err.Error())
 		}
 	}
 	return s.RequestWithRetry(http.MethodPost, urlStr, bsJSON, opts...)
@@ -191,7 +193,8 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 			return rawResp, nil
 		}
 
-		lastError = err
+		// Notice: use DeviceHTTPDriverError when request driver failed
+		lastError = errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 		log.Warn().Err(err).Msgf("request failed, attempt %d/%d", attempt, s.maxRetry)
 
 		// If this was the last attempt, break
@@ -220,6 +223,7 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 func (s *DriverSession) Request(method string, urlStr string, rawBody []byte, opts ...option.ActionOption) (
 	rawResp DriverRawResponse, err error,
 ) {
+	logid := uuid.New().String()
 	timeout := s.timeout
 	options := option.NewActionOptions(opts...)
 	if options.Timeout > 0 {
@@ -251,7 +255,7 @@ func (s *DriverSession) Request(method string, urlStr string, rawBody []byte, op
 			logger = log.Debug().Bool("success", true)
 		}
 
-		logger = logger.Str("request_method", method).Str("request_url", rawURL).
+		logger = logger.Str("logid", logid).Str("request_method", method).Str("request_url", rawURL).
 			Str("request_body", string(rawBody))
 		if !driverResult.RequestTime.IsZero() {
 			logger = logger.Int64("request_time", driverResult.RequestTime.UnixMilli())
@@ -274,6 +278,8 @@ func (s *DriverSession) Request(method string, urlStr string, rawBody []byte, op
 	}
 	req.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-HTTP-Request-ID", logid)
+	req.Header.Set("logid", logid)
 
 	driverResult.RequestTime = time.Now()
 	var resp *http.Response

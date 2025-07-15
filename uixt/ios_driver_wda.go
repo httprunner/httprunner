@@ -268,7 +268,7 @@ func (wd *WDADriver) Scale() (float64, error) {
 	}
 	screen, err := wd.Screen()
 	if err != nil {
-		return 0, errors.Wrap(code.MobileUIDriverError,
+		return 0, errors.Wrap(code.DeviceHTTPDriverError,
 			fmt.Sprintf("get screen info failed: %v", err))
 	}
 	return screen.Scale, nil
@@ -454,8 +454,7 @@ func (wd *WDADriver) AppLaunch(bundleId string) (err error) {
 	}
 	_, err = wd.Session.POST(data, "/wings/apps/launch")
 	if err != nil {
-		return errors.Wrap(code.MobileUILaunchAppError,
-			fmt.Sprintf("wda launch failed: %v", err))
+		return errors.Wrap(err, "wda app launch failed")
 	}
 	return nil
 }
@@ -466,8 +465,7 @@ func (wd *WDADriver) AppLaunchUnattached(bundleId string) (err error) {
 	data := map[string]interface{}{"bundleId": bundleId}
 	_, err = wd.Session.POST(data, "/wda/apps/launchUnattached")
 	if err != nil {
-		return errors.Wrap(code.MobileUILaunchAppError,
-			fmt.Sprintf("wda launchUnattached failed: %v", err))
+		return errors.Wrap(err, "wda app launchUnattached failed")
 	}
 	return nil
 }

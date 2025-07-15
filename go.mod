@@ -24,6 +24,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-openapi/spec v0.20.7
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/httprunner/funplugin v0.5.5
 	github.com/jinzhu/copier v0.3.5
@@ -82,7 +83,6 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/goph/emperror v0.17.2 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/grandcat/zeroconf v1.0.0 // indirect

@@ -151,7 +151,8 @@ func (dExt *XTDriver) ExecuteAction(ctx context.Context, action option.MobileAct
 	// Execute via MCP tool
 	result, err := dExt.client.CallTool(ctx, req)
 	if err != nil {
-		return SessionData{}, fmt.Errorf("MCP tool call failed: %w", err)
+		// Notice: preserve the original error code
+		return SessionData{}, errors.Wrap(err, "call MCP tool failed")
 	}
 
 	// Check if the tool execution had business logic errors
@@ -259,7 +260,7 @@ func (dExt *XTDriver) CallMCPTool(ctx context.Context,
 			Str("server", serverName).
 			Str("tool", toolName).
 			Msg("call MCP tool failed")
-		return nil, err
+		return nil, errors.Wrap(err, "call MCP tool failed")
 	}
 
 	if result.IsError {
