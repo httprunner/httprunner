@@ -155,33 +155,21 @@ func (s *DriverSession) buildURL(urlStr string) (string, error) {
 }
 
 func (s *DriverSession) GET(urlStr string, opts ...option.ActionOption) (rawResp DriverRawResponse, err error) {
-	rawResp, err = s.RequestWithRetry(http.MethodGet, urlStr, nil, opts...)
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
-	}
-	return rawResp, nil
+	return s.RequestWithRetry(http.MethodGet, urlStr, nil, opts...)
 }
 
 func (s *DriverSession) POST(data interface{}, urlStr string, opts ...option.ActionOption) (rawResp DriverRawResponse, err error) {
 	var bsJSON []byte = nil
 	if data != nil {
 		if bsJSON, err = json.Marshal(data); err != nil {
-			return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
+			return nil, errors.Wrap(code.InvalidParamError, err.Error())
 		}
 	}
-	rawResp, err = s.RequestWithRetry(http.MethodPost, urlStr, bsJSON, opts...)
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
-	}
-	return rawResp, nil
+	return s.RequestWithRetry(http.MethodPost, urlStr, bsJSON, opts...)
 }
 
 func (s *DriverSession) DELETE(urlStr string, opts ...option.ActionOption) (rawResp DriverRawResponse, err error) {
-	rawResp, err = s.RequestWithRetry(http.MethodDelete, urlStr, nil, opts...)
-	if err != nil {
-		return nil, errors.Wrap(code.DeviceHTTPDriverError, err.Error())
-	}
-	return rawResp, nil
+	return s.RequestWithRetry(http.MethodDelete, urlStr, nil, opts...)
 }
 
 func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody []byte, opts ...option.ActionOption) (
@@ -205,7 +193,8 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 			return rawResp, nil
 		}
 
-		lastError = err
+		// Notice: use DeviceHTTPDriverError when request driver failed
+		lastError = errors.Wrap(code.DeviceHTTPDriverError, err.Error())
 		log.Warn().Err(err).Msgf("request failed, attempt %d/%d", attempt, s.maxRetry)
 
 		// If this was the last attempt, break
