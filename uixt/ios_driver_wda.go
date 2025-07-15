@@ -275,14 +275,14 @@ func (wd *WDADriver) Scale() (float64, error) {
 }
 
 type Screen struct {
-	StatusBarSize types.Size `json:"statusBarSize"`
-	Scale         float64    `json:"scale"`
+	types.Size
+	Scale float64 `json:"scale"`
 }
 
 func (wd *WDADriver) Screen() (screen Screen, err error) {
-	// [[FBRoute GET:@"/wda/screen"] respondWithTarget:self action:@selector(handleGetScreen:)]
+	// [[FBRoute GET:@"/wings/window/size"] respondWithTarget:self action:@selector(handleGetScreen:)]
 	var rawResp DriverRawResponse
-	if rawResp, err = wd.Session.GET("/wda/screen"); err != nil {
+	if rawResp, err = wd.Session.GET("/wings/window/size"); err != nil {
 		return Screen{}, err
 	}
 	reply := new(struct{ Value struct{ Screen } })

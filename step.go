@@ -37,6 +37,7 @@ type StepConfig struct {
 	Validators        []interface{}          `json:"validate,omitempty" yaml:"validate,omitempty"`
 	StepExport        []string               `json:"export,omitempty" yaml:"export,omitempty"`
 	Loops             int                    `json:"loops,omitempty" yaml:"loops,omitempty"`
+	IgnorePopup       bool                   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"`             // ignore popup for this step, keep for compatibility
 	AutoPopupHandler  bool                   `json:"auto_popup_handler,omitempty" yaml:"auto_popup_handler,omitempty"` // enable auto popup handler for this step
 }
 

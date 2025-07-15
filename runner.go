@@ -878,9 +878,6 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 		}
 	}
 
-	stepName := step.Name()
-	stepType := string(step.Type())
-
 	// execute step with parameters iterator
 	tasks, err := r.generateExecutionTasks(step)
 	if err != nil {
@@ -899,30 +896,10 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 				r.sessionVariables[k] = v
 			}
 		}
-
-		// log final result
-		if err == nil && stepResult.Success {
-			log.Info().Str("step", stepName).
-				Str("type", stepType).
-				Bool("success", true).
-				Int64("elapsed(ms)", stepResult.Elapsed).
-				Interface("exportVars", stepResult.ExportVars).
-				Msg(RUN_STEP_END)
-		} else if stepResult != nil {
-			log.Error().Str("step", stepName).
-				Str("type", stepType).
-				Bool("success", false).
-				Int64("elapsed(ms)", stepResult.Elapsed).
-				Int("completed_tasks", len(stepResults)).
-				Int("total_tasks", len(tasks)).
-				Msg(RUN_STEP_END)
-		}
 	}()
 
 	// execute with loops as outer iteration
 	for _, task := range tasks {
-		log.Info().Str("step", task.stepName).Str("type", stepType).Msg(RUN_STEP_START)
-
 		// Check for interrupt signal before each parameter iteration
 		select {
 		case <-r.caseRunner.hrpRunner.interruptSignal:
@@ -967,6 +944,24 @@ func (r *SessionRunner) RunStep(step IStep) (stepResult *StepResult, err error) 
 // executeStepWithVariables executes a single step with given parameters
 // parameters will override step variables with the same name
 func (r *SessionRunner) executeStepWithVariables(step IStep, stepName string, parameters map[string]interface{}) (stepResult *StepResult, err error) {
+	stepType := string(step.Type())
+	log.Info().Str("step", stepName).Str("type", stepType).Msg(RUN_STEP_START)
+	defer func() {
+		if err == nil && stepResult.Success {
+			log.Info().Str("step", stepName).
+				Str("type", stepType).
+				Bool("success", true).
+				Int64("elapsed(ms)", stepResult.Elapsed).
+				Msg(RUN_STEP_END)
+		} else {
+			log.Error().Str("step", stepName).
+				Str("type", stepType).
+				Bool("success", false).
+				Int64("elapsed(ms)", stepResult.Elapsed).
+				Msg(RUN_STEP_END)
+		}
+	}()
+
 	stepConfig := step.Config()
 
 	// backup original variables
