@@ -225,3 +225,20 @@ const (
 	DirectionLeft  Direction = "left"
 	DirectionRight Direction = "right"
 )
+
+// TouchEvent represents a single touch event with all its properties
+type TouchEvent struct {
+	Timestamp int64   `json:"timestamp"`
+	X         float64 `json:"x"`
+	Y         float64 `json:"y"`
+	DeviceID  int     `json:"deviceId"`
+	Pressure  float64 `json:"pressure"`
+	Size      float64 `json:"size"`
+	RawX      float64 `json:"rawX"`
+	RawY      float64 `json:"rawY"`
+	DownTime  int64   `json:"downTime"`
+	EventTime int64   `json:"eventTime"`
+	ToolType  int     `json:"toolType"`
+	Flag      int     `json:"flag"`
+	Action    int     `json:"action"`
+}
