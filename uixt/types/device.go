@@ -228,7 +228,6 @@ const (
 
 // TouchEvent represents a single touch event with all its properties
 type TouchEvent struct {
-	Timestamp int64   `json:"timestamp"`
 	X         float64 `json:"x"`
 	Y         float64 `json:"y"`
 	DeviceID  int     `json:"deviceId"`

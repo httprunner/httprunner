@@ -441,26 +441,45 @@ func (ud *UIA2Driver) TouchByEvents(events []types.TouchEvent, opts ...option.Ac
 	// Apply pre-handlers for the first and last events (start and end coordinates)
 	firstEvent := events[0]
 	lastEvent := events[len(events)-1]
+
+	// Use rawX/rawY if available, otherwise fallback to X/Y for first event
+	startX, startY := firstEvent.RawX, firstEvent.RawY
+	if startX == 0 && startY == 0 {
+		startX, startY = firstEvent.X, firstEvent.Y
+	}
+
+	// Use rawX/rawY if available, otherwise fallback to X/Y for last event
+	endX, endY := lastEvent.RawX, lastEvent.RawY
+	if endX == 0 && endY == 0 {
+		endX, endY = lastEvent.X, lastEvent.Y
+	}
+
 	fromX, fromY, toX, toY, err := preHandler_Swipe(ud, option.ACTION_SwipeCoordinate, actionOptions,
-		firstEvent.X, firstEvent.Y, lastEvent.X, lastEvent.Y)
+		startX, startY, endX, endY)
 	if err != nil {
 		return err
 	}
 	defer postHandler(ud, option.ACTION_SwipeCoordinate, actionOptions)
 
 	var actions []interface{}
-	var prevTimestamp int64
+	var prevEventTime int64
 
 	for i, event := range events {
 		var duration float64
 		if i > 0 {
-			// Calculate duration from previous event in milliseconds
-			duration = float64(event.Timestamp - prevTimestamp)
+			// Calculate duration from previous event using EventTime (milliseconds)
+			duration = float64(event.EventTime - prevEventTime)
 		}
-		prevTimestamp = event.Timestamp
+		prevEventTime = event.EventTime
+
+		// Use rawX/rawY if available, otherwise fallback to X/Y
+		x, y := event.RawX, event.RawY
+		if x == 0 && y == 0 {
+			// Fallback to X/Y if rawX/rawY are not set
+			x, y = event.X, event.Y
+		}
 
 		// Apply coordinate transformation if it's the first or last event
-		x, y := event.X, event.Y
 		if i == 0 {
 			x, y = fromX, fromY
 		} else if i == len(events)-1 {
