@@ -428,6 +428,131 @@ func (ud *UIA2Driver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Actio
 	return err
 }
 
+// TouchByEvents performs a complex swipe using a sequence of touch events with pressure and size data
+func (ud *UIA2Driver) TouchByEvents(events []types.TouchEvent, opts ...option.ActionOption) error {
+	log.Info().Int("eventCount", len(events)).Msg("UIA2Driver.SwipeSimulator")
+
+	if len(events) == 0 {
+		return fmt.Errorf("no touch events provided")
+	}
+
+	actionOptions := option.NewActionOptions(opts...)
+
+	// Apply pre-handlers for the first and last events (start and end coordinates)
+	firstEvent := events[0]
+	lastEvent := events[len(events)-1]
+
+	// Use rawX/rawY if available, otherwise fallback to X/Y for first event
+	startX, startY := firstEvent.RawX, firstEvent.RawY
+	if startX == 0 && startY == 0 {
+		startX, startY = firstEvent.X, firstEvent.Y
+	}
+
+	// Use rawX/rawY if available, otherwise fallback to X/Y for last event
+	endX, endY := lastEvent.RawX, lastEvent.RawY
+	if endX == 0 && endY == 0 {
+		endX, endY = lastEvent.X, lastEvent.Y
+	}
+
+	fromX, fromY, toX, toY, err := preHandler_Swipe(ud, option.ACTION_SwipeCoordinate, actionOptions,
+		startX, startY, endX, endY)
+	if err != nil {
+		return err
+	}
+	defer postHandler(ud, option.ACTION_SwipeCoordinate, actionOptions)
+
+	var actions []interface{}
+	var prevEventTime int64
+
+	for i, event := range events {
+		var duration float64
+		if i > 0 {
+			// Calculate duration from previous event using EventTime (milliseconds)
+			duration = float64(event.EventTime - prevEventTime)
+		}
+		prevEventTime = event.EventTime
+
+		// Use rawX/rawY if available, otherwise fallback to X/Y
+		x, y := event.RawX, event.RawY
+		if x == 0 && y == 0 {
+			// Fallback to X/Y if rawX/rawY are not set
+			x, y = event.X, event.Y
+		}
+
+		// Apply coordinate transformation if it's the first or last event
+		if i == 0 {
+			x, y = fromX, fromY
+		} else if i == len(events)-1 {
+			x, y = toX, toY
+		}
+
+		var actionMap map[string]interface{}
+
+		switch event.Action {
+		case 0: // ACTION_DOWN
+			actionMap = map[string]interface{}{
+				"type":     "pointerDown",
+				"duration": 0,
+				"button":   0,
+				"pressure": event.Pressure,
+				"size":     event.Size,
+			}
+			// Add initial move to position before down
+			if i == 0 {
+				moveAction := map[string]interface{}{
+					"type":     "pointerMove",
+					"duration": 0,
+					"x":        x,
+					"y":        y,
+					"origin":   "viewport",
+					"pressure": event.Pressure,
+					"size":     event.Size,
+				}
+				actions = append(actions, moveAction)
+			}
+		case 1: // ACTION_UP
+			actionMap = map[string]interface{}{
+				"type":     "pointerUp",
+				"duration": 0,
+				"button":   0,
+				"pressure": event.Pressure,
+				"size":     event.Size,
+			}
+		case 2: // ACTION_MOVE
+			actionMap = map[string]interface{}{
+				"type":     "pointerMove",
+				"duration": duration,
+				"x":        x,
+				"y":        y,
+				"origin":   "viewport",
+				"pressure": event.Pressure,
+				"size":     event.Size,
+			}
+		default:
+			log.Warn().Int("action", event.Action).Msg("Unknown action type, skipping")
+			continue
+		}
+
+		actions = append(actions, actionMap)
+	}
+
+	data := map[string]interface{}{
+		"actions": []interface{}{
+			map[string]interface{}{
+				"type":       "pointer",
+				"parameters": map[string]string{"pointerType": "touch"},
+				"id":         "touch",
+				"actions":    actions,
+			},
+		},
+	}
+	option.MergeOptions(data, opts...)
+
+	urlStr := fmt.Sprintf("/session/%s/actions/swipe", ud.Session.ID)
+	_, err = ud.Session.POST(data, urlStr)
+	return err
+}
+
 func (ud *UIA2Driver) SetPasteboard(contentType types.PasteboardType, content string) (err error) {
 	log.Info().Str("contentType", string(contentType)).
 		Str("content", content).Msg("UIA2Driver.SetPasteboard")

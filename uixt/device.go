@@ -12,6 +12,8 @@ type IDevice interface {
 	UUID() string
 	NewDriver() (driver IDriver, err error)
 
+	IsHealthy() (bool, error)
+
 	Setup() error
 	Teardown() error
 

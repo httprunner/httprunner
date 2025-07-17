@@ -75,6 +75,10 @@ func (dev *HarmonyDevice) Setup() error {
 	return nil
 }
 
+func (dev *HarmonyDevice) IsHealthy() (bool, error) {
+	return true, nil
+}
+
 func (dev *HarmonyDevice) Teardown() error {
 	return nil
 }

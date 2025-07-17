@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -14,19 +15,41 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+
+	"github.com/httprunner/httprunner/v5/internal/builtin"
 )
 
 // WingsService implements ILLMService interface using external Wings API
 type WingsService struct {
-	apiURL string
-	bizId  string
+	apiURL     string
+	bizId      string
+	isExternal bool
+	accessKey  string
+	secretKey  string
 }
 
 // NewWingsService creates a new Wings service instance
 func NewWingsService() ILLMService {
+	// Check for environment variables for external API access
+	accessKey := ""
+	secretKey := ""
+	isExternal := false
+	apiURL := "https://vedem-algorithm.bytedance.net/algorithm/StepActionDecision"
+
+	// If environment variables are set, use external API with authentication
+	if ak, sk := os.Getenv("VEDEM_WINGS_AK"), os.Getenv("VEDEM_WINGS_SK"); ak != "" && sk != "" {
+		accessKey = ak
+		secretKey = sk
+		isExternal = true
+		apiURL = "https://vedem-algorithm.zijieapi.com/algorithm/StepActionDecision"
+	}
+
 	return &WingsService{
-		apiURL: "https://vedem-algorithm.bytedance.net/algorithm/StepActionDecision",
-		bizId:  "489fdae44de048e0922a32834ea668af",
+		apiURL:     apiURL,
+		bizId:      "489fdae44de048e0922a32834ea668af",
+		isExternal: isExternal,
+		accessKey:  accessKey,
+		secretKey:  secretKey,
 	}
 }
 
@@ -383,6 +406,16 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 	// Set headers
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Accept", "application/json")
+
+	// Add authentication headers if using external API
+	if w.isExternal {
+		signToken := "UNSIGNED-PAYLOAD"
+		token := builtin.Sign("auth-v2", w.accessKey, w.secretKey, []byte(signToken))
+
+		httpReq.Header.Add("Agw-Auth", token)
+		httpReq.Header.Add("Agw-Auth-Content", signToken)
+		httpReq.Header.Add("Content-Type", "application/json")
+	}
 
 	// Execute HTTP request
 	client := &http.Client{
