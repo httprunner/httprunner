@@ -308,6 +308,9 @@ func (s *DriverSession) Request(method string, urlStr string, rawBody []byte, op
 	}
 
 	if err = rawResp.CheckErr(); err != nil {
+		if resp.StatusCode == http.StatusOK {
+			return rawResp, nil
+		}
 		return nil, err
 	}
 
