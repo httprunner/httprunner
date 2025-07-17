@@ -45,6 +45,10 @@ func (dev *BrowserDevice) Setup() error {
 	return nil
 }
 
+func (dev *BrowserDevice) IsHealthy() (bool, error) {
+	return true, nil
+}
+
 func (dev *BrowserDevice) LogEnabled() bool {
 	return dev.Options.LogOn
 }
