@@ -160,6 +160,7 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 			LogID: generateWingsUUID(),
 		},
 	}
+	log.Info().Interface("apiRequest", apiRequest).Msg("Wings API request")
 
 	// Call Wings API
 	startTime := time.Now()
