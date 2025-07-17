@@ -114,6 +114,14 @@ func (dev *AndroidDevice) Setup() error {
 	return nil
 }
 
+func (dev *AndroidDevice) IsHealthy() (bool, error) {
+	state, err := dev.Device.State()
+	if err != nil {
+		return false, err
+	}
+	return state == gadb.StateOnline, nil
+}
+
 func (dev *AndroidDevice) Teardown() error {
 	return nil
 }

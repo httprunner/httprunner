@@ -184,6 +184,18 @@ func (dev *IOSDevice) Setup() error {
 	return nil
 }
 
+func (dev *IOSDevice) IsHealthy() (bool, error) {
+	startTimestamp := time.Now()
+	lockdown, err := ios.ConnectLockdownWithSession(dev.DeviceEntry)
+	if err != nil {
+		return false, err
+	}
+	defer lockdown.Close()
+	elapsed := time.Since(startTimestamp)
+	log.Info().Dur("elapsed", elapsed).Msg("connect lockdown")
+	return true, nil
+}
+
 func (dev *IOSDevice) Teardown() error {
 	for _, listener := range dev.listeners {
 		_ = listener.Close()
