@@ -160,6 +160,7 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 			LogID: generateWingsUUID(),
 		},
 	}
+	log.Info().Interface("apiRequest", apiRequest).Msg("Wings API request")
 
 	// Call Wings API
 	startTime := time.Now()
@@ -419,7 +420,7 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 
 	// Execute HTTP request
 	client := &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout: 60 * time.Second,
 	}
 
 	resp, err := client.Do(httpReq)

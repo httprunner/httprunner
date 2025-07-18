@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -60,40 +59,22 @@ type WDADriver struct {
 }
 
 func (wd *WDADriver) getLocalPort() (int, error) {
-	localPort, err := strconv.Atoi(os.Getenv("WDA_LOCAL_PORT"))
+	localPort, err := wd.Device.Forward(wd.Device.Options.WDAPort)
 	if err != nil {
-		localPort, err = builtin.GetFreePort()
-		if err != nil {
-			return 0, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("get free port failed: %v", err))
-		}
-		// forward local port to device
-		if err = wd.Device.Forward(localPort, wd.Device.Options.WDAPort); err != nil {
-			return 0, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("forward tcp port failed: %v", err))
-		}
-	} else {
-		log.Info().Int("WDA_LOCAL_PORT", localPort).Msg("reuse WDA local port")
+		return 0, errors.Wrap(code.DeviceHTTPDriverError,
+			fmt.Sprintf("forward tcp port failed: %v", err))
 	}
 	return localPort, nil
 }
 
 func (wd *WDADriver) getMjpegLocalPort() (int, error) {
-	localMjpegPort, err := strconv.Atoi(os.Getenv("WDA_LOCAL_MJPEG_PORT"))
+	localMjpegPort, err := wd.Device.Forward(wd.Device.Options.WDAMjpegPort)
 	if err != nil {
-		localMjpegPort, err = builtin.GetFreePort()
-		if err != nil {
-			return 0, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("get free port failed: %v", err))
-		}
-		if err = wd.Device.Forward(localMjpegPort, wd.Device.Options.WDAMjpegPort); err != nil {
-			return 0, errors.Wrap(code.DeviceHTTPDriverError,
-				fmt.Sprintf("forward tcp port failed: %v", err))
-		}
-	} else {
-		log.Info().Int("WDA_LOCAL_MJPEG_PORT", localMjpegPort).
-			Msg("reuse WDA local mjpeg port")
+		return 0, errors.Wrap(code.DeviceHTTPDriverError,
+			fmt.Sprintf("forward tcp port failed: %v", err))
 	}
+	log.Info().Int("WDA_LOCAL_MJPEG_PORT", localMjpegPort).
+		Msg("reuse WDA local mjpeg port")
 	return localMjpegPort, nil
 }
 
