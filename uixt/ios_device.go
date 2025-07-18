@@ -106,7 +106,10 @@ func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error)
 	device = &IOSDevice{
 		DeviceEntry: *iosDevice,
 		Options:     deviceOptions,
-		listeners:   make(map[int]*forward.ConnListener),
+		listeners: make(map[int]struct {
+			listener  *forward.ConnListener
+			localPort int
+		}),
 	}
 	log.Info().Str("udid", device.Options.UDID).Msg("init ios device")
 
@@ -119,8 +122,12 @@ func NewIOSDevice(opts ...option.IOSDeviceOption) (device *IOSDevice, err error)
 
 type IOSDevice struct {
 	ios.DeviceEntry
-	Options   *option.IOSDeviceOptions
-	listeners map[int]*forward.ConnListener
+	Options *option.IOSDeviceOptions
+	// 键为remotePort，值为对应的listener和localPort
+	listeners map[int]struct {
+		listener  *forward.ConnListener
+		localPort int
+	}
 }
 
 type DeviceDetail struct {
@@ -197,8 +204,10 @@ func (dev *IOSDevice) IsHealthy() (bool, error) {
 }
 
 func (dev *IOSDevice) Teardown() error {
-	for _, listener := range dev.listeners {
-		_ = listener.Close()
+	for _, forwardInfo := range dev.listeners {
+		if forwardInfo.listener != nil {
+			_ = forwardInfo.listener.Close()
+		}
 	}
 	return nil
 }
@@ -287,18 +296,37 @@ func (dev *IOSDevice) Uninstall(bundleId string) error {
 	return nil
 }
 
-func (dev *IOSDevice) Forward(localPort, remotePort int) error {
-	if dev.listeners[localPort] != nil {
-		log.Warn().Msg(fmt.Sprintf("local port :%d is already in use", localPort))
-		_ = dev.listeners[localPort].Close()
+func (dev *IOSDevice) Forward(remotePort int) (int, error) {
+	// 检查remotePort是否已经被转发
+	if forwardInfo, exists := dev.listeners[remotePort]; exists && forwardInfo.listener != nil {
+		log.Info().Msg(fmt.Sprintf("remote port :%d is already forwarded to local port :%d", remotePort, forwardInfo.localPort))
+		return forwardInfo.localPort, nil
 	}
+
+	// 获取一个空闲的本地端口
+	localPort, err := builtin.GetFreePort()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get free port")
+		return 0, err
+	}
+
 	listener, err := forward.Forward(dev.DeviceEntry, uint16(localPort), uint16(remotePort))
 	if err != nil {
-		log.Error().Err(err).Msg(fmt.Sprintf("failed to forward %d to %d", localPort, remotePort))
-		return err
+		log.Error().Err(err).Msg(fmt.Sprintf("failed to forward local port :%d to remote port :%d", localPort, remotePort))
+		return 0, err
 	}
-	dev.listeners[localPort] = listener
-	return nil
+
+	// 保存转发信息，以remotePort为键
+	dev.listeners[remotePort] = struct {
+		listener  *forward.ConnListener
+		localPort int
+	}{
+		listener:  listener,
+		localPort: localPort,
+	}
+
+	log.Info().Msg(fmt.Sprintf("forwarded local port :%d to remote port :%d", localPort, remotePort))
+	return localPort, nil
 }
 
 func (dev *IOSDevice) GetDeviceInfo() (*DeviceDetail, error) {
