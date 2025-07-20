@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cloudwego/eino/schema"
+
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
@@ -24,43 +25,66 @@ func NewLLMService(modelType option.LLMServiceType) (ILLMService, error) {
 
 // NewLLMServiceWithOptionConfig creates a new LLM service with different models for each component
 func NewLLMServiceWithOptionConfig(config *option.LLMServiceConfig) (ILLMService, error) {
-	// Get model configs for each component
-	plannerModelConfig, err := GetModelConfig(config.PlannerModel)
-	if err != nil {
-		return nil, err
+	combinedLLMService := &combinedLLMService{}
+
+	// Planner
+	if config.PlannerModel == option.WINGS_SERVICE {
+		planner, err := NewWingsService()
+		if err != nil {
+			return nil, err
+		}
+		combinedLLMService.planner = planner
+	} else {
+		plannerModelConfig, err := GetModelConfig(config.PlannerModel)
+		if err != nil {
+			return nil, err
+		}
+		planner, err := NewPlanner(context.Background(), plannerModelConfig)
+		if err != nil {
+			return nil, err
+		}
+		combinedLLMService.planner = planner
 	}
 
-	asserterModelConfig, err := GetModelConfig(config.AsserterModel)
-	if err != nil {
-		return nil, err
+	// Asserter
+	if config.AsserterModel == option.WINGS_SERVICE {
+		asserter, err := NewWingsService()
+		if err != nil {
+			return nil, err
+		}
+		combinedLLMService.asserter = asserter
+	} else {
+		asserterModelConfig, err := GetModelConfig(config.AsserterModel)
+		if err != nil {
+			return nil, err
+		}
+		asserter, err := NewAsserter(context.Background(), asserterModelConfig)
+		if err != nil {
+			return nil, err
+		}
+		combinedLLMService.asserter = asserter
 	}
 
-	querierModelConfig, err := GetModelConfig(config.QuerierModel)
-	if err != nil {
-		return nil, err
+	// Querier
+	if config.QuerierModel == option.WINGS_SERVICE {
+		querier, err := NewWingsService()
+		if err != nil {
+			return nil, err
+		}
+		combinedLLMService.querier = querier
+	} else {
+		querierModelConfig, err := GetModelConfig(config.QuerierModel)
+		if err != nil {
+			return nil, err
+		}
+		querier, err := NewQuerier(context.Background(), querierModelConfig)
+		if err != nil {
+			return nil, err
+		}
+		combinedLLMService.querier = querier
 	}
 
-	// Create components with their respective model configs
-	planner, err := NewPlanner(context.Background(), plannerModelConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	asserter, err := NewAsserter(context.Background(), asserterModelConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	querier, err := NewQuerier(context.Background(), querierModelConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return &combinedLLMService{
-		planner:  planner,
-		asserter: asserter,
-		querier:  querier,
-	}, nil
+	return combinedLLMService, nil
 }
 
 // combinedLLMService 实现了 ILLMService 接口，组合了规划、断言和查询功能
