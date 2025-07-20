@@ -16,41 +16,40 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
+	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 )
 
 // WingsService implements ILLMService interface using external Wings API
 type WingsService struct {
-	apiURL     string
-	bizId      string
-	isExternal bool
-	accessKey  string
-	secretKey  string
+	apiURL    string
+	bizId     string
+	accessKey string
+	secretKey string
 }
 
 // NewWingsService creates a new Wings service instance
-func NewWingsService() ILLMService {
+func NewWingsService() (ILLMService, error) {
 	// Check for environment variables for external API access
-	accessKey := ""
-	secretKey := ""
-	isExternal := false
-	apiURL := "https://vedem-algorithm.bytedance.net/algorithm/StepActionDecision"
+	apiURL := os.Getenv("VEDEM_WINGS_API_URL")
+	accessKey := os.Getenv("VEDEM_WINGS_AK")
+	secretKey := os.Getenv("VEDEM_WINGS_SK")
+	bizID := os.Getenv("VEDEM_WINGS_BIZ_ID")
 
-	// If environment variables are set, use external API with authentication
-	if ak, sk := os.Getenv("VEDEM_WINGS_AK"), os.Getenv("VEDEM_WINGS_SK"); ak != "" && sk != "" {
-		accessKey = ak
-		secretKey = sk
-		isExternal = true
-		apiURL = "https://vedem-algorithm.zijieapi.com/algorithm/StepActionDecision"
+	// check required env
+	if apiURL == "" {
+		return nil, errors.Wrap(code.LLMEnvMissedError, "missed env VEDEM_WINGS_API_URL")
+	}
+	if bizID == "" {
+		return nil, errors.Wrap(code.LLMEnvMissedError, "missed env VEDEM_WINGS_BIZ_ID")
 	}
 
 	return &WingsService{
-		apiURL:     apiURL,
-		bizId:      "489fdae44de048e0922a32834ea668af",
-		isExternal: isExternal,
-		accessKey:  accessKey,
-		secretKey:  secretKey,
-	}
+		apiURL:    apiURL,
+		bizId:     bizID,
+		accessKey: accessKey,
+		secretKey: secretKey,
+	}, nil
 }
 
 // Plan implements the ILLMService.Plan method using Wings API
@@ -409,7 +408,7 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 	httpReq.Header.Set("Accept", "application/json")
 
 	// Add authentication headers if using external API
-	if w.isExternal {
+	if w.accessKey != "" && w.secretKey != "" {
 		signToken := "UNSIGNED-PAYLOAD"
 		token := builtin.Sign("auth-v2", w.accessKey, w.secretKey, []byte(signToken))
 
