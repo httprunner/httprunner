@@ -217,7 +217,9 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 		ScreenshotElapsed: screenResult.Elapsed,
 		ImagePath:         screenResult.ImagePath,
 		Resolution:        &screenResult.Resolution,
-		PlanningResult:    &planningResult.PlanningResult,
+	}
+	if planningResult != nil {
+		aiExecutionResult.PlanningResult = &planningResult.PlanningResult
 	}
 	if err != nil {
 		aiExecutionResult.Error = err.Error()

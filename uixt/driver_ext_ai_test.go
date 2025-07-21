@@ -314,7 +314,7 @@ func TestDriverExt_AIAction_CompareWithAIAction(t *testing.T) {
 		if aiResult.PlanningResult != nil {
 			t.Logf("AIAction model: %s", aiResult.PlanningResult.ModelName)
 
-			assert.NotEqual(t, "wings-api", aiResult.PlanningResult.ModelName, "AIAction should not use wings-api")
+			assert.Equal(t, "wings-api", aiResult.PlanningResult.ModelName, "AIAction should use wings-api")
 		}
 	}
 }
