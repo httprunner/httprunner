@@ -6,6 +6,7 @@ type IOSDeviceOptions struct {
 	WDAPort      int    `json:"port,omitempty" yaml:"port,omitempty"`             // WDA remote port
 	WDAMjpegPort int    `json:"mjpeg_port,omitempty" yaml:"mjpeg_port,omitempty"` // WDA remote MJPEG port
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	IgnorePopup  bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"` // keep for compatibility
 
 	// switch to iOS springboard before init WDA session
 	ResetHomeOnStartup bool `json:"reset_home_on_startup,omitempty" yaml:"reset_home_on_startup,omitempty"`

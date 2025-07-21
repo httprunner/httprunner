@@ -9,10 +9,11 @@ func NewBrowserDeviceOptions(opts ...BrowserDeviceOption) *BrowserDeviceOptions 
 }
 
 type BrowserDeviceOptions struct {
-	BrowserID string `json:"browser_id,omitempty" yaml:"browser_id,omitempty"`
-	LogOn     bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
-	Width     int    `json:"width,omitempty" yaml:"width,omitempty"`
-	Height    int    `json:"height,omitempty" yaml:"height,omitempty"`
+	BrowserID   string `json:"browser_id,omitempty" yaml:"browser_id,omitempty"`
+	LogOn       bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	IgnorePopup bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"` // keep for compatibility
+	Width       int    `json:"width,omitempty" yaml:"width,omitempty"`
+	Height      int    `json:"height,omitempty" yaml:"height,omitempty"`
 }
 
 func (dev *BrowserDeviceOptions) Options() (deviceOptions []BrowserDeviceOption) {
