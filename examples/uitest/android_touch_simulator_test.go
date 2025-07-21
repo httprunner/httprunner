@@ -29,10 +29,6 @@ func ParseTouchEvents(data string) ([]types.TouchEvent, error) {
 		event := types.TouchEvent{}
 		var err error
 
-		// Parse each field
-		if event.Timestamp, err = strconv.ParseInt(parts[0], 10, 64); err != nil {
-			return nil, fmt.Errorf("invalid timestamp: %v", err)
-		}
 		if event.X, err = strconv.ParseFloat(parts[1], 64); err != nil {
 			return nil, fmt.Errorf("invalid x coordinate: %v", err)
 		}
@@ -155,9 +151,6 @@ func TestTouchEventParsing(t *testing.T) {
 	}
 
 	event := events[0]
-	if event.Timestamp != 1752646457403 {
-		t.Errorf("Expected timestamp 1752646457403, got %d", event.Timestamp)
-	}
 	if event.X != 456.78418 {
 		t.Errorf("Expected X 456.78418, got %f", event.X)
 	}
@@ -226,13 +219,6 @@ func TestTouchEventSequenceValidation(t *testing.T) {
 	for i, event := range events {
 		if event.Action != expectedActions[i] {
 			t.Errorf("Event %d: expected action %d, got %d", i, expectedActions[i], event.Action)
-		}
-	}
-
-	// Validate timestamps are in increasing order
-	for i := 1; i < len(events); i++ {
-		if events[i].Timestamp <= events[i-1].Timestamp {
-			t.Errorf("Event %d: timestamp should be greater than previous event", i)
 		}
 	}
 
