@@ -288,14 +288,6 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 	return assertResult, nil
 }
 
-// Context key types to avoid collisions
-type contextKey string
-
-const (
-	deviceIDKey     contextKey = "device_id"
-	platformTypeKey contextKey = "platform_type"
-)
-
 // PlanNextAction performs planning and returns unified planning information
 func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ...option.ActionOption) (*PlanningExecutionResult, error) {
 	if dExt.LLMService == nil {
@@ -514,6 +506,14 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*AIExec
 	return aiResult, nil
 }
 
+// Context key types to avoid collisions
+type contextKey string
+
+const (
+	deviceIDKey     contextKey = "device_id"
+	platformTypeKey contextKey = "platform_type"
+)
+
 // addDeviceContextForWings adds device information to context for Wings service
 func (dExt *XTDriver) addDeviceContextForWings(ctx context.Context) context.Context {
 	device := dExt.GetDevice()
@@ -533,6 +533,10 @@ func (dExt *XTDriver) addDeviceContextForWings(ctx context.Context) context.Cont
 		platformType = "ios"
 	case *HarmonyDevice:
 		platformType = "harmony"
+	case *BrowserDevice:
+		platformType = "browser"
+	default:
+		platformType = "unknown"
 	}
 	ctx = context.WithValue(ctx, platformTypeKey, platformType)
 
