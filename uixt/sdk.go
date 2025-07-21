@@ -29,23 +29,29 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 
 	// Handle LLM service initialization
 	if services.LLMConfig != nil {
-		// Use advanced LLM configuration if provided
+		// Use advanced LLM service configuration if provided
 		driverExt.LLMService, err = ai.NewLLMServiceWithOptionConfig(services.LLMConfig)
 		if err != nil {
-			log.Warn().Err(err).Msg("init llm service with config failed, Wings service will be used")
+			log.Warn().Err(err).Msg("init llm service with config failed")
 		} else {
 			log.Info().Msg("LLM service initialized with advanced config")
 		}
 	} else if services.LLMService != "" {
-		// Fallback to simple LLM service if no config provided
+		// Use simple LLM service configuration if provided
 		driverExt.LLMService, err = ai.NewLLMService(services.LLMService)
 		if err != nil {
-			log.Warn().Err(err).Msg("init llm service failed, Wings service will be used")
+			log.Warn().Err(err).Msg("init llm service failed")
 		} else {
-			log.Info().Msg("LLM service initialized")
+			log.Info().Msg("LLM service initialized with simple config")
 		}
 	} else {
-		log.Info().Msg("no LLM service config provided, using Wings service only")
+		// Use Wings service as fallback
+		driverExt.LLMService, err = ai.NewWingsService()
+		if err != nil {
+			log.Warn().Err(err).Msg("init Wings service failed")
+		} else {
+			log.Info().Msg("Wings service initialized")
+		}
 	}
 
 	// Register uixt MCP tools to LLM service if it exists

@@ -245,8 +245,6 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 		return nil, errors.New("LLM service is not initialized")
 	}
 
-	ctx := dExt.addDeviceContextForWings(context.Background())
-
 	// Step 1: Take screenshot and convert to base64
 	screenResult, err := dExt.GetScreenResult(
 		option.WithScreenShotFileName("ai_assert"),
@@ -270,7 +268,7 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 		Screenshot: screenResult.Base64,
 		Size:       screenResult.Resolution,
 	}
-	result, err := dExt.LLMService.Assert(ctx, assertOpts)
+	result, err := dExt.LLMService.Assert(context.Background(), assertOpts)
 	assertResult.ModelCallElapsed = time.Since(modelCallStartTime).Milliseconds()
 	assertResult.AssertionResult = result
 
@@ -293,8 +291,6 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 	if dExt.LLMService == nil {
 		return nil, errors.New("LLM service is not initialized")
 	}
-
-	ctx = dExt.addDeviceContextForWings(ctx)
 
 	// Parse action options to get ResetHistory setting
 	options := option.NewActionOptions(opts...)
@@ -504,41 +500,4 @@ func (dExt *XTDriver) AIQuery(text string, opts ...option.ActionOption) (*AIExec
 		QueryResult:       result,                   // query-specific result
 	}
 	return aiResult, nil
-}
-
-// Context key types to avoid collisions
-type contextKey string
-
-const (
-	deviceIDKey     contextKey = "device_id"
-	platformTypeKey contextKey = "platform_type"
-)
-
-// addDeviceContextForWings adds device information to context for Wings service
-func (dExt *XTDriver) addDeviceContextForWings(ctx context.Context) context.Context {
-	device := dExt.GetDevice()
-	if device == nil {
-		return ctx
-	}
-
-	// Add device ID to context
-	ctx = context.WithValue(ctx, deviceIDKey, device.UUID())
-
-	// Add platform type to context
-	platformType := "android" // default
-	switch device.(type) {
-	case *AndroidDevice:
-		platformType = "android"
-	case *IOSDevice:
-		platformType = "ios"
-	case *HarmonyDevice:
-		platformType = "harmony"
-	case *BrowserDevice:
-		platformType = "browser"
-	default:
-		platformType = "unknown"
-	}
-	ctx = context.WithValue(ctx, platformTypeKey, platformType)
-
-	return ctx
 }
