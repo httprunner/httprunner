@@ -61,7 +61,23 @@ func (s *MCPServer4XTDriver) GetToolByAction(actionMethod option.ActionName) Act
 	if s.actionToolMap == nil {
 		return nil
 	}
+	actionMethod = getActionNameByAlias(actionMethod)
 	return s.actionToolMap[actionMethod]
+}
+
+func getActionNameByAlias(actionMethod option.ActionName) option.ActionName {
+	switch strings.ToLower(string(actionMethod)) {
+	case "terminal_app":
+		return option.ACTION_AppTerminate
+	case "open_app":
+		return option.ACTION_AppLaunch
+	case "text":
+		return option.ACTION_Input
+	case "tap":
+		return option.ACTION_TapXY
+	default:
+		return actionMethod
+	}
 }
 
 // registerTools registers all MCP tools.
@@ -71,7 +87,6 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolSelectDevice{})         // SelectDevice
 
 	// Touch Tools
-	s.registerTool(&ToolTap{})         // tap
 	s.registerTool(&ToolTapXY{})       // tap xy
 	s.registerTool(&ToolTapAbsXY{})    // tap abs xy
 	s.registerTool(&ToolTapByOCR{})    // tap by OCR
@@ -89,7 +104,6 @@ func (s *MCPServer4XTDriver) registerTools() {
 
 	// Input Tools
 	s.registerTool(&ToolInput{})
-	s.registerTool(&ToolText{})
 	s.registerTool(&ToolBackspace{})
 	s.registerTool(&ToolSetIme{})
 
@@ -101,9 +115,7 @@ func (s *MCPServer4XTDriver) registerTools() {
 	// App Tools
 	s.registerTool(&ToolListPackages{})     // ListPackages
 	s.registerTool(&ToolLaunchApp{})        // LaunchApp
-	s.registerTool(&ToolOpenApp{})          // OpenApp
 	s.registerTool(&ToolTerminateApp{})     // TerminateApp
-	s.registerTool(&ToolTerminateAppNew{})  // TerminateApp (new)
 	s.registerTool(&ToolColdLaunch{})       // ColdLaunch
 	s.registerTool(&ToolAppInstall{})       // AppInstall
 	s.registerTool(&ToolAppUninstall{})     // AppUninstall
