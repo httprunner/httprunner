@@ -336,32 +336,18 @@ func compressImageBufferWithOptions(raw *bytes.Buffer, enableResize bool, maxWid
 		newHeight = originalHeight
 	}
 
-	// Determine JPEG quality based on image size for optimal compression
-	jpegQuality := 60                // Default quality for better compression
-	if newWidth*newHeight > 500000 { // For very large images, use lower quality
-		jpegQuality = 50
-	} else if newWidth*newHeight < 100000 { // For small images, use higher quality
-		jpegQuality = 70
-	}
-
+	jpegQuality := 95
 	var buf bytes.Buffer
-	switch strings.ToLower(format) {
-	case "jpeg", "jpg":
-		// Use adaptive JPEG compression quality
-		err = jpeg.Encode(&buf, resizedImg, &jpeg.Options{Quality: jpegQuality})
-	case "png":
-		// Convert PNG to JPEG for better compression
-		err = jpeg.Encode(&buf, resizedImg, &jpeg.Options{Quality: jpegQuality})
-	case "gif":
-		// Keep GIF format but with reduced colors for better compression
-		err = gif.Encode(&buf, resizedImg, &gif.Options{NumColors: 64})
+	switch format {
+	case "jpeg", "jpg", "png":
+		// compress with compression rate of 95
+		jpegOptions := &jpeg.Options{Quality: jpegQuality}
+		err = jpeg.Encode(&buf, resizedImg, jpegOptions)
+		if err != nil {
+			return nil, err
+		}
 	default:
-		// Default to JPEG for unknown formats
-		err = jpeg.Encode(&buf, resizedImg, &jpeg.Options{Quality: jpegQuality})
-	}
-
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unsupported image format: %s", format)
 	}
 
 	compressedSize := buf.Len()
