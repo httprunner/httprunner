@@ -58,6 +58,7 @@ const (
 	DOUBAO_SEED_1_6_250615                LLMServiceType = "doubao-seed-1.6-250615"
 	OPENAI_GPT_4O                         LLMServiceType = "openai/gpt-4o"
 	DEEPSEEK_R1_250528                    LLMServiceType = "deepseek-r1-250528"
+	WINGS_SERVICE                         LLMServiceType = "wings-service"
 )
 
 func WithLLMService(modelType LLMServiceType) AIServiceOption {
