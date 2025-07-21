@@ -346,22 +346,6 @@ func (w *WingsService) extractScreenshotFromMessage(message *schema.Message) (st
 
 // getDeviceInfoFromContext gets device info from context with fallback
 func (w *WingsService) getDeviceInfoFromContext(ctx context.Context, screenshot string) WingsDeviceInfo {
-	// Try to get device info from context
-	if deviceID, ok := ctx.Value("device_id").(string); ok {
-		platformType := "android"
-		if platform, ok := ctx.Value("platform_type").(string); ok {
-			platformType = platform
-		}
-
-		return WingsDeviceInfo{
-			DeviceID:        deviceID,
-			NowImage:        screenshot,
-			PreImage:        screenshot,
-			NowLayoutJSON:   "",
-			OperationSystem: platformType,
-		}
-	}
-
 	// Fallback to default device info
 	return WingsDeviceInfo{
 		DeviceID:        "default-device",

@@ -295,32 +295,25 @@ func TestDriverExt_AIAction_CompareWithAIAction(t *testing.T) {
 	prompt := "点击搜索按钮"
 
 	// Test both methods with the same prompt
-	wingsResult, wingsErr := driver.AIAction(context.Background(), prompt)
 	aiResult, aiErr := driver.AIAction(context.Background(), prompt)
 
 	// Both should execute without critical errors (may have different implementations)
-	t.Logf("AIAction error: %v", wingsErr)
 	t.Logf("AIAction error: %v", aiErr)
 
 	// If both succeed, compare results
-	if wingsResult != nil && aiResult != nil {
-		assert.Equal(t, "action", wingsResult.Type, "AIAction result type should be 'action'")
+	if aiResult != nil {
 		assert.Equal(t, "action", aiResult.Type, "AIAction result type should be 'action'")
 
 		// Both should have timing information
-		assert.Greater(t, wingsResult.ModelCallElapsed, int64(0), "AIAction should have model call elapsed time")
 		assert.Greater(t, aiResult.ModelCallElapsed, int64(0), "AIAction should have model call elapsed time")
 
 		// Both should have screenshot information
-		assert.NotEmpty(t, wingsResult.ImagePath, "AIAction should have image path")
 		assert.NotEmpty(t, aiResult.ImagePath, "AIAction should have image path")
 
 		// Compare model names
-		if wingsResult.PlanningResult != nil && aiResult.PlanningResult != nil {
-			t.Logf("AIAction model: %s", wingsResult.PlanningResult.ModelName)
+		if aiResult.PlanningResult != nil {
 			t.Logf("AIAction model: %s", aiResult.PlanningResult.ModelName)
 
-			assert.Equal(t, "wings-api", wingsResult.PlanningResult.ModelName, "AIAction should use wings-api")
 			assert.NotEqual(t, "wings-api", aiResult.PlanningResult.ModelName, "AIAction should not use wings-api")
 		}
 	}
