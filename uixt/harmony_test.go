@@ -5,17 +5,28 @@ package uixt
 import (
 	"testing"
 
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func setupHDCDriverExt(t *testing.T) *XTDriver {
-	device, err := NewHarmonyDevice()
-	require.Nil(t, err)
-	hdcDriver, err := NewHDCDriver(device)
-	require.Nil(t, err)
-	driverExt, err := NewXTDriver(hdcDriver, option.WithCVService(option.CVServiceTypeVEDEM))
+	// Use cache mechanism for Harmony HDC driver
+	config := DriverCacheConfig{
+		Platform: "harmony",
+		Serial:   "", // Let it auto-detect the device serial
+		AIOptions: []option.AIServiceOption{
+			option.WithCVService(option.CVServiceTypeVEDEM),
+			option.WithLLMConfig(
+				option.NewLLMServiceConfig(option.DOUBAO_1_5_UI_TARS_250328).
+					WithPlannerModel(option.WINGS_SERVICE).
+					WithAsserterModel(option.WINGS_SERVICE),
+			),
+		},
+	}
+
+	driverExt, err := GetOrCreateXTDriver(config)
 	require.Nil(t, err)
 	return driverExt
 }

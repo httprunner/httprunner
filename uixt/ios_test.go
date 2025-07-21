@@ -16,14 +16,29 @@ import (
 )
 
 func setupWDADriverExt(t *testing.T) *XTDriver {
-	device, err := NewIOSDevice(
-		option.WithWDAPort(8700),
-		option.WithWDAMjpegPort(8800),
-		option.WithWDALogOn(true))
-	require.Nil(t, err)
-	driver, err := device.NewDriver()
-	require.Nil(t, err)
-	driverExt, err := NewXTDriver(driver, option.WithCVService(option.CVServiceTypeVEDEM))
+	// Use cache mechanism with unified DeviceOptions for iOS WDA driver
+	deviceOpts := option.NewDeviceOptions(
+		option.WithPlatform("ios"),
+		option.WithDeviceWDAPort(8700),
+		option.WithDeviceWDAMjpegPort(8800),
+		option.WithDeviceLogOn(true),
+	)
+
+	config := DriverCacheConfig{
+		Platform:   "ios",
+		Serial:     "", // Let it auto-detect the device serial
+		DeviceOpts: deviceOpts,
+		AIOptions: []option.AIServiceOption{
+			option.WithCVService(option.CVServiceTypeVEDEM),
+			option.WithLLMConfig(
+				option.NewLLMServiceConfig(option.DOUBAO_1_5_UI_TARS_250328).
+					WithPlannerModel(option.WINGS_SERVICE).
+					WithAsserterModel(option.WINGS_SERVICE),
+			),
+		},
+	}
+
+	driverExt, err := GetOrCreateXTDriver(config)
 	require.Nil(t, err)
 	return driverExt
 }
