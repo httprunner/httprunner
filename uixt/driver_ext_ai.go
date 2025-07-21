@@ -209,80 +209,51 @@ func (dExt *XTDriver) AIAction(ctx context.Context, prompt string, opts ...optio
 	}
 
 	// Step 2: Check if WingsService is available and prioritize it
-	if dExt.WingsService != nil {
+	if dExt.LLMService != nil {
 		log.Info().Msg("using Wings service for AI action")
-		return dExt.executeAIAction(ctx, prompt, screenResult, dExt.WingsService, "wings", opts...)
+		return dExt.executeAIAction(ctx, prompt, screenResult, dExt.LLMService, "wings", opts...)
+	} else {
+		return nil, errors.New("no LLM service is initialized")
 	}
-
-	// Step 3: Fallback to LLM service
-	if dExt.LLMService == nil {
-		return nil, errors.New("neither Wings service nor LLM service is initialized")
-	}
-
-	log.Info().Msg("using LLM service for AI action")
-	return dExt.executeAIAction(ctx, prompt, screenResult, dExt.LLMService, "llm", opts...)
 }
 
 // executeAIAction executes AIAction using any AI service (generic implementation)
 func (dExt *XTDriver) executeAIAction(ctx context.Context, prompt string, screenResult *ScreenResult, service ai.ILLMService, serviceType string, opts ...option.ActionOption) (*AIExecutionResult, error) {
-	// Add device context for Wings service if needed
-	if serviceType == "wings" {
-		ctx = dExt.addDeviceContextForWings(ctx)
-	}
-
 	// Step 1: Plan next action and measure time
 	modelCallStartTime := time.Now()
 
 	var planningResult *ai.PlanningResult
 	var err error
 
-	if serviceType == "llm" {
-		// For LLM service, use PlanNextAction which includes additional processing
-		planningExecutionResult, planErr := dExt.PlanNextAction(ctx, prompt, opts...)
-		if planErr != nil {
-			modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
-			return &AIExecutionResult{
-				Type:              "action",
-				ModelCallElapsed:  modelCallElapsed,
-				ScreenshotElapsed: screenResult.Elapsed,
-				ImagePath:         screenResult.ImagePath,
-				Resolution:        &screenResult.Resolution,
-				Error:             planErr.Error(),
-			}, errors.Wrap(planErr, "get next action failed")
-		}
-		planningResult = &planningExecutionResult.PlanningResult
-	} else {
-		// For Wings service, call Plan directly
-		planningOpts := &ai.PlanningOptions{
-			UserInstruction: prompt,
-			Message: &schema.Message{
-				Role: schema.User,
-				MultiContent: []schema.ChatMessagePart{
-					{
-						Type: schema.ChatMessagePartTypeImageURL,
-						ImageURL: &schema.ChatMessageImageURL{
-							URL: screenResult.Base64,
-						},
+	// For Wings service, call Plan directly
+	planningOpts := &ai.PlanningOptions{
+		UserInstruction: prompt,
+		Message: &schema.Message{
+			Role: schema.User,
+			MultiContent: []schema.ChatMessagePart{
+				{
+					Type: schema.ChatMessagePartTypeImageURL,
+					ImageURL: &schema.ChatMessageImageURL{
+						URL: screenResult.Base64,
 					},
 				},
 			},
-			Size: screenResult.Resolution,
-		}
-
-		planningResult, err = service.Plan(ctx, planningOpts)
-		if err != nil {
-			modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
-			return &AIExecutionResult{
-				Type:              "action",
-				ModelCallElapsed:  modelCallElapsed,
-				ScreenshotElapsed: screenResult.Elapsed,
-				ImagePath:         screenResult.ImagePath,
-				Resolution:        &screenResult.Resolution,
-				Error:             err.Error(),
-			}, errors.Wrap(err, fmt.Sprintf("%s service planning failed", serviceType))
-		}
+		},
+		Size: screenResult.Resolution,
 	}
 
+	planningResult, err = service.Plan(ctx, planningOpts)
+	if err != nil {
+		modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
+		return &AIExecutionResult{
+			Type:              "action",
+			ModelCallElapsed:  modelCallElapsed,
+			ScreenshotElapsed: screenResult.Elapsed,
+			ImagePath:         screenResult.ImagePath,
+			Resolution:        &screenResult.Resolution,
+			Error:             err.Error(),
+		}, errors.Wrap(err, fmt.Sprintf("%s service planning failed", serviceType))
+	}
 	modelCallElapsed := time.Since(modelCallStartTime).Milliseconds()
 
 	aiExecutionResult := &AIExecutionResult{
@@ -322,28 +293,18 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 		return nil, err
 	}
 
-	// Step 2: Check if WingsService is available and prioritize it
-	if dExt.WingsService != nil {
+	if dExt.LLMService != nil {
 		log.Info().Msg("using Wings service for AI assertion")
-		return dExt.executeAIAssert(assertion, screenResult, dExt.WingsService, "wings", opts...)
+		return dExt.executeAIAssert(assertion, screenResult, dExt.LLMService, "wings", opts...)
+	} else {
+		return nil, errors.New("no LLM service is initialized")
 	}
-
-	// Step 3: Fallback to LLM service
-	if dExt.LLMService == nil {
-		return nil, errors.New("neither Wings service nor LLM service is initialized")
-	}
-
-	log.Info().Msg("using LLM service for AI assertion")
-	return dExt.executeAIAssert(assertion, screenResult, dExt.LLMService, "llm", opts...)
 }
 
 // executeAIAssert executes AIAssert using any AI service (generic implementation)
 func (dExt *XTDriver) executeAIAssert(assertion string, screenResult *ScreenResult, service ai.ILLMService, serviceType string, opts ...option.ActionOption) (*AIExecutionResult, error) {
 	// Step 1: Prepare context and options
 	ctx := context.Background()
-	if serviceType == "wings" {
-		ctx = dExt.addDeviceContextForWings(ctx)
-	}
 
 	assertResult := &AIExecutionResult{
 		Type:              "assert",
@@ -374,31 +335,6 @@ func (dExt *XTDriver) executeAIAssert(assertion string, screenResult *ScreenResu
 	}
 
 	return assertResult, nil
-}
-
-// addDeviceContextForWings adds device information to context for Wings service
-func (dExt *XTDriver) addDeviceContextForWings(ctx context.Context) context.Context {
-	device := dExt.GetDevice()
-	if device == nil {
-		return ctx
-	}
-
-	// Add device ID to context
-	ctx = context.WithValue(ctx, "device_id", device.UUID())
-
-	// Add platform type to context
-	platformType := "android" // default
-	switch device.(type) {
-	case *AndroidDevice:
-		platformType = "android"
-	case *IOSDevice:
-		platformType = "ios"
-	case *HarmonyDevice:
-		platformType = "harmony"
-	}
-	ctx = context.WithValue(ctx, "platform_type", platformType)
-
-	return ctx
 }
 
 // PlanNextAction (original implementation - preserved)
