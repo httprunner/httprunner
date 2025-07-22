@@ -124,65 +124,6 @@ func (t *ToolSetIme) ConvertActionToCallToolRequest(action option.MobileAction) 
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid set ime params: %v", action.Params)
 }
 
-// ToolText implements the text tool call.
-type ToolText struct {
-	// Return data fields - these define the structure of data returned by this tool
-	Text string `json:"text" desc:"Text that was input"`
-}
-
-func (t *ToolText) Name() option.ActionName {
-	return option.ACTION_Text
-}
-
-func (t *ToolText) Description() string {
-	return "Input text into the currently focused element or input field"
-}
-
-func (t *ToolText) Options() []mcp.ToolOption {
-	unifiedReq := &option.ActionOptions{}
-	return unifiedReq.GetMCPOptions(option.ACTION_Text)
-}
-
-func (t *ToolText) Implement() server.ToolHandlerFunc {
-	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		arguments := request.GetArguments()
-		driverExt, err := setupXTDriver(ctx, arguments)
-		if err != nil {
-			return nil, fmt.Errorf("setup driver failed: %w", err)
-		}
-
-		unifiedReq, err := parseActionOptions(arguments)
-		if err != nil {
-			return nil, err
-		}
-
-		if unifiedReq.Text == "" {
-			return nil, fmt.Errorf("text is required")
-		}
-
-		opts := unifiedReq.Options()
-
-		// Text input action logic
-		err = driverExt.Input(unifiedReq.Text, opts...)
-		if err != nil {
-			return NewMCPErrorResponse(fmt.Sprintf("Text input failed: %s", err.Error())), err
-		}
-
-		message := fmt.Sprintf("Successfully input text: %s", unifiedReq.Text)
-		returnData := ToolText{Text: unifiedReq.Text}
-
-		return NewMCPSuccessResponse(message, &returnData), nil
-	}
-}
-
-func (t *ToolText) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	text := fmt.Sprintf("%v", action.Params)
-	arguments := map[string]any{
-		"text": text,
-	}
-	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
-}
-
 // ToolBackspace implements the backspace tool call.
 type ToolBackspace struct {
 	// Return data fields - these define the structure of data returned by this tool

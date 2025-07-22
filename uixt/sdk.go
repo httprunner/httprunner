@@ -29,31 +29,35 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 
 	// Handle LLM service initialization
 	if services.LLMConfig != nil {
-		// Use advanced LLM configuration if provided
+		// Use advanced LLM service configuration if provided
 		driverExt.LLMService, err = ai.NewLLMServiceWithOptionConfig(services.LLMConfig)
 		if err != nil {
-			log.Warn().Err(err).Msg("init llm service with config failed, Wings service will be used")
+			log.Warn().Err(err).Msg("init llm service with config failed")
 		} else {
 			log.Info().Msg("LLM service initialized with advanced config")
 		}
 	} else if services.LLMService != "" {
-		// Fallback to simple LLM service if no config provided
+		// Use simple LLM service configuration if provided
 		driverExt.LLMService, err = ai.NewLLMService(services.LLMService)
 		if err != nil {
-			log.Warn().Err(err).Msg("init llm service failed, Wings service will be used")
+			log.Warn().Err(err).Msg("init llm service failed")
 		} else {
-			log.Info().Msg("LLM service initialized")
+			log.Info().Msg("LLM service initialized with simple config")
 		}
 	} else {
-		driverExt.LLMService = ai.NewWingsService()
-		log.Info().Msg("Wings service initialized")
+		// Use Wings service as fallback
+		driverExt.LLMService, err = ai.NewWingsService()
+		if err != nil {
+			log.Warn().Err(err).Msg("init Wings service failed")
+		} else {
+			log.Info().Msg("Wings service initialized")
+		}
 	}
 
+	// Register uixt MCP tools to LLM service if it exists
 	if driverExt.LLMService != nil {
-		// Register uixt MCP tools to LLM service if it exists
 		mcpTools := driverExt.client.Server.ListTools()
 		einoTools := ai.ConvertMCPToolsToEinoToolInfos(mcpTools, "uixt")
-
 		if err = driverExt.LLMService.RegisterTools(einoTools); err != nil {
 			log.Warn().Err(err).Msg("failed to register uixt tools to LLM service")
 		}
@@ -66,7 +70,7 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 type XTDriver struct {
 	IDriver
 	CVService  ai.ICVService  // OCR/CV
-	LLMService ai.ILLMService // LLM (fallback service)
+	LLMService ai.ILLMService // LLM
 
 	services         *option.AIServiceOptions    // AI services options
 	client           *MCPClient4XTDriver         // MCP Client for built-in uixt server

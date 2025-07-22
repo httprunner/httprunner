@@ -16,29 +16,47 @@ import (
 )
 
 func setupADBDriverExt(t *testing.T) *XTDriver {
-	device, err := NewAndroidDevice()
-	require.Nil(t, err)
-	device.Options.UIA2 = false
-	device.Options.LogOn = false
-	driver, err := device.NewDriver()
-	require.Nil(t, err)
-	driverExt, err := NewXTDriver(driver,
-		option.WithCVService(option.CVServiceTypeVEDEM),
-		// option.WithLLMService(option.DOUBAO_1_5_UI_TARS_250328),
-	)
+	config := DriverCacheConfig{
+		Platform: "android",
+		Serial:   "", // Let it auto-detect the device serial
+		AIOptions: []option.AIServiceOption{
+			option.WithCVService(option.CVServiceTypeVEDEM),
+			option.WithLLMConfig(
+				option.NewLLMServiceConfig(option.DOUBAO_1_5_UI_TARS_250328).
+					WithPlannerModel(option.WINGS_SERVICE).
+					WithAsserterModel(option.WINGS_SERVICE),
+			),
+		},
+	}
+
+	driverExt, err := GetOrCreateXTDriver(config)
 	require.Nil(t, err)
 	return driverExt
 }
 
 func setupUIA2DriverExt(t *testing.T) *XTDriver {
-	device, err := NewAndroidDevice()
-	require.Nil(t, err)
-	device.Options.UIA2 = true // use uiautomator2 driver
-	device.Options.LogOn = false
-	driver, err := device.NewDriver()
-	require.Nil(t, err)
-	driverExt, err := NewXTDriver(driver,
-		option.WithCVService(option.CVServiceTypeVEDEM))
+	// Use cache mechanism with UIA2 enabled
+	deviceOpts := option.NewDeviceOptions(
+		option.WithPlatform("android"),
+		option.WithDeviceUIA2(true),
+		option.WithDeviceLogOn(false),
+	)
+
+	config := DriverCacheConfig{
+		Platform:   "android",
+		Serial:     "", // Let it auto-detect the device serial
+		DeviceOpts: deviceOpts,
+		AIOptions: []option.AIServiceOption{
+			option.WithCVService(option.CVServiceTypeVEDEM),
+			option.WithLLMConfig(
+				option.NewLLMServiceConfig(option.DOUBAO_1_5_UI_TARS_250328).
+					WithPlannerModel(option.WINGS_SERVICE).
+					WithAsserterModel(option.WINGS_SERVICE),
+			),
+		},
+	}
+
+	driverExt, err := GetOrCreateXTDriver(config)
 	require.Nil(t, err)
 	return driverExt
 }

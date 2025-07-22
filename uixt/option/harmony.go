@@ -8,8 +8,9 @@ const (
 )
 
 type HarmonyDeviceOptions struct {
-	ConnectKey string `json:"connect_key,omitempty" yaml:"connect_key,omitempty"`
-	LogOn      bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	ConnectKey  string `json:"connect_key,omitempty" yaml:"connect_key,omitempty"`
+	LogOn       bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	IgnorePopup bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"` // keep for compatibility
 }
 
 func (dev *HarmonyDeviceOptions) Options() (deviceOptions []HarmonyDeviceOption) {

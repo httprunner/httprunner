@@ -5,6 +5,7 @@ import "github.com/httprunner/httprunner/v5/pkg/gadb"
 type AndroidDeviceOptions struct {
 	SerialNumber string `json:"serial,omitempty" yaml:"serial,omitempty"`
 	LogOn        bool   `json:"log_on,omitempty" yaml:"log_on,omitempty"`
+	IgnorePopup  bool   `json:"ignore_popup,omitempty" yaml:"ignore_popup,omitempty"` // keep for compatibility
 
 	// adb
 	AdbServerHost string `json:"adb_server_host,omitempty" yaml:"adb_server_host,omitempty"`

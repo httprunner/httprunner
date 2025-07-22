@@ -1077,6 +1077,24 @@ func (r *SessionRunner) GetTransactions() map[string]map[TransactionType]time.Ti
 	return r.transactions
 }
 
+// keep for compatibility
+func (r *SessionRunner) ignorePopup(osType string) bool {
+	config := r.caseRunner.TestCase.Config.Get()
+	if osType == string(StepTypeAndroid) && len(config.Android) > 0 {
+		return config.Android[0].IgnorePopup
+	}
+	if osType == string(StepTypeIOS) && len(config.IOS) > 0 {
+		return config.IOS[0].IgnorePopup
+	}
+	if osType == string(StepTypeHarmony) && len(config.Harmony) > 0 {
+		return config.Harmony[0].IgnorePopup
+	}
+	if osType == string(stepTypeBrowser) && len(config.Browser) > 0 {
+		return config.Browser[0].IgnorePopup
+	}
+	return false
+}
+
 // saveJSONCase saves the original JSON case content to the results directory
 func saveJSONCase(casePath string) error {
 	// Read the original JSON case content
