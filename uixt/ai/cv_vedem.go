@@ -79,7 +79,7 @@ func (s *vedemCVService) ReadFromBuffer(imageBuf *bytes.Buffer, opts ...option.A
 		if err != nil {
 			logger = log.Error().Err(err)
 		} else {
-			logger = log.Info()
+			logger = log.Debug()
 			if imageResult.URL != "" {
 				logger = logger.Str("url", imageResult.URL)
 			}
