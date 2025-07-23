@@ -163,6 +163,7 @@ func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption)
 	// swipe to first screen
 	for i := 0; i < 5; i++ {
 		dExt.Swipe(0.5, 0.5, 0.9, 0.5, optionsWithoutIdentifier...)
+		time.Sleep(1 * time.Second)
 	}
 
 	opts = append(opts, option.WithDirection("left"))
