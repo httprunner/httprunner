@@ -183,6 +183,8 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 		maxRetry = options.MaxRetryTimes
 	}
 
+	synthesizeEventRetryAdded := false
+
 	for attempt := 1; attempt <= maxRetry; attempt++ {
 		// Execute the request
 		rawResp, err = s.Request(method, urlStr, rawBody, opts...)
@@ -193,14 +195,22 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 			return rawResp, nil
 		}
 
+		// only for WDA driver, check if "synthesizeEvent timeout" error and add extra retry
+		if strings.Contains(err.Error(), "synthesizeEvent timeout") && !synthesizeEventRetryAdded {
+			log.Warn().Err(err).Msg("synthesizeEvent timeout detected, adding one extra retry")
+			maxRetry++
+			synthesizeEventRetryAdded = true
+		}
+
 		// Notice: use DeviceHTTPDriverError when request driver failed
 		lastError = errors.Wrap(code.DeviceHTTPDriverError, err.Error())
-		log.Warn().Err(err).Msgf("request failed, attempt %d/%d", attempt, s.maxRetry)
 
 		// If this was the last attempt, break
-		if attempt == s.maxRetry {
-			log.Error().Err(lastError).Msgf("all %d retry attempts failed, giving up", s.maxRetry)
+		if attempt == maxRetry {
+			log.Error().Err(lastError).Msgf("request failed after %d retries, giving up", maxRetry)
 			break
+		} else {
+			log.Warn().Err(lastError).Msgf("request failed after %d/%d retries, retrying", attempt, maxRetry)
 		}
 
 		// Wait before next attempt

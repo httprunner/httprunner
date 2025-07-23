@@ -31,7 +31,9 @@ func (dExt *XTDriver) LoopUntil(findAction, findCondition, foundAction Action, o
 		}
 
 		if err := findAction(dExt); err != nil {
+			// find action failed, abort loop
 			log.Error().Err(err).Msgf("find action failed")
+			return err
 		}
 	}
 
@@ -85,7 +87,8 @@ func prepareSwipeAction(dExt *XTDriver, params interface{}, opts ...option.Actio
 				return err
 			}
 		} else {
-			return fmt.Errorf("invalid swipe params %v", swipeDirection)
+			return errors.Wrap(code.InvalidParamError,
+				fmt.Sprintf("invalid swipe params %v", swipeDirection))
 		}
 		return nil
 	}
@@ -97,7 +100,7 @@ func (dExt *XTDriver) SwipeToTapTexts(texts []string, opts ...option.ActionOptio
 	}
 
 	log.Info().Strs("texts", texts).Msg("swipe to tap texts")
-	opts = append(opts, option.WithMatchOne(true), option.WithRegex(true))
+	opts = append(opts, option.WithMatchOne(true), option.WithRegex(true), option.WithInterval(1))
 
 	// Remove identifier for swipe operations to avoid WDA/UIA2 logging
 	actionOptions := option.NewActionOptions(opts...)
@@ -160,6 +163,7 @@ func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption)
 	// swipe to first screen
 	for i := 0; i < 5; i++ {
 		dExt.Swipe(0.5, 0.5, 0.9, 0.5, optionsWithoutIdentifier...)
+		time.Sleep(1 * time.Second)
 	}
 
 	opts = append(opts, option.WithDirection("left"))
