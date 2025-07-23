@@ -204,12 +204,13 @@ func (s *DriverSession) RequestWithRetry(method string, urlStr string, rawBody [
 
 		// Notice: use DeviceHTTPDriverError when request driver failed
 		lastError = errors.Wrap(code.DeviceHTTPDriverError, err.Error())
-		log.Warn().Err(err).Msgf("request failed, attempt %d/%d", attempt, maxRetry)
 
 		// If this was the last attempt, break
 		if attempt == maxRetry {
-			log.Error().Err(lastError).Msgf("all %d retry attempts failed, giving up", maxRetry)
+			log.Error().Err(lastError).Msgf("request failed after %d retries, giving up", maxRetry)
 			break
+		} else {
+			log.Warn().Err(lastError).Msgf("request failed after %d/%d retries, retrying", attempt, maxRetry)
 		}
 
 		// Wait before next attempt
