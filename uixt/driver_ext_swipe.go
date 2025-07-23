@@ -31,7 +31,9 @@ func (dExt *XTDriver) LoopUntil(findAction, findCondition, foundAction Action, o
 		}
 
 		if err := findAction(dExt); err != nil {
+			// find action failed, abort loop
 			log.Error().Err(err).Msgf("find action failed")
+			return err
 		}
 	}
 
@@ -85,7 +87,8 @@ func prepareSwipeAction(dExt *XTDriver, params interface{}, opts ...option.Actio
 				return err
 			}
 		} else {
-			return fmt.Errorf("invalid swipe params %v", swipeDirection)
+			return errors.Wrap(code.InvalidParamError,
+				fmt.Sprintf("invalid swipe params %v", swipeDirection))
 		}
 		return nil
 	}
