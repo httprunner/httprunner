@@ -574,32 +574,6 @@ func (ud *UIA2Driver) SetPasteboard(contentType types.PasteboardType, content st
 	return
 }
 
-func (ud *UIA2Driver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
-	if len(contentType) == 0 {
-		contentType = types.PasteboardTypePlaintext
-	}
-	// register(postHandler, new GetClipboard("/wd/hub/session/:sessionId/appium/device/get_clipboard"))
-	data := map[string]interface{}{
-		"contentType": contentType[0],
-	}
-	var rawResp DriverRawResponse
-	urlStr := fmt.Sprintf("/session/%s/appium/device/get_clipboard", ud.Session.ID)
-	if rawResp, err = ud.Session.POST(data, urlStr); err != nil {
-		return
-	}
-	reply := new(struct{ Value string })
-	if err = json.Unmarshal(rawResp, reply); err != nil {
-		return
-	}
-
-	if data, err := base64.StdEncoding.DecodeString(reply.Value); err != nil {
-		raw.Write([]byte(reply.Value))
-	} else {
-		raw.Write(data)
-	}
-	return
-}
-
 // SendKeys Android input does not support setting frequency.
 func (ud *UIA2Driver) Input(text string, opts ...option.ActionOption) (err error) {
 	log.Info().Str("text", text).Msg("UIA2Driver.Input")

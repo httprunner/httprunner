@@ -86,4 +86,7 @@ type IDriver interface {
 	// triggers the log capture and returns the log entries
 	StartCaptureLog(identifier ...string) error
 	StopCaptureLog() (result interface{}, err error)
+
+	// clipboard operations
+	GetPasteboard() (string, error)
 }

@@ -55,7 +55,8 @@ const (
 	ACTION_SetIme           ActionName = "set_ime"
 	ACTION_GetSource        ActionName = "get_source"
 	ACTION_GetForegroundApp ActionName = "get_foreground_app"
-	ACTION_AppInfo          ActionName = "app_info" // get app info action
+	ACTION_GetPasteboard    ActionName = "get_pasteboard" // get clipboard content
+	ACTION_AppInfo          ActionName = "app_info"       // get app info action
 
 	// UI handling
 	ACTION_Home                     ActionName = "home"
