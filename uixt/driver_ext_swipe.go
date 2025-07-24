@@ -162,7 +162,11 @@ func (dExt *XTDriver) SwipeToTapApp(appName string, opts ...option.ActionOption)
 
 	// swipe to first screen
 	for i := 0; i < 5; i++ {
-		dExt.Swipe(0.5, 0.5, 0.9, 0.5, optionsWithoutIdentifier...)
+		err := dExt.Swipe(0.5, 0.5, 0.9, 0.5, optionsWithoutIdentifier...)
+		if err != nil {
+			log.Error().Err(err).Msgf("swipe to tap app %s failed", appName)
+			return errors.Wrapf(err, "swipe to tap app %s failed", appName)
+		}
 		time.Sleep(1 * time.Second)
 	}
 
