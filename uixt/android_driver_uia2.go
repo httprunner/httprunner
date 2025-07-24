@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/code"
+	"github.com/httprunner/httprunner/v5/internal/simulation"
 	"github.com/httprunner/httprunner/v5/internal/utf7"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
@@ -551,6 +552,201 @@ func (ud *UIA2Driver) TouchByEvents(events []types.TouchEvent, opts ...option.Ac
 	urlStr := fmt.Sprintf("/session/%s/actions/swipe", ud.Session.ID)
 	_, err = ud.Session.POST(data, urlStr)
 	return err
+}
+
+// SwipeWithDirection 向指定方向滑动任意距离
+// direction: 滑动方向 ("up", "down", "left", "right")
+// startX, startY: 起始坐标
+// minDistance, maxDistance: 距离范围，如果相等则为固定距离，否则为随机距离
+func (ud *UIA2Driver) SwipeWithDirection(direction string, startX, startY, minDistance, maxDistance float64, opts ...option.ActionOption) error {
+	absStartX, absStartY, err := convertToAbsolutePoint(ud, startX, startY)
+	if err != nil {
+		return err
+	}
+	// 获取设备型号和配置参数
+	deviceModel, _ := ud.Device.Model()
+	deviceParams := simulation.GetRandomDeviceParams(deviceModel)
+
+	log.Info().Str("direction", direction).
+		Float64("startX", absStartX).Float64("startY", absStartY).
+		Float64("minDistance", minDistance).Float64("maxDistance", maxDistance).
+		Str("deviceModel", deviceModel).
+		Int("deviceID", deviceParams.DeviceID).
+		Float64("pressure", deviceParams.Pressure).
+		Float64("size", deviceParams.Size).
+		Msg("UIA2Driver.SwipeWithDirection")
+
+	// 导入滑动仿真库
+	simulator := simulation.NewSlideSimulatorAPI(nil)
+
+	// 转换方向字符串为Direction类型
+	var slideDirection simulation.Direction
+	switch direction {
+	case "up":
+		slideDirection = simulation.Up
+	case "down":
+		slideDirection = simulation.Down
+	case "left":
+		slideDirection = simulation.Left
+	case "right":
+		slideDirection = simulation.Right
+	default:
+		return fmt.Errorf("invalid direction: %s, must be one of: up, down, left, right", direction)
+	}
+
+	// 使用滑动仿真算法生成触摸事件序列
+	events, err := simulator.GenerateSlideWithRandomDistance(
+		absStartX, absStartY, slideDirection, minDistance, maxDistance,
+		deviceParams.DeviceID, deviceParams.Pressure, deviceParams.Size)
+	if err != nil {
+		return fmt.Errorf("generate slide events failed: %v", err)
+	}
+
+	// 执行触摸事件序列
+	return ud.TouchByEvents(events, opts...)
+}
+
+// SwipeInArea 在指定区域内向指定方向滑动任意距离
+// direction: 滑动方向 ("up", "down", "left", "right")
+// areaStartX, areaStartY, areaEndX, areaEndY: 区域范围(相对坐标)
+// minDistance, maxDistance: 距离范围，如果相等则为固定距离，否则为随机距离
+func (ud *UIA2Driver) SwipeInArea(direction string, areaStartX, areaStartY, areaEndX, areaEndY, minDistance, maxDistance float64, opts ...option.ActionOption) error {
+	// 转换区域坐标为绝对坐标
+	absAreaStartX, absAreaStartY, err := convertToAbsolutePoint(ud, areaStartX, areaStartY)
+	if err != nil {
+		return err
+	}
+	absAreaEndX, absAreaEndY, err := convertToAbsolutePoint(ud, areaEndX, areaEndY)
+	if err != nil {
+		return err
+	}
+
+	// 确保区域坐标正确(start应该小于等于end)
+	if absAreaStartX > absAreaEndX {
+		absAreaStartX, absAreaEndX = absAreaEndX, absAreaStartX
+	}
+	if absAreaStartY > absAreaEndY {
+		absAreaStartY, absAreaEndY = absAreaEndY, absAreaStartY
+	}
+
+	// 获取设备型号和配置参数
+	deviceModel, _ := ud.Device.Model()
+	deviceParams := simulation.GetRandomDeviceParams(deviceModel)
+
+	log.Info().Str("direction", direction).
+		Float64("areaStartX", absAreaStartX).Float64("areaStartY", absAreaStartY).
+		Float64("areaEndX", absAreaEndX).Float64("areaEndY", absAreaEndY).
+		Float64("minDistance", minDistance).Float64("maxDistance", maxDistance).
+		Str("deviceModel", deviceModel).
+		Int("deviceID", deviceParams.DeviceID).
+		Float64("pressure", deviceParams.Pressure).
+		Float64("size", deviceParams.Size).
+		Msg("UIA2Driver.SwipeInArea")
+
+	// 导入滑动仿真库
+	simulator := simulation.NewSlideSimulatorAPI(nil)
+
+	// 转换方向字符串为Direction类型
+	var slideDirection simulation.Direction
+	switch direction {
+	case "up":
+		slideDirection = simulation.Up
+	case "down":
+		slideDirection = simulation.Down
+	case "left":
+		slideDirection = simulation.Left
+	case "right":
+		slideDirection = simulation.Right
+	default:
+		return fmt.Errorf("invalid direction: %s, must be one of: up, down, left, right", direction)
+	}
+
+	// 使用滑动仿真算法生成区域内滑动的触摸事件序列
+	events, err := simulator.GenerateSlideInArea(
+		absAreaStartX, absAreaStartY, absAreaEndX, absAreaEndY,
+		slideDirection, minDistance, maxDistance,
+		deviceParams.DeviceID, deviceParams.Pressure, deviceParams.Size)
+	if err != nil {
+		return fmt.Errorf("generate slide in area events failed: %v", err)
+	}
+
+	// 执行触摸事件序列
+	return ud.TouchByEvents(events, opts...)
+}
+
+// SwipeFromPointToPoint 指定起始点和结束点进行滑动
+// startX, startY: 起始坐标(相对坐标)
+// endX, endY: 结束坐标(相对坐标)
+func (ud *UIA2Driver) SwipeFromPointToPoint(startX, startY, endX, endY float64, opts ...option.ActionOption) error {
+	// 转换起始点和结束点为绝对坐标
+	absStartX, absStartY, err := convertToAbsolutePoint(ud, startX, startY)
+	if err != nil {
+		return err
+	}
+	absEndX, absEndY, err := convertToAbsolutePoint(ud, endX, endY)
+	if err != nil {
+		return err
+	}
+
+	// 获取设备型号和配置参数
+	deviceModel, _ := ud.Device.Model()
+	deviceParams := simulation.GetRandomDeviceParams(deviceModel)
+
+	log.Info().Float64("startX", absStartX).Float64("startY", absStartY).
+		Float64("endX", absEndX).Float64("endY", absEndY).
+		Str("deviceModel", deviceModel).
+		Int("deviceID", deviceParams.DeviceID).
+		Float64("pressure", deviceParams.Pressure).
+		Float64("size", deviceParams.Size).
+		Msg("UIA2Driver.SwipeFromPointToPoint")
+
+	// 导入滑动仿真库
+	simulator := simulation.NewSlideSimulatorAPI(nil)
+
+	// 使用滑动仿真算法生成点对点滑动的触摸事件序列
+	events, err := simulator.GeneratePointToPointSlideEvents(
+		absStartX, absStartY, absEndX, absEndY,
+		deviceParams.DeviceID, deviceParams.Pressure, deviceParams.Size)
+	if err != nil {
+		return fmt.Errorf("generate point to point slide events failed: %v", err)
+	}
+
+	// 执行触摸事件序列
+	return ud.TouchByEvents(events, opts...)
+}
+
+// ClickAtPoint 点击相对坐标
+// x, y: 点击坐标(相对坐标)
+func (ud *UIA2Driver) ClickAtPoint(x, y float64, opts ...option.ActionOption) error {
+	// 转换为绝对坐标
+	absX, absY, err := convertToAbsolutePoint(ud, x, y)
+	if err != nil {
+		return err
+	}
+
+	// 获取设备型号和配置参数
+	deviceModel, _ := ud.Device.Model()
+	deviceParams := simulation.GetRandomDeviceParams(deviceModel)
+
+	log.Info().Float64("x", absX).Float64("y", absY).
+		Str("deviceModel", deviceModel).
+		Int("deviceID", deviceParams.DeviceID).
+		Float64("pressure", deviceParams.Pressure).
+		Float64("size", deviceParams.Size).
+		Msg("UIA2Driver.ClickAtPoint")
+
+	// 导入点击仿真库
+	clickSimulator := simulation.NewClickSimulatorAPI(nil)
+
+	// 使用点击仿真算法生成触摸事件序列
+	events, err := clickSimulator.GenerateClickEvents(
+		absX, absY, deviceParams.DeviceID, deviceParams.Pressure, deviceParams.Size)
+	if err != nil {
+		return fmt.Errorf("generate click events failed: %v", err)
+	}
+
+	// 执行触摸事件序列
+	return ud.TouchByEvents(events, opts...)
 }
 
 func (ud *UIA2Driver) SetPasteboard(contentType types.PasteboardType, content string) (err error) {
