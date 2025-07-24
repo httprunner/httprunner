@@ -356,3 +356,10 @@ func TestDriver_WDA_PushImage(t *testing.T) {
 	err = driver.ClearImages()
 	assert.Nil(t, err)
 }
+
+func TestDriver_WDA_GetPasteboard(t *testing.T) {
+	driver := setupWDADriverExt(t)
+	pasteboard, err := driver.IDriver.(*WDADriver).GetPasteboard()
+	assert.Nil(t, err)
+	t.Log(pasteboard)
+}

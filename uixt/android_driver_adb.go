@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -1164,6 +1165,59 @@ func (ad *ADBDriver) ClearFiles(paths ...string) error {
 		_, _ = ad.Device.RunShellCommand("rm", "-rf", path)
 	}
 	return nil
+}
+
+func (ad *ADBDriver) GetPasteboard() (content string, err error) {
+	/**
+	adb shell am broadcast -n  io.appium.settings/.receivers.ClipboardReceiver -a io.appium.settings.clipboard.get
+	Broadcasting: Intent { act=io.appium.settings.clipboard.get flg=0x400000 cmp=io.appium.settings/.receivers.ClipboardReceiver }
+	Broadcast completed: result=-1, data="SEhHRw=="
+		**/
+
+	// Check and switch input method if needed, similar to SendUnicodeKeys
+	currentIme, err := ad.GetIme()
+	if err != nil {
+		return "", err
+	}
+
+	// If current IME is not the required one, switch temporarily and restore later
+	if currentIme != option.UnicodeImePackageName {
+		defer func() {
+			_ = ad.SetIme(currentIme)
+		}()
+
+		err = ad.SetIme(option.UnicodeImePackageName)
+		if err != nil {
+			log.Warn().Err(err).Msgf("set Unicode Ime failed for clipboard operation")
+			// Continue anyway, might still work with current IME
+		}
+	}
+
+	res, err := ad.Device.RunShellCommand("am", "broadcast", "-n", option.AppiumSettingsPackageName+"/.receivers.ClipboardReceiver", "-a", option.AppiumSettingsPackageName+".clipboard.get")
+	if err != nil {
+		return "", err
+	}
+
+	// Parse the response to extract the base64 encoded data
+	dataPrefix := "data=\""
+	dataIndex := strings.Index(res, dataPrefix)
+	if dataIndex == -1 {
+		return "", fmt.Errorf("clipboard data not found in response: %s", res)
+	}
+
+	dataStart := dataIndex + len(dataPrefix)
+	dataEnd := strings.Index(res[dataStart:], "\"")
+	if dataEnd == -1 {
+		return "", fmt.Errorf("malformed clipboard data in response: %s", res)
+	}
+
+	base64Data := res[dataStart : dataStart+dataEnd]
+	decodedData, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode clipboard content: %w", err)
+	}
+
+	return string(decodedData), nil
 }
 
 type ExportPoint struct {

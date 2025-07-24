@@ -321,3 +321,10 @@ func TestDriver_UIA2_Input(t *testing.T) {
 	err = driver.Input("123\n")
 	assert.Nil(t, err)
 }
+
+func TestDriver_ADB_GetPasteboard(t *testing.T) {
+	driver := setupADBDriverExt(t)
+	pasteboard, err := driver.IDriver.(*ADBDriver).GetPasteboard()
+	assert.Nil(t, err)
+	t.Log(pasteboard)
+}

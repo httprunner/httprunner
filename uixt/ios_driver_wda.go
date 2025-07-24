@@ -630,9 +630,13 @@ func (wd *WDADriver) SetPasteboard(contentType types.PasteboardType, content str
 	return
 }
 
-func (wd *WDADriver) GetPasteboard(contentType types.PasteboardType) (raw *bytes.Buffer, err error) {
+func (wd *WDADriver) GetPasteboard() (raw *bytes.Buffer, err error) {
 	// [[FBRoute POST:@"/wda/getPasteboard"] respondWithTarget:self action:@selector(handleGetPasteboard:)]
-	data := map[string]interface{}{"contentType": contentType}
+	err = wd.AppLaunch("com.gtf.wda.runner.xctrunner")
+	if err != nil {
+		return nil, errors.Wrap(err, "GetPasteboard failed. WDA app not launched")
+	}
+	data := map[string]interface{}{}
 	var rawResp DriverRawResponse
 	if rawResp, err = wd.Session.POST(data, "/wda/getPasteboard"); err != nil {
 		return nil, err
