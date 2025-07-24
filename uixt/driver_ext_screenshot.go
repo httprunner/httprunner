@@ -112,6 +112,7 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 			return nil, err
 		}
 		if imageResult != nil {
+			log.Info().Str("serial", dExt.GetDevice().UUID()).Str("url", imageResult.URL).Msg("ReadFromBuffer from ImageService")
 			screenResult.Texts = imageResult.OCRResult.ToOCRTexts()
 			screenResult.UploadedURL = imageResult.URL
 			screenResult.Icons = imageResult.UIResult

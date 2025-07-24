@@ -433,7 +433,8 @@ func (wd *WDADriver) AppLaunch(bundleId string) (err error) {
 	data["environment"] = map[string]interface{}{
 		"SHOW_EXPLORER": "NO",
 	}
-	_, err = wd.Session.POST(data, "/wings/apps/launch")
+	// 超时两分钟
+	_, err = wd.Session.POST(data, "/wings/apps/launch", option.WithTimeout(120))
 	if err != nil {
 		return errors.Wrap(err, "wda app launch failed")
 	}
