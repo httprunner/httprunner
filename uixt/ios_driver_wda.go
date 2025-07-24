@@ -630,21 +630,22 @@ func (wd *WDADriver) SetPasteboard(contentType types.PasteboardType, content str
 	return
 }
 
-func (wd *WDADriver) GetPasteboard() (raw *bytes.Buffer, err error) {
+func (wd *WDADriver) GetPasteboard() (content string, err error) {
 	// [[FBRoute POST:@"/wda/getPasteboard"] respondWithTarget:self action:@selector(handleGetPasteboard:)]
 	err = wd.AppLaunch("com.gtf.wda.runner.xctrunner")
 	if err != nil {
-		return nil, errors.Wrap(err, "GetPasteboard failed. WDA app not launched")
+		return "", errors.Wrap(err, "GetPasteboard failed. WDA app not launched")
 	}
 	data := map[string]interface{}{}
 	var rawResp DriverRawResponse
 	if rawResp, err = wd.Session.POST(data, "/wda/getPasteboard"); err != nil {
-		return nil, err
+		return "", err
 	}
+	var raw *bytes.Buffer
 	if raw, err = rawResp.ValueDecodeAsBase64(); err != nil {
-		return nil, err
+		return "", err
 	}
-	return
+	return string(raw.Bytes()), nil
 }
 
 func (wd *WDADriver) SetIme(ime string) error {

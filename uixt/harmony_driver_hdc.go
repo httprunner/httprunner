@@ -348,3 +348,7 @@ func (hd *HDCDriver) SecondaryClick(x, y float64) (err error) {
 func (hd *HDCDriver) SecondaryClickBySelector(selector string, options ...option.ActionOption) (err error) {
 	return err
 }
+
+func (hd *HDCDriver) GetPasteboard() (content string, err error) {
+	return "", errors.New("not implemented")
+}

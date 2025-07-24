@@ -365,7 +365,6 @@ func (wd *BrowserDriver) Input(text string, option ...option.ActionOption) (err 
 // Source Return application elements tree
 func (wd *BrowserDriver) Source(srcOpt ...option.SourceOption) (string, error) {
 	result, err := wd.CustomeGet(wd.concatURL(wd.Session.ID, "stub/source"))
-
 	if err != nil {
 		return "", err
 	}
@@ -750,4 +749,8 @@ func (wd *BrowserDriver) CustomeGet(urlStr string) (response *WebAgentResponse, 
 	}
 
 	return &webResp, err
+}
+
+func (wd *BrowserDriver) GetPasteboard() (content string, err error) {
+	return "", errors.New("not implemented")
 }
