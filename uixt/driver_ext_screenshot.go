@@ -7,7 +7,6 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"math"
@@ -262,11 +261,7 @@ func saveScreenShot(raw *bytes.Buffer, screenshotPath string) error {
 		log.Error().Err(err).Msg("copy screenshot buffer failed")
 	}
 
-	img, format, err := image.Decode(copiedBuffer)
-	if err != nil {
-		return errors.Wrap(err, "decode screenshot image failed")
-	}
-
+	// create file
 	file, err := os.Create(screenshotPath)
 	if err != nil {
 		return errors.Wrap(err, "create screenshot image file failed")
@@ -275,26 +270,10 @@ func saveScreenShot(raw *bytes.Buffer, screenshotPath string) error {
 		_ = file.Close()
 	}()
 
-	// compress image and save to file
-	switch format {
-	case "jpeg":
-		jpegOptions := &jpeg.Options{Quality: 95}
-		err = jpeg.Encode(file, img, jpegOptions)
-	case "png":
-		encoder := png.Encoder{
-			CompressionLevel: png.BestCompression,
-		}
-		err = encoder.Encode(file, img)
-	case "gif":
-		gifOptions := &gif.Options{
-			NumColors: 256,
-		}
-		err = gif.Encode(file, img, gifOptions)
-	default:
-		return fmt.Errorf("unsupported image format %s", format)
-	}
+	// directly write compressed JPEG data to avoid quality loss
+	_, err = file.Write(copiedBuffer.Bytes())
 	if err != nil {
-		return errors.Wrap(err, "save image file failed")
+		return errors.Wrap(err, "write image file failed")
 	}
 
 	var fileSize int64
@@ -303,7 +282,7 @@ func saveScreenShot(raw *bytes.Buffer, screenshotPath string) error {
 		fileSize = fileInfo.Size()
 	}
 	log.Info().Str("path", screenshotPath).
-		Int("rawBytes", raw.Len()).Int64("saveBytes", fileSize).
+		Int64("fileSize", fileSize).
 		Msg("save screenshot file success")
 
 	return nil
