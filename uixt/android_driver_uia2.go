@@ -818,12 +818,13 @@ func (ud *UIA2Driver) SIMInput(text string, opts ...option.ActionOption) error {
 		Msg("Input segments generated")
 
 	// 逐个输入每个片段
-	var segmentErr error
+	var segmentErrCnt int
 	for _, segment := range response.Segments {
 		// 使用SendUnicodeKeys进行输入（内部已包含Session.POST请求）
-		segmentErr = ud.SendUnicodeKeys(segment.Text, opts...)
+		segmentErr := ud.SendUnicodeKeys(segment.Text, opts...)
 		if segmentErr != nil {
-			log.Info().Err(segmentErr).
+			segmentErrCnt++
+			log.Info().Err(segmentErr).Int("segmentErrCnt", segmentErrCnt).
 				Msg("segments err")
 		}
 
@@ -838,7 +839,7 @@ func (ud *UIA2Driver) SIMInput(text string, opts ...option.ActionOption) error {
 				Msg("Delay between input segments")
 		}
 	}
-	if segmentErr != nil {
+	if segmentErrCnt > 0 {
 		data := map[string]interface{}{
 			"text": text,
 		}
