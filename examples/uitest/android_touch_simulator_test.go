@@ -256,30 +256,30 @@ func TestSwipeWithDirection(t *testing.T) {
 			minDistance: 100.0,
 			maxDistance: 500.0,
 		},
-		//{
-		//	name:        "随机距离下滑",
-		//	direction:   "down",
-		//	startX:      0.5,
-		//	startY:      0.5,
-		//	minDistance: 150.0,
-		//	maxDistance: 350.0, // 范围内随机
-		//},
-		//{
-		//	name:        "固定距离左滑",
-		//	direction:   "left",
-		//	startX:      0.5,
-		//	startY:      0.5,
-		//	minDistance: 300.0,
-		//	maxDistance: 300.0,
-		//},
-		//{
-		//	name:        "随机距离右滑",
-		//	direction:   "right",
-		//	startX:      0.6,
-		//	startY:      0.5,
-		//	minDistance: 100.0,
-		//	maxDistance: 250.0,
-		//},
+		{
+			name:        "随机距离下滑",
+			direction:   "down",
+			startX:      0.5,
+			startY:      0.5,
+			minDistance: 150.0,
+			maxDistance: 350.0, // 范围内随机
+		},
+		{
+			name:        "固定距离左滑",
+			direction:   "left",
+			startX:      0.5,
+			startY:      0.5,
+			minDistance: 300.0,
+			maxDistance: 300.0,
+		},
+		{
+			name:        "随机距离右滑",
+			direction:   "right",
+			startX:      0.6,
+			startY:      0.5,
+			minDistance: 100.0,
+			maxDistance: 250.0,
+		},
 	}
 
 	for _, tc := range testCases {
