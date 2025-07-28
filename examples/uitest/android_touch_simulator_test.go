@@ -601,7 +601,7 @@ func TestSIMInput(t *testing.T) {
 		//},
 		{
 			name: "长文本",
-			text: "This is a very long text to test the performance of SIMInput function. 这是一个很长的文本用来测试SIMInput函数的性能。1234567890!@#$%^&*()英語の長い文字",
+			text: "This is a very long text to test the performance of SIMInput function. 这是一个很长的文本用来测试SIMInput函数的性能。1234567890!@#$%^&*()英語の長い文",
 		},
 	}
 
