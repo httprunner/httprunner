@@ -257,44 +257,6 @@ func (api *InputSimulatorAPI) isChinese(r rune) bool {
 	return unicode.Is(unicode.Scripts["Han"], r)
 }
 
-// splitTextRandomly 将文本随机分割成指定长度范围的片段（保留原有方法作为备用）
-func (api *InputSimulatorAPI) splitTextRandomly(text string, minLen, maxLen int) []string {
-	var segments []string
-	runes := []rune(text) // 使用rune来正确处理多字节字符（如中文）
-
-	if minLen <= 0 {
-		minLen = api.config.MinSegmentLen
-	}
-	if maxLen <= 0 {
-		maxLen = api.config.MaxSegmentLen
-	}
-	if maxLen < minLen {
-		maxLen = minLen
-	}
-
-	i := 0
-	for i < len(runes) {
-		// 随机决定本次分割的长度
-		segmentLength := minLen
-		if maxLen > minLen {
-			segmentLength = minLen + api.rand.Intn(maxLen-minLen+1)
-		}
-
-		// 确保不超出文本长度
-		if i+segmentLength > len(runes) {
-			segmentLength = len(runes) - i
-		}
-
-		// 提取片段
-		segment := string(runes[i : i+segmentLength])
-		segments = append(segments, segment)
-
-		i += segmentLength
-	}
-
-	return segments
-}
-
 // generateRandomDelay 生成随机延迟时间
 func (api *InputSimulatorAPI) generateRandomDelay(minDelayMs, maxDelayMs int) int {
 	if minDelayMs < 0 {
