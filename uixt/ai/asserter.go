@@ -24,10 +24,9 @@ type IAsserter interface {
 
 // AssertOptions represents the input options for assertion
 type AssertOptions struct {
-	Assertion    string     `json:"assertion"`     // The assertion text to verify
-	Screenshot   string     `json:"screenshot"`    // Base64 encoded screenshot
-	Size         types.Size `json:"size"`          // Screen dimensions
-	ResetHistory bool       `json:"reset_history"` // whether to reset conversation history before assertion
+	Assertion  string     `json:"assertion"`  // The assertion text to verify
+	Screenshot string     `json:"screenshot"` // Base64 encoded screenshot
+	Size       types.Size `json:"size"`       // Screen dimensions
 }
 
 // AssertionResult represents the response from an AI assertion

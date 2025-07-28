@@ -164,11 +164,6 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 		return nil, errors.Wrap(err, "validate assertion parameters failed")
 	}
 
-	// Reset history if requested
-	if opts.ResetHistory {
-		w.resetHistory()
-	}
-
 	// Clean screenshot data URL prefix
 	cleanScreenshot := w.cleanScreenshotDataURL(opts.Screenshot)
 
@@ -177,7 +172,7 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 
 	// Prepare Wings API request for assertion
 	apiRequest := WingsActionRequest{
-		Historys:   w.history,
+		Historys:   []History{},
 		DeviceInfo: deviceInfo,
 		StepText:   opts.Assertion,
 		BizId:      w.bizId,
