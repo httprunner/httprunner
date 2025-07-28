@@ -323,7 +323,6 @@ func createXTDriverWithConfig(config DriverCacheConfig) (*XTDriver, error) {
 		// Default AI options
 		aiOpts = []option.AIServiceOption{
 			option.WithCVService(option.CVServiceTypeVEDEM),
-			option.WithLLMConfig(option.RecommendedConfigurations()["ui_focused"]),
 		}
 	}
 
