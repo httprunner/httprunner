@@ -188,7 +188,7 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 			LogID: generateWingsUUID(),
 		},
 	}
-	log.Info().Interface("apiRequest", apiRequest).Msg("Wings API request")
+	log.Info().Str("assertion", opts.Assertion).Str("biz_id", w.bizId).Str("url", w.apiURL).Msg("call wings api")
 
 	// Call Wings API
 	startTime := time.Now()
@@ -485,7 +485,8 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 		httpReq.Header.Add("Agw-Auth-Content", signToken)
 		httpReq.Header.Add("Content-Type", "application/json")
 	}
-	log.Info().Str("request", string(requestBody)).Str("url", w.apiURL).Msg("call wings api")
+
+	log.Info().Str("step_text", request.StepText).Str("biz_id", request.BizId).Str("url", w.apiURL).Msg("call wings api")
 
 	// Execute HTTP request
 	client := &http.Client{
