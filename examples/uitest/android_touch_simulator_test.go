@@ -567,38 +567,38 @@ func TestSIMInput(t *testing.T) {
 		name string
 		text string
 	}{
-		//{
-		//	name: "英文短文本",
-		//	text: "Hello",
-		//},
-		//{
-		//	name: "英文长文本",
-		//	text: "Hello World! This is a test message.",
-		//},
-		//{
-		//	name: "日文文本",
-		//	text: "英語の長い文字",
-		//},
-		//{
-		//	name: "混合文本",
-		//	text: "Hello你好123",
-		//},
-		//{
-		//	name: "特殊字符",
-		//	text: "!@#$%^&*()",
-		//},
-		//{
-		//	name: "数字文本",
-		//	text: "1234567890",
-		//},
-		//{
-		//	name: "空文本",
-		//	text: "",
-		//},
-		//{
-		//	name: "单个字符",
-		//	text: "A",
-		//},
+		{
+			name: "英文短文本",
+			text: "Hello",
+		},
+		{
+			name: "英文长文本",
+			text: "Hello World! This is a test message.",
+		},
+		{
+			name: "日文文本",
+			text: "英語の長い文字",
+		},
+		{
+			name: "混合文本",
+			text: "Hello你好123",
+		},
+		{
+			name: "特殊字符",
+			text: "!@#$%^&*()",
+		},
+		{
+			name: "数字文本",
+			text: "1234567890",
+		},
+		{
+			name: "空文本",
+			text: "",
+		},
+		{
+			name: "单个字符",
+			text: "A",
+		},
 		{
 			name: "长文本",
 			text: "This is a very long text to test the performance of SIMInput function. 这是一个很长的文本用来测试SIMInput函数的性能。1234567890!@#$%^&*()英語の長い文",
