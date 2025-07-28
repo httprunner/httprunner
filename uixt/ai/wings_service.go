@@ -485,6 +485,7 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 		httpReq.Header.Add("Agw-Auth-Content", signToken)
 		httpReq.Header.Add("Content-Type", "application/json")
 	}
+	log.Info().Str("request", string(requestBody)).Str("url", w.apiURL).Msg("call wings api")
 
 	// Execute HTTP request
 	client := &http.Client{
