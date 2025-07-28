@@ -256,35 +256,35 @@ func TestSwipeWithDirection(t *testing.T) {
 			minDistance: 100.0,
 			maxDistance: 500.0,
 		},
-		//{
-		//	name:        "随机距离下滑",
-		//	direction:   "down",
-		//	startX:      0.5,
-		//	startY:      0.5,
-		//	minDistance: 150.0,
-		//	maxDistance: 350.0, // 范围内随机
-		//},
-		//{
-		//	name:        "固定距离左滑",
-		//	direction:   "left",
-		//	startX:      0.5,
-		//	startY:      0.5,
-		//	minDistance: 300.0,
-		//	maxDistance: 300.0,
-		//},
-		//{
-		//	name:        "随机距离右滑",
-		//	direction:   "right",
-		//	startX:      0.6,
-		//	startY:      0.5,
-		//	minDistance: 100.0,
-		//	maxDistance: 250.0,
-		//},
+		{
+			name:        "随机距离下滑",
+			direction:   "down",
+			startX:      0.5,
+			startY:      0.5,
+			minDistance: 150.0,
+			maxDistance: 350.0, // 范围内随机
+		},
+		{
+			name:        "固定距离左滑",
+			direction:   "left",
+			startX:      0.5,
+			startY:      0.5,
+			minDistance: 300.0,
+			maxDistance: 300.0,
+		},
+		{
+			name:        "随机距离右滑",
+			direction:   "right",
+			startX:      0.6,
+			startY:      0.5,
+			minDistance: 100.0,
+			maxDistance: 250.0,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := driver.SwipeWithDirection(
+			err := driver.SIMSwipeWithDirection(
 				tc.direction,
 				tc.startX,
 				tc.startY,
@@ -316,19 +316,19 @@ func TestSwipeWithDirectionInvalidInputs(t *testing.T) {
 	defer driver.TearDown()
 
 	// Test invalid direction
-	err = driver.SwipeWithDirection("invalid", 500.0, 500.0, 100.0, 200.0)
+	err = driver.SIMSwipeWithDirection("invalid", 500.0, 500.0, 100.0, 200.0)
 	if err == nil {
 		t.Error("Expected error for invalid direction, but got none")
 	}
 
 	// Test invalid distance range (max < min)
-	err = driver.SwipeWithDirection("up", 500.0, 500.0, 200.0, 100.0)
+	err = driver.SIMSwipeWithDirection("up", 500.0, 500.0, 200.0, 100.0)
 	if err == nil {
 		t.Error("Expected error for invalid distance range, but got none")
 	}
 
 	// Test zero distance
-	err = driver.SwipeWithDirection("up", 500.0, 500.0, 0.0, 0.0)
+	err = driver.SIMSwipeWithDirection("up", 500.0, 500.0, 0.0, 0.0)
 	if err == nil {
 		t.Error("Expected error for zero distance, but got none")
 	}
@@ -376,7 +376,7 @@ func TestSwipeInArea(t *testing.T) {
 	for _, tc := range testCases {
 		for i := 0; i < 3; i++ {
 			t.Run(tc.name, func(t *testing.T) {
-				err := driver.SwipeInArea(
+				err := driver.SIMSwipeInArea(
 					tc.direction,
 					tc.areaStartX,
 					tc.areaStartY,
@@ -429,7 +429,7 @@ func TestSwipeFromPointToPoint(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := driver.SwipeFromPointToPoint(
+			err := driver.SIMSwipeFromPointToPoint(
 				tc.startX,
 				tc.startY,
 				tc.endX,
@@ -460,13 +460,13 @@ func TestSwipeFromPointToPointInvalidInputs(t *testing.T) {
 	defer driver.TearDown()
 
 	// Test same start and end point
-	err = driver.SwipeFromPointToPoint(0.5, 0.5, 0.5, 0.5)
+	err = driver.SIMSwipeFromPointToPoint(0.5, 0.5, 0.5, 0.5)
 	if err == nil {
 		t.Error("Expected error for same start and end point, but got none")
 	}
 
 	// Test very close points (should result in distance too short)
-	err = driver.SwipeFromPointToPoint(0.5, 0.5, 0.501, 0.501)
+	err = driver.SIMSwipeFromPointToPoint(0.5, 0.5, 0.501, 0.501)
 	if err == nil {
 		t.Error("Expected error for very close points, but got none")
 	}
@@ -503,7 +503,7 @@ func TestClickAtPoint(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := driver.ClickAtPoint(tc.x, tc.y)
+			err := driver.SIMClickAtPoint(tc.x, tc.y)
 			if err != nil {
 				t.Errorf("ClickAtPoint failed: %v", err)
 			} else {
@@ -529,21 +529,91 @@ func TestClickAtPointInvalidInputs(t *testing.T) {
 	defer driver.TearDown()
 
 	// Test negative coordinates
-	err = driver.ClickAtPoint(-0.1, 0.5)
+	err = driver.SIMClickAtPoint(-0.1, 0.5)
 	if err == nil {
 		t.Error("Expected error for negative x coordinate, but got none")
 	}
 
-	err = driver.ClickAtPoint(0.5, -0.1)
+	err = driver.SIMClickAtPoint(0.5, -0.1)
 	if err == nil {
 		t.Error("Expected error for negative y coordinate, but got none")
 	}
 
 	// Test coordinates out of range (though these should be handled by convertToAbsolutePoint)
-	err = driver.ClickAtPoint(1.5, 0.5)
+	err = driver.SIMClickAtPoint(1.5, 0.5)
 	if err != nil {
 		t.Logf("Out of range coordinates handled properly: %v", err)
 	}
 
 	t.Log("Click invalid input validation tests passed")
+}
+
+func TestSIMInput(t *testing.T) {
+	device, err := uixt.NewAndroidDevice(
+		option.WithSerialNumber(""),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver, err := uixt.NewUIA2Driver(device)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer driver.TearDown()
+
+	// Test cases for different text inputs
+	testCases := []struct {
+		name string
+		text string
+	}{
+		{
+			name: "英文短文本",
+			text: "Hello",
+		},
+		{
+			name: "英文长文本",
+			text: "Hello World! This is a test message.",
+		},
+		{
+			name: "日文文本",
+			text: "英語の長い文字",
+		},
+		{
+			name: "混合文本",
+			text: "Hello你好123",
+		},
+		{
+			name: "特殊字符",
+			text: "!@#$%^&*()",
+		},
+		{
+			name: "数字文本",
+			text: "1234567890",
+		},
+		{
+			name: "空文本",
+			text: "",
+		},
+		{
+			name: "单个字符",
+			text: "A",
+		},
+		{
+			name: "长文本",
+			text: "This is a very long text to test the performance of SIMInput function. 这是一个很长的文本用来测试SIMInput函数的性能。1234567890!@#$%^&*()英語の長い文",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := driver.SIMInput(tc.text)
+			// err := driver.Input(tc.text)
+			if err != nil {
+				t.Errorf("SIMInput failed: %v", err)
+			} else {
+				t.Logf("Successfully executed SIMInput: %s with text '%s'", tc.name, tc.text)
+			}
+		})
+	}
 }
