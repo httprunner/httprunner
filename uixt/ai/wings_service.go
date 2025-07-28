@@ -70,13 +70,23 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 
 	// Prepare Wings API request
 	apiRequest := WingsActionRequest{
-		Historys: []interface{}{}, // empty as specified
+		Historys: []interface{}{
+			map[string]interface{}{
+				"observation":   "",
+				"thought":       "",
+				"summary":       "",
+				"step_text":     "我获取了设备'设备a', 设备id是'xxx'；",
+				"device_id":     "default-device",
+				"action_type":   "material",
+				"action_result": "",
+			},
+		}, // empty as specified
 		DeviceInfos: []WingsDeviceInfo{
 			deviceInfo,
 		},
 		StepText: opts.UserInstruction,
 		BizId:    w.bizId,
-		TextCase: "整体描述：\\n前置条件：\\n获取 1 台设备 A。\\n获取 1 个[万粉创作者]账号a。\\n获取 2 个[普通]账号 b、c。\\n账号 a 和账号 b 互相关注。\\n账号 a 和账号 c 互相关注。\\n账号 a 给账号 b 设置备注为 “11131b”。\\n账号 a 给账号 c 设置备注为 “11131c”。\\n账号 a 创建一个粉丝群 m。\\n 账号 a 修改粉丝群 m 名称为“11131群”。\\n 账号 a 邀请账号 b 加入粉丝群 m。\\n账号 a 邀请账号 c 加入粉丝群 m。\\n账号 a 给群聊 m 发送一条文字消息。\\n设备 A 打开抖音 app。\\n设备 A 登录账号 a。\\n设备 A 退出抖音 app。\\n操作步骤：\\n账号a打开抖音app。\\n点击“消息”。\\n点击“11131群”cell。\\n点击“聊天信息页入口”按钮。\\n点击“分享公开群”按钮。\\n点击文字“群口令”。\\n断言：屏幕中存在文字“口令复制成功”。\\n停止操作。\\n注意事项：\\n",
+		TextCase: fmt.Sprintf("整体描述：\n前置条件：\n获取 1 台设备 A。\n操作步骤：\n%s。\n停止操作。\n注意事项：\n", opts.UserInstruction),
 		StepType: "automation",
 		DeviceID: deviceInfo.DeviceID,
 		Base: WingsBase{
@@ -146,13 +156,23 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 
 	// Prepare Wings API request for assertion
 	apiRequest := WingsActionRequest{
-		Historys: []interface{}{}, // empty as specified
+		Historys: []interface{}{
+			map[string]interface{}{
+				"observation":   "",
+				"thought":       "",
+				"summary":       "",
+				"step_text":     "我获取了设备'设备a', 设备id是'xxx'；",
+				"device_id":     "",
+				"action_type":   "material",
+				"action_result": "",
+			},
+		}, // empty as specified
 		DeviceInfos: []WingsDeviceInfo{
 			deviceInfo,
 		},
 		StepText: opts.Assertion,
 		BizId:    w.bizId,
-		TextCase: "整体描述：\\n前置条件：\\n获取 1 台设备 A。\\n获取 1 个[万粉创作者]账号a。\\n获取 2 个[普通]账号 b、c。\\n账号 a 和账号 b 互相关注。\\n账号 a 和账号 c 互相关注。\\n账号 a 给账号 b 设置备注为 “11131b”。\\n账号 a 给账号 c 设置备注为 “11131c”。\\n账号 a 创建一个粉丝群 m。\\n 账号 a 修改粉丝群 m 名称为“11131群”。\\n 账号 a 邀请账号 b 加入粉丝群 m。\\n账号 a 邀请账号 c 加入粉丝群 m。\\n账号 a 给群聊 m 发送一条文字消息。\\n设备 A 打开抖音 app。\\n设备 A 登录账号 a。\\n设备 A 退出抖音 app。\\n操作步骤：\\n账号a打开抖音app。\\n点击“消息”。\\n点击“11131群”cell。\\n点击“聊天信息页入口”按钮。\\n点击“分享公开群”按钮。\\n点击文字“群口令”。\\n断言：屏幕中存在文字“口令复制成功”。\\n停止操作。\\n注意事项：\\n",
+		TextCase: "整体描述：\n前置条件：\n获取 1 台设备 A。\n获取 1 个[万粉创作者]账号a。\n获取 2 个[普通]账号 b、c。\n账号 a 和账号 b 互相关注。\n账号 a 和账号 c 互相关注。\n账号 a 给账号 b 设置备注为 “11131b”。\n账号 a 给账号 c 设置备注为 “11131c”。\n账号 a 创建一个粉丝群 m。\n 账号 a 修改粉丝群 m 名称为“11131群”。\n 账号 a 邀请账号 b 加入粉丝群 m。\n账号 a 邀请账号 c 加入粉丝群 m。\n账号 a 给群聊 m 发送一条文字消息。\n设备 A 打开抖音 app。\n设备 A 登录账号 a。\n设备 A 退出抖音 app。\n操作步骤：\n账号a打开抖音app。\n点击“消息”。\n点击“11131群”cell。\n点击“聊天信息页入口”按钮。\n点击“分享公开群”按钮。\n点击文字“群口令”。\n断言：屏幕中存在文字“口令复制成功”。\n停止操作。\n注意事项：\n",
 		StepType: "assert", // Different from automation
 		DeviceID: deviceInfo.DeviceID,
 		Base: WingsBase{
