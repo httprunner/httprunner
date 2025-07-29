@@ -82,8 +82,6 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 		StepText:   opts.UserInstruction,
 		BizId:      w.bizId,
 		TextCase:   fmt.Sprintf("整体描述：\n前置条件：\n操作步骤：\n%s。\n断言: 当前在“张杰演唱会”搜索页。\n停止操作。\n注意事项：\n", opts.UserInstruction),
-		StepType:   "automation",
-		DeviceID:   deviceInfo.DeviceID,
 		Base: WingsBase{
 			LogID: generateWingsUUID(),
 		},
@@ -120,10 +118,10 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 		StepText:      response.StepText,
 		StepTextTrans: response.StepTextTrans,
 		OriStepIndex:  parseOriStepIndex(response.OriStepIndex),
-		DeviceID:      deviceInfo.DeviceID,
-		ActionType:    response.StepType,
+		DeviceID:      deviceInfo[0].DeviceID,
+		AgentType:     response.AgentType,
 		ActionResult:  "", // Always empty as requested
-		DeviceInfo:    &deviceInfo,
+		DeviceInfos:   &deviceInfo,
 		ActionParams:  response.ActionParams,
 	}
 	w.history = append(w.history, newHistoryEntry)
@@ -177,8 +175,6 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 		StepText:   opts.Assertion,
 		BizId:      w.bizId,
 		TextCase:   fmt.Sprintf("整体描述：\n前置条件：\n操作步骤：\n断言: %s\n停止操作。\n注意事项：\n", opts.Assertion),
-		StepType:   "assert", // Different from automation
-		DeviceID:   deviceInfo.DeviceID,
 		Base: WingsBase{
 			LogID: generateWingsUUID(),
 		},
@@ -216,10 +212,10 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 		StepText:      response.StepText,
 		StepTextTrans: response.StepTextTrans,
 		OriStepIndex:  parseOriStepIndex(response.OriStepIndex),
-		DeviceID:      deviceInfo.DeviceID,
-		ActionType:    response.StepType,
+		DeviceID:      deviceInfo[0].DeviceID,
+		AgentType:     response.AgentType,
 		ActionResult:  "", // Always empty as requested
-		DeviceInfo:    &deviceInfo,
+		DeviceInfos:   &deviceInfo,
 		ActionParams:  response.ActionParams,
 	}
 	w.history = append(w.history, newHistoryEntry)
@@ -271,14 +267,12 @@ func (w *WingsService) RegisterTools(tools []*schema.ToolInfo) error {
 
 // Wings API data structures
 type WingsActionRequest struct {
-	Historys   []History       `json:"historys"`
-	DeviceInfo WingsDeviceInfo `json:"device_info"`
-	StepText   string          `json:"step_text"`
-	BizId      string          `json:"biz_id"`
-	TextCase   string          `json:"text_case"`
-	StepType   string          `json:"step_type"`
-	DeviceID   string          `json:"device_id"`
-	Base       WingsBase       `json:"Base"`
+	Historys   []History         `json:"historys"`
+	DeviceInfo []WingsDeviceInfo `json:"device_infos"`
+	StepText   string            `json:"step_text"`
+	BizId      string            `json:"biz_id"`
+	TextCase   string            `json:"text_case"`
+	Base       WingsBase         `json:"Base"`
 }
 
 type WingsDeviceInfo struct {
@@ -325,17 +319,17 @@ type WingsExtra struct {
 
 // History structure for request and response
 type History struct {
-	Observation   string           `json:"observation" thrift:"observation,1,required"`           // 思考结果
-	Thought       string           `json:"thought" thrift:"thought,2,required"`                   // 思考结果
-	Summary       string           `json:"summary" thrift:"summary,3,required"`                   // 思考结果
-	StepText      string           `json:"step_text" thrift:"step_text,4"`                        // 操作的指令
-	DeviceID      string           `json:"device_id" thrift:"device_id,5"`                        // 操作的设备id
-	ActionType    string           `json:"action_type" thrift:"action_type,7"`                    // 最终决策的agent类型
-	ActionResult  string           `json:"action_result" thrift:"action_result,8"`                // 操作结果, 断言=断言结果, 自动化=自动化操作是否成功, 物料构造=物料构造结果
-	DeviceInfo    *WingsDeviceInfo `json:"device_info,omitempty" thrift:"device_info,9"`          // 操作设备的信息
-	ActionParams  string           `json:"action_params,omitempty" thrift:"action_params,10"`     // 历史操作解析结果(断言，自动化，物料构造)
-	StepTextTrans string           `json:"step_text_trans,omitempty" thrift:"step_text_trans,13"` // 归一化的步骤文本(为后续的实际执行解析文本)
-	OriStepIndex  int64            `json:"ori_step_index,omitempty" thrift:"ori_step_index,14"`   // 原本的执行序列（扩展前、目标导向原始文本步骤）
+	Observation   string             `json:"observation" thrift:"observation,1,required"`           // 思考结果
+	Thought       string             `json:"thought" thrift:"thought,2,required"`                   // 思考结果
+	Summary       string             `json:"summary" thrift:"summary,3,required"`                   // 思考结果
+	StepText      string             `json:"step_text" thrift:"step_text,4"`                        // 操作的指令
+	DeviceID      string             `json:"device_id" thrift:"device_id,5"`                        // 操作的设备id
+	AgentType     string             `json:"agent_type" thrift:"agent_type,7"`                      // 最终决策的agent类型
+	ActionResult  string             `json:"action_result" thrift:"action_result,8"`                // 操作结果, 断言=断言结果, 自动化=自动化操作是否成功, 物料构造=物料构造结果
+	DeviceInfos   *[]WingsDeviceInfo `json:"device_infos,omitempty" thrift:"device_infos,9"`        // 所有设备的信息
+	ActionParams  string             `json:"action_params,omitempty" thrift:"action_params,10"`     // 历史操作解析结果(断言，自动化，物料构造)
+	StepTextTrans string             `json:"step_text_trans,omitempty" thrift:"step_text_trans,13"` // 归一化的步骤文本(为后续的实际执行解析文本)
+	OriStepIndex  int64              `json:"ori_step_index,omitempty" thrift:"ori_step_index,14"`   // 原本的执行序列（扩展前、目标导向原始文本步骤）
 }
 
 // Action parameter structures
@@ -425,19 +419,23 @@ func (w *WingsService) extractScreenshotFromMessage(message *schema.Message) (st
 }
 
 // getDeviceInfoFromContext gets device info from context with fallback
-func (w *WingsService) getDeviceInfoFromContext(_ context.Context, screenshot string) WingsDeviceInfo {
+func (w *WingsService) getDeviceInfoFromContext(_ context.Context, screenshot string) []WingsDeviceInfo {
+	// TODO: Extract device info from context if available
+
 	// use default device info
-	return WingsDeviceInfo{
-		DeviceID:        "default-device",
-		NowImage:        screenshot,
-		PreImage:        screenshot,
-		NowLayoutJSON:   "",
-		OperationSystem: "android",
+	return []WingsDeviceInfo{
+		{
+			DeviceID:        "default-device",
+			NowImage:        screenshot,
+			PreImage:        screenshot,
+			NowLayoutJSON:   "",
+			OperationSystem: "android",
+		},
 	}
 }
 
 // getDeviceInfoFromScreenshot gets device info from screenshot (for Assert)
-func (w *WingsService) getDeviceInfoFromScreenshot(ctx context.Context, screenshot string) WingsDeviceInfo {
+func (w *WingsService) getDeviceInfoFromScreenshot(ctx context.Context, screenshot string) []WingsDeviceInfo {
 	return w.getDeviceInfoFromContext(ctx, screenshot)
 }
 
