@@ -66,9 +66,14 @@ const (
 	ACTION_TapByCV                  ActionName = "tap_cv"
 	ACTION_DoubleTap                ActionName = "double_tap" // generic double tap action
 	ACTION_DoubleTapXY              ActionName = "double_tap_xy"
-	ACTION_Swipe                    ActionName = "swipe"            // swipe by direction or coordinates
-	ACTION_SwipeDirection           ActionName = "swipe_direction"  // swipe by direction (up, down, left, right)
-	ACTION_SwipeCoordinate          ActionName = "swipe_coordinate" // swipe by coordinates (fromX, fromY, toX, toY)
+	ACTION_Swipe                    ActionName = "swipe"                    // swipe by direction or coordinates
+	ACTION_SwipeDirection           ActionName = "swipe_direction"          // swipe by direction (up, down, left, right)
+	ACTION_SwipeCoordinate          ActionName = "swipe_coordinate"         // swipe by coordinates (fromX, fromY, toX, toY)
+	ACTION_SIMSwipeDirection        ActionName = "sim_swipe_direction"      // simulated swipe by direction with random distance
+	ACTION_SIMSwipeInArea           ActionName = "sim_swipe_in_area"        // simulated swipe in area with direction and distance
+	ACTION_SIMSwipeFromPointToPoint ActionName = "sim_swipe_point_to_point" // simulated swipe from point to point
+	ACTION_SIMClickAtPoint          ActionName = "sim_click_at_point"       // simulated click at point
+	ACTION_SIMInput                 ActionName = "sim_input"                // simulated text input with segments
 	ACTION_Drag                     ActionName = "drag"
 	ACTION_Input                    ActionName = "input"
 	ACTION_PressButton              ActionName = "press_button"
@@ -201,6 +206,14 @@ type ActionOptions struct {
 	PressDuration float64         `json:"press_duration,omitempty" yaml:"press_duration,omitempty" desc:"Press duration in seconds"`
 	Steps         int             `json:"steps,omitempty" yaml:"steps,omitempty" desc:"Number of steps for action"`
 	Direction     interface{}     `json:"direction,omitempty" yaml:"direction,omitempty" desc:"Direction for swipe operations or custom coordinates"`
+	StartX        float64         `json:"start_x,omitempty" yaml:"start_x,omitempty" desc:"Starting X coordinate for simulated swipe"`
+	StartY        float64         `json:"start_y,omitempty" yaml:"start_y,omitempty" desc:"Starting Y coordinate for simulated swipe"`
+	MinDistance   float64         `json:"min_distance,omitempty" yaml:"min_distance,omitempty" desc:"Minimum distance for simulated swipe"`
+	MaxDistance   float64         `json:"max_distance,omitempty" yaml:"max_distance,omitempty" desc:"Maximum distance for simulated swipe"`
+	AreaStartX    float64         `json:"area_start_x,omitempty" yaml:"area_start_x,omitempty" desc:"Area starting X coordinate for simulated swipe"`
+	AreaStartY    float64         `json:"area_start_y,omitempty" yaml:"area_start_y,omitempty" desc:"Area starting Y coordinate for simulated swipe"`
+	AreaEndX      float64         `json:"area_end_x,omitempty" yaml:"area_end_x,omitempty" desc:"Area ending X coordinate for simulated swipe"`
+	AreaEndY      float64         `json:"area_end_y,omitempty" yaml:"area_end_y,omitempty" desc:"Area ending Y coordinate for simulated swipe"`
 	Timeout       int             `json:"timeout,omitempty" yaml:"timeout,omitempty" desc:"Timeout in seconds for action execution"`
 	TimeLimit     int             `json:"time_limit,omitempty" yaml:"time_limit,omitempty" desc:"Time limit in seconds for action execution, stops gracefully when reached"`
 	Frequency     int             `json:"frequency,omitempty" yaml:"frequency,omitempty" desc:"Action frequency"`

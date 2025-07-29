@@ -290,6 +290,100 @@ func (s *StepMobile) SwipeRight(opts ...option.ActionOption) *StepMobile {
 	return s
 }
 
+// SIMSwipeWithDirection performs simulated swipe in specified direction with random distance
+func (s *StepMobile) SIMSwipeWithDirection(direction string, startX, startY, minDistance, maxDistance float64, opts ...option.ActionOption) *StepMobile {
+	// Create params map for SIMSwipeWithDirection
+	params := map[string]interface{}{
+		"direction":    direction,
+		"start_x":      startX,
+		"start_y":      startY,
+		"min_distance": minDistance,
+		"max_distance": maxDistance,
+	}
+
+	action := option.MobileAction{
+		Method:  option.ACTION_SIMSwipeDirection,
+		Params:  params,
+		Options: option.NewActionOptions(opts...),
+	}
+
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+// SIMSwipeInArea performs simulated swipe in specified area with direction and random distance
+func (s *StepMobile) SIMSwipeInArea(direction string, areaStartX, areaStartY, areaEndX, areaEndY, minDistance, maxDistance float64, opts ...option.ActionOption) *StepMobile {
+	// Create params map for SIMSwipeInArea
+	params := map[string]interface{}{
+		"direction":    direction,
+		"area_start_x": areaStartX,
+		"area_start_y": areaStartY,
+		"area_end_x":   areaEndX,
+		"area_end_y":   areaEndY,
+		"min_distance": minDistance,
+		"max_distance": maxDistance,
+	}
+
+	action := option.MobileAction{
+		Method:  option.ACTION_SIMSwipeInArea,
+		Params:  params,
+		Options: option.NewActionOptions(opts...),
+	}
+
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+// SIMSwipeFromPointToPoint performs simulated swipe from point to point
+func (s *StepMobile) SIMSwipeFromPointToPoint(startX, startY, endX, endY float64, opts ...option.ActionOption) *StepMobile {
+	// Create params map for SIMSwipeFromPointToPoint
+	params := map[string]interface{}{
+		"start_x": startX,
+		"start_y": startY,
+		"end_x":   endX,
+		"end_y":   endY,
+	}
+
+	action := option.MobileAction{
+		Method:  option.ACTION_SIMSwipeFromPointToPoint,
+		Params:  params,
+		Options: option.NewActionOptions(opts...),
+	}
+
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+// SIMClickAtPoint performs simulated click at specified point
+func (s *StepMobile) SIMClickAtPoint(x, y float64, opts ...option.ActionOption) *StepMobile {
+	// Create params map for SIMClickAtPoint
+	params := map[string]interface{}{
+		"x": x,
+		"y": y,
+	}
+
+	action := option.MobileAction{
+		Method:  option.ACTION_SIMClickAtPoint,
+		Params:  params,
+		Options: option.NewActionOptions(opts...),
+	}
+
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
+// SIMInput performs simulated text input with intelligent segmentation
+func (s *StepMobile) SIMInput(text string, opts ...option.ActionOption) *StepMobile {
+	action := option.MobileAction{
+		Method:  option.ACTION_SIMInput,
+		Params:  text,
+		Options: option.NewActionOptions(opts...),
+	}
+
+	s.obj().Actions = append(s.obj().Actions, action)
+	return s
+}
+
 func (s *StepMobile) SwipeToTapApp(appName string, opts ...option.ActionOption) *StepMobile {
 	action := option.MobileAction{
 		Method:  option.ACTION_SwipeToTapApp,

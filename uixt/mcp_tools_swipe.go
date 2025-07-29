@@ -547,3 +547,412 @@ func (t *ToolDrag) ConvertActionToCallToolRequest(action option.MobileAction) (m
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid drag parameters: %v", action.Params)
 }
+
+// ToolSIMSwipeDirection implements the sim_swipe_direction tool call.
+type ToolSIMSwipeDirection struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Direction      string  `json:"direction" desc:"Direction that was swiped (up/down/left/right)"`
+	StartX         float64 `json:"startX" desc:"Starting X coordinate of the simulated swipe"`
+	StartY         float64 `json:"startY" desc:"Starting Y coordinate of the simulated swipe"`
+	MinDistance    float64 `json:"minDistance" desc:"Minimum distance of the simulated swipe"`
+	MaxDistance    float64 `json:"maxDistance" desc:"Maximum distance of the simulated swipe"`
+	ActualDistance float64 `json:"actualDistance" desc:"Actual distance of the simulated swipe"`
+}
+
+func (t *ToolSIMSwipeDirection) Name() option.ActionName {
+	return option.ACTION_SIMSwipeDirection
+}
+
+func (t *ToolSIMSwipeDirection) Description() string {
+	return "Perform simulated swipe in specified direction with random distance and human-like touch patterns"
+}
+
+func (t *ToolSIMSwipeDirection) Options() []mcp.ToolOption {
+	unifiedReq := &option.ActionOptions{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SIMSwipeDirection)
+}
+
+func (t *ToolSIMSwipeDirection) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		unifiedReq, err := parseActionOptions(arguments)
+		if err != nil {
+			return nil, err
+		}
+
+		// Validate required parameters
+		if unifiedReq.Direction == nil {
+			return nil, fmt.Errorf("direction parameter is required")
+		}
+		direction, ok := unifiedReq.Direction.(string)
+		if !ok {
+			return nil, fmt.Errorf("direction must be a string")
+		}
+
+		// Validate direction
+		validDirections := []string{"up", "down", "left", "right"}
+		if !slices.Contains(validDirections, direction) {
+			return nil, fmt.Errorf("invalid swipe direction: %s, expected one of: %v",
+				direction, validDirections)
+		}
+
+		// Default values if not provided
+		startX := unifiedReq.StartX
+		startY := unifiedReq.StartY
+		minDistance := unifiedReq.MinDistance
+		maxDistance := unifiedReq.MaxDistance
+
+		if startX == 0 {
+			startX = 0.5 // default to center
+		}
+		if startY == 0 {
+			startY = 0.5 // default to center
+		}
+		if minDistance == 0 {
+			minDistance = 100 // default minimum distance
+		}
+		if maxDistance == 0 {
+			maxDistance = 300 // default maximum distance
+		}
+
+		log.Info().
+			Str("direction", direction).
+			Float64("startX", startX).
+			Float64("startY", startY).
+			Float64("minDistance", minDistance).
+			Float64("maxDistance", maxDistance).
+			Msg("performing simulated swipe with direction")
+
+		// Build all options from request arguments
+		opts := unifiedReq.Options()
+
+		// Call the underlying SIMSwipeWithDirection method (Android UIA2 specific)
+		if uia2Driver, ok := driverExt.IDriver.(*UIA2Driver); ok {
+			err = uia2Driver.SIMSwipeWithDirection(direction, startX, startY, minDistance, maxDistance, opts...)
+			if err != nil {
+				return NewMCPErrorResponse(fmt.Sprintf("Simulated swipe failed: %s", err.Error())), err
+			}
+		} else {
+			return NewMCPErrorResponse("SIMSwipeWithDirection is only supported on Android UIA2 driver"), fmt.Errorf("unsupported driver type for SIMSwipeWithDirection")
+		}
+
+		// Calculate actual distance for response (approximate)
+		actualDistance := minDistance
+		if maxDistance > minDistance {
+			actualDistance = minDistance + (maxDistance-minDistance)*0.5 // approximate middle value
+		}
+
+		message := fmt.Sprintf("Successfully performed simulated swipe %s from (%.2f, %.2f) with distance %.2f",
+			direction, startX, startY, actualDistance)
+		returnData := ToolSIMSwipeDirection{
+			Direction:      direction,
+			StartX:         startX,
+			StartY:         startY,
+			MinDistance:    minDistance,
+			MaxDistance:    maxDistance,
+			ActualDistance: actualDistance,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
+	}
+}
+
+func (t *ToolSIMSwipeDirection) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
+	// Handle params as map[string]interface{}
+	if paramsMap, ok := action.Params.(map[string]interface{}); ok {
+		arguments := map[string]any{}
+
+		// Extract direction
+		if direction, exists := paramsMap["direction"]; exists {
+			arguments["direction"] = direction
+		}
+
+		// Extract coordinates and distances
+		if startX, exists := paramsMap["start_x"]; exists {
+			arguments["start_x"] = startX
+		}
+		if startY, exists := paramsMap["start_y"]; exists {
+			arguments["start_y"] = startY
+		}
+		if minDistance, exists := paramsMap["min_distance"]; exists {
+			arguments["min_distance"] = minDistance
+		}
+		if maxDistance, exists := paramsMap["max_distance"]; exists {
+			arguments["max_distance"] = maxDistance
+		}
+
+		// Add duration and press duration from options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
+			arguments["pressDuration"] = pressDuration
+		}
+
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid SIM swipe direction params: %v", action.Params)
+}
+
+// ToolSIMSwipeInArea implements the sim_swipe_in_area tool call.
+type ToolSIMSwipeInArea struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Direction   string  `json:"direction" desc:"Direction that was swiped (up/down/left/right)"`
+	AreaStartX  float64 `json:"areaStartX" desc:"Area starting X coordinate"`
+	AreaStartY  float64 `json:"areaStartY" desc:"Area starting Y coordinate"`
+	AreaEndX    float64 `json:"areaEndX" desc:"Area ending X coordinate"`
+	AreaEndY    float64 `json:"areaEndY" desc:"Area ending Y coordinate"`
+	MinDistance float64 `json:"minDistance" desc:"Minimum distance of the simulated swipe"`
+	MaxDistance float64 `json:"maxDistance" desc:"Maximum distance of the simulated swipe"`
+}
+
+func (t *ToolSIMSwipeInArea) Name() option.ActionName {
+	return option.ACTION_SIMSwipeInArea
+}
+
+func (t *ToolSIMSwipeInArea) Description() string {
+	return "Perform simulated swipe in specified area with direction and random distance"
+}
+
+func (t *ToolSIMSwipeInArea) Options() []mcp.ToolOption {
+	unifiedReq := &option.ActionOptions{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SIMSwipeInArea)
+}
+
+func (t *ToolSIMSwipeInArea) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		unifiedReq, err := parseActionOptions(arguments)
+		if err != nil {
+			return nil, err
+		}
+
+		// Validate required parameters
+		if unifiedReq.Direction == nil {
+			return nil, fmt.Errorf("direction parameter is required")
+		}
+		direction, ok := unifiedReq.Direction.(string)
+		if !ok {
+			return nil, fmt.Errorf("direction must be a string")
+		}
+
+		// Validate direction
+		validDirections := []string{"up", "down", "left", "right"}
+		if !slices.Contains(validDirections, direction) {
+			return nil, fmt.Errorf("invalid swipe direction: %s, expected one of: %v",
+				direction, validDirections)
+		}
+
+		// Get area coordinates
+		areaStartX := unifiedReq.AreaStartX
+		areaStartY := unifiedReq.AreaStartY
+		areaEndX := unifiedReq.AreaEndX
+		areaEndY := unifiedReq.AreaEndY
+		minDistance := unifiedReq.MinDistance
+		maxDistance := unifiedReq.MaxDistance
+
+		// Default values
+		if minDistance == 0 {
+			minDistance = 100
+		}
+		if maxDistance == 0 {
+			maxDistance = 300
+		}
+
+		log.Info().
+			Str("direction", direction).
+			Float64("areaStartX", areaStartX).
+			Float64("areaStartY", areaStartY).
+			Float64("areaEndX", areaEndX).
+			Float64("areaEndY", areaEndY).
+			Float64("minDistance", minDistance).
+			Float64("maxDistance", maxDistance).
+			Msg("performing simulated swipe in area")
+
+		// Build all options from request arguments
+		opts := unifiedReq.Options()
+
+		// Call the underlying SIMSwipeInArea method (Android UIA2 specific)
+		if uia2Driver, ok := driverExt.IDriver.(*UIA2Driver); ok {
+			err = uia2Driver.SIMSwipeInArea(direction, areaStartX, areaStartY, areaEndX, areaEndY, minDistance, maxDistance, opts...)
+			if err != nil {
+				return NewMCPErrorResponse(fmt.Sprintf("Simulated swipe in area failed: %s", err.Error())), err
+			}
+		} else {
+			return NewMCPErrorResponse("SIMSwipeInArea is only supported on Android UIA2 driver"), fmt.Errorf("unsupported driver type for SIMSwipeInArea")
+		}
+
+		message := fmt.Sprintf("Successfully performed simulated swipe %s in area (%.2f,%.2f)-(%.2f,%.2f)",
+			direction, areaStartX, areaStartY, areaEndX, areaEndY)
+		returnData := ToolSIMSwipeInArea{
+			Direction:   direction,
+			AreaStartX:  areaStartX,
+			AreaStartY:  areaStartY,
+			AreaEndX:    areaEndX,
+			AreaEndY:    areaEndY,
+			MinDistance: minDistance,
+			MaxDistance: maxDistance,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
+	}
+}
+
+func (t *ToolSIMSwipeInArea) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
+	// Handle params as map[string]interface{}
+	if paramsMap, ok := action.Params.(map[string]interface{}); ok {
+		arguments := map[string]any{}
+
+		// Extract direction
+		if direction, exists := paramsMap["direction"]; exists {
+			arguments["direction"] = direction
+		}
+
+		// Extract area coordinates and distances
+		if areaStartX, exists := paramsMap["area_start_x"]; exists {
+			arguments["area_start_x"] = areaStartX
+		}
+		if areaStartY, exists := paramsMap["area_start_y"]; exists {
+			arguments["area_start_y"] = areaStartY
+		}
+		if areaEndX, exists := paramsMap["area_end_x"]; exists {
+			arguments["area_end_x"] = areaEndX
+		}
+		if areaEndY, exists := paramsMap["area_end_y"]; exists {
+			arguments["area_end_y"] = areaEndY
+		}
+		if minDistance, exists := paramsMap["min_distance"]; exists {
+			arguments["min_distance"] = minDistance
+		}
+		if maxDistance, exists := paramsMap["max_distance"]; exists {
+			arguments["max_distance"] = maxDistance
+		}
+
+		// Add duration and press duration from options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
+			arguments["pressDuration"] = pressDuration
+		}
+
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid SIM swipe in area params: %v", action.Params)
+}
+
+// ToolSIMSwipeFromPointToPoint implements the sim_swipe_point_to_point tool call.
+type ToolSIMSwipeFromPointToPoint struct {
+	// Return data fields - these define the structure of data returned by this tool
+	StartX float64 `json:"startX" desc:"Starting X coordinate"`
+	StartY float64 `json:"startY" desc:"Starting Y coordinate"`
+	EndX   float64 `json:"endX" desc:"Ending X coordinate"`
+	EndY   float64 `json:"endY" desc:"Ending Y coordinate"`
+}
+
+func (t *ToolSIMSwipeFromPointToPoint) Name() option.ActionName {
+	return option.ACTION_SIMSwipeFromPointToPoint
+}
+
+func (t *ToolSIMSwipeFromPointToPoint) Description() string {
+	return "Perform simulated swipe from point to point with human-like touch patterns"
+}
+
+func (t *ToolSIMSwipeFromPointToPoint) Options() []mcp.ToolOption {
+	unifiedReq := &option.ActionOptions{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SIMSwipeFromPointToPoint)
+}
+
+func (t *ToolSIMSwipeFromPointToPoint) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		unifiedReq, err := parseActionOptions(arguments)
+		if err != nil {
+			return nil, err
+		}
+
+		// Get coordinates from arguments
+		startX := unifiedReq.StartX
+		startY := unifiedReq.StartY
+		endX := unifiedReq.ToX // Using existing ToX field
+		endY := unifiedReq.ToY // Using existing ToY field
+
+		log.Info().
+			Float64("startX", startX).
+			Float64("startY", startY).
+			Float64("endX", endX).
+			Float64("endY", endY).
+			Msg("performing simulated point to point swipe")
+
+		// Build all options from request arguments
+		opts := unifiedReq.Options()
+
+		// Call the underlying SIMSwipeFromPointToPoint method (Android UIA2 specific)
+		if uia2Driver, ok := driverExt.IDriver.(*UIA2Driver); ok {
+			err = uia2Driver.SIMSwipeFromPointToPoint(startX, startY, endX, endY, opts...)
+			if err != nil {
+				return NewMCPErrorResponse(fmt.Sprintf("Simulated point to point swipe failed: %s", err.Error())), err
+			}
+		} else {
+			return NewMCPErrorResponse("SIMSwipeFromPointToPoint is only supported on Android UIA2 driver"), fmt.Errorf("unsupported driver type for SIMSwipeFromPointToPoint")
+		}
+
+		message := fmt.Sprintf("Successfully performed simulated swipe from (%.2f,%.2f) to (%.2f,%.2f)",
+			startX, startY, endX, endY)
+		returnData := ToolSIMSwipeFromPointToPoint{
+			StartX: startX,
+			StartY: startY,
+			EndX:   endX,
+			EndY:   endY,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
+	}
+}
+
+func (t *ToolSIMSwipeFromPointToPoint) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
+	// Handle params as map[string]interface{}
+	if paramsMap, ok := action.Params.(map[string]interface{}); ok {
+		arguments := map[string]any{}
+
+		// Extract coordinates
+		if startX, exists := paramsMap["start_x"]; exists {
+			arguments["start_x"] = startX
+		}
+		if startY, exists := paramsMap["start_y"]; exists {
+			arguments["start_y"] = startY
+		}
+		if endX, exists := paramsMap["end_x"]; exists {
+			arguments["to_x"] = endX // Map to existing ToX field
+		}
+		if endY, exists := paramsMap["end_y"]; exists {
+			arguments["to_y"] = endY // Map to existing ToY field
+		}
+
+		// Add duration and press duration from options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+		if pressDuration := action.ActionOptions.PressDuration; pressDuration > 0 {
+			arguments["pressDuration"] = pressDuration
+		}
+
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid SIM swipe point to point params: %v", action.Params)
+}
