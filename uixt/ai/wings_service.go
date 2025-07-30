@@ -467,6 +467,8 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 	// Set headers
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Accept", "application/json")
+	httpReq.Header.Add("x-use-ppe", "1")
+	httpReq.Header.Add("x-tt-env", "ppe_refactor_merge")
 
 	// Add authentication headers if using external API
 	if w.accessKey != "" && w.secretKey != "" {
