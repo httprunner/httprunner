@@ -343,9 +343,8 @@ func (g *HTMLReportGenerator) encodeImageToBase64(imagePath string) string {
 		return ""
 	}
 
-	// Read and compress the image using the unified compression function
-	// Enable resize with max width 800px for HTML reports
-	compressedData, err := uixt.CompressImageFile(imagePath, true, 800)
+	// Read and compress the image with quality 50
+	compressedData, err := uixt.CompressImageFile(imagePath, 50)
 	if err != nil {
 		log.Warn().Err(err).Str("path", imagePath).Msg("failed to compress image, using original")
 		// Fallback to original image if compression fails

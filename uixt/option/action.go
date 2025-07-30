@@ -66,9 +66,14 @@ const (
 	ACTION_TapByCV                  ActionName = "tap_cv"
 	ACTION_DoubleTap                ActionName = "double_tap" // generic double tap action
 	ACTION_DoubleTapXY              ActionName = "double_tap_xy"
-	ACTION_Swipe                    ActionName = "swipe"            // swipe by direction or coordinates
-	ACTION_SwipeDirection           ActionName = "swipe_direction"  // swipe by direction (up, down, left, right)
-	ACTION_SwipeCoordinate          ActionName = "swipe_coordinate" // swipe by coordinates (fromX, fromY, toX, toY)
+	ACTION_Swipe                    ActionName = "swipe"                    // swipe by direction or coordinates
+	ACTION_SwipeDirection           ActionName = "swipe_direction"          // swipe by direction (up, down, left, right)
+	ACTION_SwipeCoordinate          ActionName = "swipe_coordinate"         // swipe by coordinates (fromX, fromY, toX, toY)
+	ACTION_SIMSwipeDirection        ActionName = "sim_swipe_direction"      // simulated swipe by direction with random distance
+	ACTION_SIMSwipeInArea           ActionName = "sim_swipe_in_area"        // simulated swipe in area with direction and distance
+	ACTION_SIMSwipeFromPointToPoint ActionName = "sim_swipe_point_to_point" // simulated swipe from point to point
+	ACTION_SIMClickAtPoint          ActionName = "sim_click_at_point"       // simulated click at point
+	ACTION_SIMInput                 ActionName = "sim_input"                // simulated text input with segments
 	ACTION_Drag                     ActionName = "drag"
 	ACTION_Input                    ActionName = "input"
 	ACTION_PressButton              ActionName = "press_button"
@@ -201,9 +206,18 @@ type ActionOptions struct {
 	PressDuration float64         `json:"press_duration,omitempty" yaml:"press_duration,omitempty" desc:"Press duration in seconds"`
 	Steps         int             `json:"steps,omitempty" yaml:"steps,omitempty" desc:"Number of steps for action"`
 	Direction     interface{}     `json:"direction,omitempty" yaml:"direction,omitempty" desc:"Direction for swipe operations or custom coordinates"`
-	Timeout       int             `json:"timeout,omitempty" yaml:"timeout,omitempty" desc:"Timeout in seconds for action execution"`
-	TimeLimit     int             `json:"time_limit,omitempty" yaml:"time_limit,omitempty" desc:"Time limit in seconds for action execution, stops gracefully when reached"`
-	Frequency     int             `json:"frequency,omitempty" yaml:"frequency,omitempty" desc:"Action frequency"`
+
+	// SIM specific options with SIM prefix
+	SIMMinDistance float64 `json:"sim_min_distance,omitempty" yaml:"sim_min_distance,omitempty" desc:"Minimum distance for SIM simulated actions"`
+	SIMMaxDistance float64 `json:"sim_max_distance,omitempty" yaml:"sim_max_distance,omitempty" desc:"Maximum distance for SIM simulated actions"`
+	SIMAreaStartX  float64 `json:"sim_area_start_x,omitempty" yaml:"sim_area_start_x,omitempty" desc:"Area starting X coordinate for SIM simulated swipe"`
+	SIMAreaStartY  float64 `json:"sim_area_start_y,omitempty" yaml:"sim_area_start_y,omitempty" desc:"Area starting Y coordinate for SIM simulated swipe"`
+	SIMAreaEndX    float64 `json:"sim_area_end_x,omitempty" yaml:"sim_area_end_x,omitempty" desc:"Area ending X coordinate for SIM simulated swipe"`
+	SIMAreaEndY    float64 `json:"sim_area_end_y,omitempty" yaml:"sim_area_end_y,omitempty" desc:"Area ending Y coordinate for SIM simulated swipe"`
+
+	Timeout   int `json:"timeout,omitempty" yaml:"timeout,omitempty" desc:"Timeout in seconds for action execution"`
+	TimeLimit int `json:"time_limit,omitempty" yaml:"time_limit,omitempty" desc:"Time limit in seconds for action execution, stops gracefully when reached"`
+	Frequency int `json:"frequency,omitempty" yaml:"frequency,omitempty" desc:"Action frequency"`
 
 	ScreenOptions
 
@@ -649,6 +663,13 @@ func (o *ActionOptions) GetMCPOptions(actionType ActionName) []mcp.ToolOption {
 		ACTION_Back:                     {"platform", "serial"},
 		ACTION_ListPackages:             {"platform", "serial"},
 		ACTION_ClosePopups:              {"platform", "serial"},
+
+		// SIM specific actions using fromX/fromY for startX/startY and SIM-prefixed fields
+		ACTION_SIMSwipeDirection:        {"platform", "serial", "direction", "fromX", "fromY", "sim_min_distance", "sim_max_distance", "duration", "pressDuration"},
+		ACTION_SIMSwipeInArea:           {"platform", "serial", "direction", "sim_area_start_x", "sim_area_start_y", "sim_area_end_x", "sim_area_end_y", "sim_min_distance", "sim_max_distance", "duration", "pressDuration"},
+		ACTION_SIMSwipeFromPointToPoint: {"platform", "serial", "fromX", "fromY", "toX", "toY", "duration", "pressDuration"},
+		ACTION_SIMClickAtPoint:          {"platform", "serial", "x", "y", "duration", "pressDuration"},
+		ACTION_SIMInput:                 {"platform", "serial", "text", "frequency"},
 	}
 
 	fields := fieldMappings[actionType]

@@ -87,23 +87,28 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolSelectDevice{})         // SelectDevice
 
 	// Touch Tools
-	s.registerTool(&ToolTapXY{})       // tap xy
-	s.registerTool(&ToolTapAbsXY{})    // tap abs xy
-	s.registerTool(&ToolTapByOCR{})    // tap by OCR
-	s.registerTool(&ToolTapByCV{})     // tap by CV
-	s.registerTool(&ToolDoubleTapXY{}) // double tap xy
+	s.registerTool(&ToolTapXY{})           // tap xy
+	s.registerTool(&ToolTapAbsXY{})        // tap abs xy
+	s.registerTool(&ToolTapByOCR{})        // tap by OCR
+	s.registerTool(&ToolTapByCV{})         // tap by CV
+	s.registerTool(&ToolDoubleTapXY{})     // double tap xy
+	s.registerTool(&ToolSIMClickAtPoint{}) // simulated click at point
 
 	// Swipe Tools
-	s.registerTool(&ToolSwipe{})           // generic swipe, auto-detect direction or coordinate
-	s.registerTool(&ToolSwipeDirection{})  // swipe direction, up/down/left/right
-	s.registerTool(&ToolSwipeCoordinate{}) // swipe coordinate, [fromX, fromY, toX, toY]
+	s.registerTool(&ToolSwipe{})                    // generic swipe, auto-detect direction or coordinate
+	s.registerTool(&ToolSwipeDirection{})           // swipe direction, up/down/left/right
+	s.registerTool(&ToolSwipeCoordinate{})          // swipe coordinate, [fromX, fromY, toX, toY]
+	s.registerTool(&ToolSIMSwipeDirection{})        // simulated swipe direction with random distance
+	s.registerTool(&ToolSIMSwipeInArea{})           // simulated swipe in area with direction and distance
+	s.registerTool(&ToolSIMSwipeFromPointToPoint{}) // simulated swipe from point to point
 	s.registerTool(&ToolSwipeToTapApp{})
 	s.registerTool(&ToolSwipeToTapText{})
 	s.registerTool(&ToolSwipeToTapTexts{})
 	s.registerTool(&ToolDrag{})
 
 	// Input Tools
-	s.registerTool(&ToolInput{})
+	s.registerTool(&ToolInput{})    // regular input
+	s.registerTool(&ToolSIMInput{}) // simulated input with intelligent segmentation
 	s.registerTool(&ToolBackspace{})
 	s.registerTool(&ToolSetIme{})
 

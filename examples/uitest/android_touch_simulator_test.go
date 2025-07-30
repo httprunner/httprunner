@@ -2,10 +2,12 @@ package uitest
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
 
+	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
@@ -223,4 +225,380 @@ func TestTouchEventSequenceValidation(t *testing.T) {
 	}
 
 	t.Logf("Touch sequence validation passed: %d events with correct action sequence", len(events))
+}
+
+func TestSwipeWithDirection(t *testing.T) {
+	device, err := uixt.NewAndroidDevice(
+		option.WithSerialNumber(""),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver, err := uixt.NewUIA2Driver(device)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer driver.TearDown()
+
+	// Test cases for different directions and distance configurations
+	testCases := []struct {
+		name        string
+		direction   string
+		startX      float64
+		startY      float64
+		minDistance float64
+		maxDistance float64
+	}{
+		{
+			name:        "随机距离上滑",
+			direction:   "up",
+			startX:      0.5,
+			startY:      0.5,
+			minDistance: 100.0,
+			maxDistance: 500.0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := driver.SIMSwipeWithDirection(
+				tc.direction,
+				tc.startX,
+				tc.startY,
+				tc.minDistance,
+				tc.maxDistance,
+			)
+			if err != nil {
+				t.Errorf("SwipeWithDirection failed: %v", err)
+			} else {
+				t.Logf("Successfully executed swipe: direction=%s, start=(%.1f,%.1f), distance=%.1f-%.1f",
+					tc.direction, tc.startX, tc.startY, tc.minDistance, tc.maxDistance)
+			}
+		})
+	}
+}
+
+func TestSwipeWithDirectionInvalidInputs(t *testing.T) {
+	device, err := uixt.NewAndroidDevice(
+		option.WithSerialNumber(""),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver, err := uixt.NewUIA2Driver(device)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer driver.TearDown()
+
+	// Test invalid direction
+	err = driver.SIMSwipeWithDirection("invalid", 500.0, 500.0, 100.0, 200.0)
+	if err == nil {
+		t.Error("Expected error for invalid direction, but got none")
+	}
+
+	// Test invalid distance range (max < min)
+	err = driver.SIMSwipeWithDirection("up", 500.0, 500.0, 200.0, 100.0)
+	if err == nil {
+		t.Error("Expected error for invalid distance range, but got none")
+	}
+
+	// Test zero distance
+	err = driver.SIMSwipeWithDirection("up", 500.0, 500.0, 0.0, 0.0)
+	if err == nil {
+		t.Error("Expected error for zero distance, but got none")
+	}
+
+	t.Log("Invalid input validation tests passed")
+}
+
+func TestSwipeInArea(t *testing.T) {
+	device, err := uixt.NewAndroidDevice(
+		option.WithSerialNumber(""),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver, err := uixt.NewUIA2Driver(device)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer driver.TearDown()
+
+	// Test cases for different area configurations and directions
+	testCases := []struct {
+		name        string
+		direction   string
+		areaStartX  float64
+		areaStartY  float64
+		areaEndX    float64
+		areaEndY    float64
+		minDistance float64
+		maxDistance float64
+	}{
+		{
+			name:        "中心区域上滑_固定距离",
+			direction:   "up",
+			areaStartX:  0.2,
+			areaStartY:  0.3,
+			areaEndX:    0.8,
+			areaEndY:    0.6,
+			minDistance: 500.0,
+			maxDistance: 700.0, // 固定距离
+		},
+	}
+
+	for _, tc := range testCases {
+		for i := 0; i < 3; i++ {
+			t.Run(tc.name, func(t *testing.T) {
+				err := driver.SIMSwipeInArea(
+					tc.direction,
+					tc.areaStartX,
+					tc.areaStartY,
+					tc.areaEndX,
+					tc.areaEndY,
+					tc.minDistance,
+					tc.maxDistance,
+				)
+				if err != nil {
+					t.Errorf("SwipeInArea failed: %v", err)
+				} else {
+					t.Logf("Successfully executed area swipe: direction=%s, area=(%.1f,%.1f)-(%.1f,%.1f), distance=%.1f-%.1f",
+						tc.direction, tc.areaStartX, tc.areaStartY, tc.areaEndX, tc.areaEndY, tc.minDistance, tc.maxDistance)
+				}
+			})
+		}
+	}
+}
+
+func TestSwipeFromPointToPoint(t *testing.T) {
+	device, err := uixt.NewAndroidDevice(
+		option.WithSerialNumber(""),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver, err := uixt.NewUIA2Driver(device)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer driver.TearDown()
+
+	// Test cases for different point-to-point swipes
+	testCases := []struct {
+		name   string
+		startX float64
+		startY float64
+		endX   float64
+		endY   float64
+	}{
+		{
+			name:   "对角线滑动_左上到右下",
+			startX: 0.2,
+			startY: 0.3,
+			endX:   0.8,
+			endY:   0.5,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := driver.SIMSwipeFromPointToPoint(
+				tc.startX,
+				tc.startY,
+				tc.endX,
+				tc.endY,
+			)
+			if err != nil {
+				t.Errorf("SwipeFromPointToPoint failed: %v", err)
+			} else {
+				t.Logf("Successfully executed point-to-point swipe: %s, from (%.1f,%.1f) to (%.1f,%.1f)",
+					tc.name, tc.startX, tc.startY, tc.endX, tc.endY)
+			}
+		})
+	}
+}
+
+func TestSwipeFromPointToPointInvalidInputs(t *testing.T) {
+	device, err := uixt.NewAndroidDevice(
+		option.WithSerialNumber(""),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver, err := uixt.NewUIA2Driver(device)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer driver.TearDown()
+
+	// Test same start and end point
+	err = driver.SIMSwipeFromPointToPoint(0.5, 0.5, 0.5, 0.5)
+	if err == nil {
+		t.Error("Expected error for same start and end point, but got none")
+	}
+
+	// Test very close points (should result in distance too short)
+	err = driver.SIMSwipeFromPointToPoint(0.5, 0.5, 0.501, 0.501)
+	if err == nil {
+		t.Error("Expected error for very close points, but got none")
+	}
+
+	t.Log("Point-to-point swipe invalid input validation tests passed")
+}
+
+func TestClickAtPoint(t *testing.T) {
+	device, err := uixt.NewAndroidDevice(
+		option.WithSerialNumber(""),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver, err := uixt.NewUIA2Driver(device)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer driver.TearDown()
+
+	// Test cases for different click positions
+	testCases := []struct {
+		name string
+		x    float64
+		y    float64
+	}{
+		{
+			name: "屏幕中心点击",
+			x:    0.5,
+			y:    0.5,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := driver.SIMClickAtPoint(tc.x, tc.y)
+			if err != nil {
+				t.Errorf("ClickAtPoint failed: %v", err)
+			} else {
+				t.Logf("Successfully executed click: %s at (%.1f, %.1f)",
+					tc.name, tc.x, tc.y)
+			}
+		})
+	}
+}
+
+func TestClickAtPointInvalidInputs(t *testing.T) {
+	device, err := uixt.NewAndroidDevice(
+		option.WithSerialNumber(""),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver, err := uixt.NewUIA2Driver(device)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer driver.TearDown()
+
+	// Test negative coordinates
+	err = driver.SIMClickAtPoint(-0.1, 0.5)
+	if err == nil {
+		t.Error("Expected error for negative x coordinate, but got none")
+	}
+
+	err = driver.SIMClickAtPoint(0.5, -0.1)
+	if err == nil {
+		t.Error("Expected error for negative y coordinate, but got none")
+	}
+
+	// Test coordinates out of range (though these should be handled by convertToAbsolutePoint)
+	err = driver.SIMClickAtPoint(1.5, 0.5)
+	if err != nil {
+		t.Logf("Out of range coordinates handled properly: %v", err)
+	}
+
+	t.Log("Click invalid input validation tests passed")
+}
+
+func TestSIMInput(t *testing.T) {
+	device, err := uixt.NewAndroidDevice(
+		option.WithSerialNumber(""),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	driver, err := uixt.NewUIA2Driver(device)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer driver.TearDown()
+
+	// Test cases for different text inputs
+	testCases := []struct {
+		name string
+		text string
+	}{
+		{
+			name: "长文本",
+			text: "This is a very long text to test the performance of SIMInput function. 这是一个很长的文本用来测试SIMInput函数的性能。1234567890!@#$%^&*()英語の長い文字",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := driver.SIMInput(tc.text)
+			// err := driver.Input(tc.text)
+			if err != nil {
+				t.Errorf("SIMInput failed: %v", err)
+			} else {
+				t.Logf("Successfully executed SIMInput: %s with text '%s'", tc.name, tc.text)
+			}
+		})
+	}
+}
+
+// TestStepMultipleSIMActions tests multiple SIM actions in one test case
+func TestStepMultipleSIMActions(t *testing.T) {
+	// 创建包含多个SIM操作的测试用例
+	testCase := &hrp.TestCase{
+		Config: hrp.NewConfig("多个SIM操作组合测试").SetAndroid(option.WithUIA2(true), option.WithSerialNumber("")),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("组合SIM操作测试").
+				Android().
+				SIMClickAtPoint(0.5, 0.5).                              // 点击屏幕中心
+				Sleep(1).                                               // 等待1秒
+				SIMSwipeWithDirection("up", 0.5, 0.7, 200.0, 400.0).    // 向上滑动
+				Sleep(0.5).                                             // 等待0.5秒
+				SIMSwipeInArea("up", 0.2, 0.2, 0.6, 0.6, 350.0, 500.0). // 在区域内向下滑动
+				Sleep(0.5).                                             // 等待0.5秒
+				SIMSwipeFromPointToPoint(0.1, 0.5, 0.9, 0.5).           // 从左到右滑动
+				Sleep(0.5).                                             // 等待0.5秒
+				SIMInput("测试组合操作 Test Combination 123"),                // 仿真输入
+		},
+	}
+
+	// 运行测试用例
+	err := testCase.Dump2JSON("TestStepMultipleSIMActions.json")
+	if err != nil {
+		t.Fatalf("Failed to dump test case: %v", err)
+	}
+	defer func() {
+		// 清理生成的文件
+		_ = os.Remove("TestStepMultipleSIMActions.json")
+	}()
+
+	// 执行测试用例
+	err = hrp.NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Errorf("Test case failed: %v", err)
+	}
+
+	t.Logf("Successfully executed multiple SIM actions test")
 }

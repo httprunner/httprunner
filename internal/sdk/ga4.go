@@ -64,7 +64,7 @@ func NewGA4Client(measurementID, apiSecret string, debug ...bool) *GA4Client {
 		apiSecret:     apiSecret,
 		userID:        userID,
 		httpClient: &http.Client{
-			Timeout: 5 * time.Second,
+			Timeout: 10 * time.Second,
 		},
 		debug: dbg,
 	}
@@ -206,6 +206,6 @@ func SendGA4Event(name string, params map[string]interface{}) {
 	}
 	err := ga4Client.SendEvent(event)
 	if err != nil {
-		log.Warn().Err(err).Msg("send GA4 event failed")
+		log.Debug().Err(err).Msg("send GA4 event failed")
 	}
 }
