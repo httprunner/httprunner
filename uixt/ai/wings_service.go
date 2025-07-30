@@ -51,6 +51,7 @@ func NewWingsService() (ILLMService, error) {
 		bizId:     bizID,
 		accessKey: accessKey,
 		secretKey: secretKey,
+		history:   []History{},
 	}, nil
 }
 
