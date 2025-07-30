@@ -240,7 +240,7 @@ func (dev *AndroidDevice) installViaInstaller(apkPath string, args ...string) er
 		return err
 	}
 	// 等待安装完成或超时
-	timeout := 3 * time.Minute
+	timeout := 8 * time.Minute
 	select {
 	case err := <-done:
 		return err
