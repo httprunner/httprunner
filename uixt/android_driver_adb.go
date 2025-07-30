@@ -1273,26 +1273,3 @@ func (ad *ADBDriver) SecondaryClick(x, y float64) (err error) {
 func (ad *ADBDriver) SecondaryClickBySelector(selector string, options ...option.ActionOption) (err error) {
 	return err
 }
-
-// SIMSupport interface implementation for ADBDriver
-// These methods return "not supported" errors since SIM functionality is only available in UIA2Driver
-
-func (ad *ADBDriver) SIMClickAtPoint(x, y float64, opts ...option.ActionOption) error {
-	return fmt.Errorf("SIMClickAtPoint is not supported in ADBDriver, please use UIA2Driver instead")
-}
-
-func (ad *ADBDriver) SIMSwipeWithDirection(direction string, startX, startY, minDistance, maxDistance float64, opts ...option.ActionOption) error {
-	return fmt.Errorf("SIMSwipeWithDirection is not supported in ADBDriver, please use UIA2Driver instead")
-}
-
-func (ad *ADBDriver) SIMSwipeInArea(direction string, areaStartX, areaStartY, areaEndX, areaEndY, minDistance, maxDistance float64, opts ...option.ActionOption) error {
-	return fmt.Errorf("SIMSwipeInArea is not supported in ADBDriver, please use UIA2Driver instead")
-}
-
-func (ad *ADBDriver) SIMSwipeFromPointToPoint(startX, startY, endX, endY float64, opts ...option.ActionOption) error {
-	return fmt.Errorf("SIMSwipeFromPointToPoint is not supported in ADBDriver, please use UIA2Driver instead")
-}
-
-func (ad *ADBDriver) SIMInput(text string, opts ...option.ActionOption) error {
-	return fmt.Errorf("SIMInput is not supported in ADBDriver, please use UIA2Driver instead")
-}

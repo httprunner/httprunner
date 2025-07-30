@@ -206,17 +206,18 @@ type ActionOptions struct {
 	PressDuration float64         `json:"press_duration,omitempty" yaml:"press_duration,omitempty" desc:"Press duration in seconds"`
 	Steps         int             `json:"steps,omitempty" yaml:"steps,omitempty" desc:"Number of steps for action"`
 	Direction     interface{}     `json:"direction,omitempty" yaml:"direction,omitempty" desc:"Direction for swipe operations or custom coordinates"`
-	StartX        float64         `json:"start_x,omitempty" yaml:"start_x,omitempty" desc:"Starting X coordinate for simulated swipe"`
-	StartY        float64         `json:"start_y,omitempty" yaml:"start_y,omitempty" desc:"Starting Y coordinate for simulated swipe"`
-	MinDistance   float64         `json:"min_distance,omitempty" yaml:"min_distance,omitempty" desc:"Minimum distance for simulated swipe"`
-	MaxDistance   float64         `json:"max_distance,omitempty" yaml:"max_distance,omitempty" desc:"Maximum distance for simulated swipe"`
-	AreaStartX    float64         `json:"area_start_x,omitempty" yaml:"area_start_x,omitempty" desc:"Area starting X coordinate for simulated swipe"`
-	AreaStartY    float64         `json:"area_start_y,omitempty" yaml:"area_start_y,omitempty" desc:"Area starting Y coordinate for simulated swipe"`
-	AreaEndX      float64         `json:"area_end_x,omitempty" yaml:"area_end_x,omitempty" desc:"Area ending X coordinate for simulated swipe"`
-	AreaEndY      float64         `json:"area_end_y,omitempty" yaml:"area_end_y,omitempty" desc:"Area ending Y coordinate for simulated swipe"`
-	Timeout       int             `json:"timeout,omitempty" yaml:"timeout,omitempty" desc:"Timeout in seconds for action execution"`
-	TimeLimit     int             `json:"time_limit,omitempty" yaml:"time_limit,omitempty" desc:"Time limit in seconds for action execution, stops gracefully when reached"`
-	Frequency     int             `json:"frequency,omitempty" yaml:"frequency,omitempty" desc:"Action frequency"`
+
+	// SIM specific options with SIM prefix
+	SIMMinDistance float64 `json:"sim_min_distance,omitempty" yaml:"sim_min_distance,omitempty" desc:"Minimum distance for SIM simulated actions"`
+	SIMMaxDistance float64 `json:"sim_max_distance,omitempty" yaml:"sim_max_distance,omitempty" desc:"Maximum distance for SIM simulated actions"`
+	SIMAreaStartX  float64 `json:"sim_area_start_x,omitempty" yaml:"sim_area_start_x,omitempty" desc:"Area starting X coordinate for SIM simulated swipe"`
+	SIMAreaStartY  float64 `json:"sim_area_start_y,omitempty" yaml:"sim_area_start_y,omitempty" desc:"Area starting Y coordinate for SIM simulated swipe"`
+	SIMAreaEndX    float64 `json:"sim_area_end_x,omitempty" yaml:"sim_area_end_x,omitempty" desc:"Area ending X coordinate for SIM simulated swipe"`
+	SIMAreaEndY    float64 `json:"sim_area_end_y,omitempty" yaml:"sim_area_end_y,omitempty" desc:"Area ending Y coordinate for SIM simulated swipe"`
+
+	Timeout   int `json:"timeout,omitempty" yaml:"timeout,omitempty" desc:"Timeout in seconds for action execution"`
+	TimeLimit int `json:"time_limit,omitempty" yaml:"time_limit,omitempty" desc:"Time limit in seconds for action execution, stops gracefully when reached"`
+	Frequency int `json:"frequency,omitempty" yaml:"frequency,omitempty" desc:"Action frequency"`
 
 	ScreenOptions
 
@@ -662,6 +663,13 @@ func (o *ActionOptions) GetMCPOptions(actionType ActionName) []mcp.ToolOption {
 		ACTION_Back:                     {"platform", "serial"},
 		ACTION_ListPackages:             {"platform", "serial"},
 		ACTION_ClosePopups:              {"platform", "serial"},
+
+		// SIM specific actions using fromX/fromY for startX/startY and SIM-prefixed fields
+		ACTION_SIMSwipeDirection:        {"platform", "serial", "direction", "fromX", "fromY", "sim_min_distance", "sim_max_distance", "duration", "pressDuration"},
+		ACTION_SIMSwipeInArea:           {"platform", "serial", "direction", "sim_area_start_x", "sim_area_start_y", "sim_area_end_x", "sim_area_end_y", "sim_min_distance", "sim_max_distance", "duration", "pressDuration"},
+		ACTION_SIMSwipeFromPointToPoint: {"platform", "serial", "fromX", "fromY", "toX", "toY", "duration", "pressDuration"},
+		ACTION_SIMClickAtPoint:          {"platform", "serial", "x", "y", "duration", "pressDuration"},
+		ACTION_SIMInput:                 {"platform", "serial", "text", "frequency"},
 	}
 
 	fields := fieldMappings[actionType]

@@ -291,14 +291,14 @@ func (s *StepMobile) SwipeRight(opts ...option.ActionOption) *StepMobile {
 }
 
 // SIMSwipeWithDirection performs simulated swipe in specified direction with random distance
-func (s *StepMobile) SIMSwipeWithDirection(direction string, startX, startY, minDistance, maxDistance float64, opts ...option.ActionOption) *StepMobile {
+func (s *StepMobile) SIMSwipeWithDirection(direction string, fromX, fromY, simMinDistance, simMaxDistance float64, opts ...option.ActionOption) *StepMobile {
 	// Create params map for SIMSwipeWithDirection
 	params := map[string]interface{}{
-		"direction":    direction,
-		"start_x":      startX,
-		"start_y":      startY,
-		"min_distance": minDistance,
-		"max_distance": maxDistance,
+		"direction":        direction,
+		"from_x":           fromX,
+		"from_y":           fromY,
+		"sim_min_distance": simMinDistance,
+		"sim_max_distance": simMaxDistance,
 	}
 
 	action := option.MobileAction{
@@ -312,16 +312,16 @@ func (s *StepMobile) SIMSwipeWithDirection(direction string, startX, startY, min
 }
 
 // SIMSwipeInArea performs simulated swipe in specified area with direction and random distance
-func (s *StepMobile) SIMSwipeInArea(direction string, areaStartX, areaStartY, areaEndX, areaEndY, minDistance, maxDistance float64, opts ...option.ActionOption) *StepMobile {
+func (s *StepMobile) SIMSwipeInArea(direction string, simAreaStartX, simAreaStartY, simAreaEndX, simAreaEndY, simMinDistance, simMaxDistance float64, opts ...option.ActionOption) *StepMobile {
 	// Create params map for SIMSwipeInArea
 	params := map[string]interface{}{
-		"direction":    direction,
-		"area_start_x": areaStartX,
-		"area_start_y": areaStartY,
-		"area_end_x":   areaEndX,
-		"area_end_y":   areaEndY,
-		"min_distance": minDistance,
-		"max_distance": maxDistance,
+		"direction":        direction,
+		"sim_area_start_x": simAreaStartX,
+		"sim_area_start_y": simAreaStartY,
+		"sim_area_end_x":   simAreaEndX,
+		"sim_area_end_y":   simAreaEndY,
+		"sim_min_distance": simMinDistance,
+		"sim_max_distance": simMaxDistance,
 	}
 
 	action := option.MobileAction{
@@ -335,13 +335,13 @@ func (s *StepMobile) SIMSwipeInArea(direction string, areaStartX, areaStartY, ar
 }
 
 // SIMSwipeFromPointToPoint performs simulated swipe from point to point
-func (s *StepMobile) SIMSwipeFromPointToPoint(startX, startY, endX, endY float64, opts ...option.ActionOption) *StepMobile {
+func (s *StepMobile) SIMSwipeFromPointToPoint(fromX, fromY, toX, toY float64, opts ...option.ActionOption) *StepMobile {
 	// Create params map for SIMSwipeFromPointToPoint
 	params := map[string]interface{}{
-		"start_x": startX,
-		"start_y": startY,
-		"end_x":   endX,
-		"end_y":   endY,
+		"from_x": fromX,
+		"from_y": fromY,
+		"to_x":   toX,
+		"to_y":   toY,
 	}
 
 	action := option.MobileAction{
