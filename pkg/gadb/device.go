@@ -615,14 +615,22 @@ func (d *Device) installViaABBExec(apk io.ReadSeeker, args ...string) (raw []byt
 		tp       transport
 		filesize int64
 	)
+	timeout := 8
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Minute)
+	defer cancel()
+
 	filesize, err = apk.Seek(0, io.SeekEnd)
 	if err != nil {
 		return nil, err
 	}
-	if tp, err = d.createDeviceTransport(5 * time.Minute); err != nil {
+	if tp, err = d.createDeviceTransport(4 * time.Minute); err != nil {
 		return nil, err
 	}
 	defer func() { _ = tp.Close() }()
+	go func() {
+		<-ctx.Done()
+		_ = tp.Close()
+	}()
 	cmd := "abb_exec:package\x00install\x00-t"
 	for _, arg := range args {
 		cmd += "\x00" + arg
@@ -641,6 +649,9 @@ func (d *Device) installViaABBExec(apk io.ReadSeeker, args ...string) (raw []byt
 		return nil, err
 	}
 	raw, err = tp.ReadBytesAll()
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return nil, fmt.Errorf("installation timed out after %d minutes", timeout)
+	}
 	return
 }
 
