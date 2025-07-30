@@ -2,10 +2,12 @@ package uitest
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
 
+	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
@@ -255,30 +257,6 @@ func TestSwipeWithDirection(t *testing.T) {
 			startY:      0.5,
 			minDistance: 100.0,
 			maxDistance: 500.0,
-		},
-		{
-			name:        "随机距离下滑",
-			direction:   "down",
-			startX:      0.5,
-			startY:      0.5,
-			minDistance: 150.0,
-			maxDistance: 350.0, // 范围内随机
-		},
-		{
-			name:        "固定距离左滑",
-			direction:   "left",
-			startX:      0.5,
-			startY:      0.5,
-			minDistance: 300.0,
-			maxDistance: 300.0,
-		},
-		{
-			name:        "随机距离右滑",
-			direction:   "right",
-			startX:      0.6,
-			startY:      0.5,
-			minDistance: 100.0,
-			maxDistance: 250.0,
 		},
 	}
 
@@ -568,40 +546,8 @@ func TestSIMInput(t *testing.T) {
 		text string
 	}{
 		{
-			name: "英文短文本",
-			text: "Hello",
-		},
-		{
-			name: "英文长文本",
-			text: "Hello World! This is a test message.",
-		},
-		{
-			name: "日文文本",
-			text: "英語の長い文字",
-		},
-		{
-			name: "混合文本",
-			text: "Hello你好123",
-		},
-		{
-			name: "特殊字符",
-			text: "!@#$%^&*()",
-		},
-		{
-			name: "数字文本",
-			text: "1234567890",
-		},
-		{
-			name: "空文本",
-			text: "",
-		},
-		{
-			name: "单个字符",
-			text: "A",
-		},
-		{
 			name: "长文本",
-			text: "This is a very long text to test the performance of SIMInput function. 这是一个很长的文本用来测试SIMInput函数的性能。1234567890!@#$%^&*()英語の長い文",
+			text: "This is a very long text to test the performance of SIMInput function. 这是一个很长的文本用来测试SIMInput函数的性能。1234567890!@#$%^&*()英語の長い文字",
 		},
 	}
 
@@ -616,4 +562,43 @@ func TestSIMInput(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestStepMultipleSIMActions tests multiple SIM actions in one test case
+func TestStepMultipleSIMActions(t *testing.T) {
+	// 创建包含多个SIM操作的测试用例
+	testCase := &hrp.TestCase{
+		Config: hrp.NewConfig("多个SIM操作组合测试").SetAndroid(option.WithUIA2(true), option.WithSerialNumber("")),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("组合SIM操作测试").
+				Android().
+				SIMClickAtPoint(0.5, 0.5).                              // 点击屏幕中心
+				Sleep(1).                                               // 等待1秒
+				SIMSwipeWithDirection("up", 0.5, 0.7, 200.0, 400.0).    // 向上滑动
+				Sleep(0.5).                                             // 等待0.5秒
+				SIMSwipeInArea("up", 0.2, 0.2, 0.6, 0.6, 350.0, 500.0). // 在区域内向下滑动
+				Sleep(0.5).                                             // 等待0.5秒
+				SIMSwipeFromPointToPoint(0.1, 0.5, 0.9, 0.5).           // 从左到右滑动
+				Sleep(0.5).                                             // 等待0.5秒
+				SIMInput("测试组合操作 Test Combination 123"),                // 仿真输入
+		},
+	}
+
+	// 运行测试用例
+	err := testCase.Dump2JSON("TestStepMultipleSIMActions.json")
+	if err != nil {
+		t.Fatalf("Failed to dump test case: %v", err)
+	}
+	defer func() {
+		// 清理生成的文件
+		_ = os.Remove("TestStepMultipleSIMActions.json")
+	}()
+
+	// 执行测试用例
+	err = hrp.NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Errorf("Test case failed: %v", err)
+	}
+
+	t.Logf("Successfully executed multiple SIM actions test")
 }

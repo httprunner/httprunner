@@ -6,6 +6,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
@@ -189,6 +190,86 @@ func (t *ToolBackspace) ConvertActionToCallToolRequest(action option.MobileActio
 
 	arguments := map[string]any{
 		"count": count,
+	}
+	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
+}
+
+// ToolSIMInput implements the sim_input tool call.
+type ToolSIMInput struct {
+	// Return data fields - these define the structure of data returned by this tool
+	Text     string `json:"text" desc:"Text that was input with simulation"`
+	Segments int    `json:"segments" desc:"Number of segments the text was split into"`
+}
+
+func (t *ToolSIMInput) Name() option.ActionName {
+	return option.ACTION_SIMInput
+}
+
+func (t *ToolSIMInput) Description() string {
+	return "Input text with intelligent segmentation and human-like typing patterns"
+}
+
+func (t *ToolSIMInput) Options() []mcp.ToolOption {
+	unifiedReq := &option.ActionOptions{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SIMInput)
+}
+
+func (t *ToolSIMInput) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		unifiedReq, err := parseActionOptions(arguments)
+		if err != nil {
+			return nil, err
+		}
+
+		if unifiedReq.Text == "" {
+			return nil, fmt.Errorf("text is required")
+		}
+
+		text := unifiedReq.Text
+
+		log.Info().
+			Str("text", text).
+			Int("textLength", len(text)).
+			Msg("performing simulated input")
+
+		opts := unifiedReq.Options()
+
+		// Call the underlying SIMInput method (check if driver supports SIM)
+		if simDriver, ok := driverExt.IDriver.(SIMSupport); ok {
+			err = simDriver.SIMInput(text, opts...)
+			if err != nil {
+				return NewMCPErrorResponse(fmt.Sprintf("Simulated input failed: %s", err.Error())), err
+			}
+		} else {
+			return NewMCPErrorResponse("SIMInput is not supported by the current driver"), fmt.Errorf("driver does not implement SIMSupport interface")
+		}
+
+		// Estimate segments count (this is approximate since the actual segmentation happens in the driver)
+		estimatedSegments := len([]rune(text))/2 + 1
+		if estimatedSegments < 1 {
+			estimatedSegments = 1
+		}
+
+		message := fmt.Sprintf("Successfully performed simulated input: %s", text)
+		returnData := ToolSIMInput{
+			Text:     text,
+			Segments: estimatedSegments,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
+	}
+}
+
+func (t *ToolSIMInput) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
+	text := fmt.Sprintf("%v", action.Params)
+	arguments := map[string]any{
+		"text": text,
 	}
 	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }

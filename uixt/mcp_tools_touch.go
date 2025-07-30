@@ -6,6 +6,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/rs/zerolog/log"
 
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/uixt/option"
@@ -340,4 +341,96 @@ func (t *ToolDoubleTapXY) ConvertActionToCallToolRequest(action option.MobileAct
 		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 	}
 	return mcp.CallToolRequest{}, fmt.Errorf("invalid double tap params: %v", action.Params)
+}
+
+// ToolSIMClickAtPoint implements the sim_click_at_point tool call.
+type ToolSIMClickAtPoint struct {
+	// Return data fields - these define the structure of data returned by this tool
+	X float64 `json:"x" desc:"X coordinate where simulated click was performed"`
+	Y float64 `json:"y" desc:"Y coordinate where simulated click was performed"`
+}
+
+func (t *ToolSIMClickAtPoint) Name() option.ActionName {
+	return option.ACTION_SIMClickAtPoint
+}
+
+func (t *ToolSIMClickAtPoint) Description() string {
+	return "Perform simulated click at specified point with human-like touch patterns"
+}
+
+func (t *ToolSIMClickAtPoint) Options() []mcp.ToolOption {
+	unifiedReq := &option.ActionOptions{}
+	return unifiedReq.GetMCPOptions(option.ACTION_SIMClickAtPoint)
+}
+
+func (t *ToolSIMClickAtPoint) Implement() server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		arguments := request.GetArguments()
+		driverExt, err := setupXTDriver(ctx, arguments)
+		if err != nil {
+			return nil, fmt.Errorf("setup driver failed: %w", err)
+		}
+
+		unifiedReq, err := parseActionOptions(arguments)
+		if err != nil {
+			return nil, err
+		}
+
+		// Validate required parameters
+		if unifiedReq.X == 0 || unifiedReq.Y == 0 {
+			return nil, fmt.Errorf("x and y coordinates are required")
+		}
+
+		x := unifiedReq.X
+		y := unifiedReq.Y
+
+		log.Info().
+			Float64("x", x).
+			Float64("y", y).
+			Msg("performing simulated click at point")
+
+		// Build all options from request arguments
+		opts := unifiedReq.Options()
+
+		// Call the underlying SIMClickAtPoint method (check if driver supports SIM)
+		if simDriver, ok := driverExt.IDriver.(SIMSupport); ok {
+			err = simDriver.SIMClickAtPoint(x, y, opts...)
+			if err != nil {
+				return NewMCPErrorResponse(fmt.Sprintf("Simulated click failed: %s", err.Error())), err
+			}
+		} else {
+			return NewMCPErrorResponse("SIMClickAtPoint is not supported by the current driver"), fmt.Errorf("driver does not implement SIMSupport interface")
+		}
+
+		message := fmt.Sprintf("Successfully performed simulated click at (%.2f, %.2f)", x, y)
+		returnData := ToolSIMClickAtPoint{
+			X: x,
+			Y: y,
+		}
+
+		return NewMCPSuccessResponse(message, &returnData), nil
+	}
+}
+
+func (t *ToolSIMClickAtPoint) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
+	// Handle params as map[string]interface{}
+	if paramsMap, ok := action.Params.(map[string]interface{}); ok {
+		arguments := map[string]any{}
+
+		// Extract coordinates
+		if x, exists := paramsMap["x"]; exists {
+			arguments["x"] = x
+		}
+		if y, exists := paramsMap["y"]; exists {
+			arguments["y"] = y
+		}
+
+		// Add duration from options
+		if duration := action.ActionOptions.Duration; duration > 0 {
+			arguments["duration"] = duration
+		}
+
+		return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
+	}
+	return mcp.CallToolRequest{}, fmt.Errorf("invalid SIM click at point params: %v", action.Params)
 }
