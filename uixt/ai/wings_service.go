@@ -79,9 +79,9 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 	apiRequest := WingsActionRequest{
 		Historys:   w.history,
 		DeviceInfo: deviceInfo,
-		StepText:   opts.UserInstruction,
+		StepText:   fmt.Sprintf("%s", opts.UserInstruction),
 		BizId:      w.bizId,
-		TextCase:   fmt.Sprintf("整体描述：\n前置条件：\n操作步骤：\n%s。\n断言: 当前在“张杰演唱会”搜索页。\n停止操作。\n注意事项：\n", opts.UserInstruction),
+		TextCase:   fmt.Sprintf("整体描述：\n前置条件：\n操作步骤：\n%s\n停止操作。\n注意事项：\n", opts.UserInstruction),
 		Base: WingsBase{
 			LogID: generateWingsUUID(),
 		},
@@ -101,7 +101,7 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 	}
 
 	// Check API response status
-	if response.BaseResp.StatusCode != 0 {
+	if response.BaseResp.StatusCode != 0 && response.BaseResp.StatusCode != 200 {
 		err = fmt.Errorf("API returned error: %s", response.BaseResp.StatusMessage)
 		return &PlanningResult{
 			Thought:   response.ThoughtChain.Thought,
@@ -117,7 +117,7 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 		Summary:       response.ThoughtChain.Summary,
 		StepText:      response.StepText,
 		StepTextTrans: response.StepTextTrans,
-		OriStepIndex:  parseOriStepIndex(response.OriStepIndex),
+		OriStepIndex:  response.OriStepIndex,
 		DeviceID:      deviceInfo[0].DeviceID,
 		AgentType:     response.AgentType,
 		ActionResult:  "", // Always empty as requested
@@ -172,14 +172,13 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 	apiRequest := WingsActionRequest{
 		Historys:   []History{},
 		DeviceInfo: deviceInfo,
-		StepText:   opts.Assertion,
+		StepText:   fmt.Sprintf("断言:%s", opts.Assertion),
 		BizId:      w.bizId,
 		TextCase:   fmt.Sprintf("整体描述：\n前置条件：\n操作步骤：\n断言: %s\n停止操作。\n注意事项：\n", opts.Assertion),
 		Base: WingsBase{
 			LogID: generateWingsUUID(),
 		},
 	}
-	log.Info().Str("assertion", opts.Assertion).Str("biz_id", w.bizId).Str("url", w.apiURL).Msg("call wings api")
 
 	// Call Wings API
 	startTime := time.Now()
@@ -195,7 +194,7 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 	}
 
 	// Check API response status
-	if response.BaseResp.StatusCode != 0 {
+	if response.BaseResp.StatusCode != 0 && response.BaseResp.StatusCode != 200 {
 		err = fmt.Errorf("API returned error: %s", response.BaseResp.StatusMessage)
 		return &AssertionResult{
 			Pass:      false,
@@ -211,7 +210,7 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 		Summary:       response.ThoughtChain.Summary,
 		StepText:      response.StepText,
 		StepTextTrans: response.StepTextTrans,
-		OriStepIndex:  parseOriStepIndex(response.OriStepIndex),
+		OriStepIndex:  response.OriStepIndex,
 		DeviceID:      deviceInfo[0].DeviceID,
 		AgentType:     response.AgentType,
 		ActionResult:  "", // Always empty as requested
@@ -293,7 +292,7 @@ type WingsActionResponse struct {
 	AgentType     string            `json:"agent_type" thrift:"agent_type,1,required"`
 	StepText      string            `json:"step_text" thrift:"step_text,2,required"`
 	StepTextTrans string            `json:"step_text_trans" thrift:"step_text_trans,3,required"`
-	OriStepIndex  string            `json:"ori_step_index" thrift:"ori_step_index,4,required"`
+	OriStepIndex  int               `json:"ori_step_index" thrift:"ori_step_index,4,required"`
 	StepType      string            `json:"step_type" thrift:"step_type,5,required"`
 	ActionParams  string            `json:"action_params" thrift:"action_params,6,required"`
 	ThoughtChain  WingsThoughtChain `json:"thought_chain" thrift:"thought_chain,7,required"`
@@ -329,7 +328,7 @@ type History struct {
 	DeviceInfos   *[]WingsDeviceInfo `json:"device_infos,omitempty" thrift:"device_infos,9"`        // 所有设备的信息
 	ActionParams  string             `json:"action_params,omitempty" thrift:"action_params,10"`     // 历史操作解析结果(断言，自动化，物料构造)
 	StepTextTrans string             `json:"step_text_trans,omitempty" thrift:"step_text_trans,13"` // 归一化的步骤文本(为后续的实际执行解析文本)
-	OriStepIndex  int64              `json:"ori_step_index,omitempty" thrift:"ori_step_index,14"`   // 原本的执行序列（扩展前、目标导向原始文本步骤）
+	OriStepIndex  int                `json:"ori_step_index,omitempty" thrift:"ori_step_index,14"`   // 原本的执行序列（扩展前、目标导向原始文本步骤）
 }
 
 // Action parameter structures
@@ -483,7 +482,7 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 
 	// Execute HTTP request
 	client := &http.Client{
-		Timeout: 60 * time.Second,
+		Timeout: 120 * time.Second,
 	}
 
 	resp, err := client.Do(httpReq)
