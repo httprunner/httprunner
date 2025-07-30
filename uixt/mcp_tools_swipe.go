@@ -631,14 +631,14 @@ func (t *ToolSIMSwipeDirection) Implement() server.ToolHandlerFunc {
 		// Build all options from request arguments
 		opts := unifiedReq.Options()
 
-		// Call the underlying SIMSwipeWithDirection method (Android UIA2 specific)
-		if uia2Driver, ok := driverExt.IDriver.(*UIA2Driver); ok {
-			err = uia2Driver.SIMSwipeWithDirection(direction, startX, startY, minDistance, maxDistance, opts...)
+		// Call the underlying SIMSwipeWithDirection method (check if driver supports SIM)
+		if simDriver, ok := driverExt.IDriver.(SIMSupport); ok {
+			err = simDriver.SIMSwipeWithDirection(direction, startX, startY, minDistance, maxDistance, opts...)
 			if err != nil {
 				return NewMCPErrorResponse(fmt.Sprintf("Simulated swipe failed: %s", err.Error())), err
 			}
 		} else {
-			return NewMCPErrorResponse("SIMSwipeWithDirection is only supported on Android UIA2 driver"), fmt.Errorf("unsupported driver type for SIMSwipeWithDirection")
+			return NewMCPErrorResponse("SIMSwipeWithDirection is not supported by the current driver"), fmt.Errorf("driver does not implement SIMSupport interface")
 		}
 
 		// Calculate actual distance for response (approximate)
@@ -782,14 +782,14 @@ func (t *ToolSIMSwipeInArea) Implement() server.ToolHandlerFunc {
 		// Build all options from request arguments
 		opts := unifiedReq.Options()
 
-		// Call the underlying SIMSwipeInArea method (Android UIA2 specific)
-		if uia2Driver, ok := driverExt.IDriver.(*UIA2Driver); ok {
-			err = uia2Driver.SIMSwipeInArea(direction, areaStartX, areaStartY, areaEndX, areaEndY, minDistance, maxDistance, opts...)
+		// Call the underlying SIMSwipeInArea method (check if driver supports SIM)
+		if simDriver, ok := driverExt.IDriver.(SIMSupport); ok {
+			err = simDriver.SIMSwipeInArea(direction, areaStartX, areaStartY, areaEndX, areaEndY, minDistance, maxDistance, opts...)
 			if err != nil {
 				return NewMCPErrorResponse(fmt.Sprintf("Simulated swipe in area failed: %s", err.Error())), err
 			}
 		} else {
-			return NewMCPErrorResponse("SIMSwipeInArea is only supported on Android UIA2 driver"), fmt.Errorf("unsupported driver type for SIMSwipeInArea")
+			return NewMCPErrorResponse("SIMSwipeInArea is not supported by the current driver"), fmt.Errorf("driver does not implement SIMSupport interface")
 		}
 
 		message := fmt.Sprintf("Successfully performed simulated swipe %s in area (%.2f,%.2f)-(%.2f,%.2f)",
@@ -902,14 +902,14 @@ func (t *ToolSIMSwipeFromPointToPoint) Implement() server.ToolHandlerFunc {
 		// Build all options from request arguments
 		opts := unifiedReq.Options()
 
-		// Call the underlying SIMSwipeFromPointToPoint method (Android UIA2 specific)
-		if uia2Driver, ok := driverExt.IDriver.(*UIA2Driver); ok {
-			err = uia2Driver.SIMSwipeFromPointToPoint(startX, startY, endX, endY, opts...)
+		// Call the underlying SIMSwipeFromPointToPoint method (check if driver supports SIM)
+		if simDriver, ok := driverExt.IDriver.(SIMSupport); ok {
+			err = simDriver.SIMSwipeFromPointToPoint(startX, startY, endX, endY, opts...)
 			if err != nil {
 				return NewMCPErrorResponse(fmt.Sprintf("Simulated point to point swipe failed: %s", err.Error())), err
 			}
 		} else {
-			return NewMCPErrorResponse("SIMSwipeFromPointToPoint is only supported on Android UIA2 driver"), fmt.Errorf("unsupported driver type for SIMSwipeFromPointToPoint")
+			return NewMCPErrorResponse("SIMSwipeFromPointToPoint is not supported by the current driver"), fmt.Errorf("driver does not implement SIMSupport interface")
 		}
 
 		message := fmt.Sprintf("Successfully performed simulated swipe from (%.2f,%.2f) to (%.2f,%.2f)",

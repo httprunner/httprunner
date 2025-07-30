@@ -15,6 +15,10 @@ var (
 	_ IDriver = (*WDADriver)(nil)
 	_ IDriver = (*HDCDriver)(nil)
 	_ IDriver = (*BrowserDriver)(nil)
+
+	// Ensure drivers implement SIMSupport interface
+	_ SIMSupport = (*UIA2Driver)(nil)
+	_ SIMSupport = (*ADBDriver)(nil)
 )
 
 // current implemeted driver: ADBDriver, UIA2Driver, WDADriver, HDCDriver
@@ -89,4 +93,14 @@ type IDriver interface {
 
 	// clipboard operations
 	GetPasteboard() (string, error)
+}
+
+// SIMSupport interface defines simulated interaction methods
+// Any driver that supports simulated touch and input should implement this interface
+type SIMSupport interface {
+	SIMClickAtPoint(x, y float64, opts ...option.ActionOption) error
+	SIMSwipeWithDirection(direction string, startX, startY, minDistance, maxDistance float64, opts ...option.ActionOption) error
+	SIMSwipeInArea(direction string, areaStartX, areaStartY, areaEndX, areaEndY, minDistance, maxDistance float64, opts ...option.ActionOption) error
+	SIMSwipeFromPointToPoint(startX, startY, endX, endY float64, opts ...option.ActionOption) error
+	SIMInput(text string, opts ...option.ActionOption) error
 }

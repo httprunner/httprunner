@@ -2,10 +2,12 @@ package uitest
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
 
+	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
@@ -560,4 +562,43 @@ func TestSIMInput(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestStepMultipleSIMActions tests multiple SIM actions in one test case
+func TestStepMultipleSIMActions(t *testing.T) {
+	// 创建包含多个SIM操作的测试用例
+	testCase := &hrp.TestCase{
+		Config: hrp.NewConfig("多个SIM操作组合测试").SetAndroid(option.WithUIA2(true), option.WithSerialNumber("")),
+		TestSteps: []hrp.IStep{
+			hrp.NewStep("组合SIM操作测试").
+				Android().
+				SIMClickAtPoint(0.5, 0.5).                              // 点击屏幕中心
+				Sleep(1).                                               // 等待1秒
+				SIMSwipeWithDirection("up", 0.5, 0.7, 200.0, 400.0).    // 向上滑动
+				Sleep(0.5).                                             // 等待0.5秒
+				SIMSwipeInArea("up", 0.2, 0.2, 0.6, 0.6, 350.0, 500.0). // 在区域内向下滑动
+				Sleep(0.5).                                             // 等待0.5秒
+				SIMSwipeFromPointToPoint(0.1, 0.5, 0.9, 0.5).           // 从左到右滑动
+				Sleep(0.5).                                             // 等待0.5秒
+				SIMInput("测试组合操作 Test Combination 123"),                // 仿真输入
+		},
+	}
+
+	// 运行测试用例
+	err := testCase.Dump2JSON("TestStepMultipleSIMActions.json")
+	if err != nil {
+		t.Fatalf("Failed to dump test case: %v", err)
+	}
+	defer func() {
+		// 清理生成的文件
+		_ = os.Remove("TestStepMultipleSIMActions.json")
+	}()
+
+	// 执行测试用例
+	err = hrp.NewRunner(t).Run(testCase)
+	if err != nil {
+		t.Errorf("Test case failed: %v", err)
+	}
+
+	t.Logf("Successfully executed multiple SIM actions test")
 }

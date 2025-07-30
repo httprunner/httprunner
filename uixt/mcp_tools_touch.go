@@ -392,14 +392,14 @@ func (t *ToolSIMClickAtPoint) Implement() server.ToolHandlerFunc {
 		// Build all options from request arguments
 		opts := unifiedReq.Options()
 
-		// Call the underlying SIMClickAtPoint method (Android UIA2 specific)
-		if uia2Driver, ok := driverExt.IDriver.(*UIA2Driver); ok {
-			err = uia2Driver.SIMClickAtPoint(x, y, opts...)
+		// Call the underlying SIMClickAtPoint method (check if driver supports SIM)
+		if simDriver, ok := driverExt.IDriver.(SIMSupport); ok {
+			err = simDriver.SIMClickAtPoint(x, y, opts...)
 			if err != nil {
 				return NewMCPErrorResponse(fmt.Sprintf("Simulated click failed: %s", err.Error())), err
 			}
 		} else {
-			return NewMCPErrorResponse("SIMClickAtPoint is only supported on Android UIA2 driver"), fmt.Errorf("unsupported driver type for SIMClickAtPoint")
+			return NewMCPErrorResponse("SIMClickAtPoint is not supported by the current driver"), fmt.Errorf("driver does not implement SIMSupport interface")
 		}
 
 		message := fmt.Sprintf("Successfully performed simulated click at (%.2f, %.2f)", x, y)

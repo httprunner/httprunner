@@ -240,14 +240,14 @@ func (t *ToolSIMInput) Implement() server.ToolHandlerFunc {
 
 		opts := unifiedReq.Options()
 
-		// Call the underlying SIMInput method (Android UIA2 specific)
-		if uia2Driver, ok := driverExt.IDriver.(*UIA2Driver); ok {
-			err = uia2Driver.SIMInput(text, opts...)
+		// Call the underlying SIMInput method (check if driver supports SIM)
+		if simDriver, ok := driverExt.IDriver.(SIMSupport); ok {
+			err = simDriver.SIMInput(text, opts...)
 			if err != nil {
 				return NewMCPErrorResponse(fmt.Sprintf("Simulated input failed: %s", err.Error())), err
 			}
 		} else {
-			return NewMCPErrorResponse("SIMInput is only supported on Android UIA2 driver"), fmt.Errorf("unsupported driver type for SIMInput")
+			return NewMCPErrorResponse("SIMInput is not supported by the current driver"), fmt.Errorf("driver does not implement SIMSupport interface")
 		}
 
 		// Estimate segments count (this is approximate since the actual segmentation happens in the driver)

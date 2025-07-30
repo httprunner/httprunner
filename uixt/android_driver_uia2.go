@@ -533,7 +533,7 @@ func (ud *UIA2Driver) TouchByEvents(events []types.TouchEvent, opts ...option.Ac
 			log.Warn().Int("action", event.Action).Msg("Unknown action type, skipping")
 			continue
 		}
-
+		log.Warn().Any("actionMap", actionMap).Msg("ActionMap")
 		actions = append(actions, actionMap)
 	}
 

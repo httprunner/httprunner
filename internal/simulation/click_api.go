@@ -61,7 +61,7 @@ type ClickConfig struct {
 var DefaultClickConfig = ClickConfig{
 	MinDuration:  40,
 	MaxDuration:  90,
-	MinPoints:    3,
+	MinPoints:    4, // 增加最小点数从3到4，确保至少有2个MOVE事件
 	MaxPoints:    6,
 	MaxDeviation: 2.0,
 	NoiseLevel:   0.5,
