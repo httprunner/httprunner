@@ -245,7 +245,7 @@ func (dev *AndroidDevice) installViaInstaller(apkPath string, args ...string) er
 	case err := <-done:
 		return err
 	case <-time.After(timeout):
-		return fmt.Errorf("installation timed out after %v", timeout)
+		return fmt.Errorf("install via installer timed out after %v", timeout)
 	}
 }
 
