@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"code.byted.org/gopkg/logid"
 	"github.com/cloudwego/eino/schema"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -381,7 +380,7 @@ func (w *WingsService) resetHistory() {
 
 // generateWingsUUID generates a random UUID for LogID
 func generateWingsUUID() string {
-	return logid.GenLogID()
+	return uuid.New().String()
 }
 
 // extractScreenshotFromMessage extracts base64 screenshot from message
@@ -412,12 +411,18 @@ func (w *WingsService) extractScreenshotFromMessage(message *schema.Message) (st
 func (w *WingsService) getDeviceInfoFromContext(_ context.Context, screenshot string) []WingsDeviceInfo {
 	// TODO: Extract device info from context if available
 
-	// use default device info
+	// Use last history's NowImage as PreImage if history exists
+	preImage := screenshot
+	if len(w.history) > 0 && w.history[len(w.history)-1].DeviceInfos != nil && len(*w.history[len(w.history)-1].DeviceInfos) > 0 {
+		preImage = (*w.history[len(w.history)-1].DeviceInfos)[0].NowImage
+	}
+
+	// use default device info with optimized PreImage
 	return []WingsDeviceInfo{
 		{
 			DeviceID:        "default-device",
 			NowImage:        screenshot,
-			PreImage:        screenshot,
+			PreImage:        preImage,
 			NowLayoutJSON:   "",
 			OperationSystem: "android",
 		},
@@ -471,8 +476,6 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 		httpReq.Header.Add("Content-Type", "application/json")
 	}
 
-	log.Info().Str("step_text", request.StepText).Str("log_id", request.Base.LogID).Str("biz_id", request.BizId).Str("url", w.apiURL).Msg("call wings api")
-
 	// Execute HTTP request
 	client := &http.Client{
 		Timeout: 120 * time.Second,
@@ -483,7 +486,9 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 		return nil, errors.Wrap(err, "HTTP request failed")
 	}
 	defer resp.Body.Close()
-
+	// resp X-Tt-Logid
+	logID := resp.Header.Get("X-Tt-Logid")
+	log.Info().Str("step_text", request.StepText).Str("log_id", logID).Str("biz_id", request.BizId).Str("url", w.apiURL).Msg("call wings api")
 	// Read response body
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
