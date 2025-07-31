@@ -48,11 +48,15 @@ require (
 )
 
 require (
+	code.byted.org/gopkg/ctxvalues v0.4.0 // indirect
+	code.byted.org/gopkg/logid v0.0.0-20241008043456-230d03adb830 // indirect
+	code.byted.org/gopkg/net2 v1.2.0 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/antchfx/xpath v1.3.3 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/bytedance/gopkg v0.0.0-20211103090529-d4719f74be3d // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/catppuccin/go v0.2.0 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect

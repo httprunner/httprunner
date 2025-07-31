@@ -8,10 +8,10 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
+	"code.byted.org/gopkg/logid"
 	"github.com/cloudwego/eino/schema"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -144,14 +144,17 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 
 	log.Info().
 		Str("thought", response.ThoughtChain.Thought).
+		Str("action", response.AgentType).
+		Str("action_params", response.ActionParams).
+		Str("log_id", fmt.Sprintf("%v", response.BaseResp.Extra)).
 		Int("tool_calls_count", len(toolCalls)).
 		Int64("elapsed_ms", elapsed).
 		Msg("Wings API planning completed")
 
 	return &PlanningResult{
 		ToolCalls: toolCalls,
-		Thought:   response.ThoughtChain.Thought,
-		Content:   response.ThoughtChain.Summary,
+		Thought:   response.StepTextTrans,
+		Content:   response.StepTextTrans,
 		ModelName: "wings-api",
 	}, nil
 }
@@ -378,20 +381,7 @@ func (w *WingsService) resetHistory() {
 
 // generateWingsUUID generates a random UUID for LogID
 func generateWingsUUID() string {
-	return uuid.New().String()
-}
-
-// parseOriStepIndex converts string to int64 with fallback to 0
-func parseOriStepIndex(index string) int64 {
-	if index == "" {
-		return 0
-	}
-
-	val, err := strconv.ParseInt(index, 10, 64)
-	if err != nil {
-		return 0
-	}
-	return val
+	return logid.GenLogID()
 }
 
 // extractScreenshotFromMessage extracts base64 screenshot from message
@@ -481,7 +471,7 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 		httpReq.Header.Add("Content-Type", "application/json")
 	}
 
-	log.Info().Str("step_text", request.StepText).Str("biz_id", request.BizId).Str("url", w.apiURL).Msg("call wings api")
+	log.Info().Str("step_text", request.StepText).Str("log_id", request.Base.LogID).Str("biz_id", request.BizId).Str("url", w.apiURL).Msg("call wings api")
 
 	// Execute HTTP request
 	client := &http.Client{

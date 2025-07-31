@@ -292,10 +292,10 @@ func TestDriverExt_AIAction(t *testing.T) {
 func TestDriverExt_AIAction_CompareWithAIAction(t *testing.T) {
 	driver := setupDriverExt(t)
 
-	prompt := "点击返回按钮"
+	prompt := "[目标导向]向上滑动屏幕2次"
 
 	// Test both methods with the same prompt
-	aiResult, aiErr := driver.AIAction(context.Background(), prompt)
+	aiResult, aiErr := driver.StartToGoal(context.Background(), prompt)
 
 	// Both should execute without critical errors (may have different implementations)
 	t.Logf("AIAction error: %v", aiErr)
