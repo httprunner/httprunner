@@ -26,6 +26,7 @@ type WingsService struct {
 	bizId     string
 	accessKey string
 	secretKey string
+	history   []History // Conversation history for Wings API
 }
 
 // NewWingsService creates a new Wings service instance
@@ -49,6 +50,7 @@ func NewWingsService() (ILLMService, error) {
 		bizId:     bizID,
 		accessKey: accessKey,
 		secretKey: secretKey,
+		history:   []History{},
 	}, nil
 }
 
@@ -57,6 +59,11 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 	// Validate input parameters
 	if err := validatePlanningInput(opts); err != nil {
 		return nil, errors.Wrap(err, "validate planning parameters failed")
+	}
+
+	// Reset history if requested
+	if opts.ResetHistory {
+		w.resetHistory()
 	}
 
 	// Extract screenshot from message
@@ -70,15 +77,11 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 
 	// Prepare Wings API request
 	apiRequest := WingsActionRequest{
-		Historys: []interface{}{}, // empty as specified
-		DeviceInfos: []WingsDeviceInfo{
-			deviceInfo,
-		},
-		StepText: opts.UserInstruction,
-		BizId:    w.bizId,
-		TextCase: "整体描述：\\n前置条件：\\n获取 1 台设备 A。\\n获取 1 个[万粉创作者]账号a。\\n获取 2 个[普通]账号 b、c。\\n账号 a 和账号 b 互相关注。\\n账号 a 和账号 c 互相关注。\\n账号 a 给账号 b 设置备注为 “11131b”。\\n账号 a 给账号 c 设置备注为 “11131c”。\\n账号 a 创建一个粉丝群 m。\\n 账号 a 修改粉丝群 m 名称为“11131群”。\\n 账号 a 邀请账号 b 加入粉丝群 m。\\n账号 a 邀请账号 c 加入粉丝群 m。\\n账号 a 给群聊 m 发送一条文字消息。\\n设备 A 打开抖音 app。\\n设备 A 登录账号 a。\\n设备 A 退出抖音 app。\\n操作步骤：\\n账号a打开抖音app。\\n点击“消息”。\\n点击“11131群”cell。\\n点击“聊天信息页入口”按钮。\\n点击“分享公开群”按钮。\\n点击文字“群口令”。\\n断言：屏幕中存在文字“口令复制成功”。\\n停止操作。\\n注意事项：\\n",
-		StepType: "automation",
-		DeviceID: deviceInfo.DeviceID,
+		Historys:   w.history,
+		DeviceInfo: deviceInfo,
+		StepText:   fmt.Sprintf("%s", opts.UserInstruction),
+		BizId:      w.bizId,
+		TextCase:   fmt.Sprintf("整体描述：\n前置条件：\n操作步骤：\n%s\n停止操作。\n注意事项：\n", opts.UserInstruction),
 		Base: WingsBase{
 			LogID: generateWingsUUID(),
 		},
@@ -98,7 +101,7 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 	}
 
 	// Check API response status
-	if response.BaseResp.StatusCode != 0 {
+	if response.BaseResp.StatusCode != 0 && response.BaseResp.StatusCode != 200 {
 		err = fmt.Errorf("API returned error: %s", response.BaseResp.StatusMessage)
 		return &PlanningResult{
 			Thought:   response.ThoughtChain.Thought,
@@ -107,26 +110,50 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 		}, err
 	}
 
-	// Convert Wings API response to tool calls
-	toolCalls, err := w.convertWingsResponseToToolCalls(response.ActionParams)
-	if err != nil {
-		return &PlanningResult{
-			Thought:   response.ThoughtChain.Thought,
-			Error:     err.Error(),
-			ModelName: "wings-api",
-		}, errors.Wrap(err, "convert Wings response to tool calls failed")
+	// Update history with response data
+	newHistoryEntry := History{
+		Observation:   response.ThoughtChain.Observation,
+		Thought:       response.ThoughtChain.Thought,
+		Summary:       response.ThoughtChain.Summary,
+		StepText:      response.StepText,
+		StepTextTrans: response.StepTextTrans,
+		OriStepIndex:  response.OriStepIndex,
+		DeviceID:      deviceInfo[0].DeviceID,
+		AgentType:     response.AgentType,
+		ActionResult:  "", // Always empty as requested
+		DeviceInfos:   &deviceInfo,
+		ActionParams:  response.ActionParams,
 	}
+	w.history = append(w.history, newHistoryEntry)
+	var toolCalls []schema.ToolCall
+	if response.StepType != "FINISH" {
+		// Convert Wings API response to tool calls
+		toolCalls, err = w.convertWingsResponseToToolCalls(response.ActionParams)
+		if err != nil {
+			return &PlanningResult{
+				Thought:   response.ThoughtChain.Thought,
+				Error:     err.Error(),
+				ModelName: "wings-api",
+			}, errors.Wrap(err, "convert Wings response to tool calls failed")
+		}
+	}
+
+	// No need to update ActionResult as per user request
+	// ActionResult should always be empty
 
 	log.Info().
 		Str("thought", response.ThoughtChain.Thought).
+		Str("action", response.AgentType).
+		Str("action_params", response.ActionParams).
+		Str("log_id", fmt.Sprintf("%v", response.BaseResp.Extra)).
 		Int("tool_calls_count", len(toolCalls)).
 		Int64("elapsed_ms", elapsed).
 		Msg("Wings API planning completed")
 
 	return &PlanningResult{
 		ToolCalls: toolCalls,
-		Thought:   response.ThoughtChain.Thought,
-		Content:   response.ThoughtChain.Summary,
+		Thought:   response.StepTextTrans,
+		Content:   response.StepTextTrans,
 		ModelName: "wings-api",
 	}, nil
 }
@@ -146,20 +173,15 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 
 	// Prepare Wings API request for assertion
 	apiRequest := WingsActionRequest{
-		Historys: []interface{}{}, // empty as specified
-		DeviceInfos: []WingsDeviceInfo{
-			deviceInfo,
-		},
-		StepText: opts.Assertion,
-		BizId:    w.bizId,
-		TextCase: "整体描述：\\n前置条件：\\n获取 1 台设备 A。\\n获取 1 个[万粉创作者]账号a。\\n获取 2 个[普通]账号 b、c。\\n账号 a 和账号 b 互相关注。\\n账号 a 和账号 c 互相关注。\\n账号 a 给账号 b 设置备注为 “11131b”。\\n账号 a 给账号 c 设置备注为 “11131c”。\\n账号 a 创建一个粉丝群 m。\\n 账号 a 修改粉丝群 m 名称为“11131群”。\\n 账号 a 邀请账号 b 加入粉丝群 m。\\n账号 a 邀请账号 c 加入粉丝群 m。\\n账号 a 给群聊 m 发送一条文字消息。\\n设备 A 打开抖音 app。\\n设备 A 登录账号 a。\\n设备 A 退出抖音 app。\\n操作步骤：\\n账号a打开抖音app。\\n点击“消息”。\\n点击“11131群”cell。\\n点击“聊天信息页入口”按钮。\\n点击“分享公开群”按钮。\\n点击文字“群口令”。\\n断言：屏幕中存在文字“口令复制成功”。\\n停止操作。\\n注意事项：\\n",
-		StepType: "assert", // Different from automation
-		DeviceID: deviceInfo.DeviceID,
+		Historys:   []History{},
+		DeviceInfo: deviceInfo,
+		StepText:   fmt.Sprintf("断言:%s", opts.Assertion),
+		BizId:      w.bizId,
+		TextCase:   fmt.Sprintf("整体描述：\n前置条件：\n操作步骤：\n断言: %s\n停止操作。\n注意事项：\n", opts.Assertion),
 		Base: WingsBase{
 			LogID: generateWingsUUID(),
 		},
 	}
-	log.Info().Interface("apiRequest", apiRequest).Msg("Wings API request")
 
 	// Call Wings API
 	startTime := time.Now()
@@ -175,7 +197,7 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 	}
 
 	// Check API response status
-	if response.BaseResp.StatusCode != 0 {
+	if response.BaseResp.StatusCode != 0 && response.BaseResp.StatusCode != 200 {
 		err = fmt.Errorf("API returned error: %s", response.BaseResp.StatusMessage)
 		return &AssertionResult{
 			Pass:      false,
@@ -183,6 +205,22 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 			ModelName: "wings-api",
 		}, err
 	}
+
+	// Update history with response data
+	newHistoryEntry := History{
+		Observation:   response.ThoughtChain.Observation,
+		Thought:       response.ThoughtChain.Thought,
+		Summary:       response.ThoughtChain.Summary,
+		StepText:      response.StepText,
+		StepTextTrans: response.StepTextTrans,
+		OriStepIndex:  response.OriStepIndex,
+		DeviceID:      deviceInfo[0].DeviceID,
+		AgentType:     response.AgentType,
+		ActionResult:  "", // Always empty as requested
+		DeviceInfos:   &deviceInfo,
+		ActionParams:  response.ActionParams,
+	}
+	w.history = append(w.history, newHistoryEntry)
 
 	// Parse assertion result from action_params
 	passed, assertionThought, err := w.parseAssertionResult(response.ActionParams, response.ThoughtChain)
@@ -193,6 +231,9 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 			ModelName: "wings-api",
 		}, errors.Wrap(err, "parse assertion result failed")
 	}
+
+	// No need to update ActionResult as per user request
+	// ActionResult should always be empty
 
 	log.Info().
 		Bool("passed", passed).
@@ -228,14 +269,12 @@ func (w *WingsService) RegisterTools(tools []*schema.ToolInfo) error {
 
 // Wings API data structures
 type WingsActionRequest struct {
-	Historys    []interface{}     `json:"historys"`
-	DeviceInfos []WingsDeviceInfo `json:"device_infos"`
-	StepText    string            `json:"step_text"`
-	BizId       string            `json:"biz_id"`
-	TextCase    string            `json:"text_case"`
-	StepType    string            `json:"step_type"`
-	DeviceID    string            `json:"device_id"`
-	Base        WingsBase         `json:"Base"`
+	Historys   []History         `json:"historys"`
+	DeviceInfo []WingsDeviceInfo `json:"device_infos"`
+	StepText   string            `json:"step_text"`
+	BizId      string            `json:"biz_id"`
+	TextCase   string            `json:"text_case"`
+	Base       WingsBase         `json:"Base"`
 }
 
 type WingsDeviceInfo struct {
@@ -253,10 +292,14 @@ type WingsBase struct {
 }
 
 type WingsActionResponse struct {
-	StepType     string            `json:"step_type"`
-	ActionParams string            `json:"action_params"`
-	ThoughtChain WingsThoughtChain `json:"thought_chain"`
-	BaseResp     WingsBaseResp     `json:"BaseResp"`
+	AgentType     string            `json:"agent_type" thrift:"agent_type,1,required"`
+	StepText      string            `json:"step_text" thrift:"step_text,2,required"`
+	StepTextTrans string            `json:"step_text_trans" thrift:"step_text_trans,3,required"`
+	OriStepIndex  int               `json:"ori_step_index" thrift:"ori_step_index,4,required"`
+	StepType      string            `json:"step_type" thrift:"step_type,5,required"`
+	ActionParams  string            `json:"action_params" thrift:"action_params,6,required"`
+	ThoughtChain  WingsThoughtChain `json:"thought_chain" thrift:"thought_chain,7,required"`
+	BaseResp      WingsBaseResp     `json:"BaseResp" thrift:"BaseResp,255,optional"`
 }
 
 type WingsThoughtChain struct {
@@ -274,6 +317,21 @@ type WingsBaseResp struct {
 type WingsExtra struct {
 	CostTime string `json:"cost_time"`
 	LogID    string `json:"_log_id"`
+}
+
+// History structure for request and response
+type History struct {
+	Observation   string             `json:"observation" thrift:"observation,1,required"`           // 思考结果
+	Thought       string             `json:"thought" thrift:"thought,2,required"`                   // 思考结果
+	Summary       string             `json:"summary" thrift:"summary,3,required"`                   // 思考结果
+	StepText      string             `json:"step_text" thrift:"step_text,4"`                        // 操作的指令
+	DeviceID      string             `json:"device_id" thrift:"device_id,5"`                        // 操作的设备id
+	AgentType     string             `json:"agent_type" thrift:"agent_type,7"`                      // 最终决策的agent类型
+	ActionResult  string             `json:"action_result" thrift:"action_result,8"`                // 操作结果, 断言=断言结果, 自动化=自动化操作是否成功, 物料构造=物料构造结果
+	DeviceInfos   *[]WingsDeviceInfo `json:"device_infos,omitempty" thrift:"device_infos,9"`        // 所有设备的信息
+	ActionParams  string             `json:"action_params,omitempty" thrift:"action_params,10"`     // 历史操作解析结果(断言，自动化，物料构造)
+	StepTextTrans string             `json:"step_text_trans,omitempty" thrift:"step_text_trans,13"` // 归一化的步骤文本(为后续的实际执行解析文本)
+	OriStepIndex  int                `json:"ori_step_index,omitempty" thrift:"ori_step_index,14"`   // 原本的执行序列（扩展前、目标导向原始文本步骤）
 }
 
 // Action parameter structures
@@ -315,6 +373,11 @@ type WingsTextParams struct {
 
 // Helper methods
 
+// resetHistory resets the conversation history
+func (w *WingsService) resetHistory() {
+	w.history = []History{}
+}
+
 // generateWingsUUID generates a random UUID for LogID
 func generateWingsUUID() string {
 	return uuid.New().String()
@@ -345,19 +408,29 @@ func (w *WingsService) extractScreenshotFromMessage(message *schema.Message) (st
 }
 
 // getDeviceInfoFromContext gets device info from context with fallback
-func (w *WingsService) getDeviceInfoFromContext(_ context.Context, screenshot string) WingsDeviceInfo {
-	// use default device info
-	return WingsDeviceInfo{
-		DeviceID:        "default-device",
-		NowImage:        screenshot,
-		PreImage:        screenshot,
-		NowLayoutJSON:   "",
-		OperationSystem: "android",
+func (w *WingsService) getDeviceInfoFromContext(_ context.Context, screenshot string) []WingsDeviceInfo {
+	// TODO: Extract device info from context if available
+
+	// Use last history's NowImage as PreImage if history exists
+	preImage := screenshot
+	if len(w.history) > 0 && w.history[len(w.history)-1].DeviceInfos != nil && len(*w.history[len(w.history)-1].DeviceInfos) > 0 {
+		preImage = (*w.history[len(w.history)-1].DeviceInfos)[0].NowImage
+	}
+
+	// use default device info with optimized PreImage
+	return []WingsDeviceInfo{
+		{
+			DeviceID:        "default-device",
+			NowImage:        screenshot,
+			PreImage:        preImage,
+			NowLayoutJSON:   "",
+			OperationSystem: "android",
+		},
 	}
 }
 
 // getDeviceInfoFromScreenshot gets device info from screenshot (for Assert)
-func (w *WingsService) getDeviceInfoFromScreenshot(ctx context.Context, screenshot string) WingsDeviceInfo {
+func (w *WingsService) getDeviceInfoFromScreenshot(ctx context.Context, screenshot string) []WingsDeviceInfo {
 	return w.getDeviceInfoFromContext(ctx, screenshot)
 }
 
@@ -390,6 +463,8 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 	// Set headers
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Accept", "application/json")
+	httpReq.Header.Add("x-use-ppe", "1")
+	httpReq.Header.Add("x-tt-env", "ppe_refactor_merge")
 
 	// Add authentication headers if using external API
 	if w.accessKey != "" && w.secretKey != "" {
@@ -403,7 +478,7 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 
 	// Execute HTTP request
 	client := &http.Client{
-		Timeout: 60 * time.Second,
+		Timeout: 120 * time.Second,
 	}
 
 	resp, err := client.Do(httpReq)
@@ -411,7 +486,9 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 		return nil, errors.Wrap(err, "HTTP request failed")
 	}
 	defer resp.Body.Close()
-
+	// resp X-Tt-Logid
+	logID := resp.Header.Get("X-Tt-Logid")
+	log.Info().Str("step_text", request.StepText).Str("log_id", logID).Str("biz_id", request.BizId).Str("url", w.apiURL).Msg("call wings api")
 	// Read response body
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -434,7 +511,7 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 
 // convertWingsResponseToToolCalls converts Wings API response to tool calls using generic approach
 func (w *WingsService) convertWingsResponseToToolCalls(actionParamsStr string) ([]schema.ToolCall, error) {
-	if actionParamsStr == "" {
+	if actionParamsStr == "" || actionParamsStr == "FINISH" {
 		return []schema.ToolCall{}, nil
 	}
 
