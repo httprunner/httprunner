@@ -25,6 +25,7 @@ func setupDevices(t *testing.T) {
 }
 
 func TestDevice_State(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for i := range devices {
@@ -44,6 +45,7 @@ func TestDevice_State(t *testing.T) {
 }
 
 func TestDevice_DevicePath(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for i := range devices {
@@ -57,6 +59,7 @@ func TestDevice_DevicePath(t *testing.T) {
 }
 
 func TestDevice_Product(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for i := range devices {
@@ -70,6 +73,7 @@ func TestDevice_Product(t *testing.T) {
 }
 
 func TestDevice_Model(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for i := range devices {
@@ -83,6 +87,7 @@ func TestDevice_Model(t *testing.T) {
 }
 
 func TestDevice_Brand(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for i := range devices {
@@ -96,6 +101,7 @@ func TestDevice_Brand(t *testing.T) {
 }
 
 func TestDevice_Usb(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for i := range devices {
@@ -113,6 +119,7 @@ func TestDevice_Usb(t *testing.T) {
 }
 
 func TestDevice_DeviceInfo(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for i := range devices {
@@ -122,6 +129,7 @@ func TestDevice_DeviceInfo(t *testing.T) {
 }
 
 func TestDevice_SdkVersion(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 	for _, device := range devices {
 		sdkVersion, err := device.SdkVersion()
@@ -131,6 +139,7 @@ func TestDevice_SdkVersion(t *testing.T) {
 }
 
 func TestDevice_SystemVersion(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 	for _, device := range devices {
 		systemVersion, err := device.SystemVersion()
@@ -140,6 +149,7 @@ func TestDevice_SystemVersion(t *testing.T) {
 }
 
 func TestDevice_Forward(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for _, device := range devices {
@@ -156,6 +166,7 @@ func TestDevice_Forward(t *testing.T) {
 }
 
 func TestDevice_ReverseForward(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for _, device := range devices {
@@ -186,6 +197,7 @@ func TestDevice_ReverseForward(t *testing.T) {
 }
 
 func TestDevice_ForwardList(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for i := range devices {
@@ -199,6 +211,7 @@ func TestDevice_ForwardList(t *testing.T) {
 }
 
 func TestDevice_ForwardKill(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for _, device := range devices {
@@ -210,6 +223,7 @@ func TestDevice_ForwardKill(t *testing.T) {
 }
 
 func TestDevice_RunShellCommand(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	// for i := range devices {
@@ -236,6 +250,7 @@ func TestDevice_RunShellCommand(t *testing.T) {
 }
 
 func TestDevice_EnableAdbOverTCP(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for _, dev := range devices {
@@ -247,6 +262,7 @@ func TestDevice_EnableAdbOverTCP(t *testing.T) {
 }
 
 func TestDevice_List(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for _, dev := range devices {
@@ -263,6 +279,7 @@ func TestDevice_List(t *testing.T) {
 }
 
 func TestDevice_Push(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for _, dev := range devices {
@@ -280,6 +297,7 @@ func TestDevice_Push(t *testing.T) {
 }
 
 func TestDevice_Pull(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for _, dev := range devices {
@@ -297,6 +315,7 @@ func TestDevice_Pull(t *testing.T) {
 }
 
 func TestDevice_ScreenRecord(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for _, dev := range devices {
@@ -327,6 +346,7 @@ func TestDevice_ScreenRecord(t *testing.T) {
 }
 
 func TestDevice_RunShellCommandBackgroundWithBytes(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	type fields struct {
 		adbClient Client
 		serial    string
@@ -379,6 +399,7 @@ func TestDevice_RunShellCommandBackgroundWithBytes(t *testing.T) {
 }
 
 func TestDevice_InstallAPK(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	apkPath := "test.apk"
@@ -392,6 +413,7 @@ func TestDevice_InstallAPK(t *testing.T) {
 }
 
 func TestDevice_ListPackages(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 	for _, dev := range devices {
 		res, err := dev.ListPackages()
@@ -408,6 +430,7 @@ func TestDevice_ListPackages(t *testing.T) {
 }
 
 func TestDevice_HasFeature(t *testing.T) {
+	t.Skip("Skip ADB test - requires Android Debug Bridge server and connected device")
 	setupDevices(t)
 
 	for _, dev := range devices {

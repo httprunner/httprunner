@@ -10,6 +10,7 @@ import (
 )
 
 func TestIOSDouyinFollowLive(t *testing.T) {
+	t.Skip("Skip iOS UI test - requires physical iOS device with WDA")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("通过 关注天窗 进入指定主播抖音直播间").
 			WithVariables(map[string]interface{}{

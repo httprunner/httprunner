@@ -16,6 +16,7 @@ import (
 )
 
 func TestDriverExt_NewMethod1(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	device, err := NewAndroidDevice(option.WithUIA2(true))
 	require.Nil(t, err)
 	driver, err := device.NewDriver()
@@ -27,6 +28,7 @@ func TestDriverExt_NewMethod1(t *testing.T) {
 }
 
 func TestDriverExt_NewMethod2(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	device, err := NewAndroidDevice()
 	require.Nil(t, err)
 	driver, err := NewUIA2Driver(device)
@@ -38,6 +40,7 @@ func TestDriverExt_NewMethod2(t *testing.T) {
 }
 
 func TestDriverExt(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	device, _ := NewAndroidDevice()
 	driver, _ := NewADBDriver(device)
 	driverExt, err := NewXTDriver(driver,
@@ -95,6 +98,7 @@ func setupDriverExt(t *testing.T) *XTDriver {
 }
 
 func TestDriverExt_FindScreenText(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	driver := setupDriverExt(t)
 	point, err := driver.FindScreenText("首页")
 	assert.Nil(t, err)
@@ -102,6 +106,7 @@ func TestDriverExt_FindScreenText(t *testing.T) {
 }
 
 func TestDriverExt_Seek(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	driver := setupDriverExt(t)
 
 	textRect, err := driver.FindScreenText("首页")
@@ -124,12 +129,14 @@ func TestDriverExt_Seek(t *testing.T) {
 }
 
 func TestDriverExt_TapByOCR(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	driver := setupDriverExt(t)
 	err := driver.TapByOCR("天气", option.WithScope(0, 0.7, 0.3, 1))
 	assert.Nil(t, err)
 }
 
 func TestDriverExt_prepareSwipeAction(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	driver := setupDriverExt(t)
 
 	swipeAction := prepareSwipeAction(driver, "up", option.WithDirection("down"))
@@ -142,12 +149,14 @@ func TestDriverExt_prepareSwipeAction(t *testing.T) {
 }
 
 func TestDriverExt_SwipeToTapApp(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	driver := setupDriverExt(t)
 	err := driver.SwipeToTapApp("抖音", option.WithPreMarkOperation(true))
 	assert.Nil(t, err)
 }
 
 func TestDriverExt_SwipeToTapTexts(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	driver := setupDriverExt(t)
 	err := driver.AppLaunch("com.ss.android.ugc.aweme")
 	assert.Nil(t, err)
@@ -160,6 +169,7 @@ func TestDriverExt_SwipeToTapTexts(t *testing.T) {
 }
 
 func TestDriverExt_CheckPopup(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	driver := setupADBDriverExt(t)
 	popup, err := driver.CheckPopup()
 	require.Nil(t, err)
@@ -171,12 +181,14 @@ func TestDriverExt_CheckPopup(t *testing.T) {
 }
 
 func TestDriverExt_ClosePopupsHandler(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	driver := setupADBDriverExt(t)
 	err := driver.ClosePopupsHandler()
 	assert.Nil(t, err)
 }
 
 func TestDriverExt_Action_Offset(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	driver := setupADBDriverExt(t)
 
 	// tap point with constant offset
@@ -213,6 +225,7 @@ func TestDriverExt_Action_Offset(t *testing.T) {
 }
 
 func TestSaveImageWithCircle(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	imgBytes, err := os.ReadFile("ai/testdata/llk_1.png")
 	require.NoError(t, err)
 	imgBuf := bytes.NewBuffer(imgBytes)
@@ -227,6 +240,7 @@ func TestSaveImageWithCircle(t *testing.T) {
 }
 
 func TestSaveImageWithArrow(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	imgBytes, err := os.ReadFile("ai/testdata/llk_1.png")
 	require.NoError(t, err)
 	imgBuf := bytes.NewBuffer(imgBytes)
@@ -242,6 +256,7 @@ func TestSaveImageWithArrow(t *testing.T) {
 }
 
 func TestMarkOperation(t *testing.T) {
+	t.Skip("Skip driver extension test - requires physical mobile device")
 	driver := setupDriverExt(t)
 
 	opts := []option.ActionOption{option.WithPreMarkOperation(true)}

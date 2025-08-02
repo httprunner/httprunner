@@ -9,10 +9,12 @@ import (
 )
 
 func TestMain(t *testing.T) {
+	t.Skip("Skip Bilibili test - requires physical Android device")
 	main()
 }
 
 func TestRunCaseWithShell(t *testing.T) {
+	t.Skip("Skip Bilibili test - requires physical Android device")
 	testcase1 := &hrp.TestCase{
 		Config: hrp.NewConfig("run ui test on bili android").
 			WithVariables(map[string]interface{}{

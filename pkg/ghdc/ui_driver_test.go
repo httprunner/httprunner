@@ -35,6 +35,7 @@ func setUp(t *testing.T) {
 }
 
 func TestDevice_Touch(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.Touch(1038, 798)
 	if err != nil {
@@ -43,6 +44,7 @@ func TestDevice_Touch(t *testing.T) {
 }
 
 func TestDevice_Drag(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.Drag(800, 1000, 200, 1000, 0.2)
 	if err != nil {
@@ -81,6 +83,7 @@ func (cb *CaptureScreenCallback) startCounter() {
 }
 
 func TestDevice_StartCaptureScreen(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.StopCaptureScreen()
 	if err != nil {
@@ -96,6 +99,7 @@ func TestDevice_StartCaptureScreen(t *testing.T) {
 }
 
 func TestDevice_StartCaptureUIAction(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.StopCaptureUiAction()
 	if err != nil {
@@ -110,6 +114,7 @@ func TestDevice_StartCaptureUIAction(t *testing.T) {
 }
 
 func TestDevice_TouchDownMoveUp(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 
 	for i := 0; i < 10000; i++ {
@@ -147,6 +152,7 @@ func TestDevice_TouchDownMoveUp(t *testing.T) {
 }
 
 func TestDevice_TouchDownUp(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.TouchDown(200, 2000)
 	if err != nil {
@@ -160,6 +166,7 @@ func TestDevice_TouchDownUp(t *testing.T) {
 }
 
 func TestDevice_TouchDownMoveUpAsync(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	driver.TouchDown(225, 1700)
 	time.Sleep(60 * time.Millisecond)
@@ -174,6 +181,7 @@ func TestDevice_TouchDownMoveUpAsync(t *testing.T) {
 }
 
 func TestDevice_GetDisplay(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	display, err := driver.GetDisplaySize()
 	if err != nil {
@@ -183,6 +191,7 @@ func TestDevice_GetDisplay(t *testing.T) {
 }
 
 func TestDevice_GetRotation(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	rotation, err := driver.GetDisplayRotation()
 	if err != nil {
@@ -192,6 +201,7 @@ func TestDevice_GetRotation(t *testing.T) {
 }
 
 func TestDevice_PressRecentApp(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.PressRecentApp()
 	if err != nil {
@@ -200,6 +210,7 @@ func TestDevice_PressRecentApp(t *testing.T) {
 }
 
 func TestDevice_PressBack(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.PressBack()
 	if err != nil {
@@ -208,6 +219,7 @@ func TestDevice_PressBack(t *testing.T) {
 }
 
 func TestDevice_PressPowerKey(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.PressPowerKey()
 	if err != nil {
@@ -216,6 +228,7 @@ func TestDevice_PressPowerKey(t *testing.T) {
 }
 
 func TestDevice_UpVolume(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.UpVolume()
 	if err != nil {
@@ -224,6 +237,7 @@ func TestDevice_UpVolume(t *testing.T) {
 }
 
 func TestDevice_DownVolume(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.DownVolume()
 	if err != nil {
@@ -232,6 +246,7 @@ func TestDevice_DownVolume(t *testing.T) {
 }
 
 func TestDevice_CaptureLayout(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	layout, err := driver.CaptureLayout()
 	if err != nil {
@@ -241,6 +256,7 @@ func TestDevice_CaptureLayout(t *testing.T) {
 }
 
 func TestDevice_InputText(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.InputText("abcdef")
 	if err != nil {
@@ -249,6 +265,7 @@ func TestDevice_InputText(t *testing.T) {
 }
 
 func TestDevice_InjectPoint(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.InjectGesture(NewGesture().Start(Point{800, 2000}).MoveTo(Point{200, 2000}, 2000))
 	if err != nil {
@@ -258,6 +275,7 @@ func TestDevice_InjectPoint(t *testing.T) {
 }
 
 func TestDevice_PressKey(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.PressKey(KEYCODE_NUM_1)
 	if err != nil {
@@ -266,6 +284,7 @@ func TestDevice_PressKey(t *testing.T) {
 }
 
 func TestDevice_PressKeys(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	setUp(t)
 	err := driver.PressKeys([]KeyCode{KEYCODE_SHIFT_LEFT, KEYCODE_NUM_1})
 	if err != nil {

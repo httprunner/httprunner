@@ -10,6 +10,7 @@ import (
 )
 
 func TestUIA2Log(t *testing.T) {
+	t.Skip("Skip Android UI test - requires physical Android device with ADB")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("验证 UIA2 打点数据准确性").
 			WithVariables(map[string]interface{}{

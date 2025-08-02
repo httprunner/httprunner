@@ -6,6 +6,7 @@ import (
 )
 
 func TestDevice_Product(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	hdClient, err := NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -27,6 +28,7 @@ func TestDevice_Product(t *testing.T) {
 }
 
 func TestDevice_Model(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	hdClient, err := NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -48,6 +50,7 @@ func TestDevice_Model(t *testing.T) {
 }
 
 func TestDevice_Usb(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	hdClient, err := NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -73,6 +76,7 @@ func TestDevice_Usb(t *testing.T) {
 }
 
 func TestDevice_DeviceInfo(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	hdClient, err := NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -90,6 +94,7 @@ func TestDevice_DeviceInfo(t *testing.T) {
 }
 
 func TestDevice_Forward(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	hdClient, err := NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -118,6 +123,7 @@ func TestDevice_Forward(t *testing.T) {
 }
 
 func TestDevice_ForwardKill(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	hdClient, err := NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -139,6 +145,7 @@ func TestDevice_ForwardKill(t *testing.T) {
 }
 
 func TestDevice_RunShellCommand(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	hdClient, err := NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -161,6 +168,7 @@ func TestDevice_RunShellCommand(t *testing.T) {
 }
 
 func TestDevice_Push(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	hdClient, err := NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -184,6 +192,7 @@ func TestDevice_Push(t *testing.T) {
 }
 
 func TestDevice_Pull(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	hdClient, err := NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -207,6 +216,7 @@ func TestDevice_Pull(t *testing.T) {
 }
 
 func TestDevice_Screenshot(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	hdClient, err := NewClient()
 	if err != nil {
 		t.Fatal(err)
@@ -230,6 +240,7 @@ func TestDevice_Screenshot(t *testing.T) {
 }
 
 func TestDevice_GetSoVersion(t *testing.T) {
+	t.Skip("Skip HDC test - requires HarmonyOS Device Client server and connected device")
 	hdClient, err := NewClient()
 	if err != nil {
 		t.Fatal(err)

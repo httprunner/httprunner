@@ -57,6 +57,7 @@ func setupUIA2DriverExt(t *testing.T) *XTDriver {
 }
 
 func TestDevice_Android_GetPackageInfo(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	appInfo, err := driver.GetDevice().GetPackageInfo("com.android.settings")
 	require.Nil(t, err)
@@ -67,6 +68,7 @@ func TestDevice_Android_GetPackageInfo(t *testing.T) {
 }
 
 func TestDevice_Android_GetCurrentWindow(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	driver.AppLaunch("com.android.settings")
 	windowInfo, err := driver.GetDevice().(*AndroidDevice).GetCurrentWindow()
@@ -75,6 +77,7 @@ func TestDevice_Android_GetCurrentWindow(t *testing.T) {
 }
 
 func TestDriver_ADB_Session_TODO(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	err := driver.InitSession(nil)
 	require.Nil(t, err)
@@ -83,6 +86,7 @@ func TestDriver_ADB_Session_TODO(t *testing.T) {
 }
 
 func TestDriver_ADB_Status_TODO(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	status, err := driver.Status()
 	require.Nil(t, err)
@@ -90,6 +94,7 @@ func TestDriver_ADB_Status_TODO(t *testing.T) {
 }
 
 func TestDriver_ADB_ScreenShot(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	screenshot, err := driver.ScreenShot()
 	assert.Nil(t, err)
@@ -101,6 +106,7 @@ func TestDriver_ADB_ScreenShot(t *testing.T) {
 }
 
 func TestDriver_ADB_Rotation_TODO(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	rotation, err := driver.Rotation()
 	require.Nil(t, err)
@@ -108,6 +114,7 @@ func TestDriver_ADB_Rotation_TODO(t *testing.T) {
 }
 
 func TestDriver_ADB_DeviceSize(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	deviceSize, err := driver.WindowSize()
 	require.Nil(t, err)
@@ -116,6 +123,7 @@ func TestDriver_ADB_DeviceSize(t *testing.T) {
 }
 
 func TestDriver_ADB_Source(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	source, err := driver.Source()
 	require.Nil(t, err)
@@ -125,6 +133,7 @@ func TestDriver_ADB_Source(t *testing.T) {
 }
 
 func TestDriver_ADB_BatteryInfo_TODO(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	batteryInfo, err := driver.BatteryInfo()
 	require.Nil(t, err)
@@ -132,6 +141,7 @@ func TestDriver_ADB_BatteryInfo_TODO(t *testing.T) {
 }
 
 func TestDriver_ADB_DeviceInfo_TODO(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	devInfo, err := driver.DeviceInfo()
 	require.Nil(t, err)
@@ -141,18 +151,21 @@ func TestDriver_ADB_DeviceInfo_TODO(t *testing.T) {
 }
 
 func TestDriver_ADB_TapXY(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	err := driver.TapXY(0.4, 0.5)
 	assert.Nil(t, err)
 }
 
 func TestDriver_ADB_TapAbsXY(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	err := driver.TapAbsXY(100, 300)
 	assert.Nil(t, err)
 }
 
 func TestDriver_ADB_Swipe(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	err := driver.Swipe(0.5, 0.7, 0.5, 0.5,
 		option.WithPressDuration(0.5))
@@ -160,12 +173,14 @@ func TestDriver_ADB_Swipe(t *testing.T) {
 }
 
 func TestDriver_ADB_Drag(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	err := driver.Drag(0.5, 0.7, 0.5, 0.5)
 	assert.Nil(t, err)
 }
 
 func TestDriver_ADB_Input(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	err := driver.Input("Hi 你好\n",
 		option.WithIdentifier("test"))
@@ -176,18 +191,21 @@ func TestDriver_ADB_Input(t *testing.T) {
 }
 
 func TestDriver_ADB_PressBack(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	err := driver.Back()
 	assert.Nil(t, err)
 }
 
 func TestDriver_ADB_SetRotation_TODO(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	err := driver.SetRotation(types.Rotation{Z: 270})
 	assert.Nil(t, err)
 }
 
 func TestDriver_ADB_Orientation(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	orientation, err := driver.Orientation()
 	assert.Nil(t, err)
@@ -195,6 +213,7 @@ func TestDriver_ADB_Orientation(t *testing.T) {
 }
 
 func TestDriver_ADB_AppLaunchTerminate(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	err := driver.AppLaunch("com.android.settings")
 	assert.Nil(t, err)
@@ -205,6 +224,7 @@ func TestDriver_ADB_AppLaunchTerminate(t *testing.T) {
 }
 
 func TestDriver_ADB_ForegroundInfo(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	err := driver.AppLaunch("com.android.settings")
 	assert.Nil(t, err)
@@ -214,6 +234,7 @@ func TestDriver_ADB_ForegroundInfo(t *testing.T) {
 }
 
 func TestDriver_ADB_ScreenRecord(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 
 	// adb screenrecord --time-limit 5
@@ -264,6 +285,7 @@ func TestDriver_ADB_ScreenRecord(t *testing.T) {
 }
 
 func TestDriver_ADB_PushImage(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 
 	screenshot, err := driver.ScreenShot()
@@ -284,12 +306,14 @@ func TestDriver_ADB_PushImage(t *testing.T) {
 }
 
 func TestDriver_ADB_Backspace(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	err := driver.Backspace(1)
 	assert.Nil(t, err)
 }
 
 func TestDriver_UIA2_TapXY(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with UIA2")
 	driver := setupUIA2DriverExt(t)
 	driver.StartCaptureLog("tap_xy")
 	err := driver.TapXY(0.5, 0.5,
@@ -301,6 +325,7 @@ func TestDriver_UIA2_TapXY(t *testing.T) {
 }
 
 func TestDriver_UIA2_Swipe(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with UIA2")
 	driver := setupUIA2DriverExt(t)
 	err := driver.Swipe(0.5, 0.7, 0.5, 0.5,
 		option.WithPressDuration(0.5))
@@ -308,6 +333,7 @@ func TestDriver_UIA2_Swipe(t *testing.T) {
 }
 
 func TestDriver_UIA2_Input(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with UIA2")
 	driver := setupUIA2DriverExt(t)
 	err := driver.Input("Hi 你好\n",
 		option.WithIdentifier("test"))
@@ -318,6 +344,7 @@ func TestDriver_UIA2_Input(t *testing.T) {
 }
 
 func TestDriver_ADB_GetPasteboard(t *testing.T) {
+	t.Skip("Skip Android test - requires physical Android device with ADB")
 	driver := setupADBDriverExt(t)
 	pasteboard, err := driver.IDriver.(*ADBDriver).GetPasteboard()
 	assert.Nil(t, err)

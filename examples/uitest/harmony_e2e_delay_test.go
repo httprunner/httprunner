@@ -8,6 +8,7 @@ import (
 )
 
 func TestHarmonyDouyinE2E(t *testing.T) {
+	t.Skip("Skip HarmonyOS test - requires physical HarmonyOS device with HDC")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("直播_抖音_端到端时延_harmony").
 			WithVariables(map[string]interface{}{

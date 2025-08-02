@@ -10,6 +10,7 @@ import (
 )
 
 func TestWDALog(t *testing.T) {
+	t.Skip("Skip iOS UI test - requires physical iOS device with WDA")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("验证 WDA 打点数据准确性").
 			WithVariables(map[string]interface{}{

@@ -10,6 +10,7 @@ import (
 )
 
 func TestHamonyDouyinFeedTest(t *testing.T) {
+	t.Skip("Skip HarmonyOS test - requires physical HarmonyOS device with HDC")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("点播_抖音_滑动场景_随机间隔_android").
 			WithVariables(map[string]interface{}{

@@ -40,6 +40,7 @@ type UIElement struct {
 }
 
 func TestIOSSettingsAction(t *testing.T) {
+	t.Skip("Skip iOS UI test - requires physical iOS device with WDA running")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("ios ui action on Settings").
 			SetIOS(option.WithWDAPort(8700), option.WithWDAMjpegPort(8800)),
@@ -59,6 +60,7 @@ func TestIOSSettingsAction(t *testing.T) {
 }
 
 func TestIOSSearchApp(t *testing.T) {
+	t.Skip("Skip iOS UI test - requires physical iOS device with WDA running")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("ios ui action on Search App 资源库"),
 		TestSteps: []hrp.IStep{
@@ -75,6 +77,7 @@ func TestIOSSearchApp(t *testing.T) {
 }
 
 func TestIOSAppLaunch(t *testing.T) {
+	t.Skip("Skip iOS UI test - requires physical iOS device with WDA running")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("启动 & 关闭 App").
 			SetIOS(option.WithWDAPort(8700), option.WithWDAMjpegPort(8800)),
@@ -94,6 +97,7 @@ func TestIOSAppLaunch(t *testing.T) {
 }
 
 func TestAndroidAction(t *testing.T) {
+	t.Skip("Skip Android UI test - requires physical Android device with ADB")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("android ui action"),
 		TestSteps: []hrp.IStep{
@@ -111,6 +115,7 @@ func TestAndroidAction(t *testing.T) {
 }
 
 func TestAIAction(t *testing.T) {
+	t.Skip("Skip AI UI test - requires physical Android device with AI service configuration")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("run ui action with ai").
 			SetLLMService(option.DOUBAO_1_5_THINKING_VISION_PRO_250428),
@@ -130,6 +135,7 @@ func TestAIAction(t *testing.T) {
 }
 
 func TestAIQuery(t *testing.T) {
+	t.Skip("Skip AI Query test - requires physical Android device with AI service configuration")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("AIQuery Demo with OutputSchema").
 			SetLLMService(option.DOUBAO_SEED_1_6_250615), // Configure LLM service for AI operations

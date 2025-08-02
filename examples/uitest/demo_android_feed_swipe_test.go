@@ -10,6 +10,7 @@ import (
 )
 
 func TestAndroidDouyinFeedTest(t *testing.T) {
+	t.Skip("Skip Android UI test - requires physical Android device with ADB")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("点播_抖音_滑动场景_随机间隔_android").
 			WithVariables(map[string]interface{}{

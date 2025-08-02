@@ -44,6 +44,7 @@ func setupWDADriverExt(t *testing.T) *XTDriver {
 }
 
 func TestDevice_IOS_Install(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	err := driver.GetDevice().Install("xxx.ipa",
 		option.WithRetryTimes(5))
@@ -51,6 +52,7 @@ func TestDevice_IOS_Install(t *testing.T) {
 }
 
 func TestDriver_WDA_LazySetup(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	device, err := NewIOSDevice(
 		option.WithWDAPort(8700),
 		option.WithWDAMjpegPort(8800))
@@ -66,6 +68,7 @@ func TestDriver_WDA_LazySetup(t *testing.T) {
 }
 
 func TestIOSDeviceList(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device")
 	t.Logf("start test")
 	// get all attached ios devices
 	devices, err := ios.ListDevices()
@@ -76,6 +79,7 @@ func TestIOSDeviceList(t *testing.T) {
 }
 
 func TestDevice_IOS_New(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device")
 	device, err := NewIOSDevice(
 		option.WithWDAPort(8700),
 		option.WithWDAMjpegPort(8800))
@@ -103,6 +107,7 @@ func TestDevice_IOS_New(t *testing.T) {
 }
 
 func TestDevice_IOS_GetPackageInfo(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	device, err := NewIOSDevice(option.WithWDAPort(8700))
 	require.Nil(t, err)
 	appInfo, err := device.GetPackageInfo("com.ss.iphone.ugc.Aweme")
@@ -112,6 +117,7 @@ func TestDevice_IOS_GetPackageInfo(t *testing.T) {
 }
 
 func TestDriver_WDA_DeviceScaleRatio(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	scaleRatio, err := driver.IDriver.(*WDADriver).Scale()
 	require.Nil(t, err)
@@ -119,18 +125,21 @@ func TestDriver_WDA_DeviceScaleRatio(t *testing.T) {
 }
 
 func TestDriver_WDA_DeleteSession(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	err := driver.DeleteSession()
 	assert.Nil(t, err)
 }
 
 func TestDriver_WDA_HealthCheck(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	err := driver.IDriver.(*WDADriver).HealthCheck()
 	assert.Nil(t, err)
 }
 
 func TestDriver_WDA_GetAppiumSettings(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	settings, err := driver.IDriver.(*WDADriver).GetAppiumSettings()
 	assert.Nil(t, err)
@@ -138,6 +147,7 @@ func TestDriver_WDA_GetAppiumSettings(t *testing.T) {
 }
 
 func TestDriver_WDA_SetAppiumSettings(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 
 	const _acceptAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','暂不'}`]"
@@ -153,6 +163,7 @@ func TestDriver_WDA_SetAppiumSettings(t *testing.T) {
 }
 
 func TestDriver_WDA_IsWdaHealthy(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	healthy, err := driver.IDriver.(*WDADriver).IsHealthy()
 	assert.Nil(t, err)
@@ -160,6 +171,7 @@ func TestDriver_WDA_IsWdaHealthy(t *testing.T) {
 }
 
 func TestDriver_WDA_Status(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	status, err := driver.Status()
 	assert.Nil(t, err)
@@ -167,6 +179,7 @@ func TestDriver_WDA_Status(t *testing.T) {
 }
 
 func TestDriver_WDA_DeviceInfo(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	info, err := driver.DeviceInfo()
 	assert.Nil(t, err)
@@ -174,6 +187,7 @@ func TestDriver_WDA_DeviceInfo(t *testing.T) {
 }
 
 func TestDriver_WDA_BatteryInfo(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	batteryInfo, err := driver.BatteryInfo()
 	assert.Nil(t, err)
@@ -181,6 +195,7 @@ func TestDriver_WDA_BatteryInfo(t *testing.T) {
 }
 
 func TestDriver_WDA_WindowSize(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	size, err := driver.WindowSize()
 	assert.Nil(t, err)
@@ -188,6 +203,7 @@ func TestDriver_WDA_WindowSize(t *testing.T) {
 }
 
 func TestDriver_WDA_Screen(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	screen, err := driver.IDriver.(*WDADriver).Screen()
 	assert.Nil(t, err)
@@ -195,12 +211,14 @@ func TestDriver_WDA_Screen(t *testing.T) {
 }
 
 func TestDriver_WDA_Home(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	err := driver.Home()
 	assert.Nil(t, err)
 }
 
 func TestDriver_WDA_AppLaunchTerminate(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 
 	bundleId := "com.apple.Preferences"
@@ -213,6 +231,7 @@ func TestDriver_WDA_AppLaunchTerminate(t *testing.T) {
 }
 
 func TestDriver_WDA_TapXY(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 
 	err := driver.TapXY(0.2, 0.2)
@@ -220,6 +239,7 @@ func TestDriver_WDA_TapXY(t *testing.T) {
 }
 
 func TestDriver_WDA_DoubleTapXY(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 
 	err := driver.DoubleTap(0.2, 0.2)
@@ -227,6 +247,7 @@ func TestDriver_WDA_DoubleTapXY(t *testing.T) {
 }
 
 func TestDriver_WDA_TouchAndHold(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 
 	err := driver.TouchAndHold(0.2, 0.2)
@@ -234,6 +255,7 @@ func TestDriver_WDA_TouchAndHold(t *testing.T) {
 }
 
 func TestDriver_WDA_Drag(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 
 	err := driver.Drag(0.8, 0.5, 0.2, 0.5,
@@ -242,6 +264,7 @@ func TestDriver_WDA_Drag(t *testing.T) {
 }
 
 func TestDriver_WDA_Swipe(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 
 	err := driver.Swipe(0.8, 0.5, 0.2, 0.5)
@@ -249,6 +272,7 @@ func TestDriver_WDA_Swipe(t *testing.T) {
 }
 
 func TestDriver_WDA_Input(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	driver.StartCaptureLog("hrp_wda_log")
 	err := driver.Input("test中文", option.WithIdentifier("test"))
@@ -259,6 +283,7 @@ func TestDriver_WDA_Input(t *testing.T) {
 }
 
 func TestDriver_WDA_PressButton(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 
 	err := driver.IDriver.(*WDADriver).PressButton(types.DeviceButtonVolumeUp)
@@ -272,6 +297,7 @@ func TestDriver_WDA_PressButton(t *testing.T) {
 }
 
 func TestDriver_WDA_ScreenShot(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 
 	// without save file
@@ -292,6 +318,7 @@ func TestDriver_WDA_ScreenShot(t *testing.T) {
 }
 
 func TestDriver_WDA_Source(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 
 	var source string
@@ -314,6 +341,7 @@ func TestDriver_WDA_Source(t *testing.T) {
 }
 
 func TestDriver_WDA_GetForegroundApp(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	app, err := driver.ForegroundInfo()
 	assert.Nil(t, err)
@@ -321,6 +349,7 @@ func TestDriver_WDA_GetForegroundApp(t *testing.T) {
 }
 
 func TestDriver_WDA_AccessibleSource(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	source, err := driver.IDriver.(*WDADriver).AccessibleSource()
 	assert.Nil(t, err)
@@ -328,6 +357,7 @@ func TestDriver_WDA_AccessibleSource(t *testing.T) {
 }
 
 func TestDriver_WDA_ScreenRecord(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	path, err := driver.ScreenRecord(option.WithScreenRecordDuation(5))
 	assert.Nil(t, err)
@@ -335,12 +365,14 @@ func TestDriver_WDA_ScreenRecord(t *testing.T) {
 }
 
 func TestDriver_WDA_Backspace(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	err := driver.Backspace(3)
 	assert.Nil(t, err)
 }
 
 func TestDriver_WDA_PushImage(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 
 	screenshot, err := driver.ScreenShot()
@@ -358,6 +390,7 @@ func TestDriver_WDA_PushImage(t *testing.T) {
 }
 
 func TestDriver_WDA_GetPasteboard(t *testing.T) {
+	t.Skip("Skip iOS test - requires physical iOS device with WDA")
 	driver := setupWDADriverExt(t)
 	pasteboard, err := driver.IDriver.(*WDADriver).GetPasteboard()
 	assert.Nil(t, err)

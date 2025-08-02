@@ -13,6 +13,7 @@ import (
 )
 
 func TestGetImageFromBuffer(t *testing.T) {
+	t.Skip("Skip CV test - requires external AI service and local image files")
 	imagePath := "/Users/debugtalk/Downloads/s1.png"
 	file, err := os.ReadFile(imagePath)
 	require.Nil(t, err)
@@ -27,6 +28,7 @@ func TestGetImageFromBuffer(t *testing.T) {
 }
 
 func TestGetImageFromPath(t *testing.T) {
+	t.Skip("Skip CV test - requires external AI service and local image files")
 	imagePath := "/Users/debugtalk/Downloads/s1.png"
 	service, err := NewVEDEMImageService()
 	require.Nil(t, err)

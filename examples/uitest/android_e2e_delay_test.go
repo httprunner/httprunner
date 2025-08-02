@@ -8,6 +8,7 @@ import (
 )
 
 func TestAndroidDouyinE2E(t *testing.T) {
+	t.Skip("Skip Android UI test - requires physical Android device with ADB")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("直播_抖音_端到端时延_android").
 			WithVariables(map[string]interface{}{

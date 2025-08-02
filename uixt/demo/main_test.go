@@ -13,6 +13,7 @@ import (
 )
 
 func TestIOSDemo(t *testing.T) {
+	t.Skip("Skip demo test - requires physical mobile device")
 	device, err := uixt.NewIOSDevice(
 		option.WithWDAPort(8700),
 		option.WithWDAMjpegPort(8800),

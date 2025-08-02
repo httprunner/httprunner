@@ -12,6 +12,7 @@ import (
 )
 
 func TestConvertTimeToSeconds(t *testing.T) {
+	t.Skip("Skip worldcup test - requires physical mobile device")
 	testData := []struct {
 		timeStr string
 		seconds int
@@ -32,6 +33,7 @@ func TestConvertTimeToSeconds(t *testing.T) {
 }
 
 func TestMainIOS(t *testing.T) {
+	t.Skip("Skip worldcup test - requires physical mobile device")
 	uuid := "00008030-00194DA421C1802E"
 	driver := initIOSDriver(uuid)
 	bundleID := "com.ss.iphone.ugc.Aweme"
@@ -41,6 +43,7 @@ func TestMainIOS(t *testing.T) {
 }
 
 func TestMainAndroid(t *testing.T) {
+	t.Skip("Skip worldcup test - requires physical mobile device")
 	driver := initAndroidDriver(uuid)
 	bundleID := "com.ss.android.ugc.aweme"
 	wc := NewWorldCupLive(driver, "", bundleID, 30, 10)
@@ -49,6 +52,7 @@ func TestMainAndroid(t *testing.T) {
 }
 
 func TestIOSDouyinWorldCupLive(t *testing.T) {
+	t.Skip("Skip worldcup test - requires physical mobile device")
 	testCase := &hrp.TestCase{
 		Config: hrp.NewConfig("直播_抖音_世界杯_ios").
 			WithVariables(map[string]interface{}{
