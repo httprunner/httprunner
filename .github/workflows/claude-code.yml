@@ -2,11 +2,11 @@ name: Claude Code
 
 on:
   issue_comment:
-    types: [created]
+    types: [created, edited]
   pull_request_review_comment:
-    types: [created]
+    types: [created, edited]
   issues:
-    types: [opened, assigned]
+    types: [opened, assigned, edited]
   pull_request_review:
     types: [submitted]
 
