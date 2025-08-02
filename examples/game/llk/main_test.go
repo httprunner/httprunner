@@ -1,10 +1,11 @@
+//go:build localtest
+
 package llk
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -97,18 +98,6 @@ func convertToGameElementFromQueryResult(result *ai.QueryResult) (*GameElement, 
 	return &gameElement, nil
 }
 
-// hasRequiredEnvVars checks if the required environment variables are set for testing
-func hasRequiredEnvVars() bool {
-	// Check for OpenAI environment variables
-	if os.Getenv("OPENAI_BASE_URL") != "" && os.Getenv("OPENAI_API_KEY") != "" {
-		return true
-	}
-	// Check for GPT-4O specific environment variables
-	if os.Getenv("OPENAI_GPT_4O_BASE_URL") != "" && os.Getenv("OPENAI_GPT_4O_API_KEY") != "" {
-		return true
-	}
-	return false
-}
 
 // loadTestImage loads the test image from testdata
 func loadTestImage(t *testing.T) (string, types.Size) {
@@ -129,9 +118,6 @@ func createAIQueryer(t *testing.T) *ai.Querier {
 
 // TestLLKGameBot_AnalyzeGameInterface comprehensive test for game interface analysis
 func TestLLKGameBot_AnalyzeGameInterface(t *testing.T) {
-	if !hasRequiredEnvVars() {
-		t.Skip("Skipping test: required environment variables not set")
-	}
 
 	t.Run("AnalyzeWithTestImage", func(t *testing.T) {
 		// Create test bot and load test image
