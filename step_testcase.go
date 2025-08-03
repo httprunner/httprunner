@@ -72,6 +72,11 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	}
 
 	config := copiedTestCase.Config.Get()
+	
+	// preserve original testcase config values before override
+	originalBaseURL := config.BaseURL
+	originalParameters := config.Parameters
+	
 	// override testcase config
 	// override testcase name
 	if s.StepName != "" {
@@ -79,6 +84,20 @@ func (s *StepTestCaseWithOptionalArgs) Run(r *SessionRunner) (stepResult *StepRe
 	}
 	// merge & override extractors
 	config.Export = mergeSlices(s.StepExport, config.Export)
+	
+	// preserve original base_url if not explicitly set in step
+	if originalBaseURL != "" {
+		config.BaseURL = originalBaseURL
+	}
+	
+	// preserve original parameters if not explicitly overridden
+	if len(originalParameters) > 0 {
+		mergedParameters := make(map[string]interface{})
+		for k, v := range originalParameters {
+			mergedParameters[k] = v
+		}
+		config.Parameters = mergedParameters
+	}
 
 	caseRunner, err := NewCaseRunner(*copiedTestCase, r.caseRunner.hrpRunner)
 	if err != nil {
