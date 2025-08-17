@@ -1,5 +1,59 @@
 # Release History
 
+## v5.0.0 (2025-08-03)
+
+**Major Release - HttpRunner v5**
+
+This is a major release that introduces significant architectural improvements and new features, including AI integration and enhanced UI automation capabilities.
+
+### 🎉 New Features
+
+**AI Integration**
+- feat: integrate large language models (LLM) for intelligent test automation
+- feat: support multiple AI service providers (OpenAI GPT-4O, 豆包模型, DeepSeek等)
+- feat: AI-powered UI element detection and interaction planning
+- feat: intelligent assertion generation and validation
+- feat: natural language query processing for test scenarios
+
+**MCP (Model Context Protocol) Support**
+- feat: add MCP host functionality for AI model integration
+- feat: support MCP server connections and tool management
+- feat: enable function calling through MCP protocol
+
+**Enhanced UI Automation**
+- feat: unified driver interface for cross-platform UI automation
+- feat: enhanced Android/iOS/Harmony/Browser support
+- feat: AI-powered popup handling and smart interaction
+- feat: improved screenshot and OCR capabilities
+- feat: advanced swipe and tap operations with offset support
+
+**Core Improvements**
+- feat: Function step type for custom function execution
+- feat: Shell step type for system command execution  
+- feat: enhanced parameter and configuration management
+- feat: improved session management and driver caching
+- feat: better error handling and debugging capabilities
+
+### 🔧 Technical Changes
+
+- refactor: migrate to Go modules with v5 namespace
+- refactor: improved driver architecture with extension methods
+- refactor: enhanced configuration system with environment variable support
+- change: updated dependency management and build system
+
+### 🐛 Bug Fixes
+
+- fix: improved stability in UI automation scenarios
+- fix: better handling of device connections and timeouts
+- fix: enhanced compatibility across different platforms
+
+### 📚 Documentation
+
+- docs: comprehensive update of all documentation for v5 features
+- docs: new AI integration guides and best practices
+- docs: updated architecture documentation
+- docs: enhanced developer instructions and examples
+
 ## v4.3.9 (2024-01-18)
 
 - feat: add Shell step type

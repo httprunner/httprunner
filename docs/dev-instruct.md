@@ -26,19 +26,26 @@ type IStep interface {
 }
 ```
 
-我们只需遵循 `IStep` 的接口定义，即可实现各种类型的测试步骤类型。当前 hrp 已支持的步骤类型包括：
+我们只需遵循 `IStep` 的接口定义，即可实现各种类型的测试步骤类型。当前 HttpRunner v5 已支持的步骤类型包括：
 
-- [request](step_request.go)：发起单次 HTTP 请求
+**协议测试步骤**
+- [request](step_request.go)：发起单次 HTTP/HTTP2 请求
 - [api](step_api.go)：引用执行其它 API 文件
 - [testcase](step_testcase.go)：引用执行其它测试用例文件
-- [thinktime](step_thinktime.go)：思考时间，按照配置的逻辑进行等待
+- [websocket](step_websocket.go)：WebSocket 通信
+
+**性能测试步骤**
 - [transaction](step_transaction.go)：事务机制，用于压测
 - [rendezvous](step_rendezvous.go)：集合点机制，用于压测
-- [websocket](step_websocket.go)：WebSocket 通信
-- [android](step_ui.go)：Android UI 自动化
-- [ios](step_ui.go)：iOS UI 自动化
-- [harmony](step_ui.go)：Harmony UI 自动化
-- [browser](step_ui.go)：浏览器 UI 自动化
+- [thinktime](step_thinktime.go)：思考时间，按照配置的逻辑进行等待
+
+**UI 自动化步骤**
+- [android](step_ui.go)：Android UI 自动化（支持 ADB 和 UIAutomator2）
+- [ios](step_ui.go)：iOS UI 自动化（基于 WebDriverAgent）
+- [harmony](step_ui.go)：Harmony UI 自动化（基于 HDC）
+- [browser](step_ui.go)：浏览器 UI 自动化（支持 Chrome、Firefox、Safari、Edge）
+
+**系统集成步骤**
 - [shell](step_shell.go)：执行 shell 命令
 - [function](step_function.go)：自定义函数调用
 
@@ -328,7 +335,112 @@ func (s *StepMobileUIValidation) AssertAppNotInForeground(packageName string, ms
 2. 在 `StepMobile` 中添加新的平台字段
 3. 在 `obj()` 方法中添加对应的处理逻辑
 
-### 3. 调试技巧
+### 3. AI 集成
+
+### 3. AI 集成
+
+HttpRunner v5 引入了完整的 AI 集成功能，支持多种大语言模型进行智能化测试自动化：
+
+**支持的 AI 服务**：
+- **OpenAI GPT-4O**: 通过 OpenAI API 接口
+- **豆包模型**: 豆包思维视觉专业版、豆包 UI-TARS 等
+- **DeepSeek 模型**: DeepSeek V3 等
+- **自定义模型**: 支持兼容 OpenAI API 的其他模型
+
+**AI 功能模块**：
+- **规划器 (Planner)**: 基于屏幕截图和用户意图，生成操作计划
+- **断言器 (Asserter)**: 智能验证界面状态和内容
+- **查询器 (Querier)**: 处理自然语言查询，提取界面信息
+
+**配置方式**：
+```go
+// 环境变量配置
+OPENAI_GPT_4O_API_KEY=your_api_key
+DOUBAO_1_5_THINKING_VISION_PRO_250428_API_KEY=your_doubao_key
+
+// 代码配置
+aiOptions := []option.AIServiceOption{
+    option.WithAIService(option.OPENAI_GPT_4O),
+    option.WithLLMServiceConfig(&option.LLMServiceConfig{
+        PlannerModel:  option.OPENAI_GPT_4O,
+        AsserterModel: option.DOUBAO_1_5_THINKING_VISION_PRO_250428,
+        QuerierModel:  option.DEEPSEEK_V3,
+    }),
+}
+```
+
+### 4. MCP (Model Context Protocol) 支持
+
+v5 版本引入了 MCP 主机功能，支持与 AI 模型进行标准化交互：
+
+**主要功能**：
+- MCP 服务器连接管理
+- 工具注册和调用
+- 标准化的 AI 模型交互协议
+
+**使用方式**：
+```bash
+# 启动 MCP 主机
+hrp mcp-server --config mcp-config.yaml
+
+# 在测试中使用 MCP
+hrp run test.yaml --mcp-config mcp-config.yaml
+```
+
+### 5. 调试技巧
+
+- 启用详细日志：`--log-level debug`
+- 使用屏幕截图功能进行 UI 调试
+- 利用 `--dry-run` 模式验证测试用例
+- 通过 MCP 配置调试 AI 集成问题
+
+**支持的 AI 服务**：
+- **OpenAI GPT-4O**: 通过 OpenAI API 接口
+- **豆包模型**: 豆包思维视觉专业版、豆包 UI-TARS 等
+- **DeepSeek 模型**: DeepSeek V3 等
+- **自定义模型**: 支持兼容 OpenAI API 的其他模型
+
+**AI 功能模块**：
+- **规划器 (Planner)**: 基于屏幕截图和用户意图，生成操作计划
+- **断言器 (Asserter)**: 智能验证界面状态和内容
+- **查询器 (Querier)**: 处理自然语言查询，提取界面信息
+
+**配置方式**：
+```go
+// 环境变量配置
+OPENAI_GPT_4O_API_KEY=your_api_key
+DOUBAO_1_5_THINKING_VISION_PRO_250428_API_KEY=your_doubao_key
+
+// 代码配置
+aiOptions := []option.AIServiceOption{
+    option.WithAIService(option.OPENAI_GPT_4O),
+    option.WithLLMServiceConfig(&option.LLMServiceConfig{
+        PlannerModel:  option.OPENAI_GPT_4O,
+        AsserterModel: option.DOUBAO_1_5_THINKING_VISION_PRO_250428,
+        QuerierModel:  option.DEEPSEEK_V3,
+    }),
+}
+```
+
+### 4. MCP (Model Context Protocol) 支持
+
+v5 版本引入了 MCP 主机功能，支持与 AI 模型进行标准化交互：
+
+**主要功能**：
+- MCP 服务器连接管理
+- 工具注册和调用
+- 标准化的 AI 模型交互协议
+
+**使用方式**：
+```bash
+# 启动 MCP 主机
+hrp mcp-server --config mcp-config.yaml
+
+# 在测试中使用 MCP
+hrp run test.yaml --mcp-config mcp-config.yaml
+```
+
+### 5. 增强的 UI 自动化
 
 - 使用 `SetRequestsLogOn()` 开启详细的请求日志
 - 使用 `SetPluginLogOn()` 开启插件日志
