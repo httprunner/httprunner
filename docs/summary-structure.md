@@ -1,19 +1,46 @@
-# Summary 数据结构说明文档
+# HttpRunner v5 Summary 数据结构说明文档
 
 ## 概述
 
-HttpRunner 的 Summary 数据结构用于存储测试执行的完整汇总信息，包括测试结果、统计数据、时间信息、平台信息以及详细的测试步骤记录。本文档基于 `summary.go` 和相关代码的最新定义进行详细说明。
+HttpRunner v5 的 Summary 数据结构用于存储测试执行的完整汇总信息，包括测试结果、统计数据、时间信息、平台信息以及详细的测试步骤记录。v5 版本新增了 AI 集成信息、MCP 调用统计和增强的 UI 自动化测试记录。
+
+## v5 版本新增特性
+
+### 🤖 AI 集成统计
+- AI 模型调用次数和耗时统计
+- 不同 AI 组件（Planner、Asserter、Querier）的使用记录
+- AI 模型性能分析数据
+
+### 🔌 MCP 协议统计
+- MCP 工具调用统计
+- 工具执行成功率
+- MCP 服务器连接信息
+
+### 📱 增强的 UI 自动化记录
+- 屏幕截图和操作序列
+- 设备信息和状态记录
+- AI 驱动的操作计划和结果
 
 ## 数据结构层次关系
 
 ```
-Summary (根结构)
+Summary (根结构) - v5 增强
 ├── Success (bool)
 ├── Stat (统计信息)
 │   ├── TestCases (测试用例统计)
 │   └── TestSteps (测试步骤统计)
 ├── Time (时间信息)
-├── Platform (平台信息)
+├── Platform (平台信息) - 包含 v5.0.0 版本信息
+├── AIStats (AI统计信息) - v5 新增
+│   ├── PlannerCalls (规划器调用次数)
+│   ├── AsserterCalls (断言器调用次数)
+│   ├── QuerierCalls (查询器调用次数)
+│   ├── TotalAITime (AI总耗时)
+│   └── ModelsUsed (使用的模型列表)
+├── MCPStats (MCP统计信息) - v5 新增
+│   ├── TotalCalls (总调用次数)
+│   ├── ToolsUsed (使用的工具列表)
+│   └── SuccessRate (成功率)
 └── Details (测试用例详情列表)
     └── TestCaseSummary (单个测试用例汇总)
         ├── Stat (步骤统计)
@@ -25,18 +52,18 @@ Summary (根结构)
                 ├── Data (步骤数据)
                 │   ├── ReqResps (请求响应)
                 │   └── Validators (验证器)
-                ├── Actions (操作列表)
+                ├── Actions (操作列表) - v5 增强
                 │   ├── Requests (请求记录)
-                │   ├── Plannings (AI规划)
+                │   ├── Plannings (AI规划) - v5 新增
                 │   │   ├── ToolCalls (工具调用)
                 │   │   ├── Usage (模型使用统计)
                 │   │   ├── ScreenResult (屏幕结果)
                 │   │   └── SubActions (子操作)
-                │   ├── AIResult (统一AI操作结果)
+                │   ├── AIResult (统一AI操作结果) - v5 新增
                 │   │   ├── QueryResult (查询结果)
                 │   │   ├── PlanningResult (规划结果)
                 │   │   └── AssertionResult (断言结果)
-                │   └── ScreenResults (屏幕截图)
+                │   └── ScreenResults (屏幕截图) - v5 增强
                 └── Attachments (附件信息)
 ```
 

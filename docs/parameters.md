@@ -1,11 +1,29 @@
-# HttpRunner 参数化功能 (Parameters)
+# HttpRunner v5 参数化功能 (Parameters)
 
 ## 概述
 
-HttpRunner 支持强大的**数据驱动测试**能力，允许用户在**测试用例（Testcase）**和**测试步骤（Step）**两个层级上进行参数化。这使得测试用例可以与外部数据文件解耦，实现更灵活、可维护性更高的自动化测试。
+HttpRunner v5 支持强大的**数据驱动测试**能力，允许用户在**测试用例（Testcase）**和**测试步骤（Step）**两个层级上进行参数化。v5 版本增强了参数化策略、支持更灵活的配置选项，并改进了性能和并发处理。
 
 - **测试用例层级参数化**：对整个测试流程使用多组不同的数据重复执行。适用于需要验证完整业务流程的场景，例如使用不同用户登录并执行相同操作。
 - **测试步骤层级参数化**：仅在单个步骤内使用不同的参数重复执行。适用于需要验证单个功能点的场景，例如在搜索框中输入不同的关键词。
+
+## v5 版本新特性
+
+### 🚀 增强的参数化策略
+- **顺序策略 (sequential)**: 按顺序遍历参数
+- **随机策略 (random)**: 随机选择参数
+- **唯一策略 (unique)**: 确保不重复选择参数
+- **自定义策略**: 支持针对特定参数的个性化策略
+
+### 🔧 灵活的配置选项
+- **限制执行次数**: 通过 `WithLimit()` 控制参数化执行次数
+- **混合策略**: 不同参数可以使用不同的选择策略
+- **并发安全**: 改进了多线程环境下的参数化处理
+
+### 📊 性能优化
+- 减少内存占用
+- 优化参数解析性能
+- 改进大数据集处理能力
 
 ## 测试用例层级参数化 (TestCase-Level)
 
@@ -15,37 +33,75 @@ HttpRunner 支持强大的**数据驱动测试**能力，允许用户在**测试
 
 通过在 `hrp.TestCase` 的 `Parameters` 字段中定义参数，并可选择使用 `WithParametersSetting` 进行策略配置。
 
-```go
-// testcase_parameters_test.go
-func TestTestcaseParameters(t *testing.T) {
-    testcase := &hrp.TestCase{
-        Config: hrp.NewConfig("测试用例层级参数化").
-            WithParameters(map[string]interface{}{
-                "username-password": [][]interface{}{
-                    {"user1", "pass1"},
-                    {"user2", "pass2"},
-                    {"user3", "pass3"},
-                },
-            }).
-            WithParametersSetting(
-                hrp.WithRandomOrder(), // 随机选择参数
-                hrp.WithLimit(2),      // 只执行2次
-            ),
-        TestSteps: []hrp.IStep{
-            hrp.NewStep("登录").
-                POST("/api/login").
-                WithBody(map[string]interface{}{
-                    "username": "$username",
-                    "password": "$password",
-                }),
-            hrp.NewStep("获取用户信息").
-                GET("/api/user/info"),
-        },
-    }
+### v5 参数化配置选项
 
-    err := hrp.NewRunner(t).Run(testcase)
-    assert.Nil(t, err)
+HttpRunner v5 提供了更丰富的参数化配置选项：
+
+```go
+// 基础参数化配置
+testcase := &hrp.TestCase{
+    Config: hrp.NewConfig("测试用例层级参数化").
+        WithParameters(map[string]interface{}{
+            "username-password": [][]interface{}{
+                {"user1", "pass1"},
+                {"user2", "pass2"},
+                {"user3", "pass3"},
+            },
+        }).
+        WithParametersSetting(
+            hrp.WithRandomOrder(),        // 随机选择参数
+            hrp.WithLimit(2),            // 只执行2次
+            hrp.WithUniqueOrder(),       // 确保不重复
+            hrp.WithStrategy("username", hrp.IteratorStrategy{
+                PickOrder: "sequential",  // 特定参数使用顺序策略
+            }),
+        ),
+    TestSteps: []hrp.IStep{
+        hrp.NewStep("登录").
+            POST("/api/login").
+            WithBody(map[string]interface{}{
+                "username": "$username",
+                "password": "$password",
+            }),
+    },
 }
+```
+
+### 新增配置方法
+
+#### WithSequentialOrder()
+设置参数按顺序选择：
+```go
+.WithParametersSetting(hrp.WithSequentialOrder())
+```
+
+#### WithRandomOrder()
+设置参数随机选择：
+```go
+.WithParametersSetting(hrp.WithRandomOrder())
+```
+
+#### WithUniqueOrder()
+设置参数唯一选择（不重复）：
+```go
+.WithParametersSetting(hrp.WithUniqueOrder())
+```
+
+#### WithLimit(int)
+限制参数化执行次数：
+```go
+.WithParametersSetting(hrp.WithLimit(10))
+```
+
+#### WithStrategy(string, IteratorStrategy)
+为特定参数设置个性化策略：
+```go
+.WithParametersSetting(
+    hrp.WithStrategy("username", hrp.IteratorStrategy{
+        PickOrder: "random",
+        Limit: 5,
+    })
+)
 ```
 
 ### 执行结果

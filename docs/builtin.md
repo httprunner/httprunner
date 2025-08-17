@@ -44,10 +44,51 @@ Currently, HttpRunner+ has the following built-in assertion functions.
 
 ## Builtin functions
 
+HttpRunner v5 提供了丰富的内置函数，支持各种常用的数据处理和辅助功能。
+
 | Name | Arguments | Description |
 | --- | --- | --- |
-| `get_timestamp` | () | get the thirteen-digit timestamp of current time. |
-| `sleep` | (n int) | sleep n seconds to simulate the thinking time. |
+| `get_timestamp` | () | 获取当前时间的13位时间戳 |
+| `sleep` | (n int) | 休眠 n 秒，模拟思考时间 |
+| `gen_random_string` | (n int) | 生成长度为 n 的随机字符串 |
+| `random_int` | (max int) | 生成 0 到 max-1 的随机整数 |
+| `random_range` | (a, b float64) | 生成 a 到 b 范围内的随机浮点数 |
+| `max` | (a, b float64) | 返回两个数中的最大值 |
+| `md5` | (str string) | 计算字符串的 MD5 哈希值 |
+| `parameterize`, `P` | (filepath string) | 从 CSV 文件加载参数化数据 |
+| `split_by_comma` | (s string) | 按逗号分割字符串 |
+| `environ`, `ENV` | (key string) | 获取环境变量值 |
+| `load_ws_message` | (filepath string) | 加载 WebSocket 消息数据 |
+| `multipart_encoder` | (formMap map) | 编码 multipart/form-data 数据 |
+| `multipart_content_type` | (writer *TFormDataWriter) | 获取 multipart 内容类型 |
+
+### 使用示例
+
+```yaml
+# 在测试用例中使用内置函数
+teststeps:
+- name: test with builtin functions
+  request:
+    method: POST
+    url: /api/users
+    headers:
+      X-Timestamp: "{{ get_timestamp() }}"
+      X-Random-ID: "{{ gen_random_string(10) }}"
+    json:
+      username: "user_{{ random_int(1000) }}"
+      password: "{{ md5('secret123') }}"
+  validate:
+    - check: status_code
+      assert: eq
+      expect: 201
+```
+
+### v5 版本增强
+
+- 改进了文件上传处理，支持 `@` 标识符
+- 增强了 multipart/form-data 编码功能
+- 优化了环境变量访问性能
+- 添加了更多数学计算函数
 | `gen_random_string` | (n int) | get the n-digit random string. |
 | `max` | (m,n int) | get the maximum of two numbers m and n. |
 | `md5` | (s string) | get the MD5 of the input string s. |
