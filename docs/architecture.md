@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-HttpRunner v5 是一个开源的通用测试框架，采用 Go 语言编写，支持 API 接口测试、性能测试和 UI 自动化测试。项目融入了大模型技术，支持 Android/iOS/Harmony/Browser 多种系统平台的 UI 自动化测试。
+HttpRunner v5 是一个开源的通用测试框架，采用 Go 语言编写，支持 API 接口测试、性能测试和 UI 自动化测试。v5 版本融入了大模型技术，支持 Android/iOS/Harmony/Browser 多种系统平台的 UI 自动化测试，并引入了 AI 集成和 MCP (Model Context Protocol) 支持。
 
 ## 核心架构
 
@@ -13,13 +13,32 @@ httprunner/
 ├── cmd/                    # 命令行工具入口
 ├── internal/               # 内部模块
 ├── pkg/                    # 公共包
-├── uixt/                   # UI 测试扩展模块
+├── uixt/                   # UI 测试扩展模块 (v5 重点)
 ├── server/                 # HTTP 服务器模块
-├── mcphost/                # MCP (Model Context Protocol) 主机模块
+├── mcphost/                # MCP (Model Context Protocol) 主机模块 (v5 新增)
 ├── examples/               # 示例代码
 ├── tests/                  # 测试用例
 └── docs/                   # 文档
 ```
+
+## v5 版本主要特性
+
+### 🤖 AI 集成
+- 支持多种大语言模型 (OpenAI GPT-4O, 豆包模型, DeepSeek等)
+- AI 驱动的 UI 操作规划和执行
+- 智能断言和查询功能
+- 自然语言测试步骤描述
+
+### 🔌 MCP 支持
+- Model Context Protocol 主机功能
+- 标准化 AI 模型交互
+- 工具注册和调用管理
+
+### 📱 增强的 UI 自动化
+- 统一的跨平台驱动接口
+- 支持 Android/iOS/Harmony/Browser
+- AI 驱动的智能操作
+- 增强的截图和 OCR 能力
 
 ## 详细模块分析
 
@@ -130,14 +149,26 @@ httprunner/
 - `context.go` - 上下文管理
 - `model.go` - 数据模型
 
-### 7. MCP 主机模块 (mcphost/)
+### 7. MCP 主机模块 (mcphost/) - v5 新增
 
-**功能**: 实现 Model Context Protocol 主机功能，支持大模型集成
+**功能**: 实现 Model Context Protocol 主机功能，支持 AI 模型集成
+
+**主要文件**:
+- `host.go` - MCP 主机核心实现
+- `config.go` - MCP 配置管理
+- `chat.go` - 聊天和对话功能
+- `dump.go` - 数据导出功能
 
 **特点**:
-- 独立的 Git 仓库子模块
-- 提供与大模型的通信接口
-- 支持自然语言驱动的测试场景
+- 支持多种 MCP 服务器连接
+- 提供标准化的 AI 模型交互接口
+- 支持工具注册和函数调用
+- 集成到测试运行流程中
+
+**使用场景**:
+- AI 驱动的测试场景生成
+- 自然语言测试步骤描述
+- 智能化测试结果分析
 
 ### 8. 配置和解析模块
 

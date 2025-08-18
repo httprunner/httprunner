@@ -2,7 +2,63 @@
 
 ## 概述
 
-HttpRunner UIXT 提供统一的驱动接口 `IDriver`，支持多种平台的 UI 自动化操作。每个平台都有专门的驱动实现，但对外提供相同的接口，确保跨平台的一致性。
+HttpRunner UIXT v5 提供统一的驱动接口 `IDriver`，支持多种平台的 UI 自动化操作。每个平台都有专门的驱动实现，但对外提供相同的接口，确保跨平台的一致性。v5 版本新增了 AI 驱动扩展和增强的会话管理功能。
+
+## 核心接口
+
+### IDriver 统一接口
+
+```go
+type IDriver interface {
+    // 基础操作
+    TapXY(x, y float64) error
+    TapByCV(imagePath string) error
+    TapByOCR(ocrText string) error
+    
+    // 滑动操作
+    SwipeXY(startX, startY, endX, endY float64) error
+    SwipeToTapApp(bundleID string) error
+    
+    // 输入操作
+    InputText(text string) error
+    KeyEvent(keyCode int) error
+    
+    // 屏幕操作
+    ScreenShot() (*bytes.Buffer, error)
+    GetDisplaySize() (width, height int, err error)
+    
+    // 应用管理
+    AppLaunch(bundleID string) error
+    AppTerminate(bundleID string) error
+    
+    // 设备信息
+    GetDeviceInfo() (map[string]interface{}, error)
+    
+    // 会话管理
+    NewSession() error
+    CloseSession() error
+    
+    // v5 新增 AI 扩展
+    AIAction(prompt string) error
+    AIAssert(condition string) error
+    AIQuery(question string) (string, error)
+}
+```
+
+### v5 版本增强
+
+#### 🤖 AI 驱动扩展
+- **XTDriver**: 扩展驱动，包装原始驱动并添加 AI 功能
+- **智能操作**: 基于自然语言描述进行 UI 操作
+- **智能断言**: 使用 LLM 进行界面状态验证
+- **智能查询**: 从屏幕截图中提取结构化信息
+
+#### 🔄 会话管理增强
+- **驱动缓存**: 自动缓存和复用驱动实例
+- **资源管理**: 智能释放和清理资源
+- **错误恢复**: 自动检测和恢复驱动连接
+
+## 平台驱动实现
 
 ## IDriver 核心接口
 
