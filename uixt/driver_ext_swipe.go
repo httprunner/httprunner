@@ -100,8 +100,7 @@ func (dExt *XTDriver) SwipeToTapTexts(texts []string, opts ...option.ActionOptio
 	}
 
 	log.Info().Strs("texts", texts).Msg("swipe to tap texts")
-	opts = append(opts, option.WithMatchOne(true), option.WithRegex(true), option.WithInterval(1))
-
+	opts = append([]option.ActionOption{option.WithMatchOne(true), option.WithRegex(true), option.WithInterval(1)}, opts...)
 	// Remove identifier for swipe operations to avoid WDA/UIA2 logging
 	actionOptions := option.NewActionOptions(opts...)
 	actionOptions.Identifier = ""

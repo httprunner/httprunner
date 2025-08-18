@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/rs/zerolog/log"
+
 	hrp "github.com/httprunner/httprunner/v5"
 	"github.com/httprunner/httprunner/v5/code"
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/uixt"
 	"github.com/httprunner/httprunner/v5/uixt/option"
-	"github.com/rs/zerolog/log"
 )
 
 // GameElement represents a game element detected in the interface

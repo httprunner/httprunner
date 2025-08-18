@@ -1,3 +1,5 @@
+//go:build localtest
+
 package llk
 
 import (
@@ -7,10 +9,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/httprunner/httprunner/v5/uixt/ai"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/httprunner/httprunner/v5/uixt/ai"
 )
 
 // TestLLKSolver tests the LianLianKan solver functionality

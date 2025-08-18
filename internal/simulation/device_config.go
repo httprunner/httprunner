@@ -139,6 +139,16 @@ func getDeviceConfig(deviceModel string) DeviceConfig {
 			SizeMax:     225.0,
 		}
 
+		// "Google"
+	case "iphone":
+		return DeviceConfig{
+			DeviceID:    2,
+			PressureMin: 1,
+			PressureMax: 1,
+			SizeMin:     0.03,
+			SizeMax:     0.04,
+		}
+
 	// Default configuration for unknown devices
 	default:
 		return DeviceConfig{

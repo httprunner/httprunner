@@ -24,6 +24,7 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/builtin"
 	"github.com/httprunner/httprunner/v5/internal/config"
 	"github.com/httprunner/httprunner/v5/internal/json"
+	"github.com/httprunner/httprunner/v5/internal/simulation"
 	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/httprunner/httprunner/v5/uixt/types"
 )
@@ -436,6 +437,13 @@ func (wd *WDADriver) AppLaunch(bundleId string) (err error) {
 	// 超时两分钟
 	_, err = wd.Session.POST(data, "/wings/apps/launch", option.WithTimeout(120))
 	if err != nil {
+		// Check for untrusted certificate error
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "has not been explicitly trusted by the user") ||
+			strings.Contains(errMsg, "invalid code signature") ||
+			strings.Contains(errMsg, "inadequate entitlements") {
+			return errors.Wrap(code.DeviceUntrustedCertError, "App certificate not trusted: "+bundleId)
+		}
 		return errors.Wrap(err, "wda app launch failed")
 	}
 	return nil
@@ -443,10 +451,17 @@ func (wd *WDADriver) AppLaunch(bundleId string) (err error) {
 
 func (wd *WDADriver) AppLaunchUnattached(bundleId string) (err error) {
 	log.Info().Str("bundleId", bundleId).Msg("WDADriver.AppLaunchUnattached")
-	// [[FBRoute POST:@"/wda/apps/launchUnattached"].withoutSession respondWithTarget:self action:@selector(handleLaunchUnattachedApp:)]
+	// [[FBRoute POST:@"/wda/apps/launchUnattached"].withoutSession respondWithTarget:self action:@selector(handleLaunchUnattachedApp:)]]
 	data := map[string]interface{}{"bundleId": bundleId}
 	_, err = wd.Session.POST(data, "/wda/apps/launchUnattached")
 	if err != nil {
+		// Check for untrusted certificate error
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "has not been explicitly trusted by the user") ||
+			strings.Contains(errMsg, "invalid code signature") ||
+			strings.Contains(errMsg, "inadequate entitlements") {
+			return errors.Wrap(code.DeviceUntrustedCertError, "App certificate not trusted: "+bundleId)
+		}
 		return errors.Wrap(err, "wda app launchUnattached failed")
 	}
 	return nil
@@ -620,6 +635,331 @@ func (wd *WDADriver) Swipe(fromX, fromY, toX, toY float64, opts ...option.Action
 	return wd.Drag(fromX, fromY, toX, toY, opts...)
 }
 
+// TouchByEvents performs a complex swipe using a sequence of touch events with pressure and size data
+func (wd *WDADriver) TouchByEvents(events []types.TouchEvent, opts ...option.ActionOption) error {
+	log.Info().Int("eventCount", len(events)).Msg("WDADriver.SwipeSimulator")
+
+	if len(events) == 0 {
+		return fmt.Errorf("no touch events provided")
+	}
+
+	actionOptions := option.NewActionOptions(opts...)
+
+	// Apply pre-handlers for the first and last events (start and end coordinates)
+	firstEvent := events[0]
+	lastEvent := events[len(events)-1]
+
+	// Use rawX/rawY if available, otherwise fallback to X/Y for first event
+	startX, startY := firstEvent.RawX, firstEvent.RawY
+	if startX == 0 && startY == 0 {
+		startX, startY = firstEvent.X, firstEvent.Y
+	}
+
+	// Use rawX/rawY if available, otherwise fallback to X/Y for last event
+	endX, endY := lastEvent.RawX, lastEvent.RawY
+	if endX == 0 && endY == 0 {
+		endX, endY = lastEvent.X, lastEvent.Y
+	}
+
+	fromX, fromY, toX, toY, err := preHandler_Swipe(wd, option.ACTION_SwipeCoordinate, actionOptions,
+		startX, startY, endX, endY)
+	if err != nil {
+		return err
+	}
+	defer postHandler(wd, option.ACTION_SwipeCoordinate, actionOptions)
+
+	var actions []interface{}
+	var prevEventTime int64
+
+	for i, event := range events {
+		var duration float64
+		if i > 0 {
+			// Calculate duration from previous event using EventTime (milliseconds)
+			duration = float64(event.EventTime - prevEventTime)
+		}
+		prevEventTime = event.EventTime
+
+		// Use rawX/rawY if available, otherwise fallback to X/Y
+		x, y := event.RawX, event.RawY
+		if x == 0 && y == 0 {
+			// Fallback to X/Y if rawX/rawY are not set
+			x, y = event.X, event.Y
+		}
+
+		// Apply coordinate transformation if it's the first or last event
+		if i == 0 {
+			x, y = fromX, fromY
+		} else if i == len(events)-1 {
+			x, y = toX, toY
+		}
+
+		if x, err = wd.toScale(x); err != nil {
+			return err
+		}
+		if y, err = wd.toScale(y); err != nil {
+			return err
+		}
+
+		var actionMap map[string]interface{}
+
+		switch event.Action {
+		case 0: // ACTION_DOWN
+			actionMap = map[string]interface{}{
+				"type":     "pointerDown",
+				"duration": 0,
+				"button":   0,
+				"pressure": event.Pressure,
+				"size":     event.Size,
+			}
+			// Add initial move to position before down
+			if i == 0 {
+				moveAction := map[string]interface{}{
+					"type":     "pointerMove",
+					"duration": 0,
+					"x":        x,
+					"y":        y,
+					"origin":   "viewport",
+					"pressure": event.Pressure,
+					"size":     event.Size,
+				}
+				actions = append(actions, moveAction)
+			}
+		case 1: // ACTION_UP
+			actionMap = map[string]interface{}{
+				"type":     "pointerUp",
+				"duration": 0,
+				"button":   0,
+				"pressure": event.Pressure,
+				"size":     event.Size,
+			}
+		case 2: // ACTION_MOVE
+			actionMap = map[string]interface{}{
+				"type":     "pointerMove",
+				"duration": duration,
+				"x":        x,
+				"y":        y,
+				"origin":   "viewport",
+				"pressure": event.Pressure,
+				"size":     event.Size,
+			}
+		default:
+			log.Warn().Int("action", event.Action).Msg("Unknown action type, skipping")
+			continue
+		}
+		actions = append(actions, actionMap)
+	}
+
+	data := map[string]interface{}{
+		"actions": []interface{}{
+			map[string]interface{}{
+				"type":       "pointer",
+				"parameters": map[string]string{"pointerType": "touch"},
+				"id":         "touch",
+				"actions":    actions,
+			},
+		},
+	}
+	option.MergeOptions(data, opts...)
+
+	_, err = wd.Session.POST(data, "/wings/actions")
+	return err
+}
+
+// SIMSwipeWithDirection 向指定方向滑动任意距离
+// direction: 滑动方向 ("up", "down", "left", "right")
+// fromX, fromY: 起始坐标
+// simMinDistance, simMaxDistance: 距离范围，如果相等则为固定距离，否则为随机距离
+func (wd *WDADriver) SIMSwipeWithDirection(direction string, fromX, fromY, simMinDistance, simMaxDistance float64, opts ...option.ActionOption) error {
+	absStartX, absStartY, err := convertToAbsolutePoint(wd, fromX, fromY)
+	if err != nil {
+		return err
+	}
+	// 获取设备型号和配置参数
+	deviceModel := "iphone"
+	deviceParams := simulation.GetRandomDeviceParams(deviceModel)
+
+	log.Info().Str("direction", direction).
+		Float64("startX", absStartX).Float64("startY", absStartY).
+		Float64("minDistance", simMinDistance).Float64("maxDistance", simMaxDistance).
+		Str("deviceModel", deviceModel).
+		Int("deviceID", deviceParams.DeviceID).
+		Float64("pressure", deviceParams.Pressure).
+		Float64("size", deviceParams.Size).
+		Msg("WDADriver.SIMSwipeWithDirection")
+
+	// 导入滑动仿真库
+	simulator := simulation.NewSlideSimulatorAPI(nil)
+
+	// 转换方向字符串为Direction类型
+	var slideDirection simulation.Direction
+	switch direction {
+	case "up":
+		slideDirection = simulation.Up
+	case "down":
+		slideDirection = simulation.Down
+	case "left":
+		slideDirection = simulation.Left
+	case "right":
+		slideDirection = simulation.Right
+	default:
+		return fmt.Errorf("invalid direction: %s, must be one of: up, down, left, right", direction)
+	}
+
+	// 使用滑动仿真算法生成触摸事件序列
+	events, err := simulator.GenerateSlideWithRandomDistance(
+		absStartX, absStartY, slideDirection, simMinDistance, simMaxDistance,
+		deviceParams.DeviceID, deviceParams.Pressure, deviceParams.Size)
+	if err != nil {
+		return fmt.Errorf("generate slide events failed: %v", err)
+	}
+
+	// 执行触摸事件序列
+	return wd.TouchByEvents(events, opts...)
+}
+
+// SIMSwipeInArea 在指定区域内向指定方向滑动任意距离
+// direction: 滑动方向 ("up", "down", "left", "right")
+// simAreaStartX, simAreaStartY, simAreaEndX, simAreaEndY: 区域范围(相对坐标)
+// simMinDistance, simMaxDistance: 距离范围，如果相等则为固定距离，否则为随机距离
+func (wd *WDADriver) SIMSwipeInArea(direction string, simAreaStartX, simAreaStartY, simAreaEndX, simAreaEndY, simMinDistance, simMaxDistance float64, opts ...option.ActionOption) error {
+	// 转换区域坐标为绝对坐标
+	absAreaStartX, absAreaStartY, err := convertToAbsolutePoint(wd, simAreaStartX, simAreaStartY)
+	if err != nil {
+		return err
+	}
+	absAreaEndX, absAreaEndY, err := convertToAbsolutePoint(wd, simAreaEndX, simAreaEndY)
+	if err != nil {
+		return err
+	}
+
+	// 确保区域坐标正确(start应该小于等于end)
+	if absAreaStartX > absAreaEndX {
+		absAreaStartX, absAreaEndX = absAreaEndX, absAreaStartX
+	}
+	if absAreaStartY > absAreaEndY {
+		absAreaStartY, absAreaEndY = absAreaEndY, absAreaStartY
+	}
+
+	// 获取设备型号和配置参数
+	deviceModel := "iphone"
+	deviceParams := simulation.GetRandomDeviceParams(deviceModel)
+
+	log.Info().Str("direction", direction).
+		Float64("areaStartX", absAreaStartX).Float64("areaStartY", absAreaStartY).
+		Float64("areaEndX", absAreaEndX).Float64("areaEndY", absAreaEndY).
+		Float64("minDistance", simMinDistance).Float64("maxDistance", simMaxDistance).
+		Str("deviceModel", deviceModel).
+		Int("deviceID", deviceParams.DeviceID).
+		Float64("pressure", deviceParams.Pressure).
+		Float64("size", deviceParams.Size).
+		Msg("WDADriver.SIMSwipeInArea")
+
+	// 导入滑动仿真库
+	simulator := simulation.NewSlideSimulatorAPI(nil)
+
+	// 转换方向字符串为Direction类型
+	var slideDirection simulation.Direction
+	switch direction {
+	case "up":
+		slideDirection = simulation.Up
+	case "down":
+		slideDirection = simulation.Down
+	case "left":
+		slideDirection = simulation.Left
+	case "right":
+		slideDirection = simulation.Right
+	default:
+		return fmt.Errorf("invalid direction: %s, must be one of: up, down, left, right", direction)
+	}
+
+	// 使用滑动仿真算法生成区域内滑动的触摸事件序列
+	events, err := simulator.GenerateSlideInArea(
+		absAreaStartX, absAreaStartY, absAreaEndX, absAreaEndY,
+		slideDirection, simMinDistance, simMaxDistance,
+		deviceParams.DeviceID, deviceParams.Pressure, deviceParams.Size)
+	if err != nil {
+		return fmt.Errorf("generate slide in area events failed: %v", err)
+	}
+
+	// 执行触摸事件序列
+	return wd.TouchByEvents(events, opts...)
+}
+
+// SIMSwipeFromPointToPoint 指定起始点和结束点进行滑动
+// fromX, fromY: 起始坐标(相对坐标)
+// toX, toY: 结束坐标(相对坐标)
+func (wd *WDADriver) SIMSwipeFromPointToPoint(fromX, fromY, toX, toY float64, opts ...option.ActionOption) error {
+	// 转换起始点和结束点为绝对坐标
+	absStartX, absStartY, err := convertToAbsolutePoint(wd, fromX, fromY)
+	if err != nil {
+		return err
+	}
+	absEndX, absEndY, err := convertToAbsolutePoint(wd, toX, toY)
+	if err != nil {
+		return err
+	}
+
+	// 获取设备型号和配置参数
+	deviceModel := "iphone"
+	deviceParams := simulation.GetRandomDeviceParams(deviceModel)
+
+	log.Info().Float64("startX", absStartX).Float64("startY", absStartY).
+		Float64("endX", absEndX).Float64("endY", absEndY).
+		Str("deviceModel", deviceModel).
+		Int("deviceID", deviceParams.DeviceID).
+		Float64("pressure", deviceParams.Pressure).
+		Float64("size", deviceParams.Size).
+		Msg("WDADriver.SIMSwipeFromPointToPoint")
+
+	// 导入滑动仿真库
+	simulator := simulation.NewSlideSimulatorAPI(nil)
+
+	// 使用滑动仿真算法生成点对点滑动的触摸事件序列
+	events, err := simulator.GeneratePointToPointSlideEvents(
+		absStartX, absStartY, absEndX, absEndY,
+		deviceParams.DeviceID, deviceParams.Pressure, deviceParams.Size)
+	if err != nil {
+		return fmt.Errorf("generate point to point slide events failed: %v", err)
+	}
+
+	// 执行触摸事件序列
+	return wd.TouchByEvents(events, opts...)
+}
+
+// SIMClickAtPoint 点击相对坐标
+// x, y: 点击坐标(相对坐标)
+func (wd *WDADriver) SIMClickAtPoint(x, y float64, opts ...option.ActionOption) error {
+	// 转换为绝对坐标
+	absX, absY, err := convertToAbsolutePoint(wd, x, y)
+	if err != nil {
+		return err
+	}
+
+	// 获取设备型号和配置参数
+	deviceModel := "iphone"
+	deviceParams := simulation.GetRandomDeviceParams(deviceModel)
+
+	log.Info().Float64("x", absX).Float64("y", absY).
+		Str("deviceModel", deviceModel).
+		Int("deviceID", deviceParams.DeviceID).
+		Float64("pressure", deviceParams.Pressure).
+		Float64("size", deviceParams.Size).
+		Msg("WDADriver.SIMClickAtPoint")
+
+	// 导入点击仿真库
+	clickSimulator := simulation.NewClickSimulatorAPI(nil)
+
+	// 使用点击仿真算法生成触摸事件序列
+	events, err := clickSimulator.GenerateClickEvents(
+		absX, absY, deviceParams.DeviceID, deviceParams.Pressure, deviceParams.Size)
+	if err != nil {
+		return fmt.Errorf("generate click events failed: %v", err)
+	}
+
+	// 执行触摸事件序列
+	return wd.TouchByEvents(events, opts...)
+}
+
 func (wd *WDADriver) SetPasteboard(contentType types.PasteboardType, content string) (err error) {
 	// [[FBRoute POST:@"/wda/setPasteboard"] respondWithTarget:self action:@selector(handleSetPasteboard:)]
 	data := map[string]interface{}{
@@ -659,6 +999,69 @@ func (wd *WDADriver) Input(text string, opts ...option.ActionOption) (err error)
 	option.MergeOptions(data, opts...)
 	_, err = wd.Session.POST(data, "/wings/interaction/keys")
 	return
+}
+
+// SIMInput 仿真输入函数，模拟人类分批输入行为
+// 将文本智能分割，英文单词和数字保持完整，中文按1-2个字符分割
+func (wd *WDADriver) SIMInput(text string, opts ...option.ActionOption) error {
+	log.Info().Str("text", text).Msg("WDADriver.SIMInput")
+
+	if text == "" {
+		return nil
+	}
+
+	// 创建输入仿真器（使用默认配置）
+	inputSimulator := simulation.NewInputSimulatorAPI(nil)
+
+	// 生成输入片段（使用智能分割算法，所有参数使用默认值）
+	inputReq := simulation.InputRequest{
+		Text: text,
+		// MinSegmentLen, MaxSegmentLen, MinDelayMs, MaxDelayMs 使用默认值
+	}
+
+	response := inputSimulator.GenerateInputSegments(inputReq)
+	if !response.Success {
+		return fmt.Errorf("failed to generate input segments: %s", response.Message)
+	}
+
+	log.Info().Int("segments", response.Metrics.TotalSegments).
+		Int("totalDelayMs", response.Metrics.TotalDelayMs).
+		Int("estimatedTimeMs", response.Metrics.EstimatedTimeMs).
+		Msg("Input segments generated")
+
+	// 逐个输入每个片段
+	var segmentErrCnt int
+	for _, segment := range response.Segments {
+		// 使用Input进行输入（内部已包含Session.POST请求）
+		segmentErr := wd.Input(segment.Text, opts...)
+		if segmentErr != nil {
+			segmentErrCnt++
+			log.Info().Err(segmentErr).Int("segmentErrCnt", segmentErrCnt).
+				Msg("segments err")
+		}
+
+		log.Debug().Str("segment", segment.Text).Int("index", segment.Index).
+			Int("charLen", segment.CharLen).Msg("Successfully input segment")
+
+		// 如果有延迟时间，则等待
+		if segment.DelayMs > 0 {
+			time.Sleep(time.Duration(segment.DelayMs) * time.Millisecond)
+
+			log.Debug().Int("delayMs", segment.DelayMs).
+				Msg("Delay between input segments")
+		}
+	}
+	if segmentErrCnt > 0 {
+		data := map[string]interface{}{"value": strings.Split(text, "")}
+		option.MergeOptions(data, opts...)
+		_, err := wd.Session.POST(data, "/wings/interaction/keys")
+		return err
+	}
+	log.Info().Int("totalSegments", response.Metrics.TotalSegments).
+		Int("actualDelayMs", response.Metrics.TotalDelayMs).
+		Msg("SIMInput completed successfully")
+
+	return nil
 }
 
 func (wd *WDADriver) Backspace(count int, opts ...option.ActionOption) (err error) {

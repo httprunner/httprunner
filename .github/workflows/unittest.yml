@@ -23,8 +23,14 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go-version }}
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
       - name: Install Python plugin dependencies
-        run: python3 -m pip install funppy
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install funppy httprunner
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Run coverage

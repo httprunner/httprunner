@@ -35,24 +35,31 @@ type UIXTRunner struct {
 }
 
 type UIXTConfig struct {
-	uixt.DriverCacheConfig
+	uixt.DriverCacheConfig // includes Platform, Serial, AIOptions
 
-	Ctx                context.Context
-	Cancel             context.CancelFunc
-	JSONCase           ITestCase
-	UIA2               bool    // UIAutomator2（Android）
-	LogOn              bool    // 开启打点日志
+	// Runtime context
+	Ctx    context.Context
+	Cancel context.CancelFunc `json:"-"`
+
+	// Test case configuration
+	JSONCase ITestCase
+
+	// Device specific options
+	UIA2         bool // UIAutomator2（Android）
+	LogOn        bool // 开启打点日志
+	WDAPort      int  // iOS WebDriverAgent port
+	WDAMjpegPort int  // iOS WebDriverAgent MJPEG port
+
+	// Agent behavior configuration
 	Timeout            int     // seconds
 	AbortErrors        []error // abort errors
 	MaxRestartAppCount int     // max app restart count
 	MaxRetryCount      int     // max retry count
 
-	WDAPort      int
-	WDAMjpegPort int
-
-	OSType     string // platform
-	Serial     string
-	LLMService option.LLMServiceType // LLM 服务类型
+	// Backward compatibility fields - legacy API support
+	OSType     string                // deprecated: use Platform from DriverCacheConfig
+	Serial     string                // deprecated: use Serial from DriverCacheConfig
+	LLMService option.LLMServiceType // deprecated: use AIOptions from DriverCacheConfig
 }
 
 const (
@@ -83,7 +90,7 @@ func NewUIXTRunner(configs *UIXTConfig) (runner *UIXTRunner, err error) {
 	}
 	config.SetAIOptions(configs.AIOptions...)
 
-	switch configs.OSType {
+	switch configs.Platform {
 	case "ios":
 		port, err := configs.getWDALocalPort(configs.Serial)
 		if err != nil {
@@ -123,7 +130,7 @@ func NewUIXTRunner(configs *UIXTConfig) (runner *UIXTRunner, err error) {
 		)
 	default:
 		// default to android
-		configs.OSType = "android"
+		configs.Platform = "android"
 		config.SetAndroid(
 			option.WithSerialNumber(configs.Serial),
 			option.WithUIA2(configs.UIA2),
@@ -144,11 +151,10 @@ func NewUIXTRunner(configs *UIXTConfig) (runner *UIXTRunner, err error) {
 	}
 	sessionRunner := caseRunner.NewSession()
 
-	driverCacheConfig := uixt.DriverCacheConfig{
-		Platform:  configs.OSType,
-		Serial:    configs.Serial,
-		AIOptions: config.AIOptions.Options(),
-	}
+	// Use configs directly as it inherits DriverCacheConfig
+	driverCacheConfig := configs.DriverCacheConfig
+	driverCacheConfig.AIOptions = config.AIOptions.Options()
+
 	dExt, err := uixt.GetOrCreateXTDriver(driverCacheConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "get driver failed")
@@ -181,6 +187,19 @@ func NewUIXTRunner(configs *UIXTConfig) (runner *UIXTRunner, err error) {
 }
 
 func (configs *UIXTConfig) addDefault() {
+	// Handle backward compatibility - sync legacy fields to embedded DriverCacheConfig
+	if configs.OSType != "" && configs.Platform == "" {
+		configs.Platform = configs.OSType
+	}
+	if configs.Serial != "" && configs.DriverCacheConfig.Serial == "" {
+		configs.DriverCacheConfig.Serial = configs.Serial
+	}
+	if configs.LLMService != "" && len(configs.AIOptions) == 0 {
+		configs.AIOptions = []option.AIServiceOption{
+			option.WithLLMService(configs.LLMService),
+		}
+	}
+
 	if configs.Ctx == nil {
 		configs.Ctx = context.Background()
 	}

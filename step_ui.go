@@ -1070,6 +1070,19 @@ func runStepMobileUI(s *SessionRunner, step IStep) (stepResult *StepResult, err 
 				}
 				continue
 			}
+			if action.Method == option.ACTION_GetPasteboard {
+				content, err := uiDriver.GetPasteboard()
+				if err != nil {
+					actionResult.Error = err.Error()
+					if !code.IsErrorPredefined(err) {
+						err = errors.Wrap(code.MobileUIDriverError, err.Error())
+					}
+					return stepResult, err
+				}
+				actionResult.ExtraData = content
+				stepResult.Actions = append(stepResult.Actions, actionResult)
+				continue
+			}
 
 			// handle other non-AI actions
 			sessionData, err := uiDriver.ExecuteAction(ctx, action)

@@ -247,11 +247,17 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 		return nil, errors.New("LLM service is not initialized")
 	}
 
+	// Parse action options to get ResetHistory setting
+	options := option.NewActionOptions(opts...)
+	screenOptions := []option.ActionOption{option.WithScreenShotFileName("ai_assert"), option.WithScreenShotBase64(true)}
+	if options.ScreenShotWithUpload {
+		screenOptions = append(screenOptions, option.WithScreenShotUpload(true))
+	} else {
+		screenOptions = append(screenOptions, option.WithScreenShotBase64(true))
+	}
+
 	// Step 1: Take screenshot and convert to base64
-	screenResult, err := dExt.GetScreenResult(
-		option.WithScreenShotFileName("ai_assert"),
-		option.WithScreenShotBase64(true),
-	)
+	screenResult, err := dExt.GetScreenResult(screenOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -262,12 +268,17 @@ func (dExt *XTDriver) AIAssert(assertion string, opts ...option.ActionOption) (*
 		ImagePath:         screenResult.ImagePath,
 		Resolution:        &screenResult.Resolution,
 	}
-
+	var imageURL string
+	if screenResult.UploadedURL != "" {
+		imageURL = screenResult.UploadedURL
+	} else {
+		imageURL = screenResult.Base64
+	}
 	// Step 2: Call model and measure time
 	modelCallStartTime := time.Now()
 	assertOpts := &ai.AssertOptions{
 		Assertion:  assertion,
-		Screenshot: screenResult.Base64,
+		Screenshot: imageURL,
 		Size:       screenResult.Resolution,
 	}
 	result, err := dExt.LLMService.Assert(context.Background(), assertOpts)
@@ -297,12 +308,15 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 	// Parse action options to get ResetHistory setting
 	options := option.NewActionOptions(opts...)
 	resetHistory := options.ResetHistory
+	screenOptions := []option.ActionOption{option.WithScreenShotFileName("ai_planning")}
+	if options.ScreenShotWithUpload {
+		screenOptions = append(screenOptions, option.WithScreenShotUpload(true))
+	} else {
+		screenOptions = append(screenOptions, option.WithScreenShotBase64(true))
+	}
 
 	// Step 1: Take screenshot and convert to base64
-	screenResult, err := dExt.GetScreenResult(
-		option.WithScreenShotFileName("ai_planning"),
-		option.WithScreenShotBase64(true),
-	)
+	screenResult, err := dExt.GetScreenResult(screenOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -313,6 +327,12 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 
 	// Step 2: Call model
 	modelCallStartTime := time.Now()
+	var imageURL string
+	if screenResult.UploadedURL != "" {
+		imageURL = screenResult.UploadedURL
+	} else {
+		imageURL = screenResult.Base64
+	}
 	planningOpts := &ai.PlanningOptions{
 		UserInstruction: prompt,
 		Message: &schema.Message{
@@ -321,7 +341,7 @@ func (dExt *XTDriver) PlanNextAction(ctx context.Context, prompt string, opts ..
 				{
 					Type: schema.ChatMessagePartTypeImageURL,
 					ImageURL: &schema.ChatMessageImageURL{
-						URL: screenResult.Base64,
+						URL: imageURL,
 					},
 				},
 			},

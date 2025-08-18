@@ -133,6 +133,10 @@ func (s *MCPServer4XTDriver) registerTools() {
 	s.registerTool(&ToolGetScreenSize{})
 	s.registerTool(&ToolGetSource{})
 
+	// Media Album Tools
+	s.registerTool(&ToolPushAlbums{})
+	s.registerTool(&ToolClearAlbums{})
+
 	// Utility Tools
 	s.registerTool(&ToolSleep{})
 	s.registerTool(&ToolSleepMS{})
@@ -297,7 +301,7 @@ func extractActionOptionsToArguments(actionOptions []option.ActionOption, argume
 
 	// Add tap/swipe offset options
 	if len(tempOptions.TapOffset) == 2 {
-		arguments["tap_offset"] = tempOptions.TapOffset
+		arguments["offset"] = tempOptions.TapOffset
 	}
 	if len(tempOptions.SwipeOffset) == 4 {
 		arguments["swipe_offset"] = tempOptions.SwipeOffset

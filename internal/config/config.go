@@ -25,7 +25,7 @@ const (
 	CaseFileName    = "case.json"        // $PWD/results/20060102150405/case.json
 
 	// mobile device path
-	DeviceActionLogFilePath = "/sdcard/Android/data/io.appium.uiautomator2.server/files/hodor"
+	DeviceActionLogFilePath = "/storage/emulated/0/Download/"
 )
 
 type Config struct {

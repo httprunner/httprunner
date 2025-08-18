@@ -73,15 +73,15 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 	}
 
 	// Get device info from context (if available)
-	deviceInfo := w.getDeviceInfoFromContext(ctx, screenshot)
+	deviceInfo := w.getDeviceInfoFromScreenshot(ctx, screenshot)
 
 	// Prepare Wings API request
 	apiRequest := WingsActionRequest{
-		Historys:   w.history,
-		DeviceInfo: deviceInfo,
-		StepText:   fmt.Sprintf("%s", opts.UserInstruction),
-		BizId:      w.bizId,
-		TextCase:   fmt.Sprintf("整体描述：\n前置条件：\n操作步骤：\n%s\n停止操作。\n注意事项：\n", opts.UserInstruction),
+		Historys:    w.history,
+		DeviceInfos: deviceInfo,
+		StepText:    fmt.Sprintf("%s", opts.UserInstruction),
+		BizId:       w.bizId,
+		TextCase:    fmt.Sprintf("整体描述：\n前置条件：\n操作步骤：\n%s\n停止操作。\n注意事项：\n", opts.UserInstruction),
 		Base: WingsBase{
 			LogID: generateWingsUUID(),
 		},
@@ -112,9 +112,7 @@ func (w *WingsService) Plan(ctx context.Context, opts *PlanningOptions) (*Planni
 
 	// Update history with response data
 	newHistoryEntry := History{
-		Observation:   response.ThoughtChain.Observation,
-		Thought:       response.ThoughtChain.Thought,
-		Summary:       response.ThoughtChain.Summary,
+		ThoughtChain:  response.ThoughtChain,
 		StepText:      response.StepText,
 		StepTextTrans: response.StepTextTrans,
 		OriStepIndex:  response.OriStepIndex,
@@ -165,19 +163,16 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 		return nil, errors.Wrap(err, "validate assertion parameters failed")
 	}
 
-	// Clean screenshot data URL prefix
-	cleanScreenshot := w.cleanScreenshotDataURL(opts.Screenshot)
-
 	// Get device info from context (if available)
-	deviceInfo := w.getDeviceInfoFromScreenshot(ctx, cleanScreenshot)
+	deviceInfos := w.getDeviceInfoFromScreenshot(ctx, opts.Screenshot)
 
 	// Prepare Wings API request for assertion
 	apiRequest := WingsActionRequest{
-		Historys:   []History{},
-		DeviceInfo: deviceInfo,
-		StepText:   fmt.Sprintf("断言:%s", opts.Assertion),
-		BizId:      w.bizId,
-		TextCase:   fmt.Sprintf("整体描述：\n前置条件：\n操作步骤：\n断言: %s\n停止操作。\n注意事项：\n", opts.Assertion),
+		Historys:    []History{},
+		DeviceInfos: deviceInfos,
+		StepText:    fmt.Sprintf("断言:%s", opts.Assertion),
+		BizId:       w.bizId,
+		TextCase:    fmt.Sprintf("整体描述：\n前置条件：\n操作步骤：\n断言: %s\n停止操作。\n注意事项：\n", opts.Assertion),
 		Base: WingsBase{
 			LogID: generateWingsUUID(),
 		},
@@ -208,16 +203,13 @@ func (w *WingsService) Assert(ctx context.Context, opts *AssertOptions) (*Assert
 
 	// Update history with response data
 	newHistoryEntry := History{
-		Observation:   response.ThoughtChain.Observation,
-		Thought:       response.ThoughtChain.Thought,
-		Summary:       response.ThoughtChain.Summary,
+		ThoughtChain:  response.ThoughtChain,
 		StepText:      response.StepText,
 		StepTextTrans: response.StepTextTrans,
 		OriStepIndex:  response.OriStepIndex,
-		DeviceID:      deviceInfo[0].DeviceID,
+		DeviceID:      response.DeviceId,
 		AgentType:     response.AgentType,
-		ActionResult:  "", // Always empty as requested
-		DeviceInfos:   &deviceInfo,
+		DeviceInfos:   &apiRequest.DeviceInfos,
 		ActionParams:  response.ActionParams,
 	}
 	w.history = append(w.history, newHistoryEntry)
@@ -269,12 +261,13 @@ func (w *WingsService) RegisterTools(tools []*schema.ToolInfo) error {
 
 // Wings API data structures
 type WingsActionRequest struct {
-	Historys   []History         `json:"historys"`
-	DeviceInfo []WingsDeviceInfo `json:"device_infos"`
-	StepText   string            `json:"step_text"`
-	BizId      string            `json:"biz_id"`
-	TextCase   string            `json:"text_case"`
-	Base       WingsBase         `json:"Base"`
+	Historys    []History         `json:"historys"`
+	DeviceInfos []WingsDeviceInfo `json:"device_infos"`
+	StepText    string            `json:"step_text"`
+	TextCase    string            `json:"text_case"`
+	BizId       string            `json:"biz_id"`
+	TaskType    string            `json:"task_type"`
+	Base        WingsBase         `json:"Base"`
 }
 
 type WingsDeviceInfo struct {
@@ -292,14 +285,16 @@ type WingsBase struct {
 }
 
 type WingsActionResponse struct {
-	AgentType     string            `json:"agent_type" thrift:"agent_type,1,required"`
-	StepText      string            `json:"step_text" thrift:"step_text,2,required"`
-	StepTextTrans string            `json:"step_text_trans" thrift:"step_text_trans,3,required"`
-	OriStepIndex  int               `json:"ori_step_index" thrift:"ori_step_index,4,required"`
-	StepType      string            `json:"step_type" thrift:"step_type,5,required"`
-	ActionParams  string            `json:"action_params" thrift:"action_params,6,required"`
-	ThoughtChain  WingsThoughtChain `json:"thought_chain" thrift:"thought_chain,7,required"`
-	BaseResp      WingsBaseResp     `json:"BaseResp" thrift:"BaseResp,255,optional"`
+	AgentType     string            `json:"agent_type"`
+	StepText      string            `json:"step_text"`
+	StepTextTrans string            `json:"step_text_trans"`
+	OriStepIndex  int               `json:"ori_step_index"`
+	StepType      string            `json:"step_type"`
+	ActionParams  string            `json:"action_params"`
+	DeviceId      string            `json:"device_id"`
+	NextIsFinish  bool              `json:"next_is_finish"`
+	ThoughtChain  WingsThoughtChain `json:"thought_chain"`
+	BaseResp      WingsBaseResp     `json:"BaseResp"`
 }
 
 type WingsThoughtChain struct {
@@ -321,17 +316,15 @@ type WingsExtra struct {
 
 // History structure for request and response
 type History struct {
-	Observation   string             `json:"observation" thrift:"observation,1,required"`           // 思考结果
-	Thought       string             `json:"thought" thrift:"thought,2,required"`                   // 思考结果
-	Summary       string             `json:"summary" thrift:"summary,3,required"`                   // 思考结果
-	StepText      string             `json:"step_text" thrift:"step_text,4"`                        // 操作的指令
-	DeviceID      string             `json:"device_id" thrift:"device_id,5"`                        // 操作的设备id
-	AgentType     string             `json:"agent_type" thrift:"agent_type,7"`                      // 最终决策的agent类型
-	ActionResult  string             `json:"action_result" thrift:"action_result,8"`                // 操作结果, 断言=断言结果, 自动化=自动化操作是否成功, 物料构造=物料构造结果
-	DeviceInfos   *[]WingsDeviceInfo `json:"device_infos,omitempty" thrift:"device_infos,9"`        // 所有设备的信息
-	ActionParams  string             `json:"action_params,omitempty" thrift:"action_params,10"`     // 历史操作解析结果(断言，自动化，物料构造)
-	StepTextTrans string             `json:"step_text_trans,omitempty" thrift:"step_text_trans,13"` // 归一化的步骤文本(为后续的实际执行解析文本)
-	OriStepIndex  int                `json:"ori_step_index,omitempty" thrift:"ori_step_index,14"`   // 原本的执行序列（扩展前、目标导向原始文本步骤）
+	ThoughtChain  WingsThoughtChain  `json:"thought_chain"`   // 思考结果
+	StepText      string             `json:"step_text"`       // 操作的指令
+	DeviceID      string             `json:"device_id"`       // 操作的设备id
+	AgentType     string             `json:"agent_type"`      // 最终决策的agent类型
+	ActionResult  string             `json:"action_result"`   // 操作结果, 断言=断言结果, 自动化=自动化操作是否成功, 物料构造=物料构造结果
+	DeviceInfos   *[]WingsDeviceInfo `json:"device_infos"`    // 所有设备的信息
+	ActionParams  string             `json:"action_params"`   // 历史操作解析结果(断言，自动化，物料构造)
+	StepTextTrans string             `json:"step_text_trans"` // 归一化的步骤文本(为后续的实际执行解析文本)
+	OriStepIndex  int                `json:"ori_step_index"`  // 原本的执行序列（扩展前、目标导向原始文本步骤）
 }
 
 // Action parameter structures
@@ -391,38 +384,65 @@ func (w *WingsService) extractScreenshotFromMessage(message *schema.Message) (st
 
 	for _, content := range message.MultiContent {
 		if content.Type == schema.ChatMessagePartTypeImageURL && content.ImageURL != nil {
-			// Extract base64 data from data URL
-			screenshot := content.ImageURL.URL
-			if strings.HasPrefix(screenshot, "data:image/") {
-				// Remove data URL prefix
-				parts := strings.Split(screenshot, ",")
-				if len(parts) == 2 {
-					return parts[1], nil
-				}
-			}
-			return screenshot, nil
+			return content.ImageURL.URL, nil
 		}
 	}
 
 	return "", errors.New("no image found in message")
 }
 
-// getDeviceInfoFromContext gets device info from context with fallback
-func (w *WingsService) getDeviceInfoFromContext(_ context.Context, screenshot string) []WingsDeviceInfo {
+// getDeviceInfoFromBase gets device info from base64 screenshot
+func (w *WingsService) getDeviceInfoFromBase64(screenshotBase64 string) []WingsDeviceInfo {
 	// TODO: Extract device info from context if available
 
 	// Use last history's NowImage as PreImage if history exists
-	preImage := screenshot
+	preImage := screenshotBase64
 	if len(w.history) > 0 && w.history[len(w.history)-1].DeviceInfos != nil && len(*w.history[len(w.history)-1].DeviceInfos) > 0 {
 		preImage = (*w.history[len(w.history)-1].DeviceInfos)[0].NowImage
+	}
+
+	preImageUrl := ""
+	if len(w.history) > 0 && w.history[len(w.history)-1].DeviceInfos != nil && len(*w.history[len(w.history)-1].DeviceInfos) > 0 {
+		preImageUrl = (*w.history[len(w.history)-1].DeviceInfos)[0].NowImageUrl
 	}
 
 	// use default device info with optimized PreImage
 	return []WingsDeviceInfo{
 		{
 			DeviceID:        "default-device",
-			NowImage:        screenshot,
+			NowImage:        screenshotBase64,
+			NowImageUrl:     "",
 			PreImage:        preImage,
+			PreImageUrl:     preImageUrl,
+			NowLayoutJSON:   "",
+			OperationSystem: "android",
+		},
+	}
+}
+
+// getDeviceInfoFromUrl gets device info from url screenshot
+func (w *WingsService) getDeviceInfoFromUrl(screenshotUrl string) []WingsDeviceInfo {
+	// TODO: Extract device info from context if available
+
+	// Use last history's NowImage as PreImage if history exists
+	preImage := ""
+	if len(w.history) > 0 && w.history[len(w.history)-1].DeviceInfos != nil && len(*w.history[len(w.history)-1].DeviceInfos) > 0 {
+		preImage = (*w.history[len(w.history)-1].DeviceInfos)[0].NowImage
+	}
+
+	preImageUrl := screenshotUrl
+	if len(w.history) > 0 && w.history[len(w.history)-1].DeviceInfos != nil && len(*w.history[len(w.history)-1].DeviceInfos) > 0 {
+		preImageUrl = (*w.history[len(w.history)-1].DeviceInfos)[0].NowImageUrl
+	}
+
+	// use default device info with optimized PreImage
+	return []WingsDeviceInfo{
+		{
+			DeviceID:        "default-device",
+			NowImage:        "",
+			NowImageUrl:     screenshotUrl,
+			PreImage:        preImage,
+			PreImageUrl:     preImageUrl,
 			NowLayoutJSON:   "",
 			OperationSystem: "android",
 		},
@@ -431,7 +451,14 @@ func (w *WingsService) getDeviceInfoFromContext(_ context.Context, screenshot st
 
 // getDeviceInfoFromScreenshot gets device info from screenshot (for Assert)
 func (w *WingsService) getDeviceInfoFromScreenshot(ctx context.Context, screenshot string) []WingsDeviceInfo {
-	return w.getDeviceInfoFromContext(ctx, screenshot)
+	if strings.HasPrefix(screenshot, "data:image/") {
+		// Remove data URL prefix like "data:image/jpeg;base64,"
+		parts := strings.Split(screenshot, ",")
+		if len(parts) == 2 {
+			return w.getDeviceInfoFromBase64(parts[1])
+		}
+	}
+	return w.getDeviceInfoFromUrl(screenshot)
 }
 
 // cleanScreenshotDataURL removes data URL prefix from screenshot string
@@ -486,9 +513,13 @@ func (w *WingsService) callWingsAPI(ctx context.Context, request WingsActionRequ
 		return nil, errors.Wrap(err, "HTTP request failed")
 	}
 	defer resp.Body.Close()
-	// resp X-Tt-Logid
+
 	logID := resp.Header.Get("X-Tt-Logid")
-	log.Info().Str("step_text", request.StepText).Str("log_id", logID).Str("biz_id", request.BizId).Str("url", w.apiURL).Msg("call wings api")
+	log.Info().Str("step_text", request.StepText).
+		Str("image_url", request.DeviceInfos[0].NowImageUrl).
+		Str("log_id", logID).Str("biz_id", request.BizId).
+		Str("url", w.apiURL).Msg("call wings api")
+
 	// Read response body
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {

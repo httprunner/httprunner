@@ -45,3 +45,7 @@ dist
 *.egg-info
 .python-version
 .pytest_cache
+
+# generated go module files in templates
+internal/scaffold/templates/plugin/go.mod
+internal/scaffold/templates/plugin/go.sum

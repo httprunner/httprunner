@@ -706,17 +706,16 @@ func (ad *ADBDriver) StopCaptureLog() (result interface{}, err error) {
 		log.Error().Err(err).Msg("failed to close adb log writer")
 	}
 	pointRes := ConvertPoints(ad.Device.Logcat.logs)
-
 	// 没有解析到打点日志，走兜底逻辑
 	if len(pointRes) == 0 {
 		log.Info().Msg("action log is null, use action file >>>")
 		actionLogDirPath := config.GetConfig().ActionLogDirPath()
-		logFilePathPrefix := fmt.Sprintf("%v/data", actionLogDirPath)
 		files := []string{}
-		ad.Device.RunShellCommand("pull", config.DeviceActionLogFilePath, actionLogDirPath)
+		actionLogRegStr := `.*data_\d+\.txt`
+		ad.Device.PullFolder(config.DeviceActionLogFilePath, actionLogDirPath)
 		err = filepath.Walk(actionLogDirPath, func(path string, info fs.FileInfo, err error) error {
 			// 只是需要日志文件
-			if ok := strings.Contains(path, logFilePathPrefix); ok {
+			if ok, _ := regexp.MatchString(actionLogRegStr, path); ok {
 				files = append(files, path)
 			}
 			return nil

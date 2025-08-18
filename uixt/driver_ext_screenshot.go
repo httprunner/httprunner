@@ -134,6 +134,19 @@ func (dExt *XTDriver) GetScreenResult(opts ...option.ActionOption) (screenResult
 		}
 	}
 
+	if screenshotOptions.ScreenShotWithUpload {
+		// Upload the screenshot to the server
+		if screenResult.ImagePath != "" && screenResult.bufSource != nil {
+			url, err := uploadScreenshot(screenResult.ImagePath, screenResult.bufSource)
+			if err != nil {
+				log.Warn().Err(err).Str("imagePath", screenResult.ImagePath).Msg("failed to upload screenshot")
+			} else if url != "" {
+				screenResult.UploadedURL = url
+				log.Info().Str("uploadedUrl", url).Msg("screenshot uploaded successfully")
+			}
+		}
+	}
+
 	// save screen result to session
 	session := dExt.GetSession()
 	session.screenResults = append(session.screenResults, screenResult)

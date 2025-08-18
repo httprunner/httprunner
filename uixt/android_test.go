@@ -21,6 +21,11 @@ func setupADBDriverExt(t *testing.T) *XTDriver {
 		Serial:   "", // Let it auto-detect the device serial
 		AIOptions: []option.AIServiceOption{
 			option.WithCVService(option.CVServiceTypeVEDEM),
+			option.WithLLMConfig(
+				option.NewLLMServiceConfig(option.DOUBAO_1_5_UI_TARS_250328).
+					WithPlannerModel(option.WINGS_SERVICE).
+					WithAsserterModel(option.WINGS_SERVICE),
+			),
 		},
 	}
 

@@ -98,7 +98,6 @@ func convertToGameElementFromQueryResult(result *ai.QueryResult) (*GameElement, 
 	return &gameElement, nil
 }
 
-
 // loadTestImage loads the test image from testdata
 func loadTestImage(t *testing.T) (string, types.Size) {
 	screenshot, size, err := builtin.LoadImage("../../../uixt/ai/testdata/llk_1.png")
@@ -118,7 +117,6 @@ func createAIQueryer(t *testing.T) *ai.Querier {
 
 // TestLLKGameBot_AnalyzeGameInterface comprehensive test for game interface analysis
 func TestLLKGameBot_AnalyzeGameInterface(t *testing.T) {
-
 	t.Run("AnalyzeWithTestImage", func(t *testing.T) {
 		// Create test bot and load test image
 		querier := createAIQueryer(t)

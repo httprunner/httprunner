@@ -18,7 +18,11 @@ func InitLogger(logLevel string, logJSON bool, logFile bool) {
 	// Error Logging with Stacktrace
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 
-	// set log timestamp precise to milliseconds
+	// set log timestamp precise to milliseconds with Beijing timezone (UTC+8)
+	beijingLoc, _ := time.LoadLocation("Asia/Shanghai")
+	zerolog.TimestampFunc = func() time.Time {
+		return time.Now().In(beijingLoc)
+	}
 	zerolog.TimeFieldFormat = "2006-01-02T15:04:05.999Z0700"
 
 	// init log writers

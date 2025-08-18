@@ -1,0 +1,171 @@
+{
+    "config": {
+        "name": "起点_安卓_无限流加载耗时",
+        "variables": {
+            "device": "${ENV(SerialNumber)}"
+        },
+        "android": [
+            {
+                "serial": "$device",
+                "log_on": true,
+                "ignore_popup": true
+            }
+        ]
+    },
+    "teststeps": [
+        {
+            "name": "杀掉之前清除缓存的进程",
+            "android": {
+                "actions": [
+                    {
+                        "method": "app_terminate",
+                        "params": "com.qidian.QDReader"
+                    },
+                     {
+                        "method": "sleep",
+                        "params": 30
+                    }
+
+                ]
+            }
+        },
+        {
+            "name": "冷启动起点读书app",
+            "android": {
+                "actions": [
+                    {
+                        "method": "app_launch",
+                        "params": "com.qidian.QDReader"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 30
+                    }
+                ]
+            }
+        },
+        {
+            "name": "进入精选-男生频道",
+            "android":{
+                "actions":[
+                    {
+                        "method": "tap_ocr",
+                        "params": "精选",
+                        "offset": [
+                            0,
+                            -50
+                        ]
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 7
+                    },
+                    {
+                        "method": "tap_ocr",
+                        "params": "男生"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 7
+                    }
+                ]
+            }
+        },
+        {
+            "name": "向下滑动，触发加载",
+            "android": {
+                "actions": [
+                    {
+                        "method": "swipe",
+                        "params": [
+                            0.5,
+                            0.8,
+                            0.5,
+                            0.2
+                        ],
+                        "steps": 1,
+                        "identifier": "xiaoshuo_swip_tab_loadmore"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 3
+                    },
+                    {
+                        "method": "swipe",
+                        "params": [
+                            0.5,
+                            0.8,
+                            0.5,
+                            0.2
+                        ],
+                        "steps": 1
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 3
+                    },
+                    {
+                        "method": "swipe",
+                        "params": [
+                            0.5,
+                            0.8,
+                            0.5,
+                            0.2
+                        ],
+                        "steps": 1
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 3
+                    },
+                    {
+                        "method": "swipe",
+                        "params": [
+                            0.5,
+                            0.8,
+                            0.5,
+                            0.2
+                        ],
+                        "steps": 1
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 3
+                    },
+                    {
+                        "method": "swipe",
+                        "params": [
+                            0.5,
+                            0.8,
+                            0.5,
+                            0.2
+                        ],
+                        "steps": 1
+                    }
+                ]
+            }
+        },
+        {
+            "name": "返回",
+            "android": {
+                "actions": [
+                    {
+                        "method": "home"
+                    },
+                    {
+                        "method": "swipe_to_tap_app",
+                        "params": "local",
+                        "offset": [
+                            0,
+                            -50
+                        ]
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 7
+                    }
+                ]
+            }
+        }
+    ]
+}

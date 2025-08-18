@@ -296,6 +296,17 @@ func TestDevice_Pull(t *testing.T) {
 	}
 }
 
+func TestDevice_PullFolder(t *testing.T) {
+	setupDevices(t)
+
+	for _, dev := range devices {
+		err := dev.PullFolder("/storage/emulated/0/Download/", "/tmp/test/")
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestDevice_ScreenRecord(t *testing.T) {
 	setupDevices(t)
 

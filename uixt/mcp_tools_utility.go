@@ -2,9 +2,7 @@ package uixt
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -15,7 +13,29 @@ import (
 	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
-// ToolSleep implements the sleep tool call.
+// extractStartTimeMs extracts start_time_ms from MCP request arguments
+// Returns time.Time (zero if not provided) and any conversion error
+func extractStartTimeMs(request mcp.CallToolRequest) (time.Time, error) {
+	startTimeMs, ok := request.GetArguments()["start_time_ms"]
+	if !ok || startTimeMs == nil {
+		return time.Time{}, nil // Return zero time for normal sleep
+	}
+
+	var ms int64
+	switch v := startTimeMs.(type) {
+	case float64:
+		ms = int64(v)
+	case int64:
+		ms = v
+	case int:
+		ms = int64(v)
+	default:
+		return time.Time{}, fmt.Errorf("invalid start_time_ms type: %T", v)
+	}
+
+	return time.UnixMilli(ms), nil
+}
+
 type ToolSleep struct {
 	// Return data fields - these define the structure of data returned by this tool
 	Seconds  float64 `json:"seconds" desc:"Duration in seconds that was slept"`
@@ -33,6 +53,7 @@ func (t *ToolSleep) Description() string {
 func (t *ToolSleep) Options() []mcp.ToolOption {
 	return []mcp.ToolOption{
 		mcp.WithNumber("seconds", mcp.Description("Number of seconds to sleep")),
+		mcp.WithNumber("start_time_ms", mcp.Description("Start time as Unix milliseconds for strict sleep calculation")),
 	}
 }
 
@@ -47,38 +68,21 @@ func (t *ToolSleep) Implement() server.ToolHandlerFunc {
 		// Sleep action logic
 		log.Info().Interface("seconds", seconds).Msg("sleeping")
 
-		var duration time.Duration
-		var actualSeconds float64
-		switch v := seconds.(type) {
-		case float64:
-			actualSeconds = v
-			duration = time.Duration(v*1000) * time.Millisecond
-		case int:
-			actualSeconds = float64(v)
-			duration = time.Duration(v) * time.Second
-		case int64:
-			actualSeconds = float64(v)
-			duration = time.Duration(v) * time.Second
-		case string:
-			s, err := builtin.ConvertToFloat64(v)
-			if err != nil {
-				return nil, fmt.Errorf("invalid sleep duration: %v", v)
-			}
-			actualSeconds = s
-			duration = time.Duration(s*1000) * time.Millisecond
-		default:
-			return nil, fmt.Errorf("unsupported sleep duration type: %T", v)
+		// Use Interface2Float64 for unified type conversion
+		actualSeconds, err := builtin.Interface2Float64(seconds)
+		if err != nil {
+			return nil, fmt.Errorf("invalid sleep duration: %v", seconds)
+		}
+		duration := time.Duration(actualSeconds) * time.Second
+
+		// Extract start_time_ms and use sleepStrict for unified sleep logic
+		startTime, err := extractStartTimeMs(request)
+		if err != nil {
+			return nil, err
 		}
 
-		// Use context-aware sleep instead of blocking time.Sleep
-		select {
-		case <-time.After(duration):
-			// Normal completion
-		case <-ctx.Done():
-			// Interrupted by context cancellation (interrupt signal, timeout, time limit)
-			log.Info().Msg("sleep interrupted by context cancellation")
-			// Don't return error - let the upper layer handle timeout/time limit logic
-		}
+		milliseconds := int64(actualSeconds * 1000)
+		sleepStrict(ctx, startTime, milliseconds)
 
 		message := fmt.Sprintf("Successfully slept for %v seconds", actualSeconds)
 		returnData := ToolSleep{
@@ -91,9 +95,24 @@ func (t *ToolSleep) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolSleep) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
-	arguments := map[string]any{
-		"seconds": action.Params,
+	arguments := map[string]any{}
+
+	var seconds float64
+	if sleepConfig, ok := action.Params.(SleepConfig); ok {
+		// When startTime is provided, pass both seconds and startTime
+		seconds = sleepConfig.Seconds
+		arguments["seconds"] = seconds
+		arguments["start_time_ms"] = sleepConfig.StartTime.UnixMilli()
+	} else {
+		// Use builtin.Interface2Float64 for unified parameter handling
+		var err error
+		seconds, err = builtin.Interface2Float64(action.Params)
+		if err != nil {
+			return mcp.CallToolRequest{}, fmt.Errorf("invalid sleep params: %v", action.Params)
+		}
+		arguments["seconds"] = seconds
 	}
+
 	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }
 
@@ -115,6 +134,7 @@ func (t *ToolSleepMS) Description() string {
 func (t *ToolSleepMS) Options() []mcp.ToolOption {
 	return []mcp.ToolOption{
 		mcp.WithNumber("milliseconds", mcp.Description("Number of milliseconds to sleep")),
+		mcp.WithNumber("start_time_ms", mcp.Description("Start time as Unix milliseconds for strict sleep calculation")),
 	}
 }
 
@@ -129,38 +149,21 @@ func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 		// Sleep MS action logic
 		log.Info().Interface("milliseconds", milliseconds).Msg("sleeping in milliseconds")
 
-		var duration time.Duration
-		var actualMilliseconds int64
-		switch v := milliseconds.(type) {
-		case float64:
-			actualMilliseconds = int64(v)
-			duration = time.Duration(v) * time.Millisecond
-		case int:
-			actualMilliseconds = int64(v)
-			duration = time.Duration(v) * time.Millisecond
-		case int64:
-			actualMilliseconds = v
-			duration = time.Duration(v) * time.Millisecond
-		case string:
-			ms, err := strconv.ParseInt(v, 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("invalid sleep duration: %v", v)
-			}
-			actualMilliseconds = ms
-			duration = time.Duration(ms) * time.Millisecond
-		default:
-			return nil, fmt.Errorf("unsupported sleep duration type: %T", v)
+		// Use Interface2Float64 for unified type conversion, then convert to int64
+		floatVal, err := builtin.Interface2Float64(milliseconds)
+		if err != nil {
+			return nil, fmt.Errorf("invalid sleep duration: %v", milliseconds)
+		}
+		actualMilliseconds := int64(floatVal)
+		duration := time.Duration(actualMilliseconds) * time.Millisecond
+
+		// Extract start_time_ms and use sleepStrict for unified sleep logic
+		startTime, err := extractStartTimeMs(request)
+		if err != nil {
+			return nil, err
 		}
 
-		// Use context-aware sleep instead of blocking time.Sleep
-		select {
-		case <-time.After(duration):
-			// Normal completion
-		case <-ctx.Done():
-			// Interrupted by context cancellation (interrupt signal, timeout, time limit)
-			log.Info().Msg("sleep interrupted by context cancellation")
-			// Don't return error - let the upper layer handle timeout/time limit logic
-		}
+		sleepStrict(ctx, startTime, actualMilliseconds)
 
 		message := fmt.Sprintf("Successfully slept for %d milliseconds", actualMilliseconds)
 		returnData := ToolSleepMS{
@@ -173,17 +176,24 @@ func (t *ToolSleepMS) Implement() server.ToolHandlerFunc {
 }
 
 func (t *ToolSleepMS) ConvertActionToCallToolRequest(action option.MobileAction) (mcp.CallToolRequest, error) {
+	arguments := map[string]any{}
+
 	var milliseconds int64
-	if param, ok := action.Params.(json.Number); ok {
-		milliseconds, _ = param.Int64()
-	} else if param, ok := action.Params.(int64); ok {
-		milliseconds = param
+	if sleepConfig, ok := action.Params.(SleepConfig); ok {
+		// When startTime is provided, pass both milliseconds and startTime
+		milliseconds = sleepConfig.Milliseconds
+		arguments["milliseconds"] = milliseconds
+		arguments["start_time_ms"] = sleepConfig.StartTime.UnixMilli()
 	} else {
-		return mcp.CallToolRequest{}, fmt.Errorf("invalid sleep ms params: %v", action.Params)
+		// Use builtin.Interface2Float64 for unified parameter handling, then convert to int64
+		floatVal, err := builtin.Interface2Float64(action.Params)
+		if err != nil {
+			return mcp.CallToolRequest{}, fmt.Errorf("invalid sleep ms params: %v", action.Params)
+		}
+		milliseconds = int64(floatVal)
+		arguments["milliseconds"] = milliseconds
 	}
-	arguments := map[string]any{
-		"milliseconds": milliseconds,
-	}
+
 	return BuildMCPCallToolRequest(t.Name(), arguments, action), nil
 }
 

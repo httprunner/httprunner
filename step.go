@@ -67,6 +67,7 @@ type ActionResult struct {
 	Plannings           []*uixt.PlanningExecutionResult `json:"plannings,omitempty"` // store planning results for start_to_goal actions, which contains multiple sub-actions
 	AIResult            *uixt.AIExecutionResult         `json:"ai_result,omitempty"` // store unified AI execution result for ai_query/ai_action/ai_assert actions
 	uixt.SessionData                                    // store session data for other actions besides start_to_goal
+	ExtraData           interface{}                     `json:"extra_data,omitempty"`
 }
 
 // one testcase contains one or multiple steps

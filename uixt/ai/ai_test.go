@@ -6,14 +6,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/httprunner/httprunner/v5/internal/builtin"
-	"github.com/httprunner/httprunner/v5/uixt/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/httprunner/httprunner/v5/internal/builtin"
+	"github.com/httprunner/httprunner/v5/uixt/option"
 )
 
 func TestILLMServiceQuery(t *testing.T) {
-
 	// Create LLM service
 	service, err := NewLLMService(option.OPENAI_GPT_4O)
 	require.NoError(t, err)
@@ -80,7 +80,6 @@ func TestILLMServiceQuery(t *testing.T) {
 }
 
 func TestILLMServiceIntegration(t *testing.T) {
-
 	// Create LLM service
 	service, err := NewLLMService(option.OPENAI_GPT_4O)
 	require.NoError(t, err)

@@ -217,6 +217,8 @@ func Interface2Float64(i interface{}) (float64, error) {
 	case string: // e.g. "1", "0.5"
 		floatVar, err := strconv.ParseFloat(v, 64)
 		if err != nil {
+			log.Error().Err(err).Str("value", v).
+				Msg("convert string to float64 failed")
 			return 0, err
 		}
 		return floatVar, nil
@@ -226,6 +228,10 @@ func Interface2Float64(i interface{}) (float64, error) {
 	if ok {
 		return value.Float64()
 	}
+
+	// Log error for unsupported types
+	log.Error().Interface("value", i).Type("type", i).
+		Msg("convert float64 failed")
 	return 0, errors.New("failed to convert interface to float64")
 }
 
@@ -334,29 +340,6 @@ func IsZeroFloat64(f float64) bool {
 	return math.Abs(f) < threshold
 }
 
-func ConvertToFloat64(val interface{}) (float64, error) {
-	switch v := val.(type) {
-	case float64:
-		return v, nil
-	case int:
-		return float64(v), nil
-	case int64:
-		return float64(v), nil
-	case string:
-		f, err := strconv.ParseFloat(v, 64)
-		if err != nil {
-			log.Error().Err(err).Str("value", v).
-				Msg("convert string to float64 failed")
-			return 0, err
-		}
-		return f, nil
-	default:
-		log.Error().Interface("value", val).Type("type", val).
-			Msg("convert float64 failed")
-		return 0, errors.New("convert float64 error")
-	}
-}
-
 func ConvertToFloat64Slice(val interface{}) ([]float64, error) {
 	if paramsSlice, ok := val.([]float64); ok {
 		return paramsSlice, nil
@@ -369,7 +352,7 @@ func ConvertToFloat64Slice(val interface{}) ([]float64, error) {
 	var err error
 	float64Slice := make([]float64, len(paramsSlice))
 	for i, v := range paramsSlice {
-		float64Slice[i], err = ConvertToFloat64(v)
+		float64Slice[i], err = Interface2Float64(v)
 		if err != nil {
 			return nil, err
 		}

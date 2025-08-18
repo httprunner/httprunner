@@ -1,0 +1,206 @@
+{
+    "config": {
+        "name": "视频号搜索",
+        "ai_options": {
+            "llm_service": "doubao-1.5-ui-tars-250328"
+        }
+    },
+    "teststeps": [
+        {
+            "name": "启动视频号 app",
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "app_launch",
+                        "params": "com.tencent.mm"
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 5
+                    }
+                ]
+            },
+            "validate": [
+                {
+                    "check": "ui_foreground_app",
+                    "assert": "equal",
+                    "expect": "com.tencent.mm",
+                    "msg": "app [com.tencent.mm] should be in foreground"
+                }
+            ]
+        },
+        {
+            "name": "进入视频号搜索页面",
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "start_to_goal",
+                        "params": "进入「发现」页，点击进入「视频号」页面，点击搜索框",
+                        "options": {}
+                    }
+                ]
+            },
+            "validate": [
+                {
+                    "check": "ui_ai",
+                    "assert": "ai_assert",
+                    "expect": "当前页面包含搜索框和搜索按钮",
+                    "msg": "assert ai prompt [当前页面包含搜索框和搜索按钮] failed"
+                }
+            ]
+        },
+        {
+            "name": "搜索短剧「$dramaName」",
+            "parameters": {
+                "dramaName": [
+                    "督军，你家小福包有祖传乌鸦嘴",
+                    "换亲后我顺便换了江山，很合理吧",
+                    "穿过荆棘拥抱你",
+                    "认亲后，误入帮派成团宠",
+                    "欲念疯长",
+                    "花轿临门她拒嫁，只盼故人归",
+                    "太监武帝，功法自动大圆满",
+                    "容先生，你的爱意藏不住了",
+                    "回家给娘亲改命，心声咋还泄露了",
+                    "相亲遇甜妹，偷娶她闺蜜"
+                ]
+            },
+            "android": {
+                "os_type": "android",
+                "actions": [
+                    {
+                        "method": "start_to_goal",
+                        "params": "输入「$dramaName」，点击搜索",
+                        "options": {}
+                    },
+                    {
+                        "method": "sleep",
+                        "params": 1
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {}
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            1,
+                            2
+                        ]
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {}
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            1,
+                            2
+                        ]
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {}
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            1,
+                            2
+                        ]
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {}
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            1,
+                            2
+                        ]
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {}
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            1,
+                            2
+                        ]
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {}
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            1,
+                            2
+                        ]
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {}
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            1,
+                            2
+                        ]
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {}
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            1,
+                            2
+                        ]
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {}
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            1,
+                            2
+                        ]
+                    },
+                    {
+                        "method": "swipe_direction",
+                        "params": "up",
+                        "options": {}
+                    },
+                    {
+                        "method": "sleep_random",
+                        "params": [
+                            1,
+                            2
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

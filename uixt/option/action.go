@@ -98,6 +98,10 @@ const (
 	ACTION_ListAvailableDevices ActionName = "list_available_devices"
 	ACTION_SelectDevice         ActionName = "select_device"
 
+	// album actions (images and videos)
+	ACTION_PushAlbums  ActionName = "push_albums"
+	ACTION_ClearAlbums ActionName = "clear_albums"
+
 	// custom actions
 	ACTION_SwipeToTapApp   ActionName = "swipe_to_tap_app"   // swipe left & right to find app and tap
 	ACTION_SwipeToTapText  ActionName = "swipe_to_tap_text"  // swipe up & down to find text and tap

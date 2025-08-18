@@ -66,18 +66,19 @@ var (
 
 // device related: [50, 70)
 var (
-	DeviceConnectionError = errors.New("device general connection error") // 50
-	DeviceHTTPDriverError = errors.New("device HTTP driver error")        // 51
-	DeviceUSBDriverError  = errors.New("device USB driver error")         // 52
-	DeviceAppNotInstalled = errors.New("device app not installed")        // 59
-	DeviceGetInfoError    = errors.New("device get info error")           // 60
-	DeviceConfigureError  = errors.New("device configure error")          // 61
-	DeviceShellExecError  = errors.New("device shell exec error")         // 62
-	DeviceOfflineError    = errors.New("device offline")                  // 63
-	DeviceInstallFailed   = errors.New("device install app failed")       // 64
-	DeviceScreenShotError = errors.New("device screenshot error")         // 65
-	DeviceCaptureLogError = errors.New("device capture log error")        // 66
-	DeviceUIResponseSlow  = errors.New("device UI response slow")         // 67
+	DeviceConnectionError    = errors.New("device general connection error")    // 50
+	DeviceHTTPDriverError    = errors.New("device HTTP driver error")           // 51
+	DeviceUSBDriverError     = errors.New("device USB driver error")            // 52
+	DeviceUntrustedCertError = errors.New("device app certificate not trusted") // 53
+	DeviceAppNotInstalled    = errors.New("device app not installed")           // 59
+	DeviceGetInfoError       = errors.New("device get info error")              // 60
+	DeviceConfigureError     = errors.New("device configure error")             // 61
+	DeviceShellExecError     = errors.New("device shell exec error")            // 62
+	DeviceOfflineError       = errors.New("device offline")                     // 63
+	DeviceInstallFailed      = errors.New("device install app failed")          // 64
+	DeviceScreenShotError    = errors.New("device screenshot error")            // 65
+	DeviceCaptureLogError    = errors.New("device capture log error")           // 66
+	DeviceUIResponseSlow     = errors.New("device UI response slow")            // 67
 )
 
 // UI automation related: [70, 80)
@@ -176,18 +177,19 @@ var errorsMap = map[error]int{
 	UploadFailed:             49,
 
 	// device related
-	DeviceConnectionError: 50,
-	DeviceHTTPDriverError: 51,
-	DeviceUSBDriverError:  52,
-	DeviceAppNotInstalled: 59,
-	DeviceGetInfoError:    60,
-	DeviceConfigureError:  61,
-	DeviceShellExecError:  62,
-	DeviceOfflineError:    63,
-	DeviceInstallFailed:   64,
-	DeviceScreenShotError: 65,
-	DeviceCaptureLogError: 66,
-	DeviceUIResponseSlow:  67,
+	DeviceConnectionError:    50,
+	DeviceHTTPDriverError:    51,
+	DeviceUSBDriverError:     52,
+	DeviceUntrustedCertError: 53,
+	DeviceAppNotInstalled:    59,
+	DeviceGetInfoError:       60,
+	DeviceConfigureError:     61,
+	DeviceShellExecError:     62,
+	DeviceOfflineError:       63,
+	DeviceInstallFailed:      64,
+	DeviceScreenShotError:    65,
+	DeviceCaptureLogError:    66,
+	DeviceUIResponseSlow:     67,
 
 	// UI automation related
 	MobileUIDriverAppNotInstalled:         68,

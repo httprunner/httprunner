@@ -292,14 +292,31 @@ func TestDriverExt_AIAction(t *testing.T) {
 func TestDriverExt_AIAction_CompareWithAIAction(t *testing.T) {
 	driver := setupDriverExt(t)
 
-	prompt := "[目标导向]向上滑动屏幕2次"
+	prompt := "点击搜索按钮"
 
 	// Test both methods with the same prompt
-	aiResult, aiErr := driver.StartToGoal(context.Background(), prompt)
+	aiResult, aiErr := driver.AIAction(context.Background(), prompt)
 
 	// Both should execute without critical errors (may have different implementations)
 	t.Logf("AIAction error: %v", aiErr)
-	t.Logf("AIAction result: %v", aiResult)
+
+	// If both succeed, compare results
+	if aiResult != nil {
+		assert.Equal(t, "action", aiResult.Type, "AIAction result type should be 'action'")
+
+		// Both should have timing information
+		assert.Greater(t, aiResult.ModelCallElapsed, int64(0), "AIAction should have model call elapsed time")
+
+		// Both should have screenshot information
+		assert.NotEmpty(t, aiResult.ImagePath, "AIAction should have image path")
+
+		// Compare model names
+		if aiResult.PlanningResult != nil {
+			t.Logf("AIAction model: %s", aiResult.PlanningResult.ModelName)
+
+			assert.Equal(t, "wings-api", aiResult.PlanningResult.ModelName, "AIAction should use wings-api")
+		}
+	}
 }
 
 // TestDriverExt_AIAction_ErrorHandling tests AIAction error handling

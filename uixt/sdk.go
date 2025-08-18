@@ -24,6 +24,7 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 		services:         services,
 		loadedMCPClients: make(map[string]client.MCPClient),
 	}
+	log.Info().Interface("services", services).Msg("init XTDriver with AI services")
 
 	var err error
 
@@ -32,17 +33,21 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 		// Use advanced LLM service configuration if provided
 		driverExt.LLMService, err = ai.NewLLMServiceWithOptionConfig(services.LLMConfig)
 		if err != nil {
-			log.Warn().Err(err).Msg("init llm service with config failed")
+			log.Warn().Err(err).Interface("service", services.LLMConfig).
+				Msg("init llm service with advanced config failed")
 		} else {
-			log.Info().Msg("LLM service initialized with advanced config")
+			log.Info().Interface("service", services.LLMConfig).
+				Msg("LLM service initialized with advanced config")
 		}
 	} else if services.LLMService != "" {
 		// Use simple LLM service configuration if provided
 		driverExt.LLMService, err = ai.NewLLMService(services.LLMService)
 		if err != nil {
-			log.Warn().Err(err).Msg("init llm service failed")
+			log.Warn().Err(err).Str("service", string(services.LLMService)).
+				Msg("init llm service with simple config failed")
 		} else {
-			log.Info().Msg("LLM service initialized with simple config")
+			log.Info().Str("service", string(services.LLMService)).
+				Msg("LLM service initialized with simple config")
 		}
 	} else {
 		// Use Wings service as fallback
@@ -50,7 +55,7 @@ func NewXTDriver(driver IDriver, opts ...option.AIServiceOption) (*XTDriver, err
 		if err != nil {
 			log.Warn().Err(err).Msg("init Wings service failed")
 		} else {
-			log.Info().Msg("Wings service initialized")
+			log.Info().Msg("Wings service initialized as fallback")
 		}
 	}
 

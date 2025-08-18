@@ -18,6 +18,7 @@ var (
 
 	// Ensure drivers implement SIMSupport interface
 	_ SIMSupport = (*UIA2Driver)(nil)
+	_ SIMSupport = (*WDADriver)(nil)
 )
 
 // current implemeted driver: ADBDriver, UIA2Driver, WDADriver, HDCDriver
