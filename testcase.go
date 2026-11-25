@@ -61,6 +61,10 @@ func (tc *TestCaseJSON) GetTestCase() (*TestCase, error) {
 type TestCase struct {
 	Config    IConfig `json:"config" yaml:"config"`
 	TestSteps []IStep `json:"teststeps" yaml:"teststeps"`
+
+	// unknownSteps records names of steps dropped because their type is not recognized,
+	// e.g. a misspelled `api` / `request` key. They are rejected in strict loading mode.
+	unknownSteps []string
 }
 
 func (tc *TestCase) GetTestCase() (*TestCase, error) {
@@ -303,6 +307,7 @@ func (tc *TestCaseDef) loadISteps() (*TestCase, error) {
 			})
 		} else {
 			log.Warn().Interface("step", step).Msg("[convertTestCase] unexpected step")
+			testCase.unknownSteps = append(testCase.unknownSteps, step.StepName)
 		}
 	}
 	return testCase, nil

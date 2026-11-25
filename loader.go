@@ -16,8 +16,20 @@ import (
 	"github.com/httprunner/httprunner/v5/internal/json"
 )
 
-// LoadTestCases load testcases from TestCasePath or TestCase
+// LoadTestCases load testcases from TestCasePath or TestCase.
+// Testcases that fail to load are skipped with a warning, see LoadTestCasesStrict.
 func LoadTestCases(tests ...ITestCase) ([]*TestCase, error) {
+	return loadTestCases(false, tests...)
+}
+
+// LoadTestCasesStrict loads testcases like LoadTestCases, but returns an error
+// instead of skipping when a testcase file fails to load or contains steps of unknown type.
+// Silently skipped testcases make a CI run look green while some cases never ran.
+func LoadTestCasesStrict(tests ...ITestCase) ([]*TestCase, error) {
+	return loadTestCases(true, tests...)
+}
+
+func loadTestCases(strict bool, tests ...ITestCase) ([]*TestCase, error) {
 	testCases := make([]*TestCase, 0)
 
 	for _, iTestCase := range tests {
@@ -30,6 +42,9 @@ func LoadTestCases(tests ...ITestCase) ([]*TestCase, error) {
 			tc, err := testcase.GetTestCase()
 			if err != nil {
 				return nil, err
+			}
+			if strict && len(tc.unknownSteps) > 0 {
+				return nil, errors.Errorf("testcase contains steps of unknown type: %v", tc.unknownSteps)
 			}
 			testCases = append(testCases, tc)
 			continue
@@ -64,8 +79,14 @@ func LoadTestCases(tests ...ITestCase) ([]*TestCase, error) {
 			testCasePath := TestCasePath(path)
 			tc, err := testCasePath.GetTestCase()
 			if err != nil {
+				if strict {
+					return errors.Wrapf(err, "load testcase %s failed", path)
+				}
 				log.Warn().Err(err).Str("path", path).Msg("load testcase failed")
 				return nil
+			}
+			if strict && len(tc.unknownSteps) > 0 {
+				return errors.Errorf("testcase %s contains steps of unknown type: %v", path, tc.unknownSteps)
 			}
 			testCases = append(testCases, tc)
 			return nil
