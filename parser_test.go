@@ -16,48 +16,38 @@ import (
 )
 
 func TestBuildURL(t *testing.T) {
-	var preparedURL *url.URL
-
-	preparedURL = buildURL("https://postman-echo.com", "/get", nil)
-	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/")
-	preparedURL = buildURL("https://postman-echo.com", "get", nil)
-	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/")
-	preparedURL = buildURL("https://postman-echo.com/", "/get", nil)
-	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/")
-
-	preparedURL = buildURL("https://postman-echo.com/abc/", "/get?a=1&b=2", nil)
-	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2")
-	preparedURL = buildURL("https://postman-echo.com/abc", "get?a=1&b=2", nil)
-	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2")
-
-	// omit query string in base url
-	preparedURL = buildURL("https://postman-echo.com/abc?x=6&y=9", "/get?a=1&b=2", nil)
-	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2")
-
-	preparedURL = buildURL("", "https://postman-echo.com/get", nil)
-	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get/")
-
-	// notice: step request url > config base url
-	preparedURL = buildURL("https://postman-echo.com", "https://httpbin.org/get", nil)
-	assert.Equal(t, preparedURL.String(), "https://httpbin.org/get/")
-
-	// websocket url
-	preparedURL = buildURL("wss://ws.postman-echo.com/raw", "", nil)
-	assert.Equal(t, preparedURL.String(), "wss://ws.postman-echo.com/raw/")
-
-	preparedURL = buildURL("wss://ws.postman-echo.com", "/raw", nil)
-	assert.Equal(t, preparedURL.String(), "wss://ws.postman-echo.com/raw/")
-
-	preparedURL = buildURL("wss://ws.postman-echo.com/raw", "ws://echo.websocket.events", nil)
-	assert.Equal(t, preparedURL.String(), "ws://echo.websocket.events/")
-
-	queryParams := url.Values{}
-	queryParams.Add("c", "3")
-	queryParams.Add("d", "4")
-	preparedURL = buildURL("https://postman-echo.com/", "/get/", queryParams)
-	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/get?c=3&d=4")
-	preparedURL = buildURL("https://postman-echo.com/abc", "get?a=1&b=2", queryParams)
-	assert.Equal(t, preparedURL.String(), "https://postman-echo.com/abc/get?a=1&b=2&c=3&d=4")
+	testData := []struct {
+		baseURL, stepURL string
+		params           url.Values
+		expected         string
+	}{
+		// relative step url, trailing slash follows the step url as written
+		{"https://postman-echo.com", "/get", nil, "https://postman-echo.com/get"},
+		{"https://postman-echo.com", "get", nil, "https://postman-echo.com/get"},
+		{"https://postman-echo.com/", "/get", nil, "https://postman-echo.com/get"},
+		{"https://postman-echo.com", "/get/", nil, "https://postman-echo.com/get/"}, // #1603
+		{"https://postman-echo.com/abc/", "/get?a=1&b=2", nil, "https://postman-echo.com/abc/get?a=1&b=2"},
+		{"https://postman-echo.com/abc", "get?a=1&b=2", nil, "https://postman-echo.com/abc/get?a=1&b=2"},
+		// omit query string in base url
+		{"https://postman-echo.com/abc?x=6&y=9", "/get?a=1&b=2", nil, "https://postman-echo.com/abc/get?a=1&b=2"},
+		// empty step url, trailing slash follows the base url
+		{"wss://ws.postman-echo.com/raw", "", nil, "wss://ws.postman-echo.com/raw"},
+		{"wss://ws.postman-echo.com/raw/", "", nil, "wss://ws.postman-echo.com/raw/"},
+		{"wss://ws.postman-echo.com", "/raw", nil, "wss://ws.postman-echo.com/raw"},
+		// absolute step url is kept as is, and overrides config base url
+		{"", "https://postman-echo.com/get", nil, "https://postman-echo.com/get"},
+		{"", "https://postman-echo.com/get/", nil, "https://postman-echo.com/get/"},
+		{"https://postman-echo.com", "https://httpbin.org/get", nil, "https://httpbin.org/get"},
+		{"wss://ws.postman-echo.com/raw", "ws://echo.websocket.events", nil, "ws://echo.websocket.events"},
+		// query params
+		{"https://postman-echo.com/", "/get/", url.Values{"c": {"3"}, "d": {"4"}}, "https://postman-echo.com/get/?c=3&d=4"},
+		{"https://postman-echo.com/", "/get", url.Values{"c": {"3"}, "d": {"4"}}, "https://postman-echo.com/get?c=3&d=4"},
+		{"https://postman-echo.com/abc", "get?a=1&b=2", url.Values{"c": {"3"}, "d": {"4"}}, "https://postman-echo.com/abc/get?a=1&b=2&c=3&d=4"},
+	}
+	for _, data := range testData {
+		preparedURL := buildURL(data.baseURL, data.stepURL, data.params)
+		assert.Equal(t, data.expected, preparedURL.String(), "base=%q step=%q", data.baseURL, data.stepURL)
+	}
 }
 
 func TestRegexCompileVariable(t *testing.T) {
