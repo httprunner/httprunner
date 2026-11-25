@@ -4,6 +4,7 @@ import (
 	"bytes"
 	builtinJSON "encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"regexp"
@@ -194,7 +195,7 @@ func (v *responseObject) Validate(iValidators []interface{}, variablesMapping ma
 		}
 
 		// do assertion
-		result := assertFunc(v.t, checkValue, expectValue)
+		result := assertFunc(assertionTestingT(v.t), checkValue, expectValue)
 		if result {
 			validResult.CheckResult = "pass"
 		}
@@ -271,4 +272,26 @@ func (v *responseObject) searchRegexp(expr string) interface{} {
 	}
 	log.Error().Str("expr", expr).Msg("search regexp failed")
 	return expr
+}
+
+// assertionTestingT returns the assert.TestingT used to run validators.
+//
+// When hrp runs as a standalone CLI, NewRunner(nil) falls back to a zero-value
+// testing.T. Since Go 1.21, testing.T.Errorf reads flags that are only registered
+// by testing.Init() (e.g. -test.fullpath), so calling it outside `go test` panics
+// with a nil pointer dereference and every failed assertion crashes hrp.
+// In that case assertion messages are written to the log instead; the failure
+// itself is still recorded via t.Fail() and the validation results.
+func assertionTestingT(t *testing.T) assert.TestingT {
+	if t == nil || t.Name() == "" {
+		return logTestingT{}
+	}
+	return t
+}
+
+// logTestingT implements assert.TestingT by logging assertion failures.
+type logTestingT struct{}
+
+func (logTestingT) Errorf(format string, args ...interface{}) {
+	log.Error().Msgf(format, args...)
 }

@@ -858,3 +858,16 @@ func main() {	// should not define main() function
 	_, err := regexGoFunctionName.findAllFunctionNames(content)
 	assert.Error(t, err)
 }
+
+func TestAssertionTestingT(t *testing.T) {
+	// a real *testing.T from `go test` is used as is
+	assert.Same(t, t, assertionTestingT(t))
+
+	// the zero-value testing.T created by NewRunner(nil) in hrp CLI must not be used:
+	// its Errorf panics outside `go test` since Go 1.21
+	assert.IsType(t, logTestingT{}, assertionTestingT(&testing.T{}))
+	assert.IsType(t, logTestingT{}, assertionTestingT(nil))
+	assert.NotPanics(t, func() {
+		assert.Equal(assertionTestingT(&testing.T{}), 1, 2)
+	})
+}
