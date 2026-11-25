@@ -28,6 +28,7 @@ var CmdRun = &cobra.Command{
 
 var (
 	continueOnFailure bool
+	strictLoading     bool
 	requestsLogOff    bool
 	httpStatOn        bool
 	pluginLogOn       bool
@@ -41,6 +42,7 @@ var (
 
 func init() {
 	CmdRun.Flags().BoolVarP(&continueOnFailure, "continue-on-failure", "c", false, "continue running next step when failure occurs")
+	CmdRun.Flags().BoolVar(&strictLoading, "strict", false, "fail when a testcase cannot be loaded or contains steps of unknown type, instead of skipping it")
 	CmdRun.Flags().BoolVar(&requestsLogOff, "log-requests-off", false, "turn off request & response details logging")
 	CmdRun.Flags().BoolVar(&httpStatOn, "http-stat", false, "turn on HTTP latency stat (DNSLookup, TCP Connection, etc.)")
 	CmdRun.Flags().BoolVar(&pluginLogOn, "log-plugin", false, "turn on plugin logging")
@@ -55,6 +57,7 @@ func init() {
 func makeHRPRunner() *hrp.HRPRunner {
 	runner := hrp.NewRunner(nil).
 		SetFailfast(!continueOnFailure).
+		SetStrict(strictLoading).
 		SetSaveTests(saveTests).
 		SetCaseTimeout(caseTimeout)
 	if genHTMLReport {

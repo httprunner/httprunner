@@ -79,6 +79,7 @@ func NewRunner(t *testing.T) *HRPRunner {
 type HRPRunner struct {
 	t                *testing.T
 	failfast         bool
+	strict           bool // fail on testcases that cannot be loaded instead of skipping them
 	httpStatOn       bool
 	requestsLogOn    bool
 	pluginLogOn      bool
@@ -121,6 +122,14 @@ func (r *HRPRunner) SetClientTransport(maxConns int, disableKeepAlive bool, disa
 func (r *HRPRunner) SetFailfast(failfast bool) *HRPRunner {
 	log.Info().Bool("failfast", failfast).Msg("[init] SetFailfast")
 	r.failfast = failfast
+	return r
+}
+
+// SetStrict configures whether to fail when a testcase cannot be loaded or contains
+// steps of unknown type. By default such testcases are skipped with a warning.
+func (r *HRPRunner) SetStrict(strict bool) *HRPRunner {
+	log.Info().Bool("strict", strict).Msg("[init] SetStrict")
+	r.strict = strict
 	return r
 }
 
@@ -256,7 +265,7 @@ func (r *HRPRunner) Run(testcases ...ITestCase) (err error) {
 	}()
 
 	// load all testcases
-	testCases, err := LoadTestCases(testcases...)
+	testCases, err := loadTestCases(r.strict, testcases...)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to load testcases")
 		return err
