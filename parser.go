@@ -49,15 +49,10 @@ func buildURL(baseURL, stepURL string, queryParams url.Values) (fullUrl *url.URL
 			}
 		}
 
-		// ensure path suffix '/' exists
-		if uStep.RawQuery == "" {
-			uStep.Path = strings.TrimRight(uStep.Path, "/") + "/"
-		}
-
 		fullUrl = uStep
 	}()
 
-	// step url is absolute url
+	// step url is absolute url, keep its path as is
 	if uStep.Host != "" {
 		return uStep
 	}
@@ -70,9 +65,16 @@ func buildURL(baseURL, stepURL string, queryParams url.Values) (fullUrl *url.URL
 	}
 
 	// merge url
+	// path.Join drops the trailing '/', restore it when the url written in the testcase has one:
+	// "/get" and "/get/" may be different resources (RFC 3986), and servers with strict routing
+	// return 404 for the other one (#1603)
+	trailingSlash := strings.HasSuffix(uStep.Path, "/") || (uStep.Path == "" && strings.HasSuffix(uConfig.Path, "/"))
 	uStep.Scheme = uConfig.Scheme
 	uStep.Host = uConfig.Host
 	uStep.Path = path.Join(uConfig.Path, uStep.Path)
+	if trailingSlash && !strings.HasSuffix(uStep.Path, "/") {
+		uStep.Path += "/"
+	}
 	return uStep
 }
 
